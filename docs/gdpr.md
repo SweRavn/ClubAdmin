@@ -1,0 +1,73 @@
+# GDPR and privacy
+
+## Roles
+
+- **The club is the data controller** for its members' data.
+- **The hosted-service operator is the data processor** (personuppgiftsbiträde).
+  Every club accepts a data processing agreement (DPA) when it signs up; the list
+  of sub-processors is public and clubs are notified of changes.
+- **Self-hosting organisations** are controller (and their own processor).
+- The person's global account data (login, preferences) is controlled by the
+  operator; this is described in the platform privacy notice.
+
+## Principles in the product
+
+| Principle | How |
+|---|---|
+| Data minimisation | Only `given_name`, `family_name`, `birth_date` and one contact method required. Personal identity number only when the country pack needs it (e.g. LOK-stöd) and only visible with elevated rights. |
+| Purpose limitation | Consents are per purpose (photo publication, streaming, sharing with federation, marketing). |
+| Storage limitation | Retention rules per data category, configurable per club within legal limits, enforced by a nightly job. |
+| Integrity & confidentiality | See `security.md`. |
+| Accountability | Audit log, record of processing activities (ROPA) template generated per club. |
+
+## Legal bases (typical, club can adjust)
+
+| Processing | Basis |
+|---|---|
+| Membership register, activities, attendance | Contract (membership) / legitimate interest |
+| LOK-stöd and grant reporting | Legal obligation / legitimate interest (grant rules) |
+| Background-check status | Legal obligation / legitimate interest; Art. 10 data → only metadata stored |
+| Photos/video publication, streaming | Consent (guardian consent for children below consent age) |
+| Newsletters to non-members | Consent |
+| Salary | Contract + legal obligation |
+
+## Data subject rights (self-service)
+
+- **Access / portability:** "Download my data" (all clubs, JSON + human-readable
+  PDF/HTML), produced by the worker within minutes.
+- **Rectification:** person edits own profile; club admins edit club-specific data.
+- **Erasure:** person can leave a club; leaving schedules deletion of club-specific
+  data after the club's retention period (records required by law, e.g. accounting
+  or grant reports, are kept in minimised form). Full account deletion anonymises
+  the person everywhere: `people` row anonymised, messages kept as
+  "deleted user" if the room requires history, otherwise deleted.
+- **Objection / consent withdrawal:** one click per consent; effects apply
+  immediately (e.g. hidden from photo galleries and streams).
+- Guardians exercise rights for children below the consent age; teenagers get
+  increasing control as they approach adulthood (country pack rules).
+
+## Retention defaults (Sweden, configurable)
+
+| Data | Default |
+|---|---|
+| Former member's profile | 2 years after leaving (allows re-joining, annual reports) |
+| Attendance/LOK records | As required by grant rules (currently several years; set in country pack) |
+| Accounting records | 7 years (Bokföringslagen) |
+| Chat messages | Until room deleted, or club rule (e.g. 2 years) |
+| Background-check verification metadata | While role is held + 1 year |
+| Audit log | 2 years (security) |
+| Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore) |
+
+## Children
+
+- Default privacy settings for minors are the strictest: no public profile,
+  no name in public pages or streams without guardian consent.
+- Safe communication rules (see `domain-model.md`).
+- Streaming and photos of children require explicit consent per child; the
+  stream UI shows which participants lack consent.
+
+## Hosting location
+
+Hosted service: all personal data processed and stored in the EU/EEA, using
+EU-headquartered providers where feasible. No analytics trackers; first-party,
+cookie-less, aggregated metrics only. No third-party ad networks.
