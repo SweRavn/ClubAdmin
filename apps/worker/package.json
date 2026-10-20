@@ -1,0 +1,23 @@
+{
+  "name": "@clubadmin/worker",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Background jobs (Graphile Worker). Built in P0.3.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

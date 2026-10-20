@@ -1,0 +1,23 @@
+{
+  "name": "@clubadmin/country-packs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Country-specific rules (SE, NO, ...), see ADR 0015. Built in P0.5.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

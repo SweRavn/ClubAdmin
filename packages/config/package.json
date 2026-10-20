@@ -1,0 +1,36 @@
+{
+  "name": "@clubadmin/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared TypeScript, ESLint, Prettier and Vitest configuration, licence and commit checks",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint/index.js",
+    "./vitest": "./vitest.base.js",
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./licenses.json": "./licenses.json"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "eslint-plugin-simple-import-sort": "catalog:",
+    "globals": "catalog:",
+    "typescript-eslint": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": "^10.0.0",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.0"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", "helpers:pinGitHubActionDigests"],
+  "timezone": "Europe/Stockholm",
+  "schedule": ["before 6am on monday"],
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "rangeStrategy": "bump",
+  "commitBody": "Signed-off-by: {{{gitAuthor}}}",
+  "labels": ["dependencies"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
+  "packageRules": [
+    {
+      "description": "Group ESLint, typescript-eslint and plugins",
+      "matchPackageNames": [
+        "eslint",
+        "@eslint/**",
+        "typescript-eslint",
+        "eslint-plugin-**",
+        "globals"
+      ],
+      "groupName": "eslint"
+    },
+    {
+      "description": "Group test tooling",
+      "matchPackageNames": ["vitest", "@vitest/**"],
+      "groupName": "vitest"
+    },
+    {
+      "description": "Group GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "Automerge patch updates of dev dependencies once CI is green",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "description": "TypeScript major versions need typescript-eslint support first",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major", "minor"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

@@ -74,20 +74,36 @@ infra/
 docs/         Design documents, ADRs, prompts
 ```
 
-## Commands (to be created in Phase 0)
+## Commands
+
+Use Node.js from `.nvmrc` (current LTS) and pnpm via Corepack (`corepack enable`).
 
 ```
 pnpm install
-pnpm dev            # start all services via docker compose + apps in watch mode
-pnpm db:migrate     # apply migrations
-pnpm db:seed        # load demo scenario (see docs/seed-data.md)
-pnpm db:reset       # drop, migrate, seed (development only)
-pnpm lint           # eslint + prettier check
+pnpm lint             # ESLint (incl. SPDX header rule) + Prettier check
+pnpm lint:fix         # autofix ESLint issues and format with Prettier
 pnpm typecheck
-pnpm test           # unit + integration (integration uses a real Postgres)
-pnpm test:e2e       # Playwright against the web app
-pnpm licenses:check
+pnpm test             # unit tests (Vitest)
+pnpm licenses:check   # dependency licences against packages/config/licenses.json
+pnpm licenses:check --mobile   # stricter check for the mobile bundle
+pnpm commits:check    # DCO sign-off + Conventional Commits for origin/main..HEAD
 ```
+
+Planned in later Phase 0 packages:
+
+```
+pnpm dev            # start all services via docker compose + apps in watch mode (P0.2)
+pnpm db:migrate     # apply migrations (P0.4)
+pnpm db:seed        # load demo scenario, see docs/seed-data.md (P0.8)
+pnpm db:reset       # drop, migrate, seed; development only (P0.8)
+pnpm test:integration  # integration tests against a real Postgres (P0.4)
+pnpm test:e2e       # Playwright against the web app (P0.6/P0.9)
+```
+
+Dependency versions shared across packages are defined once in the `catalog:`
+section of `pnpm-workspace.yaml`. New dependency versions are only installed
+once they are 7 days old (`minimumReleaseAge`), and dependency install scripts
+only run if listed in `onlyBuiltDependencies`.
 
 ## Coding conventions
 

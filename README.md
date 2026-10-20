@@ -22,6 +22,18 @@ that have the capacity to run it.
 - Built-in GDPR tools, strong security, fast UI
 - Live streaming, payroll and bookkeeping integrations (later phases)
 
+## Getting started (development)
+
+Requires Node.js (version in `.nvmrc`) and Corepack.
+
+```
+corepack enable
+pnpm install
+pnpm lint && pnpm typecheck && pnpm test
+```
+
+See `CLAUDE.md` for all commands and rules.
+
 ## Documentation
 
 | Document | Contents |

@@ -1,0 +1,23 @@
+{
+  "name": "@clubadmin/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next.js web app. Built in P0.6 and P0.9.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

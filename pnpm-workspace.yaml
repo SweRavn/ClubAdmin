@@ -1,0 +1,27 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Supply-chain hardening (docs/security.md):
+# - dependency lifecycle scripts never run unless listed in onlyBuiltDependencies
+# - an install fails if a dependency wants to run a build script that is not approved
+# - newly published versions are not installed until they are 7 days old
+onlyBuiltDependencies: []
+strictDepBuilds: true
+minimumReleaseAge: 10080
+strictPeerDependencies: true
+engineStrict: true
+saveExact: false
+
+# Single source of truth for shared dependency versions (use "catalog:" in package.json).
+catalog:
+  "@eslint/js": ^10.0.0
+  "@types/node": ^24.0.0
+  eslint: ^10.0.0
+  eslint-plugin-simple-import-sort: ^14.0.0
+  globals: ^17.0.0
+  prettier: ^3.9.0
+  turbo: ^2.11.0
+  typescript: ~6.0.2
+  typescript-eslint: ^8.70.0
+  vitest: ^5.0.0

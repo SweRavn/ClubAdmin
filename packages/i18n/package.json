@@ -1,0 +1,23 @@
+{
+  "name": "@clubadmin/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ICU message catalogues (sv, en, nb). Filled from P0.9.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

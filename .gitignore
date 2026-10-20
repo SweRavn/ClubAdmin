@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output and caches
+dist/
+build/
+coverage/
+.turbo/
+.next/
+out/
+*.tsbuildinfo
+
+# Expo / React Native
+.expo/
+.expo-shared/
+apps/mobile/android/
+apps/mobile/ios/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Environment files (only .env.example is committed)
+.env
+.env.*
+!.env.example
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json

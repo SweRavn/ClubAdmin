@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+import globals from "globals";
+import tseslint from "typescript-eslint";
+
+import { spdxHeader } from "./spdx-header.js";
+
+export const clubadminPlugin = {
+  meta: { name: "eslint-plugin-clubadmin" },
+  rules: { "spdx-header": spdxHeader },
+};
+
+const SOURCE_FILES = ["**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"];
+const JS_FILES = ["**/*.{js,jsx,mjs,cjs}"];
+// Files where the tooling requires a default export.
+const DEFAULT_EXPORT_ALLOWED = [
+  "**/*.config.{ts,js,mjs,cjs}",
+  "**/vitest.base.js",
+  "apps/web/app/**/{page,layout,loading,error,not-found,template,default,route}.tsx",
+  "apps/mobile/app/**/*.tsx",
+];
+
+/**
+ * The repository-wide ESLint flat config.
+ *
+ * @param {{ tsconfigRootDir: string }} options
+ */
+export function createConfig({ tsconfigRootDir }) {
+  return defineConfig(
+    {
+      ignores: [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/build/**",
+        "**/coverage/**",
+        "**/.next/**",
+        "**/.turbo/**",
+        "**/.expo/**",
+        "apps/mobile/android/**",
+        "apps/mobile/ios/**",
+        "**/*.d.ts",
+      ],
+    },
+    {
+      files: SOURCE_FILES,
+      extends: [js.configs.recommended, tseslint.configs.recommendedTypeChecked],
+      languageOptions: {
+        ecmaVersion: 2023,
+        sourceType: "module",
+        globals: { ...globals.node },
+        parserOptions: { projectService: true, tsconfigRootDir },
+      },
+      plugins: {
+        clubadmin: clubadminPlugin,
+        "simple-import-sort": simpleImportSort,
+      },
+      rules: {
+        "clubadmin/spdx-header": "error",
+        "simple-import-sort/imports": "error",
+        "simple-import-sort/exports": "error",
+        "no-restricted-exports": [
+          "error",
+          {
+            restrictDefaultExports: {
+              direct: true,
+              named: true,
+              defaultFrom: true,
+              namedFrom: true,
+              namespaceFrom: true,
+            },
+          },
+        ],
+        "@typescript-eslint/consistent-type-imports": "error",
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+        ],
+      },
+    },
+    {
+      // Plain JavaScript (config files, ESLint rules) is not type-checked.
+      files: JS_FILES,
+      extends: [tseslint.configs.disableTypeChecked],
+    },
+    {
+      files: DEFAULT_EXPORT_ALLOWED,
+      rules: { "no-restricted-exports": "off" },
+    },
+    {
+      // Server code logs through the structured logger, never console (docs/security.md).
+      files: ["apps/api/**", "apps/worker/**"],
+      rules: { "no-console": "error" },
+    },
+  );
+}
