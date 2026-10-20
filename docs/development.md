@@ -7,12 +7,25 @@ sent to external services.
 
 | Tool | Notes |
 |---|---|
-| Node.js | Version in `.nvmrc` (current LTS). Use nvm, fnm or similar. |
+| Node.js | Version 24, exact version in `.nvmrc`. Install with fnm or nvm (see the README); the system package is often too old. |
 | pnpm | Via Corepack: `corepack enable` (version is pinned in `package.json`). |
 | Docker | Docker Desktop (macOS, Windows) or Docker Engine with the Compose v2 plugin (Linux). On Windows, work inside **WSL2** with Docker Desktop's WSL integration. |
 | Free ports | 80, 443, 5432, 6379, 3900, 3903, 1025, 8025 on 127.0.0.1 (all configurable in `.env.local`). |
 
 `pnpm dev:doctor` checks all of this and tells you how to fix problems.
+
+### Windows (WSL2)
+
+- Clone the repository **inside WSL** (e.g. `~/ClubAdmin`), not under
+  `/mnt/c/...`: the Windows drive is slow from WSL and file watching does not
+  work there. `pnpm dev:doctor` warns about this.
+- Docker Desktop must have *Settings → Resources → WSL integration* enabled for
+  your distro; then `docker version` in WSL shows a server. Without it the doctor
+  reports `spawnSync docker ENOENT`.
+- `pnpm dev:trust-ca` exports the certificate and prints the PowerShell command
+  that makes Windows browsers trust it; run that command in Windows.
+- Windows browsers reach `https://clubadmin.localhost` because Docker Desktop
+  publishes the ports on Windows as well.
 
 ## First run
 

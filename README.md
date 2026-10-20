@@ -24,18 +24,53 @@ that have the capacity to run it.
 
 ## Getting started (development)
 
-Requires Node.js (version in `.nvmrc`), Corepack and Docker.
+### Prerequisites
 
-```
+- **Node.js 24** (the exact version is in `.nvmrc`). Install it with a version
+  manager instead of the system package, which is often older:
+
+  ```bash
+  curl -fsSL https://fnm.vercel.app/install | bash   # installs fnm
+  source ~/.bashrc
+  cd ClubAdmin
+  fnm install && fnm use                              # reads .nvmrc
+  node -v                                             # v24.x
+  ```
+
+  To switch automatically when entering the folder, use
+  `eval "$(fnm env --use-on-cd)"` in `~/.bashrc`. nvm works too
+  (`nvm install && nvm use`).
+- **pnpm** via Corepack (bundled with Node): `corepack enable`. The pnpm version
+  is pinned in `package.json`.
+- **Docker** with Compose v2: Docker Desktop on macOS and Windows, Docker Engine
+  on Linux.
+
+### Windows (WSL2)
+
+Develop inside WSL2 (Ubuntu), not in Windows directly:
+
+1. **Clone the repository inside WSL**, e.g. `~/ClubAdmin`, not under
+   `/mnt/c/...`. On the Windows drive, installs are many times slower and file
+   watching does not work.
+2. **Docker:** install Docker Desktop on Windows, then enable
+   *Settings → Resources → WSL integration* for your Ubuntu distro and open a
+   new WSL terminal. `docker version` inside WSL should show both client and
+   server.
+3. Install Node 24 inside WSL as above.
+
+### First run
+
+```bash
 corepack enable
 pnpm install
-pnpm dev:services    # PostgreSQL, Valkey, Zitadel, Garage, Mailpit, Caddy (needs Docker)
+pnpm dev:doctor      # checks Node, Docker, ports, certificates; prints fixes
+pnpm dev:services    # PostgreSQL, Valkey, Zitadel, Garage, Mailpit, Caddy
 pnpm dev:trust-ca    # once, so browsers trust https://clubadmin.localhost
 pnpm dev             # services + apps
 ```
 
-Also requires Docker. See [`docs/development.md`](docs/development.md) and
-`CLAUDE.md` for all commands and rules.
+See [`docs/development.md`](docs/development.md) for daily use and
+troubleshooting, and `CLAUDE.md` for all commands and rules.
 
 ## Documentation
 

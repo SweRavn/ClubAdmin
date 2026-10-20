@@ -3,21 +3,17 @@
 // operating system trust store, so https://clubadmin.localhost works without
 // warnings. With --print, only prints the commands.
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 
 import { exportCaddyRootCert } from "./caddy.ts";
 import { caddyRootCertFile } from "./paths.ts";
+import { isWsl } from "./platform.ts";
 import { capture, run } from "./process.ts";
 
 interface Step {
   command: string;
   args: string[];
 }
-
-const isWsl = () =>
-  process.platform === "linux" &&
-  existsSync("/proc/version") &&
-  /microsoft/i.test(readFileSync("/proc/version", "utf8"));
 
 export function trustSteps(platform: NodeJS.Platform, certFile: string): Step[] {
   if (platform === "darwin") {

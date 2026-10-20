@@ -4,13 +4,13 @@
 import { X509Certificate } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync } from "node:fs";
-import { createServer } from "node:net";
 import { join } from "node:path";
 import { getCACertificates } from "node:tls";
 
 import { DEV_SERVICES, serviceStates } from "./compose.ts";
 import { ALL_KEYS, loadEnv } from "./env.ts";
 import { caddyRootCertFile, envLocalFile, repoRoot } from "./paths.ts";
+import { isWindowsMountPath, isWsl, portInUse } from "./platform.ts";
 import { capture } from "./process.ts";
 import type { CheckResult } from "./report.ts";
 import { printResults } from "./report.ts";
@@ -27,23 +27,25 @@ export function nodeVersionCheck(actual: string, wanted: string): CheckResult {
       };
 }
 
-function portFree(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = createServer();
-    server.once("error", () => resolve(false));
-    server.listen(port, "127.0.0.1", () => server.close(() => resolve(true)));
-  });
-}
-
 const isLoopback = (address: string) => address === "::1" || address.startsWith("127.");
 
 export async function doctor(): Promise<boolean> {
   const results: CheckResult[] = [];
   const env = loadEnv();
+  const wsl = isWsl();
 
   // Toolchain
   const nvmrc = readFileSync(join(repoRoot, ".nvmrc"), "utf8").trim();
   results.push(nodeVersionCheck(process.version, nvmrc));
+
+  if (wsl && isWindowsMountPath(repoRoot)) {
+    results.push({
+      name: "Repository location",
+      status: "warn",
+      detail: `${repoRoot} is on the Windows drive: installs are slow and file watching does not work`,
+      fix: "clone the repository inside WSL instead, e.g. `git clone … ~/ClubAdmin`",
+    });
+  }
 
   const pnpm = capture("pnpm", ["--version"]);
   results.push(
@@ -60,14 +62,19 @@ export async function doctor(): Promise<boolean> {
           name: "Docker daemon",
           status: "fail",
           detail: docker.stderr.split("\n")[0]?.trim() ?? "not reachable",
-          fix: "install Docker (Docker Desktop on macOS/Windows; Docker Engine on Linux/WSL2) and start it",
+          fix: wsl
+            ? "start Docker Desktop on Windows and enable Settings → Resources → WSL integration for this distro " +
+              "(or install Docker Engine inside WSL), then open a new terminal"
+            : "install Docker (Docker Desktop on macOS/Windows, Docker Engine on Linux) and start it",
         },
   );
   const composeVersion = capture("docker", ["compose", "version", "--short"]);
   results.push(
     composeVersion.status === 0
       ? { name: "Docker Compose", status: "ok", detail: composeVersion.stdout.trim() }
-      : { name: "Docker Compose", status: "fail", fix: "install the Docker Compose v2 plugin" },
+      : docker.status !== 0
+        ? { name: "Docker Compose", status: "fail", detail: "needs Docker (see above)" }
+        : { name: "Docker Compose", status: "fail", fix: "install the Docker Compose v2 plugin" },
   );
 
   // Configuration
@@ -106,7 +113,7 @@ export async function doctor(): Promise<boolean> {
   for (const [key, fallback, service] of ports) {
     const port = Number(env.get(key) ?? fallback);
     if (running.has(service)) continue; // in use by our own container
-    if (!(await portFree(port))) {
+    if (await portInUse(port)) {
       results.push({
         name: `Port ${port} (${service})`,
         status: "fail",

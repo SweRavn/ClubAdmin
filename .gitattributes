@@ -1,0 +1,9 @@
+# Always check out with LF line endings, also with Git for Windows.
+# Shell scripts, the Caddyfile and other files mounted into Linux containers
+# break with CRLF.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
