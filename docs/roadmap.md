@@ -5,20 +5,23 @@ is delivered as one or a few PRs.
 
 ## Phase 0 — Foundation
 
-| ID | Work package |
-|---|---|
-| P0.1 | Monorepo scaffolding (pnpm, Turborepo, TS config, lint, format, CI, licence check, DCO) |
-| P0.2 | Local environment: docker compose (Postgres, Valkey, Zitadel, Garage, Caddy, Mailpit), `pnpm dev` |
-| P0.3 | API skeleton: NestJS/Fastify, config, health, OpenAPI from Zod, problem-details errors, OpenTelemetry, log redaction |
-| P0.4 | Database foundation: Drizzle, migrations, roles (owner/app/operator), `withTenant` + RLS helpers, audit events, record-history trigger (ADR 0017), outbox |
-| P0.5 | Authentication: Zitadel OIDC (web BFF + mobile PKCE + API token validation), `DEV_AUTH` persona login |
-| P0.6 | Authorization engine: relationship model (incl. group owners and group hierarchy), policy DSL, endpoint policy enforcement, `PersonVisibility` service for protected identity (ADR 0022), test helpers |
-| P0.7 | Core domain: people (no email), accounts (unique login email), clubs, groups + group owners, seasons, memberships, member numbers, roles, guardianships, club profiles, protected-identity flags |
-| P0.8 | Seed framework + demo scenario personas (`seed-data.md`) |
-| P0.9 | Web shell: Next.js, layout, club switcher, i18n (sv/en/nb), auth flow, "Source code" link |
-| P0.10 | Mobile shell: Expo app, login, club switcher, i18n, persisted cache |
-| P0.11 | Backup sidecar + restore runbooks + `ops:verify-backup` |
-| P0.12 | Entitlements service + optional billing module skeleton |
+Ordered so each package only depends on earlier ones. Prompts:
+[`prompts/`](prompts/).
+
+| ID | Work package | Depends on |
+|---|---|---|
+| P0.1 | Monorepo scaffolding: pnpm, Turborepo, TS/lint/format config, CI, licence check, DCO and SPDX checks | — |
+| P0.2 | Local environment: docker compose (Postgres, Valkey, Zitadel, Garage, Caddy, Mailpit), `pnpm dev` | P0.1 |
+| P0.3 | API and worker skeletons: NestJS/Fastify, config, health, OpenAPI from Zod, problem details, logging with redaction, OpenTelemetry, generated API client | P0.2 |
+| P0.4 | Database foundation: Drizzle, migrations, DB roles, `withTenant`/`withActor`, RLS helpers, record history (ADR 0017), audit events, outbox, test harness | P0.3 |
+| P0.5 | Core domain schema and services: people, accounts, clubs, groups, owners, memberships, roles, guardianships, profiles, protected-identity flags, invariants | P0.4 |
+| P0.6 | Authentication: Zitadel config as code, API token validation, account provisioning, web BFF session, `DEV_AUTH` | P0.5 |
+| P0.7 | Authorization engine, `PersonVisibility`, first read endpoints | P0.6 |
+| P0.8 | Seed framework and demo scenario (`seed-data.md`) | P0.7 |
+| P0.9 | Web shell: layout, club switcher, i18n, persona login, group pages, "Source code" link | P0.8 |
+| P0.10 | Mobile shell: Expo app, PKCE login, club switcher, i18n, persisted cache | P0.8 |
+| P0.11 | Backup and restore: pgBackRest, object replication, `ops:verify-backup`, runbooks | P0.4 |
+| P0.12 | Entitlements service and optional billing module skeleton | P0.7 |
 
 ## Phase 1 — MVP
 

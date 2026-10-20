@@ -49,7 +49,7 @@ flowchart LR
 | API | NestJS on Fastify, Zod, Drizzle | REST API (`/api/v1`), WebSocket gateway, authorization, business logic |
 | Worker | Graphile Worker (jobs stored in Postgres) | Email, push, reminders, exports, report generation, image processing, scheduled jobs |
 | Identity | Zitadel (OIDC) | Login, passkeys, MFA, social login, later eID (BankID/Freja) via OIDC broker |
-| Database | PostgreSQL 17+ | System of record, RLS-based tenant isolation, full-text search |
+| Database | PostgreSQL 18+ (built-in `uuidv7()`) | System of record, RLS-based tenant isolation, full-text search |
 | Cache / realtime | Valkey (BSD-3 Redis fork) | Permission cache, rate limiting, WebSocket fan-out between API instances |
 | Object storage | Any S3-compatible service (hosted: provider's object storage; self-host: Garage or SeaweedFS) | Documents, images, attachments, exports |
 | Reverse proxy | Caddy | TLS, HTTP/2 and HTTP/3, compression, security headers |

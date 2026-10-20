@@ -10,3 +10,33 @@ Keep each prompt small enough for one reviewable PR (a few days of work at most)
 
 Use [`_template.md`](_template.md). Prompt files are written just before the
 work package starts, so they reflect what already exists in the code.
+
+Foundation (Phase 0) prompts are infrastructure-heavy, so they use a single
+**Scope** section instead of user stories, data model and API sections.
+
+## How to use a prompt
+
+Give the agent: "Implement `docs/prompts/<file>` following `CLAUDE.md`.
+Work on `main`, commit with sign-off, keep CI green, and update the docs the
+prompt names." Review the result against the prompt's acceptance criteria
+before starting the next one.
+
+## Phase 0 — Foundation
+
+| Prompt | Depends on |
+|---|---|
+| [P0.1 Monorepo scaffolding](P0.1-monorepo-scaffolding.md) | — |
+| [P0.2 Local environment](P0.2-local-environment.md) | P0.1 |
+| [P0.3 API and worker skeletons](P0.3-api-and-worker-skeleton.md) | P0.2 |
+| [P0.4 Database foundation](P0.4-database-foundation.md) | P0.3 |
+| [P0.5 Core domain](P0.5-core-domain.md) | P0.4 |
+| [P0.6 Authentication](P0.6-authentication.md) | P0.5 |
+| [P0.7 Authorization and person visibility](P0.7-authorization-and-visibility.md) | P0.6 |
+| [P0.8 Seed data](P0.8-seed-data.md) | P0.7 |
+| [P0.9 Web shell](P0.9-web-shell.md) | P0.8 |
+| [P0.10 Mobile shell](P0.10-mobile-shell.md) | P0.8 |
+| [P0.11 Backup and restore](P0.11-backup-and-restore.md) | P0.4 (can run in parallel) |
+| [P0.12 Entitlements and billing skeleton](P0.12-entitlements-and-billing-skeleton.md) | P0.7 |
+
+After P0.9 the maintainer can log in to the web app as any demo persona and
+test the foundation by hand.

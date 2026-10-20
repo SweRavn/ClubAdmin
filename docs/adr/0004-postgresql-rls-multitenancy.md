@@ -6,7 +6,8 @@
 be catastrophic. Self-hosters need one database to operate.
 
 **Decision.**
-- PostgreSQL 17+ as the only system of record (also for jobs and search initially).
+- PostgreSQL 18+ (built-in `uuidv7()`) as the only system of record (also for
+  jobs and search initially). *(Amended before implementation: 17+ → 18+.)*
 - Drizzle ORM and SQL migrations (forward-only, expand/contract).
 - Shared schema; club-owned tables have `club_id`; RLS policies on all of them
   based on `SET LOCAL app.club_id` / `app.person_id` inside each request
