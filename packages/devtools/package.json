@@ -1,0 +1,23 @@
+{
+  "name": "@clubadmin/devtools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local development tooling: pnpm dev orchestration, environment setup, doctor, smoke test",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "bin": {
+    "clubadmin-dev": "./src/cli.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

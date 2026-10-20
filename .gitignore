@@ -36,3 +36,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Local generated files (exported dev CA certificate, ...)
+.local/

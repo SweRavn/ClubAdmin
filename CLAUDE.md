@@ -89,10 +89,21 @@ pnpm licenses:check --mobile   # stricter check for the mobile bundle
 pnpm commits:check    # DCO sign-off + Conventional Commits for origin/main..HEAD
 ```
 
+Local development (see `docs/development.md`):
+
+```
+pnpm dev              # start services (docker compose) + all apps in watch mode
+pnpm dev:services     # services only (--full adds ClamAV)
+pnpm dev:down         # stop services, keep data
+pnpm dev:clean        # stop services and delete their data
+pnpm dev:doctor       # check tools, ports, certificates, service health
+pnpm dev:trust-ca     # trust Caddy's local HTTPS CA (once)
+pnpm dev:smoke        # end-to-end check of all services
+```
+
 Planned in later Phase 0 packages:
 
 ```
-pnpm dev            # start all services via docker compose + apps in watch mode (P0.2)
 pnpm db:migrate     # apply migrations (P0.4)
 pnpm db:seed        # load demo scenario, see docs/seed-data.md (P0.8)
 pnpm db:reset       # drop, migrate, seed; development only (P0.8)

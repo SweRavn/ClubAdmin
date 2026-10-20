@@ -1,0 +1,195 @@
+# ClubAdmin backing services, shared by local development and (later) self-hosting.
+# Development overrides live in compose.dev.yml. Use the pnpm scripts
+# (pnpm dev, pnpm dev:services, ...) rather than calling docker compose directly;
+# they pass the right env file and project name. See infra/docker/README.md.
+#
+# Images are pinned by version and digest. Renovate keeps them up to date.
+
+name: clubadmin
+
+services:
+  postgres:
+    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env.local}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.local}
+      POSTGRES_DB: ${POSTGRES_DB:-clubadmin}
+      ZITADEL_DB_USER: ${ZITADEL_DB_USER:-zitadel}
+      ZITADEL_DB_PASSWORD: ${ZITADEL_DB_PASSWORD:?set in .env.local}
+    volumes:
+      # PostgreSQL 18 images keep data in a version-specific subdirectory of this path.
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+    networks: [backend]
+
+  valkey:
+    image: valkey/valkey:9.1.2-alpine@sha256:48332870af354a799964c0012ae1194a0bf2bf894eb508f945810596dc2d8d11
+    restart: unless-stopped
+    # Valkey holds only caches, rate limits and pub/sub (ADR 0010): no persistence.
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [backend]
+
+  zitadel:
+    image: ghcr.io/zitadel/zitadel:v4.19.5@sha256:a586456a208e0db4c633db0ba43c427c24b37846138b8b13ff16ad8e003a18d3
+    restart: unless-stopped
+    user: "0"
+    command: start-from-init --masterkeyFromEnv
+    environment:
+      ZITADEL_MASTERKEY: ${ZITADEL_MASTERKEY:?set in .env.local}
+      ZITADEL_PORT: 8080
+      ZITADEL_EXTERNALDOMAIN: ${AUTH_DOMAIN:-auth.clubadmin.localhost}
+      ZITADEL_EXTERNALPORT: ${CADDY_HTTPS_PORT:-443}
+      ZITADEL_EXTERNALSECURE: "true"
+      ZITADEL_TLS_ENABLED: "false"
+      ZITADEL_DATABASE_POSTGRES_DSN: postgresql://${ZITADEL_DB_USER:-zitadel}:${ZITADEL_DB_PASSWORD}@postgres:5432/zitadel?sslmode=disable
+      # First instance: ClubAdmin organisation, an admin user, a machine user whose
+      # personal access token (PAT) is used by `pnpm auth:configure` (P0.6), and the
+      # login-client token used by the login UI container.
+      ZITADEL_FIRSTINSTANCE_INSTANCENAME: ClubAdmin
+      ZITADEL_FIRSTINSTANCE_DEFAULTLANGUAGE: sv
+      ZITADEL_FIRSTINSTANCE_ORG_NAME: ClubAdmin
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: ${ZITADEL_ADMIN_EMAIL:-admin@clubadmin.test}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: ${ZITADEL_ADMIN_EMAIL:-admin@clubadmin.test}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:?set in .env.local}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: "false"
+      ZITADEL_FIRSTINSTANCE_PATPATH: /zitadel/bootstrap/admin.pat
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: clubadmin-config
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_NAME: ClubAdmin configuration (pnpm auth:configure)
+      ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE: ${ZITADEL_PAT_EXPIRATION:-2030-01-01T00:00:00Z}
+      ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH: /zitadel/bootstrap/login-client.pat
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: login-client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME: Login UI client
+      ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: ${ZITADEL_PAT_EXPIRATION:-2030-01-01T00:00:00Z}
+      # Login UI v2 runs as the separate zitadel-login container, served under /ui/v2/login.
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://${AUTH_DOMAIN:-auth.clubadmin.localhost}:${CADDY_HTTPS_PORT:-443}/ui/v2/login/
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: https://${AUTH_DOMAIN:-auth.clubadmin.localhost}:${CADDY_HTTPS_PORT:-443}/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: https://${AUTH_DOMAIN:-auth.clubadmin.localhost}:${CADDY_HTTPS_PORT:-443}/ui/v2/login/logout?post_logout_redirect=
+      # Outgoing email (verification, password reset).
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_HOST: ${SMTP_HOST_INTERNAL:-mailpit}:${SMTP_PORT_INTERNAL:-1025}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_USER: ${SMTP_USER:-}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_TLS: ${SMTP_TLS:-false}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROM: ${MAIL_FROM_ADDRESS:-noreply@clubadmin.test}
+      ZITADEL_DEFAULTINSTANCE_SMTPCONFIGURATION_FROMNAME: ClubAdmin
+      ZITADEL_DEFAULTINSTANCE_DOMAINPOLICY_SMTPSENDERADDRESSMATCHESINSTANCEDOMAIN: "false"
+    volumes:
+      - zitadel-bootstrap:/zitadel/bootstrap
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/zitadel", "ready"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 20s
+    networks: [backend]
+
+  zitadel-login:
+    image: ghcr.io/zitadel/zitadel-login:v4.19.5@sha256:2f8e57672fcd4f9a285d99355fae9f85fd7495768c090c07c3bbc2d84fc06617
+    restart: unless-stopped
+    user: "0"
+    environment:
+      ZITADEL_API_URL: http://zitadel:8080
+      NEXT_PUBLIC_BASE_PATH: /ui/v2/login
+      ZITADEL_SERVICE_USER_TOKEN_FILE: /zitadel/bootstrap/login-client.pat
+      ZITADEL_SESSION_COOKIE_SECRET: ${ZITADEL_LOGIN_COOKIE_SECRET:?set in .env.local}
+      CUSTOM_REQUEST_HEADERS: Host:${AUTH_DOMAIN:-auth.clubadmin.localhost},X-Forwarded-Proto:https
+    volumes:
+      - zitadel-bootstrap:/zitadel/bootstrap:ro
+    depends_on:
+      zitadel:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/bin/sh",
+          "-c",
+          "node /app/healthcheck.mjs http://localhost:3000/ui/v2/login/healthy",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+    networks: [backend]
+
+  garage:
+    image: dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
+    restart: unless-stopped
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?set in .env.local}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:?set in .env.local}
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+    networks: [backend]
+
+  caddy:
+    image: caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-clubadmin.localhost}
+      AUTH_DOMAIN: ${AUTH_DOMAIN:-auth.clubadmin.localhost}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [backend]
+
+  # Virus scanning for uploads (from Phase 2). Slow to start (downloads
+  # signatures), so only started with the "full" profile: pnpm dev:services --full
+  clamav:
+    image: clamav/clamav:1.5.4@sha256:e19130cdebaeacc71fa46eab3ed6f69941f2f22aa5e08d55e9197f8edf43ce5e
+    restart: unless-stopped
+    profiles: [full]
+    volumes:
+      - clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    networks: [backend]
+
+networks:
+  backend:
+
+volumes:
+  postgres-data:
+  zitadel-bootstrap:
+  garage-meta:
+  garage-data:
+  caddy-data:
+  caddy-config:
+  clamav-db:

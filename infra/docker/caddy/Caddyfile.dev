@@ -1,0 +1,42 @@
+# Development reverse proxy with real HTTPS from Caddy's local CA.
+# Trust the CA once with `pnpm dev:trust-ca`.
+{
+	local_certs
+	skip_install_trust
+	admin 127.0.0.1:2019
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy {$API_UPSTREAM}
+	}
+	handle {
+		reverse_proxy {$WEB_UPSTREAM}
+	}
+
+	# While the apps are not running (or not built yet), show a placeholder page.
+	handle_errors 502 503 504 {
+		root * /srv/placeholder
+		rewrite * /index.html
+		file_server
+	}
+}
+
+{$AUTH_DOMAIN} {
+	encode zstd gzip
+
+	redir / /ui/v2/login/ 302
+
+	handle /ui/v2/login* {
+		reverse_proxy zitadel-login:3000
+	}
+	handle {
+		reverse_proxy h2c://zitadel:8080
+	}
+}
+
+mail.{$APP_DOMAIN} {
+	reverse_proxy mailpit:8025
+}

@@ -44,6 +44,9 @@ importers:
       '@clubadmin/config':
         specifier: workspace:*
         version: link:packages/config
+      '@clubadmin/devtools':
+        specifier: workspace:*
+        version: link:packages/devtools
       eslint:
         specifier: 'catalog:'
         version: 10.12.0
@@ -176,6 +179,24 @@ importers:
         version: 5.0.4(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2))
 
   packages/db:
+    devDependencies:
+      '@clubadmin/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
+      eslint:
+        specifier: 'catalog:'
+        version: 10.12.0
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.4(@types/node@24.19.2)(vite@8.3.4(@types/node@24.19.2))
+
+  packages/devtools:
     devDependencies:
       '@clubadmin/config':
         specifier: workspace:*

@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "dev": "node -e \"console.log('@clubadmin/worker: placeholder, the worker is built in P0.3')\"",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

@@ -11,7 +11,14 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "node packages/devtools/src/cli.ts dev",
+    "dev:services": "node packages/devtools/src/cli.ts services",
+    "dev:down": "node packages/devtools/src/cli.ts down",
+    "dev:logs": "node packages/devtools/src/cli.ts logs",
+    "dev:clean": "node packages/devtools/src/cli.ts clean",
+    "dev:doctor": "node packages/devtools/src/cli.ts doctor",
+    "dev:trust-ca": "node packages/devtools/src/cli.ts trust-ca",
+    "dev:smoke": "node packages/devtools/src/cli.ts smoke",
     "lint": "turbo run lint && pnpm run lint:root && pnpm run format:check",
     "lint:root": "eslint --no-warn-ignored eslint.config.js",
     "lint:fix": "turbo run lint -- --fix && eslint --fix --no-warn-ignored eslint.config.js && prettier --write .",
@@ -26,6 +33,7 @@
   },
   "devDependencies": {
     "@clubadmin/config": "workspace:*",
+    "@clubadmin/devtools": "workspace:*",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "turbo": "catalog:",

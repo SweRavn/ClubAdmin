@@ -24,15 +24,18 @@ that have the capacity to run it.
 
 ## Getting started (development)
 
-Requires Node.js (version in `.nvmrc`) and Corepack.
+Requires Node.js (version in `.nvmrc`), Corepack and Docker.
 
 ```
 corepack enable
 pnpm install
-pnpm lint && pnpm typecheck && pnpm test
+pnpm dev:services    # PostgreSQL, Valkey, Zitadel, Garage, Mailpit, Caddy (needs Docker)
+pnpm dev:trust-ca    # once, so browsers trust https://clubadmin.localhost
+pnpm dev             # services + apps
 ```
 
-See `CLAUDE.md` for all commands and rules.
+Also requires Docker. See [`docs/development.md`](docs/development.md) and
+`CLAUDE.md` for all commands and rules.
 
 ## Documentation
 

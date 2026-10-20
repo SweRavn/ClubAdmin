@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "dev": "node -e \"console.log('@clubadmin/web: placeholder, the web app is built in P0.6/P0.9')\"",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
