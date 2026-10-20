@@ -18,6 +18,13 @@ strictPeerDependencies: true
 engineStrict: true
 saveExact: false
 
+# Security overrides of transitive dependencies (keep this list short; remove
+# when the parent package updates).
+overrides:
+  # drizzle-kit's legacy loader pins esbuild 0.18 (GHSA-67mh-4wv8-2f99); use the
+  # 0.25 line drizzle-kit itself depends on.
+  "@esbuild-kit/core-utils>esbuild": ^0.25.0
+
 # Explicitly accepted peer-dependency mismatches (keep this list short).
 peerDependencyRules:
   allowedVersions:
