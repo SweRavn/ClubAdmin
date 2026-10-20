@@ -63,6 +63,27 @@ export const ENV_TEMPLATE: EnvSection[] = [
     ],
   },
   {
+    title: "API and worker",
+    variables: [
+      { key: "LOG_LEVEL", value: "debug" },
+      {
+        key: "API_HOST",
+        value: "0.0.0.0",
+        comment: "Caddy runs in Docker and reaches the API on the host through the Docker gateway",
+      },
+      { key: "CORS_ORIGINS", value: "${PUBLIC_WEB_URL}" },
+      { key: "SOURCE_URL", value: "https://github.com/SweRavn/ClubAdmin" },
+      { key: "OPENAPI_ENABLED", value: "true" },
+      { key: "WORKER_CONCURRENCY", value: "5" },
+      {
+        key: "OTEL_EXPORTER_OTLP_ENDPOINT",
+        value: "",
+        comment:
+          "Set (e.g. http://127.0.0.1:4318) to send traces and metrics to an OpenTelemetry collector",
+      },
+    ],
+  },
+  {
     title: "PostgreSQL",
     variables: [
       { key: "POSTGRES_USER", value: "postgres" },
@@ -74,6 +95,11 @@ export const ENV_TEMPLATE: EnvSection[] = [
         value: () =>
           "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}",
         comment: "Superuser connection for bootstrap/migrations; app roles come in P0.4",
+      },
+      {
+        key: "DATABASE_URL",
+        value: "${DATABASE_ADMIN_URL}",
+        comment: "Used by the API and worker; switches to the unprivileged app role in P0.4",
       },
       { key: "ZITADEL_DB_USER", value: "zitadel" },
       { key: "ZITADEL_DB_PASSWORD", value: () => alphanumeric(32) },

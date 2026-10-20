@@ -11,13 +11,19 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate": "openapi-typescript openapi.json --output src/schema.ts && node scripts/add-header.ts src/schema.ts && prettier --write src/schema.ts"
   },
   "devDependencies": {
     "@clubadmin/config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "openapi-typescript": "catalog:",
+    "prettier": "catalog:"
+  },
+  "dependencies": {
+    "openapi-fetch": "catalog:"
   }
 }

@@ -54,7 +54,7 @@ by the CI check when added.
 | Zod | MIT |
 | node-postgres (`pg`) | MIT |
 | Graphile Worker | MIT |
-| Socket.IO / `ws` | MIT |
+| Socket.IO / `ws` (planned) | MIT |
 | Next.js | MIT |
 | React | MIT |
 | React Native | MIT |
@@ -65,6 +65,17 @@ by the CI check when added.
 | `openid-client` / `jose` (OIDC/JWT) | MIT |
 | Stripe SDK (`stripe`) | MIT |
 | @faker-js/faker (seed data) | MIT |
+| @nestjs/common, @nestjs/core, @nestjs/platform-fastify | MIT |
+| reflect-metadata | Apache-2.0 |
+| rxjs | Apache-2.0 |
+| fastify, @fastify/helmet, @fastify/cors, @fastify/rate-limit | MIT |
+| @asteasolutions/zod-to-openapi | MIT |
+| pino | MIT |
+| ioredis (Valkey client) | MIT |
+| graphile-worker | MIT |
+| openapi-fetch | MIT |
+| OpenTelemetry JS SDK and instrumentations (`@opentelemetry/*`) | Apache-2.0 |
+| import-in-the-middle | Apache-2.0 |
 | Vitest, Playwright | MIT, Apache-2.0 |
 | pnpm, Turborepo | MIT |
 
@@ -91,6 +102,8 @@ by the CI check when added.
 
 ### Development and CI tools (not distributed)
 
+SWC (`@swc/core`, `@swc/cli`: Apache-2.0, MIT), unplugin-swc (MIT), chokidar (MIT),
+openapi-typescript (MIT), dependency-cruiser (MIT), autocannon (MIT),
 Renovate (AGPL-3.0), OSV-Scanner (Apache-2.0), Trivy (Apache-2.0), Lighthouse
 CI (Apache-2.0), k6 (AGPL-3.0), Weblate (GPL-3.0-or-later), CodeQL (free for
 open-source repositories on GitHub; proprietary, CI use only). No licence

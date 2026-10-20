@@ -59,6 +59,12 @@ budgets are requirements; CI measures them.
 
 ## Measurement
 
+- `pnpm --filter @clubadmin/api build && pnpm --filter @clubadmin/api bench [path] [seconds] [connections]`
+  measures the request pipeline (validation, problem details, logging, security
+  headers, rate limiting) without a database. Baseline at P0.3 on a development
+  container: `/health/live` p99 < 1 ms with one connection; about 4,000 req/s
+  with 20 connections.
+
 - Lighthouse CI on key web pages per PR.
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.

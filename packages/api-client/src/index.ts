@@ -1,4 +1,70 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// @clubadmin/api-client: Typed API client generated from the OpenAPI document. Built in P0.3.
+// Typed client for the ClubAdmin API, used by the web and mobile apps.
+// Types are generated from openapi.json (`pnpm api:client`).
 
-export const PACKAGE_NAME = "@clubadmin/api-client";
+import createClient, { type Client, type Middleware } from "openapi-fetch";
+
+import type { components, paths } from "./schema.ts";
+
+export type { components, paths } from "./schema.ts";
+export type ProblemDetails = components["schemas"]["ProblemDetails"];
+
+/** Thrown for every non-2xx response; carries the RFC 9457 problem details. */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly problem: ProblemDetails | undefined;
+  readonly requestId: string | undefined;
+
+  constructor(status: number, problem: ProblemDetails | undefined, requestId: string | undefined) {
+    super(problem?.title ?? `API request failed with status ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.problem = problem;
+    this.requestId = requestId ?? problem?.requestId;
+  }
+
+  /** The problem type slug, e.g. "validation" or "not-found". */
+  get type(): string | undefined {
+    return this.problem?.type.split("#").pop();
+  }
+}
+
+export interface ApiClientOptions {
+  /** Base URL, e.g. https://clubadmin.localhost. Paths already include /api/v1. */
+  baseUrl: string;
+  /** Preferred languages for translated error titles. */
+  acceptLanguage?: string;
+  /** Request ID generator; defaults to crypto.randomUUID. */
+  requestId?: () => string;
+  fetch?: typeof fetch;
+}
+
+export type ApiClient = Client<paths>;
+
+export function createApiClient(options: ApiClientOptions): ApiClient {
+  const client = createClient<paths>({
+    baseUrl: options.baseUrl.replace(/\/$/, ""),
+    ...(options.fetch ? { fetch: options.fetch } : {}),
+    credentials: "include",
+  });
+  const newRequestId = options.requestId ?? (() => crypto.randomUUID());
+
+  const middleware: Middleware = {
+    onRequest({ request }) {
+      if (!request.headers.has("x-request-id")) request.headers.set("x-request-id", newRequestId());
+      if (options.acceptLanguage) request.headers.set("accept-language", options.acceptLanguage);
+      return request;
+    },
+    async onResponse({ response }) {
+      if (response.ok) return response;
+      const requestId = response.headers.get("x-request-id") ?? undefined;
+      let problem: ProblemDetails | undefined;
+      if (response.headers.get("content-type")?.includes("application/problem+json")) {
+        problem = (await response.clone().json()) as ProblemDetails;
+      }
+      throw new ApiError(response.status, problem, requestId);
+    },
+  };
+  client.use(middleware);
+  return client;
+}

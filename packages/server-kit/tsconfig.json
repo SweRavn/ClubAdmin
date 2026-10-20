@@ -1,0 +1,9 @@
+{
+  "extends": "@clubadmin/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": ["src", "*.ts"]
+}

@@ -1,0 +1,338 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ClubAdmin API",
+    "version": "0.0.0",
+    "license": {
+      "name": "AGPL-3.0-only",
+      "identifier": "AGPL-3.0-only"
+    },
+    "description": "REST API of ClubAdmin. Errors use RFC 9457 problem details (application/problem+json)."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "https://github.com/SweRavn/ClubAdmin/blob/main/docs/api/problems.md#validation"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "requestId"
+        ]
+      },
+      "ValidationIssue": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "enum": [
+              "body",
+              "query",
+              "params",
+              "headers"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "example": "groups[0].name"
+          },
+          "code": {
+            "type": "string",
+            "example": "too_small"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "location",
+          "path",
+          "code",
+          "message"
+        ]
+      },
+      "SourceResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://github.com/SweRavn/ClubAdmin/tree/c366744"
+          },
+          "license": {
+            "type": "string",
+            "enum": [
+              "AGPL-3.0-only"
+            ]
+          },
+          "commit": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "license",
+          "commit"
+        ]
+      },
+      "VersionResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "0.0.0"
+          },
+          "commit": {
+            "type": "string",
+            "example": "c366744"
+          }
+        },
+        "required": [
+          "version",
+          "commit"
+        ]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "fail"
+            ]
+          },
+          "checks": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "ok",
+                    "fail",
+                    "skipped"
+                  ]
+                },
+                "durationMs": {
+                  "type": "number"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status",
+                "durationMs"
+              ]
+            }
+          }
+        },
+        "required": [
+          "status"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/v1/meta/source": {
+      "get": {
+        "operationId": "Meta_source",
+        "summary": "Where to get the source code of the running version (AGPL-3.0 section 13)",
+        "tags": [
+          "meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta/version": {
+      "get": {
+        "operationId": "Meta_version",
+        "summary": "Running version",
+        "tags": [
+          "meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "Health_live",
+        "summary": "Liveness: the process is up",
+        "tags": [
+          "health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "Health_ready",
+        "summary": "Readiness: dependencies are reachable (503 otherwise)",
+        "tags": [
+          "health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

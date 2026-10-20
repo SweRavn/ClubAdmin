@@ -60,6 +60,21 @@ pnpm dev:down          # stop services, keep data
 Until the web app exists (P0.6/P0.9), https://clubadmin.localhost shows a
 placeholder page served by Caddy.
 
+## API and worker
+
+`pnpm dev` also starts the API (port 4000) and the worker in watch mode; they
+recompile and restart when you save a file.
+
+| What | Where |
+|---|---|
+| API through Caddy | https://clubadmin.localhost/api/v1/meta/version |
+| API directly | http://127.0.0.1:4000 (health: `/health/live`, `/health/ready`) |
+| OpenAPI document | https://clubadmin.localhost/api/v1/openapi.json (development only) |
+
+After changing an endpoint, run `pnpm api:client` and commit the regenerated
+`packages/api-client` files (a test fails otherwise). `pnpm test:integration`
+runs the tests that need the local services.
+
 ## Commands
 
 | Command | Does |

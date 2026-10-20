@@ -54,6 +54,14 @@ jobs:
       - run: pnpm licenses:check
       - run: pnpm licenses:check --mobile
 
+      - name: API client is up to date with the API
+        run: |
+          pnpm api:client
+          git diff --exit-code -- packages/api-client || {
+            echo "::error::packages/api-client is out of date. Run 'pnpm api:client' and commit the result."
+            exit 1
+          }
+
   services:
     name: Local services (docker compose smoke test)
     runs-on: ubuntu-24.04
@@ -77,6 +85,9 @@ jobs:
 
       - name: Smoke test
         run: pnpm dev:smoke
+
+      - name: Integration tests (API and worker against the services)
+        run: pnpm test:integration
 
       - name: Doctor
         if: always()

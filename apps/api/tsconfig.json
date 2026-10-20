@@ -1,7 +1,10 @@
 {
   "extends": "@clubadmin/config/tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["src", "*.ts"]
 }

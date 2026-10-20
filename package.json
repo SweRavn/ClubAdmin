@@ -19,8 +19,8 @@
     "dev:doctor": "node packages/devtools/src/cli.ts doctor",
     "dev:trust-ca": "node packages/devtools/src/cli.ts trust-ca",
     "dev:smoke": "node packages/devtools/src/cli.ts smoke",
-    "lint": "turbo run lint && pnpm run lint:root && pnpm run format:check",
-    "lint:root": "eslint --no-warn-ignored eslint.config.js",
+    "lint": "turbo run lint && pnpm run lint:root && pnpm run lint:deps && pnpm run format:check",
+    "lint:root": "eslint --no-warn-ignored eslint.config.js dependency-cruiser.config.mjs",
     "lint:fix": "turbo run lint -- --fix && eslint --fix --no-warn-ignored eslint.config.js && prettier --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -29,11 +29,15 @@
     "test:integration": "turbo run test:integration",
     "test:e2e": "turbo run test:e2e",
     "licenses:check": "node packages/config/scripts/check-licenses.ts",
-    "commits:check": "node packages/config/scripts/check-commits.ts"
+    "commits:check": "node packages/config/scripts/check-commits.ts",
+    "lint:deps": "depcruise apps packages --config dependency-cruiser.config.mjs",
+    "api:openapi": "pnpm --filter @clubadmin/api run openapi",
+    "api:client": "pnpm run api:openapi && pnpm --filter @clubadmin/api-client run generate"
   },
   "devDependencies": {
     "@clubadmin/config": "workspace:*",
     "@clubadmin/devtools": "workspace:*",
+    "dependency-cruiser": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "turbo": "catalog:",

@@ -1,7 +1,10 @@
 {
   "extends": "@clubadmin/config/tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "lib": ["ES2023", "DOM"]
   },
-  "include": ["src", "*.ts"]
+  "include": ["src", "scripts", "*.ts"]
 }

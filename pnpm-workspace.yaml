@@ -3,25 +3,76 @@ packages:
   - packages/*
 
 # Supply-chain hardening (docs/security.md):
-# - dependency lifecycle scripts never run unless listed in onlyBuiltDependencies
-# - an install fails if a dependency wants to run a build script that is not approved
+# - dependency lifecycle scripts never run unless allowed below (true)
+# - an install fails if a dependency wants to run a build script that is not listed
 # - newly published versions are not installed until they are 7 days old
-onlyBuiltDependencies: []
+allowBuilds:
+  # Reviewed and not needed: prebuilt binaries come from optional dependencies,
+  # the scripts only verify the binary or print notices.
+  "@swc/core": false
+  protobufjs: false
 strictDepBuilds: true
 minimumReleaseAge: 10080
 strictPeerDependencies: true
 engineStrict: true
 saveExact: false
 
+# Explicitly accepted peer-dependency mismatches (keep this list short).
+peerDependencyRules:
+  allowedVersions:
+    # Generates types with the TypeScript compiler API, which is compatible with TS 6.
+    openapi-typescript>typescript: "6"
+
 # Single source of truth for shared dependency versions (use "catalog:" in package.json).
 catalog:
+  "@asteasolutions/zod-to-openapi": ^9.0.0
   "@eslint/js": ^10.0.0
+  "@fastify/cors": ^11.0.0
+  "@fastify/helmet": ^13.0.0
+  "@fastify/rate-limit": ^11.0.0
+  "@nestjs/common": ^12.0.0
+  "@nestjs/core": ^12.0.0
+  "@nestjs/platform-fastify": ^12.0.0
+  "@opentelemetry/api": ^1.9.0
+  "@opentelemetry/exporter-metrics-otlp-http": ~0.223.0
+  "@opentelemetry/exporter-trace-otlp-http": ~0.223.0
+  "@opentelemetry/instrumentation": ~0.223.0
+  "@opentelemetry/instrumentation-http": ~0.223.0
+  "@opentelemetry/instrumentation-ioredis": ^0.71.0
+  "@opentelemetry/instrumentation-pg": ~0.75.0
+  "@opentelemetry/resources": ~2.12.0
+  "@opentelemetry/sdk-metrics": ~2.12.0
+  "@opentelemetry/sdk-node": ~0.223.0
+  "@opentelemetry/sdk-trace-base": ~2.12.0
+  "@opentelemetry/semantic-conventions": ^1.30.0
+  "@swc/cli": ^0.8.0
+  "@swc/core": ^1.15.0
+  "@types/autocannon": ^7.12.0
   "@types/node": ^24.0.0
+  "@types/pg": ^8.15.0
+  autocannon: ^8.0.0
+  # Needed by `swc --watch` (optional peer dependency of @swc/cli)
+  chokidar: ^5.0.0
+  dependency-cruiser: ^18.0.0
   eslint: ^10.0.0
   eslint-plugin-simple-import-sort: ^14.0.0
+  # Must equal the exact version @nestjs/platform-fastify depends on (one Fastify
+  # instance type); Renovate updates them together.
+  fastify: 5.12.5
   globals: ^17.0.0
+  graphile-worker: ^0.18.0
+  import-in-the-middle: ^3.0.0
+  ioredis: ^5.11.0
+  openapi-fetch: ^0.17.0
+  openapi-typescript: ^7.13.0
+  pg: ^8.20.0
+  pino: ^10.0.0
   prettier: ^3.9.0
+  reflect-metadata: ^0.2.2
+  rxjs: ^7.8.0
   turbo: ^2.11.0
   typescript: ~6.0.2
   typescript-eslint: ^8.70.0
+  unplugin-swc: ^2.0.0
   vitest: ^5.0.0
+  zod: ^4.0.0

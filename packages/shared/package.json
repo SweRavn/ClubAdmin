@@ -19,5 +19,9 @@
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "catalog:",
+    "zod": "catalog:"
   }
 }

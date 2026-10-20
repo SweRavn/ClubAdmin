@@ -1,0 +1,15 @@
+{
+  "problem.bad-request": "Bad request",
+  "problem.validation": "The request contains invalid data",
+  "problem.unauthenticated": "You need to log in",
+  "problem.forbidden": "You do not have permission to do this",
+  "problem.not-found": "Not found",
+  "problem.method-not-allowed": "Method not allowed",
+  "problem.conflict": "The request conflicts with the current state",
+  "problem.payload-too-large": "The request is too large",
+  "problem.unsupported-media-type": "Unsupported content type",
+  "problem.rate-limited": "Too many requests, please try again later",
+  "problem.internal": "Something went wrong on our side",
+  "problem.not-implemented": "Not implemented yet",
+  "problem.unavailable": "The service is temporarily unavailable"
+}

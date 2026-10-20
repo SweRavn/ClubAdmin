@@ -66,8 +66,10 @@ packages/
   api-client/ Generated typed client from OpenAPI
   i18n/       Message catalogues (sv, en, nb, ...)
   ui/         Shared UI primitives (web)
-  config/     Shared eslint/tsconfig/prettier
+  config/     Shared eslint/tsconfig/prettier, licence and commit checks
   country-packs/  Country-specific rules (se, no, ...)
+  server-kit/ Server bootstrap shared by api and worker: config, logging, telemetry
+  devtools/   pnpm dev:* tooling (docker compose, doctor, smoke test)
 infra/
   docker/     Dockerfiles, docker-compose for dev and self-hosting
   backup/     pgBackRest config, restore runbooks and scripts
@@ -101,13 +103,20 @@ pnpm dev:trust-ca     # trust Caddy's local HTTPS CA (once)
 pnpm dev:smoke        # end-to-end check of all services
 ```
 
+API:
+
+```
+pnpm api:client       # regenerate packages/api-client (openapi.json + types); commit the result
+pnpm test:integration # integration tests against the local services (needs pnpm dev:services)
+pnpm --filter @clubadmin/api build && pnpm --filter @clubadmin/api bench   # request-pipeline benchmark
+```
+
 Planned in later Phase 0 packages:
 
 ```
 pnpm db:migrate     # apply migrations (P0.4)
 pnpm db:seed        # load demo scenario, see docs/seed-data.md (P0.8)
 pnpm db:reset       # drop, migrate, seed; development only (P0.8)
-pnpm test:integration  # integration tests against a real Postgres (P0.4)
 pnpm test:e2e       # Playwright against the web app (P0.6/P0.9)
 ```
 
@@ -119,6 +128,12 @@ only run if listed in `onlyBuiltDependencies`.
 ## Coding conventions
 
 - TypeScript `strict`, no `any` without a comment explaining why.
+- Every API route is declared with `@Endpoint(...)` (schemas, access rule);
+  plain `@Get`/`@Post` routes make the API refuse to start. Throw
+  `ProblemError` for expected failures; never return error objects.
+- Import Zod as `import { z } from "@clubadmin/shared"`.
+- Packages under `packages/` are TypeScript source (no build step) with `.ts`
+  import extensions and erasable syntax only; apps are compiled with SWC.
 - Backend modules live in `apps/api/src/modules/<module>/` with
   `*.controller.ts`, `*.service.ts`, `*.repository.ts`, `*.policy.ts`,
   `*.schemas.ts` (re-exported from `packages/shared`), and tests next to them.

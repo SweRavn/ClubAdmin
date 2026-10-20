@@ -1,4 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// @clubadmin/shared: Zod schemas, types, domain constants and permission names shared by all apps.
+// @clubadmin/shared: Zod schemas, types and constants shared by all apps.
 
-export const PACKAGE_NAME = "@clubadmin/shared";
+export * from "./http/meta.ts";
+export * from "./http/problem.ts";
+export * from "./ids/uuidv7.ts";
+export * from "./logging/redact.ts";
+export { z } from "./zod.ts";

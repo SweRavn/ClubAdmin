@@ -136,6 +136,45 @@ resolve names. This is enforced by lint rules and tests.
 - Public API for integrations (federations, accounting) uses the same
   endpoints with OAuth client credentials and scoped API keys per club.
 
+## API implementation (`apps/api`)
+
+| Concern | Where | Notes |
+|---|---|---|
+| Routes | `@Endpoint({ method, path, summary, access, request, response })` in `src/platform/http/endpoint.ts` | One declaration for route, Zod schemas (validation + OpenAPI), access rule and rate limit. A route declared with plain `@Get`/`@Post` makes the API refuse to start (`EndpointRegistry`). |
+| Validation | `ValidationInterceptor` | Params, query and body parsed with the endpoint's schemas before the handler runs; responses parsed with the response schema, which strips undeclared fields. |
+| Errors | `ProblemDetailsFilter`, `ProblemError` | Everything becomes RFC 9457 problem details ([problem types](api/problems.md)); titles translated from `Accept-Language`. Unknown errors → 500 with no internals. |
+| Request IDs | `app.ts` | `X-Request-Id` accepted from the proxy if it is a UUID, otherwise a new UUIDv7; returned on every response and logged. |
+| Logging | `@clubadmin/server-kit` `createLogger` (pino) | One line per request with the route template, status and duration; never bodies or query strings. Every log object passes through the shared redaction (`packages/shared/src/logging/redact.ts`). |
+| Security headers, CORS, limits | `app.ts` | Helmet (CSP `default-src 'none'`), CORS limited to `CORS_ORIGINS`, 1 MB body limit, request timeout, global rate limit per IP in Valkey (in-memory without Valkey; fails open if Valkey is down). |
+| Health | `/health/live`, `/health/ready` | Outside `/api/v1`, not rate limited. Readiness checks PostgreSQL and Valkey and answers 503 if one fails. |
+| AGPL | `/api/v1/meta/source`, `/api/v1/meta/version` | Source URL of the exact running commit (`SOURCE_URL` + `GIT_COMMIT`). |
+| OpenAPI | `/api/v1/openapi.json` (development) and `pnpm api:client` | Committed to `packages/api-client/openapi.json`; a test fails when it is out of date. |
+| Telemetry | `@clubadmin/server-kit/telemetry`, loaded with `node --import` | OTLP traces and metrics only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; query strings and personal-data attributes are scrubbed from spans. |
+| Module boundaries | `dependency-cruiser.config.mjs` (`pnpm lint`) | Modules import each other only through `index.ts`; packages never import apps; no cycles. |
+
+Folder layout: `src/platform/` holds cross-cutting infrastructure (HTTP,
+health, OpenAPI, database/Valkey clients); business modules go in
+`src/modules/<module>/` from P0.5 on.
+
+### Build and runtime
+
+- Apps (`apps/api`, `apps/worker`) are compiled with **SWC** (decorator metadata
+  for NestJS dependency injection) to `dist/`; `tsc` only type-checks.
+  `pnpm dev` runs SWC in watch mode and restarts Node on changes.
+- Shared packages (`packages/*`) are not built: they are TypeScript source with
+  `.ts` import extensions, run directly by Node's type stripping (Node 24) and
+  bundled by the web/mobile toolchains. They may only use erasable TypeScript
+  syntax (no enums, namespaces or parameter properties; `erasableSyntaxOnly`).
+- Import Zod as `import { z } from "@clubadmin/shared"` (it is extended for
+  OpenAPI metadata).
+
+## Worker (`apps/worker`)
+
+Graphile Worker on the same PostgreSQL database. Jobs are picked up through
+LISTEN/NOTIFY; scheduled tasks use its crontab. Job payloads carry IDs only,
+never personal data. Shares configuration, logging, telemetry and graceful
+shutdown with the API through `@clubadmin/server-kit`.
+
 ## Country packs
 
 Country-specific rules live in `packages/country-packs/<cc>/` behind interfaces:
