@@ -30,6 +30,24 @@ export default {
       to: { path: "^apps/", pathNot: "^apps/$1/" },
     },
     {
+      name: "raw-database-access",
+      comment:
+        "Only packages/db talks to PostgreSQL directly. Everything else uses withTenant/withActor/withSystem (CLAUDE.md rule 1).",
+      severity: "error",
+      from: { pathNot: "^packages/db/" },
+      to: { path: "node_modules/(pg|pg-pool|drizzle-orm/node-postgres)/" },
+    },
+    {
+      name: "db-internals",
+      comment: "The connection pool is internal to packages/db.",
+      severity: "error",
+      from: {
+        path: "^packages/db/",
+        pathNot: ["^packages/db/src/database\\.ts$", "^packages/db/src/internal/"],
+      },
+      to: { path: "^packages/db/src/internal/" },
+    },
+    {
       name: "production-imports-tests",
       comment: "Production code must not import tests or test helpers.",
       severity: "error",

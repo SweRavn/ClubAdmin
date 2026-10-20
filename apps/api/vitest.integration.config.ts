@@ -8,6 +8,9 @@ export default defineConfig({
   test: {
     include: ["src/**/*.integration.test.ts"],
     environment: "node",
+    globalSetup: ["@clubadmin/db/testing/global-setup"],
     passWithNoTests: false,
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
 });

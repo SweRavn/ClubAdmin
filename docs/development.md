@@ -75,6 +75,16 @@ After changing an endpoint, run `pnpm api:client` and commit the regenerated
 `packages/api-client` files (a test fails otherwise). `pnpm test:integration`
 runs the tests that need the local services.
 
+## Database
+
+`pnpm dev:services` creates the database roles and applies all migrations.
+Connect with `DATABASE_URL` (the app role, subject to row-level security) or
+`DATABASE_ADMIN_URL` (superuser) from `.env.local`. After pulling new
+migrations, run `pnpm db:migrate` (or `pnpm dev:services` again).
+
+`pnpm test:integration` clones a migrated template database per test file;
+the template is rebuilt automatically when migrations change.
+
 ## Commands
 
 | Command | Does |

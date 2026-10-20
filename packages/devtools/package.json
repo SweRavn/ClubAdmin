@@ -19,5 +19,8 @@
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@clubadmin/db": "workspace:*"
   }
 }

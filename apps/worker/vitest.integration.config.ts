@@ -3,5 +3,12 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  test: { include: ["src/**/*.integration.test.ts"], environment: "node", passWithNoTests: false },
+  test: {
+    include: ["src/**/*.integration.test.ts"],
+    environment: "node",
+    globalSetup: ["@clubadmin/db/testing/global-setup"],
+    passWithNoTests: false,
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
+  },
 });

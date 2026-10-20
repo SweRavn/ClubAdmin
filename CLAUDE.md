@@ -21,10 +21,14 @@ PostgreSQL. All TypeScript. See `docs/architecture.md`.
    (lint rule / test). Do not check roles ad hoc in controllers.
 3. **Audit and history.** Any create/update/delete of personal data,
    permissions, roles, guardianship, money or documents writes a semantic audit
-   event in the same transaction. In addition, **every table** gets the generic
-   record-history trigger via `enableHistory(...)` in its migration (ADR 0017);
-   CI fails for tables without it unless explicitly excluded. Always write
-   through `withTenant(...)`/`withActor(...)` so the actor is recorded.
+   event in the same transaction (`audit.record(tx, ...)`). In addition,
+   **every table** gets the record-history trigger with
+   `SELECT history.enable_history('public.<table>')` in its migration
+   (ADR 0017); integration tests fail for tables without it unless listed in
+   `packages/db/src/history-exclusions.ts`. Always write through
+   `db.withTenant(...)`/`db.withActor(...)`/`db.withSystem(...)` so the actor is
+   recorded. Club-owned tables also call `app.enable_tenant_rls(...)`, and
+   tables with `updated_at` call `app.enable_updated_at(...)`.
 4. **Protected identity and person visibility.** Never serialise a person's
    name or details except through the `PersonVisibility` presenter (ADR 0022).
    This covers API responses, exports, emails, push, calendar feeds, chat and
@@ -111,10 +115,19 @@ pnpm test:integration # integration tests against the local services (needs pnpm
 pnpm --filter @clubadmin/api build && pnpm --filter @clubadmin/api bench   # request-pipeline benchmark
 ```
 
+Database (see `docs/architecture.md`, "Database"):
+
+```
+pnpm db:bootstrap     # roles and grants (superuser; idempotent; pnpm dev:services runs it)
+pnpm db:migrate       # apply migrations as clubadmin_owner (pnpm dev:services runs it)
+pnpm db:status        # pending or changed migrations
+pnpm db:generate      # write a migration from changes in packages/db/src/schema
+pnpm --filter @clubadmin/db bench   # cost of tenant transactions and history triggers
+```
+
 Planned in later Phase 0 packages:
 
 ```
-pnpm db:migrate     # apply migrations (P0.4)
 pnpm db:seed        # load demo scenario, see docs/seed-data.md (P0.8)
 pnpm db:reset       # drop, migrate, seed; development only (P0.8)
 pnpm test:e2e       # Playwright against the web app (P0.6/P0.9)
@@ -132,6 +145,9 @@ only run if listed in `onlyBuiltDependencies`.
   plain `@Get`/`@Post` routes make the API refuse to start. Throw
   `ProblemError` for expected failures; never return error objects.
 - Import Zod as `import { z } from "@clubadmin/shared"`.
+- Only `packages/db` imports `pg`/Drizzle drivers; everything else uses
+  `createDatabase(...).withTenant/withActor/withSystem` (dependency-cruiser).
+  Outbox payloads and job payloads contain IDs only.
 - Packages under `packages/` are TypeScript source (no build step) with `.ts`
   import extensions and erasable syntax only; apps are compiled with SWC.
 - Backend modules live in `apps/api/src/modules/<module>/` with

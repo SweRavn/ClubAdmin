@@ -1,19 +1,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { Writable } from "node:stream";
 
+import type { Database } from "@clubadmin/db";
 import { createLogger } from "@clubadmin/server-kit";
 import { parseCrontab } from "graphile-worker";
 import { describe, expect, it } from "vitest";
 
 import { loadWorkerConfig } from "./config.ts";
 import { graphileLogger } from "./graphile-logger.ts";
-import { crontab, taskList } from "./tasks/index.ts";
+import { createTaskList, crontab } from "./tasks/index.ts";
+
+const taskList = createTaskList({
+  db: {} as Database,
+  outboxHandlers: [],
+  historyRetentionMonths: 24,
+  historyPartitionsAhead: 3,
+});
 
 describe("worker", () => {
-  it("schedules the heartbeat every minute and every cron task exists", () => {
+  it("schedules heartbeat and history maintenance, and every cron task exists", () => {
     const items = parseCrontab(crontab);
-    expect(items.map((i) => i.task)).toEqual(["heartbeat"]);
+    expect(items.map((i) => i.task)).toEqual(["heartbeat", "history:maintain_partitions"]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
+  });
+
+  it("has a task for the outbox trigger's jobs", () => {
+    expect(taskList["outbox:dispatch"]).toBeTypeOf("function");
   });
 
   it("requires DATABASE_URL", () => {

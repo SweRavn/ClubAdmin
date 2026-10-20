@@ -2,16 +2,16 @@
 import { Global, Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 
 import { API_CONFIG, type ApiConfig } from "../../config.ts";
-import { createDatabasePool, DATABASE_POOL, type DatabasePool } from "./database.ts";
+import { createApiDatabase, DATABASE, type OptionalDatabase } from "./database.ts";
 import { createValkeyClient, VALKEY_CLIENT, type ValkeyClient } from "./valkey.ts";
 
 @Global()
 @Module({
   providers: [
     {
-      provide: DATABASE_POOL,
+      provide: DATABASE,
       inject: [API_CONFIG],
-      useFactory: (config: ApiConfig) => createDatabasePool(config.DATABASE_URL),
+      useFactory: (config: ApiConfig) => createApiDatabase(config.DATABASE_URL),
     },
     {
       provide: VALKEY_CLIENT,
@@ -25,21 +25,18 @@ import { createValkeyClient, VALKEY_CLIENT, type ValkeyClient } from "./valkey.t
       },
     },
   ],
-  exports: [DATABASE_POOL, VALKEY_CLIENT],
+  exports: [DATABASE, VALKEY_CLIENT],
 })
 export class InfraModule implements OnApplicationShutdown {
-  private readonly pool: DatabasePool;
+  private readonly db: OptionalDatabase;
   private readonly valkey: ValkeyClient;
 
-  constructor(
-    @Inject(DATABASE_POOL) pool: DatabasePool,
-    @Inject(VALKEY_CLIENT) valkey: ValkeyClient,
-  ) {
-    this.pool = pool;
+  constructor(@Inject(DATABASE) db: OptionalDatabase, @Inject(VALKEY_CLIENT) valkey: ValkeyClient) {
+    this.db = db;
     this.valkey = valkey;
   }
 
   async onApplicationShutdown(): Promise<void> {
-    await Promise.allSettled([this.pool?.end(), this.valkey?.quit()]);
+    await Promise.allSettled([this.db?.close(), this.valkey?.quit()]);
   }
 }

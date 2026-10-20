@@ -32,6 +32,10 @@ export const REDACTED_KEYS: readonly string[] = [
   "comment",
   "note",
   "notes",
+  // database error details and query parameters can contain values
+  "detail",
+  "params",
+  "parameters",
   // credentials and secrets
   "authorization",
   "cookie",

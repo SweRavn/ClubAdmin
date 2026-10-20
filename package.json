@@ -30,6 +30,10 @@
     "test:e2e": "turbo run test:e2e",
     "licenses:check": "node packages/config/scripts/check-licenses.ts",
     "commits:check": "node packages/config/scripts/check-commits.ts",
+    "db:bootstrap": "node packages/db/src/cli.ts bootstrap",
+    "db:migrate": "node packages/db/src/cli.ts migrate",
+    "db:status": "node packages/db/src/cli.ts status",
+    "db:generate": "pnpm --filter @clubadmin/db run generate",
     "lint:deps": "depcruise apps packages --config dependency-cruiser.config.mjs",
     "api:openapi": "pnpm --filter @clubadmin/api run openapi",
     "api:client": "pnpm run api:openapi && pnpm --filter @clubadmin/api-client run generate"

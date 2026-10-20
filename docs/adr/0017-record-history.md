@@ -51,6 +51,15 @@ addition to `audit_events`.
 - **UI:** a "History" panel on every detail page (member, team, activity,
   document, …) and a filterable history view for club managers.
 
+**Implementation notes (P0.4).**
+- The helper is the SQL function `history.enable_history(table, redact, skip_insert)`,
+  called from migrations; it creates three *statement-level* triggers with
+  transition tables, so bulk changes are captured with one set-based insert per
+  statement instead of one per row.
+- Redacted columns are stored as `"[changed]"` in inserts, updates and deletes.
+- `history.maintain_partitions()` (SECURITY DEFINER) keeps a default partition
+  as a safety net and moves rows out of it when it creates a month's partition.
+
 **Consequences.**
 - Every write costs one extra insert in the same transaction (small; measured in
   the load scenario against `performance.md` budgets).

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Entry point for the pnpm dev:* scripts. Usage: node packages/devtools/src/cli.ts <command>
 
+import { bootstrap, migrate, passwordsFromEnv } from "@clubadmin/db/admin";
+
 import { compose } from "./compose.ts";
 import { doctor } from "./doctor.ts";
 import { ensureEnvLocal, loadEnv, requireEnv } from "./env.ts";
@@ -44,6 +46,18 @@ async function startServices(full: boolean): Promise<boolean> {
     buckets: [requireEnv(env, "S3_BUCKET_FILES"), requireEnv(env, "S3_BUCKET_BACKUPS")],
   });
   for (const change of changes) console.log(`Garage: ${change}`);
+
+  // Database roles, grants and migrations (idempotent).
+  await bootstrap({
+    adminUrl: requireEnv(env, "DATABASE_ADMIN_URL"),
+    passwords: passwordsFromEnv(Object.fromEntries(env)),
+  });
+  const migrated = await migrate({ ownerUrl: requireEnv(env, "DATABASE_OWNER_URL") });
+  console.log(
+    migrated.applied.length > 0
+      ? `Database: applied ${migrated.applied.join(", ")}`
+      : `Database: up to date (${migrated.alreadyApplied} migrations)`,
+  );
 
   const port = env.get("CADDY_HTTPS_PORT") ?? "443";
   const suffix = port === "443" ? "" : `:${port}`;

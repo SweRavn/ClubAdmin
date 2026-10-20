@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { createDatabase } from "@clubadmin/db";
 import { createLogger, loadEnvFiles, onShutdown } from "@clubadmin/server-kit";
 import { run } from "graphile-worker";
 
 import { loadWorkerConfig } from "./config.ts";
 import { graphileLogger } from "./graphile-logger.ts";
-import { crontab, taskList } from "./tasks/index.ts";
+import { outboxHandlers } from "./outbox-handlers.ts";
+import { createTaskList, crontab } from "./tasks/index.ts";
 
 loadEnvFiles();
 const config = loadWorkerConfig();
 const logger = createLogger({ service: "clubadmin-worker", level: config.LOG_LEVEL });
+const db = createDatabase({
+  url: config.DATABASE_URL,
+  max: config.WORKER_CONCURRENCY,
+  applicationName: "clubadmin-worker",
+});
 
 const runner = await run({
   connectionString: config.DATABASE_URL,
@@ -17,9 +24,17 @@ const runner = await run({
   // Signals are handled below, so open jobs can finish before exit.
   noHandleSignals: true,
   logger: graphileLogger(logger),
-  taskList,
+  taskList: createTaskList({
+    db,
+    outboxHandlers,
+    historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
+    historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
+  }),
   crontab,
 });
 logger.info({ concurrency: config.WORKER_CONCURRENCY }, "worker started");
 
-onShutdown(logger, () => runner.stop());
+onShutdown(logger, async () => {
+  await runner.stop();
+  await db.close();
+});

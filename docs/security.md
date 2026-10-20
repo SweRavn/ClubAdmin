@@ -41,7 +41,15 @@ later phase. Backup and disaster recovery are in
 - Deny by default; CI fails if an endpoint has no policy.
 - Relationship-based policies (see `domain-model.md`), each with allow and
   deny tests.
-- Postgres RLS as a second, independent barrier.
+- Postgres RLS as a second, independent barrier, enforced for the
+  application's own database role: the API and worker connect as
+  `clubadmin_app`, which cannot bypass RLS, run DDL, or change history and
+  audit rows. Migrations run as `clubadmin_owner`; retention jobs as
+  `clubadmin_retention`; operator tooling as `clubadmin_operator`, whose changes
+  are rejected unless they identify the operator (see `architecture.md`,
+  "Database").
+- Database errors are rethrown without query parameters, and the logger
+  redacts `detail`/`params` fields, so values never reach the logs.
 - Field-level filtering: list endpoints return only fields the caller may see
   (e.g. coaches see guardians' phone numbers, not their addresses).
 

@@ -1,24 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// PostgreSQL connection pool. Only used for health checks until the database
-// foundation (P0.4) adds Drizzle, roles and tenant-scoped transactions.
+// The database, reached only through withTenant/withActor/withSystem
+// (@clubadmin/db). Undefined when DATABASE_URL is not set (unit tests).
+import { createDatabase, type Database } from "@clubadmin/db";
 
-import pg from "pg";
+export const DATABASE = Symbol("DATABASE");
 
-export const DATABASE_POOL = Symbol("DATABASE_POOL");
+export type OptionalDatabase = Database | undefined;
 
-export type DatabasePool = pg.Pool | undefined;
-
-export function createDatabasePool(url: string | undefined): DatabasePool {
-  if (!url) return undefined;
-  const pool = new pg.Pool({
-    connectionString: url,
-    max: 10,
-    connectionTimeoutMillis: 2_000,
-    idleTimeoutMillis: 30_000,
-    statement_timeout: 10_000,
-    application_name: "clubadmin-api",
-  });
-  // Errors on idle clients must not crash the process; the next query reports them.
-  pool.on("error", () => undefined);
-  return pool;
+export function createApiDatabase(url: string | undefined): OptionalDatabase {
+  return url ? createDatabase({ url, max: 10, applicationName: "clubadmin-api" }) : undefined;
 }

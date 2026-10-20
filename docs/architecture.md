@@ -49,7 +49,7 @@ flowchart LR
 | API | NestJS on Fastify, Zod, Drizzle | REST API (`/api/v1`), WebSocket gateway, authorization, business logic |
 | Worker | Graphile Worker (jobs stored in Postgres) | Email, push, reminders, exports, report generation, image processing, scheduled jobs |
 | Identity | Zitadel (OIDC) | Login, passkeys, MFA, social login, later eID (BankID/Freja) via OIDC broker |
-| Database | PostgreSQL 18+ (built-in `uuidv7()`) | System of record, RLS-based tenant isolation, full-text search |
+| Database | PostgreSQL 18+ (built-in `uuidv7()`), Drizzle ORM | System of record, RLS-based tenant isolation, full-text search |
 | Cache / realtime | Valkey (BSD-3 Redis fork) | Permission cache, rate limiting, WebSocket fan-out between API instances |
 | Object storage | Any S3-compatible service (hosted: provider's object storage; self-host: Garage or SeaweedFS) | Documents, images, attachments, exports |
 | Reverse proxy | Caddy | TLS, HTTP/2 and HTTP/3, compression, security headers |
@@ -73,17 +73,95 @@ Planned modules (see `roadmap.md` for order):
 ## Multi-tenancy
 
 - Shared database, shared schema. Club-owned rows carry `club_id`.
-- Every request runs inside a transaction that sets
-  `SET LOCAL app.club_id = ...` and `SET LOCAL app.person_id = ...`.
-  RLS policies use these settings. This is **defence in depth**: the
-  authorization module is the primary check, RLS guarantees that a bug cannot
-  leak another club's data.
+- Defence in depth: the authorization module is the primary check; row-level
+  security (RLS) guarantees that a bug cannot leak another club's data.
 - Global (non-club) tables: `people`, `accounts`, shared plan library,
   platform tables. Access to them goes through explicit policies.
-- The application connects as a role **without** `BYPASSRLS`. Migrations run as
-  a separate owner role. Platform operator tooling uses a third role, audited.
-- Transaction-scoped settings (`SET LOCAL`) keep this compatible with PgBouncer
-  in transaction pooling mode.
+
+## Database (`packages/db`)
+
+### Roles
+
+| Role | Used by | Can |
+|---|---|---|
+| `clubadmin_owner` | `pnpm db:migrate` | Owns schemas and tables; runs DDL. Never used by the apps. |
+| `clubadmin_app` | API, worker | DML on application tables, subject to RLS; insert-only on audit; read-only on history; no DDL, no `BYPASSRLS`. |
+| `clubadmin_operator` | operator tooling | Like the app role, but every change must identify an operator (`app.actor_kind = 'operator'`), or it is rejected. |
+| `clubadmin_retention` | retention and erasure jobs | May delete or scrub history and audit rows, across clubs. |
+
+`pnpm db:bootstrap` (superuser, idempotent) creates them from
+`packages/db/sql/roles.sql` and sets passwords from `DB_*_PASSWORD`;
+`pnpm db:migrate` applies the migrations as the owner. `pnpm dev:services`
+runs both.
+
+### Transactions and context
+
+All database access goes through three functions of `createDatabase(...)`:
+
+| Function | For | Settings |
+|---|---|---|
+| `db.withTenant(ctx, tx => …)` | Club data | `app.club_id`, `app.person_id`, `app.on_behalf_of`, `app.request_id`, `app.actor_kind`, `app.ip_hash` |
+| `db.withActor(ctx, tx => …)` | Global tables (people, accounts) | same, without club |
+| `db.withSystem(jobName, { clubId? }, tx => …)` | Worker jobs | `actor_kind = system_job`, `request_id = job:<name>` |
+
+Each call is one transaction. `BEGIN` and the settings (`set_config(..., true)`,
+transaction-local) go in a single round trip, so it works with PgBouncer
+transaction pooling. The overhead is about 0.6 ms per transaction. The raw pool
+is internal to `packages/db` (dependency-cruiser enforces it). SQL reads the
+context through `app.current_club_id()`, `app.current_person_id()`,
+`app.current_on_behalf_of()`, `app.current_actor_kind()` and
+`app.current_request_id()`, which return NULL when unset.
+
+### Migrations
+
+- `packages/db/migrations/NNNN_name.sql`, applied in order, each in its own
+  transaction, recorded with a checksum in `app_meta.schema_migrations`.
+  Editing an applied migration stops `db:migrate` and fails `/health/ready`.
+- Application tables are defined with Drizzle in `packages/db/src/schema/`;
+  `pnpm db:generate` writes the migration. Infrastructure schemas (`app`,
+  `history`, `audit`, `outbox`, `privacy`, `app_meta`) are hand-written SQL.
+- Every new club-owned table calls, in its migration:
+
+  ```sql
+  SELECT app.enable_tenant_rls('public.groups');   -- RLS on club_id, enabled and forced
+  SELECT app.enable_updated_at('public.groups');   -- keeps updated_at current
+  SELECT history.enable_history('public.groups');  -- record history (ADR 0017)
+  -- options: redact => ARRAY['personal_identity_number'], skip_insert => true
+  ```
+
+  Integration tests (`findGuardViolations`) fail if a table misses one of
+  them; exclusions are listed with a reason in `src/history-exclusions.ts`.
+- `pnpm lint` warns about unsafe statements (dropping or renaming columns,
+  type changes) unless marked `-- expand-contract: <reason>`.
+
+### History, audit, outbox
+
+- **Record history:** statement-level triggers (`history.capture()`, using
+  transition tables) write one row per changed record to the monthly-partitioned
+  `history.record_changes`: changed columns only, old/new values, actor,
+  on-behalf-of, request ID, transaction, database role. Changes without context
+  are recorded as `actor_kind = db_role`. The worker job
+  `history:maintain_partitions` creates partitions ahead and drops expired ones.
+  Read with `getRecordHistory(tx, table, id, { cursor })`.
+- **Audit events:** `audit.record(tx, { action, resourceType, resourceId, changedFields })`
+  in the same transaction; actions are registered in
+  `packages/shared/src/audit-actions.ts`.
+- **Outbox:** `outbox.publish(tx, type, payload)` writes a domain event
+  (`packages/shared/src/domain-events.ts`, IDs only). A trigger enqueues the
+  `outbox:dispatch` job in the same transaction, so rolled-back events are never
+  dispatched. Handlers (`apps/worker/src/outbox-handlers.ts`) run at most once
+  per event: their database work and the delivery record commit together.
+  Failures retry with backoff (10 attempts), then the event is marked `failed`
+  and an error is logged.
+- **Deletion ledger:** `privacy.deletion_ledger` (erased person IDs), re-applied
+  after restores.
+
+### Tests
+
+`pnpm test:integration` runs against the local PostgreSQL. A template
+database is migrated once (rebuilt only when migrations change); each test
+file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
+`createTestClubs`, `asPerson`, `expectTenantIsolation`.
 
 ## Authentication
 

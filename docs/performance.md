@@ -64,6 +64,15 @@ budgets are requirements; CI measures them.
   headers, rate limiting) without a database. Baseline at P0.3 on a development
   container: `/health/live` p95 0.5 ms and p99 0.9 ms with one connection;
   about 3,000 req/s (client and server sharing one process).
+- `pnpm --filter @clubadmin/db bench`: tenant transactions and record history
+  on a throwaway database. Baseline at P0.4 (local Docker PostgreSQL 18):
+  - `withTenant` overhead: about 0.6 ms per transaction (one round trip for
+    `BEGIN` plus the context settings, one for `COMMIT`), on top of the queries.
+  - Record history (statement-level triggers): inserting 10,000 rows takes
+    about 0.34 s with history vs 0.05 s without (about 30 µs per row); updating
+    10,000 rows about 0.8 s vs 0.09 s (about 80 µs per row, mostly comparing
+    each row's columns). Single-row writes pay well under 0.1 ms. Bulk jobs that
+    rewrite many rows should update only rows that actually change.
 
 - Lighthouse CI on key web pages per PR.
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)

@@ -2,22 +2,37 @@
   "name": "@clubadmin/db",
   "version": "0.0.0",
   "private": true,
-  "description": "Drizzle schema, migrations, RLS policies and seed scenarios. Built in P0.4.",
+  "description": "Database access: Drizzle schema, migrations, roles, tenant-scoped transactions, record history, audit, outbox",
   "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts",
+    "./testing/global-setup": "./src/testing/global-setup.ts",
+    "./admin": "./src/admin.ts"
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . && node src/cli.ts lint-migrations",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "generate": "drizzle-kit generate",
+    "bench": "node src/testing/bench.ts"
   },
   "devDependencies": {
     "@clubadmin/config": "workspace:*",
     "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "drizzle-kit": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@clubadmin/server-kit": "workspace:*",
+    "@clubadmin/shared": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "graphile-worker": "catalog:",
+    "pg": "catalog:"
   }
 }

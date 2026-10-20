@@ -5,7 +5,14 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { ALL_KEYS, ensureEnvLocal, expand, missingEnvLines, parseEnv } from "./env.ts";
+import {
+  ALL_KEYS,
+  ensureEnvLocal,
+  expand,
+  missingEnvLines,
+  parseEnv,
+  upgradeEnvText,
+} from "./env.ts";
 import { envExampleFile } from "./paths.ts";
 
 describe("parseEnv", () => {
@@ -74,5 +81,28 @@ describe(".env.example", () => {
   it("documents every key that pnpm dev generates", () => {
     const example = parseEnv(readFileSync(envExampleFile, "utf8"));
     expect(ALL_KEYS.filter((key) => !example.has(key))).toEqual([]);
+  });
+});
+
+describe("upgradeEnvText", () => {
+  it("switches a DATABASE_URL that still points at the superuser to the app role", () => {
+    const text = [
+      "POSTGRES_PORT=5432",
+      "POSTGRES_DB=clubadmin",
+      "DB_APP_PASSWORD=apppw",
+      "DATABASE_ADMIN_URL=postgresql://postgres:pw@127.0.0.1:5432/clubadmin",
+      "DATABASE_URL=postgresql://postgres:pw@127.0.0.1:5432/clubadmin",
+    ].join("\n");
+    const { text: upgraded, upgraded: keys } = upgradeEnvText(text);
+    expect(keys).toEqual(["DATABASE_URL"]);
+    expect(parseEnv(upgraded).get("DATABASE_URL")).toBe(
+      "postgresql://clubadmin_app:apppw@127.0.0.1:5432/clubadmin",
+    );
+    expect(upgradeEnvText(upgraded).upgraded).toEqual([]);
+  });
+
+  it("leaves a DATABASE_URL the developer changed alone", () => {
+    const text = "DATABASE_ADMIN_URL=postgresql://a\nDATABASE_URL=postgresql://custom";
+    expect(upgradeEnvText(text)).toEqual({ text, upgraded: [] });
   });
 });

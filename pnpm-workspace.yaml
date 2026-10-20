@@ -11,6 +11,7 @@ allowBuilds:
   # the scripts only verify the binary or print notices.
   "@swc/core": false
   protobufjs: false
+  esbuild: false
 strictDepBuilds: true
 minimumReleaseAge: 10080
 strictPeerDependencies: true
@@ -52,6 +53,8 @@ catalog:
   # Needed by `swc --watch` (optional peer dependency of @swc/cli)
   chokidar: ^5.0.0
   dependency-cruiser: ^18.0.0
+  drizzle-kit: ^0.31.11
+  drizzle-orm: ^0.45.3
   eslint: ^10.0.0
   eslint-plugin-simple-import-sort: ^14.0.0
   # Must equal the exact version @nestjs/platform-fastify depends on (one Fastify

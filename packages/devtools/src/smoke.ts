@@ -49,6 +49,28 @@ export async function smoke(): Promise<boolean> {
   );
 
   results.push(
+    await check("PostgreSQL: roles and migrations", () => {
+      const user = requireEnv(env, "POSTGRES_USER");
+      const sql =
+        "select (select count(*) from pg_roles where rolname like 'clubadmin\\_%')::text || ',' || " +
+        "(select count(*) from app_meta.schema_migrations)::text";
+      const out = exec("postgres", [
+        "psql",
+        "-U",
+        user,
+        "-d",
+        requireEnv(env, "POSTGRES_DB"),
+        "-tAc",
+        sql,
+      ]);
+      const [roles, migrations] = out.split(",").map(Number);
+      if (roles !== 4 || !migrations)
+        throw new Error(`roles ${roles}, migrations ${migrations}: run pnpm dev:services`);
+      return `${migrations} migration(s) applied`;
+    }),
+  );
+
+  results.push(
     await check("Valkey: PING", () => {
       const out = exec("valkey", ["valkey-cli", "ping"]);
       if (out !== "PONG") throw new Error(`got "${out}"`);
