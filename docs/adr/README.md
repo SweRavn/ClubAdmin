@@ -17,8 +17,10 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0009](0009-jobs-in-postgres.md) | Background jobs in Postgres (Graphile Worker) | Accepted |
 | [0010](0010-valkey.md) | Valkey for cache, rate limiting and pub/sub | Accepted |
 | [0011](0011-object-storage.md) | S3-compatible object storage | Accepted |
-| [0012](0012-licensing-contributions.md) | AGPL-3.0, dependency allow list, DCO, app-store permission | Proposed (needs maintainer decision on CLA vs DCO) |
+| [0012](0012-licensing-contributions.md) | AGPL-3.0, dependency allow list, DCO, app-store permission | Accepted |
 | [0013](0013-hosting-billing.md) | Hosted + self-hosted from the same code; optional billing | Accepted |
 | [0014](0014-backup-strategy.md) | Backups: pgBackRest, immutable off-site copies | Accepted |
 | [0015](0015-country-packs.md) | Country packs for country-specific rules | Accepted |
 | [0016](0016-own-chat.md) | Build chat in-house instead of Matrix | Accepted |
+| [0017](0017-record-history.md) | Change history for every database record | Accepted |
+| [0018](0018-self-signup-club-managers.md) | Self sign-up, club creation and club managers | Accepted |

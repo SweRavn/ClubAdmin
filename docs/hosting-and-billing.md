@@ -23,7 +23,8 @@ Everything is configured by environment variables (documented in
 |---|---|---|
 | `DEPLOYMENT_MODE` | `self_hosted` | `hosted` enables public club sign-up, operator console |
 | `BILLING_ENABLED` | `false` | Enables plans, subscriptions, invoices, payment provider |
-| `CLUB_SIGNUP` | `invite_only` | `open` lets anyone register a new club |
+| `USER_SIGNUP` | `open` | `open`: anyone can create an account; `invite_only`: accounts only via invitation |
+| `CLUB_CREATION` | `open` if hosted, else `operators_only` | `open`: any signed-up person can create a club and becomes its manager; `approval`: operator approves new clubs; `operators_only` |
 | `DEFAULT_COUNTRY` | `SE` | Country pack for new clubs |
 | `FEATURE_*` | per feature | Turn whole modules off (e.g. `FEATURE_STREAMING=false`) |
 
@@ -49,7 +50,7 @@ Billing must be easy to ignore. It is built in two layers:
      data for non-payment**; export always remains available.
 
 Billing data concerns the club as a customer (organisation), not its members,
-and is separated from club data with its own permissions (`club_admin` /
+and is separated from club data with its own permissions (`club_manager` /
 `treasurer` see their invoices; operators see billing but not member data).
 
 Note: *member fees* (clubs charging their own members) are a separate feature in

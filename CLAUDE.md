@@ -19,9 +19,12 @@ PostgreSQL. All TypeScript. See `docs/architecture.md`.
 2. **Deny by default.** Every API endpoint declares its required permission via
    the authorization module. An endpoint with no declared policy fails the build
    (lint rule / test). Do not check roles ad hoc in controllers.
-3. **Audit.** Any create/update/delete of personal data, permissions, roles,
-   guardianship, money or documents writes an audit event in the same
-   transaction.
+3. **Audit and history.** Any create/update/delete of personal data,
+   permissions, roles, guardianship, money or documents writes a semantic audit
+   event in the same transaction. In addition, **every table** gets the generic
+   record-history trigger via `enableHistory(...)` in its migration (ADR 0017);
+   CI fails for tables without it unless explicitly excluded. Always write
+   through `withTenant(...)`/`withActor(...)` so the actor is recorded.
 4. **Personal data.** Never log personal data (names, emails, phone numbers,
    personal identity numbers, messages). Log IDs. Sensitive fields (personal
    identity number, health notes) use field-level encryption helpers. Never
@@ -97,7 +100,12 @@ pnpm licenses:check
 - Tests: every policy has allow and deny tests; every endpoint has at least one
   integration test that also asserts tenant isolation (a user of club B cannot
   read club A).
-- Commits: Conventional Commits (`feat(activities): ...`). Sign off (DCO).
+- Commits: Conventional Commits (`feat(activities): ...`). Sign off every
+  commit (`git commit -s`, DCO).
+- Source files start with `// SPDX-License-Identifier: AGPL-3.0-only`.
+- `apps/mobile` and anything it bundles must not depend on GPL/LGPL/AGPL
+  third-party code (app-store exception, `docs/licensing.md`).
+- Work happens on `main` for now (single maintainer); keep `main` green.
 
 ## When working from a prompt in `docs/prompts/`
 

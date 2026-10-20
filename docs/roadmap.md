@@ -10,7 +10,7 @@ is delivered as one or a few PRs.
 | P0.1 | Monorepo scaffolding (pnpm, Turborepo, TS config, lint, format, CI, licence check, DCO) |
 | P0.2 | Local environment: docker compose (Postgres, Valkey, Zitadel, Garage, Caddy, Mailpit), `pnpm dev` |
 | P0.3 | API skeleton: NestJS/Fastify, config, health, OpenAPI from Zod, problem-details errors, OpenTelemetry, log redaction |
-| P0.4 | Database foundation: Drizzle, migrations, roles (owner/app/operator), `withTenant` + RLS helpers, audit events, outbox |
+| P0.4 | Database foundation: Drizzle, migrations, roles (owner/app/operator), `withTenant` + RLS helpers, audit events, record-history trigger (ADR 0017), outbox |
 | P0.5 | Authentication: Zitadel OIDC (web BFF + mobile PKCE + API token validation), `DEV_AUTH` persona login |
 | P0.6 | Authorization engine: relationship model, policy DSL, endpoint policy enforcement, test helpers |
 | P0.7 | Core domain: people, accounts, clubs, sections, teams, seasons, memberships, roles, guardianships, club profiles |
@@ -24,7 +24,7 @@ is delivered as one or a few PRs.
 
 | ID | Work package |
 |---|---|
-| P1.1 | Club registration, invitations, membership applications and approval |
+| P1.1 | Self sign-up, club creation, club managers (multiple, hand-over), join policies and requests, invitations (ADR 0018) |
 | P1.2 | Member register UI (search, filter, export) with field-level permissions |
 | P1.3 | Guardian/child management, relative access, age transitions |
 | P1.4 | Activities: recurring trainings, matches, locations, calendar, iCal feed |
@@ -32,7 +32,7 @@ is delivered as one or a few PRs.
 | P1.6 | Events with sign-up forms, deadlines, capacity, waiting lists |
 | P1.7 | Notifications: email (templates, i18n), push, in-app; user preferences |
 | P1.8 | Privacy: consents, "download my data", leave club, anonymisation and retention jobs |
-| P1.9 | Audit log UI for club admins |
+| P1.9 | Audit log and record-history UI ("History" panel on detail pages) |
 | P1.10 | Billing: plans, subscriptions, invoices (only active with `BILLING_ENABLED`) |
 
 ## Phase 2 — Communication and compliance

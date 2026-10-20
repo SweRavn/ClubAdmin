@@ -35,12 +35,14 @@
 
 - **Access / portability:** "Download my data" (all clubs, JSON + human-readable
   PDF/HTML), produced by the worker within minutes.
-- **Rectification:** person edits own profile; club admins edit club-specific data.
+- **Rectification:** person edits own profile; club managers edit club-specific data.
 - **Erasure:** person can leave a club; leaving schedules deletion of club-specific
   data after the club's retention period (records required by law, e.g. accounting
   or grant reports, are kept in minimised form). Full account deletion anonymises
   the person everywhere: `people` row anonymised, messages kept as
-  "deleted user" if the room requires history, otherwise deleted.
+  "deleted user" if the room requires history, otherwise deleted. The person's
+  values are also scrubbed from the record history (the fact that a change
+  happened is kept).
 - **Objection / consent withdrawal:** one click per consent; effects apply
   immediately (e.g. hidden from photo galleries and streams).
 - Guardians exercise rights for children below the consent age; teenagers get
@@ -56,6 +58,7 @@
 | Chat messages | Until room deleted, or club rule (e.g. 2 years) |
 | Background-check verification metadata | While role is held + 1 year |
 | Audit log | 2 years (security) |
+| Record history | 2 years (configurable); personal values scrubbed on erasure |
 | Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore) |
 
 ## Children

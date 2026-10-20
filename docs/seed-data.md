@@ -44,11 +44,11 @@ Zitadel (password `demo-password-123`, documented) to test the real login flow.
 
 ## Demo scenario: clubs
 
-| Club | Country / locale / TZ | Sport(s) | Billing (if enabled) |
-|---|---|---|---|
-| **Strandvikens Volleybollklubb** (SVK) | SE / sv-SE / Europe/Stockholm | Volleyball | Paid plan, active |
-| **IK Norrbacka** (IKN) | SE / sv-SE / Europe/Stockholm | Multi-sport: football + floorball sections | Free plan |
-| **Fjordvik Idrettslag** (FIL) | NO / nb-NO / Europe/Oslo | Handball | Trial, ends in 10 days |
+| Club | Country / locale / TZ | Sport(s) | Join policy | Managers | Billing (if enabled) |
+|---|---|---|---|---|---|
+| **Strandvikens Volleybollklubb** (SVK) | SE / sv-SE / Europe/Stockholm | Volleyball | `approval` | Anna, Sara (two managers); Peter was manager until last year | Paid plan, active |
+| **IK Norrbacka** (IKN) | SE / sv-SE / Europe/Stockholm | Multi-sport: football + floorball sections | `open` | Karin; hand-over to Peter **pending** his acceptance | Free plan |
+| **Fjordvik Idrettslag** (FIL) | NO / nb-NO / Europe/Oslo | Handball | `invite_only` | Lars (sole manager → "last manager cannot leave" rule) | Trial, ends in 10 days |
 
 ### Teams
 
@@ -68,26 +68,28 @@ club has roughly 10 named/central users plus generated players.
 
 | # | Person | Age | Has login | Relationships (what it tests) |
 |---|---|---|---|---|
-| 1 | **Anna Lindqvist** | 41 | yes | SVK: **chair** (board). Parent of Elsa (SVK) and Oskar (IKN) → board role + parent in two clubs |
+| 1 | **Anna Lindqvist** | 41 | yes | SVK: **chair** (board) + **club manager**. Parent of Elsa (SVK) and Oskar (IKN) → board role + parent in two clubs |
 | 2 | **Mikael Lindqvist** | 43 | yes | Parent of Elsa and Oskar; separate household from Anna (divorced) → two full guardians, separate addresses |
 | 3 | **Elsa Lindqvist** | 9 | **no** | SVK F2017 player → child without account, managed by guardians |
 | 4 | **Oskar Lindqvist** | 14 | yes | IKN P2012 player → teen with own login *and* guardians |
 | 5 | **Erik Johansson** | 38 | yes | SVK F2017 **head coach**; IKN floorball F2015 **assistant coach**; parent of Maja → leader in two clubs + parent; background check **valid** |
 | 6 | **Maja Johansson** | 10 | no | Plays in SVK F2017 *and* IKN F2015 → one child in two clubs/sports |
-| 7 | **Sara Ahmed** | 35 | yes | SVK **treasurer** + F2017 **team manager** (cash desk) + parent of Alva → several roles in one club; MFA required |
+| 7 | **Sara Ahmed** | 35 | yes | SVK **club manager** + **treasurer** + F2017 **team manager** (cash desk) + parent of Alva → several roles in one club, second manager; MFA required |
 | 8 | **Alva Ahmed** | 9 | no | SVK F2017 player; **no photo consent** → tests consent filtering |
 | 9 | **Gunilla Berg** | 68 | yes | Grandmother of Alva, **relative** with view-only rights → restricted guardian kind |
 | 10 | **Johan Nilsson** | 27 | yes | SVK Herr senior player and F2017 **assistant coach**; background check **expires in 20 days** → reminder flow |
-| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **board member** + J2014 **head coach**; also **member/player in SVK Herr senior** and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
+| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior** and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
 | 12 | **Ingrid Haugen** | 12 | no | Daughter of Lars, FIL J2014 player |
-| 13 | **Karin Ek** | 52 | yes | IKN **club admin** + **safeguarding officer**; employed part-time as club administrator (staff, time reporting) |
+| 13 | **Karin Ek** | 52 | yes | IKN **club manager** + **safeguarding officer**; employed part-time as club administrator (staff, time reporting) |
 | 14 | **Ahmed Yilmaz** | 47 | yes | IKN P2012 **head coach**; background check **expired** → must be flagged |
 | 15 | **Liam Yilmaz** | 14 | yes | IKN P2012 player; user preference `en` locale → locale override |
-| 16 | **Peter Sund** | 60 | yes | IKN **treasurer**, **left** SVK board last year → historic role (valid_to in past) |
+| 16 | **Peter Sund** | 60 | yes | IKN **treasurer**; former SVK board member and **manager**, handed over to Anna last year → historic roles (valid_to in past); has a **pending manager hand-over** from Karin in IKN |
 | 17 | **Nora Lund** | 30 | invited | SVK new leader, **invitation pending** (not yet accepted) |
 | 18 | **Sofie Dahl** | 12 | no | FIL J2014; membership **applied**, awaiting approval |
 | 19 | **Ola Former** | 34 | yes | Left SVK 2 years ago, scheduled for **anonymisation** → retention job |
 | 20 | **Platform Operator** | — | yes | Operator account with **no** club access; one time-limited support grant to IKN |
+| 21 | **Emma Svensson** | 29 | yes | **Signed up without invitation, no club yet** → onboarding screen (find club / create club) |
+| 22 | **Henrik Malm** | 36 | yes | Self-signed-up, has a **pending join request** to SVK for himself and his son **Viktor Malm** (8, no login) → manager approval flow |
 
 ## Demo scenario: activity and other data (added as modules land)
 
@@ -102,6 +104,12 @@ club has roughly 10 named/central users plus generated players.
   meeting with agenda.
 - Team cash desk for SVK F2017 with a cup income and two expenses.
 - Two sponsor banners for SVK.
+- **Record history:** the seed writes through the same services as the app,
+  with the persona as actor, so history exists from the start. It also replays a
+  few changes over time so the History panel has content: Anna moved Elsa
+  between teams, Erik updated his own phone number, Anna ended Peter's
+  manager role, Sara corrected an attendance mark, Karin approved Sofie's
+  earlier application, and one change made by a system job.
 
 ## Load scenario
 

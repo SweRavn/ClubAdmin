@@ -64,7 +64,7 @@ module owns its tables, exposes a service interface and publishes domain events
 Planned modules (see `roadmap.md` for order):
 
 `identity` · `people` · `clubs` · `teams` · `memberships` · `authorization` ·
-`audit` · `privacy` (GDPR) · `notifications` · `activities` · `attendance` ·
+`audit` (audit events + record history) · `privacy` (GDPR) · `notifications` · `activities` · `attendance` ·
 `events` · `carpool` · `messaging` (email/board) · `chat` · `documents` ·
 `clearances` (background checks) · `grants` (LOK-stöd, country packs) ·
 `plans` (training plans/library) · `finance` (team cash desk, fees) ·
@@ -96,7 +96,7 @@ Planned modules (see `roadmap.md` for order):
 - **API:** validates access tokens (JWT, cached JWKS), maps the subject to a
   `person`. Short-lived access tokens (≤ 10 min), rotating refresh tokens.
 - MFA (passkey or TOTP) is **required** for roles with elevated access: board,
-  club admin, treasurer, anyone who can see background-check status or
+  club manager, treasurer, anyone who can see background-check status or
   personal identity numbers.
 - Development: a `DEV_AUTH` provider lets you log in as any seeded persona
   without Zitadel. It refuses to start unless `NODE_ENV=development`

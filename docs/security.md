@@ -11,6 +11,7 @@ later phase. Backup and disaster recovery are in
 |---|---|---|
 | Cross-tenant leak | Bug lets club B read club A's members | Authorization module + RLS + tenant-isolation tests on every endpoint |
 | Privilege escalation inside a club | Player edits roles; parent sees other children's data | Deny-by-default policies, relationship-based permissions, policy tests |
+| Fake sign-ups / spam clubs | Bots creating accounts and clubs | Email verification, rate limits, `CLUB_CREATION` policy, abandoned-club archiving |
 | Account takeover | Phished admin password | IdP with passkeys, mandatory MFA for elevated roles, rate limiting, breach-password check, session revocation |
 | Malicious insider (club) | Leader exports all members' data | Least privilege, field-level scoping, export audit + alerts, rate limits on bulk reads |
 | Malicious/compromised operator | Platform staff browsing data | No default operator access, time-limited support grants approved by the club, all operator actions audited, separate DB role |
@@ -71,8 +72,14 @@ later phase. Backup and disaster recovery are in
   request id, timestamp.
 - Audit events are also streamed to separate storage the application cannot
   delete from.
-- Club admins can view their club's audit log; operators can see operator
+- Club managers can view their club's audit log; operators can see operator
   actions only.
+- **Record history** (ADR 0017): a database trigger on every table records
+  each insert/update/delete with changed columns, old/new values, actor and
+  request id in `history.record_changes`. Insert-only for the app role,
+  RLS-scoped by club, values of restricted fields shown only to those allowed
+  to see the field. This also captures changes made outside the application
+  (operator SQL, migrations).
 
 ### Development process
 - Branch protection, required review, CI: lint, typecheck, tests, licence check,

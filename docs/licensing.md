@@ -1,7 +1,10 @@
 # Licensing
 
-ClubAdmin is licensed under **AGPL-3.0-only** (see `LICENSE`). An additional
-app-store permission is proposed below and awaits the maintainer's decision.
+ClubAdmin is licensed under **AGPL-3.0-only** (see `LICENSE`) with an
+additional permission for app-store distribution
+(see [`LICENSE-APP-STORE-EXCEPTION.md`](../LICENSE-APP-STORE-EXCEPTION.md)).
+Source files carry the header `SPDX-License-Identifier: AGPL-3.0-only`; the
+exception applies to the whole repository.
 
 ## Why AGPL-3.0
 
@@ -102,25 +105,38 @@ can be switched off so self-hosters are never forced to use them.
 (EAS Build is optional: the apps can be built locally or in CI with
 open tooling.)
 
-## Mobile app stores — action needed
+## Mobile app stores
 
 Apple's App Store terms add usage restrictions that the FSF considers
-incompatible with the (A)GPL. When **all** copyright holders agree, this is
-resolved. Recommended:
+incompatible with the (A)GPL. We solve this with an **additional permission**
+under AGPL-3.0 section 7 (`LICENSE-APP-STORE-EXCEPTION.md`), which allows
+distributing the client apps through app stores as long as the full source
+stays freely available and the app shows where to get it.
 
-1. Add an **additional permission** under AGPL-3.0 section 7 to `LICENSE`
-   (a `LICENSE-EXCEPTION` notice) that allows distributing the mobile apps
-   through app stores despite their terms.
-2. Require every contribution to be made under AGPL-3.0 *including* that
-   permission (stated in `CONTRIBUTING.md`, enforced by DCO sign-off).
+### Effect on dependencies
 
-This must be in place **before the first external contribution**, because it
-cannot be added later without every contributor's consent.
+The permission only covers code whose copyright holders granted it, which means
+our own code. Third-party code keeps its own licence. Therefore:
+
+- **Server-side and separate services: no effect.** They are not distributed
+  through app stores. AGPL services such as Zitadel, Garage and Grafana are
+  unaffected.
+- **Web app: no effect.** It is not distributed through an app store.
+- **Mobile app bundle: stricter rule.** Anything compiled into the iOS/Android
+  apps must be under a licence that itself allows app-store distribution:
+  MIT, ISC, BSD, Apache-2.0, Zlib, 0BSD, Unlicense, CC0, and MPL-2.0 (file-level
+  copyleft; we publish our source anyway). **GPL, LGPL and AGPL third-party
+  code is not allowed in `apps/mobile`** or in packages it bundles, because our
+  exception cannot cover it.
+- Every library proposed so far for the mobile app (React Native, Expo SDK,
+  Expo Router, TanStack Query, react-native-mmkv, i18next, jose, our own
+  packages) is MIT or Apache-2.0, so **nothing in the proposed stack changes**.
+- CI runs a separate, stricter licence check for the mobile bundle
+  (`pnpm licenses:check --mobile`).
 
 ## Contributor terms
 
-- Default: **Developer Certificate of Origin (DCO)** sign-off on every commit.
-  Simple and contributor-friendly.
-- If the maintainer may want to dual-license later (e.g. sell a commercial
-  licence), a **Contributor Licence Agreement (CLA)** would be needed instead.
-  Decide before accepting external contributions. Recorded in ADR 0012.
+**Decision: Developer Certificate of Origin (DCO).** There are no plans to
+relicense. Every commit must be signed off (`git commit -s`), certifying the
+[DCO](https://developercertificate.org/). Contributions are accepted under
+AGPL-3.0-only together with the app-store permission. CI checks for sign-off.

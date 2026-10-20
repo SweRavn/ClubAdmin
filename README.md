@@ -43,6 +43,7 @@ that have the capacity to run it.
 
 ## License
 
-ClubAdmin is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+ClubAdmin is licensed under the [GNU Affero General Public License v3.0](LICENSE)
+with an [additional permission for app-store distribution](LICENSE-APP-STORE-EXCEPTION.md).
 If you run a modified version as a network service, you must offer its source
 code to its users.

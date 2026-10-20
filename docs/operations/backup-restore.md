@@ -60,7 +60,7 @@ task), tested in the DR drill.
 
 ## Per-club export (data portability)
 
-Every club admin can export the club's full data (JSON + CSV + files, documented
+Every club manager can export the club's full data (JSON + CSV + files, documented
 schema). This doubles as the club's own backup and as the migration path away
 from the hosted service — the anti-lock-in promise.
 

@@ -9,5 +9,7 @@ documents in `docs/` describe what we are building.
   certifies the [Developer Certificate of Origin](https://developercertificate.org/).
 - By contributing you agree that your contribution is licensed under
   AGPL-3.0-only, including the additional app-store distribution permission
-  described in `docs/licensing.md` (pending, see ADR 0012).
+  in `LICENSE-APP-STORE-EXCEPTION.md`.
+- Dependencies used by the mobile app must not be GPL, LGPL or AGPL (see
+  `docs/licensing.md`).
 - Security issues: see `SECURITY.md`, never a public issue.

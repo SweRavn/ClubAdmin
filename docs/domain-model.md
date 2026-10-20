@@ -86,8 +86,24 @@ in the same team (separate rows). `valid_from`/`valid_to`.
 ### `club_role_assignments`
 Club-level roles: `chair`, `vice_chair`, `treasurer`, `secretary`,
 `board_member`, `deputy_board_member`, `auditor`, `nomination_committee`,
-`club_admin`, `section_admin`, `registrar` (membership/LOK), `safeguarding_officer`,
+`club_manager`, `section_admin`, `registrar` (membership/LOK), `safeguarding_officer`,
 `communications`, `staff`. Optional scope to a section. Validity period.
+
+**Club managers** (ADR 0018) have full administrative rights in the club. A club
+can have several; there must always be at least one active manager. The person
+who creates a club becomes its first manager. Managers appoint/remove other
+managers; handing over is "appoint successor → successor accepts → step down".
+
+### Sign-up and joining (ADR 0018)
+- Anyone can sign up (verified email) without an invitation; this creates an
+  `account` + `person` with no club yet.
+- `clubs.join_policy`: `open` | `approval` (default) | `invite_only`.
+- `join_requests`: person (and optionally their children) asking to join,
+  with status `pending`/`approved`/`rejected`/`withdrawn`, decided by a manager
+  or registrar.
+- `invitations`: email or link/code invitations with role/team presets and expiry.
+- Club creation is governed by `CLUB_CREATION` (`open` | `approval` |
+  `operators_only`).
 
 ### `guardianships` (global, confirmed per club)
 `guardian_person_id`, `ward_person_id`, `kind` (`parent`, `legal_guardian`,
@@ -101,7 +117,7 @@ decides).
 - A guardianship becomes visible to a club only when the ward is a member of
   that club.
 - Two guardians in separate households are both full guardians; neither can
-  remove the other (only a club admin with evidence, audited).
+  remove the other (only a club manager with evidence, audited).
 
 ### `employments`
 Person employed by a club: role, start/end, employment type, hours. Salary data
@@ -111,6 +127,12 @@ lives in the `staff` module (later phase) with stricter access.
 Purpose-based consents (photo/video publication, streaming, marketing, data
 sharing with federation). Given by the person or, for minors under the
 country's consent age, by a guardian. Timestamped, versioned text, revocable.
+
+### Record history (ADR 0017)
+Every table has a trigger writing to `history.record_changes`: table, record
+id, operation, changed columns with old/new values, actor, on-behalf-of,
+request id, time. Every detail screen can show "who changed what, when".
+Separate from `audit_events`, which record business-level actions.
 
 ### Platform tables
 `platform_operators`, `support_access_grants` (time-limited, club-approved
@@ -127,7 +149,9 @@ optional), `feature_flags`.
 | `relative` of P with `view_schedule` | See P's schedule only |
 | `treasurer` of club C | Club finance, fees; with MFA |
 | `board_member` of C | Board documents, meetings; member list (limited fields) |
-| `safeguarding_officer` / `club_admin` | Background-check status of leaders; with MFA |
+| `safeguarding_officer` / `club_manager` | Background-check status of leaders; with MFA |
+| `club_manager` of C | Everything in C's administration: settings, roles (incl. other managers), members, join requests, history; with MFA |
+| Signed-up person without club | Own profile, search clubs, send join requests, create a club (if allowed) |
 | Platform operator | Nothing in club data, unless the club grants time-limited support access |
 
 ## Age and child-safety rules (configured per country pack)

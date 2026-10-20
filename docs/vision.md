@@ -28,7 +28,7 @@ A fast, secure, open-source club management system that:
 | Relative / supporter | Follow a child or team, watch streams (read-only) |
 | Leader / coach | Plan trainings, take attendance, message team, share plans |
 | Team manager | Team cash desk, events, logistics |
-| Board member / club admin | Members, roles, documents, meetings, budget, reporting, background checks |
+| Board member / club manager | Members, roles, documents, meetings, budget, reporting, background checks |
 | Club staff | Time reporting, salary data |
 | Platform operator | Runs the hosted service, billing, support (no default access to club data) |
 
