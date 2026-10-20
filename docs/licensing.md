@@ -103,7 +103,7 @@ by the CI check when added.
 ### Development and CI tools (not distributed)
 
 SWC (`@swc/core`, `@swc/cli`: Apache-2.0, MIT), unplugin-swc (MIT), chokidar (MIT),
-openapi-typescript (MIT), dependency-cruiser (MIT), autocannon (MIT),
+openapi-typescript (MIT), dependency-cruiser (MIT),
 Renovate (AGPL-3.0), OSV-Scanner (Apache-2.0), Trivy (Apache-2.0), Lighthouse
 CI (Apache-2.0), k6 (AGPL-3.0), Weblate (GPL-3.0-or-later), CodeQL (free for
 open-source repositories on GitHub; proprietary, CI use only). No licence
