@@ -61,6 +61,12 @@
 | Record history | 2 years (configurable); personal values scrubbed on erasure |
 | Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore) |
 
+## Protected identity
+
+People with protected personal data are hidden from other members, excluded
+from public pages, photos and streams, have no stored postal address, and every
+view of their profile is logged. See `domain-model.md` and ADR 0022.
+
 ## Children
 
 - Default privacy settings for minors are the strictest: no public profile,

@@ -63,9 +63,9 @@ module owns its tables, exposes a service interface and publishes domain events
 
 Planned modules (see `roadmap.md` for order):
 
-`identity` · `people` · `clubs` · `teams` · `memberships` · `authorization` ·
+`identity` · `people` · `clubs` · `groups` (incl. waiting lists) · `memberships` · `authorization` (incl. person visibility) ·
 `audit` (audit events + record history) · `privacy` (GDPR) · `notifications` · `activities` · `attendance` ·
-`events` · `carpool` · `messaging` (email/board) · `chat` · `documents` ·
+`events` · `calendar` (iCal feeds, invitations) · `carpool` · `messaging` (email/board) · `chat` · `documents` ·
 `clearances` (background checks) · `grants` (LOK-stöd, country packs) ·
 `plans` (training plans/library) · `finance` (team cash desk, fees) ·
 `sponsors` · `streaming` · `staff` (time/salary) · `billing` · `entitlements`
@@ -108,7 +108,7 @@ In-process, relationship-based (ReBAC) policy engine in the `authorization`
 module. See [ADR 0006](adr/0006-authorization.md).
 
 - Permissions are derived from relationships: *membership in club*, *role in
-  club* (board, admin, treasurer…), *function in team* (player, coach,
+  club* (board, manager, treasurer…), *owner of group*, *function in group* (member, coach,
   manager), *guardian of person*, *employee of club*.
 - Each endpoint declares a permission such as `activity.attendance.write` on a
   resource; the policy resolves it from the relationships.
@@ -116,6 +116,14 @@ module. See [ADR 0006](adr/0006-authorization.md).
   cached in Valkey with versioned invalidation on membership/role changes.
 - Guardians act **on behalf of** a child: the API records both the actor and the
   subject in audit events.
+
+## Person visibility (protected identity)
+
+Any response, export, notification, feed or history view that mentions a
+person passes through the `PersonVisibility` service (ADR 0022), which returns
+*full*, *full with protected icon* or *hidden* for each person, computed in
+bulk per request from cached data. Repositories return person IDs; presenters
+resolve names. This is enforced by lint rules and tests.
 
 ## API style
 
@@ -164,6 +172,7 @@ The core never branches on country code; it asks the club's country pack.
 | Capability | Interface | First implementations |
 |---|---|---|
 | Email | `MailProvider` | SMTP (self-host), EU transactional provider (hosted) |
+| Inbound email (calendar replies) | `InboundMailProvider` | Provider webhook (hosted), IMAP/LMTP mailbox (self-host) |
 | Push | `PushProvider` | Expo Push, direct APNs/FCM |
 | Payments | `PaymentProvider` | Stripe (cards), Swish (SE) |
 | Video | `StreamingProvider` | api.video / Mux, self-hosted MediaMTX |

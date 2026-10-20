@@ -24,3 +24,7 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0016](0016-own-chat.md) | Build chat in-house instead of Matrix | Accepted |
 | [0017](0017-record-history.md) | Change history for every database record | Accepted |
 | [0018](0018-self-signup-club-managers.md) | Self sign-up, club creation and club managers | Accepted |
+| [0019](0019-groups-owners-waitlists.md) | Groups, group owners and waiting lists | Accepted |
+| [0020](0020-identifiers-and-login-email.md) | Identifiers, login email and people without email | Accepted |
+| [0021](0021-calendar-subscriptions.md) | Calendar subscriptions and answering from the phone's calendar | Accepted |
+| [0022](0022-protected-identity.md) | Protected identity | Accepted |

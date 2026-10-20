@@ -15,6 +15,8 @@ later phase. Backup and disaster recovery are in
 | Account takeover | Phished admin password | IdP with passkeys, mandatory MFA for elevated roles, rate limiting, breach-password check, session revocation |
 | Malicious insider (club) | Leader exports all members' data | Least privilege, field-level scoping, export audit + alerts, rate limits on bulk reads |
 | Malicious/compromised operator | Platform staff browsing data | No default operator access, time-limited support grants approved by the club, all operator actions audited, separate DB role |
+| Exposure of a person with protected identity | Name in a roster, chat, photo, calendar feed or history view reveals a protected member | Central `PersonVisibility` service on every person-bearing output, no attendee names in calendar data, explicit chat acceptance, access log on profile views (ADR 0022) |
+| Calendar feed URL leaks | Shared or forwarded `.ics` link | Secret per-person tokens (hashed), revocable, no other people's names in feeds, answer links bound to one person and occurrence |
 | Grooming / unsafe contact | Adult contacts a child privately | No adult–minor 1:1 chat without guardian, reporting, moderation, audit |
 | Injection / XSS / CSRF | Stored XSS in a message | Parameterised queries (Drizzle), output encoding (React), strict CSP, sanitised rich text, SameSite cookies + CSRF tokens on BFF |
 | Malicious upload | Malware in a document | Type allow list, size limits, ClamAV scan, serve from separate domain, `Content-Disposition: attachment` |

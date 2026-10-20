@@ -25,27 +25,31 @@ PostgreSQL. All TypeScript. See `docs/architecture.md`.
    record-history trigger via `enableHistory(...)` in its migration (ADR 0017);
    CI fails for tables without it unless explicitly excluded. Always write
    through `withTenant(...)`/`withActor(...)` so the actor is recorded.
-4. **Personal data.** Never log personal data (names, emails, phone numbers,
+4. **Protected identity and person visibility.** Never serialise a person's
+   name or details except through the `PersonVisibility` presenter (ADR 0022).
+   This covers API responses, exports, emails, push, calendar feeds, chat and
+   history views. Calendar data never contains attendee names.
+5. **Personal data.** Never log personal data (names, emails, phone numbers,
    personal identity numbers, messages). Log IDs. Sensitive fields (personal
    identity number, health notes) use field-level encryption helpers. Never
    store background-check documents, only verification metadata.
-5. **Validate at the boundary.** All input is validated with the shared Zod
+6. **Validate at the boundary.** All input is validated with the shared Zod
    schemas in `packages/shared`. The same schemas generate the OpenAPI spec.
-6. **Performance budgets** in `docs/performance.md` are requirements. No N+1
+7. **Performance budgets** in `docs/performance.md` are requirements. No N+1
    queries, all list endpoints paginate with keyset pagination, every new query
    on a large table needs a supporting index (justify in the PR).
-7. **Times.** Store `timestamptz` in UTC. Store the club's IANA time zone on the
+8. **Times.** Store `timestamptz` in UTC. Store the club's IANA time zone on the
    club. Calendar-type values (birth dates, all-day events) use `date`.
-8. **i18n.** No user-facing string literals in components or emails. Use message
+9. **i18n.** No user-facing string literals in components or emails. Use message
    keys (ICU format). Swedish (`sv`) and English (`en`) must both be complete.
-9. **Licences.** Only add dependencies whose licence is on the allow list in
+10. **Licences.** Only add dependencies whose licence is on the allow list in
    `docs/licensing.md`. CI enforces this.
-10. **Billing is optional.** Code must work with `BILLING_ENABLED=false`
+11. **Billing is optional.** Code must work with `BILLING_ENABLED=false`
     (self-hosted). Check entitlements through the `entitlements` service, never
     billing tables directly.
-11. **No secrets in the repo.** Use environment variables; `.env.example` lists
+12. **No secrets in the repo.** Use environment variables; `.env.example` lists
     them with dummy values.
-12. **Migrations are forward-only** and must be safe to run on a live database
+13. **Migrations are forward-only** and must be safe to run on a live database
     (expand/contract). Never edit a merged migration.
 
 ## Repository layout (target)
@@ -93,8 +97,11 @@ pnpm licenses:check
   `*.schemas.ts` (re-exported from `packages/shared`), and tests next to them.
 - A module may only use another module through its exported service, never its
   tables. Cross-module reactions go through domain events.
-- Database names: `snake_case`, plural tables, `id` is UUIDv7, `created_at`,
-  `updated_at` on every table.
+- Database names: `snake_case`, plural tables, `id` is UUIDv7 (ADR 0020),
+  `created_at`, `updated_at` on every table. Login email only on `accounts`
+  (unique, case-insensitive); people never have an email column.
+- Terminology: "group" in code and data (`groups`, `group_memberships`); "team"
+  is one `kind` of group and a UI label.
 - API: REST, JSON, `/api/v1/...`, plural resources, ISO 8601 times, errors as
   RFC 9457 problem details.
 - Tests: every policy has allow and deny tests; every endpoint has at least one

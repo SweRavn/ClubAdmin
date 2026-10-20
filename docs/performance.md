@@ -15,6 +15,7 @@ budgets are requirements; CI measures them.
 | Web: initial JS for member pages | < 150 KB compressed |
 | Mobile: cold start to usable schedule | < 2 s; cached data shown immediately |
 | Chat message delivery (online recipient) | < 300 ms |
+| Calendar feed (`.ics`) request, p95 | < 50 ms (served from precomputed schedule, ETag/`304`) |
 
 ## Design rules
 

@@ -30,6 +30,10 @@ What exists already: <modules, tables, endpoints this builds on>.
 <Personal data touched, legal basis, consent, who may see which fields,
 audit events, retention, child-safety concerns.>
 
+## Protected identity
+<Where this feature shows people; confirm all of it goes through
+`PersonVisibility`; what protected persons see and what others see.>
+
 ## Locale and country packs
 <Translations needed (sv, en, nb); country-specific rules and where they live.>
 

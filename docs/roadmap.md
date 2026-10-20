@@ -12,8 +12,8 @@ is delivered as one or a few PRs.
 | P0.3 | API skeleton: NestJS/Fastify, config, health, OpenAPI from Zod, problem-details errors, OpenTelemetry, log redaction |
 | P0.4 | Database foundation: Drizzle, migrations, roles (owner/app/operator), `withTenant` + RLS helpers, audit events, record-history trigger (ADR 0017), outbox |
 | P0.5 | Authentication: Zitadel OIDC (web BFF + mobile PKCE + API token validation), `DEV_AUTH` persona login |
-| P0.6 | Authorization engine: relationship model, policy DSL, endpoint policy enforcement, test helpers |
-| P0.7 | Core domain: people, accounts, clubs, sections, teams, seasons, memberships, roles, guardianships, club profiles |
+| P0.6 | Authorization engine: relationship model (incl. group owners and group hierarchy), policy DSL, endpoint policy enforcement, `PersonVisibility` service for protected identity (ADR 0022), test helpers |
+| P0.7 | Core domain: people (no email), accounts (unique login email), clubs, groups + group owners, seasons, memberships, member numbers, roles, guardianships, club profiles, protected-identity flags |
 | P0.8 | Seed framework + demo scenario personas (`seed-data.md`) |
 | P0.9 | Web shell: Next.js, layout, club switcher, i18n (sv/en/nb), auth flow, "Source code" link |
 | P0.10 | Mobile shell: Expo app, login, club switcher, i18n, persisted cache |
@@ -26,18 +26,22 @@ is delivered as one or a few PRs.
 |---|---|
 | P1.1 | Self sign-up, club creation, club managers (multiple, hand-over), join policies and requests, invitations (ADR 0018) |
 | P1.2 | Member register UI (search, filter, export) with field-level permissions |
-| P1.3 | Guardian/child management, relative access, age transitions |
-| P1.4 | Activities: recurring trainings, matches, locations, calendar, iCal feed |
+| P1.3 | Guardian/child management: "Add child" without email, invite co-guardian, merge duplicates, "give own login" with the child's own email, relative access, age transitions |
+| P1.4 | Activities: recurring trainings, matches, locations, in-app calendar |
 | P1.5 | Responses (attending / not attending) and attendance taking |
 | P1.6 | Events with sign-up forms, deadlines, capacity, waiting lists |
 | P1.7 | Notifications: email (templates, i18n), push, in-app; user preferences |
 | P1.8 | Privacy: consents, "download my data", leave club, anonymisation and retention jobs |
 | P1.9 | Audit log and record-history UI ("History" panel on detail pages) |
-| P1.10 | Billing: plans, subscriptions, invoices (only active with `BILLING_ENABLED`) |
+| P1.10 | Groups admin: group owners, group hierarchy, waiting lists with offers and admission (ADR 0019) |
+| P1.11 | Calendar subscriptions: secret iCal feeds (my schedule / group / club) with one-click answer links (ADR 0021) |
+| P1.12 | Protected identity UI: flags, crossed-camera icon, chat-acceptance flow, access log (ADR 0022) |
+| P1.13 | Billing: plans, subscriptions, invoices (only active with `BILLING_ENABLED`) |
 
 ## Phase 2 — Communication and compliance
 
-Chat rooms (team rooms, moderation, child-safety rules) · message board ·
+Chat rooms (group rooms, moderation, child-safety rules, protected-identity acceptance) ·
+calendar invitations by email with Accept/Decline from the native calendar (iMIP, ADR 0021) · message board ·
 bulk email with bounce handling · car pooling · documents (statutes, minutes,
 versions) · board meetings (agenda, minutes, decisions) · background-check
 tracking (clearances, country packs SE/NO) · LOK-stöd reporting and

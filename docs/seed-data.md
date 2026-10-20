@@ -50,20 +50,23 @@ Zitadel (password `demo-password-123`, documented) to test the real login flow.
 | **IK Norrbacka** (IKN) | SE / sv-SE / Europe/Stockholm | Multi-sport: football + floorball sections | `open` | Karin; hand-over to Peter **pending** his acceptance | Free plan |
 | **Fjordvik Idrettslag** (FIL) | NO / nb-NO / Europe/Oslo | Handball | `invite_only` | Lars (sole manager → "last manager cannot leave" rule) | Trial, ends in 10 days |
 
-### Teams
+### Groups
 
-| Club | Team | Players |
-|---|---|---|
-| SVK | F2017 (girls, ~9 yrs) | Elsa, Maja, Alva, + 5 generated |
-| SVK | Herr senior | Johan, Lars, + 4 generated |
-| IKN / football | P2012 (boys, ~14 yrs) | Oskar, Liam, + 6 generated |
-| IKN / floorball | F2015 (girls, ~11 yrs) | Maja, + 5 generated |
-| FIL | J2014 (girls, ~12 yrs) | Ingrid, Sofie, + 5 generated |
-| FIL | Veteran (adults) | Lars, + 4 generated |
+| Club | Group (kind) | Owners | Admission | Members |
+|---|---|---|---|---|
+| SVK | F2017 (team, girls ~9 yrs), capacity 10 | Erik, Sara | `waitlist`, **full**: 5 waiting incl. Viktor (#2), one **offer outstanding** (expires in 3 days), one admitted out of order with a reason (sibling) | Elsa, Maja, Alva, + 7 generated |
+| SVK | Herr senior (team) | Johan | `direct` | Johan, Lars, + 4 generated (one with **club-level protected identity** set by Anna) |
+| IKN | Fotboll (section) | Karin | — | parent of P2012 |
+| IKN | P2012 (team, boys ~14 yrs) | Ahmed | `direct` | Oskar, Liam, + 6 generated |
+| IKN | Innebandy (section) | — | — | parent of F2015 |
+| IKN | F2015 (training group, girls ~11 yrs) | **none** (managers act) | `waitlist`, not full, 1 waiting | Maja, Nadia, + 5 generated |
+| IKN | Styrelsen (board) | Karin | `closed` | board members |
+| FIL | J2014 (team, girls ~12 yrs) | Lars | `direct` | Ingrid, Sofie, + 5 generated |
+| FIL | Veteran (team, adults) | Lars | `direct` | Lars, + 4 generated |
 
 ## Demo scenario: named personas
 
-All names fictional. Generated extras fill teams up to realistic sizes so each
+All names fictional. Children without own login have **no email**. Generated extras fill groups up to realistic sizes so each
 club has roughly 10 named/central users plus generated players.
 
 | # | Person | Age | Has login | Relationships (what it tests) |
@@ -71,7 +74,7 @@ club has roughly 10 named/central users plus generated players.
 | 1 | **Anna Lindqvist** | 41 | yes | SVK: **chair** (board) + **club manager**. Parent of Elsa (SVK) and Oskar (IKN) → board role + parent in two clubs |
 | 2 | **Mikael Lindqvist** | 43 | yes | Parent of Elsa and Oskar; separate household from Anna (divorced) → two full guardians, separate addresses |
 | 3 | **Elsa Lindqvist** | 9 | **no** | SVK F2017 player → child without account, managed by guardians |
-| 4 | **Oskar Lindqvist** | 14 | yes | IKN P2012 player → teen with own login *and* guardians |
+| 4 | **Oskar Lindqvist** | 14 | yes | IKN P2012 player → teen with own login *and* guardians; was created by Anna as a child without email and **got his own email/login last year** (visible in history) |
 | 5 | **Erik Johansson** | 38 | yes | SVK F2017 **head coach**; IKN floorball F2015 **assistant coach**; parent of Maja → leader in two clubs + parent; background check **valid** |
 | 6 | **Maja Johansson** | 10 | no | Plays in SVK F2017 *and* IKN F2015 → one child in two clubs/sports |
 | 7 | **Sara Ahmed** | 35 | yes | SVK **club manager** + **treasurer** + F2017 **team manager** (cash desk) + parent of Alva → several roles in one club, second manager; MFA required |
@@ -89,7 +92,10 @@ club has roughly 10 named/central users plus generated players.
 | 19 | **Ola Former** | 34 | yes | Left SVK 2 years ago, scheduled for **anonymisation** → retention job |
 | 20 | **Platform Operator** | — | yes | Operator account with **no** club access; one time-limited support grant to IKN |
 | 21 | **Emma Svensson** | 29 | yes | **Signed up without invitation, no club yet** → onboarding screen (find club / create club) |
-| 22 | **Henrik Malm** | 36 | yes | Self-signed-up, has a **pending join request** to SVK for himself and his son **Viktor Malm** (8, no login) → manager approval flow |
+| 22 | **Henrik Malm** | 36 | yes | Self-signed-up, added his son **Viktor Malm** (8, no login, no email) via "Add child"; Viktor is **#2 on SVK F2017's waiting list**, which also created a pending club join request |
+| 23 | **Samira Karimi** | 39 | yes | Guardian of Nadia; **protected identity** (global, self-set); accepted the IKN F2015 "Föräldrar" chat room only |
+| 24 | **Nadia Karimi** | 11 | no | IKN F2015; **protected identity** set by Samira → invisible to other members, crossed-camera icon for leaders/managers, not in chats, no photo/stream tagging |
+| 25 | **Jonas Karimi** | 41 | yes | Second guardian of Nadia, **invited** as guardian by Samira (pending), prompted to enable protection |
 
 ## Demo scenario: activity and other data (added as modules land)
 
@@ -97,17 +103,19 @@ club has roughly 10 named/central users plus generated players.
   (some sessions below LOK-stöd thresholds to test validation).
 - Upcoming 6 weeks of trainings, 3 matches per team, one cup weekend (event with
   sign-up, deadline, and car pool: Mikael offers 3 seats, Anna requests 1).
-- Chat rooms per team: "Ledare", "Föräldrar", "Spelare" (players room only for
-  teams where players have accounts).
+- Chat rooms per group: "Ledare", "Föräldrar", "Spelare" (players room only for
+  groups where players have accounts); protected persons only where accepted.
 - SVK training plan "Volleyboll 9 år — hösttermin" shared publicly; IKN copies it.
 - Club documents: statutes (stadgar), last annual meeting minutes, a board
   meeting with agenda.
 - Team cash desk for SVK F2017 with a cup income and two expenses.
 - Two sponsor banners for SVK.
+- Calendar feeds: Anna has a "my schedule" feed including Elsa and Oskar;
+  Erik subscribes to the F2017 group feed; Ahmed has revoked an old feed token.
 - **Record history:** the seed writes through the same services as the app,
   with the persona as actor, so history exists from the start. It also replays a
   few changes over time so the History panel has content: Anna moved Elsa
-  between teams, Erik updated his own phone number, Anna ended Peter's
+  between groups, Erik updated his own phone number, Anna ended Peter's
   manager role, Sara corrected an attendance mark, Karin approved Sofie's
   earlier application, and one change made by a system job.
 
