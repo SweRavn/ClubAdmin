@@ -67,6 +67,9 @@ export function buildOpenApiDocument(
         ...(isPublic
           ? {}
           : { 401: problemResponse("Not logged in"), 403: problemResponse("Not allowed") }),
+        ...("permission" in endpoint.access
+          ? { 404: problemResponse("Not found, or not visible to the caller") }
+          : {}),
         ...(endpoint.request ? { 400: problemResponse("Invalid request") } : {}),
         429: problemResponse("Too many requests"),
         500: problemResponse("Unexpected error"),
@@ -74,7 +77,9 @@ export function buildOpenApiDocument(
     };
     if (!isPublic) route.security = [{ bearer: [] }];
     if ("permission" in endpoint.access) {
-      route.description = `Requires permission \`${endpoint.access.permission}\`.`;
+      route.description =
+        `Requires permission \`${endpoint.access.permission}\` on the ${endpoint.access.resource}. ` +
+        "Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.";
     }
     registry.registerPath(route);
   }

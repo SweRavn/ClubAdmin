@@ -6,8 +6,9 @@ import { z } from "../zod.ts";
 import { SessionMetadataSchema } from "./sessions.ts";
 
 /**
- * A person as others may see them. Produced only by the PersonVisibility
- * presenter (ADR 0022); the stub in P0.6 shows names, P0.7 applies the rules.
+ * A person as the viewer may see them. Produced only by the PersonPresenter
+ * (apps/api/src/modules/authorization/presenters, ADR 0022): people the
+ * viewer may not see are left out of lists entirely.
  */
 export const PersonSummarySchema = z
   .object({
@@ -15,8 +16,8 @@ export const PersonSummarySchema = z
     displayName: z.string(),
     givenName: z.string(),
     familyName: z.string(),
-    /** Show the crossed-camera icon: do not photograph, film or share. */
-    protectedIdentity: z.boolean(),
+    /** Protected identity: show the crossed-camera icon; do not photograph, film, publish or share. */
+    protected: z.boolean(),
   })
   .openapi("PersonSummary");
 export type PersonSummary = z.infer<typeof PersonSummarySchema>;

@@ -60,9 +60,23 @@ later phase. Backup and disaster recovery are in
   self-hosted deployment, in both API and web (tests).
 
 ### Authorization
-- Deny by default; CI fails if an endpoint has no policy.
-- Relationship-based policies (see `domain-model.md`), each with allow and
-  deny tests.
+- Deny by default: the API refuses to start (and the test suite fails) if a
+  route has no `@Endpoint`, or an endpoint's permission has no policy.
+- Relationship-based policies (see `domain-model.md`, "Permissions"), each
+  with allow and deny tests; a matrix test runs every permission endpoint for
+  manager, registrar, owner, coach, member, parent, relative, outsider (another
+  club) and operator.
+- Denials do not reveal existence: 404 for anything in a club the caller has
+  no relationship with, and for people they may not see; 403 only when the
+  caller already knows the resource (ADR 0025).
+- Guardians act for a ward only with the `act_on_behalf` right
+  (`X-On-Behalf-Of`), limited to the ward's memberships; both are recorded.
+- Platform operators have no club access unless the club grants time-limited
+  support access (`support_access_grants`), used only with a second factor;
+  protected persons stay hidden from them.
+- Relationship and protected sets are cached in Valkey with version keys,
+  bumped by the worker on domain events; a change applies on the next request
+  after the event is handled (under a second; tested).
 - Postgres RLS as a second, independent barrier, enforced for the
   application's own database role: the API and worker connect as
   `clubadmin_app`, which cannot bypass RLS, run DDL, or change history and
@@ -72,8 +86,15 @@ later phase. Backup and disaster recovery are in
   "Database").
 - Database errors are rethrown without query parameters, and the logger
   redacts `detail`/`params` fields, so values never reach the logs.
-- Field-level filtering: list endpoints return only fields the caller may see
-  (e.g. coaches see guardians' phone numbers, not their addresses).
+- Field-level filtering: endpoints return only fields the caller may see
+  (e.g. coaches see guardians' phone numbers, not addresses; addresses only
+  managers and registrars, and only if the person shared them with the club;
+  `domain-model.md`, "Field visibility").
+- Protected identity: names leave the API only through `PersonPresenter`
+  (lint rule `clubadmin/person-names-in-presenters`); rosters read
+  `app.visible_group_members`, which hides protected persons unless the
+  transaction is marked privileged; every view of a protected person's
+  profile by someone else is audited (`person.protected.viewed`).
 
 ### Data protection
 - TLS 1.3 everywhere (Caddy), HSTS preload, internal traffic on a private

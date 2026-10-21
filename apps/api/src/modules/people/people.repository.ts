@@ -21,6 +21,27 @@ export async function findPeople(tx: Tx, ids: readonly string[]): Promise<Person
     .where(inArray(people.id, [...ids]));
 }
 
+/** What the person presenter needs (names and the global protected flag). */
+export async function findSummaries(tx: Tx, ids: readonly string[]): Promise<PersonSummaryRow[]> {
+  if (ids.length === 0) return [];
+  return tx
+    .select({
+      id: people.id,
+      givenName: people.givenName,
+      familyName: people.familyName,
+      protectedIdentity: people.protectedIdentity,
+    })
+    .from(people)
+    .where(inArray(people.id, [...ids]));
+}
+
+export interface PersonSummaryRow {
+  id: string;
+  givenName: string;
+  familyName: string;
+  protectedIdentity: boolean;
+}
+
 export async function findPerson(tx: Tx, id: string): Promise<PersonRow | null> {
   const [row] = await tx.select().from(people).where(eq(people.id, id));
   return row ?? null;

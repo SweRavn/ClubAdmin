@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Permission names (CLAUDE.md rule 2, ADR 0006). Every API endpoint declares
+// one of these (or is public / for the logged-in person's own data); the
+// authorization module (apps/api/src/modules/authorization) has exactly one
+// policy per permission. docs/domain-model.md lists who has each.
+
+export const PERMISSIONS = [
+  "club.read",
+  "club.settings.update",
+  "club.roles.manage",
+  "group.read",
+  "group.update",
+  "group.owners.manage",
+  "group.members.read",
+  "group.members.manage",
+  "person.profile.read",
+  "person.profile.update",
+  "person.protection.set",
+] as const;
+export type Permission = (typeof PERMISSIONS)[number];
+
+export const isPermission = (value: string): value is Permission =>
+  (PERMISSIONS as readonly string[]).includes(value);
+
+/** A guardian acting for a ward sends the ward's person ID in this header (ADR 0006). */
+export const ON_BEHALF_OF_HEADER = "x-on-behalf-of";

@@ -76,6 +76,15 @@ Built so far (P0.5, `apps/api/src/modules/`, no HTTP endpoints yet; wired in
 | `groups` | `groups`, `group_owners`, `seasons`, `group_seasons` | Hierarchy, archive, owners (`allowedBy: club_manager \| group_owner`) |
 | `memberships` | `club_memberships`, `group_memberships` | Join (per `join_policy`), add, approve, leave, group functions, "my clubs and groups" |
 | `guardianships` | `guardianships`, `guardian_invitations` | Add child, invite and accept co-guardian, rights, ending rules |
+| `authorization` | `platform_operators`, `support_access_grants` (reads all relationship tables) | Relationship sets, policies, resource loaders, `PersonVisibility`, `PersonPresenter`, profile field filtering (P0.7, ADR 0025) |
+| `person-profiles` | — | `GET /people/:personId`: person, club profile and guardians, filtered per relationship |
+
+Read endpoints (P0.7): `GET /api/v1/me/clubs`, `/me/wards` (own data),
+`/clubs/:clubId`, `/clubs/:clubId/groups` (`club.read`), `/groups/:groupId`
+(`group.read`), `/groups/:groupId/members` (`group.members.read`, keyset
+pagination by name, total count as aggregate), `/people/:personId?clubId=`
+(`person.profile.read`). Lists page with `cursor` (the last item's ID, never
+data) and `limit`.
 
 Services take an `ActorContext` or `TenantContext` and open their own
 transaction; `…InTx(tx, …)` variants let another module's service join it.
@@ -239,8 +248,8 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   Mapping subject → account is cached in memory for 5 minutes, so a request
   needs no database query (validation p95 < 1 ms).
 - **Endpoint access** in `@Endpoint`: `{ public: true }`, `{ authenticated:
-  true }` (the person's own data) or `{ permission }` (P0.7; refused until
-  then). `@RequireMfa()` answers `403 mfa-required` without a second factor;
+  true }` (the person's own data) or `{ permission, resource }` (checked by
+  the authorization module, below). `@RequireMfa()` answers `403 mfa-required` without a second factor;
   `@RecentAuth(minutes)` answers `403 reauthentication-required`.
 - **Provisioning:** the first request with an unknown subject creates person
   and account from the ID token's verified email and names. An email that
@@ -287,21 +296,41 @@ module. See [ADR 0006](adr/0006-authorization.md).
 
 - Permissions are derived from relationships: *membership in club*, *role in
   club* (board, manager, treasurer…), *owner of group*, *function in group* (member, coach,
-  manager), *guardian of person*, *employee of club*.
-- Each endpoint declares a permission such as `activity.attendance.write` on a
-  resource; the policy resolves it from the relationships.
+  manager), *guardian of person*, *employee of club*, *support access* (operators).
+- Each endpoint declares `access: { permission, resource }`, e.g.
+  `{ permission: "group.members.read", resource: "group" }`. Permission names
+  are in `packages/shared/src/permissions.ts`; there is exactly one policy per
+  permission (`authorization.policy.ts`, `definePolicy(...)`, helpers such as
+  `isClubManager`, `hasClubRole`, `ownsGroup` (incl. parent groups),
+  `hasGroupFunction`, `isGuardianOf(personId, right)`, `isSelf`). The API
+  refuses to start if a route has no `@Endpoint`, or an endpoint's permission
+  has no policy, names another resource kind or lacks the path parameter.
+- The `AuthGuard` builds the request's actor (`RequestAuthorization`, read
+  with `@CurrentAuthorization()`), the resource loader reads the minimal scope
+  (`:clubId`; `:groupId` with its club and ancestors; `:personId` with
+  `?clubId`), and the policy decides. Denials: 404 without a relationship with
+  the resource's club or for people, 403 otherwise (ADR 0025).
 - The relationship set for a person is loaded once per request (one query) and
-  cached in Valkey with versioned invalidation on membership/role changes.
-- Guardians act **on behalf of** a child: the API records both the actor and the
-  subject in audit events.
+  cached in Valkey under a version key; the worker bumps versions on domain
+  events (`authorizationCacheHandler`), so changes apply on the next request.
+- Guardians act **on behalf of** a child with `X-On-Behalf-Of: <personId>`
+  (needs `act_on_behalf`); the policy evaluates the child's memberships and
+  the services record both the guardian (actor) and the child (on behalf of)
+  in history and audit.
 
 ## Person visibility (protected identity)
 
 Any response, export, notification, feed or history view that mentions a
 person passes through the `PersonVisibility` service (ADR 0022), which returns
 *full*, *full with protected icon* or *hidden* for each person, computed in
-bulk per request from cached data. Repositories return person IDs; presenters
-resolve names. This is enforced by lint rules and tests.
+bulk per request from the relationship set and the club's cached protected
+set. Repositories return person IDs; `PersonPresenter.present(viewer, clubId,
+rows)` (in `modules/authorization/presenters/`) is the only code that turns
+person rows into `PersonSummary` (hidden people left out; counts reported
+separately) and `presentActors` masks hidden actors in history views as
+`{ kind: "protected" }`. The lint rule `clubadmin/person-names-in-presenters`
+forbids name fields and name columns elsewhere; the view
+`app.visible_group_members` is the database backstop for rosters.
 
 ## API style
 

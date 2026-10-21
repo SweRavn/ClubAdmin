@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// The core domain modules (P0.5). They have no HTTP endpoints yet; endpoints
-// come with authorization (P0.7).
+// The core domain modules (P0.5) and their read endpoints (P0.7).
 import { Module } from "@nestjs/common";
 
 import { AccountsModule } from "./modules/accounts/index.ts";
@@ -12,6 +11,7 @@ import { MembershipsModule } from "./modules/memberships/index.ts";
 import { OnboardingModule } from "./modules/onboarding/index.ts";
 import { PeopleModule } from "./modules/people/index.ts";
 import { PersonMergeModule } from "./modules/person-merge/index.ts";
+import { PersonProfilesModule } from "./modules/person-profiles/index.ts";
 import { RolesModule } from "./modules/roles/index.ts";
 
 const MODULES = [
@@ -25,6 +25,7 @@ const MODULES = [
   GroupsModule,
   MembershipsModule,
   GuardianshipsModule,
+  PersonProfilesModule,
 ];
 
 @Module({ imports: MODULES, exports: MODULES })

@@ -9,11 +9,13 @@ import {
   type TestDatabase,
 } from "@clubadmin/db/testing";
 import { createLogger } from "@clubadmin/server-kit";
-import { uuidv7 } from "@clubadmin/shared";
-import { runOnce } from "graphile-worker";
+import { relationshipVersionKey, uuidv7 } from "@clubadmin/shared";
+import { run, runOnce } from "graphile-worker";
+import { Redis } from "ioredis";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { graphileLogger } from "./graphile-logger.ts";
+import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { flagAdultWards } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 
@@ -125,5 +127,44 @@ describe("guardianships:flag_adult_wards", () => {
       [ids.adult],
     );
     expect(events[0]?.n).toBe(1);
+  });
+});
+
+describe("authorization cache invalidation", () => {
+  it("bumps the relationship version within a second of a committed role change", async () => {
+    const valkey = new Redis(process.env.VALKEY_URL ?? "redis://127.0.0.1:6379");
+    const runner = await run({
+      connectionString: t.url("app"),
+      concurrency: 2,
+      noHandleSignals: true,
+      pollInterval: 60_000, // LISTEN/NOTIFY must deliver the job, not polling
+      logger,
+      taskList: createTaskList({
+        db: t.db,
+        outboxHandlers: createOutboxHandlers({ valkey }),
+        historyRetentionMonths: 24,
+        historyPartitionsAhead: 3,
+      }),
+    });
+    try {
+      const [club = ""] = createTestClubs(1);
+      const personId = uuidv7();
+      const key = relationshipVersionKey(personId);
+      const started = performance.now();
+      await t.db.withTenant(asPerson(uuidv7(), club), (tx) =>
+        outbox.publish(tx, "role.changed", { clubId: club, personId }),
+      );
+      let version: string | null = null;
+      while (version === null && performance.now() - started < 5_000) {
+        version = await valkey.get(key);
+        if (version === null) await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      expect(version).toBe("1");
+      expect(performance.now() - started).toBeLessThan(1_000);
+      expect(await valkey.ttl(key)).toBeGreaterThan(0);
+    } finally {
+      await runner.stop();
+      valkey.disconnect();
+    }
   });
 });

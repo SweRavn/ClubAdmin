@@ -122,6 +122,9 @@ export const clubProfiles = pgTable(
     unique("club_profiles_person_unique").on(t.clubId, t.personId),
     unique("club_profiles_member_number_unique").on(t.clubId, t.memberNumber),
     index("club_profiles_person_idx").on(t.personId),
+    index("club_profiles_protected_idx")
+      .on(t.clubId)
+      .where(sql`${t.protectedIdentityClub}`),
     check("club_profiles_shared_fields", subsetOf(t.sharedFields, SHAREABLE_PERSON_FIELDS)),
     check("club_profiles_member_number", sql`${t.memberNumber} > 0`),
   ],

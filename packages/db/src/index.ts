@@ -2,6 +2,11 @@
 // @clubadmin/db: the only way application code reaches PostgreSQL.
 
 export { audit, type AuditEvent } from "./audit.ts";
+export {
+  authorizationCacheHandler,
+  type CacheVersions,
+  invalidatedKeys,
+} from "./authorization-cache.ts";
 export { inClub } from "./club-context.ts";
 export type { ActorContext, ActorKind, TenantContext } from "./context.ts";
 export { createDatabase, type Database, type Tx } from "./database.ts";

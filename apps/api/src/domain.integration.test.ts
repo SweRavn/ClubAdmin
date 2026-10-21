@@ -48,6 +48,9 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO invitations (club_id, kind, email, token_hash, expires_at, created_by_person_id)
         VALUES (${a.id}, 'email', 'nora@example.test', 'hash', now() + interval '7 days', ${a.manager.id})`);
+      await tx.execute(sql`
+        INSERT INTO support_access_grants (club_id, operator_person_id, granted_by_person_id, reason, expires_at)
+        VALUES (${a.id}, ${family.guardian.id}, ${a.manager.id}, 'Import help', now() + interval '1 day')`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(

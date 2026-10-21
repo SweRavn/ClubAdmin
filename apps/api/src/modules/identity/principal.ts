@@ -6,25 +6,10 @@ import type { ActorContext } from "@clubadmin/db";
 import { createParamDecorator, type ExecutionContext, SetMetadata } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 
+import type { Principal } from "../../platform/http/principal.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
 
-export interface Principal {
-  /** Null for DEV_AUTH personas without a login (children). */
-  accountId: string | null;
-  personId: string;
-  /** Logged in with a second factor (amr). */
-  mfa: boolean;
-  authTime: Date | null;
-  /** Identity-provider session (Zitadel sid; DEV_AUTH: the BFF session). */
-  sessionId: string | null;
-  dev: boolean;
-}
-
-declare module "fastify" {
-  interface FastifyRequest {
-    principal?: Principal;
-  }
-}
+export type { Principal };
 
 export const REQUIRE_MFA = "clubadmin:require-mfa";
 export const RECENT_AUTH = "clubadmin:recent-auth";

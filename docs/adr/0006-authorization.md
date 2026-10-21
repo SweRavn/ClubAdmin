@@ -1,6 +1,6 @@
 # 0006 — In-process relationship-based authorization
 
-**Status:** Accepted
+**Status:** Accepted. Implemented in P0.7; details in [ADR 0025](0025-authorization-engine.md).
 
 **Context.** Permissions depend on relationships: role in club, function in
 team, guardian of child, employee. Simple role lists cannot express "parent of

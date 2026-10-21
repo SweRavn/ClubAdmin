@@ -33,6 +33,7 @@
     "@clubadmin/server-kit": "workspace:*",
     "@clubadmin/shared": "workspace:*",
     "graphile-worker": "catalog:",
+    "ioredis": "catalog:",
     "zod": "catalog:"
   }
 }

@@ -224,6 +224,35 @@ export class MembershipsService {
     return this.db.withTenant(context, (tx) => repo.groupMembersQuery(tx, context.clubId, groupId));
   }
 
+  /**
+   * A page of the group's roster (IDs and functions; names go through the
+   * PersonPresenter). Protected members are left out by the database unless
+   * the context is viewerPrivileged (set by the authorization module).
+   */
+  groupMembersPage(
+    context: TenantContext,
+    groupId: string,
+    page: { cursor?: string | undefined; limit: number },
+  ): Promise<{
+    items: { personId: string; functions: GroupFunction[] }[];
+    nextCursor: string | null;
+    totalCount: number;
+  }> {
+    return this.db.withTenant(context, async (tx) => {
+      const result = await repo.groupMembersPage(tx, context.clubId, groupId, {
+        cursor: page.cursor ?? null,
+        limit: page.limit + 1,
+      });
+      if (!result.cursorFound) throw new DomainError("invalid_cursor");
+      const items = result.items.slice(0, page.limit);
+      return {
+        items,
+        nextCursor: result.items.length > page.limit ? items.at(-1)!.personId : null,
+        totalCount: result.totalCount,
+      };
+    });
+  }
+
   /** The person's (or ward's) clubs and groups across clubs, through the own-relationships policies. */
   myClubsAndGroups(context: ActorContext, personId: string): Promise<MyClubsAndGroups> {
     return this.db.withActor(context, async (tx) => {

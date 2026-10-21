@@ -6,6 +6,8 @@ export const workerConfigSchema = z.object({
   ...baseConfigShape,
   /** clubadmin_app connection: jobs and their database work are subject to row-level security. */
   DATABASE_URL: z.string().min(1, "required: the worker stores its jobs in PostgreSQL"),
+  /** Valkey of the API: domain events invalidate its authorization caches. */
+  VALKEY_URL: z.string().optional(),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(5),
   /** Fallback polling interval; jobs are normally picked up instantly via LISTEN/NOTIFY. */
   WORKER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(2_000),

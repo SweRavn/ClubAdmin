@@ -149,3 +149,59 @@ export async function activeMemberIds(tx: Tx, clubId: string): Promise<string[]>
 }
 
 export type GroupMember = { id: string; personId: string; function: GroupFunction };
+
+export interface GroupMembersPageRow {
+  totalCount: number;
+  cursorFound: boolean;
+  items: { personId: string; functions: GroupFunction[] }[];
+}
+
+/**
+ * One page of a group's roster, ordered by name, from app.visible_group_members
+ * (protected persons are left out unless the transaction is viewerPrivileged,
+ * ADR 0022), plus the total number of members as an aggregate. One statement;
+ * served by group_memberships_group_idx. Returns IDs only.
+ */
+export async function groupMembersPage(
+  tx: Tx,
+  clubId: string,
+  groupId: string,
+  page: { cursor: string | null; limit: number },
+): Promise<GroupMembersPageRow> {
+  const { rows } = await tx.execute<{
+    total_count: number;
+    cursor_found: boolean;
+    items: GroupMembersPageRow["items"];
+  }>(groupMembersPageQuery(clubId, groupId, page));
+  const row = rows[0]!;
+  return { totalCount: row.total_count, cursorFound: row.cursor_found, items: row.items };
+}
+
+/** The statement of groupMembersPage (query-plans test). */
+export function groupMembersPageQuery(
+  clubId: string,
+  groupId: string,
+  page: { cursor: string | null; limit: number },
+) {
+  return sql`
+    WITH anchor AS (
+      SELECT v.sort_name, v.person_id FROM app.visible_group_members v
+      WHERE v.club_id = ${clubId} AND v.group_id = ${groupId} AND v.person_id = ${page.cursor}
+      LIMIT 1
+    ), page AS (
+      SELECT v.person_id, array_agg(v.function ORDER BY v.function) AS functions,
+        row_number() OVER (ORDER BY v.sort_name, v.person_id) AS ord
+      FROM app.visible_group_members v
+      WHERE v.club_id = ${clubId} AND v.group_id = ${groupId}
+        AND (${page.cursor}::uuid IS NULL
+          OR (v.sort_name, v.person_id) > (SELECT a.sort_name, a.person_id FROM anchor a))
+      GROUP BY v.person_id, v.sort_name
+      ORDER BY v.sort_name, v.person_id
+      LIMIT ${page.limit}
+    )
+    SELECT
+      (SELECT count(DISTINCT gm.person_id)::int FROM public.group_memberships gm
+       WHERE gm.club_id = ${clubId} AND gm.group_id = ${groupId} AND gm.valid_to IS NULL) AS total_count,
+      (${page.cursor}::uuid IS NULL OR EXISTS (SELECT 1 FROM anchor)) AS cursor_found,
+      coalesce((SELECT jsonb_agg(jsonb_build_object('personId', p.person_id, 'functions', p.functions) ORDER BY p.ord) FROM page p), '[]') AS items`;
+}

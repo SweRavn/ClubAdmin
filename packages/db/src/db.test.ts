@@ -77,7 +77,13 @@ describe("settingsFor", () => {
       "app.request_id": "r1",
       "app.actor_kind": "person",
       "app.ip_hash": "h",
+      "app.viewer_privileged": "",
     });
+    expect(
+      settingsFor({ actorKind: "person", personId }, clubId, { viewerPrivileged: true })[
+        "app.viewer_privileged"
+      ],
+    ).toBe("on");
   });
 
   it("rejects invalid contexts", () => {

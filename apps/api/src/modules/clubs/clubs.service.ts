@@ -4,6 +4,7 @@
 
 import { getCountryPack, isSupportedCountry } from "@clubadmin/country-packs";
 import {
+  type ActorContext,
   audit,
   type Database,
   isUniqueViolation,
@@ -69,6 +70,11 @@ export class ClubsService {
   /** Clubs visible to the transaction (the current club, or clubs the actor or their wards belong to). */
   findClubsInTx(tx: Tx, clubIds: readonly string[]): Promise<Club[]> {
     return repo.findClubs(tx, clubIds);
+  }
+
+  /** Clubs the actor (or their ward) belongs to or holds a role in, by ID. */
+  findClubs(context: ActorContext, clubIds: readonly string[]): Promise<Club[]> {
+    return this.db.withActor(context, (tx) => repo.findClubs(tx, clubIds));
   }
 
   /** All clubs, without an actor (worker jobs and development tooling). */

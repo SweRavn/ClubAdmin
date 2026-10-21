@@ -2,9 +2,11 @@
 import { Module } from "@nestjs/common";
 
 import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform/infra/database.ts";
+import { ClubsController } from "./clubs.controller.ts";
 import { ClubsService } from "./clubs.service.ts";
 
 @Module({
+  controllers: [ClubsController],
   providers: [
     {
       provide: ClubsService,

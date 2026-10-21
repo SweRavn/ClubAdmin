@@ -20,6 +20,11 @@ export interface ActorContext {
 
 export interface TenantContext extends ActorContext {
   clubId: string;
+  /**
+   * The viewer may see protected persons in what this transaction reads
+   * (app.visible_group_members, ADR 0022). Set only by the authorization module.
+   */
+  viewerPrivileged?: boolean;
 }
 
 export interface Settings {
@@ -29,6 +34,7 @@ export interface Settings {
   "app.request_id": string;
   "app.actor_kind": ActorKind;
   "app.ip_hash": string;
+  "app.viewer_privileged": "on" | "";
 }
 
 function requireUuid(name: string, value: string | null | undefined): string {
@@ -41,6 +47,7 @@ function requireUuid(name: string, value: string | null | undefined): string {
 export function settingsFor(
   actor: { actorKind: ActorKind } & Omit<ActorContext, "actorKind">,
   clubId?: string | null,
+  options: { viewerPrivileged?: boolean | undefined } = {},
 ): Settings {
   if ((actor.actorKind === "person" || actor.actorKind === "operator") && !actor.personId) {
     throw new Error(`actorKind "${actor.actorKind}" requires personId`);
@@ -53,5 +60,6 @@ export function settingsFor(
     "app.request_id": actor.requestId ?? "",
     "app.actor_kind": actor.actorKind,
     "app.ip_hash": actor.ipHash ?? "",
+    "app.viewer_privileged": options.viewerPrivileged ? "on" : "",
   };
 }

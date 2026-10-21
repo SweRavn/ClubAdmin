@@ -83,6 +83,18 @@ budgets are requirements; CI measures them.
   (`guardianships_guardian_idx`). The test fails on sequential scans and keeps
   the plans as snapshots; the nightly job reruns it on the `load` scenario
   once P0.8 provides it.
+- Authorization (P0.7, `authorization.integration.test.ts`, local Docker,
+  requests injected in-process): the relationship set is one query (none with
+  a warm Valkey cache); a permission check with a warm cache takes about
+  0.002 ms (budget 0.2 ms); `GET /groups/:id/members` for 41 members, four of
+  them protected, runs 3 queries (group scope, roster page, names; the
+  protected set comes from the cache): median about 15 ms, p95 about 21 ms
+  (budget 50 ms). Row-level security dominates; its helpers check one
+  condition per statement (ADR 0025), which took the median from 32 ms. Queries are
+  counted with `countQueries` from `@clubadmin/db/testing` (statements, not
+  BEGIN/COMMIT). A role change reaches the API through the worker in well
+  under a second (`worker.integration.test.ts`). The query-plans test also
+  covers the relationship set, a roster page and a club's protected set.
 - Lighthouse CI on key web pages per PR.
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.

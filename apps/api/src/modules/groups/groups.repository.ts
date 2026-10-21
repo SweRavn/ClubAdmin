@@ -131,3 +131,38 @@ export async function upsertGroupSeason(
     .returning({ id: groupSeasons.id });
   return row!.id;
 }
+
+/**
+ * A page of the club's groups ordered by name (keyset: name, id); archived
+ * groups only if asked. Served by groups_club_idx. cursorFound is false when
+ * the cursor is not a group of the club.
+ */
+export async function listGroupsPage(
+  tx: Tx,
+  clubId: string,
+  page: { cursor: string | null; limit: number; includeArchived: boolean },
+): Promise<{ rows: GroupRow[]; cursorFound: boolean }> {
+  let anchor: { name: string; id: string } | undefined;
+  if (page.cursor) {
+    [anchor] = await tx
+      .select({ name: groups.name, id: groups.id })
+      .from(groups)
+      .where(and(eq(groups.clubId, clubId), eq(groups.id, page.cursor)));
+    if (!anchor) return { rows: [], cursorFound: false };
+  }
+  const rows = await tx
+    .select()
+    .from(groups)
+    .where(
+      and(
+        eq(groups.clubId, clubId),
+        page.includeArchived ? undefined : isNull(groups.archivedAt),
+        anchor
+          ? sql`(${groups.name}, ${groups.id}) > (${anchor.name}, ${anchor.id}::uuid)`
+          : undefined,
+      ),
+    )
+    .orderBy(groups.name, groups.id)
+    .limit(page.limit);
+  return { rows, cursorFound: true };
+}

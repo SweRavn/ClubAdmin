@@ -5,8 +5,8 @@
 
 import type { PersonaList } from "@clubadmin/shared";
 
-import { presentPerson } from "../../platform/visibility/person-presenter.ts";
 import type { AccountsService } from "../accounts/index.ts";
+import type { PersonPresenter } from "../authorization/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import type { MembershipsService } from "../memberships/index.ts";
 import type { PeopleService } from "../people/index.ts";
@@ -21,6 +21,7 @@ export class DevPersonasService {
     clubs: ClubsService;
     memberships: MembershipsService;
     roles: RolesService;
+    presenter: PersonPresenter;
   };
 
   constructor(deps: DevPersonasService["deps"]) {
@@ -48,7 +49,7 @@ export class DevPersonasService {
         .filter((p) => !p.mergedIntoPersonId && !p.anonymizedAt)
         .map((p) => ({
           // The picker is a development tool; it shows whom you log in as.
-          person: presentPerson(p.id, { ...p }),
+          person: this.deps.presenter.presentSelf(p),
           hasAccount: true,
           clubs: clubsOf.get(p.id) ?? [],
         }))

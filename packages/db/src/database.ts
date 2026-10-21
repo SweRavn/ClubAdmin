@@ -87,7 +87,10 @@ export function createDatabase(options: PoolOptions): Database {
   return {
     withTenant: async (context, fn) => {
       if (!context.clubId) throw new Error("withTenant requires clubId");
-      return run(settingsFor(context, context.clubId), fn);
+      return run(
+        settingsFor(context, context.clubId, { viewerPrivileged: context.viewerPrivileged }),
+        fn,
+      );
     },
     withActor: async (context, fn) => run(settingsFor(context), fn),
     withSystem: async (jobName, { clubId }, fn) =>

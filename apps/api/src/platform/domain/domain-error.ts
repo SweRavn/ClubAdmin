@@ -13,6 +13,8 @@ export const DOMAIN_ERRORS = {
   not_found: "not-found",
   not_allowed: "forbidden",
   invalid_input: "validation",
+  /** A pagination cursor that is not an item of the list (any more). */
+  invalid_cursor: "bad-request",
   // people
   protected_address: "validation",
   invalid_personal_identity_number: "validation",

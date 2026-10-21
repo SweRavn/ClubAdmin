@@ -252,10 +252,12 @@ who must not be exposed.
   has been informed; applies in that club).
 - Only the person/guardian (global flag) or a club manager (club flag) can
   remove it; every change is audited and notifies club managers.
-- **Who can see a protected person:** club managers, registrars, and the
-  owners/leaders of groups the person belongs to (they must run activities and
-  take attendance). They see a **camera-with-strike-through icon** next to the
-  name, meaning: do not photograph, film, publish or share.
+- **Who can see a protected person:** the person, their family (guardians and
+  wards), club managers, registrars, and the owners (including owners of parent
+  groups) and leaders of groups the person belongs to (they must run
+  activities and take attendance). They see a **camera-with-strike-through
+  icon** next to the name, meaning: do not photograph, film, publish or share.
+  Platform operators with support access never see them.
 - **Everyone else sees nothing:** not in member lists, group rosters,
   attendance/response lists, event participant lists, car pools, search,
   history/audit actor names, chat member lists, photos or streams. Counts may
@@ -297,9 +299,11 @@ pass through the visibility service, so protected persons appear as
 "Protected member" to those not allowed to see them.
 
 ### Platform tables
-`platform_operators`, `support_access_grants` (time-limited, club-approved
-access for support), `subscriptions`, `plans`, `invoices` (billing module,
-optional), `feature_flags`.
+`platform_operators` (`person_id`, validity; written only by operator
+tooling), `support_access_grants` (club-owned: `operator_person_id`,
+`granted_by_person_id`, `reason`, `expires_at`, `revoked_at`; time-limited,
+club-approved access for support, P0.7), `subscriptions`, `plans`,
+`invoices` (billing module, optional), `feature_flags`.
 
 ## Access in the database (ADR 0023)
 
@@ -323,6 +327,49 @@ only by the person, their family and the clubs they belong to.
 | `club_manager` of C | Everything in C's administration: settings, roles (incl. other managers and group owners), members, join requests, waiting lists, history; with MFA |
 | Signed-up person without club | Own profile, add children, search clubs, send join requests, join waiting lists, create a club (if allowed) |
 | Platform operator | Nothing in club data, unless the club grants time-limited support access |
+
+## Permissions (implemented policies)
+
+The authorization module (ADR 0006, ADR 0025) has one policy per permission
+(`packages/shared/src/permissions.ts`, policies in
+`apps/api/src/modules/authorization/authorization.policy.ts`). "Insider" means
+any current relationship with the club: active or paused member, a club role,
+a current employment, unexpired support access (operators, with a second
+factor), or guardian of an active or paused member. Without one, everything in
+the club answers 404; with one but without the permission, 403. "Owner"
+includes owners of parent groups; "leader" is any function except `member`.
+
+| Permission | Resource | Allowed for |
+|---|---|---|
+| `club.read` | club | insiders |
+| `club.settings.update` | club | club managers, with MFA |
+| `club.roles.manage` | club | club managers, with MFA |
+| `group.read` | group | insiders; archived groups only managers, registrars and owners |
+| `group.update` | group | club managers, owners |
+| `group.owners.manage` | group | club managers; owners if the club allows co-owners |
+| `group.members.read` | group | managers, registrars, owners; for active groups also everyone in the group, guardians (with `act_on_behalf`) of its members, support access |
+| `group.members.manage` | group | club managers, owners |
+| `person.profile.read` | person (`?clubId`) | the person and their guardians with `act_on_behalf`; in the club: managers and registrars, owners and leaders of the person's groups, and (unless the person is protected) people in the same group, their guardians, support access |
+| `person.profile.update` | person | the person, guardians with `act_on_behalf` |
+| `person.protection.set` | person | global flag: the person, guardians with `act_on_behalf` (the service requires a parent or legal guardian); club flag (`?clubId`): club managers, with MFA |
+
+Endpoints for "my" data (`/me`, `/me/clubs`, `/me/wards`) need only a login.
+A guardian acting for a ward (`X-On-Behalf-Of`) is evaluated as the ward,
+with the ward's memberships only (never their roles, ownerships, leader
+functions or employments); history and audit record both.
+
+### Field visibility
+
+`GET /api/v1/people/:personId?clubId=` returns fields by relationship
+(`profileAccess`). Phone, address and gender reach a club only if the person
+shared them with it (`club_profiles.shared_fields`).
+
+| Viewer | Fields |
+|---|---|
+| The person, guardian with `act_on_behalf` | everything: birth date, gender, phone, address, club profile (member number, membership, groups), guardians with phone numbers |
+| Club manager, registrar | birth date; shared phone, gender and address; member number, membership, groups; guardians with phone numbers |
+| Owner or leader of one of the person's groups | birth date, shared phone, member number, groups, guardians with phone numbers |
+| Same group, their guardians, support access | name only (never a protected person) |
 
 ## Age and child-safety rules (configured per country pack)
 

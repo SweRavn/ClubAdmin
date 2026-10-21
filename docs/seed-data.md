@@ -18,6 +18,14 @@ pnpm db:seed --scenario minimal   # one club, three people (fast unit/integratio
 Open question before P0.8: where the seed runner lives, since it should use the
 domain services in `apps/api` and packages cannot import apps ([#4](https://github.com/SweRavn/ClubAdmin/issues/4)).
 
+Until then, integration tests build fixtures with the builders in
+`apps/api/src/testing/`. The **matrix** scenario (`scenarios.ts`, P0.7) has
+one person per kind of relationship for the permission tests: in club A a
+section with a team, a club manager, a registrar, the section's owner, the
+team's head coach, an adult member, a protected adult member, a child with a
+parent and a relative (`view_schedule` only); club B's manager as the
+outsider; and a platform operator without support access.
+
 ## Rules
 
 - Seeding is **deterministic**: fixed UUIDs for the named personas and clubs

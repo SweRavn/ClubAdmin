@@ -6,6 +6,11 @@ import { API_CONFIG, type ApiConfig } from "../../config.ts";
 import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform/infra/database.ts";
 import { VALKEY_CLIENT, type ValkeyClient } from "../../platform/infra/valkey.ts";
 import { AccountsModule, AccountsService } from "../accounts/index.ts";
+import {
+  AuthorizationModule,
+  AuthorizationService,
+  PersonPresenter,
+} from "../authorization/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
@@ -24,7 +29,14 @@ export class IdentityModule {
   static register(config: Pick<ApiConfig, "DEV_AUTH">): DynamicModule {
     return {
       module: IdentityModule,
-      imports: [AccountsModule, PeopleModule, ClubsModule, MembershipsModule, RolesModule],
+      imports: [
+        AccountsModule,
+        AuthorizationModule,
+        PeopleModule,
+        ClubsModule,
+        MembershipsModule,
+        RolesModule,
+      ],
       controllers: config.DEV_AUTH ? [MeController, DevController] : [MeController],
       providers: [
         {
@@ -59,20 +71,32 @@ export class IdentityModule {
         },
         {
           provide: DevPersonasService,
-          inject: [AccountsService, PeopleService, ClubsService, MembershipsService, RolesService],
+          inject: [
+            AccountsService,
+            PeopleService,
+            ClubsService,
+            MembershipsService,
+            RolesService,
+            PersonPresenter,
+          ],
           useFactory: (
             accounts: AccountsService,
             people: PeopleService,
             clubs: ClubsService,
             memberships: MembershipsService,
             roles: RolesService,
-          ) => new DevPersonasService({ accounts, people, clubs, memberships, roles }),
+            presenter: PersonPresenter,
+          ) => new DevPersonasService({ accounts, people, clubs, memberships, roles, presenter }),
         },
         {
           provide: APP_GUARD,
-          inject: [Reflector, TokenVerifier, IdentityService],
-          useFactory: (reflector: Reflector, verifier: TokenVerifier, identity: IdentityService) =>
-            new AuthGuard(reflector, verifier, identity),
+          inject: [Reflector, TokenVerifier, IdentityService, AuthorizationService],
+          useFactory: (
+            reflector: Reflector,
+            verifier: TokenVerifier,
+            identity: IdentityService,
+            authorization: AuthorizationService,
+          ) => new AuthGuard(reflector, verifier, identity, authorization),
         },
       ],
       exports: [IdentityService, TokenVerifier],

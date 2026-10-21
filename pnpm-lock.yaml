@@ -361,6 +361,9 @@ importers:
       graphile-worker:
         specifier: 'catalog:'
         version: 0.18.0(typescript@6.0.3)
+      ioredis:
+        specifier: 'catalog:'
+        version: 5.11.1
       zod:
         specifier: 'catalog:'
         version: 4.6.7

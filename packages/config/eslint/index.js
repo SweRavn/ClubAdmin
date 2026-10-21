@@ -5,15 +5,28 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+import { personNamesInPresenters } from "./person-names.js";
 import { spdxHeader } from "./spdx-header.js";
 
 export const clubadminPlugin = {
   meta: { name: "eslint-plugin-clubadmin" },
-  rules: { "spdx-header": spdxHeader },
+  rules: { "spdx-header": spdxHeader, "person-names-in-presenters": personNamesInPresenters },
 };
 
 const SOURCE_FILES = ["**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"];
 const JS_FILES = ["**/*.{js,jsx,mjs,cjs}"];
+// Person names reach API output only through the PersonPresenter (ADR 0022).
+// Allowed: presenters, the people module (owns the columns) and the identity
+// files that read names from ID-token claims at sign-up. Tests check names.
+const PERSON_NAMES_ALLOWED = [
+  "**/presenters/**",
+  "apps/api/src/modules/people/**",
+  "apps/api/src/modules/identity/token-verifier.ts",
+  "apps/api/src/modules/identity/identity.service.ts",
+  "apps/api/src/testing/**",
+  "apps/worker/src/testing/**",
+  "**/*.test.ts",
+];
 // Files where the tooling requires a default export.
 const DEFAULT_EXPORT_ALLOWED = [
   "**/*.config.{ts,js,mjs,cjs}",
@@ -99,6 +112,11 @@ export function createConfig({ tsconfigRootDir }) {
       languageOptions: {
         parserOptions: { emitDecoratorMetadata: true, experimentalDecorators: true },
       },
+    },
+    {
+      files: ["apps/api/src/**/*.ts", "apps/worker/src/**/*.ts"],
+      ignores: PERSON_NAMES_ALLOWED,
+      rules: { "clubadmin/person-names-in-presenters": "error" },
     },
     {
       // Server code logs through the structured logger, never console (docs/security.md).

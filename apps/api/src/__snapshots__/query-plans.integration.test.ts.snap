@@ -28,6 +28,63 @@ exports[`query plans (10k rows) > my groups (by person, across clubs) 1`] = `
 ]
 `;
 
+exports[`query plans (10k rows) > relationship set (one statement, by person) 1`] = `
+[
+  "Result",
+  "Index Scan guardianships guardianships_guardian_idx",
+  "Seq Scan platform_operators",
+  "Aggregate",
+  "Index Scan club_memberships club_memberships_person_active_idx",
+  "Aggregate",
+  "Index Scan club_role_assignments club_role_assignments_person_idx",
+  "Aggregate",
+  "Index Scan group_memberships group_memberships_person_idx",
+  "Aggregate",
+  "Index Scan group_owners group_owners_person_idx",
+  "Aggregate",
+  "Index Scan employments employments_person_idx",
+  "Aggregate",
+  "Index Scan support_access_grants support_access_grants_operator_idx",
+  "Aggregate",
+  "CTE Scan",
+  "Aggregate",
+  "Index Scan guardianships guardianships_ward_idx",
+  "Aggregate",
+  "Nested Loop",
+  "CTE Scan",
+  "Index Scan club_memberships club_memberships_person_active_idx",
+  "Aggregate",
+  "Nested Loop",
+  "CTE Scan",
+  "Index Scan group_memberships group_memberships_person_idx",
+]
+`;
+
+exports[`query plans (10k rows) > roster page (app.visible_group_members) 1`] = `
+[
+  "Result",
+  "Limit",
+  "Result",
+  "Aggregate",
+  "Sort",
+  "Index Scan group_memberships group_memberships_group_idx",
+  "Aggregate",
+  "Sort",
+  "Subquery Scan",
+  "Limit",
+  "WindowAgg",
+  "Aggregate",
+  "Sort",
+  "Subquery Scan",
+  "Nested Loop",
+  "Result",
+  "Nested Loop",
+  "Index Scan group_memberships group_memberships_group_idx",
+  "Index Scan people people_pkey",
+  "Index Scan club_profiles club_profiles_person_idx",
+]
+`;
+
 exports[`query plans (10k rows) > wards of person 1`] = `
 [
   "Sort",

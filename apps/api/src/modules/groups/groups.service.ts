@@ -104,6 +104,23 @@ export class GroupsService {
     return group;
   }
 
+  /** A page of the club's groups by name; archived ones only with includeArchived. */
+  listGroups(
+    context: TenantContext,
+    page: { cursor?: string | undefined; limit: number; includeArchived: boolean },
+  ): Promise<{ items: Group[]; nextCursor: string | null }> {
+    return this.db.withTenant(context, async (tx) => {
+      const { rows, cursorFound } = await repo.listGroupsPage(tx, context.clubId, {
+        cursor: page.cursor ?? null,
+        limit: page.limit + 1,
+        includeArchived: page.includeArchived,
+      });
+      if (!cursorFound) throw new DomainError("invalid_cursor");
+      const items = rows.slice(0, page.limit);
+      return { items, nextCursor: rows.length > page.limit ? items.at(-1)!.id : null };
+    });
+  }
+
   /** Groups visible to the transaction, by ID. */
   findGroupsInTx(tx: Tx, groupIds: readonly string[]): Promise<Group[]> {
     return repo.findGroups(tx, groupIds);

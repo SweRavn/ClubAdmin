@@ -3,6 +3,7 @@
 // API with the session's tokens (the browser never sees them). Non-GET
 // requests need the CSRF token in X-CSRF-Token.
 
+import { ON_BEHALF_OF_HEADER } from "@clubadmin/shared";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiFetch } from "../../../server/api.ts";
@@ -19,6 +20,8 @@ const FORWARDED_REQUEST_HEADERS = [
   "accept-language",
   "if-none-match",
   "x-request-id",
+  // A guardian acting for a ward (checked by the API, ADR 0006).
+  ON_BEHALF_OF_HEADER,
 ];
 const FORWARDED_RESPONSE_HEADERS = [
   "content-type",

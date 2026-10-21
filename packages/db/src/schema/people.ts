@@ -75,6 +75,10 @@ export const people = pgTable(
     // Duplicate candidates: same birth date and family name.
     index("people_duplicate_idx").on(t.birthDate, sql`lower(${t.familyName})`),
     index("people_created_by_idx").on(t.createdByPersonId),
+    // Protected sets per club (PersonVisibility, ADR 0022): few rows.
+    index("people_protected_idx")
+      .on(t.id)
+      .where(sql`${t.protectedIdentity}`),
   ],
 );
 

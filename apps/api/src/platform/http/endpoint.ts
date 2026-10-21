@@ -3,7 +3,7 @@
 // OpenAPI) and its access rule in one place. Every route must use it; a route
 // declared with plain @Get/@Post fails at startup (see endpoint-registry.ts).
 
-import type { z } from "@clubadmin/shared";
+import type { Permission, z } from "@clubadmin/shared";
 import { applyDecorators, HttpCode, RequestMethod, SetMetadata } from "@nestjs/common";
 import { RequestMapping } from "@nestjs/common";
 import { RouteConfig } from "@nestjs/platform-fastify";
@@ -12,14 +12,20 @@ export const ENDPOINT_METADATA = "clubadmin:endpoint";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+/** Which resource the authorization module loads for the policy (from :clubId, :groupId, :personId). */
+export type EndpointResource = "club" | "group" | "person";
+
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any
  * logged-in person (their own data, e.g. /me), `permission` a permission
- * checked by the authorization module (P0.7; refused until then). The
- * AuthGuard (identity module) enforces it; @RequireMfa() and @RecentAuth()
- * add step-up requirements.
+ * whose policy the authorization module evaluates against the `resource`
+ * (ADR 0006). The AuthGuard (identity module) enforces it; @RequireMfa() and
+ * @RecentAuth() add step-up requirements.
  */
-export type EndpointAccess = { public: true } | { authenticated: true } | { permission: string };
+export type EndpointAccess =
+  | { public: true }
+  | { authenticated: true }
+  | { permission: Permission; resource: EndpointResource };
 
 export interface EndpointOptions {
   method: HttpMethod;

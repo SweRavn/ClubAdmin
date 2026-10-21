@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Global guard: every request with a bearer token is authenticated; endpoints
-// that are not public require it. Tokens and their contents are never logged.
+// that are not public require it, and endpoints with a permission are
+// authorized by the authorization module (deny by default, ADR 0006).
+// Tokens and their contents are never logged.
 
 import { ACCOUNT_INVITATION_HEADER, ID_TOKEN_HEADER } from "@clubadmin/shared";
 import { type CanActivate, type ExecutionContext, Injectable } from "@nestjs/common";
@@ -9,6 +11,7 @@ import type { FastifyRequest } from "fastify";
 
 import { ENDPOINT_METADATA, type EndpointOptions } from "../../platform/http/endpoint.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
+import type { AuthorizationService } from "../authorization/index.ts";
 import type { IdentityService } from "./identity.service.ts";
 import { RECENT_AUTH, REQUIRE_MFA } from "./principal.ts";
 import { TokenError, type TokenVerifier } from "./token-verifier.ts";
@@ -23,11 +26,18 @@ export class AuthGuard implements CanActivate {
   private readonly reflector: Reflector;
   private readonly verifier: TokenVerifier;
   private readonly identity: IdentityService;
+  private readonly authorization: AuthorizationService;
 
-  constructor(reflector: Reflector, verifier: TokenVerifier, identity: IdentityService) {
+  constructor(
+    reflector: Reflector,
+    verifier: TokenVerifier,
+    identity: IdentityService,
+    authorization: AuthorizationService,
+  ) {
     this.reflector = reflector;
     this.verifier = verifier;
     this.identity = identity;
+    this.authorization = authorization;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -64,9 +74,12 @@ export class AuthGuard implements CanActivate {
       ...(invitation ? { invitationToken: invitation } : {}),
     });
 
+    // Public endpoints never act on the caller's relationships.
+    if (isPublic) return true;
+
+    request.authz = await this.authorization.forRequest(request, request.principal);
     if ("permission" in endpoint.access) {
-      // The authorization module arrives in P0.7; until then nothing is granted.
-      throw new ProblemError("forbidden");
+      await this.authorization.authorize(request.authz, endpoint.access.permission, request);
     }
     const handler = context.getHandler();
     const controller = context.getClass();

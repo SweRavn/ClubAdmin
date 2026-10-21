@@ -24,13 +24,13 @@ with content type `application/problem+json`:
 
 | Type | Status | Meaning |
 |---|---|---|
-| <a id="bad-request"></a>`bad-request` | 400 | Malformed request, e.g. invalid JSON |
+| <a id="bad-request"></a>`bad-request` | 400 | Malformed request, e.g. invalid JSON, a pagination `cursor` that is not an item of the list (`detail` `invalid_cursor`) or an `X-On-Behalf-Of` that is not a person ID |
 | <a id="validation"></a>`validation` | 400 | Request does not match the schema; see `errors` |
 | <a id="unauthenticated"></a>`unauthenticated` | 401 | Not logged in, or the session expired |
-| <a id="forbidden"></a>`forbidden` | 403 | Logged in but not allowed |
+| <a id="forbidden"></a>`forbidden` | 403 | Logged in but not allowed: the caller has a relationship with the resource's club but lacks the permission. Also `detail` `not_guardian_with_act_on_behalf` for an `X-On-Behalf-Of` the caller may not use. |
 | <a id="mfa-required"></a>`mfa-required` | 403 | The endpoint needs a login with a second factor (passkey or one-time code); `detail` is `mfa_required`. Clients start a step-up login. |
 | <a id="reauthentication-required"></a>`reauthentication-required` | 403 | The endpoint needs a recent login (`detail` `recent_auth_required`); clients ask the user to log in again. |
-| <a id="not-found"></a>`not-found` | 404 | Resource does not exist, or you may not know that it exists |
+| <a id="not-found"></a>`not-found` | 404 | Resource does not exist, or you may not know that it exists: anything in a club you have no relationship with, and people you may not see (ADR 0025) |
 | <a id="method-not-allowed"></a>`method-not-allowed` | 405 | HTTP method not supported for this resource |
 | <a id="conflict"></a>`conflict` | 409 | Conflicts with the current state, e.g. a concurrent change |
 | <a id="payload-too-large"></a>`payload-too-large` | 413 | Request body larger than the limit (1 MB by default) |

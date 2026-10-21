@@ -13,6 +13,8 @@ import { withDatabase } from "../urls.ts";
 import { testEnv } from "./env.ts";
 import { cloneTemplate, dropDatabase, withAdmin } from "./template.ts";
 
+export { countQueries } from "./query-counter.ts";
+
 export interface TestDatabase {
   name: string;
   /** clubadmin_app, as the API and worker use it. */

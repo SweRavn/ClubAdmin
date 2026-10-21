@@ -4,6 +4,7 @@ import { APP_FILTER, APP_INTERCEPTOR, DiscoveryModule } from "@nestjs/core";
 
 import { API_CONFIG, type ApiConfig } from "./config.ts";
 import { DomainModule } from "./domain.module.ts";
+import { EndpointPolicyCheck } from "./modules/authorization/index.ts";
 import { IdentityModule } from "./modules/identity/index.ts";
 import { HealthController } from "./platform/health/health.controller.ts";
 import { EndpointRegistry } from "./platform/http/endpoint-registry.ts";
@@ -35,6 +36,7 @@ export class AppModule {
       controllers: [HealthController, MetaController, OpenApiController],
       providers: [
         EndpointRegistry,
+        EndpointPolicyCheck,
         { provide: APP_INTERCEPTOR, useClass: ValidationInterceptor },
         { provide: APP_FILTER, useClass: ProblemDetailsFilter },
       ],

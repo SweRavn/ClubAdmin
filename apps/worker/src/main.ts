@@ -2,10 +2,11 @@
 import { createDatabase } from "@clubadmin/db";
 import { createLogger, loadEnvFiles, onShutdown } from "@clubadmin/server-kit";
 import { run } from "graphile-worker";
+import { Redis } from "ioredis";
 
 import { loadWorkerConfig } from "./config.ts";
 import { graphileLogger } from "./graphile-logger.ts";
-import { outboxHandlers } from "./outbox-handlers.ts";
+import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { createTaskList, crontab } from "./tasks/index.ts";
 
 loadEnvFiles();
@@ -16,6 +17,11 @@ const db = createDatabase({
   max: config.WORKER_CONCURRENCY,
   applicationName: "clubadmin-worker",
 });
+const valkey = config.VALKEY_URL
+  ? new Redis(config.VALKEY_URL, { maxRetriesPerRequest: 3, connectionName: "clubadmin-worker" })
+  : undefined;
+// Reconnects automatically; a failed handler is retried by the outbox.
+valkey?.on("error", () => undefined);
 
 const runner = await run({
   connectionString: config.DATABASE_URL,
@@ -26,7 +32,7 @@ const runner = await run({
   logger: graphileLogger(logger),
   taskList: createTaskList({
     db,
-    outboxHandlers,
+    outboxHandlers: createOutboxHandlers({ valkey }),
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
   }),
@@ -37,4 +43,5 @@ logger.info({ concurrency: config.WORKER_CONCURRENCY }, "worker started");
 onShutdown(logger, async () => {
   await runner.stop();
   await db.close();
+  await valkey?.quit();
 });

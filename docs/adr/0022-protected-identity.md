@@ -1,6 +1,6 @@
 # 0022 — Protected identity
 
-**Status:** Accepted
+**Status:** Accepted. Implemented in P0.7; details in [ADR 0025](0025-authorization-engine.md).
 
 **Context.** Some members live under protected personal data (in Sweden
 *skyddade personuppgifter*) or for other reasons must not be exposed to

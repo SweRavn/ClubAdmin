@@ -144,6 +144,39 @@ export class PeopleService {
     return toPerson(row);
   }
 
+  /** People by ID, as visible to the transaction (rows the actor may not reach are missing). */
+  getPeople(context: Context, personIds: readonly string[]): Promise<Person[]> {
+    return runAs(this.db, context, async (tx) =>
+      (await repo.findPeople(tx, personIds)).map(toPerson),
+    );
+  }
+
+  /**
+   * Names and global protected flags for the person presenter, in the order
+   * asked (missing rows left out). Never serialise these yourself: pass them
+   * to PersonPresenter (ADR 0022).
+   */
+  summaries(context: Context, personIds: readonly string[]): Promise<repo.PersonSummaryRow[]> {
+    return runAs(this.db, context, async (tx) => {
+      const rows = new Map((await repo.findSummaries(tx, personIds)).map((r) => [r.id, r]));
+      return personIds.flatMap((id) => {
+        const row = rows.get(id);
+        return row ? [row] : [];
+      });
+    });
+  }
+
+  /** Access log: someone other than the person viewed a protected person's profile (ADR 0022). */
+  recordProtectedView(context: Context, personId: string): Promise<void> {
+    return runAs(this.db, context, (tx) =>
+      audit.record(tx, {
+        action: "person.protected.viewed",
+        resourceType: "person",
+        resourceId: personId,
+      }),
+    );
+  }
+
   /** People by ID without an actor (DEV_AUTH persona picker only). */
   listForDevelopment(personIds: readonly string[]): Promise<Person[]> {
     return this.db.withSystem("dev:personas", {}, async (tx) =>

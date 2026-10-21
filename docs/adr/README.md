@@ -30,3 +30,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0022](0022-protected-identity.md) | Protected identity | Accepted |
 | [0023](0023-global-tables-rls.md) | Row-level security for global tables and own relationships | Accepted |
 | [0024](0024-api-tokens.md) | API tokens: JWT access token plus the bound ID token | Accepted |
+| [0025](0025-authorization-engine.md) | Authorization engine: relationship sets, resource scopes and visibility | Accepted |

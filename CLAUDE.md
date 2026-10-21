@@ -143,10 +143,18 @@ only run if listed in `onlyBuiltDependencies`.
 
 - TypeScript `strict`, no `any` without a comment explaining why.
 - Every API route is declared with `@Endpoint(...)` (schemas, access rule:
-  `public`, `authenticated` or a `permission`; `@RequireMfa()` and
-  `@RecentAuth(minutes)` for step-up); plain `@Get`/`@Post` routes make the
-  API refuse to start. Read the caller with `@CurrentPrincipal()`. Throw
-  `ProblemError` for expected failures; never return error objects.
+  `{ public: true }`, `{ authenticated: true }` or `{ permission, resource }`
+  with a permission from `packages/shared/src/permissions.ts` and its one
+  policy in `modules/authorization/authorization.policy.ts`; `@RequireMfa()`
+  and `@RecentAuth(minutes)` for step-up); plain `@Get`/`@Post` routes, or a
+  permission without a policy, make the API refuse to start. Read the caller
+  with `@CurrentAuthorization()` (actor, checked resource, and the `context`
+  to pass to services, which records on-behalf-of) or `@CurrentPrincipal()`.
+  Throw `ProblemError` for expected failures; never return error objects.
+- People in responses: load rows with `PeopleService.summaries(...)` and map
+  them with `PersonPresenter` (hidden people are left out). Name fields and
+  name columns anywhere else fail lint (`clubadmin/person-names-in-presenters`).
+  Lists are keyset-paginated (`PageQuerySchema`: `cursor` = last item's ID).
 - Import Zod as `import { z } from "@clubadmin/shared"`.
 - Only `packages/db` imports `pg`/Drizzle drivers; everything else uses
   `createDatabase(...).withTenant/withActor/withSystem` (dependency-cruiser).
@@ -171,9 +179,11 @@ only run if listed in `onlyBuiltDependencies`.
   is one `kind` of group and a UI label.
 - API: REST, JSON, `/api/v1/...`, plural resources, ISO 8601 times, errors as
   RFC 9457 problem details.
-- Tests: every policy has allow and deny tests; every endpoint has at least one
-  integration test that also asserts tenant isolation (a user of club B cannot
-  read club A).
+- Tests: every policy has allow and deny tests (`authorization.policy.test.ts`
+  fails otherwise); every endpoint with a permission is in the permission
+  matrix (`authorization.integration.test.ts`, "matrix" scenario in
+  `apps/api/src/testing/scenarios.ts`), which also asserts tenant isolation (a
+  user of club B gets 404 for club A).
 - Commits: Conventional Commits (`feat(activities): ...`). Sign off every
   commit (`git commit -s`, DCO).
 - Source files start with `// SPDX-License-Identifier: AGPL-3.0-only`.
