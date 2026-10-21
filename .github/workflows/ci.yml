@@ -89,6 +89,11 @@ jobs:
       - name: Integration tests (API and worker against the services)
         run: pnpm test:integration
 
+      - name: Seed scenarios (load with 10 clubs, then the demo the end-to-end tests run on)
+        run: |
+          pnpm db:reset --scenario load --size 10
+          pnpm db:reset
+
       - name: Start the API and the web app (DEV_AUTH on, as in development)
         run: |
           echo "127.0.0.1 clubadmin.localhost auth.clubadmin.localhost api.clubadmin.localhost mail.clubadmin.localhost" | sudo tee -a /etc/hosts

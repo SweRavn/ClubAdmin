@@ -25,6 +25,10 @@ testing.
   with a fixed Faker seed; only named, hand-written content is a data file.
 - `pnpm db:seed` and `pnpm db:reset` keep their names and run the API app's
   seed entry point.
+- **Seed mode** (P0.8): to replay changes with their past times, history
+  takes `app.seed_time` and skips backdating updates (`app.seed_skip_history`)
+  only in a database with a row in `app_meta.seed_mode`, which the app roles
+  cannot write; `db:seed`/`db:reset` write it as superuser in development.
 
 **Consequences.** No package imports an app; the seed uses the same code
 paths as the API. Demo content can be read and reviewed without reading

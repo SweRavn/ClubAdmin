@@ -1,0 +1,523 @@
+{
+  "personas": [
+    {
+      "key": "anna",
+      "number": 1,
+      "id": "0199a000-0000-7000-8000-000000000001",
+      "givenName": "Anna",
+      "familyName": "Lindqvist",
+      "age": 41,
+      "birthday": "03-14",
+      "gender": "female",
+      "login": "account",
+      "email": "anna.lindqvist@example.test",
+      "phone": "+46 70 174 06 05",
+      "address": {
+        "street": "Strandvägen 12",
+        "postalCode": "123 45",
+        "city": "Strandviken",
+        "country": "SE"
+      },
+      "description": "SVK chair and club manager; parent of Elsa (SVK) and Oskar (IKN).",
+      "tags": [
+        "board",
+        "club manager",
+        "parent in two clubs"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "mikael",
+      "number": 2,
+      "id": "0199a000-0000-7000-8000-000000000002",
+      "givenName": "Mikael",
+      "familyName": "Lindqvist",
+      "age": 43,
+      "birthday": "09-02",
+      "gender": "male",
+      "login": "account",
+      "email": "mikael.lindqvist@example.test",
+      "phone": "+46 70 174 06 06",
+      "address": {
+        "street": "Ekvägen 3",
+        "postalCode": "123 46",
+        "city": "Strandviken",
+        "country": "SE"
+      },
+      "description": "Parent of Elsa and Oskar, separate household from Anna.",
+      "tags": [
+        "parent",
+        "divorced parents"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "elsa",
+      "number": 3,
+      "id": "0199a000-0000-7000-8000-000000000003",
+      "givenName": "Elsa",
+      "familyName": "Lindqvist",
+      "age": 9,
+      "birthday": "05-20",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "anna",
+      "createdAt": "-9y",
+      "description": "SVK F2017 player, no login; managed by her guardians. Moved from Minivolley half a year ago.",
+      "tags": [
+        "child without login"
+      ]
+    },
+    {
+      "key": "oskar",
+      "number": 4,
+      "id": "0199a000-0000-7000-8000-000000000004",
+      "givenName": "Oskar",
+      "familyName": "Lindqvist",
+      "age": 14,
+      "birthday": "01-30",
+      "gender": "male",
+      "login": "account",
+      "email": "oskar.lindqvist@example.test",
+      "createdBy": "anna",
+      "createdAt": "-8y",
+      "description": "IKN P2012 player with his own login since last year; created by Anna as a child without email.",
+      "tags": [
+        "teen with own login",
+        "guardians"
+      ]
+    },
+    {
+      "key": "erik",
+      "number": 5,
+      "id": "0199a000-0000-7000-8000-000000000005",
+      "givenName": "Erik",
+      "familyName": "Johansson",
+      "age": 38,
+      "birthday": "11-08",
+      "gender": "male",
+      "login": "account",
+      "email": "erik.johansson@example.test",
+      "phone": "+46 70 174 06 07",
+      "description": "SVK F2017 head coach and owner, IKN F2015 assistant coach, parent of Maja.",
+      "tags": [
+        "leader in two clubs",
+        "parent"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "maja",
+      "number": 6,
+      "id": "0199a000-0000-7000-8000-000000000006",
+      "givenName": "Maja",
+      "familyName": "Johansson",
+      "age": 10,
+      "birthday": "02-11",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "erik",
+      "createdAt": "-10y",
+      "description": "Plays in SVK F2017 and IKN F2015.",
+      "tags": [
+        "child in two clubs"
+      ]
+    },
+    {
+      "key": "sara",
+      "number": 7,
+      "id": "0199a000-0000-7000-8000-000000000007",
+      "givenName": "Sara",
+      "familyName": "Ahmed",
+      "age": 35,
+      "birthday": "07-22",
+      "gender": "female",
+      "login": "account",
+      "email": "sara.ahmed@example.test",
+      "phone": "+46 70 174 06 09",
+      "description": "SVK club manager, treasurer, F2017 team manager and owner; parent of Alva.",
+      "tags": [
+        "club manager",
+        "treasurer",
+        "several roles",
+        "parent"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "alva",
+      "number": 8,
+      "id": "0199a000-0000-7000-8000-000000000008",
+      "givenName": "Alva",
+      "familyName": "Ahmed",
+      "age": 9,
+      "birthday": "10-01",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "sara",
+      "createdAt": "-9y",
+      "description": "SVK F2017 player without photo consent.",
+      "tags": [
+        "no photo consent"
+      ]
+    },
+    {
+      "key": "gunilla",
+      "number": 9,
+      "id": "0199a000-0000-7000-8000-000000000009",
+      "givenName": "Gunilla",
+      "familyName": "Berg",
+      "age": 68,
+      "birthday": "04-04",
+      "gender": "female",
+      "login": "account",
+      "email": "gunilla.berg@example.test",
+      "phone": "+46 70 174 06 15",
+      "description": "Grandmother of Alva: relative with view-only rights.",
+      "tags": [
+        "relative",
+        "view only"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "johan",
+      "number": 10,
+      "id": "0199a000-0000-7000-8000-000000000010",
+      "givenName": "Johan",
+      "familyName": "Nilsson",
+      "age": 27,
+      "birthday": "08-17",
+      "gender": "male",
+      "login": "account",
+      "email": "johan.nilsson@example.test",
+      "phone": "+46 70 174 06 10",
+      "description": "SVK Herr senior player and owner, F2017 assistant coach; applied to SVK and was approved by Anna last year.",
+      "tags": [
+        "leader",
+        "player"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "lars",
+      "number": 11,
+      "id": "0199a000-0000-7000-8000-000000000011",
+      "givenName": "Lars",
+      "familyName": "Haugen",
+      "age": 45,
+      "birthday": "12-05",
+      "gender": "male",
+      "login": "account",
+      "email": "lars.haugen@example.test",
+      "locale": "nb",
+      "description": "FIL club manager (founded the club), board member and J2014 head coach; also plays in SVK Herr senior and supports IKN.",
+      "tags": [
+        "norwegian",
+        "last manager",
+        "person in three clubs"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "ingrid",
+      "number": 12,
+      "id": "0199a000-0000-7000-8000-000000000012",
+      "givenName": "Ingrid",
+      "familyName": "Haugen",
+      "age": 12,
+      "birthday": "06-30",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "lars",
+      "createdAt": "-12y",
+      "description": "Daughter of Lars, FIL J2014 player.",
+      "tags": [
+        "child"
+      ]
+    },
+    {
+      "key": "karin",
+      "number": 13,
+      "id": "0199a000-0000-7000-8000-000000000013",
+      "givenName": "Karin",
+      "familyName": "Ek",
+      "age": 52,
+      "birthday": "03-03",
+      "gender": "female",
+      "login": "account",
+      "email": "karin.ek@example.test",
+      "phone": "+46 70 174 06 11",
+      "description": "IKN club manager and safeguarding officer, employed part-time as club administrator; proposed handing over to Peter.",
+      "tags": [
+        "club manager",
+        "staff",
+        "safeguarding"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "ahmed",
+      "number": 14,
+      "id": "0199a000-0000-7000-8000-000000000014",
+      "givenName": "Ahmed",
+      "familyName": "Yilmaz",
+      "age": 47,
+      "birthday": "05-09",
+      "gender": "male",
+      "login": "account",
+      "email": "ahmed.yilmaz@example.test",
+      "phone": "+46 70 174 06 12",
+      "description": "IKN P2012 head coach and owner, parent of Liam.",
+      "tags": [
+        "coach",
+        "parent"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "liam",
+      "number": 15,
+      "id": "0199a000-0000-7000-8000-000000000015",
+      "givenName": "Liam",
+      "familyName": "Yilmaz",
+      "age": 14,
+      "birthday": "09-19",
+      "gender": "male",
+      "login": "account",
+      "email": "liam.yilmaz@example.test",
+      "createdBy": "ahmed",
+      "createdAt": "-14y",
+      "locale": "en",
+      "description": "IKN P2012 player with his own login; English user interface.",
+      "tags": [
+        "teen with own login",
+        "english"
+      ]
+    },
+    {
+      "key": "peter",
+      "number": 16,
+      "id": "0199a000-0000-7000-8000-000000000016",
+      "givenName": "Peter",
+      "familyName": "Sund",
+      "age": 60,
+      "birthday": "02-27",
+      "gender": "male",
+      "login": "account",
+      "email": "peter.sund@example.test",
+      "phone": "+46 70 174 06 13",
+      "description": "IKN treasurer; founded SVK and was its manager and board member until he handed over to Anna last year; Karin proposed handing IKN over to him.",
+      "tags": [
+        "historic roles",
+        "pending hand-over"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "nora",
+      "number": 17,
+      "id": "0199a000-0000-7000-8000-000000000017",
+      "givenName": "Nora",
+      "familyName": "Lund",
+      "age": 30,
+      "birthday": "10-10",
+      "gender": "female",
+      "login": "invited",
+      "email": "nora.lund@example.test",
+      "description": "Invited by Anna to join SVK as a leader; the invitation is not accepted yet (no person until she accepts).",
+      "tags": [
+        "pending invitation"
+      ]
+    },
+    {
+      "key": "sofie",
+      "number": 18,
+      "id": "0199a000-0000-7000-8000-000000000018",
+      "givenName": "Sofie",
+      "familyName": "Dahl",
+      "age": 12,
+      "birthday": "01-15",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "camilla",
+      "createdAt": "-12y",
+      "description": "Applied to FIL (J2014) through her mother; awaiting approval.",
+      "tags": [
+        "applied"
+      ]
+    },
+    {
+      "key": "ola",
+      "number": 19,
+      "id": "0199a000-0000-7000-8000-000000000019",
+      "givenName": "Ola",
+      "familyName": "Former",
+      "age": 34,
+      "birthday": "07-07",
+      "gender": "male",
+      "login": "account",
+      "email": "ola.former@example.test",
+      "description": "Left SVK two years ago; due for anonymisation.",
+      "tags": [
+        "former member",
+        "retention"
+      ],
+      "createdAt": "-6y"
+    },
+    {
+      "key": "operator",
+      "number": 20,
+      "id": "0199a000-0000-7000-8000-000000000020",
+      "givenName": "Platform",
+      "familyName": "Operator",
+      "age": null,
+      "birthday": "06-15",
+      "gender": null,
+      "login": "account",
+      "email": "platform.operator@example.test",
+      "description": "Platform operator: no club access except a time-limited support grant from IKN.",
+      "tags": [
+        "operator",
+        "support access"
+      ],
+      "createdAt": "-1y"
+    },
+    {
+      "key": "emma",
+      "number": 21,
+      "id": "0199a000-0000-7000-8000-000000000021",
+      "givenName": "Emma",
+      "familyName": "Svensson",
+      "age": 29,
+      "birthday": "04-25",
+      "gender": "female",
+      "login": "account",
+      "email": "emma.svensson@example.test",
+      "description": "Signed up without an invitation and has no club yet.",
+      "tags": [
+        "no club",
+        "onboarding"
+      ],
+      "createdAt": "-1mo"
+    },
+    {
+      "key": "henrik",
+      "number": 22,
+      "id": "0199a000-0000-7000-8000-000000000022",
+      "givenName": "Henrik",
+      "familyName": "Malm",
+      "age": 36,
+      "birthday": "11-30",
+      "gender": "male",
+      "login": "account",
+      "email": "henrik.malm@example.test",
+      "phone": "+46 70 174 06 14",
+      "description": "Signed up himself and added his son Viktor, who waits for SVK F2017.",
+      "tags": [
+        "parent",
+        "waiting list"
+      ],
+      "createdAt": "-8mo"
+    },
+    {
+      "key": "samira",
+      "number": 23,
+      "id": "0199a000-0000-7000-8000-000000000023",
+      "givenName": "Samira",
+      "familyName": "Karimi",
+      "age": 39,
+      "birthday": "08-08",
+      "gender": "female",
+      "login": "account",
+      "email": "samira.karimi@example.test",
+      "protectedIdentity": true,
+      "description": "Guardian of Nadia, protected identity (set by herself).",
+      "tags": [
+        "protected identity",
+        "parent"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "nadia",
+      "number": 24,
+      "id": "0199a000-0000-7000-8000-000000000024",
+      "givenName": "Nadia",
+      "familyName": "Karimi",
+      "age": 11,
+      "birthday": "03-21",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "samira",
+      "createdAt": "-11y",
+      "protectedIdentity": true,
+      "description": "IKN F2015 player with protected identity set by Samira: hidden from other members, crossed-camera icon for leaders and managers.",
+      "tags": [
+        "protected identity",
+        "child"
+      ]
+    },
+    {
+      "key": "jonas",
+      "number": 25,
+      "id": "0199a000-0000-7000-8000-000000000025",
+      "givenName": "Jonas",
+      "familyName": "Karimi",
+      "age": 41,
+      "birthday": "12-12",
+      "gender": "male",
+      "login": "account",
+      "email": "jonas.karimi@example.test",
+      "phone": "+46 70 174 06 16",
+      "description": "Invited by Samira as Nadia's second guardian (not accepted yet).",
+      "tags": [
+        "pending co-guardian"
+      ],
+      "createdAt": "-15y"
+    },
+    {
+      "key": "camilla",
+      "number": 26,
+      "id": "0199a000-0000-7000-8000-000000000026",
+      "givenName": "Camilla",
+      "familyName": "Dahl",
+      "age": 40,
+      "birthday": "05-05",
+      "gender": "female",
+      "login": "account",
+      "email": "camilla.dahl@example.test",
+      "description": "Mother of Sofie; applied for her in FIL.",
+      "tags": [
+        "parent",
+        "join request"
+      ],
+      "createdAt": "-1mo"
+    },
+    {
+      "key": "viktor",
+      "number": 27,
+      "id": "0199a000-0000-7000-8000-000000000027",
+      "givenName": "Viktor",
+      "familyName": "Malm",
+      "age": 8,
+      "birthday": "02-02",
+      "gender": "male",
+      "login": "none",
+      "email": null,
+      "createdBy": "henrik",
+      "createdAt": "-8y",
+      "description": "Son of Henrik, number 2 on SVK F2017's waiting list (also a pending join request).",
+      "tags": [
+        "child",
+        "waiting list"
+      ]
+    }
+  ]
+}

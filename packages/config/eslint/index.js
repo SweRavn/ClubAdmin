@@ -16,13 +16,16 @@ export const clubadminPlugin = {
 const SOURCE_FILES = ["**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"];
 const JS_FILES = ["**/*.{js,jsx,mjs,cjs}"];
 // Person names reach API output only through the PersonPresenter (ADR 0022).
-// Allowed: presenters, the people module (owns the columns) and the identity
-// files that read names from ID-token claims at sign-up. Tests check names.
+// Allowed: presenters, the people module (owns the columns), the identity
+// files that read names from ID-token claims at sign-up, and the demo seed,
+// which creates people from docs/demodata (input, never output). Tests check
+// names.
 const PERSON_NAMES_ALLOWED = [
   "**/presenters/**",
   "apps/api/src/modules/people/**",
   "apps/api/src/modules/identity/token-verifier.ts",
   "apps/api/src/modules/identity/identity.service.ts",
+  "apps/api/src/seed/**",
   "apps/api/src/testing/**",
   "apps/worker/src/testing/**",
   "**/*.test.ts",

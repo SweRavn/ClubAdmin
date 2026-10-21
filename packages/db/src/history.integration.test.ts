@@ -215,3 +215,49 @@ describe("history partitions", () => {
     });
   });
 });
+
+describe("seed mode (ADR 0026)", () => {
+  const changedAt = async (id: string) =>
+    (
+      await t.query<{ changed_at: Date }>(
+        "admin",
+        "SELECT changed_at FROM history.record_changes WHERE record_id = $1 ORDER BY changed_at",
+        [id],
+      )
+    ).rows.map((r) => r.changed_at);
+  const past = new Date(Date.now() - 365 * 86_400_000);
+  const insertAt = (seedTime: Date) =>
+    t.db.withTenant({ ...asPerson(anna, club), seedTime }, async (tx) => {
+      const r = await tx.execute<{ id: string }>(
+        sql`INSERT INTO public.test_items (club_id, name, secret) VALUES (${club}, 'Seeded', 'x') RETURNING id`,
+      );
+      return r.rows[0]?.id ?? "";
+    });
+
+  it("ignores app.seed_time unless the database is in seed mode", async () => {
+    const id = await insertAt(past);
+    const [at] = await changedAt(id);
+    expect(Math.abs(at!.getTime() - Date.now())).toBeLessThan(60_000);
+  });
+
+  it("records the seed time, and skips history for backdating, in seed mode", async () => {
+    await t.query("admin", "INSERT INTO app_meta.seed_mode DEFAULT VALUES");
+    try {
+      const id = await insertAt(past);
+      expect((await changedAt(id)).map((d) => d.getTime())).toEqual([past.getTime()]);
+      await t.db.withSystem("seed:backdate", { clubId: club }, async (tx) => {
+        await tx.execute(sql`SELECT set_config('app.seed_skip_history', 'on', true)`);
+        await tx.execute(sql`UPDATE public.test_items SET name = 'Backdated' WHERE id = ${id}`);
+      });
+      expect(await changedAt(id)).toHaveLength(1);
+    } finally {
+      await t.query("admin", "DELETE FROM app_meta.seed_mode");
+    }
+  });
+
+  it("is not available to the app role", async () => {
+    await expect(t.query("app", "INSERT INTO app_meta.seed_mode DEFAULT VALUES")).rejects.toThrow(
+      /permission denied/,
+    );
+  });
+});

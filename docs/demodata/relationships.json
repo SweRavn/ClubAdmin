@@ -1,0 +1,483 @@
+{
+  "guardianships": [
+    {
+      "guardian": "anna",
+      "ward": "elsa",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "anna",
+      "ward": "oskar",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "mikael",
+      "ward": "elsa",
+      "kind": "parent",
+      "via": "invitation",
+      "by": "anna"
+    },
+    {
+      "guardian": "mikael",
+      "ward": "oskar",
+      "kind": "parent",
+      "via": "invitation",
+      "by": "anna"
+    },
+    {
+      "guardian": "erik",
+      "ward": "maja",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "sara",
+      "ward": "alva",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "gunilla",
+      "ward": "alva",
+      "kind": "relative",
+      "via": "addGuardian",
+      "by": "sara",
+      "rights": [
+        "view_schedule"
+      ]
+    },
+    {
+      "guardian": "lars",
+      "ward": "ingrid",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "ahmed",
+      "ward": "liam",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "henrik",
+      "ward": "viktor",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "samira",
+      "ward": "nadia",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "jonas",
+      "ward": "nadia",
+      "kind": "parent",
+      "via": "invitation",
+      "by": "samira",
+      "status": "pending"
+    },
+    {
+      "guardian": "camilla",
+      "ward": "sofie",
+      "kind": "parent",
+      "via": "addChild"
+    }
+  ],
+  "memberships": [
+    {
+      "person": "anna",
+      "club": "svk",
+      "by": "peter",
+      "since": "-3y"
+    },
+    {
+      "person": "sara",
+      "club": "svk",
+      "since": "-2y",
+      "by": "peter"
+    },
+    {
+      "person": "erik",
+      "club": "svk",
+      "since": "-2y",
+      "by": "peter"
+    },
+    {
+      "person": "elsa",
+      "club": "svk",
+      "since": "-2y",
+      "by": "peter"
+    },
+    {
+      "person": "maja",
+      "club": "svk",
+      "since": "-1y"
+    },
+    {
+      "person": "alva",
+      "club": "svk",
+      "since": "-1y"
+    },
+    {
+      "person": "lars",
+      "club": "svk",
+      "since": "-1y"
+    },
+    {
+      "person": "ola",
+      "club": "svk",
+      "by": "peter",
+      "status": "left",
+      "since": "-5y",
+      "until": "-2y"
+    },
+    {
+      "person": "peter",
+      "club": "ikn",
+      "since": "-3y"
+    },
+    {
+      "person": "ahmed",
+      "club": "ikn",
+      "since": "-3y"
+    },
+    {
+      "person": "oskar",
+      "club": "ikn",
+      "by": "anna",
+      "since": "-3y"
+    },
+    {
+      "person": "liam",
+      "club": "ikn",
+      "by": "ahmed",
+      "since": "-2y"
+    },
+    {
+      "person": "erik",
+      "club": "ikn",
+      "by": "erik",
+      "since": "-1y"
+    },
+    {
+      "person": "maja",
+      "club": "ikn",
+      "by": "erik",
+      "since": "-1y"
+    },
+    {
+      "person": "nadia",
+      "club": "ikn",
+      "by": "samira",
+      "since": "-6mo"
+    },
+    {
+      "person": "lars",
+      "club": "ikn",
+      "by": "lars",
+      "membershipType": "supporting",
+      "since": "-1y"
+    },
+    {
+      "person": "ingrid",
+      "club": "fil",
+      "since": "-2y"
+    },
+    {
+      "person": "sofie",
+      "club": "fil",
+      "by": "camilla",
+      "status": "applied",
+      "since": "-10d"
+    }
+  ],
+  "roles": [
+    {
+      "person": "peter",
+      "club": "svk",
+      "role": "board_member",
+      "by": "peter",
+      "since": "-6y",
+      "until": "-1y"
+    },
+    {
+      "person": "anna",
+      "club": "svk",
+      "role": "chair",
+      "since": "-1y"
+    },
+    {
+      "person": "sara",
+      "club": "svk",
+      "role": "club_manager",
+      "since": "-1y"
+    },
+    {
+      "person": "sara",
+      "club": "svk",
+      "role": "treasurer",
+      "since": "-1y"
+    },
+    {
+      "person": "karin",
+      "club": "ikn",
+      "role": "safeguarding_officer",
+      "since": "-3y"
+    },
+    {
+      "person": "karin",
+      "club": "ikn",
+      "role": "staff",
+      "since": "-2y"
+    },
+    {
+      "person": "peter",
+      "club": "ikn",
+      "role": "treasurer",
+      "since": "-2y"
+    },
+    {
+      "person": "lars",
+      "club": "fil",
+      "role": "board_member",
+      "since": "-2y"
+    }
+  ],
+  "groupMemberships": [
+    {
+      "person": "elsa",
+      "group": "svk-minivolley",
+      "by": "sara",
+      "since": "-2y"
+    },
+    {
+      "person": "maja",
+      "group": "svk-f2017",
+      "since": "-1y"
+    },
+    {
+      "person": "alva",
+      "group": "svk-f2017",
+      "since": "-1y"
+    },
+    {
+      "person": "erik",
+      "group": "svk-f2017",
+      "function": "head_coach",
+      "since": "-2y"
+    },
+    {
+      "person": "sara",
+      "group": "svk-f2017",
+      "function": "team_manager",
+      "since": "-1y"
+    },
+    {
+      "person": "johan",
+      "group": "svk-f2017",
+      "function": "assistant_coach",
+      "since": "-6mo"
+    },
+    {
+      "person": "johan",
+      "group": "svk-herr",
+      "since": "-1y"
+    },
+    {
+      "person": "lars",
+      "group": "svk-herr",
+      "since": "-1y"
+    },
+    {
+      "person": "oskar",
+      "group": "ikn-p2012",
+      "since": "-3y"
+    },
+    {
+      "person": "liam",
+      "group": "ikn-p2012",
+      "since": "-2y"
+    },
+    {
+      "person": "ahmed",
+      "group": "ikn-p2012",
+      "function": "head_coach",
+      "since": "-3y"
+    },
+    {
+      "person": "maja",
+      "group": "ikn-f2015",
+      "since": "-1y"
+    },
+    {
+      "person": "nadia",
+      "group": "ikn-f2015",
+      "since": "-6mo"
+    },
+    {
+      "person": "erik",
+      "group": "ikn-f2015",
+      "function": "assistant_coach",
+      "since": "-1y"
+    },
+    {
+      "person": "karin",
+      "group": "ikn-styrelsen",
+      "since": "-3y"
+    },
+    {
+      "person": "peter",
+      "group": "ikn-styrelsen",
+      "since": "-2y"
+    },
+    {
+      "person": "ingrid",
+      "group": "fil-j2014",
+      "since": "-2y"
+    },
+    {
+      "person": "lars",
+      "group": "fil-j2014",
+      "function": "head_coach",
+      "since": "-2y"
+    },
+    {
+      "person": "lars",
+      "group": "fil-veteran",
+      "since": "-2y"
+    }
+  ],
+  "handovers": [
+    {
+      "club": "svk",
+      "from": "peter",
+      "to": "anna",
+      "status": "accepted",
+      "at": "-1y"
+    },
+    {
+      "club": "ikn",
+      "from": "karin",
+      "to": "peter",
+      "status": "proposed",
+      "at": "-5d"
+    }
+  ],
+  "ownLogins": [
+    {
+      "person": "oskar",
+      "by": "anna",
+      "at": "-1y"
+    },
+    {
+      "person": "liam",
+      "by": "ahmed",
+      "at": "-6mo"
+    }
+  ],
+  "employments": [
+    {
+      "person": "karin",
+      "club": "ikn",
+      "title": "Kansliadministratör",
+      "employmentType": "permanent",
+      "hoursPerWeek": 20,
+      "startsOn": "-2y"
+    }
+  ],
+  "consents": [
+    {
+      "person": "elsa",
+      "club": "svk",
+      "purpose": "photo_publication",
+      "givenBy": "anna"
+    },
+    {
+      "person": "maja",
+      "club": "svk",
+      "purpose": "photo_publication",
+      "givenBy": "erik"
+    },
+    {
+      "person": "maja",
+      "club": "ikn",
+      "purpose": "photo_publication",
+      "givenBy": "erik"
+    }
+  ],
+  "sharedFields": [
+    {
+      "person": "anna",
+      "club": "svk",
+      "fields": [
+        "phone",
+        "address"
+      ]
+    },
+    {
+      "person": "erik",
+      "club": "svk",
+      "fields": [
+        "phone"
+      ]
+    },
+    {
+      "person": "johan",
+      "club": "svk",
+      "fields": [
+        "phone"
+      ]
+    },
+    {
+      "person": "ahmed",
+      "club": "ikn",
+      "fields": [
+        "phone"
+      ]
+    }
+  ],
+  "clubProtection": [],
+  "joinRequests": [
+    {
+      "person": "viktor",
+      "club": "svk",
+      "requestedBy": "henrik",
+      "preferredGroups": [
+        "svk-f2017"
+      ]
+    },
+    {
+      "person": "sofie",
+      "club": "fil",
+      "requestedBy": "camilla",
+      "preferredGroups": [
+        "fil-j2014"
+      ]
+    }
+  ],
+  "invitations": [
+    {
+      "club": "svk",
+      "email": "nora.lund@example.test",
+      "createdBy": "anna",
+      "group": "svk-f2017",
+      "expiresIn": "+7d"
+    }
+  ],
+  "operators": [
+    "operator"
+  ],
+  "supportGrants": [
+    {
+      "operator": "operator",
+      "club": "ikn",
+      "grantedBy": "karin",
+      "reason": "Help importing the member register",
+      "expiresIn": "+7d"
+    }
+  ]
+}

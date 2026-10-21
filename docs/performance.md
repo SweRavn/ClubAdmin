@@ -95,6 +95,10 @@ budgets are requirements; CI measures them.
   BEGIN/COMMIT). A role change reaches the API through the worker in well
   under a second (`worker.integration.test.ts`). The query-plans test also
   covers the relationship set, a roster page and a club's protected set.
+- Seeding (P0.8): `pnpm db:reset` with the demo scenario about 7 s including
+  the build (budget 15 s; the seed itself about 4 s); `pnpm db:reset --scenario
+  load` (1,000 clubs, 200,000 people) about 100 s locally (budget 10 minutes,
+  nightly workflow).
 - Lighthouse CI on key web pages per PR.
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.

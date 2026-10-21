@@ -28,7 +28,7 @@ export interface Database {
   /** Runs `fn` as a background job (actor kind system_job), optionally in a club. */
   withSystem<T>(
     jobName: string,
-    options: { clubId?: string },
+    options: { clubId?: string; seedTime?: Date },
     fn: (tx: Tx) => Promise<T>,
   ): Promise<T>;
   /** Checks connectivity (health checks). */
@@ -93,8 +93,14 @@ export function createDatabase(options: PoolOptions): Database {
       );
     },
     withActor: async (context, fn) => run(settingsFor(context), fn),
-    withSystem: async (jobName, { clubId }, fn) =>
-      run(settingsFor({ actorKind: "system_job", requestId: `job:${jobName}` }, clubId), fn),
+    withSystem: async (jobName, { clubId, seedTime }, fn) =>
+      run(
+        settingsFor(
+          { actorKind: "system_job", requestId: `job:${jobName}`, seedTime: seedTime ?? null },
+          clubId,
+        ),
+        fn,
+      ),
     ping: async () => {
       await pool.query("SELECT 1");
     },

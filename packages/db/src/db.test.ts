@@ -78,6 +78,7 @@ describe("settingsFor", () => {
       "app.actor_kind": "person",
       "app.ip_hash": "h",
       "app.viewer_privileged": "",
+      "app.seed_time": "",
     });
     expect(
       settingsFor({ actorKind: "person", personId }, clubId, { viewerPrivileged: true })[

@@ -17,7 +17,9 @@
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "openapi": "pnpm run build && node --enable-source-maps ./dist/scripts/write-openapi.js",
-    "bench": "node --enable-source-maps ./dist/scripts/bench.js"
+    "bench": "node --enable-source-maps ./dist/scripts/bench.js",
+    "seed": "pnpm run build && node --enable-source-maps ./dist/seed/cli.js seed",
+    "seed:reset": "pnpm run build && node --enable-source-maps ./dist/seed/cli.js reset"
   },
   "devDependencies": {
     "@clubadmin/config": "workspace:*",

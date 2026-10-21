@@ -1,0 +1,716 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`demo scenario > creates exactly the clubs, groups and personas of docs/seed-data.md 1`] = `
+{
+  "clubs": {
+    "fil": {
+      "consents": [],
+      "country": "NO",
+      "employments": [],
+      "handovers": [],
+      "invitations": [],
+      "joinPolicy": "invite_only",
+      "joinRequests": [
+        "sofie by camilla: pending",
+      ],
+      "locale": "nb-NO",
+      "managers": [
+        "lars",
+      ],
+      "memberships": {
+        "active": 11,
+        "applied": 1,
+      },
+      "slug": "fjordvik-il",
+      "supportGrants": [],
+      "timeZone": "Europe/Oslo",
+    },
+    "ikn": {
+      "consents": [
+        "maja: photo_publication by erik",
+      ],
+      "country": "SE",
+      "employments": [
+        "karin: Kansliadministratör",
+      ],
+      "handovers": [
+        "karin → peter: proposed",
+      ],
+      "invitations": [],
+      "joinPolicy": "open",
+      "joinRequests": [],
+      "locale": "sv-SE",
+      "managers": [
+        "karin",
+      ],
+      "memberships": {
+        "active": 20,
+      },
+      "slug": "ik-norrbacka",
+      "supportGrants": [
+        "operator by karin",
+      ],
+      "timeZone": "Europe/Stockholm",
+    },
+    "svk": {
+      "consents": [
+        "elsa: photo_publication by anna",
+        "maja: photo_publication by erik",
+      ],
+      "country": "SE",
+      "employments": [],
+      "handovers": [
+        "peter → anna: accepted",
+      ],
+      "invitations": [
+        "nora.lund@example.test → svk-f2017",
+      ],
+      "joinPolicy": "approval",
+      "joinRequests": [
+        "viktor by henrik: pending",
+      ],
+      "locale": "sv-SE",
+      "managers": [
+        "anna",
+        "sara",
+      ],
+      "memberships": {
+        "active": 26,
+        "left": 1,
+      },
+      "slug": "strandvikens-vk",
+      "supportGrants": [],
+      "timeZone": "Europe/Stockholm",
+    },
+  },
+  "groups": {
+    "fil-j2014": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 5,
+      "kind": "team",
+      "named": [
+        "ingrid",
+        "lars (head_coach)",
+      ],
+      "owners": [
+        "lars",
+      ],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+    "fil-veteran": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 4,
+      "kind": "team",
+      "named": [
+        "lars",
+      ],
+      "owners": [
+        "lars",
+      ],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+    "ikn-f2015": {
+      "admission": "waitlist",
+      "capacity": 12,
+      "generated": 5,
+      "kind": "training_group",
+      "named": [
+        "erik (assistant_coach)",
+        "maja",
+        "nadia",
+      ],
+      "owners": [],
+      "parent": "ikn-innebandy",
+      "queue": [
+        "generated",
+      ],
+      "waitlist": {
+        "waiting": 1,
+      },
+    },
+    "ikn-fotboll": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 0,
+      "kind": "section",
+      "named": [],
+      "owners": [
+        "karin",
+      ],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+    "ikn-innebandy": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 0,
+      "kind": "section",
+      "named": [],
+      "owners": [],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+    "ikn-p2012": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 6,
+      "kind": "team",
+      "named": [
+        "ahmed (head_coach)",
+        "liam",
+        "oskar",
+      ],
+      "owners": [
+        "ahmed",
+      ],
+      "parent": "ikn-fotboll",
+      "queue": [],
+      "waitlist": {},
+    },
+    "ikn-styrelsen": {
+      "admission": "closed",
+      "capacity": null,
+      "generated": 0,
+      "kind": "board",
+      "named": [
+        "karin",
+        "peter",
+      ],
+      "owners": [
+        "karin",
+      ],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+    "svk-f2017": {
+      "admission": "waitlist",
+      "capacity": 10,
+      "generated": 7,
+      "kind": "team",
+      "named": [
+        "alva",
+        "elsa",
+        "erik (head_coach)",
+        "johan (assistant_coach)",
+        "maja",
+        "sara (team_manager)",
+      ],
+      "owners": [
+        "erik",
+        "sara",
+      ],
+      "parent": null,
+      "queue": [
+        "generated",
+        "viktor",
+        "generated",
+        "generated",
+        "generated",
+      ],
+      "waitlist": {
+        "admitted": 1,
+        "expired": 1,
+        "offered": 1,
+        "waiting": 5,
+      },
+    },
+    "svk-herr": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 4,
+      "kind": "team",
+      "named": [
+        "johan",
+        "lars",
+      ],
+      "owners": [
+        "johan",
+      ],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+    "svk-minivolley": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 6,
+      "kind": "training_group",
+      "named": [],
+      "owners": [
+        "sara",
+      ],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+  },
+  "personas": {
+    "ahmed": {
+      "account": {
+        "email": "ahmed.yilmaz@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [
+        "ikn-p2012: head_coach",
+      ],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "alva": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [
+        "svk-f2017: member",
+      ],
+      "guardians": [
+        "sara: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+        "gunilla: relative active [view_schedule]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "anna": {
+      "account": {
+        "email": "anna.lindqvist@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "svk: chair",
+        "svk: club_manager",
+      ],
+    },
+    "camilla": {
+      "account": {
+        "email": "camilla.dahl@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "elsa": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [
+        "svk-f2017: member",
+        "svk-minivolley: member (ended)",
+      ],
+      "guardians": [
+        "anna: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+        "mikael: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "emma": {
+      "account": {
+        "email": "emma.svensson@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "erik": {
+      "account": {
+        "email": "erik.johansson@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [
+        "svk-f2017: head_coach",
+        "ikn-f2015: assistant_coach",
+      ],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "gunilla": {
+      "account": {
+        "email": "gunilla.berg@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "henrik": {
+      "account": {
+        "email": "henrik.malm@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "ingrid": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [
+        "fil-j2014: member",
+      ],
+      "guardians": [
+        "lars: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "fil: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "johan": {
+      "account": {
+        "email": "johan.nilsson@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [
+        "svk-f2017: assistant_coach",
+        "svk-herr: member",
+      ],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "jonas": {
+      "account": {
+        "email": "jonas.karimi@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "karin": {
+      "account": {
+        "email": "karin.ek@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [
+        "ikn-styrelsen: member",
+      ],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "ikn: club_manager",
+        "ikn: safeguarding_officer",
+        "ikn: staff",
+      ],
+    },
+    "lars": {
+      "account": {
+        "email": "lars.haugen@example.test",
+        "locale": "nb",
+      },
+      "clubProtected": [],
+      "groups": [
+        "svk-herr: member",
+        "fil-j2014: head_coach",
+        "fil-veteran: member",
+      ],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+        "ikn: active (supporting)",
+        "fil: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "fil: board_member",
+        "fil: club_manager",
+      ],
+    },
+    "liam": {
+      "account": {
+        "email": "liam.yilmaz@example.test",
+        "locale": "en",
+      },
+      "clubProtected": [],
+      "groups": [
+        "ikn-p2012: member",
+      ],
+      "guardians": [
+        "ahmed: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "maja": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [
+        "svk-f2017: member",
+        "ikn-f2015: member",
+      ],
+      "guardians": [
+        "erik: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "mikael": {
+      "account": {
+        "email": "mikael.lindqvist@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "nadia": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [
+        "ikn-f2015: member",
+      ],
+      "guardians": [
+        "samira: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 1,
+      "protected": true,
+      "roles": [],
+    },
+    "nora": {
+      "person": false,
+    },
+    "ola": {
+      "account": {
+        "email": "ola.former@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: left (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "operator": {
+      "account": {
+        "email": "platform.operator@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": false,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "oskar": {
+      "account": {
+        "email": "oskar.lindqvist@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [
+        "ikn-p2012: member",
+      ],
+      "guardians": [
+        "anna: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+        "mikael: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "peter": {
+      "account": {
+        "email": "peter.sund@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [
+        "ikn-styrelsen: member",
+      ],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "svk: board_member (ended)",
+        "svk: club_manager (ended)",
+        "ikn: treasurer",
+      ],
+    },
+    "samira": {
+      "account": {
+        "email": "samira.karimi@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": true,
+      "roles": [],
+    },
+    "sara": {
+      "account": {
+        "email": "sara.ahmed@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [
+        "svk-f2017: team_manager",
+      ],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "svk: club_manager",
+        "svk: treasurer",
+      ],
+    },
+    "sofie": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [
+        "camilla: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "fil: applied (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "viktor": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [
+        "henrik: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+  },
+}
+`;

@@ -145,6 +145,8 @@ async function main(argv: string[]): Promise<number> {
   switch (command) {
     case "dev":
       if (!(await startServices(flag("--full")))) return 1;
+      // First start: load the demo scenario into the empty database (docs/seed-data.md).
+      if ((await run("pnpm", ["db:seed", "--if-empty"], process.env)) !== 0) return 1;
       // Settings Node.js reads only at process start (Caddy's CA for https://auth.clubadmin.localhost).
       return run("pnpm", ["exec", "turbo", "run", "dev"], {
         ...process.env,

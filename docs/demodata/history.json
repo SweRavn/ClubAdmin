@@ -1,0 +1,33 @@
+{
+  "changes": [
+    {
+      "action": "membership.approve",
+      "at": "-1y",
+      "actor": "anna",
+      "person": "johan",
+      "club": "svk",
+      "appliedAt": "-14mo"
+    },
+    {
+      "action": "group.move",
+      "at": "-6mo",
+      "actor": "anna",
+      "person": "elsa",
+      "from": "svk-minivolley",
+      "to": "svk-f2017"
+    },
+    {
+      "action": "person.update",
+      "at": "-2mo",
+      "actor": "erik",
+      "person": "erik",
+      "phone": "+46 70 174 06 08"
+    },
+    {
+      "action": "waitlist.offer.expire",
+      "at": "-1d",
+      "job": "waitlist:expire-offers",
+      "group": "svk-f2017"
+    }
+  ]
+}

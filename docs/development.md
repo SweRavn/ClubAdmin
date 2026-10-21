@@ -64,8 +64,9 @@ placeholder page served by Caddy.
 ## Logging in
 
 - **As anyone (DEV_AUTH):** https://clubadmin.localhost/auth/login shows a
-  persona picker with everyone who has a login (the demo personas arrive in
-  P0.8). Tick "as if logged in with two-factor authentication" to test
+  persona picker with the demo personas (`pnpm dev` seeds them on its first
+  start; `pnpm db:reset` starts over, see `seed-data.md`), each with what it
+  tests, and everyone else who has a login. Tick "as if logged in with two-factor authentication" to test
   MFA-gated pages. `.env.local` has `DEV_AUTH=true`; it is refused outside
   development.
 - **For real (Zitadel):** "Log in with email" or "Create an account" on the

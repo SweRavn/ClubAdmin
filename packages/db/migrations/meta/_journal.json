@@ -29,6 +29,13 @@
       "when": 1792574212074,
       "tag": "0003_authorization",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792598389021,
+      "tag": "0004_seed_mode",
+      "breakpoints": true
     }
   ]
 }

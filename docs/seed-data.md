@@ -7,21 +7,43 @@ patterns of the domain model.
 ## Commands
 
 ```
-pnpm db:seed                      # load the "demo" scenario into an empty database
-pnpm db:reset                     # drop + migrate + seed demo (development only)
-pnpm db:seed --scenario load      # large volume for performance tests
-pnpm db:seed --scenario minimal   # one club, three people (fast unit/integration tests)
+pnpm db:seed                         # load the "demo" scenario into an empty database
+pnpm db:seed --if-empty              # the same, but do nothing if there is data already
+pnpm db:reset                        # drop, recreate, bootstrap, migrate, seed demo (development only)
+pnpm db:reset --scenario load        # 1,000 clubs, about 200,000 people (--size n clubs)
+pnpm db:reset --scenario minimal     # one club, one group, three people
 ```
 
-`pnpm dev` runs `db:reset` automatically on first start if the database is empty.
+`pnpm dev` seeds the demo scenario on its first start (`db:seed --if-empty`).
+`db:reset` takes about 7 seconds with the demo scenario (budget 15 s); the full
+`load` scenario about 2 minutes (budget 10 minutes; CI seeds `--size 10`, the
+nightly workflow the full size).
 
 The demo content below is stored as JSON data files in `docs/demodata/`
-(personas with fixed IDs, clubs, groups, relationships, history to replay)
-and loaded by the seed runner in `apps/api/src/seed/`, which writes through
-the domain services (ADR 0026). This document describes the same data in
-prose and tables; keep both in step.
+(personas with fixed IDs, clubs, groups, relationships, history to replay;
+see its README) and loaded by the seed runner in `apps/api/src/seed/`, which
+writes through the domain services with the persona as actor (ADR 0026).
+This document describes the same data in prose and tables; keep both in step.
 
-Until the seed exists (P0.8), integration tests build fixtures with the builders in
+- **Fixed IDs:** personas, clubs and groups have the IDs in the data files;
+  generated people get IDs from a counter, so two runs give the same IDs.
+- **Dates relative to today:** ages in the tables stay correct (birth dates are
+  computed from them), and so the names of age-group teams follow the year:
+  "F2017" is `F{year}` with the birth year of 9-year-olds.
+- **History:** past relationships are written with the time they happened
+  (`app.seed_time`), and their validity is backdated without history rows of
+  its own. Only a database in seed mode (`app_meta.seed_mode`, written by
+  `db:seed`/`db:reset` as superuser) honours this; production never has it.
+- **Tables without flows yet** (waiting lists, join requests, club invitations,
+  consents, employments, support grants): rows are inserted in a transaction
+  of the acting persona, so history records who did it.
+- **The `load` scenario** is the documented exception to writing through the
+  services: one set-based transaction as superuser, recorded as a system job.
+
+The persona picker (`DEV_AUTH`) shows every demo persona, children without a
+login too, with the description and tags from `docs/demodata/personas.json`.
+
+Integration tests also build their own fixtures with the builders in
 `apps/api/src/testing/`. The **matrix** scenario (`scenarios.ts`, P0.7) has
 one person per kind of relationship for the permission tests: in club A a
 section with a team, a club manager, a registrar, the section's owner, the
@@ -42,9 +64,13 @@ outsider; and a platform operator without support access.
   never random numbers that could belong to real people.
 - The seed refuses to run against a database where `DEPLOYMENT_MODE=hosted`
   and `NODE_ENV=production`.
-- Each feature module adds its own seed step (`apps/api/src/seed/steps/<module>.ts`)
-  and data file in `docs/demodata/` on top of the core personas, so the
-  dataset grows with the application.
+- Each feature module adds its own seed step (`apps/api/src/seed/steps/<module>.ts`,
+  registered in `DEMO_STEPS` in `runner.ts`) and data file in `docs/demodata/`
+  on top of the core personas, so the dataset grows with the application.
+- No personal identity numbers are seeded yet: only official test numbers
+  may be used, and they are added when a feature needs them. Phone numbers
+  come from the range reserved for fiction (+46 70-174 06 05 to 06 99);
+  Norwegian personas have none.
 
 ## Development login (`DEV_AUTH`)
 
@@ -69,6 +95,7 @@ Zitadel (password `demo-password-123`, documented) to test the real login flow.
 
 | Club | Group (kind) | Owners | Admission | Members |
 |---|---|---|---|---|
+| SVK | Minivolley (training group, ages 7–8) | Sara | `direct` | 6 generated; Elsa played here until half a year ago |
 | SVK | F2017 (team, girls ~9 yrs), capacity 10 | Erik, Sara | `waitlist`, **full**: 5 waiting incl. Viktor (#2), one **offer outstanding** (expires in 3 days), one admitted out of order with a reason (sibling) | Elsa, Maja, Alva, + 7 generated |
 | SVK | Herr senior (team) | Johan | `direct` | Johan, Lars, + 4 generated (one with **club-level protected identity** set by Anna) |
 | IKN | Fotboll (section) | Karin | — | parent of P2012 |
@@ -111,6 +138,16 @@ club has roughly 10 named/central users plus generated players.
 | 23 | **Samira Karimi** | 39 | yes | Guardian of Nadia; **protected identity** (global, self-set); accepted the IKN F2015 "Föräldrar" chat room only |
 | 24 | **Nadia Karimi** | 11 | no | IKN F2015; **protected identity** set by Samira → invisible to other members, crossed-camera icon for leaders/managers, not in chats, no photo/stream tagging |
 | 25 | **Jonas Karimi** | 41 | yes | Second guardian of Nadia, **invited** as guardian by Samira (pending), prompted to enable protection |
+| 26 | **Camilla Dahl** | 40 | yes | Mother of Sofie; applied for her in FIL (join request with J2014 as preferred group) |
+| 27 | **Viktor Malm** | 8 | no | Son of Henrik (see 22): #2 on SVK F2017's waiting list, pending join request |
+
+Ahmed is Liam's parent; Liam, like Oskar, was created as a child and got his
+own login (half a year ago). The waiting list of F2017 has five waiting, one
+outstanding offer (expires in 3 days), one admitted out of order ("sibling
+already plays in the group") and one offer that a system job expired
+yesterday. Seeded now as data only, for modules that come later: background
+checks (clearances), billing plans, chat rooms, the anonymisation schedule
+(Ola left two years ago) and Sara's correction of an attendance mark.
 
 ## Demo scenario: activity and other data (added as modules land)
 
@@ -130,12 +167,17 @@ club has roughly 10 named/central users plus generated players.
 - **Record history:** the seed writes through the same services as the app,
   with the persona as actor, so history exists from the start. It also replays a
   few changes over time so the History panel has content: Anna moved Elsa
-  between groups, Erik updated his own phone number, Anna ended Peter's
-  manager role, Sara corrected an attendance mark, Karin approved Sofie's
-  earlier application, and one change made by a system job.
+  between groups (Minivolley → F2017, half a year ago), Erik updated his own
+  phone number (two months ago), Anna accepted Peter's hand-over (last year,
+  which ended his manager role; his board role ended then too), Anna approved
+  Johan's application (last year), Oskar and Liam got their own logins, and a
+  system job expired an offer on F2017's waiting list (yesterday). Sara's
+  attendance correction comes with the attendance module.
 
 ## Load scenario
 
-1,000 clubs, ~200,000 people, 5 years of activities and attendance, 10 million
-chat messages — generated with the same generators, used by performance tests
-(`performance.md`).
+1,000 clubs, ~200,000 people (per club 120 children with a parent each, 40
+adult members, 40 parents who are not members, 8 teams with two leaders, a
+club manager), `--size` sets the number of clubs. Activities and attendance
+(5 years) and chat messages (10 million) are added by their modules. Used by
+the performance tests (`performance.md`).

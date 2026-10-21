@@ -44,16 +44,22 @@ export class GuardianshipsService {
     this.people = people;
   }
 
-  /** "Add child": a new person without account or email, with the actor as parent. */
+  /** "Add child": a new person without account or email, with the actor as parent. `id`: fixed (demo seed). */
   addChild(
     context: Context,
     child: CreatePersonInput,
     kind: GuardianshipKind = "parent",
+    options: { id?: string } = {},
   ): Promise<{ child: Person; guardianship: Guardianship }> {
     return runAs(this.db, context, async (tx) => {
       const guardian = actorPersonId(context);
       parseInput(GuardianshipKindSchema, kind);
-      const person = await this.people.createPersonInTx(tx, context, child);
+      const person = await this.people.createPersonInTx(
+        tx,
+        context,
+        child,
+        options.id ? { id: options.id } : {},
+      );
       const guardianship = await this.insertInTx(
         tx,
         guardian,

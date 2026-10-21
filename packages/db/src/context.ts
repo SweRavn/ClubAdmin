@@ -16,6 +16,12 @@ export interface ActorContext {
   requestId?: string | null;
   /** Salted hash of the client IP, for audit events. Never the IP itself. */
   ipHash?: string | null;
+  /**
+   * Seeding only: the time recorded in history for this transaction's
+   * changes. Ignored unless the database is in seed mode (app.seed_mode(),
+   * development only; ADR 0026).
+   */
+  seedTime?: Date | null;
 }
 
 export interface TenantContext extends ActorContext {
@@ -35,6 +41,7 @@ export interface Settings {
   "app.actor_kind": ActorKind;
   "app.ip_hash": string;
   "app.viewer_privileged": "on" | "";
+  "app.seed_time": string;
 }
 
 function requireUuid(name: string, value: string | null | undefined): string {
@@ -61,5 +68,6 @@ export function settingsFor(
     "app.actor_kind": actor.actorKind,
     "app.ip_hash": actor.ipHash ?? "",
     "app.viewer_privileged": options.viewerPrivileged ? "on" : "",
+    "app.seed_time": actor.seedTime ? actor.seedTime.toISOString() : "",
   };
 }

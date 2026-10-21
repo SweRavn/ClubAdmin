@@ -1,0 +1,213 @@
+{
+  "clubs": [
+    {
+      "key": "svk",
+      "id": "0199a000-0000-7000-8001-000000000001",
+      "name": "Strandvikens Volleybollklubb",
+      "shortName": "SVK",
+      "slug": "strandvikens-vk",
+      "country": "SE",
+      "joinPolicy": "approval",
+      "foundedBy": "peter",
+      "foundedAt": "-6y",
+      "actor": "anna"
+    },
+    {
+      "key": "ikn",
+      "id": "0199a000-0000-7000-8001-000000000002",
+      "name": "IK Norrbacka",
+      "shortName": "IKN",
+      "slug": "ik-norrbacka",
+      "country": "SE",
+      "joinPolicy": "open",
+      "foundedBy": "karin",
+      "foundedAt": "-4y",
+      "actor": "karin"
+    },
+    {
+      "key": "fil",
+      "id": "0199a000-0000-7000-8001-000000000003",
+      "name": "Fjordvik Idrettslag",
+      "shortName": "FIL",
+      "slug": "fjordvik-il",
+      "country": "NO",
+      "joinPolicy": "invite_only",
+      "foundedBy": "lars",
+      "foundedAt": "-2y",
+      "actor": "lars"
+    }
+  ],
+  "groups": [
+    {
+      "key": "svk-f2017",
+      "id": "0199a000-0000-7000-8002-000000000001",
+      "club": "svk",
+      "name": "F{year}",
+      "kind": "team",
+      "birthYearAgo": 9,
+      "genderCategory": "female",
+      "sport": "volleyball",
+      "capacity": 10,
+      "admissionMode": "waitlist",
+      "owners": [
+        "erik",
+        "sara"
+      ],
+      "generated": {
+        "count": 7,
+        "ageFrom": 9,
+        "ageTo": 9,
+        "gender": "female"
+      }
+    },
+    {
+      "key": "svk-minivolley",
+      "id": "0199a000-0000-7000-8002-000000000002",
+      "club": "svk",
+      "name": "Minivolley",
+      "kind": "training_group",
+      "sport": "volleyball",
+      "admissionMode": "direct",
+      "owners": [
+        "sara"
+      ],
+      "generated": {
+        "count": 6,
+        "ageFrom": 7,
+        "ageTo": 8,
+        "gender": null
+      }
+    },
+    {
+      "key": "svk-herr",
+      "id": "0199a000-0000-7000-8002-000000000003",
+      "club": "svk",
+      "name": "Herr senior",
+      "kind": "team",
+      "genderCategory": "male",
+      "sport": "volleyball",
+      "admissionMode": "direct",
+      "owners": [
+        "johan"
+      ],
+      "generated": {
+        "count": 4,
+        "ageFrom": 20,
+        "ageTo": 35,
+        "gender": "male",
+        "clubProtected": 1,
+        "protectedBy": "anna"
+      }
+    },
+    {
+      "key": "ikn-fotboll",
+      "id": "0199a000-0000-7000-8002-000000000004",
+      "club": "ikn",
+      "name": "Fotboll",
+      "kind": "section",
+      "sport": "football",
+      "owners": [
+        "karin"
+      ]
+    },
+    {
+      "key": "ikn-p2012",
+      "id": "0199a000-0000-7000-8002-000000000005",
+      "club": "ikn",
+      "name": "P{year}",
+      "kind": "team",
+      "parent": "ikn-fotboll",
+      "birthYearAgo": 14,
+      "genderCategory": "male",
+      "sport": "football",
+      "admissionMode": "direct",
+      "owners": [
+        "ahmed"
+      ],
+      "generated": {
+        "count": 6,
+        "ageFrom": 14,
+        "ageTo": 14,
+        "gender": "male"
+      }
+    },
+    {
+      "key": "ikn-innebandy",
+      "id": "0199a000-0000-7000-8002-000000000006",
+      "club": "ikn",
+      "name": "Innebandy",
+      "kind": "section",
+      "sport": "floorball",
+      "owners": []
+    },
+    {
+      "key": "ikn-f2015",
+      "id": "0199a000-0000-7000-8002-000000000007",
+      "club": "ikn",
+      "name": "F{year}",
+      "kind": "training_group",
+      "parent": "ikn-innebandy",
+      "birthYearAgo": 11,
+      "genderCategory": "female",
+      "sport": "floorball",
+      "capacity": 12,
+      "admissionMode": "waitlist",
+      "owners": [],
+      "generated": {
+        "count": 5,
+        "ageFrom": 11,
+        "ageTo": 11,
+        "gender": "female"
+      }
+    },
+    {
+      "key": "ikn-styrelsen",
+      "id": "0199a000-0000-7000-8002-000000000008",
+      "club": "ikn",
+      "name": "Styrelsen",
+      "kind": "board",
+      "admissionMode": "closed",
+      "owners": [
+        "karin"
+      ]
+    },
+    {
+      "key": "fil-j2014",
+      "id": "0199a000-0000-7000-8002-000000000009",
+      "club": "fil",
+      "name": "J{year}",
+      "kind": "team",
+      "birthYearAgo": 12,
+      "genderCategory": "female",
+      "sport": "handball",
+      "admissionMode": "direct",
+      "owners": [
+        "lars"
+      ],
+      "generated": {
+        "count": 5,
+        "ageFrom": 12,
+        "ageTo": 12,
+        "gender": "female"
+      }
+    },
+    {
+      "key": "fil-veteran",
+      "id": "0199a000-0000-7000-8002-000000000010",
+      "club": "fil",
+      "name": "Veteran",
+      "kind": "team",
+      "sport": "handball",
+      "admissionMode": "direct",
+      "owners": [
+        "lars"
+      ],
+      "generated": {
+        "count": 4,
+        "ageFrom": 35,
+        "ageTo": 55,
+        "gender": null
+      }
+    }
+  ]
+}

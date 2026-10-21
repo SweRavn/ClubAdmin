@@ -1,0 +1,58 @@
+{
+  "entries": [
+    {
+      "group": "svk-f2017",
+      "status": "waiting",
+      "queuedAt": "-8mo"
+    },
+    {
+      "group": "svk-f2017",
+      "status": "waiting",
+      "queuedAt": "-7mo",
+      "person": "viktor",
+      "requestedBy": "henrik"
+    },
+    {
+      "group": "svk-f2017",
+      "status": "waiting",
+      "queuedAt": "-6mo"
+    },
+    {
+      "group": "svk-f2017",
+      "status": "waiting",
+      "queuedAt": "-5mo"
+    },
+    {
+      "group": "svk-f2017",
+      "status": "waiting",
+      "queuedAt": "-4mo"
+    },
+    {
+      "group": "svk-f2017",
+      "status": "offered",
+      "queuedAt": "-9mo",
+      "offerExpiresIn": "+3d",
+      "decidedBy": "erik"
+    },
+    {
+      "group": "svk-f2017",
+      "status": "offered",
+      "queuedAt": "-10mo",
+      "offerExpiresIn": "-1d",
+      "decidedBy": "erik"
+    },
+    {
+      "group": "svk-f2017",
+      "status": "admitted",
+      "queuedAt": "-3mo",
+      "outOfOrderReason": "Sibling already plays in the group",
+      "decidedBy": "sara",
+      "admittedMember": 0
+    },
+    {
+      "group": "ikn-f2015",
+      "status": "waiting",
+      "queuedAt": "-2mo"
+    }
+  ]
+}

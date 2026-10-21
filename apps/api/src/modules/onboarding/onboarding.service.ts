@@ -29,9 +29,14 @@ export class OnboardingService {
     this.roles = deps.roles;
   }
 
-  createClub(context: ActorContext, input: CreateClubInput): Promise<Club> {
+  /** `id`: a fixed club ID (the demo seed; ADR 0026). */
+  createClub(
+    context: ActorContext,
+    input: CreateClubInput,
+    options: { id?: string } = {},
+  ): Promise<Club> {
     const creator = actorPersonId(context);
-    const clubContext: TenantContext = { ...context, clubId: uuidv7() };
+    const clubContext: TenantContext = { ...context, clubId: options.id ?? uuidv7() };
     return this.db.withTenant(clubContext, async (tx) => {
       const club = await this.clubs.insertClubInTx(tx, clubContext.clubId, input);
       await this.memberships.addMemberInTx(tx, clubContext, creator);

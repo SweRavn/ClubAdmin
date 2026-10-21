@@ -46,6 +46,9 @@ export const PersonaSchema = z
   .object({
     person: PersonSummarySchema,
     hasAccount: z.boolean(),
+    /** From docs/demodata/personas.json (what the persona tests); null for others. */
+    description: z.string().nullable(),
+    tags: z.array(z.string()),
     clubs: z.array(
       z.object({ clubId: z.uuid(), clubName: z.string(), roles: z.array(z.enum(CLUB_ROLES)) }),
     ),

@@ -65,7 +65,12 @@ export class GroupsService {
     this.clubs = clubs;
   }
 
-  createGroup(context: TenantContext, input: CreateGroupInput): Promise<Group> {
+  /** `id`: a fixed group ID (the demo seed; ADR 0026). */
+  createGroup(
+    context: TenantContext,
+    input: CreateGroupInput,
+    options: { id?: string } = {},
+  ): Promise<Group> {
     return this.db.withTenant(context, async (tx) => {
       const data = definedOnly(parseInput(CreateGroupSchema, input));
       if (data.parentGroupId) await this.requireVisibleGroup(tx, data.parentGroupId);
@@ -74,7 +79,7 @@ export class GroupsService {
           ...data,
           name: data.name!,
           kind: data.kind!,
-          id: uuidv7(),
+          id: options.id ?? uuidv7(),
           clubId: context.clubId,
         })
         .catch(translateWriteError);

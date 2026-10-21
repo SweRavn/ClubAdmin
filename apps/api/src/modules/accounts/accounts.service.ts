@@ -256,7 +256,7 @@ export class AccountsService {
    * must be the address the invitation was sent to.
    */
   async acceptOwnLoginInvitation(
-    context: { requestId?: string | null; ipHash?: string | null },
+    context: Pick<ActorContext, "requestId" | "ipHash" | "seedTime">,
     token: string,
     account: NewAccount,
   ): Promise<Account> {

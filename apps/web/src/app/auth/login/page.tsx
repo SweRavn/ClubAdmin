@@ -86,6 +86,16 @@ function DevPicker({
                 .map((c) => `${c.clubName}${c.roles.length ? ` (${c.roles.join(", ")})` : ""}`)
                 .join(" · ")}
             </small>
+            {/* Demo data (docs/demodata): what the persona is for, in the data's own words. */}
+            {persona.description ? (
+              <>
+                <br />
+                <small>
+                  {persona.description}
+                  {persona.tags.length ? ` [${persona.tags.join(", ")}]` : ""}
+                </small>
+              </>
+            ) : null}
           </li>
         ))}
       </ul>

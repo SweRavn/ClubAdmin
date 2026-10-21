@@ -125,13 +125,8 @@ pnpm db:migrate       # apply migrations as clubadmin_owner (pnpm dev:services r
 pnpm db:status        # pending or changed migrations
 pnpm db:generate      # write a migration from changes in packages/db/src/schema
 pnpm --filter @clubadmin/db bench   # cost of tenant transactions and history triggers
-```
-
-Planned in later Phase 0 packages:
-
-```
-pnpm db:seed        # load demo scenario, see docs/seed-data.md (P0.8)
-pnpm db:reset       # drop, migrate, seed; development only (P0.8)
+pnpm db:seed          # load the demo scenario (docs/seed-data.md, data in docs/demodata)
+pnpm db:reset         # drop, recreate, migrate, seed; development only (--scenario demo|minimal|load)
 ```
 
 Dependency versions shared across packages are defined once in the `catalog:`

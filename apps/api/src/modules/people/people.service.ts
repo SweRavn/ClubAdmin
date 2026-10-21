@@ -88,9 +88,15 @@ export class PeopleService {
     });
   }
 
-  /** Creates a person without email (children, people added by a club). */
-  createPerson(context: Context, input: CreatePersonInput): Promise<Person> {
-    return runAs(this.db, context, (tx) => this.createPersonInTx(tx, context, input));
+  /** Creates a person without email (children, people added by a club). `id`: fixed (demo seed). */
+  createPerson(
+    context: Context,
+    input: CreatePersonInput,
+    options: { id?: string } = {},
+  ): Promise<Person> {
+    return runAs(this.db, context, (tx) =>
+      this.createPersonInTx(tx, context, input, options.id ? { id: options.id } : {}),
+    );
   }
 
   async createPersonInTx(
