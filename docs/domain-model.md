@@ -98,7 +98,8 @@ No password data (that lives in Zitadel).
   The duplicate's relationships move to the kept person; where the kept
   person already has the same open relationship, the duplicate's is ended.
   The duplicate stays as a stub with `merged_into_person_id`. A person with a
-  login cannot be merged away (merge into them instead).
+  login cannot be merged away (merge into them instead). A club manager's
+  merge only moves rows in clubs the manager can see ([#5](https://github.com/SweRavn/ClubAdmin/issues/5)).
 - **"Give own login"**: when the child reaches `own_account_min_age` (country
   pack, default 13), a guardian (or the club) enters the child's own email. An
   invitation goes to that address; when the child completes sign-up, the
@@ -230,7 +231,8 @@ successor manager and ends the proposer's role in one transaction.
 (`pending`, `active`, `ended`; invitations are separate rows, see above),
 `valid_from`, `valid_to`, `created_by_person_id`, `ward_adult_flagged_at`
 (set by the worker when the ward reaches `adult_age`; the guardianship is
-not ended automatically).
+not ended automatically; the worker currently uses the highest `adult_age` of
+all country packs, [#6](https://github.com/SweRavn/ClubAdmin/issues/6)).
 - `parent`/`legal_guardian` default to full rights.
 - `relative` (grandparent, older sibling) defaults to view-only and must be
   granted by a guardian.

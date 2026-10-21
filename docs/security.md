@@ -33,9 +33,10 @@ later phase. Backup and disaster recovery are in
 - Login policy (`infra/zitadel/clubadmin.json`): email as login name,
   verified email before the first login, passkeys and TOTP/security keys,
   passwords of at least 10 characters with a lower-case letter and a digit,
-  lockout after 10 failed password or code attempts, unknown login names not
+  lockout after 10 failed password or code attempts (organisation level only,
+  [#2](https://github.com/SweRavn/ClubAdmin/issues/2)), unknown login names not
   revealed, self-registration only when `USER_SIGNUP=open`. Zitadel has no
-  breached-password check (known gap, ADR 0005).
+  breached-password check (known gap, ADR 0005, [#1](https://github.com/SweRavn/ClubAdmin/issues/1)).
 - Access and ID tokens live 10 minutes; refresh tokens rotate on every use,
   expire after 30 days idle (90 days at most), and a rejected refresh (already
   used: possible theft) ends the session. Users see and revoke their sessions
@@ -49,7 +50,8 @@ later phase. Backup and disaster recovery are in
   by a state cookie (no login CSRF). Logout removes the session, revokes the
   refresh token and ends the Zitadel session.
 - Rate limits: `/auth/*` 30 requests per IP and minute (BFF, Valkey); first
-  logins (account creation) 10 per IP and minute (API); the global API limit.
+  logins (account creation) 10 per IP and minute (API; in memory, so per API
+  instance, [#7](https://github.com/SweRavn/ClubAdmin/issues/7)); the global API limit.
 - Token contents are never logged (tests); rejected tokens are logged with the
   reason only.
 - Step-up authentication for sensitive actions (exporting member data, viewing

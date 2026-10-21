@@ -15,6 +15,9 @@ pnpm db:seed --scenario minimal   # one club, three people (fast unit/integratio
 
 `pnpm dev` runs `db:reset` automatically on first start if the database is empty.
 
+Open question before P0.8: where the seed runner lives, since it should use the
+domain services in `apps/api` and packages cannot import apps ([#4](https://github.com/SweRavn/ClubAdmin/issues/4)).
+
 ## Rules
 
 - Seeding is **deterministic**: fixed UUIDs for the named personas and clubs

@@ -27,4 +27,4 @@ they are passed in (`AUTH_WEB_CLIENT_SECRET`, `ZITADEL_API_TOKEN`); otherwise
 new ones are generated.
 
 Login UI: Zitadel's built-in login (v1), because login UI v2 has no Swedish
-translation yet (ADR 0005).
+translation yet (ADR 0005, [#3](https://github.com/SweRavn/ClubAdmin/issues/3)).

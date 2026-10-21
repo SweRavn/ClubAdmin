@@ -185,4 +185,7 @@ only run if listed in `onlyBuiltDependencies`.
 
 Implement only what the prompt scopes. If you discover a needed design change,
 write or update an ADR in `docs/adr/` and say so in the PR. Update the relevant
-docs in the same PR as the code.
+docs in the same PR as the code. Known gaps and deferred work are GitHub issues
+(labels `security`, `auth`, `tech-debt`, `decision-needed`); link the issue
+from the doc or ADR that describes the gap, and close it in the commit that
+fixes it.

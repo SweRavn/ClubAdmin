@@ -22,7 +22,10 @@ separate login UI v2 has no Swedish translation (its languages are fixed in
 the build); v1 has complete Swedish texts and supports passkeys, TOTP,
 security keys, self-registration with email verification and lockout. The
 `loginVersion` setting in `infra/zitadel/clubadmin.json` switches back to v2
-once it supports Swedish (and the `zitadel-login` container returns).
+once it supports Swedish (and the `zitadel-login` container returns;
+[#3](https://github.com/SweRavn/ClubAdmin/issues/3)).
 Zitadel has no breached-password check; this is a known gap (password length
-and lockout policies apply). How the API reads MFA and the login time from
+and lockout policies apply; [#1](https://github.com/SweRavn/ClubAdmin/issues/1)). The lockout policy is set on the
+organisation, because Zitadel v4 cannot change it instance-wide over REST
+([#2](https://github.com/SweRavn/ClubAdmin/issues/2)). How the API reads MFA and the login time from
 Zitadel's tokens is ADR 0024.
