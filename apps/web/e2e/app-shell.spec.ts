@@ -58,8 +58,13 @@ test.describe("protected identity on IK Norrbacka F2015", () => {
     const badge = row.getByTestId("protected-badge");
     const tooltip = "Skyddad identitet — fotografera, filma eller dela inte";
     await expect(badge).toHaveAttribute("aria-label", tooltip);
-    await badge.focus();
-    await expect(page.getByRole("tooltip")).toHaveText(tooltip);
+    // Keyboard focus shows the tooltip. `next dev` may still be streaming and
+    // hydrating the page, which can drop an early focus: focus until it holds.
+    await expect(async () => {
+      await badge.focus();
+      await expect(badge).toBeFocused({ timeout: 1_000 });
+      await expect(page.getByRole("tooltip")).toHaveText(tooltip, { timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
     // Erik himself is not protected: no icon on his row.
     await expect(
       page.locator(`[data-person-id="${PERSONAS.erik.id}"]`).first().getByTestId("protected-badge"),
@@ -215,8 +220,13 @@ test("a roster longer than a page loads the next page on request", async ({ brow
   await page.goto(`/groups/${GROUPS.svkF2017}?limit=10`);
   const roster = page.getByTestId("group-members");
   await expect(roster.locator("li")).toHaveCount(10);
-  await roster.getByRole("button", { name: "Visa fler" }).click();
-  await expect(roster.locator("li")).toHaveCount(13);
+  // The button is server-rendered: a click before `next dev` has hydrated the
+  // list does nothing, so click until the next page is there.
+  await expect(async () => {
+    const more = roster.getByRole("button", { name: "Visa fler" });
+    if (await more.isEnabled().catch(() => false)) await more.click({ timeout: 1_000 });
+    await expect(roster.locator("li")).toHaveCount(13, { timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
   await expect(roster.getByRole("button", { name: "Visa fler" })).toHaveCount(0);
   await page.context().close();
 });
