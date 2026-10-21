@@ -71,6 +71,11 @@ export class ClubsService {
     return repo.findClubs(tx, clubIds);
   }
 
+  /** All clubs, without an actor (worker jobs and development tooling). */
+  listAllSystem(jobName: string): Promise<Club[]> {
+    return this.db.withSystem(jobName, {}, (tx) => repo.listClubs(tx));
+  }
+
   /** Locks the club row until the end of the transaction. */
   async lockClubInTx(tx: Tx, clubId: string): Promise<Club> {
     const club = await repo.lockClub(tx, clubId);

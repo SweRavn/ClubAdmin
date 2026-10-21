@@ -222,20 +222,63 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
 
 ## Authentication
 
-- Zitadel is the OIDC provider. The app never sees passwords.
-- **Web:** Next.js acts as backend-for-frontend. Authorization-code flow with
-  PKCE; tokens stay server-side; the browser holds only an `HttpOnly`, `Secure`,
-  `SameSite=Lax` session cookie. No tokens in `localStorage`.
+- Zitadel is the OIDC provider (ADR 0005); the app never sees passwords. Its
+  configuration is code: `pnpm auth:configure` (also run by `pnpm
+  dev:services`) applies `infra/zitadel/clubadmin.json` — project
+  `clubadmin`, apps `web` (confidential, code + PKCE), `mobile` (native,
+  PKCE) and `api`, login and password policies, lockout, token lifetimes,
+  branding, Swedish and English texts — and writes the client IDs to
+  `.env.local` (`--print` for operators). Login pages: Zitadel's built-in
+  login UI (v1) under `https://auth.clubadmin.localhost/ui/login`.
+- **API** (`apps/api/src/modules/identity`): a global `AuthGuard` validates
+  `Authorization: Bearer` access tokens with `jose` (issuer, audience = the
+  Zitadel project, expiry, signature through a cached JWKS that is refetched on
+  an unknown `kid` at most once a minute) and the ID token in `X-Id-Token`,
+  bound to it by `at_hash` (ADR 0024). The **principal** is
+  `{ accountId, personId, mfa, authTime, sessionId }`; `mfa` comes from `amr`.
+  Mapping subject → account is cached in memory for 5 minutes, so a request
+  needs no database query (validation p95 < 1 ms).
+- **Endpoint access** in `@Endpoint`: `{ public: true }`, `{ authenticated:
+  true }` (the person's own data) or `{ permission }` (P0.7; refused until
+  then). `@RequireMfa()` answers `403 mfa-required` without a second factor;
+  `@RecentAuth(minutes)` answers `403 reauthentication-required`.
+- **Provisioning:** the first request with an unknown subject creates person
+  and account from the ID token's verified email and names. An email that
+  already belongs to another account (in any letter case) is refused with
+  `409 conflict` / `email_taken`: accounts are never merged by email. A
+  verified email that changed in Zitadel is taken over on the next login.
+  With a "give own login" invitation (`X-ClubAdmin-Invitation`, ADR 0020) the
+  new login is linked to the invited person instead. At most 10 first logins
+  per client IP and minute.
+- **Web (BFF, `apps/web`):** Next.js route handlers `/auth/login/start`,
+  `/auth/callback`, `/auth/logout` (and `/auth/dev-login`) do authorization
+  code + PKCE with `openid-client`. Tokens stay in Valkey, encrypted with
+  `SESSION_ENCRYPTION_KEY` (AES-256-GCM, bound to the session ID); the browser
+  holds only `__Host-session` (`HttpOnly; Secure; SameSite=Lax; Path=/`) and
+  `__Host-csrf`. Browser calls to `/api/*` go through the BFF, which adds the
+  tokens and refreshes them (rotation; a rejected refresh token ends the
+  session). Non-GET requests need `X-CSRF-Token` equal to the CSRF cookie and
+  the session's token, from the site's own origin. The login adds exactly one
+  API call (`GET /api/v1/me`). `api.clubadmin.localhost` serves the API
+  directly for clients with their own tokens (mobile).
+- **Sessions:** `GET /api/v1/me/sessions` lists the person's browser sessions
+  from the BFF's index in Valkey (by a public handle, never the session ID);
+  `DELETE /api/v1/me/sessions/:id` removes the session (that browser is logged
+  out on its next request) and ends the Zitadel session (machine user
+  `clubadmin-api`, `ZITADEL_API_TOKEN`).
 - **Mobile:** authorization-code flow with PKCE via the system browser; refresh
-  token in the OS secure store (Keychain/Keystore).
-- **API:** validates access tokens (JWT, cached JWKS), maps the subject to a
-  `person`. Short-lived access tokens (≤ 10 min), rotating refresh tokens.
+  token in the OS secure store (Keychain/Keystore) (P0.10).
+- Short-lived access and ID tokens (10 min), rotating refresh tokens (30 days
+  idle, 90 days at most).
 - MFA (passkey or TOTP) is **required** for roles with elevated access: board,
   club manager, treasurer, anyone who can see background-check status or
-  personal identity numbers.
-- Development: a `DEV_AUTH` provider lets you log in as any seeded persona
-  without Zitadel. It refuses to start unless `NODE_ENV=development`
-  (see `seed-data.md`).
+  personal identity numbers (enforced with the permissions, P0.7).
+- **Development:** with `DEV_AUTH=true` the login page shows a persona picker
+  (`GET /api/v1/dev/personas`, only registered then); the BFF signs HS256
+  tokens with `DEV_AUTH_KEY` (`iss = clubadmin-dev`) for the chosen person,
+  with or without MFA. API and web refuse to start with `DEV_AUTH=true` unless
+  `NODE_ENV=development` and `DEPLOYMENT_MODE=self_hosted`, and log a warning
+  on every start (see `seed-data.md`).
 
 ## Authorization
 

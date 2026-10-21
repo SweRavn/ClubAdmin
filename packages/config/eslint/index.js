@@ -18,7 +18,7 @@ const JS_FILES = ["**/*.{js,jsx,mjs,cjs}"];
 const DEFAULT_EXPORT_ALLOWED = [
   "**/*.config.{ts,js,mjs,cjs}",
   "**/vitest.base.js",
-  "apps/web/app/**/{page,layout,loading,error,not-found,template,default,route}.tsx",
+  "apps/web/src/app/**/{page,layout,loading,error,not-found,template,default,route}.tsx",
   "apps/mobile/app/**/*.tsx",
 ];
 

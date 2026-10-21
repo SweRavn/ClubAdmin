@@ -39,3 +39,6 @@ Thumbs.db
 
 # Local generated files (exported dev CA certificate, ...)
 .local/
+next-env.d.ts
+apps/web/playwright-report/
+apps/web/test-results/

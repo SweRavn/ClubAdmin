@@ -2,23 +2,37 @@
   "name": "@clubadmin/web",
   "version": "0.0.0",
   "private": true,
-  "description": "Next.js web app. Built in P0.6 and P0.9.",
+  "description": "Next.js web app: backend-for-frontend login and session (P0.6); the app shell comes in P0.9.",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
-    "dev": "node -e \"console.log('@clubadmin/web: placeholder, the web app is built in P0.6/P0.9')\"",
+    "dev": "NEXT_TELEMETRY_DISABLED=1 next dev --port ${WEB_PORT:-3000}",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "start": "next start --port ${WEB_PORT:-3000}",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@clubadmin/config": "workspace:*",
+    "@playwright/test": "catalog:",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@clubadmin/i18n": "workspace:*",
+    "@clubadmin/server-kit": "workspace:*",
+    "@clubadmin/shared": "workspace:*",
+    "ioredis": "catalog:",
+    "jose": "catalog:",
+    "next": "catalog:",
+    "openid-client": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
   }
 }

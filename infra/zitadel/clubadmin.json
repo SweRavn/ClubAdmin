@@ -1,0 +1,89 @@
+{
+  "$comment": "Desired Zitadel configuration, applied by `pnpm auth:configure` (packages/devtools/src/zitadel.ts). ${VAR} is replaced from the environment. Login UI v1 (built into Zitadel) is used because login UI v2 has no Swedish yet (ADR 0005); login-texts/<lang>.json override its default texts.",
+  "project": {
+    "name": "clubadmin"
+  },
+  "apps": {
+    "web": {
+      "type": "oidc",
+      "appType": "OIDC_APP_TYPE_WEB",
+      "authMethodType": "OIDC_AUTH_METHOD_TYPE_BASIC",
+      "redirectUris": ["${PUBLIC_WEB_URL}/auth/callback"],
+      "postLogoutRedirectUris": ["${PUBLIC_WEB_URL}/"]
+    },
+    "mobile": {
+      "type": "oidc",
+      "appType": "OIDC_APP_TYPE_NATIVE",
+      "authMethodType": "OIDC_AUTH_METHOD_TYPE_NONE",
+      "redirectUris": ["clubadmin://auth/callback"],
+      "postLogoutRedirectUris": ["clubadmin://auth/logout"]
+    },
+    "api": {
+      "type": "api",
+      "authMethodType": "API_AUTH_METHOD_TYPE_PRIVATE_KEY_JWT"
+    }
+  },
+  "serviceUser": {
+    "userName": "clubadmin-api",
+    "name": "ClubAdmin API (session revocation)",
+    "instanceRoles": ["IAM_LOGIN_CLIENT"]
+  },
+  "loginPolicy": {
+    "allowUsernamePassword": true,
+    "allowExternalIdp": false,
+    "forceMfa": false,
+    "passwordlessType": "PASSWORDLESS_TYPE_ALLOWED",
+    "hidePasswordReset": false,
+    "ignoreUnknownUsernames": true,
+    "disableLoginWithEmail": false,
+    "disableLoginWithPhone": true,
+    "secondFactors": ["SECOND_FACTOR_TYPE_OTP", "SECOND_FACTOR_TYPE_U2F"],
+    "multiFactors": ["MULTI_FACTOR_TYPE_U2F_WITH_VERIFICATION"],
+    "passwordCheckLifetime": "864000s",
+    "externalLoginCheckLifetime": "864000s",
+    "mfaInitSkipLifetime": "2592000s",
+    "secondFactorCheckLifetime": "64800s",
+    "multiFactorCheckLifetime": "43200s",
+    "allowDomainDiscovery": false
+  },
+  "passwordComplexity": {
+    "minLength": 10,
+    "hasUppercase": false,
+    "hasLowercase": true,
+    "hasNumber": true,
+    "hasSymbol": false
+  },
+  "lockout": {
+    "maxPasswordAttempts": 10,
+    "maxOtpAttempts": 10
+  },
+  "oidcSettings": {
+    "accessTokenLifetime": "600s",
+    "idTokenLifetime": "600s",
+    "refreshTokenIdleExpiration": "2592000s",
+    "refreshTokenExpiration": "7776000s"
+  },
+  "domainPolicy": {
+    "userLoginMustBeDomain": false,
+    "validateOrgDomains": false,
+    "smtpSenderAddressMatchesInstanceDomain": false
+  },
+  "branding": {
+    "primaryColor": "#1f6f50",
+    "backgroundColor": "#fafaf7",
+    "warnColor": "#b3261e",
+    "fontColor": "#1c1b1f",
+    "primaryColorDark": "#7ad3a8",
+    "backgroundColorDark": "#141414",
+    "warnColorDark": "#ffb4ab",
+    "fontColorDark": "#e6e1e5",
+    "hideLoginNameSuffix": true,
+    "disableWatermark": true,
+    "themeMode": "THEME_MODE_AUTO"
+  },
+  "languages": {
+    "default": "sv",
+    "allowed": ["sv", "en"]
+  },
+  "loginVersion": "v1"
+}

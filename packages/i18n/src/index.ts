@@ -43,3 +43,14 @@ export function negotiateLocale(acceptLanguage: string | undefined): Locale {
 export function translate(locale: Locale, key: MessageKey): string {
   return catalogues[locale][key] ?? catalogues[DEFAULT_LOCALE][key];
 }
+
+/** A message with `{name}` placeholders filled in (plain values only; full ICU formatting comes in P0.9). */
+export function format(
+  locale: Locale,
+  key: MessageKey,
+  values: Readonly<Record<string, string | number>> = {},
+): string {
+  return translate(locale, key).replace(/\{([A-Za-z0-9_]+)\}/g, (whole, name: string) =>
+    name in values ? String(values[name]) : whole,
+  );
+}

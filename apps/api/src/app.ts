@@ -7,7 +7,7 @@ import "reflect-metadata";
 import type { IncomingMessage } from "node:http";
 
 import { createLogger, type Logger } from "@clubadmin/server-kit";
-import { isUuid, uuidv7 } from "@clubadmin/shared";
+import { DEV_AUTH_WARNING, isUuid, uuidv7 } from "@clubadmin/shared";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
@@ -42,6 +42,8 @@ export async function createApp(
 ): Promise<NestFastifyApplication> {
   const logger =
     options.logger ?? createLogger({ service: "clubadmin-api", level: config.LOG_LEVEL });
+
+  if (config.DEV_AUTH) logger.warn(DEV_AUTH_WARNING);
 
   const adapter = new FastifyAdapter({
     loggerInstance: logger,

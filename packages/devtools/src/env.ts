@@ -42,6 +42,11 @@ export const ENV_TEMPLATE: EnvSection[] = [
       { key: "CLUB_CREATION", value: "open" },
       { key: "DEFAULT_COUNTRY", value: "SE" },
       { key: "DEV_AUTH", value: "true" },
+      {
+        key: "DEV_AUTH_KEY",
+        value: () => hex(32),
+        comment: "Signs DEV_AUTH tokens (web app and API); development only",
+      },
     ],
   },
   {
@@ -135,6 +140,17 @@ export const ENV_TEMPLATE: EnvSection[] = [
         key: "BLIND_INDEX_KEY",
         value: () => randomBytes(32).toString("base64"),
         comment: "Keyed hashes for matching encrypted values (duplicate personal identity numbers)",
+      },
+    ],
+  },
+  {
+    title: "Web app (backend-for-frontend)",
+    variables: [
+      { key: "API_INTERNAL_URL", value: "http://127.0.0.1:${API_PORT}" },
+      {
+        key: "SESSION_ENCRYPTION_KEY",
+        value: () => randomBytes(32).toString("base64"),
+        comment: "Encrypts the tokens in session records (Valkey)",
       },
     ],
   },
@@ -311,4 +327,32 @@ export function requireEnv(env: ReadonlyMap<string, string>, key: string): strin
     throw new Error(`${key} is not set. Run \`pnpm dev\` once to generate .env.local.`);
   }
   return value;
+}
+
+/**
+ * Sets keys in .env.local (adding or replacing them), for values that a tool
+ * owns, such as client IDs written by `pnpm auth:configure`.
+ */
+export function setEnvValues(
+  values: Readonly<Record<string, string>>,
+  path = envLocalFile,
+): string[] {
+  let text = existsSync(path) ? readFileSync(path, "utf8") : `${HEADER.join("\n")}\n`;
+  const current = parseEnv(text);
+  const changed: string[] = [];
+  const appended: string[] = [];
+  for (const [key, value] of Object.entries(values)) {
+    if (current.get(key) === value) continue;
+    changed.push(key);
+    const line = `${key}=${value}`;
+    const pattern = new RegExp(`^${key}=.*$`, "m");
+    if (pattern.test(text)) text = text.replace(pattern, () => line);
+    else appended.push(line);
+  }
+  if (changed.length === 0) return [];
+  if (appended.length > 0) {
+    text = `${text.replace(/\n*$/, "\n")}\n# Written by pnpm auth:configure\n${appended.join("\n")}\n`;
+  }
+  writeFileSync(path, text, { mode: 0o600 });
+  return changed;
 }

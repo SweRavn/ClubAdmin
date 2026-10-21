@@ -14,7 +14,6 @@ export const DEV_SERVICES = [
   "postgres",
   "valkey",
   "zitadel",
-  "zitadel-login",
   "garage",
   "mailpit",
   "caddy",

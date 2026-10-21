@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from "vitest";
 
-import { catalogues, negotiateLocale, translate } from "./index.ts";
+import { catalogues, format, negotiateLocale, translate } from "./index.ts";
 
 describe("catalogues", () => {
   it("have the same keys in every language", () => {
@@ -28,5 +28,12 @@ describe("translate", () => {
   it("returns the message in the requested language", () => {
     expect(translate("sv", "problem.not-found")).toBe("Hittades inte");
     expect(translate("en", "problem.not-found")).toBe("Not found");
+  });
+});
+
+describe("format", () => {
+  it("fills placeholders", () => {
+    expect(format("sv", "web.me.loggedInAs", { name: "Anna" })).toBe("Inloggad som Anna");
+    expect(format("en", "web.me.loggedInAs")).toBe("Logged in as {name}");
   });
 });

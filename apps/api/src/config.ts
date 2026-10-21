@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { baseConfigShape, envBoolean, envList, parseConfig } from "@clubadmin/server-kit";
-import { z } from "@clubadmin/shared";
+import { devAuthViolation, z } from "@clubadmin/shared";
 
 export const apiConfigSchema = z
   .object({
@@ -18,6 +18,20 @@ export const apiConfigSchema = z
     ENCRYPTION_MASTER_KEYS: z.string().optional(),
     /** Key for blind indexes (matching encrypted values), base64, 32 bytes. */
     BLIND_INDEX_KEY: z.string().optional(),
+    /** OIDC issuer (Zitadel). Without it only DEV_AUTH tokens are accepted. */
+    AUTH_ISSUER: z.url().optional(),
+    /** Required audience of access tokens: the Zitadel project ID (pnpm auth:configure). */
+    AUTH_AUDIENCE: z.string().optional(),
+    /** JWKS URL; defaults to the issuer's /oauth/v2/keys. */
+    AUTH_JWKS_URL: z.url().optional(),
+    /** Zitadel API base URL for session revocation; defaults to AUTH_ISSUER. */
+    ZITADEL_API_URL: z.url().optional(),
+    /** Token of the clubadmin-api machine user (pnpm auth:configure), to end Zitadel sessions. */
+    ZITADEL_API_TOKEN: z.string().optional(),
+    /** Development login (docs/seed-data.md); refused outside development. */
+    DEV_AUTH: envBoolean(false),
+    /** HS256 key shared with the web app for DEV_AUTH tokens (at least 32 characters). */
+    DEV_AUTH_KEY: z.string().min(32).optional(),
     BODY_LIMIT_BYTES: z.coerce.number().int().positive().default(1_048_576),
     REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
@@ -26,6 +40,15 @@ export const apiConfigSchema = z
     OPENAPI_ENABLED: envBoolean(false).optional(),
   })
   .superRefine((config, ctx) => {
+    const devAuth = devAuthViolation(config);
+    if (devAuth) ctx.addIssue({ code: "custom", path: ["DEV_AUTH"], message: devAuth });
+    if (config.DEV_AUTH && !config.DEV_AUTH_KEY) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["DEV_AUTH_KEY"],
+        message: "required when DEV_AUTH=true",
+      });
+    }
     if (config.NODE_ENV === "production") {
       for (const key of [
         "DATABASE_URL",

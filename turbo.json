@@ -32,5 +32,12 @@
       "dependsOn": ["build"],
       "cache": false
     }
-  }
+  },
+  "globalPassThroughEnv": [
+    "NODE_EXTRA_CA_CERTS",
+    "NEXT_TELEMETRY_DISABLED",
+    "PLAYWRIGHT_CHROMIUM_EXECUTABLE",
+    "ZITADEL_PAT",
+    "BASE_URL"
+  ]
 }

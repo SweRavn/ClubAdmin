@@ -13,10 +13,13 @@ export const ENDPOINT_METADATA = "clubadmin:endpoint";
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /**
- * Who may call the endpoint. `public` needs no login. Permissions are checked
- * by the authorization module (P0.7); until then only public endpoints exist.
+ * Who may call the endpoint: `public` needs no login, `authenticated` any
+ * logged-in person (their own data, e.g. /me), `permission` a permission
+ * checked by the authorization module (P0.7; refused until then). The
+ * AuthGuard (identity module) enforces it; @RequireMfa() and @RecentAuth()
+ * add step-up requirements.
  */
-export type EndpointAccess = { public: true } | { permission: string };
+export type EndpointAccess = { public: true } | { authenticated: true } | { permission: string };
 
 export interface EndpointOptions {
   method: HttpMethod;

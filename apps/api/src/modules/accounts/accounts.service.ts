@@ -4,6 +4,8 @@
 // own person, so duplicates are detected by the unique index, never by
 // looking up other people's accounts.
 
+import { createHash, randomBytes } from "node:crypto";
+
 import { ageOn, getCountryPack, isSupportedCountry } from "@clubadmin/country-packs";
 import {
   type ActorContext,
@@ -13,16 +15,25 @@ import {
   outbox,
   type Tx,
 } from "@clubadmin/db";
-import { EmailSchema } from "@clubadmin/shared";
+import { EmailSchema, type SignUpPersonInput, uuidv7 } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
-import { actorPersonId, parseInput } from "../../platform/domain/run.ts";
+import {
+  actorPersonId,
+  type Context,
+  hasClub,
+  parseInput,
+  runAs,
+} from "../../platform/domain/run.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import type { MembershipsService } from "../memberships/index.ts";
 import type { PeopleService } from "../people/index.ts";
 import * as repo from "./accounts.repository.ts";
 
 export type Account = repo.AccountRow;
+
+export const ACCOUNT_INVITATION_VALID_DAYS = 14;
+const hashToken = (token: string) => createHash("sha256").update(token, "utf8").digest("base64url");
 
 export interface NewAccount {
   email: string;
@@ -115,7 +126,11 @@ export class AccountsService {
       const personId = actorPersonId(context);
       const person = await this.people.getPersonInTx(tx, personId);
       if (await repo.findByPerson(tx, personId)) throw new DomainError("account_exists");
-      if (ageOn(person.birthDate) < (await this.ownAccountMinAge(tx, personId))) {
+      // Unknown age counts as too young.
+      if (
+        !person.birthDate ||
+        ageOn(person.birthDate) < (await this.ownAccountMinAge(tx, personId))
+      ) {
         throw new DomainError("too_young_for_account");
       }
       const account = await this.insert(tx, personId, input);
@@ -126,6 +141,135 @@ export class AccountsService {
       });
       return account;
     });
+  }
+
+  /**
+   * Sign-up: a new person and their account in one transaction. The person
+   * acts as themselves (`personId` is generated here). Used when someone logs
+   * in for the first time (identity module).
+   */
+  signUp(
+    context: { requestId?: string | null; ipHash?: string | null },
+    person: SignUpPersonInput,
+    account: NewAccount,
+  ): Promise<Account> {
+    const self: ActorContext = { actorKind: "person", personId: uuidv7(), ...context };
+    return this.db.withActor(self, async (tx) => {
+      await this.people.createSelfInTx(tx, self, person);
+      return this.createAccountInTx(tx, self, account);
+    });
+  }
+
+  /** Account by identity-provider subject, without an actor (resolving who is logging in). */
+  findBySubject(idpSubject: string): Promise<Account | null> {
+    return this.db.withSystem("auth:resolve", {}, (tx) => repo.findBySubject(tx, idpSubject));
+  }
+
+  /** Account of a person, without an actor (DEV_AUTH logins). */
+  findByPerson(personId: string): Promise<Account | null> {
+    return this.db.withSystem("auth:resolve", {}, (tx) => repo.findByPersonId(tx, personId));
+  }
+
+  /** People with a login (DEV_AUTH persona picker). */
+  listAllForDevelopment(): Promise<{ personId: string; email: string }[]> {
+    return this.db.withSystem("dev:personas", {}, (tx) => repo.listAll(tx));
+  }
+
+  /**
+   * The identity provider reports a different verified email: take it over
+   * (changed in Zitadel). Fails with email_taken if another account has it.
+   */
+  syncEmail(context: ActorContext, email: string, verifiedAt: Date): Promise<Account> {
+    return this.db.withActor(context, async (tx) => {
+      const account = await repo.findByPerson(tx, actorPersonId(context));
+      if (!account) throw new DomainError("not_found");
+      const normalized = parseInput(EmailSchema, email);
+      if (normalized === account.email) return account;
+      try {
+        await repo.updateAccount(tx, account.id, {
+          email: normalized,
+          emailVerifiedAt: verifiedAt,
+        });
+      } catch (error) {
+        if (isUniqueViolation(error, "accounts_email_unique")) throw new DomainError("email_taken");
+        throw error;
+      }
+      await audit.record(tx, {
+        action: "account.email.synced",
+        resourceType: "account",
+        resourceId: account.id,
+        changedFields: ["email"],
+      });
+      await outbox.publish(tx, "account.email.changed", {
+        accountId: account.id,
+        personId: account.personId,
+      });
+      return { ...account, email: normalized, emailVerifiedAt: verifiedAt };
+    });
+  }
+
+  /**
+   * "Give own login" (ADR 0020): a full guardian (or a club manager of a club
+   * the person belongs to) invites the person's own email. Returns the secret
+   * token for the link; only its hash is stored. The UI comes in P1.3.
+   */
+  createOwnLoginInvitation(
+    context: Context,
+    personId: string,
+    email: string,
+  ): Promise<{ invitationId: string; token: string }> {
+    return runAs(this.db, context, async (tx) => {
+      const actor = actorPersonId(context);
+      const allowed =
+        (await repo.actorIsFullGuardianOf(tx, personId)) ||
+        (hasClub(context) && (await repo.actorIsClubManager(tx)));
+      if (!allowed) throw new DomainError("not_allowed");
+      const person = await this.people.getPersonInTx(tx, personId);
+      if (await repo.findByPersonId(tx, personId)) throw new DomainError("account_exists");
+      if (
+        !person.birthDate ||
+        ageOn(person.birthDate) < (await this.ownAccountMinAge(tx, personId))
+      ) {
+        throw new DomainError("too_young_for_account");
+      }
+      const token = randomBytes(32).toString("base64url");
+      const invitation = await repo.insertInvitation(tx, {
+        personId,
+        email: parseInput(EmailSchema, email),
+        tokenHash: hashToken(token),
+        createdByPersonId: actor,
+        expiresAt: new Date(Date.now() + ACCOUNT_INVITATION_VALID_DAYS * 86_400_000),
+      });
+      await audit.record(tx, {
+        action: "account.invitation.created",
+        resourceType: "account_invitation",
+        resourceId: invitation.id,
+      });
+      await outbox.publish(tx, "account.invited", { invitationId: invitation.id, personId });
+      return { invitationId: invitation.id, token };
+    });
+  }
+
+  /**
+   * Completes sign-up from an own-login invitation: the new login is linked to
+   * the invited person (memberships and history stay). The verified email
+   * must be the address the invitation was sent to.
+   */
+  async acceptOwnLoginInvitation(
+    context: { requestId?: string | null; ipHash?: string | null },
+    token: string,
+    account: NewAccount,
+  ): Promise<Account> {
+    const invitation = await this.db.withSystem("auth:invitation", {}, (tx) =>
+      repo.findInvitation(tx, hashToken(token)),
+    );
+    if (!invitation) throw new DomainError("invitation_invalid");
+    if (parseInput(EmailSchema, account.email) !== invitation.email)
+      throw new DomainError("invitation_invalid");
+    const self: ActorContext = { actorKind: "person", personId: invitation.personId, ...context };
+    const linked = await this.linkAccount(self, account);
+    await this.db.withActor(self, (tx) => repo.markInvitationAccepted(tx, invitation.invitationId));
+    return linked;
   }
 
   private async ownAccountMinAge(tx: Tx, personId: string): Promise<number> {

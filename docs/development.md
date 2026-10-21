@@ -50,15 +50,46 @@ pnpm dev:down          # stop services, keep data
 
 | What | Where |
 |---|---|
-| Web app (and API under `/api`) | https://clubadmin.localhost |
+| Web app (its `/api` proxies to the API with the session's tokens) | https://clubadmin.localhost |
+| API directly | https://api.clubadmin.localhost |
 | Login (Zitadel) | https://auth.clubadmin.localhost (admin user and password in `.env.local`) |
 | Emails sent by the system | http://127.0.0.1:8025 or https://mail.clubadmin.localhost |
 | PostgreSQL | `127.0.0.1:5432`, connection string `DATABASE_ADMIN_URL` in `.env.local` |
 | Valkey | `127.0.0.1:6379` |
 | Object storage (S3 API) | `http://127.0.0.1:3900`, buckets `clubadmin-files` and `clubadmin-backups` |
 
-Until the web app exists (P0.6/P0.9), https://clubadmin.localhost shows a
+When the web app is not running, https://clubadmin.localhost shows a
 placeholder page served by Caddy.
+
+## Logging in
+
+- **As anyone (DEV_AUTH):** https://clubadmin.localhost/auth/login shows a
+  persona picker with everyone who has a login (the demo personas arrive in
+  P0.8). Tick "as if logged in with two-factor authentication" to test
+  MFA-gated pages. `.env.local` has `DEV_AUTH=true`; it is refused outside
+  development.
+- **For real (Zitadel):** "Log in with email" or "Create an account" on the
+  same page. Sign-up sends a verification code to Mailpit
+  (http://127.0.0.1:8025). https://clubadmin.localhost/me shows who you are
+  and where you are logged in.
+- `pnpm dev:services` runs `pnpm auth:configure`, which applies
+  `infra/zitadel/` to Zitadel and writes the client IDs to `.env.local`. Run it
+  again after changing `infra/zitadel/`. The Zitadel console is at
+  https://auth.clubadmin.localhost/ui/console (admin in `.env.local`).
+
+## End-to-end tests
+
+With services, API and web app running (`pnpm dev`):
+
+```
+pnpm --filter @clubadmin/web exec playwright install chromium   # once
+docker compose --project-name clubadmin cp zitadel:/zitadel/bootstrap/admin.pat .local/admin.pat
+ZITADEL_PAT=$(cat .local/admin.pat) pnpm --filter @clubadmin/web test:e2e
+```
+
+The tests sign up through the real Zitadel pages (reading the code from
+Mailpit), enrol TOTP through Zitadel's API (hence the token), and log in with
+DEV_AUTH. CI runs them in the services job.
 
 ## API and worker
 
@@ -67,9 +98,9 @@ recompile and restart when you save a file.
 
 | What | Where |
 |---|---|
-| API through Caddy | https://clubadmin.localhost/api/v1/meta/version |
+| API through Caddy | https://api.clubadmin.localhost/api/v1/meta/version |
 | API directly | http://127.0.0.1:4000 (health: `/health/live`, `/health/ready`) |
-| OpenAPI document | https://clubadmin.localhost/api/v1/openapi.json (development only) |
+| OpenAPI document | https://api.clubadmin.localhost/api/v1/openapi.json (development only) |
 
 After changing an endpoint, run `pnpm api:client` and commit the regenerated
 `packages/api-client` files (a test fails otherwise). `pnpm test:integration`
@@ -97,6 +128,7 @@ the template is rebuilt automatically when migrations change.
 | `pnpm dev:doctor` | Check tools, ports, names, certificates and service health |
 | `pnpm dev:trust-ca [--print]` | Install Caddy's local CA in the OS trust store |
 | `pnpm dev:smoke` | End-to-end check of every service (also run in CI) |
+| `pnpm auth:configure [--print]` | Apply `infra/zitadel/` to Zitadel (idempotent); `--print` shows the results instead of writing `.env.local` |
 
 ## Resetting
 

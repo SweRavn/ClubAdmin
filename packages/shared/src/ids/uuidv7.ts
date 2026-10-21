@@ -4,13 +4,12 @@
 // The database generates row IDs with Postgres 18's uuidv7(); this is for IDs
 // created in application code (e.g. request IDs).
 
-import { randomBytes } from "node:crypto";
-
 let lastMs = 0;
 let sequence = 0;
 
 export function uuidv7(now: number = Date.now()): string {
-  const bytes = randomBytes(16);
+  // Web Crypto: available in Node.js and in edge runtimes (the web app's middleware).
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
   // Keep IDs generated within the same millisecond ordered: use a 12-bit
   // counter in rand_a, seeded randomly each new millisecond.
   if (now > lastMs) {
@@ -34,7 +33,7 @@ export function uuidv7(now: number = Date.now()): string {
   bytes[6] = 0x70 | ((sequence >> 8) & 0x0f); // version 7
   bytes[7] = sequence & 0xff;
   bytes[8] = 0x80 | ((bytes[8] ?? 0) & 0x3f); // variant 10
-  const hex = bytes.toString("hex");
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 

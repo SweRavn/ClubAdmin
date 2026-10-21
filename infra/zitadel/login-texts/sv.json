@@ -1,0 +1,17 @@
+{
+  "loginText": {
+    "title": "Logga in på ClubAdmin",
+    "description": "Logga in med din e-postadress.",
+    "loginNameLabel": "E-postadress",
+    "loginNamePlaceholder": "namn@exempel.se",
+    "registerButtonText": "Skapa konto",
+    "nextButtonText": "Fortsätt"
+  },
+  "registrationUserText": {
+    "title": "Skapa ditt ClubAdmin-konto",
+    "description": "Ange ditt namn och din e-postadress. Vi skickar en kod för att bekräfta adressen.",
+    "emailLabel": "E-postadress",
+    "firstnameLabel": "Förnamn",
+    "lastnameLabel": "Efternamn"
+  }
+}

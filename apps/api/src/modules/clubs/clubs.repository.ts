@@ -32,3 +32,7 @@ export async function lockClub(tx: Tx, id: string): Promise<ClubRow | null> {
 export async function updateClub(tx: Tx, id: string, values: Partial<NewClubRow>): Promise<void> {
   await tx.update(clubs).set(values).where(eq(clubs.id, id));
 }
+
+export async function listClubs(tx: Tx): Promise<ClubRow[]> {
+  return tx.select().from(clubs).orderBy(clubs.name);
+}

@@ -19,6 +19,8 @@ export const DOMAIN_EVENTS = {
   "person.merged": z.object({ keptPersonId: id, mergedPersonId: id, undone: z.boolean() }),
   /** Notify the old address (P1.7). */
   "account.email.changed": z.object({ accountId: id, personId: id }),
+  /** Send the own-login invitation email (P1.7). */
+  "account.invited": z.object({ invitationId: id, personId: id }),
   /** Send the invitation email (P1.7). */
   "guardianship.invited": z.object({ invitationId: id, wardPersonId: id }),
   /** The ward reached the adult age: notify them and their guardians (P1.7). */

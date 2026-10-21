@@ -25,9 +25,13 @@ export function capture(command: string, args: readonly string[], input?: string
 }
 
 /** Runs a command with inherited stdio; resolves with its exit code. */
-export function run(command: string, args: readonly string[]): Promise<number> {
+export function run(
+  command: string,
+  args: readonly string[],
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<number> {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { cwd: repoRoot, stdio: "inherit" });
+    const child = spawn(command, args, { cwd: repoRoot, stdio: "inherit", env });
     child.on("error", () => resolve(127));
     child.on("exit", (code, signal) => resolve(code ?? (signal ? 130 : 1)));
   });

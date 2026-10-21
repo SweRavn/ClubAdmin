@@ -55,6 +55,10 @@ export const CreatePersonSchema = z.object({
 });
 export type CreatePersonInput = z.input<typeof CreatePersonSchema>;
 
+/** Sign-up: the identity provider knows the name, not the birth date (asked in onboarding, P1.1). */
+export const SignUpPersonSchema = CreatePersonSchema.extend({ birthDate: z.iso.date().nullish() });
+export type SignUpPersonInput = z.input<typeof SignUpPersonSchema>;
+
 export const UpdatePersonSchema = CreatePersonSchema.omit({ protectedIdentity: true })
   .partial()
   .strict();

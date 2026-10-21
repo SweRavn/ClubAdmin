@@ -8,11 +8,10 @@ they pass the project name (`clubadmin`) and the `.env`/`.env.local` files.
 |---|---|---|---|
 | `postgres` | PostgreSQL 18 | Databases `clubadmin` (app) and `zitadel`; `pg_stat_statements` enabled. Application roles are created in P0.4. | 5432 |
 | `valkey` | Valkey 9 | Cache, rate limits, pub/sub. No persistence (ADR 0010). | 6379 |
-| `zitadel` | Zitadel v4 | Identity provider (ADR 0005). First start creates the ClubAdmin instance, an admin user, and a machine user whose token is written to `/zitadel/bootstrap/admin.pat` (volume `zitadel-bootstrap`) for `pnpm auth:configure` (P0.6). | via Caddy |
-| `zitadel-login` | Zitadel login UI v2 | Login pages under `/ui/v2/login`. | via Caddy |
+| `zitadel` | Zitadel v4 | Identity provider (ADR 0005). First start creates the ClubAdmin instance, an admin user, and a machine user whose token is written to `/zitadel/bootstrap/admin.pat` (volume `zitadel-bootstrap`) for `pnpm auth:configure`. Login pages (built-in login UI v1) under `/ui/login`. | via Caddy |
 | `garage` | Garage v2 | S3-compatible object storage (ADR 0011). `pnpm dev` applies the single-node layout and creates the buckets and access key from `.env.local` through the admin API. | 3900 (S3), 3903 (admin) |
 | `mailpit` | Mailpit | Catches all outgoing email (dev only). | 1025 (SMTP), 8025 (UI) |
-| `caddy` | Caddy 2 | HTTPS with a local CA. `clubadmin.localhost` → web (3000) and `/api` → API (4000) on the host; `auth.clubadmin.localhost` → Zitadel; `mail.clubadmin.localhost` → Mailpit. | 80, 443 |
+| `caddy` | Caddy 2 | HTTPS with a local CA. `clubadmin.localhost` → web (3000; it proxies `/api` to the API as backend-for-frontend), `api.clubadmin.localhost` → API (4000) on the host; `auth.clubadmin.localhost` → Zitadel; `mail.clubadmin.localhost` → Mailpit. | 80, 443 |
 | `clamav` | ClamAV | Virus scanning for uploads (Phase 2). Profile `full` only. | — |
 
 ## Notes

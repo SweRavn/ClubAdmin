@@ -255,6 +255,11 @@ export class MembershipsService {
     });
   }
 
+  /** Active members of a club, without an actor (development tooling). */
+  activeMembersSystem(jobName: string, clubId: string): Promise<string[]> {
+    return this.db.withSystem(jobName, { clubId }, (tx) => repo.activeMemberIds(tx, clubId));
+  }
+
   /** Clubs where the person has an open membership (as visible to the transaction). */
   async clubIdsOfPersonInTx(tx: Tx, personId: string): Promise<string[]> {
     return (await repo.clubsOfPersonQuery(tx, personId)).map((c) => c.clubId);

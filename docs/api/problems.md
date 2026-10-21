@@ -27,7 +27,9 @@ with content type `application/problem+json`:
 | <a id="bad-request"></a>`bad-request` | 400 | Malformed request, e.g. invalid JSON |
 | <a id="validation"></a>`validation` | 400 | Request does not match the schema; see `errors` |
 | <a id="unauthenticated"></a>`unauthenticated` | 401 | Not logged in, or the session expired |
-| <a id="forbidden"></a>`forbidden` | 403 | Logged in but not allowed (also used when MFA is required) |
+| <a id="forbidden"></a>`forbidden` | 403 | Logged in but not allowed |
+| <a id="mfa-required"></a>`mfa-required` | 403 | The endpoint needs a login with a second factor (passkey or one-time code); `detail` is `mfa_required`. Clients start a step-up login. |
+| <a id="reauthentication-required"></a>`reauthentication-required` | 403 | The endpoint needs a recent login (`detail` `recent_auth_required`); clients ask the user to log in again. |
 | <a id="not-found"></a>`not-found` | 404 | Resource does not exist, or you may not know that it exists |
 | <a id="method-not-allowed"></a>`method-not-allowed` | 405 | HTTP method not supported for this resource |
 | <a id="conflict"></a>`conflict` | 409 | Conflicts with the current state, e.g. a concurrent change |

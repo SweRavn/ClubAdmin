@@ -43,7 +43,8 @@ export const people = pgTable(
     id: id(),
     givenName: text().notNull(),
     familyName: text().notNull(),
-    birthDate: date({ mode: "string" }).notNull(),
+    /** Unknown for people who signed up themselves until they complete their profile (P1.1). */
+    birthDate: date({ mode: "string" }),
     gender: text(),
     /** Ciphertext (envelope encryption, @clubadmin/server-kit/crypto). */
     personalIdentityNumber: text(),
@@ -216,5 +217,36 @@ export const peopleMerges = pgTable(
   (t) => [
     index("people_merges_kept_idx").on(t.keptPersonId),
     index("people_merges_merged_idx").on(t.mergedPersonId),
+  ],
+);
+
+/**
+ * "Give own login" (ADR 0020): an invitation to an account-less person's own
+ * email. Completing sign-up with the token links the new account to the
+ * person (P0.6); creating invitations in the UI comes in P1.3.
+ */
+export const accountInvitations = pgTable(
+  "account_invitations",
+  {
+    id: id(),
+    personId: uuid()
+      .notNull()
+      .references(() => people.id),
+    /** Normalised; the account must be created with this (verified) address. */
+    email: text().notNull(),
+    /** SHA-256 of the secret token in the invitation link. */
+    tokenHash: text().notNull(),
+    createdByPersonId: uuid()
+      .notNull()
+      .references(() => people.id),
+    expiresAt: timestamp(tz).notNull(),
+    acceptedAt: timestamp(tz),
+    revokedAt: timestamp(tz),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("account_invitations_token_unique").on(t.tokenHash),
+    index("account_invitations_person_idx").on(t.personId),
+    check("account_invitations_email_normalised", sql`${t.email} = lower(btrim(${t.email}))`),
   ],
 );

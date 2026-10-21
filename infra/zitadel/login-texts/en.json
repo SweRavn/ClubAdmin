@@ -1,0 +1,17 @@
+{
+  "loginText": {
+    "title": "Log in to ClubAdmin",
+    "description": "Log in with your email address.",
+    "loginNameLabel": "Email",
+    "loginNamePlaceholder": "name@example.com",
+    "registerButtonText": "Create account",
+    "nextButtonText": "Continue"
+  },
+  "registrationUserText": {
+    "title": "Create your ClubAdmin account",
+    "description": "Enter your name and email address. We will send a code to confirm the address.",
+    "emailLabel": "Email",
+    "firstnameLabel": "First name",
+    "lastnameLabel": "Last name"
+  }
+}

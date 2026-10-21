@@ -10,26 +10,8 @@ allowBuilds:
   # Reviewed and not needed: prebuilt binaries come from optional dependencies,
   # the scripts only verify the binary or print notices.
   "@swc/core": false
-  protobufjs: false
   esbuild: false
-strictDepBuilds: true
-minimumReleaseAge: 10080
-strictPeerDependencies: true
-engineStrict: true
-saveExact: false
-
-# Security overrides of transitive dependencies (keep this list short; remove
-# when the parent package updates).
-overrides:
-  # drizzle-kit's legacy loader pins esbuild 0.18 (GHSA-67mh-4wv8-2f99); use the
-  # 0.25 line drizzle-kit itself depends on.
-  "@esbuild-kit/core-utils>esbuild": ^0.25.0
-
-# Explicitly accepted peer-dependency mismatches (keep this list short).
-peerDependencyRules:
-  allowedVersions:
-    # Generates types with the TypeScript compiler API, which is compatible with TS 6.
-    openapi-typescript>typescript: "6"
+  protobufjs: false
 
 # Single source of truth for shared dependency versions (use "catalog:" in package.json).
 catalog:
@@ -53,10 +35,13 @@ catalog:
   "@opentelemetry/sdk-node": ~0.223.0
   "@opentelemetry/sdk-trace-base": ~2.12.0
   "@opentelemetry/semantic-conventions": ^1.30.0
+  "@playwright/test": ^1.56.0
   "@swc/cli": ^0.8.0
   "@swc/core": ^1.15.0
   "@types/node": ^24.0.0
   "@types/pg": ^8.15.0
+  "@types/react": ^19.2.0
+  "@types/react-dom": ^19.2.0
   # Needed by `swc --watch` (optional peer dependency of @swc/cli)
   chokidar: ^5.0.0
   dependency-cruiser: ^18.0.0
@@ -71,11 +56,16 @@ catalog:
   graphile-worker: ^0.18.0
   import-in-the-middle: ^3.0.0
   ioredis: ^5.11.0
+  jose: ^6.2.12
+  next: ^16.0.0
   openapi-fetch: ^0.17.0
   openapi-typescript: ^7.13.0
+  openid-client: ^6.8.0
   pg: ^8.20.0
   pino: ^10.0.0
   prettier: ^3.9.0
+  react: ^19.2.0
+  react-dom: ^19.2.0
   reflect-metadata: ^0.2.2
   rxjs: ^7.8.0
   turbo: ^2.11.0
@@ -84,3 +74,21 @@ catalog:
   unplugin-swc: ^2.0.0
   vitest: ^5.0.0
   zod: ^4.0.0
+engineStrict: true
+minimumReleaseAge: 10080
+
+# Security overrides of transitive dependencies (keep this list short; remove
+# when the parent package updates).
+overrides:
+  # drizzle-kit's legacy loader pins esbuild 0.18 (GHSA-67mh-4wv8-2f99); use the
+  # 0.25 line drizzle-kit itself depends on.
+  "@esbuild-kit/core-utils>esbuild": ^0.25.0
+
+# Explicitly accepted peer-dependency mismatches (keep this list short).
+peerDependencyRules:
+  allowedVersions:
+    # Generates types with the TypeScript compiler API, which is compatible with TS 6.
+    openapi-typescript>typescript: "6"
+saveExact: false
+strictDepBuilds: true
+strictPeerDependencies: true

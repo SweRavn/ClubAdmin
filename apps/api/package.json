@@ -45,6 +45,7 @@
     "@nestjs/platform-fastify": "catalog:",
     "fastify": "catalog:",
     "ioredis": "catalog:",
+    "jose": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "zod": "catalog:"

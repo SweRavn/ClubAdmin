@@ -105,6 +105,8 @@ pnpm dev:clean        # stop services and delete their data
 pnpm dev:doctor       # check tools, ports, certificates, service health
 pnpm dev:trust-ca     # trust Caddy's local HTTPS CA (once)
 pnpm dev:smoke        # end-to-end check of all services
+pnpm auth:configure   # apply infra/zitadel/ to Zitadel (pnpm dev:services runs it)
+pnpm --filter @clubadmin/web test:e2e   # Playwright: real Zitadel login and DEV_AUTH (docs/development.md)
 ```
 
 API:
@@ -130,7 +132,6 @@ Planned in later Phase 0 packages:
 ```
 pnpm db:seed        # load demo scenario, see docs/seed-data.md (P0.8)
 pnpm db:reset       # drop, migrate, seed; development only (P0.8)
-pnpm test:e2e       # Playwright against the web app (P0.6/P0.9)
 ```
 
 Dependency versions shared across packages are defined once in the `catalog:`
@@ -141,8 +142,10 @@ only run if listed in `onlyBuiltDependencies`.
 ## Coding conventions
 
 - TypeScript `strict`, no `any` without a comment explaining why.
-- Every API route is declared with `@Endpoint(...)` (schemas, access rule);
-  plain `@Get`/`@Post` routes make the API refuse to start. Throw
+- Every API route is declared with `@Endpoint(...)` (schemas, access rule:
+  `public`, `authenticated` or a `permission`; `@RequireMfa()` and
+  `@RecentAuth(minutes)` for step-up); plain `@Get`/`@Post` routes make the
+  API refuse to start. Read the caller with `@CurrentPrincipal()`. Throw
   `ProblemError` for expected failures; never return error objects.
 - Import Zod as `import { z } from "@clubadmin/shared"`.
 - Only `packages/db` imports `pg`/Drizzle drivers; everything else uses

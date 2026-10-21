@@ -11,6 +11,7 @@ import { httpsGet } from "./https.ts";
 import { check, type CheckResult, printResults } from "./report.ts";
 import { signV4 } from "./s3.ts";
 import { sendMail } from "./smtp.ts";
+import { readZitadelAdminPat, ZITADEL_PAT_PATH } from "./zitadel-pat.ts";
 
 function exec(service: string, command: string[]): string {
   const result = composeCapture(["exec", "-T", service, ...command]);
@@ -111,7 +112,7 @@ export async function smoke(): Promise<boolean> {
 
   results.push(
     await check("Zitadel: login UI", async () => {
-      const res = await httpsGet(`${httpsBase(authDomain, httpsPort)}/ui/v2/login/healthy`, { ca });
+      const res = await httpsGet(`${httpsBase(authDomain, httpsPort)}/ui/login/register`, { ca });
       if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
       return undefined;
     }),
@@ -119,8 +120,8 @@ export async function smoke(): Promise<boolean> {
 
   results.push(
     await check("Zitadel: machine-user PAT in the bootstrap volume", () => {
-      exec("zitadel-login", ["test", "-s", "/zitadel/bootstrap/admin.pat"]);
-      return "/zitadel/bootstrap/admin.pat";
+      if (!readZitadelAdminPat()) throw new Error("empty");
+      return ZITADEL_PAT_PATH;
     }),
   );
 

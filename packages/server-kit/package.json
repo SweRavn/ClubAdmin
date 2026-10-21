@@ -8,7 +8,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./telemetry": "./src/telemetry.ts",
-    "./crypto": "./src/crypto.ts"
+    "./crypto": "./src/crypto.ts",
+    "./config": "./src/config.ts",
+    "./env": "./src/env.ts"
   },
   "scripts": {
     "lint": "eslint .",

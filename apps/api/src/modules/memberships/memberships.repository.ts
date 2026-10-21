@@ -140,4 +140,12 @@ export function groupsOfPersonQuery(tx: Tx, personId: string) {
     .orderBy(groupMemberships.groupId);
 }
 
+export async function activeMemberIds(tx: Tx, clubId: string): Promise<string[]> {
+  const rows = await tx
+    .select({ personId: clubMemberships.personId })
+    .from(clubMemberships)
+    .where(and(eq(clubMemberships.clubId, clubId), isNull(clubMemberships.validTo)));
+  return rows.map((r) => r.personId);
+}
+
 export type GroupMember = { id: string; personId: string; function: GroupFunction };

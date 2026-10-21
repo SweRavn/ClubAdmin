@@ -57,7 +57,8 @@ erDiagram
 
 ### `people` (global)
 `id` (UUIDv7), `given_name`, `family_name`, `birth_date` (age rules: LOK,
-child protection, consent age), `gender` (optional, some grant reports),
+child protection, consent age; unknown for people who signed up themselves
+until onboarding asks, P1.1), `gender` (optional, some grant reports),
 `personal_identity_number` (optional, encrypted, country-specific format,
 stored as `<country>:<normalised number>` ciphertext),
 `personal_identity_number_hash` (keyed blind index for finding duplicates),
@@ -102,7 +103,10 @@ No password data (that lives in Zitadel).
   pack, default 13), a guardian (or the club) enters the child's own email. An
   invitation goes to that address; when the child completes sign-up, the
   account is linked to the existing person — all history, memberships and
-  groups are kept. Guardians keep their rights until `adult_age`; then the
+  groups are kept. The invitation is an `account_invitations` row
+  (`person_id`, `email`, `token_hash`, `created_by_person_id`, `expires_at`,
+  `accepted_at`, `revoked_at`); the account must be created with that
+  (verified) email. Guardians keep their rights until `adult_age`; then the
   young person decides which guardian access continues.
 - Messages for a child without account go to guardians with
   `receive_messages`.

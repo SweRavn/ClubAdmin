@@ -4,6 +4,7 @@ import { APP_FILTER, APP_INTERCEPTOR, DiscoveryModule } from "@nestjs/core";
 
 import { API_CONFIG, type ApiConfig } from "./config.ts";
 import { DomainModule } from "./domain.module.ts";
+import { IdentityModule } from "./modules/identity/index.ts";
 import { HealthController } from "./platform/health/health.controller.ts";
 import { EndpointRegistry } from "./platform/http/endpoint-registry.ts";
 import { ProblemDetailsFilter } from "./platform/http/problem.filter.ts";
@@ -28,6 +29,7 @@ export class AppModule {
         },
         InfraModule,
         DomainModule,
+        IdentityModule.register(config),
         ...extraModules,
       ],
       controllers: [HealthController, MetaController, OpenApiController],

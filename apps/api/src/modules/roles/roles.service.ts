@@ -119,6 +119,14 @@ export class RolesService {
     );
   }
 
+  /** Active role assignments in a club, without an actor (development tooling). */
+  activeAssignmentsSystem(
+    jobName: string,
+    clubId: string,
+  ): Promise<{ personId: string; role: ClubRole }[]> {
+    return this.db.withSystem(jobName, { clubId }, (tx) => repo.activeAssignments(tx, clubId));
+  }
+
   activeHoldersInTx(tx: Tx, clubId: string, role: ClubRole): Promise<string[]> {
     return repo.activeHolders(tx, clubId, role);
   }

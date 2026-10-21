@@ -9,9 +9,8 @@
 {$APP_DOMAIN} {
 	encode zstd gzip
 
-	handle /api/* {
-		reverse_proxy {$API_UPSTREAM}
-	}
+	# The web app (Next.js) is also the backend-for-frontend: browser calls to
+	# /api/* go through it, which adds the access token from the session.
 	handle {
 		reverse_proxy {$WEB_UPSTREAM}
 	}
@@ -24,17 +23,15 @@
 	}
 }
 
+# The API directly, for clients that hold their own tokens (mobile app, integrations).
+api.{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy {$API_UPSTREAM}
+}
+
 {$AUTH_DOMAIN} {
 	encode zstd gzip
-
-	redir / /ui/v2/login/ 302
-
-	handle /ui/v2/login* {
-		reverse_proxy zitadel-login:3000
-	}
-	handle {
-		reverse_proxy h2c://zitadel:8080
-	}
+	reverse_proxy h2c://zitadel:8080
 }
 
 mail.{$APP_DOMAIN} {

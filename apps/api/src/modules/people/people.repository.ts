@@ -2,7 +2,7 @@
 // Queries on people. Row-level security limits every query to people the
 // actor may reach (the person, their family, the current club's members).
 
-import { eq, schema, sql, type Tx } from "@clubadmin/db";
+import { eq, inArray, schema, sql, type Tx } from "@clubadmin/db";
 
 const { people } = schema;
 
@@ -11,6 +11,14 @@ export type NewPersonRow = typeof people.$inferInsert;
 
 export async function insertPerson(tx: Tx, values: NewPersonRow): Promise<void> {
   await tx.insert(people).values(values);
+}
+
+export async function findPeople(tx: Tx, ids: readonly string[]): Promise<PersonRow[]> {
+  if (ids.length === 0) return [];
+  return tx
+    .select()
+    .from(people)
+    .where(inArray(people.id, [...ids]));
 }
 
 export async function findPerson(tx: Tx, id: string): Promise<PersonRow | null> {

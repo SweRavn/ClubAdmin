@@ -28,14 +28,34 @@ later phase. Backup and disaster recovery are in
 
 ### Identity and sessions
 - Zitadel (OIDC). Passkeys preferred; TOTP fallback. MFA mandatory for
-  elevated roles (enforced by the API: elevated permissions require the `amr`
-  claim to contain an MFA method).
-- Short-lived access tokens (≤ 10 min), rotating refresh tokens with reuse
-  detection; user can see and revoke sessions/devices.
-- Web: tokens never reach the browser (BFF). Cookies `HttpOnly; Secure;
-  SameSite=Lax`; CSRF token on state-changing requests.
+  elevated roles (enforced by the API: `@RequireMfa`, from the `amr` claim of
+  the ID token bound to the access token, ADR 0024).
+- Login policy (`infra/zitadel/clubadmin.json`): email as login name,
+  verified email before the first login, passkeys and TOTP/security keys,
+  passwords of at least 10 characters with a lower-case letter and a digit,
+  lockout after 10 failed password or code attempts, unknown login names not
+  revealed, self-registration only when `USER_SIGNUP=open`. Zitadel has no
+  breached-password check (known gap, ADR 0005).
+- Access and ID tokens live 10 minutes; refresh tokens rotate on every use,
+  expire after 30 days idle (90 days at most), and a rejected refresh (already
+  used: possible theft) ends the session. Users see and revoke their sessions
+  (`/api/v1/me/sessions`); revoking also ends the Zitadel session.
+- Web: tokens never reach the browser (BFF): they are stored in Valkey,
+  encrypted with `SESSION_ENCRYPTION_KEY`. Cookies `__Host-session`
+  (`HttpOnly; Secure; SameSite=Lax; Path=/`) and `__Host-csrf`; every login
+  creates a new session ID (no session fixation); CSRF double-submit token and
+  same-origin check on every state-changing request; `returnTo` accepts only
+  paths on the site (no open redirect); login flows are bound to the browser
+  by a state cookie (no login CSRF). Logout removes the session, revokes the
+  refresh token and ends the Zitadel session.
+- Rate limits: `/auth/*` 30 requests per IP and minute (BFF, Valkey); first
+  logins (account creation) 10 per IP and minute (API); the global API limit.
+- Token contents are never logged (tests); rejected tokens are logged with the
+  reason only.
 - Step-up authentication for sensitive actions (exporting member data, viewing
-  personal identity numbers, changing roles, payouts).
+  personal identity numbers, changing roles, payouts): `@RecentAuth(minutes)`.
+- `DEV_AUTH` (log in as anyone) is refused unless `NODE_ENV=development` on a
+  self-hosted deployment, in both API and web (tests).
 
 ### Authorization
 - Deny by default; CI fails if an endpoint has no policy.

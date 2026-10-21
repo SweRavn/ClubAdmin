@@ -14,3 +14,15 @@ development-only `DEV_AUTH` provider supports persona login with seed data.
 
 **Consequences.** One more service to run (included in compose). The app has no
 password handling. eID comes via an OIDC broker configured in Zitadel.
+
+**Amendment (P0.6).** Zitadel's configuration is code: `pnpm auth:configure`
+applies `infra/zitadel/` (project, apps, policies, branding, texts)
+idempotently. The apps use Zitadel's **built-in login UI (v1)**, because the
+separate login UI v2 has no Swedish translation (its languages are fixed in
+the build); v1 has complete Swedish texts and supports passkeys, TOTP,
+security keys, self-registration with email verification and lockout. The
+`loginVersion` setting in `infra/zitadel/clubadmin.json` switches back to v2
+once it supports Swedish (and the `zitadel-login` container returns).
+Zitadel has no breached-password check; this is a known gap (password length
+and lockout policies apply). How the API reads MFA and the login time from
+Zitadel's tokens is ADR 0024.

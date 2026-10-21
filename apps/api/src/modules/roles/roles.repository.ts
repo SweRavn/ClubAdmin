@@ -105,3 +105,13 @@ export async function setHandoverStatus(
     .set({ status, decidedAt: sql`now()` })
     .where(eq(handovers.id, id));
 }
+
+export async function activeAssignments(
+  tx: Tx,
+  clubId: string,
+): Promise<{ personId: string; role: ClubRole }[]> {
+  return tx
+    .select({ personId: roles.personId, role: roles.role })
+    .from(roles)
+    .where(and(eq(roles.clubId, clubId), isNull(roles.validTo)));
+}

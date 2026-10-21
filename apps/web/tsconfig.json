@@ -1,7 +1,16 @@
 {
   "extends": "@clubadmin/config/tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
+    "declaration": false,
+    "incremental": true,
+    "plugins": [{ "name": "next" }]
   },
-  "include": ["src", "*.ts"]
+  "include": ["src", "e2e", "*.ts", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
 }

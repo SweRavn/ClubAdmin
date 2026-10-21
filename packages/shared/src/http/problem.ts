@@ -13,6 +13,8 @@ export const PROBLEM_TYPES = {
   validation: 400,
   unauthenticated: 401,
   forbidden: 403,
+  "mfa-required": 403,
+  "reauthentication-required": 403,
   "not-found": 404,
   "method-not-allowed": 405,
   conflict: 409,

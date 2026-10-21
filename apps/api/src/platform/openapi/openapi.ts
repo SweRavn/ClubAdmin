@@ -26,10 +26,18 @@ export function buildOpenApiDocument(
 ): OpenApiDocument {
   const registry = new OpenAPIRegistry();
   registry.register("ProblemDetails", ProblemDetailsSchema);
+  registry.registerComponent("securitySchemes", "bearer", {
+    type: "http",
+    scheme: "bearer",
+    bearerFormat: "JWT",
+    description:
+      "Access token from the identity provider. Send the ID token issued with it in `X-Id-Token` (ADR 0024).",
+  });
 
   for (const endpoint of endpoints) {
     if (endpoint.hidden) continue;
     const status = endpoint.status ?? (endpoint.method === "POST" ? 201 : 200);
+    const isPublic = "public" in endpoint.access;
     const route: RouteConfig = {
       method: endpoint.method.toLowerCase() as RouteConfig["method"],
       path: toOpenApiPath(endpoint.fullPath),
@@ -49,15 +57,22 @@ export function buildOpenApiDocument(
           : {}),
       },
       responses: {
-        [status]: {
-          description: "Success",
-          content: { "application/json": { schema: endpoint.response } },
-        },
+        [status]:
+          status === 204
+            ? { description: "Done" }
+            : {
+                description: "Success",
+                content: { "application/json": { schema: endpoint.response } },
+              },
+        ...(isPublic
+          ? {}
+          : { 401: problemResponse("Not logged in"), 403: problemResponse("Not allowed") }),
         ...(endpoint.request ? { 400: problemResponse("Invalid request") } : {}),
         429: problemResponse("Too many requests"),
         500: problemResponse("Unexpected error"),
       },
     };
+    if (!isPublic) route.security = [{ bearer: [] }];
     if ("permission" in endpoint.access) {
       route.description = `Requires permission \`${endpoint.access.permission}\`.`;
     }
