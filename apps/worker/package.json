@@ -28,6 +28,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@clubadmin/country-packs": "workspace:*",
     "@clubadmin/db": "workspace:*",
     "@clubadmin/server-kit": "workspace:*",
     "@clubadmin/shared": "workspace:*",

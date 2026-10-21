@@ -28,3 +28,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0020](0020-identifiers-and-login-email.md) | Identifiers, login email and people without email | Accepted |
 | [0021](0021-calendar-subscriptions.md) | Calendar subscriptions and answering from the phone's calendar | Accepted |
 | [0022](0022-protected-identity.md) | Protected identity | Accepted |
+| [0023](0023-global-tables-rls.md) | Row-level security for global tables and own relationships | Accepted |

@@ -35,6 +35,8 @@ describe("CI guards", () => {
       "owner",
       `CREATE TABLE public.bad_items (id uuid PRIMARY KEY DEFAULT uuidv7(), club_id uuid NOT NULL, updated_at timestamptz);
        CREATE TABLE public.half_done (id uuid PRIMARY KEY DEFAULT uuidv7(), club_id uuid NOT NULL);
+       CREATE TABLE public.global_items (id uuid PRIMARY KEY DEFAULT uuidv7());
+       SELECT history.enable_history('public.global_items');
        ALTER TABLE public.half_done ENABLE ROW LEVEL SECURITY;
        SELECT history.enable_history('public.half_done');`,
     );
@@ -42,10 +44,11 @@ describe("CI guards", () => {
     expect(found).toEqual([
       "history:public.bad_items",
       "rls:public.bad_items",
+      "rls:public.global_items", // no club_id, but still needs RLS
       "rls:public.half_done", // enabled but not forced
       "updated_at:public.bad_items",
     ]);
-    await t.query("owner", "DROP TABLE public.bad_items, public.half_done");
+    await t.query("owner", "DROP TABLE public.bad_items, public.half_done, public.global_items");
   });
 
   it("report app-role privileges that would allow rewriting history", async () => {

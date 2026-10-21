@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Structural checks that make the CLAUDE.md rules impossible to forget
 // (run by the integration tests on a freshly migrated database):
-// - every table with club_id has row-level security enabled and forced;
+// - every table with club_id has row-level security enabled and forced, and
+//   every other application table (schema public) has it at least enabled;
 // - every table has the record-history trigger unless excluded (history-exclusions.ts);
 // - every table with updated_at has the trigger that maintains it;
 // - clubadmin_app cannot bypass RLS, run DDL, own objects or rewrite history/audit.
@@ -56,6 +57,14 @@ export async function findGuardViolations(client: pg.ClientBase): Promise<GuardV
         object: t.name,
         message:
           "has club_id but row-level security is not enabled and forced: SELECT app.enable_tenant_rls(...)",
+      });
+    }
+    if (!t.has_club_id && t.name.startsWith("public.") && !t.relrowsecurity) {
+      violations.push({
+        rule: "rls",
+        object: t.name,
+        message:
+          "application table without row-level security: enable it with policies for its access paths (docs/architecture.md)",
       });
     }
     if (!t.has_history && !infra) {

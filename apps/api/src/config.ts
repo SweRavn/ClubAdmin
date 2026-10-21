@@ -14,6 +14,10 @@ export const apiConfigSchema = z
     TRUST_PROXY: z.string().default("loopback,uniquelocal"),
     DATABASE_URL: z.string().optional(),
     VALKEY_URL: z.string().optional(),
+    /** Field encryption master keys, `id:base64key` comma-separated, current first (docs/security.md). */
+    ENCRYPTION_MASTER_KEYS: z.string().optional(),
+    /** Key for blind indexes (matching encrypted values), base64, 32 bytes. */
+    BLIND_INDEX_KEY: z.string().optional(),
     BODY_LIMIT_BYTES: z.coerce.number().int().positive().default(1_048_576),
     REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
@@ -23,7 +27,12 @@ export const apiConfigSchema = z
   })
   .superRefine((config, ctx) => {
     if (config.NODE_ENV === "production") {
-      for (const key of ["DATABASE_URL", "VALKEY_URL"] as const) {
+      for (const key of [
+        "DATABASE_URL",
+        "VALKEY_URL",
+        "ENCRYPTION_MASTER_KEYS",
+        "BLIND_INDEX_KEY",
+      ] as const) {
         if (!config[key])
           ctx.addIssue({ code: "custom", path: [key], message: "required in production" });
       }

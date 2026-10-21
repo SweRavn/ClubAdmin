@@ -84,3 +84,13 @@ export const deletionLedger = privacySchema.table("deletion_ledger", {
   erasedAt: timestamp("erased_at", tz).notNull(),
   reason: text().notNull(),
 });
+
+export const cryptoSchema = pgSchema("crypto");
+export const dataKeys = cryptoSchema.table("data_keys", {
+  id: uuid().primaryKey(),
+  clubId: uuid("club_id"),
+  wrappedKey: text("wrapped_key").notNull(),
+  createdAt: timestamp("created_at", tz).notNull(),
+  rewrappedAt: timestamp("rewrapped_at", tz),
+  retiredAt: timestamp("retired_at", tz),
+});

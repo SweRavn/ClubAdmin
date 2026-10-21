@@ -74,6 +74,15 @@ budgets are requirements; CI measures them.
     each row's columns). Single-row writes pay well under 0.1 ms. Bulk jobs that
     rewrite many rows should update only rows that actually change.
 
+- Query plans of the hot paths (P0.5, `apps/api/src/query-plans.integration.test.ts`,
+  10k rows per table, as the app role with row-level security): "my clubs"
+  (`club_memberships_person_active_idx`), "my groups"
+  (`group_memberships_person_idx`), "members of group"
+  (`group_memberships_group_idx`), "guardians of person"
+  (`guardianships_ward_idx`), "wards of person"
+  (`guardianships_guardian_idx`). The test fails on sequential scans and keeps
+  the plans as snapshots; the nightly job reruns it on the `load` scenario
+  once P0.8 provides it.
 - Lighthouse CI on key web pages per PR.
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.

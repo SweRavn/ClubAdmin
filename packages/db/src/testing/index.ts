@@ -9,6 +9,7 @@ import { expect } from "vitest";
 import type { TenantContext } from "../context.ts";
 import { createDatabase, type Database, type Tx } from "../database.ts";
 import type { ROLES } from "../roles.ts";
+import { withDatabase } from "../urls.ts";
 import { testEnv } from "./env.ts";
 import { cloneTemplate, dropDatabase, withAdmin } from "./template.ts";
 
@@ -24,7 +25,17 @@ export interface TestDatabase {
     text: string,
     values?: unknown[],
   ): Promise<pg.QueryResult<R>>;
+  /** A dedicated connection (e.g. to hold a transaction open across concurrent steps). Call end(). */
+  connect(role: keyof typeof ROLES | "admin"): Promise<TestSession>;
   drop(): Promise<void>;
+}
+
+export interface TestSession {
+  query<R extends pg.QueryResultRow = pg.QueryResultRow>(
+    text: string,
+    values?: unknown[],
+  ): Promise<pg.QueryResult<R>>;
+  end(): Promise<void>;
 }
 
 /** A fresh, migrated database for one test file. Call drop() in afterAll. */
@@ -51,6 +62,17 @@ export async function createTestDatabase(): Promise<TestDatabase> {
         await client.end();
       }
     },
+    async connect(role) {
+      const client = new pg.Client({
+        connectionString:
+          role === "admin" ? withDatabase(env.adminUrl, name) : env.urlFor(role, name),
+      });
+      await client.connect();
+      return {
+        query: (text, values) => client.query(text, values),
+        end: () => client.end(),
+      };
+    },
     async drop() {
       await db.close();
       await dropDatabase(name);
@@ -59,8 +81,8 @@ export async function createTestDatabase(): Promise<TestDatabase> {
 }
 
 /**
- * Club IDs for tests. Until the clubs table exists (P0.5) these are just
- * fresh UUIDs; club-owned rows reference them through club_id.
+ * Club IDs for infrastructure tests on fixture tables (no clubs rows). Tests
+ * of domain tables create real clubs with the API's buildClub() builder.
  */
 export function createTestClubs(count: number): string[] {
   return Array.from({ length: count }, () => uuidv7());

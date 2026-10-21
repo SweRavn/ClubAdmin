@@ -61,6 +61,30 @@ The API is **one deployable** split into modules with strict boundaries. Each
 module owns its tables, exposes a service interface and publishes domain events
 (in-process, persisted through an outbox table so the worker can react reliably).
 
+Built so far (P0.5, `apps/api/src/modules/`, no HTTP endpoints yet; wired in
+`src/domain.module.ts`):
+
+| Module | Owns | Notes |
+|---|---|---|
+| `people` | `people` | Create (no email), update, global protected identity (self or full guardian), encrypted personal identity number |
+| `person-merge` | `people_merges` | Merge duplicates with 30-day undo; moves the references each module declares in its `*.references.ts` |
+| `accounts` | `accounts` | Account for a verified email, change email, "give own login" (from `own_account_min_age`) |
+| `clubs` | `clubs` | Settings, `join_policy` |
+| `onboarding` | — | Create a club: creator becomes active member #1 and club manager, one transaction |
+| `roles` | `club_role_assignments`, `club_manager_handovers` | Roles, last-manager rule, hand-over (propose, accept, decline, cancel) |
+| `club-profiles` | `club_profiles` | Member number, shared fields, club-level protected identity (managers only) |
+| `groups` | `groups`, `group_owners`, `seasons`, `group_seasons` | Hierarchy, archive, owners (`allowedBy: club_manager \| group_owner`) |
+| `memberships` | `club_memberships`, `group_memberships` | Join (per `join_policy`), add, approve, leave, group functions, "my clubs and groups" |
+| `guardianships` | `guardianships`, `guardian_invitations` | Add child, invite and accept co-guardian, rights, ending rules |
+
+Services take an `ActorContext` or `TenantContext` and open their own
+transaction; `…InTx(tx, …)` variants let another module's service join it.
+Expected failures are `DomainError`s with a stable code (`last_club_manager`,
+`email_taken`, …) that map to problem types; they never carry values or
+database errors. Tables waiting for their flows (`group_waitlist_entries`,
+`join_requests`, `invitations`, `employments`, `consents`) exist with stable
+names.
+
 Planned modules (see `roadmap.md` for order):
 
 `identity` · `people` · `clubs` · `groups` (incl. waiting lists) · `memberships` · `authorization` (incl. person visibility) ·
@@ -75,8 +99,12 @@ Planned modules (see `roadmap.md` for order):
 - Shared database, shared schema. Club-owned rows carry `club_id`.
 - Defence in depth: the authorization module is the primary check; row-level
   security (RLS) guarantees that a bug cannot leak another club's data.
-- Global (non-club) tables: `people`, `accounts`, shared plan library,
-  platform tables. Access to them goes through explicit policies.
+- Global (non-club) tables: `people`, `accounts`, `guardianships`, shared
+  plan library, platform tables. They have RLS too: a person reaches only
+  themselves, their family and, in a club transaction, that club's members
+  ([ADR 0023](adr/0023-global-tables-rls.md)).
+- A person's own relationships (and their wards') are readable across clubs
+  for "my clubs and groups"; writes are always limited to one club.
 
 ## Database (`packages/db`)
 
@@ -155,6 +183,35 @@ context through `app.current_club_id()`, `app.current_person_id()`,
   and an error is logged.
 - **Deletion ledger:** `privacy.deletion_ledger` (erased person IDs), re-applied
   after restores.
+
+### Core domain tables (P0.5)
+
+Columns are in [domain-model.md](domain-model.md); the schema is in
+`packages/db/src/schema/` (`people.ts`, `clubs.ts`, `groups.ts`,
+`joining.ts`), the hand-written part of the migration in
+`migrations/0001_core_domain.sql`. Database-enforced invariants:
+
+| Invariant | How |
+|---|---|
+| At least one active club manager per club | Deferred constraint triggers `club_has_manager_*` (checked at commit after locking the club row, so concurrent removals cannot both pass) |
+| Member numbers unique per club | `assign_member_number` trigger takes `clubs.next_member_number` under the club row's lock; unique `(club_id, member_number)` |
+| Group parent in the same club, no cycles | Composite foreign key `(club_id, parent_group_id)`; `check_group_cycle` trigger with a per-club advisory lock |
+| Every reference to a group is in the same club | Composite foreign keys `(club_id, group_id)` on memberships, owners, seasons, waiting lists, invitations |
+| Login email unique case-insensitively, people have no email | Unique index on `lower(btrim(email))` on `accounts`; no email column on `people` |
+| Protected persons have no address | Check constraint `people_protected_no_address` |
+| One open relationship per kind | Partial unique indexes `WHERE valid_to IS NULL` |
+| Relationships are never deleted | `DELETE` revoked from the app role on people, clubs, memberships, roles, guardianships, groups, owners |
+
+`clubs.next_member_number` is an *ignored* history column
+(`history.enable_history(..., ignore => ...)`), so assigning numbers does not
+fill the club's history.
+
+Field encryption: `crypto.data_keys` holds data keys wrapped by the master
+keys from `ENCRYPTION_MASTER_KEYS` (never in the database); one key per club
+plus a global key for global tables. `people.personal_identity_number` is
+ciphertext (AES-256-GCM, bound to the row), `personal_identity_number_hash`
+a blind index (HMAC with `BLIND_INDEX_KEY`) for finding duplicates. Helpers:
+`@clubadmin/server-kit/crypto`, used through `FieldEncryption` in the API.
 
 ### Tests
 
@@ -253,6 +310,12 @@ LISTEN/NOTIFY; scheduled tasks use its crontab. Job payloads carry IDs only,
 never personal data. Shares configuration, logging, telemetry and graceful
 shutdown with the API through `@clubadmin/server-kit`.
 
+| Task | Schedule | Does |
+|---|---|---|
+| `outbox:dispatch` | per event (outbox trigger) | Delivers a domain event to its handlers once |
+| `history:maintain_partitions` | daily 03:17 UTC | Creates history partitions ahead, drops expired ones |
+| `guardianships:flag_adult_wards` | daily 04:23 UTC | Flags (never ends) guardianships whose ward reached the adult age (highest `adultAge` of all packs, as the job cannot see the ward's clubs), audits it and publishes `guardianship.ward.adult` |
+
 ## Country packs
 
 Country-specific rules live in `packages/country-packs/<cc>/` behind interfaces:
@@ -264,6 +327,11 @@ Country-specific rules live in `packages/country-packs/<cc>/` behind interfaces:
 - default locale, time zone, currency, public holidays.
 
 The core never branches on country code; it asks the club's country pack.
+Implemented so far (P0.5): `CountryPack` with `ageRules` (`consentAge`,
+`ownAccountMinAge`, `adultAge`), `personalIdFormat` (SE personnummer and
+samordningsnummer, NO fødselsnummer, D-nummer and synthetic test numbers)
+and `localeDefaults`, for `SE` and `NO`. New clubs take locale, time zone and
+currency from their pack.
 
 ## Locale
 

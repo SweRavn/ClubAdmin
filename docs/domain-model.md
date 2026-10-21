@@ -58,15 +58,19 @@ erDiagram
 ### `people` (global)
 `id` (UUIDv7), `given_name`, `family_name`, `birth_date` (age rules: LOK,
 child protection, consent age), `gender` (optional, some grant reports),
-`personal_identity_number` (optional, encrypted, country-specific format),
+`personal_identity_number` (optional, encrypted, country-specific format,
+stored as `<country>:<normalised number>` ciphertext),
+`personal_identity_number_hash` (keyed blind index for finding duplicates),
 `protected_identity` (bool, see below), `phone`, `address` (both optional;
-address is never stored for protected persons), `deceased_at`,
-`anonymized_at`, `created_by_person_id`.
+address is never stored for protected persons, check constraint),
+`deceased_at`, `anonymized_at`, `merged_into_person_id` (set on a merged
+duplicate), `created_by_person_id`.
 **No email column.** Email belongs to the account.
 
 ### `accounts` (global, optional per person)
 Login identity: `person_id` (unique), `email` (unique, case-insensitive,
-verified), `idp_subject`, `locale`, `time_zone`, theme, notification settings.
+stored normalised: trimmed, lower-case), `email_verified_at`, `idp_subject`,
+`locale`, `time_zone`, `theme`, `notification_settings`.
 No password data (that lives in Zitadel).
 - One account per person, one person per account.
 - Changing email requires verifying the new address; the old address is
@@ -81,9 +85,19 @@ No password data (that lives in Zitadel).
 - The second guardian is **invited by email** to become guardian; they accept
   with their own account. A club manager or registrar can also confirm or add
   guardianships (e.g. from a paper application).
+- The second guardian's invitation is a `guardian_invitations` row
+  (`ward_person_id`, `invited_by_person_id`, `email`, `token_hash`, `kind`,
+  `rights`, `expires_at`, `accepted_at`, `accepted_by_person_id`,
+  `guardianship_id`, `revoked_at`); accepting creates the guardianship.
 - Duplicates (both parents created the same child) are merged by a guardian
-  confirming the match, or by a club manager; matching on birth date + name or
-  personal identity number. Merges are audited and reversible for 30 days.
+  of both, or by a club manager for two members of their club; matching on
+  birth date + name or personal identity number. Merges are audited and
+  reversible for 30 days (`people_merges`: kept and merged person, who
+  merged, `undo_until`, `undone_at`, and every moved or ended reference).
+  The duplicate's relationships move to the kept person; where the kept
+  person already has the same open relationship, the duplicate's is ended.
+  The duplicate stays as a stub with `merged_into_person_id`. A person with a
+  login cannot be merged away (merge into them instead).
 - **"Give own login"**: when the child reaches `own_account_min_age` (country
   pack, default 13), a guardian (or the club) enters the child's own email. An
   invitation goes to that address; when the child completes sign-up, the
@@ -97,17 +111,25 @@ No password data (that lives in Zitadel).
 `id`, `name`, `short_name`, `slug`, `country`, `default_locale`, `time_zone`,
 `currency`, `organization_number`, `federation_ids` (JSON, e.g. IdrottOnline),
 `address`, `logo`, `status` (active, suspended, archived), `join_policy`,
-`next_member_number` (for the per-club running member number).
+`next_member_number` (for the per-club running member number),
+`owners_can_appoint_co_owners` (default off), `group_owners_admit_to_club`
+(default on).
 
 ### `club_profiles`
 What a club sees about a person: **member number** (running number per club,
-human-friendly, shown on lists and exports), contact details shared with that
-club, emergency contacts, notes (restricted), photo-consent flags,
-`protected_identity_club` (club-set protection flag, see below).
+human-friendly, shown on lists and exports; assigned by a trigger under the
+club row's lock), `shared_fields` (which of the person's own fields, such as
+phone or address, the club may see), `emergency_contacts`, `notes`
+(restricted), `protected_identity_club` (club-set protection flag, see
+below). Photo and other consents are rows in `consents`. The profile is
+created with the first membership and kept when the person leaves.
 
 ### `club_memberships`
 Person ↔ club. `status` (applied, active, paused, left), `membership_type`
-(active, supporting, honorary, family), `valid_from`, `valid_to`.
+(active, supporting, honorary, family), `valid_from`, `valid_to` (set exactly
+when `status = left`). Joining follows `join_policy`: `open` → active,
+`approval` → applied, `invite_only` → only by invitation. Leaving also ends
+the person's group memberships, ownerships and roles in the club.
 
 ### `groups` (ADR 0019)
 `id`, `club_id`, `parent_group_id` (optional hierarchy: section → team), `kind`
@@ -116,7 +138,9 @@ Person ↔ club. `status` (applied, active, paused, left), `membership_type`
 `gender_category`, `level`, `capacity` (optional),
 `admission_mode` (`direct` | `waitlist` | `closed`), `waitlist_visible_publicly`,
 `offer_reply_days` (default 7), `archived_at`.
-Groups persist across seasons; `group_seasons` holds per-season settings.
+Groups persist across seasons; `seasons` (`name`, `starts_on`, `ends_on`)
+and `group_seasons` (`capacity`, `notes`) hold per-season settings. Groups are
+archived, never deleted.
 Multi-sport sections are groups of kind `section`; the earlier
 `section_admin` role is simply an owner of a section group.
 
@@ -134,13 +158,16 @@ and functions, run its waiting list, manage its chat rooms and calendar.
   `owners_can_appoint_co_owners` (default off) lets owners add co-owners.
 - Ownership of a parent group (e.g. a section) includes its child groups.
 - Ownership is independent of being a coach: often the same person, not always.
+- `group_owners`: `group_id`, `person_id`, `assigned_by_person_id`,
+  `valid_from`, `valid_to`.
 
 ### Waiting lists (ADR 0019)
 `group_waitlist_entries`: `group_id`, `person_id`, `requested_by_person_id`
 (e.g. guardian), `status` (`waiting`, `offered`, `accepted`, `declined`,
 `expired`, `admitted`, `withdrawn`, `removed`), `queued_at`,
 `priority` (optional: e.g. sibling, returning member), `offer_expires_at`,
-`applicant_note`, `owner_note` (owners only), `decided_by_person_id`.
+`applicant_note`, `owner_note` (owners only), `out_of_order_reason`,
+`decided_by_person_id`, `decided_at`. (Schema since P0.5; behaviour P1.10.)
 - **Getting on the list:** a member (or guardian for a child) applies to a
   group that is full or has `admission_mode = waitlist`. Non-members can join a
   waiting list from the club's public page after signing up; this also creates
@@ -164,12 +191,17 @@ and functions, run its waiting list, manage its chat rooms and calendar.
 Club-level roles: `chair`, `vice_chair`, `treasurer`, `secretary`,
 `board_member`, `deputy_board_member`, `auditor`, `nomination_committee`,
 `club_manager`, `registrar` (membership/LOK), `safeguarding_officer`,
-`communications`, `staff`. Validity period.
+`communications`, `staff`. Validity period; `assigned_by_person_id`,
+`ended_by_person_id`.
 
 **Club managers** (ADR 0018) have full administrative rights in the club. A club
 can have several; there must always be at least one active manager. The person
 who creates a club becomes its first manager. Managers appoint/remove other
 managers; handing over is "appoint successor → successor accepts → step down".
+Proposals are `club_manager_handovers` (`from_person_id`, `to_person_id`,
+`status`: proposed, accepted, declined, cancelled; `expires_at`, 14 days);
+one open proposal per manager, a new one replaces it. Accepting makes the
+successor manager and ends the proposer's role in one transaction.
 
 ### Sign-up and joining (ADR 0018)
 - Anyone can sign up (verified email) without an invitation; this creates an
@@ -178,7 +210,12 @@ managers; handing over is "appoint successor → successor accepts → step down
 - `join_requests`: person (and optionally their children) asking to join,
   with status `pending`/`approved`/`rejected`/`withdrawn`, decided by a manager
   or registrar (or implicitly by a group owner admitting from a waiting list).
-- `invitations`: email or link/code invitations with role/group presets and expiry.
+  Columns: `person_id`, `requested_by_person_id`, `message`,
+  `preferred_group_ids`, `decided_by_person_id`, `decided_at`.
+- `invitations`: email or link/code invitations with role/group presets and
+  expiry (`kind`, `email`, `token_hash`, `role_preset`, `group_id`,
+  `expires_at`, `max_uses`, `uses`, `accepted_by_person_id`, `revoked_at`).
+  Schema since P0.5; flows in P1.1.
 - Club creation is governed by `CLUB_CREATION` (`open` | `approval` |
   `operators_only`).
 
@@ -186,14 +223,18 @@ managers; handing over is "appoint successor → successor accepts → step down
 `guardian_person_id`, `ward_person_id`, `kind` (`parent`, `legal_guardian`,
 `relative`, `contact_person`), `rights` (flags: `act_on_behalf`,
 `receive_messages`, `view_schedule`, `sign_up`, `see_medical`), `status`
-(`pending` invitation, `active`), `valid_to`.
+(`pending`, `active`, `ended`; invitations are separate rows, see above),
+`valid_from`, `valid_to`, `created_by_person_id`, `ward_adult_flagged_at`
+(set by the worker when the ward reaches `adult_age`; the guardianship is
+not ended automatically).
 - `parent`/`legal_guardian` default to full rights.
 - `relative` (grandparent, older sibling) defaults to view-only and must be
   granted by a guardian.
 - A guardianship becomes visible to a club only when the ward is a member of
   that club.
 - Two guardians in separate households are both full guardians; neither can
-  remove the other (only a club manager with evidence, audited).
+  remove the other (only a club manager with evidence, audited). A guardian
+  can end their own guardianship and those of relatives they granted.
 
 ### Protected identity (ADR 0022)
 For people with protected personal data (in Sweden *skyddade
@@ -225,13 +266,16 @@ who must not be exposed.
 - **Access logging:** every view of a protected person's profile is logged.
 
 ### `employments`
-Person employed by a club: role, start/end, employment type, hours. Salary data
+Person employed by a club: `title`, `starts_on`/`ends_on`, `employment_type`
+(permanent, fixed_term, hourly, volunteer_stipend), `hours_per_week`. Salary data
 lives in the `staff` module (later phase) with stricter access.
 
 ### `consents`
 Purpose-based consents (photo/video publication, streaming, marketing, data
 sharing with federation). Given by the person or, for minors under the
-country's consent age, by a guardian. Timestamped, versioned text, revocable.
+country's consent age, by a guardian. Timestamped, versioned text, revocable
+(`purpose`, `text_version`, `given_by_person_id`, `given_at`, `revoked_at`,
+`revoked_by_person_id`; one open consent per purpose).
 
 ### `calendar_feeds` (ADR 0021)
 Personal, secret, revocable iCalendar subscription URLs: `person_id`, `scope`
@@ -250,6 +294,13 @@ pass through the visibility service, so protected persons appear as
 `platform_operators`, `support_access_grants` (time-limited, club-approved
 access for support), `subscriptions`, `plans`, `invoices` (billing module,
 optional), `feature_flags`.
+
+## Access in the database (ADR 0023)
+
+Row-level security backs the authorization module: club-owned tables are
+isolated by `club_id`; a person's own relationships (and their wards') are
+readable in every club; `people`, `accounts` and `guardianships` are reachable
+only by the person, their family and the clubs they belong to.
 
 ## Effective permissions (examples)
 

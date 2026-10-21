@@ -2,6 +2,7 @@
 import { Global, Inject, Module, type OnApplicationShutdown } from "@nestjs/common";
 
 import { API_CONFIG, type ApiConfig } from "../../config.ts";
+import { FIELD_ENCRYPTION, FieldEncryption } from "../crypto/field-encryption.ts";
 import { createApiDatabase, DATABASE, type OptionalDatabase } from "./database.ts";
 import { createValkeyClient, VALKEY_CLIENT, type ValkeyClient } from "./valkey.ts";
 
@@ -12,6 +13,11 @@ import { createValkeyClient, VALKEY_CLIENT, type ValkeyClient } from "./valkey.t
       provide: DATABASE,
       inject: [API_CONFIG],
       useFactory: (config: ApiConfig) => createApiDatabase(config.DATABASE_URL),
+    },
+    {
+      provide: FIELD_ENCRYPTION,
+      inject: [API_CONFIG],
+      useFactory: (config: ApiConfig) => FieldEncryption.fromConfig(config),
     },
     {
       provide: VALKEY_CLIENT,
@@ -25,7 +31,7 @@ import { createValkeyClient, VALKEY_CLIENT, type ValkeyClient } from "./valkey.t
       },
     },
   ],
-  exports: [DATABASE, VALKEY_CLIENT],
+  exports: [DATABASE, FIELD_ENCRYPTION, VALKEY_CLIENT],
 })
 export class InfraModule implements OnApplicationShutdown {
   private readonly db: OptionalDatabase;

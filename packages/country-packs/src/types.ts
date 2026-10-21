@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Country pack interfaces (ADR 0015). The core never branches on country
+// codes; it asks the club's pack. Packs are pure functions and data.
+
+export interface AgeRules {
+  /** Age from which a person can consent to data processing themselves. */
+  consentAge: number;
+  /** Age from which a person may have their own login and email (ADR 0020). */
+  ownAccountMinAge: number;
+  /** Age at which guardians' default rights end. */
+  adultAge: number;
+}
+
+export interface ParsedPersonalId {
+  /** Canonical form, stored (encrypted) and used for the duplicate-matching hash. */
+  normalized: string;
+  /** Date of birth encoded in the number (ISO yyyy-mm-dd). */
+  birthDate: string;
+  /** Coordination/D-numbers and synthetic test numbers are not regular birth numbers. */
+  kind: "birth_number" | "coordination_number" | "test_number";
+}
+
+export interface PersonalIdFormat {
+  /** Parses and validates (checksum, date). Returns null for invalid input; never throws. */
+  parse(input: string, today?: Date): ParsedPersonalId | null;
+  isValid(input: string, today?: Date): boolean;
+  /** Canonical form, or null if invalid. */
+  normalize(input: string, today?: Date): string | null;
+}
+
+export interface LocaleDefaults {
+  /** BCP 47 locale, e.g. sv-SE. */
+  locale: string;
+  /** IANA time zone. */
+  timeZone: string;
+  /** ISO 4217 currency code. */
+  currency: string;
+}
+
+export interface CountryPack {
+  /** ISO 3166-1 alpha-2. */
+  code: string;
+  ageRules: AgeRules;
+  personalIdFormat: PersonalIdFormat;
+  localeDefaults: LocaleDefaults;
+}
+
+/** Shared helper: builds isValid/normalize from parse. */
+export function personalIdFormat(
+  parse: (input: string, today?: Date) => ParsedPersonalId | null,
+): PersonalIdFormat {
+  return {
+    parse,
+    isValid: (input, today) => parse(input, today) !== null,
+    normalize: (input, today) => parse(input, today)?.normalized ?? null,
+  };
+}
+
+/** True if year/month/day form a real calendar date. */
+export function isCalendarDate(year: number, month: number, day: number): boolean {
+  if (month < 1 || month > 12 || day < 1) return false;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  );
+}
+
+export const isoDate = (year: number, month: number, day: number): string =>
+  `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;

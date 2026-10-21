@@ -14,6 +14,7 @@ import { runOnce } from "graphile-worker";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { graphileLogger } from "./graphile-logger.ts";
+import { flagAdultWards } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 
 let t: TestDatabase;
@@ -86,5 +87,43 @@ describe("worker with PostgreSQL (as clubadmin_app)", () => {
         tx.execute(sql`CREATE TABLE public.nope (id int)`),
       ),
     ).rejects.toThrow(/permission denied/);
+  });
+});
+
+describe("guardianships:flag_adult_wards", () => {
+  it("flags (never ends) guardianships of wards who reached the adult age, once", async () => {
+    const { rows } = await t.query<{ adult: string; child: string }>(
+      "admin",
+      `WITH g AS (INSERT INTO people (given_name, family_name, birth_date) VALUES ('G', 'P', '1980-01-01') RETURNING id),
+            a AS (INSERT INTO people (given_name, family_name, birth_date) VALUES ('A', 'P', '2008-06-01') RETURNING id),
+            c AS (INSERT INTO people (given_name, family_name, birth_date) VALUES ('C', 'P', '2008-06-02') RETURNING id),
+            ga AS (INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights)
+                   SELECT g.id, a.id, 'parent', '{}' FROM g, a RETURNING id),
+            gc AS (INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights)
+                   SELECT g.id, c.id, 'parent', '{}' FROM g, c RETURNING id)
+       SELECT (SELECT id FROM ga) AS adult, (SELECT id FROM gc) AS child`,
+    );
+    const ids = rows[0]!;
+    // On 2026-06-01 the first ward turns 18, the second the day after.
+    expect(await flagAdultWards(t.db, "2026-06-01")).toBe(1);
+    expect(await flagAdultWards(t.db, "2026-06-01")).toBe(0);
+
+    const { rows: state } = await t.query<{ id: string; status: string; flagged: boolean }>(
+      "admin",
+      "SELECT id, status, ward_adult_flagged_at IS NOT NULL AS flagged FROM guardianships WHERE id = ANY ($1) ORDER BY id",
+      [[ids.adult, ids.child]],
+    );
+    expect(state).toEqual(
+      [
+        { id: ids.adult, status: "active", flagged: true },
+        { id: ids.child, status: "active", flagged: false },
+      ].sort((x, y) => x.id.localeCompare(y.id)),
+    );
+    const { rows: events } = await t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM outbox.events WHERE type = 'guardianship.ward.adult' AND payload ->> 'guardianshipId' = $1",
+      [ids.adult],
+    );
+    expect(events[0]?.n).toBe(1);
   });
 });

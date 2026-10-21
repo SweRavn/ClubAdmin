@@ -2,6 +2,8 @@
 // @clubadmin/shared: Zod schemas, types and constants shared by all apps.
 
 export * from "./audit-actions.ts";
+export * from "./domain/core.ts";
+export * from "./domain/schemas.ts";
 export * from "./domain-events.ts";
 export * from "./http/meta.ts";
 export * from "./http/problem.ts";

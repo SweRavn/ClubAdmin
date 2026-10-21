@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "catalog:",
+    "@clubadmin/country-packs": "workspace:*",
     "@clubadmin/db": "workspace:*",
     "@clubadmin/i18n": "workspace:*",
     "@clubadmin/server-kit": "workspace:*",

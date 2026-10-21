@@ -60,11 +60,21 @@ later phase. Backup and disaster recovery are in
   leaving the host.
 - Field-level envelope encryption (AES-256-GCM, per-club data keys wrapped by a
   master key kept outside the database) for: personal identity numbers,
-  medical/allergy notes, salary data, bank details.
+  medical/allergy notes, salary data, bank details. Implementation
+  (`@clubadmin/server-kit/crypto`, P0.5): data keys in `crypto.data_keys`, one
+  per club plus a global key for global tables; master keys from
+  `ENCRYPTION_MASTER_KEYS` (`id:base64key`, current first; older keys only
+  unwrap, so rotation means adding a key and rewrapping the data keys). Each
+  ciphertext is bound to its table, column and row (AES-GCM associated data).
+  Matching without decrypting uses blind indexes (HMAC-SHA256, per-purpose
+  keys derived from `BLIND_INDEX_KEY`). Record history stores encrypted
+  columns as `[changed]` only. Decrypting a personal identity number is
+  audited (`person.personal_identity_number.viewed`).
 - Background-check documents are **never stored**; only type, verified date,
   verifier, validity end.
 - Personal data never written to logs, traces or error reports (redaction
-  middleware + tests).
+  middleware + tests). Domain errors carry only a stable code; input
+  validation errors and database constraint errors are never echoed (tests).
 
 ### Application hardening
 - Strict Content Security Policy with nonces; no inline scripts; `frame-ancestors 'none'`

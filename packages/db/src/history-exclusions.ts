@@ -10,6 +10,7 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
     "append-only list of erased person IDs; must survive restores unchanged",
   "app_meta.*": "migration bookkeeping",
   "graphile_worker.*": "job queue managed by Graphile Worker",
+  "crypto.*": "wrapped encryption keys; no personal data, rotated by operators",
 };
 
 export function isHistoryExcluded(qualifiedName: string): boolean {

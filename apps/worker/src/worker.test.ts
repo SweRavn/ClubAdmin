@@ -18,9 +18,13 @@ const taskList = createTaskList({
 });
 
 describe("worker", () => {
-  it("schedules heartbeat and history maintenance, and every cron task exists", () => {
+  it("schedules heartbeat, history maintenance and the adult-ward check; every cron task exists", () => {
     const items = parseCrontab(crontab);
-    expect(items.map((i) => i.task)).toEqual(["heartbeat", "history:maintain_partitions"]);
+    expect(items.map((i) => i.task)).toEqual([
+      "heartbeat",
+      "history:maintain_partitions",
+      "guardianships:flag_adult_wards",
+    ]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
   });
 

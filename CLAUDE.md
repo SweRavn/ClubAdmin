@@ -154,7 +154,13 @@ only run if listed in `onlyBuiltDependencies`.
   `*.controller.ts`, `*.service.ts`, `*.repository.ts`, `*.policy.ts`,
   `*.schemas.ts` (re-exported from `packages/shared`), and tests next to them.
 - A module may only use another module through its exported service, never its
-  tables. Cross-module reactions go through domain events.
+  tables. Cross-module reactions go through domain events. Services take an
+  `ActorContext`/`TenantContext` and throw `DomainError(code)` for expected
+  failures (codes, never values). A module whose tables store person IDs
+  declares them in `<module>.references.ts` so merging duplicate people
+  covers them.
+- New tables in `public` need row-level security even without `club_id`
+  (global tables: policies via the `app.*` access helpers, ADR 0023).
 - Database names: `snake_case`, plural tables, `id` is UUIDv7 (ADR 0020),
   `created_at`, `updated_at` on every table. Login email only on `accounts`
   (unique, case-insensitive); people never have an email column.

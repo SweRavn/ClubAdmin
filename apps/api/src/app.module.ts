@@ -3,6 +3,7 @@ import { type DynamicModule, Module, type Type } from "@nestjs/common";
 import { APP_FILTER, APP_INTERCEPTOR, DiscoveryModule } from "@nestjs/core";
 
 import { API_CONFIG, type ApiConfig } from "./config.ts";
+import { DomainModule } from "./domain.module.ts";
 import { HealthController } from "./platform/health/health.controller.ts";
 import { EndpointRegistry } from "./platform/http/endpoint-registry.ts";
 import { ProblemDetailsFilter } from "./platform/http/problem.filter.ts";
@@ -26,6 +27,7 @@ export class AppModule {
           exports: [API_CONFIG],
         },
         InfraModule,
+        DomainModule,
         ...extraModules,
       ],
       controllers: [HealthController, MetaController, OpenApiController],

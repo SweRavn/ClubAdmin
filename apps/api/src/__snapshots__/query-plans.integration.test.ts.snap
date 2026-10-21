@@ -1,0 +1,36 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`query plans (10k rows) > guardians of person 1`] = `
+[
+  "Sort",
+  "Index Scan guardianships guardianships_ward_idx",
+]
+`;
+
+exports[`query plans (10k rows) > members of group 1`] = `
+[
+  "Sort",
+  "Index Scan group_memberships group_memberships_group_idx",
+]
+`;
+
+exports[`query plans (10k rows) > my clubs (by person, across clubs) 1`] = `
+[
+  "Sort",
+  "Index Scan club_memberships club_memberships_person_active_idx",
+]
+`;
+
+exports[`query plans (10k rows) > my groups (by person, across clubs) 1`] = `
+[
+  "Sort",
+  "Index Scan group_memberships group_memberships_person_idx",
+]
+`;
+
+exports[`query plans (10k rows) > wards of person 1`] = `
+[
+  "Sort",
+  "Index Scan guardianships guardianships_guardian_idx",
+]
+`;

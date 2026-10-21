@@ -185,6 +185,9 @@ importers:
       '@asteasolutions/zod-to-openapi':
         specifier: 'catalog:'
         version: 9.1.0(zod@4.6.7)
+      '@clubadmin/country-packs':
+        specifier: workspace:*
+        version: link:../../packages/country-packs
       '@clubadmin/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -279,6 +282,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@clubadmin/country-packs':
+        specifier: workspace:*
+        version: link:../../packages/country-packs
       '@clubadmin/db':
         specifier: workspace:*
         version: link:../../packages/db

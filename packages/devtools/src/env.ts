@@ -94,7 +94,7 @@ export const ENV_TEMPLATE: EnvSection[] = [
         key: "DATABASE_ADMIN_URL",
         value: () =>
           "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}",
-        comment: "Superuser connection for bootstrap/migrations; app roles come in P0.4",
+        comment: "Superuser connection, only for pnpm db:bootstrap (roles and grants)",
       },
       { key: "DB_OWNER_PASSWORD", value: () => alphanumeric(32) },
       { key: "DB_APP_PASSWORD", value: () => alphanumeric(32) },
@@ -120,6 +120,22 @@ export const ENV_TEMPLATE: EnvSection[] = [
       },
       { key: "ZITADEL_DB_USER", value: "zitadel" },
       { key: "ZITADEL_DB_PASSWORD", value: () => alphanumeric(32) },
+    ],
+  },
+  {
+    title: "Field encryption",
+    variables: [
+      {
+        key: "ENCRYPTION_MASTER_KEYS",
+        value: () => `dev1:${randomBytes(32).toString("base64")}`,
+        comment:
+          "id:base64key, comma-separated, current first; wraps the data keys for encrypted fields (docs/security.md)",
+      },
+      {
+        key: "BLIND_INDEX_KEY",
+        value: () => randomBytes(32).toString("base64"),
+        comment: "Keyed hashes for matching encrypted values (duplicate personal identity numbers)",
+      },
     ],
   },
   {
