@@ -19,7 +19,6 @@
   "devDependencies": {
     "@axe-core/playwright": "catalog:",
     "@clubadmin/config": "workspace:*",
-    "@lhci/cli": "catalog:",
     "@playwright/test": "catalog:",
     "@tailwindcss/postcss": "catalog:",
     "@types/node": "catalog:",

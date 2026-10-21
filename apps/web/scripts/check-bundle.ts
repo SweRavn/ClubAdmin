@@ -54,7 +54,9 @@ if (import.meta.main) {
     const { files, inline } = await initialJavaScript(baseUrl, cookie, path);
     const total = [...files.values()].reduce((a, b) => a + b, 0) + inline;
     const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`;
-    console.log(`${path}: ${kb(total)} (${files.size} files, inline ${kb(inline)}) of ${kb(BUDGET_BYTES)}`);
+    console.log(
+      `${path}: ${kb(total)} (${files.size} files, inline ${kb(inline)}) of ${kb(BUDGET_BYTES)}`,
+    );
     for (const [file, size] of [...files].sort((a, b) => b[1] - a[1]).slice(0, 5)) {
       console.log(`  ${kb(size).padStart(9)}  ${file}`);
     }

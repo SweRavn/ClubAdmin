@@ -108,9 +108,8 @@ by the CI check when added.
 SWC (`@swc/core`, `@swc/cli`: Apache-2.0, MIT), unplugin-swc (MIT), chokidar (MIT),
 openapi-typescript (MIT), dependency-cruiser (MIT), intl-messageformat (BSD-3-Clause,
 catalogue check), `@axe-core/playwright` and axe-core (MPL-2.0, accessibility
-checks), `@lhci/cli` and Lighthouse (Apache-2.0; its dependency
-`parse-cache-control` declares "BSD" and is BSD-3-Clause, recorded as an
-exception in `packages/config/licenses.json`, ADR 0027),
+checks), Lighthouse CI (Apache-2.0; run with `pnpm dlx`, not a workspace
+dependency, ADR 0027),
 Renovate (AGPL-3.0), OSV-Scanner (Apache-2.0), Trivy (Apache-2.0), k6 (AGPL-3.0), Weblate (GPL-3.0-or-later), CodeQL (free for
 open-source repositories on GitHub; proprietary, CI use only). No licence
 conflict.

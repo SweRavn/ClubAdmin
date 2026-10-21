@@ -19,9 +19,11 @@ things got in the way:
   only exists with `NODE_ENV=development`; Lighthouse and the bundle check
   must measure the production build, where DEV_AUTH is (and must stay)
   impossible.
-- Lighthouse CI (`@lhci/cli`, Apache-2.0) depends on Lighthouse, which
-  depends on `parse-cache-control`, whose `package.json` declares "BSD"
-  (not an SPDX identifier). Its LICENSE file is the BSD-3-Clause text.
+- Lighthouse CI (`@lhci/cli`, Apache-2.0) brings Puppeteer's browser
+  downloader with it, whose dependencies have known vulnerabilities without
+  fixes (`extract-zip`, `basic-ftp`, `tmp`, `uuid`; OSV-Scanner fails on the
+  lockfile), and `parse-cache-control`, whose `package.json` declares "BSD"
+  instead of an SPDX identifier (the LICENSE file is BSD-3-Clause).
 
 **Decision.**
 - **Production builds use webpack** (`next build --webpack`, the web app's
@@ -62,10 +64,12 @@ things got in the way:
   and fails if any interaction's Event Timing duration (the INP measure)
   reaches 200 ms (P0.9: about 100 ms). TBT stays in Lighthouse CI as a
   warning above 200 ms.
-- **Licence exception** for `parse-cache-control@1.0.1` in
-  `packages/config/licenses.json`: its licence is BSD-3-Clause, the
-  `package.json` field is just not an SPDX identifier. It is a development
-  dependency of Lighthouse (CI only, never distributed).
+- **Lighthouse CI is not a workspace dependency.** `apps/web/scripts/lighthouse.ts`
+  runs it at an exact version with `pnpm dlx @lhci/cli@0.15.1` (the store's
+  integrity checks and `minimumReleaseAge` still apply). It is a CI tool
+  that never ships and never downloads a browser (it uses Playwright's
+  Chromium), so its dependency tree stays out of the lockfile, the licence
+  check and OSV-Scanner. Update the version in that script.
 
 **Consequences.** The production build is slower than with Turbopack. Heavy
 client libraries have to stay out of the initial bundle: Radix UI menus load

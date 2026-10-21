@@ -42,10 +42,5 @@
     "BlueOak-1.0.0",
     "CC-BY-4.0"
   ],
-  "exceptions": {
-    "parse-cache-control@1.0.1": {
-      "reason": "package.json says \"BSD\" (not an SPDX identifier); its LICENSE file is the BSD-3-Clause text. Development dependency of Lighthouse (CI only, not distributed).",
-      "adr": "docs/adr/0027-web-performance-budgets-in-ci.md"
-    }
-  }
+  "exceptions": {}
 }
