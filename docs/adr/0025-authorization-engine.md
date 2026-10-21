@@ -79,7 +79,8 @@ with support access fit in, and how protected sets stay current.
   groups over the whole database) were replaced; `app.can_see_person` and
   `app.has_club_relationship` check one condition per statement, cheapest
   first, because one expression with several subqueries was planned again on
-  every call (about 0.2 ms per row).
+  every call (about 0.2 ms per row). Remaining per-row costs:
+  [#9](https://github.com/SweRavn/ClubAdmin/issues/9).
 - **Field visibility.** Profiles are filtered per relationship
   (`profileAccess`: self, admin, leader, member). Leaders and administrators
   see a child's guardians with their phone numbers (they must reach them);
@@ -93,4 +94,4 @@ and a matrix test runs every permission endpoint for every kind of
 relationship. The person summary field is `protected` (was
 `protectedIdentity`). A short window remains between a committed change and
 the worker's invalidation; endpoints that change relationships (P1.x) may
-additionally invalidate synchronously.
+additionally invalidate synchronously ([#8](https://github.com/SweRavn/ClubAdmin/issues/8)).
