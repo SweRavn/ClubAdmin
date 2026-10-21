@@ -98,7 +98,8 @@ budgets are requirements; CI measures them.
 - Seeding (P0.8): `pnpm db:reset` with the demo scenario about 7 s including
   the build (budget 15 s; the seed itself about 4 s); `pnpm db:reset --scenario
   load` (1,000 clubs, 200,000 people) about 100 s locally (budget 10 minutes,
-  nightly workflow).
+  nightly workflow). The nightly job only seeds so far; measuring the budgets
+  against that data is [#10](https://github.com/SweRavn/ClubAdmin/issues/10).
 - Lighthouse CI on key web pages per PR.
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.
