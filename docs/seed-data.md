@@ -15,10 +15,13 @@ pnpm db:seed --scenario minimal   # one club, three people (fast unit/integratio
 
 `pnpm dev` runs `db:reset` automatically on first start if the database is empty.
 
-Open question before P0.8: where the seed runner lives, since it should use the
-domain services in `apps/api` and packages cannot import apps ([#4](https://github.com/SweRavn/ClubAdmin/issues/4)).
+The demo content below is stored as JSON data files in `docs/demodata/`
+(personas with fixed IDs, clubs, groups, relationships, history to replay)
+and loaded by the seed runner in `apps/api/src/seed/`, which writes through
+the domain services (ADR 0026). This document describes the same data in
+prose and tables; keep both in step.
 
-Until then, integration tests build fixtures with the builders in
+Until the seed exists (P0.8), integration tests build fixtures with the builders in
 `apps/api/src/testing/`. The **matrix** scenario (`scenarios.ts`, P0.7) has
 one person per kind of relationship for the permission tests: in club A a
 section with a team, a club manager, a registrar, the section's owner, the
@@ -39,8 +42,9 @@ outsider; and a platform operator without support access.
   never random numbers that could belong to real people.
 - The seed refuses to run against a database where `DEPLOYMENT_MODE=hosted`
   and `NODE_ENV=production`.
-- Each feature module adds its own seed step (`packages/db/seed/<module>.ts`)
-  on top of the core personas, so the dataset grows with the application.
+- Each feature module adds its own seed step (`apps/api/src/seed/steps/<module>.ts`)
+  and data file in `docs/demodata/` on top of the core personas, so the
+  dataset grows with the application.
 
 ## Development login (`DEV_AUTH`)
 

@@ -66,7 +66,7 @@ apps/
   mobile/     Expo (React Native) app for iOS and Android
 packages/
   shared/     Zod schemas, types, domain constants, permission names
-  db/         Drizzle schema, migrations, RLS policies, seed scenarios
+  db/         Drizzle schema, migrations, RLS policies
   api-client/ Generated typed client from OpenAPI
   i18n/       Message catalogues (sv, en, nb, ...)
   ui/         Shared UI primitives (web)
@@ -77,7 +77,7 @@ packages/
 infra/
   docker/     Dockerfiles, docker-compose for dev and self-hosting
   backup/     pgBackRest config, restore runbooks and scripts
-docs/         Design documents, ADRs, prompts
+docs/         Design documents, ADRs, prompts; demo data in docs/demodata (ADR 0026)
 ```
 
 ## Commands
