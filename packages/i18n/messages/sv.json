@@ -1,42 +1,249 @@
 {
-  "problem.bad-request": "Felaktig förfrågan",
-  "problem.validation": "Förfrågan innehåller ogiltiga uppgifter",
-  "problem.unauthenticated": "Du behöver logga in",
-  "problem.forbidden": "Du har inte behörighet att göra detta",
-  "problem.mfa-required": "Det här kräver tvåstegsverifiering",
-  "problem.reauthentication-required": "Logga in igen för att fortsätta",
-  "problem.not-found": "Hittades inte",
-  "problem.method-not-allowed": "Metoden är inte tillåten",
-  "problem.conflict": "Förfrågan krockar med nuvarande läge",
-  "problem.payload-too-large": "Förfrågan är för stor",
-  "problem.unsupported-media-type": "Innehållstypen stöds inte",
-  "problem.rate-limited": "För många förfrågningar, försök igen senare",
-  "problem.internal": "Något gick fel hos oss",
-  "problem.not-implemented": "Inte implementerat ännu",
-  "problem.unavailable": "Tjänsten är tillfälligt otillgänglig",
-  "web.title": "ClubAdmin",
-  "web.home.intro": "Medlemmar, lag och aktiviteter för din förening.",
-  "web.home.login": "Logga in",
-  "web.home.me": "Mitt konto",
-  "web.login.title": "Logga in",
-  "web.login.email": "Logga in med e-post",
-  "web.login.signUp": "Skapa konto",
-  "web.login.notConfigured": "Inloggning med e-post är inte konfigurerad på den här servern än.",
-  "web.login.failed": "Inloggningen fungerade inte. Försök igen.",
-  "web.login.rateLimited": "För många inloggningsförsök. Vänta en minut och försök igen.",
-  "web.login.dev.title": "Utvecklingsinloggning",
-  "web.login.dev.hint": "Logga in som vem som helst utan lösenord. Finns bara i utvecklingsmiljön.",
-  "web.login.dev.mfa": "Som om inloggad med tvåstegsverifiering",
-  "web.login.dev.loginAs": "Logga in som {name}",
-  "web.login.dev.empty": "Ingen har något konto än. Skapa ett konto med e-post först.",
-  "web.me.title": "Mitt konto",
-  "web.me.loggedInAs": "Inloggad som {name}",
-  "web.me.mfa.on": "Du loggade in med tvåstegsverifiering.",
-  "web.me.mfa.off": "Du loggade in utan tvåstegsverifiering.",
-  "web.me.sessions": "Där du är inloggad",
-  "web.me.sessions.current": "Den här webbläsaren",
-  "web.me.sessions.lastSeen": "Senast aktiv {time}",
-  "web.me.sessions.revoke": "Logga ut där",
-  "web.logout": "Logga ut",
-  "web.devBanner": "Utvecklingsinloggning: inloggad som {name}"
+  "problem": {
+    "bad-request": "Felaktig förfrågan",
+    "validation": "Förfrågan innehåller ogiltiga uppgifter",
+    "unauthenticated": "Du behöver logga in",
+    "forbidden": "Du har inte behörighet att göra detta",
+    "mfa-required": "Det här kräver tvåstegsverifiering",
+    "reauthentication-required": "Logga in igen för att fortsätta",
+    "not-found": "Hittades inte",
+    "method-not-allowed": "Metoden är inte tillåten",
+    "conflict": "Förfrågan krockar med nuvarande läge",
+    "payload-too-large": "Förfrågan är för stor",
+    "unsupported-media-type": "Innehållstypen stöds inte",
+    "rate-limited": "För många förfrågningar, försök igen senare",
+    "internal": "Något gick fel hos oss",
+    "not-implemented": "Inte implementerat ännu",
+    "unavailable": "Tjänsten är tillfälligt otillgänglig"
+  },
+  "common": {
+    "appName": "ClubAdmin",
+    "tagline": "Medlemmar, lag och aktiviteter för din förening.",
+    "skipToContent": "Hoppa till huvudinnehållet",
+    "loading": "Laddar…",
+    "loadMore": "Visa fler",
+    "loadMoreFailed": "Kunde inte hämta fler. Försök igen.",
+    "backHome": "Gå till startsidan",
+    "retry": "Försök igen",
+    "save": "Spara",
+    "yes": "Ja",
+    "no": "Nej"
+  },
+  "nav": {
+    "label": "Huvudmeny",
+    "home": "Hem",
+    "groups": "Grupper",
+    "members": "Medlemmar"
+  },
+  "clubSwitcher": {
+    "label": "Förening: {club}",
+    "choose": "Välj förening",
+    "none": "Ingen förening"
+  },
+  "userMenu": {
+    "label": "Kontomeny",
+    "profile": "Min profil",
+    "account": "Mitt konto",
+    "language": "Språk och tidszon",
+    "sessions": "Där jag är inloggad",
+    "logout": "Logga ut"
+  },
+  "viewingAs": {
+    "label": "Visar som",
+    "self": "Mig själv",
+    "banner": "Du visar som {name}: du ser det {name} ser.",
+    "stop": "Tillbaka till mig själv"
+  },
+  "footer": {
+    "source": "Källkod",
+    "version": "Version {version}",
+    "licence": "Fri programvara under AGPL-3.0"
+  },
+  "devBanner": "Utvecklingsinloggning: inloggad som {name}",
+  "login": {
+    "title": "Logga in",
+    "email": "Logga in med e-post",
+    "signUp": "Skapa konto",
+    "notConfigured": "Inloggning med e-post är inte konfigurerad på den här servern ännu.",
+    "failed": "Inloggningen fungerade inte. Försök igen.",
+    "rateLimited": "För många inloggningsförsök. Vänta en minut och försök igen.",
+    "dev": {
+      "title": "Utvecklingsinloggning",
+      "hint": "Logga in som vem som helst utan lösenord. Finns bara i utvecklingsmiljön.",
+      "mfa": "Som om inloggad med tvåstegsverifiering",
+      "loginAs": "Logga in som {name}",
+      "empty": "Ingen har en inloggning ännu. Skapa ett konto med e-post först.",
+      "noClub": "Utan förening",
+      "roles": "Roller: {roles}"
+    }
+  },
+  "account": {
+    "title": "Mitt konto",
+    "loggedInAs": "Inloggad som {name}",
+    "mfa": {
+      "on": "Du loggade in med tvåstegsverifiering.",
+      "off": "Du loggade in utan tvåstegsverifiering."
+    }
+  },
+  "preferences": {
+    "title": "Språk och tidszon",
+    "language": "Språk",
+    "timeZone": "Tidszon",
+    "automatic": "Automatiskt (förening eller webbläsare)",
+    "saved": "Sparat.",
+    "invalidTimeZone": "Okänd tidszon. Ange ett namn som Europe/Stockholm.",
+    "timeZoneHint": "Till exempel Europe/Stockholm. Lämna tomt för att använda föreningens eller webbläsarens."
+  },
+  "locales": {
+    "sv": "Svenska",
+    "en": "English",
+    "nb": "Norsk bokmål"
+  },
+  "sessions": {
+    "title": "Där du är inloggad",
+    "current": "Den här webbläsaren",
+    "lastSeen": "Senast aktiv {time}",
+    "revoke": "Logga ut där",
+    "empty": "Inga sessioner."
+  },
+  "home": {
+    "title": "Hem",
+    "greeting": "Hej {name}",
+    "myClubs": "Mina föreningar",
+    "myGroups": "Mina grupper",
+    "wardGroups": "{name}s grupper",
+    "noGroups": "Du är inte med i någon grupp ännu.",
+    "noWardGroups": "Inte med i någon grupp ännu."
+  },
+  "onboarding": {
+    "title": "Välkommen till ClubAdmin",
+    "text": "Du är inte med i någon förening ännu.",
+    "findClub": "Hitta en förening",
+    "createClub": "Skapa en förening",
+    "comingSoon": "Att gå med i och skapa föreningar kommer i nästa version."
+  },
+  "club": {
+    "overview": "Översikt",
+    "managers": "Föreningsansvariga",
+    "noManagers": "Ingen föreningsansvarig.",
+    "groups": "Grupper",
+    "allGroups": "Alla grupper",
+    "details": "Om föreningen",
+    "country": "Land",
+    "language": "Språk",
+    "timeZone": "Tidszon",
+    "localTime": "Tid hos föreningen",
+    "logo": "Logotyp för {club}"
+  },
+  "groups": {
+    "title": "Grupper i {club}",
+    "empty": "Inga grupper ännu.",
+    "archived": "Arkiverad"
+  },
+  "group": {
+    "owners": "Ägare",
+    "leaders": "Ledare",
+    "members": "Medlemmar",
+    "memberCount": "{count, plural, one {# medlem} other {# medlemmar}}",
+    "noOwners": "Inga ägare.",
+    "noLeaders": "Inga ledare.",
+    "noMembers": "Inga medlemmar.",
+    "rosterHidden": "Bara gruppens medlemmar, ledare och deras vårdnadshavare ser vilka som är med i gruppen.",
+    "partOf": "Del av",
+    "kind": "Typ",
+    "sport": "Idrott",
+    "birthYears": "Födda",
+    "birthYearRange": "{from}–{to}",
+    "capacity": "Platser",
+    "subgroups": "Grupper i {group}"
+  },
+  "protected": {
+    "label": "Skyddad identitet",
+    "tooltip": "Skyddad identitet — fotografera, filma eller dela inte"
+  },
+  "person": {
+    "title": "Profil",
+    "birthDate": "Födelsedatum",
+    "gender": "Kön",
+    "phone": "Telefon",
+    "address": "Adress",
+    "memberNumber": "Medlemsnummer",
+    "membership": "Medlemskap",
+    "groups": "Grupper",
+    "guardians": "Vårdnadshavare",
+    "limited": "Du ser de uppgifter personen delar med dig.",
+    "inClub": "I {club}"
+  },
+  "members": {
+    "title": "Medlemmar i {club}",
+    "comingSoon": "Medlemsregistret kommer i en senare version. Till dess kan du se medlemmarna i varje grupp."
+  },
+  "time": {
+    "viewerZone": "{time} hos dig ({zone})"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Hittades inte",
+      "text": "Sidan finns inte, eller så har du inte tillgång till den."
+    },
+    "forbidden": {
+      "title": "Ingen behörighet",
+      "text": "Du har inte behörighet att se det här."
+    },
+    "generic": {
+      "title": "Något gick fel",
+      "text": "Försök igen om en stund. Om det fortsätter, berätta referensen nedan för oss."
+    },
+    "reference": "Referens: {id}"
+  },
+  "roles": {
+    "chair": "Ordförande",
+    "vice_chair": "Vice ordförande",
+    "treasurer": "Kassör",
+    "secretary": "Sekreterare",
+    "board_member": "Ledamot",
+    "deputy_board_member": "Suppleant",
+    "auditor": "Revisor",
+    "nomination_committee": "Valberedning",
+    "club_manager": "Föreningsansvarig",
+    "registrar": "Medlemsansvarig",
+    "safeguarding_officer": "Trygghetsansvarig",
+    "communications": "Kommunikation",
+    "staff": "Personal"
+  },
+  "functions": {
+    "member": "Medlem",
+    "head_coach": "Huvudtränare",
+    "assistant_coach": "Assisterande tränare",
+    "team_manager": "Lagledare",
+    "physio": "Fysioterapeut",
+    "other_leader": "Ledare"
+  },
+  "kinds": {
+    "section": "Sektion",
+    "team": "Lag",
+    "training_group": "Träningsgrupp",
+    "age_group": "Åldersgrupp",
+    "committee": "Kommitté",
+    "board": "Styrelse",
+    "volunteers": "Volontärer",
+    "other": "Grupp"
+  },
+  "membershipStatus": {
+    "applied": "Ansökt",
+    "active": "Aktiv",
+    "paused": "Vilande",
+    "left": "Utträtt"
+  },
+  "guardianKinds": {
+    "parent": "Förälder",
+    "legal_guardian": "Vårdnadshavare",
+    "relative": "Släkting",
+    "contact_person": "Kontaktperson"
+  },
+  "genders": {
+    "female": "Kvinna",
+    "male": "Man",
+    "other": "Annat"
+  }
 }

@@ -107,6 +107,7 @@ pnpm dev:trust-ca     # trust Caddy's local HTTPS CA (once)
 pnpm dev:smoke        # end-to-end check of all services
 pnpm auth:configure   # apply infra/zitadel/ to Zitadel (pnpm dev:services runs it)
 pnpm --filter @clubadmin/web test:e2e   # Playwright: real Zitadel login and DEV_AUTH (docs/development.md)
+pnpm --filter @clubadmin/web bundle:check / lighthouse   # web budgets on the production build (ADR 0027)
 ```
 
 API:

@@ -160,6 +160,7 @@ describe("permission matrix", () => {
   const MATRIX: Record<string, { url: () => string; expected: Record<MatrixPersona, number> }> = {
     "GET /api/v1/me/clubs": { url: () => "/api/v1/me/clubs", expected: ALL_OK },
     "GET /api/v1/me/wards": { url: () => "/api/v1/me/wards", expected: ALL_OK },
+    "GET /api/v1/me/groups": { url: () => "/api/v1/me/groups", expected: ALL_OK },
     "GET /api/v1/clubs/:clubId": { url: () => `/api/v1/clubs/${m.clubA.id}`, expected: INSIDERS },
     "GET /api/v1/clubs/:clubId/groups": {
       url: () => `/api/v1/clubs/${m.clubA.id}/groups`,
@@ -254,6 +255,67 @@ describe("reads", () => {
       clubs: unknown[];
     }>();
     expect(outsiderClubs.clubs).toEqual([]);
+  });
+
+  it("GET /me/clubs lists the club-level permissions, locale and time zone", async () => {
+    const permissions = async (personId: string) =>
+      (await get(personId, "/api/v1/me/clubs")).json<{
+        clubs: { club: { defaultLocale: string; timeZone: string }; permissions: string[] }[];
+      }>().clubs[0];
+    expect((await permissions(m.registrar.id))?.permissions).toEqual([
+      "club.read",
+      "club.members.read",
+    ]);
+    // Listed without a second factor; the endpoints ask for it.
+    expect((await permissions(m.manager.id))?.permissions).toEqual(
+      expect.arrayContaining(["club.settings.update", "club.roles.manage", "club.members.read"]),
+    );
+    const member = await permissions(m.member.id);
+    expect(member?.permissions).toEqual(["club.read"]);
+    expect(member?.club).toMatchObject({ defaultLocale: "sv-SE", timeZone: "Europe/Stockholm" });
+  });
+
+  it("GET /me/groups lists my groups and my wards' groups with functions", async () => {
+    type MyGroups = {
+      groups: { group: { id: string }; club: { id: string }; functions: string[] }[];
+      wards: { personId: string; groups: { group: { id: string } }[] }[];
+    };
+    const coach = (await get(m.coach.id, "/api/v1/me/groups")).json<MyGroups>();
+    expect(coach.groups).toEqual([
+      expect.objectContaining({
+        group: expect.objectContaining({ id: m.team.id }) as unknown,
+        club: expect.objectContaining({ id: m.clubA.id }) as unknown,
+        functions: ["head_coach"],
+      }),
+    ]);
+    expect(coach.wards).toEqual([]);
+
+    const parent = (await get(m.parent.id, "/api/v1/me/groups")).json<MyGroups>();
+    expect(parent.groups).toEqual([]);
+    expect(parent.wards).toEqual([
+      { personId: m.child.id, groups: [expect.objectContaining({ functions: ["member"] })] },
+    ]);
+    expect(parent.wards[0]!.groups[0]!.group.id).toBe(m.team.id);
+
+    // Viewing as the child: the child's own groups.
+    const asChild = (
+      await get(m.parent.id, "/api/v1/me/groups", { headers: { "x-on-behalf-of": m.child.id } })
+    ).json<MyGroups>();
+    expect(asChild.groups.map((g) => g.group.id)).toEqual([m.team.id]);
+    expect(asChild.wards).toEqual([]);
+  });
+
+  it("GET /clubs/:clubId lists the managers; GET /groups/:groupId the visible owners", async () => {
+    const club = (await get(m.member.id, `/api/v1/clubs/${m.clubA.id}`)).json<{
+      managers: { id: string }[];
+    }>();
+    expect(club.managers.map((p) => p.id)).toEqual([m.manager.id]);
+    const section = (await get(m.member.id, `/api/v1/groups/${m.section.id}`)).json<{
+      name: string;
+      owners: { id: string; protected: boolean }[];
+    }>();
+    expect(section.name).toBe("Fotboll");
+    expect(section.owners.map((p) => p.id)).toEqual([m.owner.id]);
   });
 
   it("GET /me/wards lists wards with rights", async () => {

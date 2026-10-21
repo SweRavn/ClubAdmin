@@ -1,0 +1,111 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/*
+ * Design tokens (colour, spacing, type) for the web app, as Tailwind CSS v4
+ * theme variables. Semantic colours switch between the light and dark theme:
+ * the browser's preference by default, or the account's choice
+ * (data-theme="light" | "dark" on <html>). Text colours meet WCAG AA (4.5:1)
+ * on the background and surface colours of their theme.
+ */
+
+:root {
+  color-scheme: light;
+  --ca-bg: #ffffff;
+  --ca-surface: #f5f6f8;
+  --ca-surface-raised: #ffffff;
+  --ca-fg: #161a22;
+  --ca-muted: #535c6c;
+  --ca-border: #d6dae2;
+  --ca-accent: #1d5bb8;
+  --ca-accent-fg: #ffffff;
+  --ca-accent-soft: #e5eefb;
+  --ca-notice-bg: #fff3cd;
+  --ca-notice-fg: #4d3900;
+  --ca-protected: #9b1c1c;
+  --ca-protected-soft: #fde8e8;
+  --ca-danger: #a61b1b;
+  --ca-focus: #1d5bb8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ca-bg: #0f1218;
+    --ca-surface: #171b23;
+    --ca-surface-raised: #1d222c;
+    --ca-fg: #e7eaf0;
+    --ca-muted: #a4adbd;
+    --ca-border: #343b48;
+    --ca-accent: #8db8ff;
+    --ca-accent-fg: #0f1218;
+    --ca-accent-soft: #1d2a40;
+    --ca-notice-bg: #3a2f0b;
+    --ca-notice-fg: #fbe7a6;
+    --ca-protected: #ff9c9c;
+    --ca-protected-soft: #3b1a1a;
+    --ca-danger: #ff9c9c;
+    --ca-focus: #8db8ff;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ca-bg: #0f1218;
+  --ca-surface: #171b23;
+  --ca-surface-raised: #1d222c;
+  --ca-fg: #e7eaf0;
+  --ca-muted: #a4adbd;
+  --ca-border: #343b48;
+  --ca-accent: #8db8ff;
+  --ca-accent-fg: #0f1218;
+  --ca-accent-soft: #1d2a40;
+  --ca-notice-bg: #3a2f0b;
+  --ca-notice-fg: #fbe7a6;
+  --ca-protected: #ff9c9c;
+  --ca-protected-soft: #3b1a1a;
+  --ca-danger: #ff9c9c;
+  --ca-focus: #8db8ff;
+}
+
+@theme inline {
+  --color-bg: var(--ca-bg);
+  --color-surface: var(--ca-surface);
+  --color-raised: var(--ca-surface-raised);
+  --color-fg: var(--ca-fg);
+  --color-muted: var(--ca-muted);
+  --color-border: var(--ca-border);
+  --color-accent: var(--ca-accent);
+  --color-accent-fg: var(--ca-accent-fg);
+  --color-accent-soft: var(--ca-accent-soft);
+  --color-notice: var(--ca-notice-bg);
+  --color-notice-fg: var(--ca-notice-fg);
+  --color-protected: var(--ca-protected);
+  --color-protected-soft: var(--ca-protected-soft);
+  --color-danger: var(--ca-danger);
+  --color-focus: var(--ca-focus);
+}
+
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --spacing: 0.25rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+}
+
+@layer base {
+  html {
+    background: var(--ca-bg);
+    color: var(--ca-fg);
+    font-family: var(--font-sans);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ca-focus);
+    outline-offset: 2px;
+  }
+}

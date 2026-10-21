@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Server-side data for pages and layouts: the session and API reads, each
+// at most once per request (React cache), validated with the shared Zod
+// schemas. API problems become the matching page: 401 → login, 404 → the
+// not-found page, 403 → the forbidden page.
+
+import {
+  ClubDetailSchema,
+  GroupDetailSchema,
+  type GroupList,
+  GroupListSchema,
+  GroupMemberListSchema,
+  isUuid,
+  MeResponseSchema,
+  MyClubsSchema,
+  MyGroupsSchema,
+  MyWardsSchema,
+  PersonProfileSchema,
+  SessionListSchema,
+  SourceResponseSchema,
+  VersionResponseSchema,
+  type z,
+} from "@clubadmin/shared";
+import { cookies, headers } from "next/headers";
+import { forbidden, notFound, redirect } from "next/navigation";
+import { cache } from "react";
+
+import { apiFetch } from "./api.ts";
+import { SESSION_COOKIE } from "./cookies.ts";
+import { freshSession, loadSession, type Session } from "./sessions.ts";
+
+/** Set by the proxy (src/proxy.ts): the requested path and query, for returnTo and the current club. */
+export const PATH_HEADER = "x-clubadmin-path";
+
+export const currentPath = cache(
+  async (): Promise<string> => (await headers()).get(PATH_HEADER) ?? "/",
+);
+
+export const getSession = cache(async (): Promise<Session | null> => {
+  const loaded = await loadSession((await cookies()).get(SESSION_COOKIE)?.value);
+  return loaded ? freshSession(loaded) : null;
+});
+
+export async function requireSession(): Promise<Session> {
+  const session = await getSession();
+  if (!session) redirect(`/login?returnTo=${encodeURIComponent(await currentPath())}`);
+  return session;
+}
+
+/** An unexpected API answer (5xx, malformed): the error boundary shows it with its request ID. */
+export class ApiResponseError extends Error {
+  readonly status: number;
+  readonly requestId: string | null;
+
+  constructor(status: number, requestId: string | null) {
+    super(`API answered ${status}`);
+    this.name = "ApiResponseError";
+    this.status = status;
+    this.requestId = requestId;
+  }
+}
+
+async function apiGet<S extends z.ZodType>(
+  path: string,
+  schema: S,
+  options: { nullOn?: readonly number[] } = {},
+): Promise<z.infer<S> | null> {
+  const session = await requireSession();
+  const res = await apiFetch(path, session.record, {
+    onBehalfOf: session.record.viewingAs ?? null,
+  });
+  if (res.ok) return schema.parse(await res.json());
+  if (options.nullOn?.includes(res.status)) return null;
+  if (res.status === 401) redirect(`/login?returnTo=${encodeURIComponent(await currentPath())}`);
+  if (res.status === 404) notFound();
+  if (res.status === 403) forbidden();
+  throw new ApiResponseError(res.status, res.headers.get("x-request-id"));
+}
+
+async function required<S extends z.ZodType>(path: string, schema: S): Promise<z.infer<S>> {
+  return (await apiGet(path, schema)) as z.infer<S>;
+}
+
+/** Route parameters that are not IDs cannot exist. */
+export function requireId(value: string): string {
+  if (!isUuid(value)) notFound();
+  return value;
+}
+
+export const getMe = cache(() => required("/api/v1/me", MeResponseSchema));
+export const getMyClubs = cache(() => required("/api/v1/me/clubs", MyClubsSchema));
+export const getMyWards = cache(() => required("/api/v1/me/wards", MyWardsSchema));
+export const getMyGroups = cache(() => required("/api/v1/me/groups", MyGroupsSchema));
+export const getSessions = cache(() => required("/api/v1/me/sessions", SessionListSchema));
+export const getClub = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}`, ClubDetailSchema),
+);
+export const getGroup = cache((groupId: string) =>
+  required(`/api/v1/groups/${requireId(groupId)}`, GroupDetailSchema),
+);
+/** The first page of a roster, or null if the viewer may see the group but not who is in it. */
+export const getGroupMembers = cache((groupId: string, limit: number) =>
+  apiGet(`/api/v1/groups/${requireId(groupId)}/members?limit=${limit}`, GroupMemberListSchema, {
+    nullOn: [403],
+  }),
+);
+export const getPerson = cache((personId: string, clubId: string | null) =>
+  required(
+    `/api/v1/people/${requireId(personId)}${clubId && isUuid(clubId) ? `?clubId=${clubId}` : ""}`,
+    PersonProfileSchema,
+  ),
+);
+
+/** All of a club's groups (for the tree; clubs have tens, rarely hundreds). */
+export const getClubGroups = cache(async (clubId: string): Promise<GroupList["items"]> => {
+  const items: GroupList["items"] = [];
+  let cursor: string | null = null;
+  do {
+    const page: GroupList = await required(
+      `/api/v1/clubs/${requireId(clubId)}/groups?limit=200${cursor ? `&cursor=${cursor}` : ""}`,
+      GroupListSchema,
+    );
+    items.push(...page.items);
+    cursor = page.nextCursor;
+  } while (cursor);
+  return items;
+});
+
+/** Public metadata for the footer; null if the API cannot be reached (the page still renders). */
+async function publicMeta<S extends z.ZodType>(
+  path: string,
+  schema: S,
+): Promise<z.infer<S> | null> {
+  try {
+    const res = await apiFetch(path, null);
+    return res.ok ? schema.parse(await res.json()) : null;
+  } catch {
+    return null;
+  }
+}
+export const getSource = cache(() => publicMeta("/api/v1/meta/source", SourceResponseSchema));
+export const getVersion = cache(() => publicMeta("/api/v1/meta/version", VersionResponseSchema));

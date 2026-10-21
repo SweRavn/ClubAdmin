@@ -1,0 +1,249 @@
+{
+  "problem": {
+    "bad-request": "Ugyldig forespørsel",
+    "validation": "Forespørselen inneholder ugyldige data",
+    "unauthenticated": "Du må logge inn",
+    "forbidden": "Du har ikke tilgang til å gjøre dette",
+    "mfa-required": "Dette krever tofaktorautentisering",
+    "reauthentication-required": "Logg inn på nytt for å fortsette",
+    "not-found": "Ikke funnet",
+    "method-not-allowed": "Metoden er ikke tillatt",
+    "conflict": "Forespørselen er i konflikt med gjeldende tilstand",
+    "payload-too-large": "Forespørselen er for stor",
+    "unsupported-media-type": "Innholdstypen støttes ikke",
+    "rate-limited": "For mange forespørsler, prøv igjen senere",
+    "internal": "Noe gikk galt hos oss",
+    "not-implemented": "Ikke implementert ennå",
+    "unavailable": "Tjenesten er midlertidig utilgjengelig"
+  },
+  "common": {
+    "appName": "ClubAdmin",
+    "tagline": "Medlemmer, lag og aktiviteter for klubben din.",
+    "skipToContent": "Hopp til hovedinnholdet",
+    "loading": "Laster…",
+    "loadMore": "Vis flere",
+    "loadMoreFailed": "Kunne ikke hente flere. Prøv igjen.",
+    "backHome": "Gå til startsiden",
+    "retry": "Prøv igjen",
+    "save": "Lagre",
+    "yes": "Ja",
+    "no": "Nei"
+  },
+  "nav": {
+    "label": "Hovedmeny",
+    "home": "Hjem",
+    "groups": "Grupper",
+    "members": "Medlemmer"
+  },
+  "clubSwitcher": {
+    "label": "Klubb: {club}",
+    "choose": "Velg klubb",
+    "none": "Ingen klubb"
+  },
+  "userMenu": {
+    "label": "Kontomeny",
+    "profile": "Min profil",
+    "account": "Min konto",
+    "language": "Språk og tidssone",
+    "sessions": "Hvor jeg er logget inn",
+    "logout": "Logg ut"
+  },
+  "viewingAs": {
+    "label": "Viser som",
+    "self": "Meg selv",
+    "banner": "Du viser som {name}: du ser det {name} ser.",
+    "stop": "Tilbake til meg selv"
+  },
+  "footer": {
+    "source": "Kildekode",
+    "version": "Versjon {version}",
+    "licence": "Fri programvare under AGPL-3.0"
+  },
+  "devBanner": "Utviklingsinnlogging: logget inn som {name}",
+  "login": {
+    "title": "Logg inn",
+    "email": "Logg inn med e-post",
+    "signUp": "Opprett konto",
+    "notConfigured": "Innlogging med e-post er ikke satt opp på denne serveren ennå.",
+    "failed": "Innloggingen fungerte ikke. Prøv igjen.",
+    "rateLimited": "For mange innloggingsforsøk. Vent et minutt og prøv igjen.",
+    "dev": {
+      "title": "Utviklingsinnlogging",
+      "hint": "Logg inn som hvem som helst uten passord. Finnes bare i utviklingsmiljøet.",
+      "mfa": "Som om innlogget med tofaktorautentisering",
+      "loginAs": "Logg inn som {name}",
+      "empty": "Ingen har en innlogging ennå. Opprett en konto med e-post først.",
+      "noClub": "Uten klubb",
+      "roles": "Roller: {roles}"
+    }
+  },
+  "account": {
+    "title": "Min konto",
+    "loggedInAs": "Logget inn som {name}",
+    "mfa": {
+      "on": "Du logget inn med tofaktorautentisering.",
+      "off": "Du logget inn uten tofaktorautentisering."
+    }
+  },
+  "preferences": {
+    "title": "Språk og tidssone",
+    "language": "Språk",
+    "timeZone": "Tidssone",
+    "automatic": "Automatisk (klubb eller nettleser)",
+    "saved": "Lagret.",
+    "invalidTimeZone": "Ukjent tidssone. Bruk et navn som Europe/Oslo.",
+    "timeZoneHint": "For eksempel Europe/Oslo. La stå tomt for å bruke klubbens eller nettleserens."
+  },
+  "locales": {
+    "sv": "Svenska",
+    "en": "English",
+    "nb": "Norsk bokmål"
+  },
+  "sessions": {
+    "title": "Hvor du er logget inn",
+    "current": "Denne nettleseren",
+    "lastSeen": "Sist aktiv {time}",
+    "revoke": "Logg ut der",
+    "empty": "Ingen økter."
+  },
+  "home": {
+    "title": "Hjem",
+    "greeting": "Hei {name}",
+    "myClubs": "Mine klubber",
+    "myGroups": "Mine grupper",
+    "wardGroups": "{name}s grupper",
+    "noGroups": "Du er ikke med i noen gruppe ennå.",
+    "noWardGroups": "Ikke med i noen gruppe ennå."
+  },
+  "onboarding": {
+    "title": "Velkommen til ClubAdmin",
+    "text": "Du er ikke med i noen klubb ennå.",
+    "findClub": "Finn en klubb",
+    "createClub": "Opprett en klubb",
+    "comingSoon": "Å bli med i og opprette klubber kommer i neste versjon."
+  },
+  "club": {
+    "overview": "Oversikt",
+    "managers": "Klubbansvarlige",
+    "noManagers": "Ingen klubbansvarlig.",
+    "groups": "Grupper",
+    "allGroups": "Alle grupper",
+    "details": "Om klubben",
+    "country": "Land",
+    "language": "Språk",
+    "timeZone": "Tidssone",
+    "localTime": "Tid hos klubben",
+    "logo": "Logo for {club}"
+  },
+  "groups": {
+    "title": "Grupper i {club}",
+    "empty": "Ingen grupper ennå.",
+    "archived": "Arkivert"
+  },
+  "group": {
+    "owners": "Eiere",
+    "leaders": "Ledere",
+    "members": "Medlemmer",
+    "memberCount": "{count, plural, one {# medlem} other {# medlemmer}}",
+    "noOwners": "Ingen eiere.",
+    "noLeaders": "Ingen ledere.",
+    "noMembers": "Ingen medlemmer.",
+    "rosterHidden": "Bare gruppens medlemmer, ledere og deres foresatte ser hvem som er med i gruppen.",
+    "partOf": "Del av",
+    "kind": "Type",
+    "sport": "Idrett",
+    "birthYears": "Født",
+    "birthYearRange": "{from}–{to}",
+    "capacity": "Plasser",
+    "subgroups": "Grupper i {group}"
+  },
+  "protected": {
+    "label": "Beskyttet identitet",
+    "tooltip": "Beskyttet identitet — ikke fotografer, film eller del"
+  },
+  "person": {
+    "title": "Profil",
+    "birthDate": "Fødselsdato",
+    "gender": "Kjønn",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "memberNumber": "Medlemsnummer",
+    "membership": "Medlemskap",
+    "groups": "Grupper",
+    "guardians": "Foresatte",
+    "limited": "Du ser opplysningene personen deler med deg.",
+    "inClub": "I {club}"
+  },
+  "members": {
+    "title": "Medlemmer i {club}",
+    "comingSoon": "Medlemsregisteret kommer i en senere versjon. Inntil da kan du se medlemmene i hver gruppe."
+  },
+  "time": {
+    "viewerZone": "{time} hos deg ({zone})"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Ikke funnet",
+      "text": "Siden finnes ikke, eller du har ikke tilgang til den."
+    },
+    "forbidden": {
+      "title": "Ingen tilgang",
+      "text": "Du har ikke tilgang til å se dette."
+    },
+    "generic": {
+      "title": "Noe gikk galt",
+      "text": "Prøv igjen om litt. Hvis det fortsetter, oppgi referansen nedenfor."
+    },
+    "reference": "Referanse: {id}"
+  },
+  "roles": {
+    "chair": "Leder",
+    "vice_chair": "Nestleder",
+    "treasurer": "Kasserer",
+    "secretary": "Sekretær",
+    "board_member": "Styremedlem",
+    "deputy_board_member": "Varamedlem",
+    "auditor": "Revisor",
+    "nomination_committee": "Valgkomité",
+    "club_manager": "Klubbansvarlig",
+    "registrar": "Medlemsansvarlig",
+    "safeguarding_officer": "Trygghetsansvarlig",
+    "communications": "Kommunikasjon",
+    "staff": "Ansatt"
+  },
+  "functions": {
+    "member": "Medlem",
+    "head_coach": "Hovedtrener",
+    "assistant_coach": "Assistenttrener",
+    "team_manager": "Lagleder",
+    "physio": "Fysioterapeut",
+    "other_leader": "Leder"
+  },
+  "kinds": {
+    "section": "Seksjon",
+    "team": "Lag",
+    "training_group": "Treningsgruppe",
+    "age_group": "Aldersgruppe",
+    "committee": "Komité",
+    "board": "Styre",
+    "volunteers": "Frivillige",
+    "other": "Gruppe"
+  },
+  "membershipStatus": {
+    "applied": "Søkt",
+    "active": "Aktiv",
+    "paused": "Pauset",
+    "left": "Utmeldt"
+  },
+  "guardianKinds": {
+    "parent": "Forelder",
+    "legal_guardian": "Verge",
+    "relative": "Slektning",
+    "contact_person": "Kontaktperson"
+  },
+  "genders": {
+    "female": "Kvinne",
+    "male": "Mann",
+    "other": "Annet"
+  }
+}

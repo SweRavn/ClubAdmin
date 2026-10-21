@@ -6,7 +6,7 @@
 
 import { type Permission, PERMISSIONS } from "@clubadmin/shared";
 
-import { definePolicy, type PersonResource, type Policy } from "./policy.ts";
+import { type ClubResource, definePolicy, type PersonResource, type Policy } from "./policy.ts";
 import type { Actor } from "./relationship-set.ts";
 
 /**
@@ -65,6 +65,10 @@ export const POLICIES: readonly Policy[] = [
     "club",
     ({ actor, resource }) => actor.isClubManager(resource.clubId),
     { mfa: true },
+  ),
+  // The member register (P1.2); the web shell shows its navigation entry.
+  definePolicy("club.members.read", "club", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
   ),
   // Group structure is not personal data: anyone related to the club sees its
   // groups; archived ones only those who administer them.
@@ -132,6 +136,19 @@ const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permissi
 
 export function policyFor(permission: Permission): Policy | undefined {
   return byPermission.get(permission);
+}
+
+/**
+ * The club-level permissions (policies on the club resource) the actor holds
+ * in a club, for navigation hints (GET /me/clubs). MFA requirements are not
+ * applied here; the endpoints still enforce them.
+ */
+export function clubPermissions(actor: Actor, clubId: string): Permission[] {
+  const resource: ClubResource = { kind: "club", clubId };
+  return POLICIES.filter(
+    (p): p is Policy<"club"> =>
+      p.resource === "club" && (p as Policy<"club">).allows({ actor, resource }),
+  ).map((p) => p.permission);
 }
 
 /** Permissions without exactly one policy (the startup check refuses to start). */

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Real login through Zitadel's login pages: sign up, verify the email from
-// Mailpit, land on /me; duplicate email; MFA step-up with TOTP; logout.
+// Mailpit, land on the home page; duplicate email; MFA step-up with TOTP;
+// logout.
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -49,7 +50,7 @@ async function logIn(page: Page, address: string, otpSecret?: string): Promise<v
   await page.waitForURL("**/me");
 }
 
-test("sign up, verify the email in Mailpit, log in: /me shows the new person", async ({
+test("sign up, verify the email in Mailpit, log in: the app knows the new person", async ({
   page,
   context,
 }) => {
@@ -62,7 +63,10 @@ test("sign up, verify the email in Mailpit, log in: /me shows the new person", a
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/Aktiverat/);
   await page.getByRole("button", { name: "Fortsätt" }).click();
   await skipMfaPrompt(page);
-  await page.waitForURL("**/me");
+  // Without a club: the home page with the onboarding placeholder.
+  await page.waitForURL((url) => url.pathname === "/");
+  await expect(page.getByTestId("onboarding")).toBeVisible();
+  await page.goto("/me");
   await expect(page.getByTestId("me-name")).toHaveText("Inloggad som Emma Svensson");
   await expect(page.getByTestId("me-mfa")).toHaveText(/utan tvåstegsverifiering/);
 

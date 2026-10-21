@@ -5,12 +5,17 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+import { noJsxLiteralStrings } from "./jsx-literal-strings.js";
 import { personNamesInPresenters } from "./person-names.js";
 import { spdxHeader } from "./spdx-header.js";
 
 export const clubadminPlugin = {
   meta: { name: "eslint-plugin-clubadmin" },
-  rules: { "spdx-header": spdxHeader, "person-names-in-presenters": personNamesInPresenters },
+  rules: {
+    "spdx-header": spdxHeader,
+    "person-names-in-presenters": personNamesInPresenters,
+    "no-jsx-literal-strings": noJsxLiteralStrings,
+  },
 };
 
 const SOURCE_FILES = ["**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}"];
@@ -34,7 +39,9 @@ const PERSON_NAMES_ALLOWED = [
 const DEFAULT_EXPORT_ALLOWED = [
   "**/*.config.{ts,js,mjs,cjs}",
   "**/vitest.base.js",
-  "apps/web/src/app/**/{page,layout,loading,error,not-found,template,default,route}.tsx",
+  "apps/web/src/app/**/{page,layout,loading,error,not-found,forbidden,unauthorized,template,default,route}.tsx",
+  // next-intl reads its request configuration from the default export.
+  "apps/web/src/i18n/request.ts",
   "apps/mobile/app/**/*.tsx",
 ];
 
@@ -120,6 +127,24 @@ export function createConfig({ tsconfigRootDir }) {
       files: ["apps/api/src/**/*.ts", "apps/worker/src/**/*.ts"],
       ignores: PERSON_NAMES_ALLOWED,
       rules: { "clubadmin/person-names-in-presenters": "error" },
+    },
+    {
+      // The web app shows names only through PersonName/personLabel (packages/ui),
+      // which take a PersonSummary from the API (ADR 0022).
+      files: ["apps/web/src/**/*.{ts,tsx}", "packages/ui/src/**/*.{ts,tsx}"],
+      ignores: ["packages/ui/src/person-name.tsx", "**/*.test.{ts,tsx}"],
+      rules: {
+        "clubadmin/person-names-in-presenters": [
+          "error",
+          { fields: ["displayName", "givenName", "familyName"] },
+        ],
+      },
+    },
+    {
+      // User-facing text comes from the message catalogues (CLAUDE.md rule 9).
+      files: ["apps/web/src/**/*.tsx", "packages/ui/src/**/*.tsx"],
+      ignores: ["**/*.test.tsx"],
+      rules: { "clubadmin/no-jsx-literal-strings": "error" },
     },
     {
       // Server code logs through the structured logger, never console (docs/security.md).

@@ -21,7 +21,7 @@ import { flowKey, type LoginFlow } from "../login/start/route.ts";
 export const dynamic = "force-dynamic";
 
 const failed = (reason: string) => {
-  const response = redirectTo(`/auth/login?error=${encodeURIComponent(reason)}`);
+  const response = redirectTo(`/login?error=${encodeURIComponent(reason)}`);
   response.cookies.delete({ name: FLOW_COOKIE, path: "/", secure: true });
   return response;
 };

@@ -101,7 +101,7 @@ jobs:
           pnpm --filter @clubadmin/api build
           (cd apps/api && nohup node --enable-source-maps --import ./dist/instrumentation.js ./dist/main.js > "$RUNNER_TEMP/api.log" 2>&1 &)
           (cd apps/web && NEXT_TELEMETRY_DISABLED=1 nohup pnpm exec next dev --port 3000 > "$RUNNER_TEMP/web.log" 2>&1 &)
-          for url in http://127.0.0.1:4000/health/ready http://127.0.0.1:3000/auth/login; do
+          for url in http://127.0.0.1:4000/health/ready http://127.0.0.1:3000/login; do
             timeout 120 sh -c "until curl -sf -o /dev/null $url; do sleep 2; done"
           done
 
@@ -114,7 +114,41 @@ jobs:
           docker compose --project-name clubadmin cp zitadel:/zitadel/bootstrap/admin.pat "$RUNNER_TEMP/admin.pat"
           ZITADEL_PAT="$(cat "$RUNNER_TEMP/admin.pat")" pnpm --filter @clubadmin/web test:e2e
 
-      - name: Playwright report
+      # The production build (ADR 0027): strict CSP and Trusted Types, the
+      # initial-JavaScript budget and Lighthouse. Signed-in pages are reached
+      # with a short-lived test session (the API keeps DEV_AUTH; the web app
+      # has none in production).
+      - name: Production build of the web app (replaces next dev)
+        run: |
+          set -a; . ./.env.local; set +a
+          pkill -f "next dev" || true
+          cd apps/web
+          NODE_ENV=production DEV_AUTH=false pnpm build
+          (NODE_ENV=production DEV_AUTH=false nohup pnpm exec next start --port 3000 > "$RUNNER_TEMP/web-prod.log" 2>&1 &)
+          timeout 60 sh -c "until curl -sf -o /dev/null http://127.0.0.1:3000/login; do sleep 1; done"
+
+      - name: End-to-end checks of the production build
+        run: |
+          set -a; . ./.env.local; set +a
+          E2E_PRODUCTION=1 pnpm --filter @clubadmin/web test:e2e
+
+      - name: Initial JavaScript budget (150 KB compressed)
+        working-directory: apps/web
+        run: |
+          set -a; . ../../.env.local; set +a
+          export NODE_EXTRA_CA_CERTS="$PWD/../../.local/caddy-root.crt"
+          pnpm bundle:check https://clubadmin.localhost "$(node scripts/test-session.ts 0199a000-0000-7000-8000-000000000005)" \
+            / /login /me /clubs/0199a000-0000-7000-8001-000000000002 \
+            /clubs/0199a000-0000-7000-8001-000000000002/groups /groups/0199a000-0000-7000-8002-000000000007 \
+            "/people/0199a000-0000-7000-8000-000000000005?clubId=0199a000-0000-7000-8001-000000000002"
+
+      - name: Lighthouse CI (LCP, TBT, CLS, script size, accessibility)
+        working-directory: apps/web
+        run: |
+          set -a; . ../../.env.local; set +a
+          CHROME_PATH="$(node -e "console.log(require('@playwright/test').chromium.executablePath())")" pnpm lighthouse
+
+      - name: Playwright and Lighthouse reports
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -122,6 +156,7 @@ jobs:
           path: |
             apps/web/playwright-report/
             apps/web/test-results/
+            apps/web/.lighthouseci/
           retention-days: 7
 
       - name: Doctor
@@ -132,4 +167,4 @@ jobs:
         if: failure()
         run: |
           docker compose --project-name clubadmin logs --no-color --tail 300
-          tail -n 200 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log" || true
+          tail -n 200 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log" "$RUNNER_TEMP/web-prod.log" || true

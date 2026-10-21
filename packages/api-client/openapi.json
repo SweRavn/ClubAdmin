@@ -91,6 +91,55 @@
           "message"
         ]
       },
+      "ClubDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Club"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "managers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                }
+              }
+            },
+            "required": [
+              "managers"
+            ]
+          }
+        ]
+      },
+      "PersonSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "protected": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "givenName",
+          "familyName",
+          "protected"
+        ]
+      },
       "Club": {
         "allOf": [
           {
@@ -300,6 +349,27 @@
           "archived"
         ]
       },
+      "GroupDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Group"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "owners": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                }
+              }
+            },
+            "required": [
+              "owners"
+            ]
+          }
+        ]
+      },
       "GroupMemberList": {
         "type": "object",
         "properties": {
@@ -349,34 +419,6 @@
           "totalCount"
         ]
       },
-      "PersonSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "givenName": {
-            "type": "string"
-          },
-          "familyName": {
-            "type": "string"
-          },
-          "protected": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "displayName",
-          "givenName",
-          "familyName",
-          "protected"
-        ]
-      },
       "Me": {
         "type": "object",
         "properties": {
@@ -403,6 +445,9 @@
           },
           "person": {
             "$ref": "#/components/schemas/PersonSummary"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/Preferences"
           }
         },
         "required": [
@@ -410,7 +455,49 @@
           "accountId",
           "mfa",
           "authTime",
-          "person"
+          "person",
+          "preferences"
+        ]
+      },
+      "Preferences": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "sv",
+              "en",
+              "nb",
+              null
+            ]
+          },
+          "timeZone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "theme": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "light",
+              "dark",
+              "system",
+              null
+            ]
+          }
+        },
+        "required": [
+          "locale",
+          "timeZone",
+          "theme"
         ]
       },
       "MyClubs": {
@@ -422,7 +509,26 @@
               "type": "object",
               "properties": {
                 "club": {
-                  "$ref": "#/components/schemas/ClubSummary"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ClubSummary"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defaultLocale": {
+                          "type": "string"
+                        },
+                        "timeZone": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "defaultLocale",
+                        "timeZone"
+                      ]
+                    }
+                  ]
                 },
                 "membership": {
                   "type": [
@@ -474,12 +580,33 @@
                       "staff"
                     ]
                   }
+                },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "club.read",
+                      "club.settings.update",
+                      "club.roles.manage",
+                      "club.members.read",
+                      "group.read",
+                      "group.update",
+                      "group.owners.manage",
+                      "group.members.read",
+                      "group.members.manage",
+                      "person.profile.read",
+                      "person.profile.update",
+                      "person.protection.set"
+                    ]
+                  }
                 }
               },
               "required": [
                 "club",
                 "membership",
-                "roles"
+                "roles",
+                "permissions"
               ]
             }
           }
@@ -487,6 +614,160 @@
         "required": [
           "clubs"
         ]
+      },
+      "MyGroups": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "group": {
+                  "$ref": "#/components/schemas/Group"
+                },
+                "club": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                },
+                "functions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "member",
+                      "head_coach",
+                      "assistant_coach",
+                      "team_manager",
+                      "physio",
+                      "other_leader"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "group",
+                "club",
+                "functions"
+              ]
+            }
+          },
+          "wards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "personId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "group": {
+                        "$ref": "#/components/schemas/Group"
+                      },
+                      "club": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "functions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "member",
+                            "head_coach",
+                            "assistant_coach",
+                            "team_manager",
+                            "physio",
+                            "other_leader"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "group",
+                      "club",
+                      "functions"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "personId",
+                "groups"
+              ]
+            }
+          }
+        },
+        "required": [
+          "groups",
+          "wards"
+        ]
+      },
+      "UpdatePreferences": {
+        "type": "object",
+        "properties": {
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "sv",
+              "en",
+              "nb",
+              null
+            ]
+          },
+          "timeZone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 64
+          },
+          "theme": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "light",
+              "dark",
+              "system",
+              null
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "Security": {
         "type": "object",
@@ -885,7 +1166,7 @@
     "/api/v1/clubs/{clubId}": {
       "get": {
         "operationId": "Clubs_getClub",
-        "summary": "A club the caller is related to",
+        "summary": "A club the caller is related to, with its managers",
         "tags": [
           "clubs"
         ],
@@ -912,7 +1193,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Club"
+                  "$ref": "#/components/schemas/ClubDetail"
                 }
               }
             }
@@ -1101,7 +1382,7 @@
     "/api/v1/groups/{groupId}": {
       "get": {
         "operationId": "Groups_getGroup",
-        "summary": "A group",
+        "summary": "A group with its owners (people the caller may not see are left out)",
         "tags": [
           "groups"
         ],
@@ -1128,7 +1409,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Group"
+                  "$ref": "#/components/schemas/GroupDetail"
                 }
               }
             }
@@ -1399,6 +1680,158 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MyClubs"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/groups": {
+      "get": {
+        "operationId": "Me_myGroups",
+        "summary": "My groups and my wards' groups, with functions (the ward's own with X-On-Behalf-Of)",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyGroups"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/preferences": {
+      "patch": {
+        "operationId": "Me_updatePreferences",
+        "summary": "Change my language, time zone or theme",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferences"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preferences"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }

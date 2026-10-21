@@ -120,12 +120,27 @@ later phase. Backup and disaster recovery are in
   validation errors and database constraint errors are never echoed (tests).
 
 ### Application hardening
-- Strict Content Security Policy with nonces; no inline scripts; `frame-ancestors 'none'`
-  except for explicit embeds.
+- Strict Content Security Policy with a fresh nonce per request (the web
+  app's proxy, `apps/web/src/server/security-headers.ts`): scripts and styles
+  only with the nonce (`'strict-dynamic'`), no `unsafe-inline` or
+  `unsafe-eval`, Trusted Types for DOM script sinks, `frame-ancestors 'none'`
+  (except for explicit embeds, later), `object-src 'none'`, `base-uri 'none'`,
+  `form-action` limited to the site and the identity provider. Also
+  `X-Frame-Options`, `nosniff`, `Referrer-Policy: same-origin`, COOP/CORP,
+  `Permissions-Policy` and HSTS. `next dev` alone relaxes the policy (eval,
+  inline styles, no Trusted Types); the production build is checked in CI
+  (ADR 0027). No analytics or third-party scripts; URLs carry IDs only, never
+  personal data.
+- "Viewing as" a ward is session state in the BFF; the browser cannot send
+  `X-On-Behalf-Of` itself (the BFF drops it and sets it from the session).
 - User content (rich text) sanitised server-side with an allow list.
 - Uploads go directly to object storage via short-lived pre-signed URLs, are
   scanned before becoming visible, and are served from a separate origin.
 - Request body limits, timeouts and rate limits per IP, per account and per club.
+  Today the API has a global limit per client IP; the web app forwards the
+  browser's address (`X-Forwarded-For`, the API trusts it as a proxy). Limits
+  per account and per club, and sizing them for the web app's several API
+  calls per page, are [#11](https://github.com/SweRavn/ClubAdmin/issues/11).
 - Secrets via environment/secret store (SOPS + age for the hosted
   infrastructure); never in the repository; rotated on staff changes.
 

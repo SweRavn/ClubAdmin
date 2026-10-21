@@ -344,6 +344,7 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `club.read` | club | insiders |
 | `club.settings.update` | club | club managers, with MFA |
 | `club.roles.manage` | club | club managers, with MFA |
+| `club.members.read` | club | club managers, registrars (the member register, P1.2; today it only shows the web app's "Members" entry) |
 | `group.read` | group | insiders; archived groups only managers, registrars and owners |
 | `group.update` | group | club managers, owners |
 | `group.owners.manage` | group | club managers; owners if the club allows co-owners |
@@ -353,7 +354,10 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `person.profile.update` | person | the person, guardians with `act_on_behalf` |
 | `person.protection.set` | person | global flag: the person, guardians with `act_on_behalf` (the service requires a parent or legal guardian); club flag (`?clubId`): club managers, with MFA |
 
-Endpoints for "my" data (`/me`, `/me/clubs`, `/me/wards`) need only a login.
+Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
+`/me/preferences`) need only a login. `GET /me/clubs` lists, per club, the
+club-level permissions the caller holds (for navigation; permissions that need
+a second factor are listed without one, the endpoints still ask for it).
 A guardian acting for a ward (`X-On-Behalf-Of`) is evaluated as the ward,
 with the ward's memberships only (never their roles, ownerships, leader
 functions or employments); history and audit record both.

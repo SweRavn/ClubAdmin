@@ -18,15 +18,23 @@ export const personNamesInPresenters = {
       description:
         "Forbid person name fields outside presenters (PersonPresenter is the only way names reach output)",
     },
-    schema: [],
+    schema: [
+      {
+        type: "object",
+        properties: { fields: { type: "array", items: { type: "string" } } },
+        additionalProperties: false,
+      },
+    ],
     messages: {
       field:
-        "Person name field '{{name}}' outside a presenter: pass the person rows to PersonPresenter (ADR 0022).",
+        "Person name field '{{name}}' outside a presenter: pass the person rows to PersonPresenter (ADR 0022); in the web app use PersonName or personLabel from @clubadmin/ui.",
       column:
         "SQL with person name column '{{name}}' outside a presenter: select IDs and let PersonPresenter resolve names (ADR 0022).",
     },
   },
   create(context) {
+    // The web app also forbids displayName: names render through PersonName.
+    const fields = new Set(context.options[0]?.fields ?? NAME_FIELDS);
     const keyName = (key) =>
       key.type === "Identifier" ? key.name : key.type === "Literal" ? String(key.value) : null;
     const checkText = (node, text) => {
@@ -38,14 +46,14 @@ export const personNamesInPresenters = {
       Property(node) {
         if (node.computed) return;
         const name = keyName(node.key);
-        if (name && NAME_FIELDS.has(name)) {
+        if (name && fields.has(name)) {
           context.report({ node: node.key, messageId: "field", data: { name } });
         }
       },
       // person.givenName, people.familyName (Drizzle column)
       MemberExpression(node) {
         if (node.computed || node.property.type !== "Identifier") return;
-        if (NAME_FIELDS.has(node.property.name)) {
+        if (fields.has(node.property.name)) {
           context.report({
             node: node.property,
             messageId: "field",

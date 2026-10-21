@@ -24,9 +24,17 @@ export default defineConfig({
     ...devices["Desktop Chrome"],
     ...(chromium ? { launchOptions: { executablePath: chromium } } : {}),
   },
-  projects: [
-    // Signs up through Zitadel first, so the DEV_AUTH picker has someone to show.
-    { name: "zitadel", testMatch: /zitadel\.spec\.ts/ },
-    { name: "dev-auth", testMatch: /dev-auth\.spec\.ts/, dependencies: ["zitadel"] },
-  ],
+  // E2E_PRODUCTION=1: only the checks against the production build (`next
+  // build && next start`, no DEV_AUTH); otherwise the suite against `next dev`.
+  projects: process.env.E2E_PRODUCTION
+    ? [{ name: "production", testMatch: /production\.spec\.ts/ }]
+    : [
+        // Signs up through Zitadel first.
+        { name: "zitadel", testMatch: /zitadel\.spec\.ts/ },
+        {
+          name: "dev-auth",
+          testMatch: /(dev-auth|app-shell)\.spec\.ts/,
+          dependencies: ["zitadel"],
+        },
+      ],
 });

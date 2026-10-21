@@ -100,7 +100,27 @@ budgets are requirements; CI measures them.
   load` (1,000 clubs, 200,000 people) about 100 s locally (budget 10 minutes,
   nightly workflow). The nightly job only seeds so far; measuring the budgets
   against that data is [#10](https://github.com/SweRavn/ClubAdmin/issues/10).
-- Lighthouse CI on key web pages per PR.
+- Web (P0.9, ADR 0027), on the production build behind Caddy in CI:
+  - `pnpm --filter @clubadmin/web bundle:check` sums the gzip size of all
+    JavaScript a page loads before it is interactive (script tags and the
+    client chunks named in the RSC payload) and fails above 150 KB. At P0.9:
+    about 133 KB for `/login`, 136 KB for home, club and profile pages,
+    137 KB for a group page. React and Next.js alone are about 128 KB, so
+    every library on all pages counts: next-intl stays on the server (client
+    components get translated texts as props), the Radix UI menus load on
+    first use, TanStack Query and the API client only for rosters longer
+    than one page, list virtualisation only above 200 rows.
+  - Lighthouse CI (`pnpm --filter @clubadmin/web lighthouse`,
+    `apps/web/lighthouserc.json`): home and a group page, three runs each on
+    the mobile profile (simulated 4G, 4× CPU slowdown); medians must meet
+    LCP < 1.5 s, CLS < 0.1, script transfer < 150 KB, accessibility ≥ 0.95.
+    Runs are cold (no cache), stricter than the "cached" budget. At P0.9:
+    LCP about 1.3 s, CLS 0, scripts 137 KB. Total Blocking Time (190–230 ms,
+    mostly React's hydration) is reported as a warning above 200 ms.
+  - INP: the production end-to-end spec (`E2E_PRODUCTION=1`) interacts with a
+    group page (menus, tooltip) at 4× CPU slowdown and fails if an
+    interaction takes 200 ms or more to paint (Event Timing). At P0.9 the
+    slowest took about 100 ms.
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.
 - OpenTelemetry traces in production; alerts when budgets are exceeded.

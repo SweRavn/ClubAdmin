@@ -42,3 +42,4 @@ Thumbs.db
 next-env.d.ts
 apps/web/playwright-report/
 apps/web/test-results/
+apps/web/.lighthouseci/

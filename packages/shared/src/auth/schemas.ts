@@ -22,6 +22,35 @@ export const PersonSummarySchema = z
   .openapi("PersonSummary");
 export type PersonSummary = z.infer<typeof PersonSummarySchema>;
 
+/** Languages of the user interface (catalogues in packages/i18n). */
+export const UI_LOCALES = ["sv", "en", "nb"] as const;
+export type UiLocale = (typeof UI_LOCALES)[number];
+export const THEMES = ["light", "dark", "system"] as const;
+
+const isTimeZone = (value: string) => {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** Account preferences; null means "not set" (club default, then the browser). */
+export const PreferencesSchema = z
+  .object({
+    locale: z.enum(UI_LOCALES).nullable(),
+    timeZone: z.string().max(64).refine(isTimeZone, "unknown time zone").nullable(),
+    theme: z.enum(THEMES).nullable(),
+  })
+  .openapi("Preferences");
+export type Preferences = z.infer<typeof PreferencesSchema>;
+
+export const UpdatePreferencesSchema = PreferencesSchema.partial()
+  .strict()
+  .openapi("UpdatePreferences");
+export type UpdatePreferencesInput = z.infer<typeof UpdatePreferencesSchema>;
+
 export const MeResponseSchema = z
   .object({
     personId: z.uuid(),
@@ -29,6 +58,8 @@ export const MeResponseSchema = z
     mfa: z.boolean(),
     authTime: z.iso.datetime().nullable(),
     person: PersonSummarySchema,
+    /** The logged-in person's account preferences (all null without an account). */
+    preferences: PreferencesSchema,
   })
   .openapi("Me");
 export type MeResponse = z.infer<typeof MeResponseSchema>;

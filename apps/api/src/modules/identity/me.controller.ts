@@ -1,27 +1,38 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import {
+  type GroupFunction,
   type MeResponse,
   MeResponseSchema,
   type MyClubs,
   MyClubsSchema,
+  type MyGroups,
+  MyGroupsSchema,
   type MyWards,
   MyWardsSchema,
+  type Preferences,
+  PreferencesSchema,
   SecurityResponseSchema,
   type SessionList,
   SessionListSchema,
+  type UpdatePreferencesInput,
+  UpdatePreferencesSchema,
   z,
 } from "@clubadmin/shared";
-import { Controller, Param, Req } from "@nestjs/common";
+import { Body, Controller, Param, Req } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 
 import { Endpoint } from "../../platform/http/endpoint.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
+import { AccountsService } from "../accounts/index.ts";
 import {
+  clubPermissions,
   CurrentAuthorization,
   PersonPresenter,
   type RequestAuthorization,
+  tenantContext,
 } from "../authorization/index.ts";
 import { ClubsService } from "../clubs/index.ts";
+import { type Group, GroupsService, toGroupResponse } from "../groups/index.ts";
 import { PeopleService } from "../people/index.ts";
 import { actorOf, CurrentPrincipal, type Principal, RequireMfa } from "./principal.ts";
 import { SessionsService } from "./sessions.service.ts";
@@ -34,17 +45,23 @@ export class MeController {
   private readonly clubs: ClubsService;
   private readonly sessions: SessionsService;
   private readonly presenter: PersonPresenter;
+  private readonly accounts: AccountsService;
+  private readonly groups: GroupsService;
 
   constructor(
     people: PeopleService,
     clubs: ClubsService,
     sessions: SessionsService,
     presenter: PersonPresenter,
+    accounts: AccountsService,
+    groups: GroupsService,
   ) {
     this.people = people;
     this.clubs = clubs;
     this.sessions = sessions;
     this.presenter = presenter;
+    this.accounts = accounts;
+    this.groups = groups;
   }
 
   @Endpoint({
@@ -59,14 +76,37 @@ export class MeController {
     @CurrentPrincipal() principal: Principal,
     @Req() request: FastifyRequest,
   ): Promise<MeResponse> {
-    const person = await this.people.getPerson(actorOf(principal, request), principal.personId);
+    const context = actorOf(principal, request);
+    const [person, preferences] = await Promise.all([
+      this.people.getPerson(context, principal.personId),
+      this.accounts.getPreferences(context),
+    ]);
     return {
       personId: principal.personId,
       accountId: principal.accountId,
       mfa: principal.mfa,
       authTime: principal.authTime?.toISOString() ?? null,
       person: this.presenter.presentSelf(person),
+      preferences,
     };
+  }
+
+  @Endpoint({
+    method: "PATCH",
+    path: "preferences",
+    summary: "Change my language, time zone or theme",
+    tags: ["identity"],
+    access: { authenticated: true },
+    request: { body: UpdatePreferencesSchema },
+    response: PreferencesSchema,
+  })
+  updatePreferences(
+    @CurrentPrincipal() principal: Principal,
+    @Body() body: UpdatePreferencesInput,
+    @Req() request: FastifyRequest,
+  ): Promise<Preferences> {
+    // Always the logged-in person's own account, also when acting on behalf of a ward.
+    return this.accounts.updatePreferences(actorOf(principal, request), body);
   }
 
   @Endpoint({
@@ -93,14 +133,70 @@ export class MeController {
               slug: club.slug,
               country: club.country,
               logo: club.logo,
+              defaultLocale: club.defaultLocale,
+              timeZone: club.timeZone,
             },
             membership: membership
               ? { status: membership.status, membershipType: membership.membershipType }
               : null,
             roles: relationships.roles.filter((r) => r.clubId === club.id).map((r) => r.role),
+            permissions: clubPermissions(authz.actor, club.id),
           };
         })
         .sort((a, b) => a.club.name.localeCompare(b.club.name)),
+    };
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "groups",
+    summary: "My groups and my wards' groups, with functions (the ward's own with X-On-Behalf-Of)",
+    tags: ["identity"],
+    access: { authenticated: true },
+    response: MyGroupsSchema,
+  })
+  async myGroups(@CurrentAuthorization() authz: RequestAuthorization): Promise<MyGroups> {
+    const { groups: mine, wardGroups } = authz.actor.relationships;
+    const all = [...mine, ...wardGroups];
+    // One tenant transaction per club (a person's clubs are few), in parallel.
+    const byClub = new Map<string, Set<string>>();
+    for (const g of all) byClub.set(g.clubId, (byClub.get(g.clubId) ?? new Set()).add(g.groupId));
+    const [clubs, ...loaded] = await Promise.all([
+      this.clubs.findClubs(authz.context, [...byClub.keys()]),
+      ...[...byClub].map(([clubId, ids]) =>
+        this.groups.findGroups(tenantContext(authz, clubId), [...ids]),
+      ),
+    ]);
+    const groups = new Map<string, Group>(loaded.flat().map((g) => [g.id, g]));
+    const clubNames = new Map(clubs.map((c) => [c.id, c.name]));
+    const entries = (rows: readonly { groupId: string; function: GroupFunction }[]) => {
+      const functions = new Map<string, GroupFunction[]>();
+      for (const r of rows)
+        functions.set(r.groupId, [...(functions.get(r.groupId) ?? []), r.function]);
+      return [...functions]
+        .flatMap(([groupId, fns]) => {
+          const group = groups.get(groupId);
+          if (!group || group.archivedAt !== null) return [];
+          return [
+            {
+              group: toGroupResponse(group),
+              club: { id: group.clubId, name: clubNames.get(group.clubId) ?? "" },
+              functions: fns,
+            },
+          ];
+        })
+        .sort(
+          (a, b) =>
+            a.club.name.localeCompare(b.club.name) || a.group.name.localeCompare(b.group.name),
+        );
+    };
+    const wardIds = [...new Set(wardGroups.map((g) => g.personId))];
+    return {
+      groups: entries(mine),
+      wards: wardIds.map((personId) => ({
+        personId,
+        groups: entries(wardGroups.filter((g) => g.personId === personId)),
+      })),
     };
   }
 

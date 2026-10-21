@@ -8,6 +8,7 @@ export const AUDIT_ACTIONS = [
   "account.linked",
   "account.invitation.created",
   "account.email.synced",
+  "account.preferences.updated",
   "session.revoked",
   "person.created",
   "person.updated",

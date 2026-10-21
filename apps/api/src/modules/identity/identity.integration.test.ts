@@ -15,7 +15,7 @@ import type { InjectOptions } from "fastify";
 import { Redis } from "ioredis";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { actor, buildFamily } from "../../testing/builders.ts";
+import { actor, buildFamily, buildPerson } from "../../testing/builders.ts";
 import {
   devToken,
   type FakeIssuer,
@@ -42,6 +42,7 @@ beforeAll(async () => {
   app = await createTestApp(
     {
       NODE_ENV: "development",
+      RATE_LIMIT_MAX: "100000",
       DATABASE_URL: t.url("app"),
       VALKEY_URL: process.env.VALKEY_URL ?? "redis://127.0.0.1:6379",
       AUTH_ISSUER: issuer.issuer,
@@ -124,6 +125,30 @@ describe("authentication", () => {
       [me.personId],
     );
     expect(rows[0]?.n).toBe(1);
+  });
+
+  it("reads and changes the account preferences", async () => {
+    // Built with an account (the login flow's provisioning is rate limited per IP).
+    const person = await buildPerson(s);
+    const headers = { authorization: `Bearer ${await devToken(person.id)}` };
+    const me = await inject({ method: "GET", url: "/api/v1/me", headers });
+    expect(me.json()).toMatchObject({
+      preferences: { locale: null, timeZone: null, theme: null },
+    });
+    const patch = (payload: Record<string, unknown>) =>
+      inject({ method: "PATCH", url: "/api/v1/me/preferences", headers, payload });
+    const changed = await patch({ locale: "nb", timeZone: "Europe/Oslo" });
+    expect(changed.statusCode).toBe(200);
+    expect(changed.json()).toEqual({ locale: "nb", timeZone: "Europe/Oslo", theme: null });
+    expect((await patch({ locale: null })).json()).toMatchObject({ locale: null });
+    expect((await patch({ timeZone: "Mars/Olympus" })).statusCode).toBe(400);
+    expect((await patch({ locale: "de" })).statusCode).toBe(400);
+    const { rows } = await t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM audit.events WHERE actor_person_id = $1 AND action = 'account.preferences.updated'",
+      [person.id],
+    );
+    expect(rows[0]?.n).toBe(2);
   });
 
   it("needs the verified email of the ID token to create an account", async () => {

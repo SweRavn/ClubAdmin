@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import {
   ClubParamsSchema,
+  type GroupDetail,
+  GroupDetailSchema,
   type GroupList,
   GroupListSchema,
   GroupParamsSchema,
   type GroupResponse,
-  GroupSchema,
   type PageQuery,
   PageQuerySchema,
 } from "@clubadmin/shared";
@@ -14,10 +15,13 @@ import { Controller, Query } from "@nestjs/common";
 import { Endpoint } from "../../platform/http/endpoint.ts";
 import {
   CurrentAuthorization,
+  PersonPresenter,
+  PersonVisibility,
   type RequestAuthorization,
   resourceOf,
   tenantContext,
 } from "../authorization/index.ts";
+import { PeopleService } from "../people/index.ts";
 import { type Group, GroupsService } from "./groups.service.ts";
 
 export function toGroupResponse(group: Group): GroupResponse {
@@ -41,9 +45,20 @@ export function toGroupResponse(group: Group): GroupResponse {
 @Controller()
 export class GroupsController {
   private readonly groups: GroupsService;
+  private readonly people: PeopleService;
+  private readonly presenter: PersonPresenter;
+  private readonly visibility: PersonVisibility;
 
-  constructor(groups: GroupsService) {
+  constructor(
+    groups: GroupsService,
+    people: PeopleService,
+    presenter: PersonPresenter,
+    visibility: PersonVisibility,
+  ) {
     this.groups = groups;
+    this.people = people;
+    this.presenter = presenter;
+    this.visibility = visibility;
   }
 
   @Endpoint({
@@ -71,16 +86,24 @@ export class GroupsController {
   @Endpoint({
     method: "GET",
     path: "groups/:groupId",
-    summary: "A group",
+    summary: "A group with its owners (people the caller may not see are left out)",
     tags: ["groups"],
     access: { permission: "group.read", resource: "group" },
     request: { params: GroupParamsSchema },
-    response: GroupSchema,
+    response: GroupDetailSchema,
   })
-  async getGroup(@CurrentAuthorization() authz: RequestAuthorization): Promise<GroupResponse> {
-    const group = resourceOf(authz, "group");
-    return toGroupResponse(
-      await this.groups.getGroup(tenantContext(authz, group.clubId), group.groupId),
+  async getGroup(@CurrentAuthorization() authz: RequestAuthorization): Promise<GroupDetail> {
+    const resource = resourceOf(authz, "group");
+    const context = tenantContext(authz, resource.clubId, {
+      viewerPrivileged: this.visibility.privilegedForGroup(authz.actor, resource),
+    });
+    const { group, ownerIds } = await this.groups.getGroupWithOwners(context, resource.groupId);
+    const owners = await this.presenter.present(
+      authz,
+      resource.clubId,
+      await this.people.summaries(context, ownerIds),
+      { group: resource },
     );
+    return { ...toGroupResponse(group), owners };
   }
 }

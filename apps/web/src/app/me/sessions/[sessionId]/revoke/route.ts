@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Form action on /me: revokes one of the person's other sessions through the
+// Form action on /me/sessions: revokes one of the person's other sessions through the
 // API (which removes it from Valkey and ends the Zitadel session).
 
 import type { NextResponse } from "next/server";
@@ -18,7 +18,7 @@ export async function POST(
   { params }: { params: Promise<{ sessionId: string }> },
 ): Promise<NextResponse> {
   const loaded = await loadSession(request.cookies.get(SESSION_COOKIE)?.value);
-  if (!loaded) return redirectTo("/auth/login?returnTo=%2Fme");
+  if (!loaded) return redirectTo("/login?returnTo=%2Fme%2Fsessions");
   const form = await request.formData();
   if (
     !checkCsrf({
@@ -33,10 +33,10 @@ export async function POST(
     return problem("forbidden", "csrf");
   }
   const session = await freshSession(loaded);
-  if (!session) return redirectTo("/auth/login?returnTo=%2Fme");
+  if (!session) return redirectTo("/login?returnTo=%2Fme%2Fsessions");
   const { sessionId } = await params;
   await apiFetch(`/api/v1/me/sessions/${encodeURIComponent(sessionId)}`, session.record, {
     method: "DELETE",
   });
-  return redirectTo("/me");
+  return redirectTo("/me/sessions");
 }

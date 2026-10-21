@@ -143,6 +143,13 @@ const CASES: Record<Permission, Case[]> = {
     { name: "registrar", actor: registrar, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
+  "club.members.read": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
   "group.read": [
     { name: "member of the club", actor: plainMember, resource: teamR, allowed: true },
     { name: "guardian of a member", actor: parent, resource: teamR, allowed: true },

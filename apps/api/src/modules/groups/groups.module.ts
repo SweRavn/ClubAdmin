@@ -2,12 +2,14 @@
 import { Module } from "@nestjs/common";
 
 import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform/infra/database.ts";
+import { AuthorizationModule } from "../authorization/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
+import { PeopleModule } from "../people/index.ts";
 import { GroupsController } from "./groups.controller.ts";
 import { GroupsService } from "./groups.service.ts";
 
 @Module({
-  imports: [ClubsModule],
+  imports: [ClubsModule, AuthorizationModule, PeopleModule],
   controllers: [GroupsController],
   providers: [
     {

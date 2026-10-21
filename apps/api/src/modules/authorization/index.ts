@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Public interface of the authorization module (ADR 0006, ADR 0022).
 export { AuthorizationModule } from "./authorization.module.ts";
-export { type ProfileAccess, profileAccess } from "./authorization.policy.ts";
+export { clubPermissions, type ProfileAccess, profileAccess } from "./authorization.policy.ts";
 export { AuthorizationService } from "./authorization.service.ts";
 export { EndpointPolicyCheck, endpointPolicyProblems } from "./endpoint-policies.ts";
 export { PersonVisibility, type Visibility } from "./person-visibility.service.ts";

@@ -45,3 +45,16 @@ ruleTester.run("person-names-in-presenters", personNamesInPresenters, {
     },
   ],
 });
+
+ruleTester.run("person-names-in-presenters (web: displayName too)", personNamesInPresenters, {
+  valid: [
+    { code: "const label = personLabel(me.person);", options: [{ fields: ["displayName"] }] },
+  ],
+  invalid: [
+    {
+      code: "const label = me.person.displayName;",
+      options: [{ fields: ["displayName", "givenName", "familyName"] }],
+      errors: [{ messageId: "field" }],
+    },
+  ],
+});

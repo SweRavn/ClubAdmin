@@ -127,6 +127,11 @@ export class RolesService {
     return this.db.withSystem(jobName, { clubId }, (tx) => repo.activeAssignments(tx, clubId));
   }
 
+  /** People currently holding the role in the club. */
+  activeHolders(context: TenantContext, role: ClubRole): Promise<string[]> {
+    return this.db.withTenant(context, (tx) => repo.activeHolders(tx, context.clubId, role));
+  }
+
   activeHoldersInTx(tx: Tx, clubId: string, role: ClubRole): Promise<string[]> {
     return repo.activeHolders(tx, clubId, role);
   }

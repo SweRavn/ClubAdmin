@@ -27,9 +27,9 @@ export const flowKey = (state: string) => `bff:auth-flow:${state}`;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const config = webConfig();
-  if (!oidcConfigured(config)) return redirectTo("/auth/login?error=not_configured");
+  if (!oidcConfigured(config)) return redirectTo("/login?error=not_configured");
   if (!(await allowAuthRequest(clientIp(request.headers), config.AUTH_RATE_LIMIT_MAX))) {
-    return redirectTo("/auth/login?error=rate_limited");
+    return redirectTo("/login?error=rate_limited");
   }
   const params = request.nextUrl.searchParams;
   const verifier = client.randomPKCECodeVerifier();

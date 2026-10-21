@@ -12,6 +12,7 @@ import {
   PersonPresenter,
 } from "../authorization/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
+import { GroupsModule } from "../groups/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
 import { RolesModule, RolesService } from "../roles/index.ts";
@@ -34,6 +35,7 @@ export class IdentityModule {
         AuthorizationModule,
         PeopleModule,
         ClubsModule,
+        GroupsModule,
         MembershipsModule,
         RolesModule,
       ],

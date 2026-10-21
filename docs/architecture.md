@@ -79,12 +79,18 @@ Built so far (P0.5, `apps/api/src/modules/`, no HTTP endpoints yet; wired in
 | `authorization` | `platform_operators`, `support_access_grants` (reads all relationship tables) | Relationship sets, policies, resource loaders, `PersonVisibility`, `PersonPresenter`, profile field filtering (P0.7, ADR 0025) |
 | `person-profiles` | — | `GET /people/:personId`: person, club profile and guardians, filtered per relationship |
 
-Read endpoints (P0.7): `GET /api/v1/me/clubs`, `/me/wards` (own data),
-`/clubs/:clubId`, `/clubs/:clubId/groups` (`club.read`), `/groups/:groupId`
-(`group.read`), `/groups/:groupId/members` (`group.members.read`, keyset
-pagination by name, total count as aggregate), `/people/:personId?clubId=`
-(`person.profile.read`). Lists page with `cursor` (the last item's ID, never
-data) and `limit`.
+Read endpoints (P0.7, extended for the web shell in P0.9): `GET /api/v1/me`
+(with the account's `preferences`: language, time zone, theme),
+`/me/clubs` (with each club's language, time zone and the caller's club-level
+permissions), `/me/groups` (the caller's and their wards' groups with
+functions), `/me/wards` (own data), `PATCH /me/preferences`,
+`/clubs/:clubId` (with the club managers) and `/clubs/:clubId/groups`
+(`club.read`), `/groups/:groupId` (with the owners; `group.read`),
+`/groups/:groupId/members` (`group.members.read`, keyset pagination by name,
+total count as aggregate), `/people/:personId?clubId=`
+(`person.profile.read`). People in them are `PersonSummary`s from the
+`PersonPresenter`. Lists page with `cursor` (the last item's ID, never data)
+and `limit`.
 
 Services take an `ActorContext` or `TenantContext` and open their own
 transaction; `…InTx(tx, …)` variants let another module's service join it.
@@ -289,6 +295,50 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   `NODE_ENV=development` and `DEPLOYMENT_MODE=self_hosted`, and log a warning
   on every start (see `seed-data.md`).
 
+## Web app (`apps/web`, P0.9)
+
+- **Rendering:** Next.js App Router with React Server Components; pages read
+  the API on the server (`src/server/data.ts`: one request per resource and
+  request, in parallel, validated with the shared Zod schemas; API 401 →
+  login, 404 → the not-found page, 403 → the forbidden page). Client
+  components only for interaction: the menus, the "Show more" of keyset lists
+  (TanStack Query with the generated `@clubadmin/api-client`, through the
+  BFF), the browser's time zone.
+- **Shared UI** (`packages/ui`): design tokens as Tailwind CSS v4 theme
+  variables (`tokens.css`, light and dark theme: the browser's preference or
+  the account's), `PersonName` and `personLabel` (the only way to show a
+  name; they take a `PersonSummary` and nothing with more fields),
+  `ProtectedBadge` (crossed camera, tooltip), `RoleBadge`, `ClubSwitcher`,
+  `Menu` (Radix UI, loaded on first use), `DataList` (keyset pagination,
+  virtualised above 200 rows), `DateTime`, `EmptyState`. Components take
+  translated texts as props.
+- **Frame:** club switcher (`GET /me/clubs`; the last club is remembered per
+  person in Valkey, `web:last-club:<personId>`), main navigation (Home,
+  Groups; Members only with `club.members.read`), "Viewing as" switcher for
+  guardians with `act_on_behalf`, user menu (profile, account, language and
+  time zone, sessions, log out), footer with the "Source code" link
+  (`/api/v1/meta/source`, AGPL-3.0 section 13) and the version.
+- **Viewing as:** the chosen ward is stored in the BFF session
+  (`viewingAs`); the BFF sends it as `X-On-Behalf-Of` on every API call
+  except the person's own account (`/me`, `/me/wards`, `/me/sessions`,
+  `/me/preferences`) and public metadata. The browser cannot set the header;
+  the API checks the right on every request (ADR 0006).
+- **Pages:** `/login` (persona picker grouped by club with DEV_AUTH, "Log in
+  with email"; `/auth/login` redirects there), `/` (my clubs, my groups, my
+  children's groups; onboarding placeholder without a club), `/clubs/[id]`,
+  `/clubs/[id]/groups` (tree), `/clubs/[id]/members` (placeholder until
+  P1.2), `/groups/[id]`, `/people/[id]?clubId=`, `/me`, `/me/sessions`,
+  `/me/preferences`.
+- **Security:** CSP with a fresh nonce per request (`src/proxy.ts`),
+  Trusted Types in production, no inline scripts, `frame-ancestors 'none'`,
+  further headers in `next.config.ts` (ADR 0027). Production builds use
+  webpack (`next build --webpack`; Turbopack has no Trusted Types policy).
+- **i18n:** next-intl reads the ICU catalogues of `packages/i18n` (`sv`,
+  `en` complete, `nb` falls back to `en` per message); see "Locale". The
+  ESLint rule `clubadmin/no-jsx-literal-strings` forbids user-facing text in
+  JSX, and `clubadmin/person-names-in-presenters` forbids name fields in the
+  web app outside `PersonName`.
+
 ## Authorization
 
 In-process, relationship-based (ReBAC) policy engine in the `authorization`
@@ -408,10 +458,20 @@ currency from their pack.
 ## Locale
 
 - Club has `country`, `default_locale`, `time_zone`, `currency`.
-- Person has optional `locale` and `time_zone` overrides; fallback chain:
-  person → club in current context → browser/device → `en`.
-- Times stored UTC; activities displayed in the club's time zone (with the
-  viewer's zone shown when it differs).
+- The account has optional `locale` (`sv`, `en`, `nb`), `time_zone` and
+  `theme` preferences (`GET /me`, `PATCH /me/preferences`).
+- Language: account → current club's `default_locale` → the browser's
+  `Accept-Language` → `en`. Time zone: account → current club → the browser's
+  (a cookie the page sets) → UTC. The current club is the one in the URL
+  (club and group pages, `?clubId=`), else the person's last club, else their
+  first (`apps/web/src/server/context.ts`).
+- Times stored UTC; club data displayed in the club's time zone with the
+  viewer's own time added when it differs (`DateTime` in `packages/ui`).
+- Catalogues: `packages/i18n/messages/{sv,en,nb}.json`, ICU message format,
+  nested by namespace. A unit test (part of `pnpm test`) fails if `sv` and
+  `en` do not have the same keys, if a message is not valid ICU or uses other
+  placeholders than English; missing `nb` messages are listed as a warning
+  and fall back to English.
 
 ## Deployment
 

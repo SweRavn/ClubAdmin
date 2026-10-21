@@ -34,6 +34,8 @@ export interface SessionRecord {
   devMfa?: boolean;
   createdAt: string;
   device: string;
+  /** A ward the person is acting for ("Viewing as"); sent as X-On-Behalf-Of (ADR 0006). */
+  viewingAs?: string | null;
 }
 
 /** Session IDs: 256 random bits, base64url. */

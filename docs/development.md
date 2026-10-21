@@ -63,16 +63,16 @@ placeholder page served by Caddy.
 
 ## Logging in
 
-- **As anyone (DEV_AUTH):** https://clubadmin.localhost/auth/login shows a
-  persona picker with the demo personas (`pnpm dev` seeds them on its first
+- **As anyone (DEV_AUTH):** https://clubadmin.localhost/login shows a
+  persona picker, grouped by club, with the demo personas (`pnpm dev` seeds them on its first
   start; `pnpm db:reset` starts over, see `seed-data.md`), each with what it
   tests, and everyone else who has a login. Tick "as if logged in with two-factor authentication" to test
   MFA-gated pages. `.env.local` has `DEV_AUTH=true`; it is refused outside
   development.
 - **For real (Zitadel):** "Log in with email" or "Create an account" on the
   same page. Sign-up sends a verification code to Mailpit
-  (http://127.0.0.1:8025). https://clubadmin.localhost/me shows who you are
-  and where you are logged in.
+  (http://127.0.0.1:8025). https://clubadmin.localhost/me shows who you are,
+  `/me/sessions` where you are logged in.
 - `pnpm dev:services` runs `pnpm auth:configure`, which applies
   `infra/zitadel/` to Zitadel and writes the client IDs to `.env.local`. Run it
   again after changing `infra/zitadel/`. The Zitadel console is at
@@ -87,6 +87,25 @@ pnpm --filter @clubadmin/web exec playwright install chromium   # once
 docker compose --project-name clubadmin cp zitadel:/zitadel/bootstrap/admin.pat .local/admin.pat
 ZITADEL_PAT=$(cat .local/admin.pat) pnpm --filter @clubadmin/web test:e2e
 ```
+
+The suite runs against `next dev` with DEV_AUTH: login, protected identity,
+language and time zones, cross-club access, "viewing as", navigation, axe
+accessibility checks and the development CSP. The production build is
+checked separately (as in CI, ADR 0027): stop `pnpm dev`'s web app, then
+
+```
+set -a; . ./.env.local; set +a
+cd apps/web
+NODE_ENV=production DEV_AUTH=false pnpm build
+NODE_ENV=production DEV_AUTH=false pnpm start &       # behind Caddy on https://clubadmin.localhost
+E2E_PRODUCTION=1 pnpm test:e2e                         # strict CSP, Trusted Types, headers
+pnpm bundle:check https://clubadmin.localhost "$(node scripts/test-session.ts 0199a000-0000-7000-8000-000000000005)" / /groups/0199a000-0000-7000-8002-000000000007
+CHROME_PATH=/path/to/chrome pnpm lighthouse            # LCP, TBT, CLS, script size, accessibility
+```
+
+The signed-in pages of the production build are reached with a short-lived
+test session written to Valkey (`scripts/test-session.ts`); the API must run
+with DEV_AUTH for its token to be accepted.
 
 The tests sign up through the real Zitadel pages (reading the code from
 Mailpit), enrol TOTP through Zitadel's API (hence the token), and log in with

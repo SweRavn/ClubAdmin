@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Backend-for-frontend proxy: browser calls to /api/* are forwarded to the
 // API with the session's tokens (the browser never sees them). Non-GET
-// requests need the CSRF token in X-CSRF-Token.
+// requests need the CSRF token in X-CSRF-Token. While the person is "viewing
+// as" a ward, the BFF adds X-On-Behalf-Of.
 
-import { ON_BEHALF_OF_HEADER } from "@clubadmin/shared";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiFetch } from "../../../server/api.ts";
@@ -20,8 +20,6 @@ const FORWARDED_REQUEST_HEADERS = [
   "accept-language",
   "if-none-match",
   "x-request-id",
-  // A guardian acting for a ward (checked by the API, ADR 0006).
-  ON_BEHALF_OF_HEADER,
 ];
 const FORWARDED_RESPONSE_HEADERS = [
   "content-type",
@@ -35,6 +33,15 @@ async function proxy(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ): Promise<NextResponse> {
+  const { path } = await params;
+  // Public metadata (the AGPL source link in the footer) needs no session.
+  if (request.method === "GET" && path[0] === "v1" && path[1] === "meta") {
+    return relay(
+      await apiFetch(`/api/${path.map(encodeURIComponent).join("/")}`, null, {
+        forwardedFor: request.headers.get("x-forwarded-for"),
+      }),
+    );
+  }
   const loaded = await loadSession(request.cookies.get(SESSION_COOKIE)?.value);
   if (!loaded) return problem("unauthenticated");
   if (
@@ -56,7 +63,6 @@ async function proxy(
     return response;
   }
 
-  const { path } = await params;
   const headers: Record<string, string> = {};
   for (const name of FORWARDED_REQUEST_HEADERS) {
     const value = request.headers.get(name);
@@ -69,8 +75,15 @@ async function proxy(
       method: request.method,
       headers,
       body: isSafeMethod(request.method) ? null : await request.arrayBuffer(),
+      // "Viewing as" a ward is session state, never taken from the browser (ADR 0006).
+      onBehalfOf: session.record.viewingAs ?? null,
+      forwardedFor: request.headers.get("x-forwarded-for"),
     },
   );
+  return relay(upstream);
+}
+
+function relay(upstream: Response): NextResponse {
   const responseHeaders = new Headers();
   for (const name of FORWARDED_RESPONSE_HEADERS) {
     const value = upstream.headers.get(name);

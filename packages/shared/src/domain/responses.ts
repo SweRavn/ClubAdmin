@@ -4,6 +4,7 @@
 // PersonPresenter (ADR 0022).
 
 import { PersonSummarySchema } from "../auth/schemas.ts";
+import { PERMISSIONS } from "../permissions.ts";
 import { z } from "../zod.ts";
 import {
   ADMISSION_MODES,
@@ -66,11 +67,17 @@ export const ClubSchema = ClubSummarySchema.extend({
 }).openapi("Club");
 export type ClubResponse = z.infer<typeof ClubSchema>;
 
+/** A club with its managers (GET /clubs/{clubId}). */
+export const ClubDetailSchema = ClubSchema.extend({
+  managers: z.array(PersonSummarySchema),
+}).openapi("ClubDetail");
+export type ClubDetail = z.infer<typeof ClubDetailSchema>;
+
 export const MyClubsSchema = z
   .object({
     clubs: z.array(
       z.object({
-        club: ClubSummarySchema,
+        club: ClubSummarySchema.extend({ defaultLocale: z.string(), timeZone: z.string() }),
         /** Null when the person holds a role or employment without a membership. */
         membership: z
           .object({
@@ -79,6 +86,12 @@ export const MyClubsSchema = z
           })
           .nullable(),
         roles: z.array(z.enum(CLUB_ROLES)),
+        /**
+         * Club-level permissions the caller holds in the club (for showing
+         * navigation; the API still checks every request). Permissions that
+         * need a second factor are listed even without one.
+         */
+        permissions: z.array(z.enum(PERMISSIONS)),
       }),
     ),
   })
@@ -116,6 +129,28 @@ export const GroupSchema = z
   })
   .openapi("Group");
 export type GroupResponse = z.infer<typeof GroupSchema>;
+
+/** A group with its owners (GET /groups/{groupId}). */
+export const GroupDetailSchema = GroupSchema.extend({
+  owners: z.array(PersonSummarySchema),
+}).openapi("GroupDetail");
+export type GroupDetail = z.infer<typeof GroupDetailSchema>;
+
+const MyGroupSchema = z.object({
+  group: GroupSchema,
+  club: z.object({ id: z.uuid(), name: z.string() }),
+  functions: z.array(z.enum(GROUP_FUNCTIONS)),
+});
+
+export const MyGroupsSchema = z
+  .object({
+    /** The caller's groups (the ward's, with X-On-Behalf-Of). */
+    groups: z.array(MyGroupSchema),
+    /** The groups of the caller's wards (empty when acting on behalf). */
+    wards: z.array(z.object({ personId: z.uuid(), groups: z.array(MyGroupSchema) })),
+  })
+  .openapi("MyGroups");
+export type MyGroups = z.infer<typeof MyGroupsSchema>;
 
 export const GroupListSchema = z
   .object({ items: z.array(GroupSchema), nextCursor: z.uuid().nullable() })

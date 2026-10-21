@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// DEV_AUTH persona login (form on /auth/login). Exists only when DEV_AUTH is
+// DEV_AUTH persona login (form on /login). Exists only when DEV_AUTH is
 // on, which the server refuses outside development.
 
 import { isUuid, MeResponseSchema } from "@clubadmin/shared";
@@ -32,17 +32,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Login CSRF: only forms from this site.
   if (!isSameOrigin(request.headers.get("origin"), siteOrigin())) return problem("forbidden");
   if (!(await allowAuthRequest(clientIp(request.headers), config.AUTH_RATE_LIMIT_MAX))) {
-    return redirectTo("/auth/login?error=rate_limited");
+    return redirectTo("/login?error=rate_limited");
   }
   const form = await request.formData();
   const personId = formText(form, "personId");
-  if (!isUuid(personId)) return redirectTo("/auth/login?error=person");
+  if (!isUuid(personId)) return redirectTo("/login?error=person");
   const mfa = form.get("mfa") === "1";
 
   const handle = newSessionHandle();
   const accessToken = await mintDevToken(config.DEV_AUTH_KEY, personId, { mfa, sessionId: handle });
   const me = await apiFetch("/api/v1/me", { accessToken, idToken: null });
-  if (!me.ok) return redirectTo("/auth/login?error=person");
+  if (!me.ok) return redirectTo("/login?error=person");
   MeResponseSchema.parse(await me.json());
 
   const previous = await loadSession(request.cookies.get(SESSION_COOKIE)?.value);

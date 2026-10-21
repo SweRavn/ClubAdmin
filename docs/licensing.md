@@ -59,7 +59,10 @@ by the CI check when added.
 | React | MIT |
 | React Native | MIT |
 | Expo SDK, Expo Router | MIT |
-| TanStack Query | MIT |
+| TanStack Query, TanStack Virtual (`@tanstack/react-query`, `@tanstack/react-virtual`) | MIT |
+| next-intl (web i18n; server-side only at P0.9) | MIT |
+| Tailwind CSS (`tailwindcss`, `@tailwindcss/postcss`; build time) | MIT |
+| Radix UI primitives (`@radix-ui/react-dropdown-menu`) | MIT |
 | react-native-mmkv | MIT |
 | i18next, i18next-icu | MIT |
 | `openid-client` / `jose` (OIDC/JWT) | MIT |
@@ -103,9 +106,12 @@ by the CI check when added.
 ### Development and CI tools (not distributed)
 
 SWC (`@swc/core`, `@swc/cli`: Apache-2.0, MIT), unplugin-swc (MIT), chokidar (MIT),
-openapi-typescript (MIT), dependency-cruiser (MIT),
-Renovate (AGPL-3.0), OSV-Scanner (Apache-2.0), Trivy (Apache-2.0), Lighthouse
-CI (Apache-2.0), k6 (AGPL-3.0), Weblate (GPL-3.0-or-later), CodeQL (free for
+openapi-typescript (MIT), dependency-cruiser (MIT), intl-messageformat (BSD-3-Clause,
+catalogue check), `@axe-core/playwright` and axe-core (MPL-2.0, accessibility
+checks), `@lhci/cli` and Lighthouse (Apache-2.0; its dependency
+`parse-cache-control` declares "BSD" and is BSD-3-Clause, recorded as an
+exception in `packages/config/licenses.json`, ADR 0027),
+Renovate (AGPL-3.0), OSV-Scanner (Apache-2.0), Trivy (Apache-2.0), k6 (AGPL-3.0), Weblate (GPL-3.0-or-later), CodeQL (free for
 open-source repositories on GitHub; proprietary, CI use only). No licence
 conflict.
 

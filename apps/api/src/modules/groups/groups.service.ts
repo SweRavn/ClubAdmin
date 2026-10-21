@@ -103,6 +103,22 @@ export class GroupsService {
     return this.db.withTenant(context, (tx) => this.getGroupInTx(tx, groupId));
   }
 
+  /** A group and the IDs of its current owners, in one transaction. */
+  getGroupWithOwners(
+    context: TenantContext,
+    groupId: string,
+  ): Promise<{ group: Group; ownerIds: string[] }> {
+    return this.db.withTenant(context, async (tx) => ({
+      group: await this.getGroupInTx(tx, groupId),
+      ownerIds: await repo.activeOwners(tx, groupId),
+    }));
+  }
+
+  /** Groups of the club by ID (for "my groups"). */
+  findGroups(context: TenantContext, groupIds: readonly string[]): Promise<Group[]> {
+    return this.db.withTenant(context, (tx) => repo.findGroups(tx, groupIds));
+  }
+
   async getGroupInTx(tx: Tx, groupId: string): Promise<Group> {
     const group = await repo.findGroup(tx, groupId);
     if (!group) throw new DomainError("not_found");

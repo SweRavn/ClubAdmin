@@ -14,12 +14,12 @@ describe("safeReturnTo", () => {
   it.each([
     ["/me", "/me"],
     ["/groups/1?tab=members#top", "/groups/1?tab=members#top"],
-    ["//evil.example/x", "/me"],
-    ["/\\evil.example", "/me"],
-    ["https://evil.example/", "/me"],
-    ["javascript:alert(1)", "/me"],
-    ["/me\nSet-Cookie: x", "/me"],
-    [null, "/me"],
+    ["//evil.example/x", "/"],
+    ["/\\evil.example", "/"],
+    ["https://evil.example/", "/"],
+    ["javascript:alert(1)", "/"],
+    ["/me\nSet-Cookie: x", "/"],
+    [null, "/"],
   ])("%s → %s", (input, expected) => {
     expect(safeReturnTo(input)).toBe(expected);
   });

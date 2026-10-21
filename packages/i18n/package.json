@@ -2,7 +2,7 @@
   "name": "@clubadmin/i18n",
   "version": "0.0.0",
   "private": true,
-  "description": "ICU message catalogues (sv, en, nb). Filled from P0.9.",
+  "description": "ICU message catalogues (sv, en, nb) for the web and mobile apps and the API's problem titles.",
   "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
@@ -18,6 +18,7 @@
     "@clubadmin/config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "intl-messageformat": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+@import "tailwindcss";
+@import "@clubadmin/ui/tokens.css";
+
+/* Class names used by the shared components. */
+@source "../../../../packages/ui/src";

@@ -8,6 +8,7 @@ export const PERMISSIONS = [
   "club.read",
   "club.settings.update",
   "club.roles.manage",
+  "club.members.read",
   "group.read",
   "group.update",
   "group.owners.manage",

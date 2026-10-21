@@ -15,7 +15,16 @@ import {
   outbox,
   type Tx,
 } from "@clubadmin/db";
-import { EmailSchema, type SignUpPersonInput, uuidv7 } from "@clubadmin/shared";
+import {
+  EmailSchema,
+  type Preferences,
+  type SignUpPersonInput,
+  THEMES,
+  UI_LOCALES,
+  type UpdatePreferencesInput,
+  UpdatePreferencesSchema,
+  uuidv7,
+} from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import {
@@ -31,6 +40,17 @@ import type { PeopleService } from "../people/index.ts";
 import * as repo from "./accounts.repository.ts";
 
 export type Account = repo.AccountRow;
+
+function preferencesOf(account: Account | null): Preferences {
+  // Stored values outside today's lists (older data) read as "not set".
+  const pick = <T extends string>(value: string | null | undefined, allowed: readonly T[]) =>
+    allowed.includes(value as T) ? (value as T) : null;
+  return {
+    locale: pick(account?.locale, UI_LOCALES),
+    timeZone: account?.timeZone ?? null,
+    theme: pick(account?.theme, THEMES),
+  };
+}
 
 export const ACCOUNT_INVITATION_VALID_DAYS = 14;
 const hashToken = (token: string) => createHash("sha256").update(token, "utf8").digest("base64url");
@@ -86,6 +106,36 @@ export class AccountsService {
 
   getOwnAccount(context: ActorContext): Promise<Account | null> {
     return this.db.withActor(context, (tx) => repo.findByPerson(tx, actorPersonId(context)));
+  }
+
+  /** The account's preferences (all null for a person without an account). */
+  getPreferences(context: ActorContext): Promise<Preferences> {
+    return this.db.withActor(context, async (tx) =>
+      preferencesOf(await repo.findByPersonId(tx, actorPersonId(context))),
+    );
+  }
+
+  /** Changes language, time zone or theme; null clears a preference. */
+  updatePreferences(context: ActorContext, input: UpdatePreferencesInput): Promise<Preferences> {
+    return this.db.withActor(context, async (tx) => {
+      const data = parseInput(UpdatePreferencesSchema, input);
+      const account = await repo.findByPerson(tx, actorPersonId(context));
+      if (!account) throw new DomainError("not_found");
+      const current = preferencesOf(account);
+      const changed = (Object.keys(data) as (keyof Preferences)[]).filter(
+        (key) => data[key] !== undefined && data[key] !== current[key],
+      );
+      if (changed.length === 0) return current;
+      const next = { ...current, ...Object.fromEntries(changed.map((k) => [k, data[k]])) };
+      await repo.updateAccount(tx, account.id, next);
+      await audit.record(tx, {
+        action: "account.preferences.updated",
+        resourceType: "account",
+        resourceId: account.id,
+        changedFields: changed,
+      });
+      return next;
+    });
   }
 
   /** Changes the login email to a verified, unused address. The old address is notified (event). */
