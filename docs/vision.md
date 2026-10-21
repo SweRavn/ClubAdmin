@@ -3,9 +3,9 @@
 ## Problem
 
 Swedish and other European sports clubs run on volunteers. The tools they use
-(SportAdmin, MyClub, formerly laget.se) are proprietary, often slow, and lock
-the club's data in. When a service shuts down, as laget.se did, clubs lose their
-history and must migrate under pressure.
+(SportAdmin, MyClub, laget.se) are proprietary, often slow, and lock the club's
+data in. If a service shuts down, clubs lose their history and must migrate under
+pressure.
 
 ## Goal
 

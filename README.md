@@ -4,7 +4,7 @@
 
 ClubAdmin helps clubs run their members, teams, activities, communication and
 administration in one place, on the web, Android and iOS. It is inspired by
-SportAdmin, MyClub and the discontinued laget.se, but free and open source
+SportAdmin, MyClub and laget.se, but free and open source
 (AGPL-3.0). It can be used as a hosted service or self-hosted by organisations
 that have the capacity to run it.
 
