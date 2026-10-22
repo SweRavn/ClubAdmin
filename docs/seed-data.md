@@ -34,9 +34,18 @@ This document describes the same data in prose and tables; keep both in step.
   (`app.seed_time`), and their validity is backdated without history rows of
   its own. Only a database in seed mode (`app_meta.seed_mode`, written by
   `db:seed`/`db:reset` as superuser) honours this; production never has it.
-- **Tables without flows yet** (waiting lists, join requests, club invitations,
+- **Rows written directly** (waiting lists, join requests, club invitations,
   consents, employments, support grants): rows are inserted in a transaction
-  of the acting persona, so history records who did it.
+  of the acting persona, so history records who did it. Johan's application
+  last year goes through the join-request service (requested, then approved
+  by Anna).
+- **Joining (P1.1):** pending join requests (Camilla for Sofie in FIL, Henrik
+  for Viktor in SVK), a rejected one (Gunilla in SVK, decided by Anna with a
+  message) and Johan's approved one; Nora's email invitation to SVK; a link
+  invitation to SVK (F2017 preset, 25 uses) and a code invitation to IKN,
+  with fixed demo secrets that `pnpm db:seed` prints:
+  `/join/demo-svk-strandviken-invitation-link` and the code `KNB7DEMA`.
+  Karin's open hand-over to Peter in IKN shows in Peter's "In progress".
 - **The `load` scenario** is the documented exception to writing through the
   services: one set-based transaction as superuser, recorded as a system job.
 
@@ -103,7 +112,7 @@ Zitadel (password `demo-password-123`, documented) to test the real login flow.
 | IKN | Innebandy (section) | — | — | parent of F2015 |
 | IKN | F2015 (training group, girls ~11 yrs) | **none** (managers act) | `waitlist`, not full, 1 waiting | Maja, Nadia, + 5 generated |
 | IKN | Styrelsen (board) | Karin | `closed` | board members |
-| FIL | J2014 (team, girls ~12 yrs) | Lars | `direct` | Ingrid, Sofie, + 5 generated |
+| FIL | J2014 (team, girls ~12 yrs) | Lars | `direct` | Ingrid, + 5 generated (Sofie has applied) |
 | FIL | Veteran (team, adults) | Lars | `direct` | Lars, + 4 generated |
 
 ## Demo scenario: named personas
@@ -130,7 +139,7 @@ club has roughly 10 named/central users plus generated players.
 | 15 | **Liam Yilmaz** | 14 | yes | IKN P2012 player; user preference `en` locale → locale override |
 | 16 | **Peter Sund** | 60 | yes | IKN **treasurer**; former SVK board member and **manager**, handed over to Anna last year → historic roles (valid_to in past); has a **pending manager hand-over** from Karin in IKN |
 | 17 | **Nora Lund** | 30 | invited | SVK new leader, **invitation pending** (not yet accepted) |
-| 18 | **Sofie Dahl** | 12 | no | FIL J2014; membership **applied**, awaiting approval |
+| 18 | **Sofie Dahl** | 12 | no | Applied to FIL (J2014 preferred) through her mother: a **pending join request** (P1.1: no membership until approved) |
 | 19 | **Ola Former** | 34 | yes | Left SVK 2 years ago, scheduled for **anonymisation** → retention job |
 | 20 | **Platform Operator** | — | yes | Operator account with **no** club access; one time-limited support grant to IKN |
 | 21 | **Emma Svensson** | 29 | yes | **Signed up without invitation, no club yet** → onboarding screen (find club / create club) |

@@ -44,7 +44,7 @@ describe("docs/demodata", () => {
   it("uses only .test email addresses", () => {
     const emails = [
       ...data.personas.flatMap((p) => (p.email ? [p.email] : [])),
-      ...data.relationships.invitations.map((i) => i.email),
+      ...data.relationships.invitations.flatMap((i) => (i.kind === "email" ? [i.email] : [])),
     ];
     expect(emails.length).toBeGreaterThan(20);
     for (const email of emails) expect(email).toMatch(/@[a-z0-9.-]+\.test$/);

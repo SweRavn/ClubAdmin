@@ -99,8 +99,8 @@ CREATE POLICY applicant_read ON public.clubs FOR SELECT
       OR jr.requested_by_person_id = app.current_person_id()
     )
   ));
-CREATE INDEX join_requests_requester_idx ON public.join_requests (requested_by_person_id)
-  WHERE status = 'pending';
+-- "My join requests" (requests made for one's children too, any status).
+CREATE INDEX join_requests_requester_idx ON public.join_requests (requested_by_person_id);
 --> statement-breakpoint
 
 -- Club search (logged-in people looking for a club to join) and invitation

@@ -70,11 +70,12 @@ Built so far (P0.5, `apps/api/src/modules/`, no HTTP endpoints yet; wired in
 | `person-merge` | `people_merges` | Merge duplicates with 30-day undo; moves the references each module declares in its `*.references.ts` |
 | `accounts` | `accounts` | Account for a verified email, change email, "give own login" (from `own_account_min_age`) |
 | `clubs` | `clubs` | Settings, `join_policy` |
-| `onboarding` | — | Create a club: creator becomes active member #1 and club manager, one transaction |
-| `roles` | `club_role_assignments`, `club_manager_handovers` | Roles, last-manager rule, hand-over (propose, accept, decline, cancel) |
+| `onboarding` | `club_creation_requests` | Profile completion, club creation per `CLUB_CREATION` (creator becomes active member #1 and club manager; or a request operators decide), club managers: appoint, remove, hand over, chair claim, operator reassignment (P1.1) |
+| `joining` | `join_requests`, `invitations`, `invitation_acceptances` | Club search, join requests (the only record of an application), email/link/code invitations with presets (P1.1, ADR 0032) |
+| `roles` | `club_role_assignments`, `club_manager_handovers`, `club_manager_reassignments` | Roles, last-manager rule, hand-over (propose, accept, decline, cancel) |
 | `club-profiles` | `club_profiles` | Member number, shared fields, club-level protected identity (managers only) |
 | `groups` | `groups`, `group_owners`, `seasons`, `group_seasons` | Hierarchy, archive, owners (`allowedBy: club_manager \| group_owner`) |
-| `memberships` | `club_memberships`, `group_memberships` | Join (per `join_policy`), add, approve, leave, group functions, "my clubs and groups" |
+| `memberships` | `club_memberships`, `group_memberships` | Join an open club, add, leave, group functions, "my clubs and groups" |
 | `guardianships` | `guardianships`, `guardian_invitations` | Add child, invite and accept co-guardian, rights, ending rules |
 | `authorization` | `platform_operators`, `support_access_grants` (reads all relationship tables) | Relationship sets, policies, resource loaders, `PersonVisibility`, `PersonPresenter`, profile field filtering (P0.7, ADR 0025) |
 | `person-profiles` | — | `GET /people/:personId`: person, club profile and guardians, filtered per relationship |
@@ -498,6 +499,7 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `guardianships:flag_adult_wards` | daily 04:23 UTC | Flags (never ends) guardianships whose ward reached the adult age (highest `adultAge` of all packs, as the job cannot see the ward's clubs), audits it and publishes `guardianship.ward.adult` |
 | `ops:backup_metrics` | every 5 minutes | Reads the latest backup runs and restore verification for the backup gauges (docs/operations/backup-restore.md, "Monitoring") |
 | `billing:generate_invoices` | 1st of the month, 04:41 UTC (billing on only) | Placeholder until P1.13 (InvoiceGenerator) |
+| `joining:retention` | daily 04:53 UTC | Deletes decided join requests and unusable invitations 12 months after their last change, club by club (`docs/gdpr.md`) |
 
 Outbox handlers besides the authorization cache: `entitlements-cache`
 (`club.entitlements.changed` → Valkey channel `entitlements:invalidate`) and,

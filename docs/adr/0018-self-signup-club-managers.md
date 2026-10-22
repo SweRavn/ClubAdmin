@@ -1,6 +1,8 @@
 # 0018 — Self sign-up, club creation and club managers
 
-**Status:** Accepted
+**Status:** Accepted. Refined by ADR 0032 (P1.1): join requests are the only
+record of an application (no `applied` memberships), invitation secrets,
+cross-club lookups and transactional email.
 
 **Context.** People should be able to start without an invitation: create an
 account, find and join a club, or create a new club and run it. Clubs need one

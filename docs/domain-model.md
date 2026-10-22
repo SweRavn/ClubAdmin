@@ -130,11 +130,12 @@ below). Photo and other consents are rows in `consents`. The profile is
 created with the first membership and kept when the person leaves.
 
 ### `club_memberships`
-Person ↔ club. `status` (applied, active, paused, left), `membership_type`
-(active, supporting, honorary, family), `valid_from`, `valid_to` (set exactly
-when `status = left`). Joining follows `join_policy`: `open` → active,
-`approval` → applied, `invite_only` → only by invitation. Leaving also ends
-the person's group memberships, ownerships and roles in the club.
+Person ↔ club. `status` (active, paused, left; `applied` is legacy, no
+longer written, see below), `membership_type` (active, supporting, honorary,
+family), `valid_from`, `valid_to` (set exactly when `status = left`). Joining
+follows `join_policy`: `open` → active at once, `approval` → a join request
+the club decides, `invite_only` → only by invitation. Leaving also ends the
+person's group memberships, ownerships and roles in the club.
 
 ### `groups` (ADR 0019)
 `id`, `club_id`, `parent_group_id` (optional hierarchy: section → team), `kind`
@@ -208,21 +209,44 @@ Proposals are `club_manager_handovers` (`from_person_id`, `to_person_id`,
 one open proposal per manager, a new one replaces it. Accepting makes the
 successor manager and ends the proposer's role in one transaction.
 
-### Sign-up and joining (ADR 0018)
+### Sign-up and joining (ADR 0018, ADR 0032; P1.1)
 - Anyone can sign up (verified email) without an invitation; this creates an
-  `account` + `person` with no club yet.
+  `account` + `person` with no club yet. Before any club action the person
+  completes their profile (birth date, for age rules; `PUT /me/profile`).
 - `clubs.join_policy`: `open` | `approval` (default) | `invite_only`.
-- `join_requests`: person (and optionally their children) asking to join,
-  with status `pending`/`approved`/`rejected`/`withdrawn`, decided by a manager
-  or registrar (or implicitly by a group owner admitting from a waiting list).
-  Columns: `person_id`, `requested_by_person_id`, `message`,
-  `preferred_group_ids`, `decided_by_person_id`, `decided_at`.
-- `invitations`: email or link/code invitations with role/group presets and
-  expiry (`kind`, `email`, `token_hash`, `role_preset`, `group_id`,
-  `expires_at`, `max_uses`, `uses`, `accepted_by_person_id`, `revoked_at`).
-  Schema since P0.5; flows in P1.1.
+  `invite_only` clubs are not listed in the club search and answer "not
+  found" to join requests.
+- `join_requests` are **the only record of an application**: a person (and
+  optionally their children, as a guardian with `act_on_behalf`) asks to
+  join, with status `pending`/`approved`/`rejected`/`withdrawn`, decided by a
+  manager or registrar (later also by a group owner admitting from a waiting
+  list, P1.10). Approving creates the active membership in the same
+  transaction; accepting an invitation settles a pending request. Columns:
+  `person_id`, `requested_by_person_id`, `message`, `preferred_group_ids`
+  (a hint; the web form does not offer them yet, as outsiders cannot see a
+  club's groups), `decided_by_person_id`, `decided_at`, `decision_message`.
+  Migration 0007 turned the old `applied` memberships into pending requests.
+- `invitations`: email, link or code invitations with group and role presets
+  (role presets only by club managers), expiry and use limit (`kind`,
+  `email`, `token_hash`, `role_preset`, `group_id`, `expires_at`,
+  `max_uses`, `uses`, `accepted_by_person_id` (first acceptance),
+  `revoked_at`). Only a hash of the secret is stored; email tokens are
+  derived from the invitation ID (ADR 0032). `invitation_acceptances`
+  records everyone who accepted a link or code.
 - Club creation is governed by `CLUB_CREATION` (`open` | `approval` |
-  `operators_only`).
+  `operators_only`; default open when hosted, operators only when
+  self-hosted). With `approval`, `club_creation_requests` (global: the
+  requester and platform operators; the club fields, `status`,
+  `decided_by_person_id`, `decided_at`, `decision_message`,
+  `created_club_id`) are decided by an operator; approving creates the club
+  with the requester as its first manager.
+- `club_manager_reassignments`: an operator appointing a manager on the
+  club's documented request, with the reason (recovery, ADR 0018).
+- Decided join requests and invitations that can no longer be used are
+  deleted after 12 months (worker `joining:retention`, `docs/gdpr.md`).
+- Not yet: abandoned-club handling ([#16](https://github.com/SweRavn/ClubAdmin/issues/16)),
+  challenges and per-domain limits against abuse ([#15](https://github.com/SweRavn/ClubAdmin/issues/15)),
+  mobile screens ([#17](https://github.com/SweRavn/ClubAdmin/issues/17)).
 
 ### `guardianships` (global, confirmed per club)
 `guardian_person_id`, `ward_person_id`, `kind` (`parent`, `legal_guardian`,
@@ -358,9 +382,21 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `billing.plans.read` | platform | platform operators, with MFA (billing on only) |
 | `billing.subscription.read` | club | club managers and treasurers; platform operators with MFA (billing on only) |
 | `billing.subscription.manage` | club | platform operators, with MFA (billing on only) |
+| `club.create` | platform | anyone logged in with `CLUB_CREATION` `open` or `approval` (then a request); only platform operators, with MFA, with `operators_only`. The service also requires a verified email and a completed profile |
+| `club.creation.decide` | platform | platform operators, with MFA |
+| `club.join_requests.manage` | club | club managers, registrars |
+| `club.invitations.manage` | club | club managers, registrars (a role preset also needs `club.roles.manage`) |
+| `club.handover.respond` | handover | the proposed successor (accept, decline) and the proposer (cancel); nobody else learns that it exists |
+| `club.managers.claim` | club | the board chair, with MFA, when the club has no active manager |
+| `club.managers.reassign` | club | platform operators, with MFA (reason recorded; no access to club data) |
 
 Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
-`/me/preferences`) need only a login. `GET /me/clubs` lists, per club, the
+`/me/preferences`, `/me/profile`, `/me/join-requests`,
+`/me/club-creation-requests`, `/me/manager-handovers`) need only a login, as
+do the club search, asking to join (the service checks each person is the
+caller or a ward with `act_on_behalf`) and accepting an invitation; looking
+up an invitation by its link or code is public. Appointing, removing and
+handing over managers use `club.roles.manage`. `GET /me/clubs` lists, per club, the
 club-level permissions the caller holds (for navigation; permissions that need
 a second factor are listed without one, the endpoints still ask for it).
 A guardian acting for a ward (`X-On-Behalf-Of`) is evaluated as the ward,

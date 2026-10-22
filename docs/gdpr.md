@@ -65,6 +65,8 @@
 | Background-check verification metadata | While role is held + 1 year |
 | Audit log | 2 years (security) |
 | Record history | 2 years (configurable); personal values scrubbed on erasure |
+| Join requests (decided) and invitations that can no longer be used, with their acceptances | 12 months after the last change (worker `joining:retention`, P1.1); pending requests and usable invitations stay |
+| Invitation email addresses | With the invitation (above); never logged, never in outbox or job payloads |
 | Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
 
 ## Protected identity

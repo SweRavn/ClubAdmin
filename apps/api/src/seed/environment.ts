@@ -20,6 +20,8 @@ export interface SeedEnvironment {
   admin(sql: string): Promise<void>;
   /** BILLING_ENABLED: the demo gets plans and subscriptions (P0.12). */
   billingEnabled?: boolean;
+  /** INVITATION_TOKEN_KEY: the demo's email invitations get tokens the worker can mail (ADR 0032). */
+  invitationTokenKey?: string | undefined;
 }
 
 /** A step of the demo scenario; modules add theirs after "core" (ADR 0026). */

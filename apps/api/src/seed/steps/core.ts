@@ -11,10 +11,17 @@
 // support grants) have no service yet: their rows are inserted in a
 // transaction of the acting persona, so history still records who did it.
 
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 import { type ActorContext, sql, type TenantContext, type Tx } from "@clubadmin/db";
-import type { DemoGroup, DemoPersona, GroupFunction, RelativeTime } from "@clubadmin/shared";
+import { emailInvitationToken, hashInvitationSecret } from "@clubadmin/server-kit/invitations";
+import {
+  type DemoGroup,
+  type DemoPersona,
+  type GroupFunction,
+  type RelativeTime,
+  uuidv7,
+} from "@clubadmin/shared";
 
 import type { DemoData } from "../demodata.ts";
 import type { DemoResult, SeedEnvironment } from "../environment.ts";
@@ -509,18 +516,39 @@ class CoreSeeder {
       const groups = j.preferredGroups.map((g) => this.id(g)).join(",");
       await this.inClub(j.requestedBy, j.club, (tx, clubId) =>
         tx.execute(sql`
-          INSERT INTO join_requests (club_id, person_id, requested_by_person_id, preferred_group_ids)
+          INSERT INTO join_requests (club_id, person_id, requested_by_person_id, preferred_group_ids, message)
           VALUES (${clubId}, ${this.id(j.person)}, ${this.id(j.requestedBy)},
-                  string_to_array(${groups}, ',')::uuid[])`),
+                  ${`{${groups}}`}::uuid[], ${j.message})`),
+      );
+      if (j.status === "pending" || !j.decidedBy) continue;
+      const by = j.decidedBy;
+      await this.inClub(by, j.club, (tx, clubId) =>
+        tx.execute(sql`
+          UPDATE join_requests SET status = ${j.status}, decided_by_person_id = ${this.id(by)},
+            decided_at = ${this.env.clock.at(j.decidedAt ?? "-1mo")}, decision_message = ${j.decisionMessage}
+          WHERE club_id = ${clubId} AND person_id = ${this.id(j.person)} AND status = 'pending'`),
       );
     }
     for (const i of r.invitations) {
-      const tokenHash = createHash("sha256").update(randomBytes(32)).digest("base64url");
+      // Demo secrets are fixed (development data); an email invitation's token
+      // is derived from its ID when the key is set (ADR 0032).
+      const id = uuidv7();
+      const secret =
+        i.kind === "link"
+          ? i.token
+          : i.kind === "code"
+            ? i.code
+            : this.env.invitationTokenKey
+              ? emailInvitationToken(this.env.invitationTokenKey, id)
+              : randomBytes(32).toString("base64url");
+      const email = i.kind === "email" ? i.email : null;
+      const maxUses = i.kind === "email" ? 1 : i.maxUses;
       await this.inClub(i.createdBy, i.club, (tx, clubId) =>
         tx.execute(sql`
-          INSERT INTO invitations (club_id, kind, email, token_hash, group_id, expires_at, created_by_person_id)
-          VALUES (${clubId}, 'email', ${i.email}, ${tokenHash}, ${i.group ? this.id(i.group) : null},
-                  ${this.env.clock.at(i.expiresIn)}, ${this.id(i.createdBy)})`),
+          INSERT INTO invitations (id, club_id, kind, email, token_hash, group_id, expires_at, max_uses, created_by_person_id)
+          VALUES (${id}, ${clubId}, ${i.kind}, ${email}, ${hashInvitationSecret(secret)},
+                  ${i.group ? this.id(i.group) : null}, ${this.env.clock.at(i.expiresIn)}, ${maxUses},
+                  ${this.id(i.createdBy)})`),
       );
     }
     for (const operator of r.operators) await this.env.addPlatformOperator(this.id(operator));

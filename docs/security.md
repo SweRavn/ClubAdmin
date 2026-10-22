@@ -86,6 +86,15 @@ later phase. Backup and disaster recovery are in
   caller already knows the resource (ADR 0025).
 - Guardians act for a ward only with the `act_on_behalf` right
   (`X-On-Behalf-Of`), limited to the ward's memberships; both are recorded.
+- Invitation secrets (P1.1, ADR 0032): only a SHA-256 hash is stored; links
+  carry 32 random bytes, codes 8 characters (about 40 bits, so the lookup is
+  rate-limited per IP), both shown once to their creator and passed to the
+  web page in a two-minute cookie scoped to the page, never in a URL. Email
+  invitation tokens are an HMAC of the invitation ID with
+  `INVITATION_TOKEN_KEY` (API and worker). Expired, revoked and used-up
+  invitations are indistinguishable from unknown ones. Club search and
+  invitation lookup read across clubs only through `app.search_clubs` and
+  `app.find_club_invitation` (narrow `lookup_read` policies while they run).
 - Platform operators have no club access unless the club grants time-limited
   support access (`support_access_grants`), used only with a second factor;
   protected persons stay hidden from them.
@@ -168,6 +177,8 @@ later phase. Backup and disaster recovery are in
   | Client IP | Authenticated requests: backstop against token stuffing from one address | 6,000 |
   | Club | Bulk reads (`bulkRead` endpoints: rosters, later exports) | 1,200 |
   | Account | Bulk reads | 240 |
+  | Account, per hour | Joining (`accountLimit: "joining"`): club search, join requests, invitation acceptance, club creation (anti-abuse, ADR 0018) | 120 |
+  | Client IP | Public invitation lookup (`GET /invitations/lookup`): guessing codes | 20 |
 
   Sizing: a web page view makes about five API calls (`/me`, `/me/clubs`,
   `/me/wards`, the page's own data), a mobile cold start about six (`/me`,

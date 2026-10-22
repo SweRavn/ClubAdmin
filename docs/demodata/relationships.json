@@ -450,6 +450,17 @@
       "preferredGroups": [
         "fil-j2014"
       ]
+    },
+    {
+      "person": "gunilla",
+      "club": "svk",
+      "requestedBy": "gunilla",
+      "preferredGroups": [],
+      "message": "Vill gärna hjälpa till som funktionär.",
+      "status": "rejected",
+      "decidedBy": "anna",
+      "decidedAt": "-2mo",
+      "decisionMessage": "Vi tar in funktionärer via våra lag; hör av dig till ett lag."
     }
   ],
   "invitations": [
@@ -458,7 +469,26 @@
       "email": "nora.lund@example.test",
       "createdBy": "anna",
       "group": "svk-f2017",
-      "expiresIn": "+7d"
+      "expiresIn": "+7d",
+      "kind": "email"
+    },
+    {
+      "kind": "link",
+      "club": "svk",
+      "token": "demo-svk-strandviken-invitation-link",
+      "createdBy": "anna",
+      "group": "svk-f2017",
+      "maxUses": 25,
+      "expiresIn": "+30d"
+    },
+    {
+      "kind": "code",
+      "club": "ikn",
+      "code": "KNB7DEMA",
+      "createdBy": "karin",
+      "group": null,
+      "maxUses": null,
+      "expiresIn": "+30d"
     }
   ],
   "operators": [

@@ -52,6 +52,11 @@ export async function seed(
         await step.run(full, data, result);
         log(`${step.name}: done`);
       }
+      // The demo invitations can be tried at once (fixed secrets, development data).
+      for (const i of data.relationships.invitations) {
+        if (i.kind === "link") log(`invitation (${i.club}): /join/${i.token}`);
+        if (i.kind === "code") log(`invitation (${i.club}): code ${i.code}`);
+      }
       return result;
     }
     case "minimal":

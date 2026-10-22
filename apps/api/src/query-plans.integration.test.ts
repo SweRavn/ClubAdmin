@@ -5,7 +5,7 @@
 // run as the app role, with row-level security, on 10k rows per table; they
 // must not scan tables sequentially. The summarised plans are snapshots, so a
 // change in index use shows up in review. P0.8's load scenario reruns this at
-// full size.
+// full size. P1.1 adds the club's join requests and "my join requests".
 
 import type { SQLWrapper } from "@clubadmin/db";
 import { sql, type Tx } from "@clubadmin/db";
@@ -164,6 +164,28 @@ describe("query plans (10k rows)", () => {
     );
     noSeqScan(nodes);
     expect(nodes).toMatchSnapshot();
+  });
+
+  it("pending join requests of a club, oldest first (P1.1)", async () => {
+    const nodes = await c.t.db.withTenant(actor(ids.person, ids.club), (tx) =>
+      plan(
+        tx,
+        sql`SELECT * FROM join_requests WHERE club_id = ${ids.club} AND status = 'pending'
+            ORDER BY created_at, id LIMIT 51`,
+      ),
+    );
+    noSeqScan(nodes);
+    expect(nodes).toContain("Index Scan join_requests join_requests_club_status_idx");
+  });
+
+  it("my join requests (by person, across clubs; P1.1)", async () => {
+    const nodes = await c.t.db.withActor(actor(ids.person), (tx) =>
+      plan(
+        tx,
+        sql`SELECT * FROM join_requests WHERE person_id = ${ids.person} OR requested_by_person_id = ${ids.person}`,
+      ),
+    );
+    noSeqScan(nodes);
   });
 
   it("protected set of a club", async () => {

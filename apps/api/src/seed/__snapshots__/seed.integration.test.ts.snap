@@ -35,7 +35,9 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "handovers": [
         "karin → peter: proposed",
       ],
-      "invitations": [],
+      "invitations": [
+        "null",
+      ],
       "joinPolicy": "open",
       "joinRequests": [],
       "locale": "sv-SE",
@@ -63,9 +65,11 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "invitations": [
         "nora.lund@example.test → svk-f2017",
+        "null → svk-f2017",
       ],
       "joinPolicy": "approval",
       "joinRequests": [
+        "gunilla by gunilla: rejected",
         "johan by johan: approved",
         "viktor by henrik: pending",
       ],

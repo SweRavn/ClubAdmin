@@ -22,6 +22,7 @@ import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
+import { deleteExpiredJoiningData } from "./tasks/joining.ts";
 
 let t: TestDatabase;
 const logger = graphileLogger(
@@ -328,6 +329,65 @@ describe("transactional email (P1.1)", () => {
     expect(managerMails.every((m) => m.text.includes("Nils Ek"))).toBe(true);
     expect(new Set(managerMails.map((m) => m.messageId)).size).toBe(2);
     void manager;
+  });
+});
+
+describe("joining:retention", () => {
+  it("deletes decided requests and unusable invitations after 12 months, nothing else", async () => {
+    const club = uuidv7();
+    const person = uuidv7();
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        "INSERT INTO people (id, given_name, family_name) VALUES ($1, 'R', 'T')",
+        [person],
+      );
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Retention IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+        [club, `retention-${club.slice(-8)}`],
+      );
+      await session.query(
+        "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')",
+        [club, person],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    const old = "now() - interval '13 months'";
+    await t.db.withSystem("test", { clubId: club }, async (tx) => {
+      await tx.execute(sql`
+        INSERT INTO join_requests (club_id, person_id, requested_by_person_id, status, decided_at)
+        VALUES (${club}, ${person}, ${person}, 'rejected', now())`);
+      await tx.execute(sql`
+        INSERT INTO invitations (club_id, kind, token_hash, expires_at, created_by_person_id)
+        VALUES (${club}, 'link', ${`old-${club}`}, now() - interval '1 day', ${person}),
+               (${club}, 'link', ${`live-${club}`}, now() + interval '1 day', ${person})`);
+    });
+    // Backdate as the owner (updated_at is set by a trigger on every change).
+    await t.query("admin", `ALTER TABLE join_requests DISABLE TRIGGER set_updated_at`);
+    await t.query("admin", `ALTER TABLE invitations DISABLE TRIGGER set_updated_at`);
+    try {
+      await t.query("admin", `UPDATE join_requests SET updated_at = ${old} WHERE club_id = $1`, [
+        club,
+      ]);
+      await t.query("admin", `UPDATE invitations SET updated_at = ${old} WHERE club_id = $1`, [
+        club,
+      ]);
+    } finally {
+      await t.query("admin", `ALTER TABLE join_requests ENABLE TRIGGER set_updated_at`);
+      await t.query("admin", `ALTER TABLE invitations ENABLE TRIGGER set_updated_at`);
+    }
+    const deleted = await deleteExpiredJoiningData(t.db);
+    expect(deleted).toMatchObject({ joinRequests: 1, invitations: 1 });
+    const { rows } = await t.query<{ token_hash: string }>(
+      "admin",
+      "SELECT token_hash FROM invitations WHERE club_id = $1",
+      [club],
+    );
+    expect(rows).toEqual([{ token_hash: `live-${club}` }]);
   });
 });
 

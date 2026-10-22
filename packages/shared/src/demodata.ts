@@ -208,17 +208,47 @@ export const DemoRelationshipsFileSchema = z.object({
       club: key,
       requestedBy: key,
       preferredGroups: z.array(key).default([]),
+      message: z.string().nullable().default(null),
+      /** A decided request (history): who decided, when, and the message to the applicant. */
+      status: z.enum(["pending", "rejected"]).default("pending"),
+      decidedBy: key.nullable().default(null),
+      decidedAt: RelativeTimeSchema.nullable().default(null),
+      decisionMessage: z.string().nullable().default(null),
     }),
   ),
-  /** Club invitations (flows in P1.1): rows only. */
+  /**
+   * Club invitations (P1.1). Link and code invitations carry fixed demo
+   * secrets so they can be tried at once (development data only).
+   */
   invitations: z.array(
-    z.object({
-      club: key,
-      email: testEmail,
-      createdBy: key,
-      group: key.nullable().default(null),
-      expiresIn: RelativeTimeSchema,
-    }),
+    z.discriminatedUnion("kind", [
+      z.object({
+        kind: z.literal("email"),
+        club: key,
+        email: testEmail,
+        createdBy: key,
+        group: key.nullable().default(null),
+        expiresIn: RelativeTimeSchema,
+      }),
+      z.object({
+        kind: z.literal("link"),
+        club: key,
+        token: z.string().min(20),
+        createdBy: key,
+        group: key.nullable().default(null),
+        maxUses: z.number().int().positive().nullable().default(null),
+        expiresIn: RelativeTimeSchema,
+      }),
+      z.object({
+        kind: z.literal("code"),
+        club: key,
+        code: z.string().regex(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/),
+        createdBy: key,
+        group: key.nullable().default(null),
+        maxUses: z.number().int().positive().nullable().default(null),
+        expiresIn: RelativeTimeSchema,
+      }),
+    ]),
   ),
   operators: z.array(key),
   supportGrants: z.array(
