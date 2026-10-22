@@ -8,7 +8,9 @@
 import { ApiError } from "@clubadmin/api-client";
 import { useTranslations } from "use-intl";
 
-import { Button, EmptyState } from "./ui.tsx";
+import { errorSummary } from "../api/query-client.ts";
+import { BUILD_VARIANT } from "../config.ts";
+import { Button, EmptyState, Muted } from "./ui.tsx";
 
 export function ErrorView({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const t = useTranslations();
@@ -30,6 +32,10 @@ export function ErrorView({ error, onRetry }: { error: unknown; onRetry?: () => 
   return (
     <>
       <EmptyState title={t("mobile.loadFailed")} />
+      {/* Development and preview builds: the reason (for Maestro's screen dump and testers). */}
+      {BUILD_VARIANT !== "production" ? (
+        <Muted testID="error-detail">{errorSummary(error)}</Muted>
+      ) : null}
       {onRetry ? <Button label={t("common.retry")} onPress={onRetry} kind="secondary" /> : null}
     </>
   );

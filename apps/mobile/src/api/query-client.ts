@@ -6,8 +6,10 @@
 
 import { ApiError } from "@clubadmin/api-client";
 import NetInfo from "@react-native-community/netinfo";
-import { focusManager, onlineManager, QueryClient } from "@tanstack/react-query";
+import { focusManager, onlineManager, QueryCache, QueryClient } from "@tanstack/react-query";
 import { AppState, type AppStateStatus } from "react-native";
+
+import { BUILD_VARIANT } from "../config.ts";
 
 let wired = false;
 function wireOnlineAndFocus() {
@@ -24,6 +26,11 @@ function wireOnlineAndFocus() {
     });
     return () => subscription.remove();
   });
+}
+
+/** "Name: message" of an error, for diagnostics in development builds. */
+export function errorSummary(error: unknown): string {
+  return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 }
 
 export function shouldRetry(failureCount: number, error: unknown): boolean {
@@ -44,6 +51,16 @@ export function retryDelay(attempt: number, error: unknown): number {
 export function createQueryClient(): QueryClient {
   wireOnlineAndFocus();
   return new QueryClient({
+    // Development and preview builds: why a request failed, in logcat / the
+    // console (error name and message, never response data).
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        if (BUILD_VARIANT === "production") return;
+        console.warn(
+          `ClubAdmin: query ${String(query.queryKey[0])} failed: ${errorSummary(error)}`,
+        );
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 60_000,
