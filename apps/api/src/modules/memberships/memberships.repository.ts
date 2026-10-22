@@ -43,6 +43,25 @@ export async function findMembership(tx: Tx, id: string): Promise<ClubMembership
   return row ?? null;
 }
 
+/**
+ * When a membership ending on `date` (in the club's time zone) ends: now for
+ * today or no date, the end of an earlier day, null for a future day.
+ */
+export async function endOfDay(
+  tx: Tx,
+  date: string | null,
+  timeZone: string,
+): Promise<Date | null> {
+  if (date === null) return new Date();
+  const { rows } = await tx.execute<{ end_at: string; today: boolean; future: boolean }>(sql`
+    SELECT (${date}::date + 1)::timestamp AT TIME ZONE ${timeZone} AS end_at,
+      ${date}::date = (now() AT TIME ZONE ${timeZone})::date AS today,
+      ${date}::date > (now() AT TIME ZONE ${timeZone})::date AS future`);
+  const row = rows[0]!;
+  if (row.future) return null;
+  return row.today ? new Date() : new Date(row.end_at);
+}
+
 export async function updateMembership(
   tx: Tx,
   id: string,

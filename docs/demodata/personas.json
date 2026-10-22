@@ -195,7 +195,7 @@
       "login": "account",
       "email": "johan.nilsson@example.test",
       "phone": "+46 70 174 06 10",
-      "description": "SVK Herr senior player and owner, F2017 assistant coach; applied to SVK and was approved by Anna last year.",
+      "description": "SVK registrar (the full member register without manager rights), Herr senior player and owner, F2017 assistant coach; applied to SVK and was approved by Anna last year.",
       "tags": [
         "leader",
         "player"
@@ -214,7 +214,7 @@
       "login": "account",
       "email": "lars.haugen@example.test",
       "locale": "nb",
-      "description": "FIL club manager (founded the club), board member and J2014 head coach; also plays in SVK Herr senior and supports IKN.",
+      "description": "FIL club manager (founded the club), board member and J2014 head coach; also plays in SVK Herr senior (membership paused) and supports IKN.",
       "tags": [
         "norwegian",
         "last manager",

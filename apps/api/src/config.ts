@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { baseConfigShape, envBoolean, envList, parseConfig } from "@clubadmin/server-kit";
+import { objectStorageConfigShape } from "@clubadmin/server-kit/object-storage";
 import { AppVersionSchema, devAuthViolation, z } from "@clubadmin/shared";
 
 export const apiConfigSchema = z
   .object({
     ...baseConfigShape,
+    ...objectStorageConfigShape,
     API_HOST: z.string().default("0.0.0.0"),
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     PUBLIC_WEB_URL: z.url().default("https://clubadmin.localhost"),
@@ -54,6 +56,9 @@ export const apiConfigSchema = z
     RATE_LIMIT_ACCOUNT_BULK_MAX: z.coerce.number().int().positive().default(240),
     /** Club searches, join requests, invitation acceptances and club creations per account and hour. */
     RATE_LIMIT_JOINING_MAX: z.coerce.number().int().positive().default(120),
+    /** Member register exports (P1.2) per person and club, and per club, in 24 hours. */
+    MEMBER_EXPORTS_PER_PERSON_DAY: z.coerce.number().int().positive().default(10),
+    MEMBER_EXPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(30),
     /** First logins (account creation) per client IP and minute. */
     RATE_LIMIT_PROVISIONING_MAX: z.coerce.number().int().positive().default(10),
     /** App versions below this must update (GET /meta/client, ADR 0029); per platform with _IOS / _ANDROID. */

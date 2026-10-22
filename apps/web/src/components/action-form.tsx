@@ -21,7 +21,7 @@ export async function ActionForm({
 }) {
   const [session, path] = await Promise.all([requireSession(), currentPath()]);
   const url = new URL(back ?? path, "https://internal.invalid");
-  for (const key of ["error", "decided"]) url.searchParams.delete(key);
+  for (const key of ["error", "decided", "requested", "updated"]) url.searchParams.delete(key);
   return (
     <form method="post" action={`/actions/${action}`} className={className} data-testid={testId}>
       <input type="hidden" name="csrf" value={session.record.csrf} />

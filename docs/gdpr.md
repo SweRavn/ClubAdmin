@@ -66,6 +66,8 @@
 | Audit log | 2 years (security) |
 | Record history | 2 years (configurable); personal values scrubbed on erasure |
 | Join requests (decided) and invitations that can no longer be used, with their acceptances | 12 months after the last change (worker `joining:retention`, P1.1); pending requests and usable invitations stay |
+| Member register export files (P1.2) | 24 hours (worker `members:expire_exports`; the bucket's lifecycle rule deletes `exports/` after two days as a backstop); only the requester can download them, through a pre-signed link valid five minutes |
+| Member register export records (who, when, which columns and filter, row count; no values) | Kept as part of the audit trail, like the audit log |
 | Invitation email addresses | With the invitation (above); never logged, never in outbox or job payloads |
 | Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
 

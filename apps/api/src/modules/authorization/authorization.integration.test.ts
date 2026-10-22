@@ -315,6 +315,35 @@ describe("permission matrix", () => {
       url: () => `/api/v1/manager-handovers/${uuidv7()}/cancel`,
       expected: ALL_NOT_FOUND,
     },
+    // Member register (P1.2): the flows are in members.integration.test.ts.
+    "GET /api/v1/clubs/:clubId/members": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/members`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/clubs/:clubId/members/facets": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/members/facets`,
+      expected: ADMINS(200),
+    },
+    // Registrars without a second factor; club managers need one (403 here).
+    "PATCH /api/v1/clubs/:clubId/members/:personId/membership": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/members/${uuidv7()}/membership`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 404 },
+      body: { status: "paused" },
+    },
+    // Exports need a second factor: 403 for everyone in the club here.
+    "POST /api/v1/clubs/:clubId/member-exports": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/member-exports`,
+      expected: CLUB_FORBIDDEN,
+      body: { columns: ["name"] },
+    },
+    "GET /api/v1/clubs/:clubId/member-exports": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/member-exports`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "GET /api/v1/clubs/:clubId/member-exports/:exportId/download": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/member-exports/${uuidv7()}/download`,
+      expected: CLUB_FORBIDDEN,
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -344,13 +373,13 @@ describe("permission matrix", () => {
       const actual: Record<string, number> = {};
       for (const persona of MATRIX_PERSONAS) {
         const token = await devToken(personaId(persona));
-        const method = endpoint.split(" ")[0] as "GET" | "POST" | "PUT" | "DELETE";
+        const method = endpoint.split(" ")[0] as "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
         const res = await inject({
           method,
           url: url(),
           headers: { authorization: `Bearer ${token}` },
           ...(method === "POST" ? { payload: body ?? { phone: "+46 70 000 00 00" } } : {}),
-          ...(method === "PUT" ? { payload: body ?? {} } : {}),
+          ...(method === "PUT" || method === "PATCH" ? { payload: body ?? {} } : {}),
         });
         actual[persona] = res.statusCode;
       }
@@ -368,6 +397,9 @@ describe("tenant isolation", () => {
       `/api/v1/groups/${m.section.id}/members`,
       `/api/v1/people/${m.member.id}?clubId=${m.clubA.id}`,
       `/api/v1/people/${m.member.id}`,
+      `/api/v1/clubs/${m.clubA.id}/members`,
+      `/api/v1/clubs/${m.clubA.id}/members/facets`,
+      `/api/v1/clubs/${m.clubA.id}/member-exports`,
     ];
     for (const url of urls) {
       const res = await get(m.outsider.id, url, { mfa: true });
@@ -412,6 +444,8 @@ describe("reads", () => {
     expect((await permissions(m.registrar.id))?.permissions).toEqual([
       "club.read",
       "club.members.read",
+      "club.members.manage",
+      "club.members.export",
       "club.join_requests.manage",
       "club.invitations.manage",
     ]);

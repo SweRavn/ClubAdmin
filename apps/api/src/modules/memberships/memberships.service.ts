@@ -13,10 +13,13 @@ import {
   type Tx,
 } from "@clubadmin/db";
 import {
+  type AuditAction,
   type GroupFunction,
   GroupFunctionSchema,
   type MembershipType,
   MembershipTypeSchema,
+  type UpdateMembershipInput,
+  UpdateMembershipSchema,
 } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
@@ -128,25 +131,85 @@ export class MembershipsService {
     return this.db.withTenant(context, async (tx) => {
       const membership = await repo.findOpenMembership(tx, context.clubId, personId);
       if (!membership) throw new DomainError("not_a_member");
-      await this.roles.endAllRolesInTx(tx, context, personId);
-      const ended = await repo.endGroupMembershipsOfPerson(tx, context.clubId, personId);
-      await this.groups.endOwnershipsOfPersonInTx(tx, context, personId);
-      await repo.updateMembership(tx, membership.id, { status: "left", validTo: new Date() });
-      await audit.record(tx, {
-        action: "membership.ended",
-        resourceType: "club_membership",
-        resourceId: membership.id,
-        changedFields: ["status", "valid_to"],
-      });
-      for (const id of ended) {
+      await this.endMembershipInTx(tx, context, membership, new Date());
+    });
+  }
+
+  /**
+   * The member register's membership changes (P1.2, club.members.manage):
+   * pause, resume, end (optionally on an earlier date; groups, group
+   * ownerships and club roles end now) or change the membership type. Ending
+   * the last club manager's membership is refused (last_club_manager).
+   */
+  updateMembership(
+    context: TenantContext,
+    personId: string,
+    input: UpdateMembershipInput,
+  ): Promise<ClubMembership> {
+    return this.db.withTenant(context, async (tx) => {
+      const data = parseInput(UpdateMembershipSchema, input);
+      const membership = await repo.findOpenMembership(tx, context.clubId, personId);
+      // Not (or no longer) a member: as good as missing for the register.
+      if (!membership || membership.status === "applied") throw new DomainError("not_found");
+
+      if (data.membershipType && data.membershipType !== membership.membershipType) {
+        await repo.updateMembership(tx, membership.id, { membershipType: data.membershipType });
         await audit.record(tx, {
-          action: "group.membership.ended",
-          resourceType: "group_membership",
-          resourceId: id,
+          action: "membership.type.changed",
+          resourceType: "club_membership",
+          resourceId: membership.id,
+          changedFields: ["membership_type"],
         });
       }
-      await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
+      const target = data.status;
+      if (target === "left") {
+        const club = await this.clubs.getClubInTx(tx, context.clubId);
+        const at = await repo.endOfDay(tx, data.endedOn ?? null, club.timeZone);
+        if (!at || at <= membership.validFrom) throw new DomainError("invalid_end_date");
+        await this.endMembershipInTx(tx, context, membership, at);
+      } else if (target && target !== membership.status) {
+        const action: AuditAction =
+          target === "paused" ? "membership.paused" : "membership.resumed";
+        await repo.updateMembership(tx, membership.id, { status: target });
+        await audit.record(tx, {
+          action,
+          resourceType: "club_membership",
+          resourceId: membership.id,
+          changedFields: ["status"],
+        });
+        await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
+      } else if (data.membershipType && data.membershipType !== membership.membershipType) {
+        await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
+      }
+      return (await repo.findMembership(tx, membership.id))!;
     });
+  }
+
+  private async endMembershipInTx(
+    tx: Tx,
+    context: TenantContext,
+    membership: ClubMembership,
+    at: Date,
+  ): Promise<void> {
+    const { personId } = membership;
+    await this.roles.endAllRolesInTx(tx, context, personId);
+    const ended = await repo.endGroupMembershipsOfPerson(tx, context.clubId, personId);
+    await this.groups.endOwnershipsOfPersonInTx(tx, context, personId);
+    await repo.updateMembership(tx, membership.id, { status: "left", validTo: at });
+    await audit.record(tx, {
+      action: "membership.ended",
+      resourceType: "club_membership",
+      resourceId: membership.id,
+      changedFields: ["status", "valid_to"],
+    });
+    for (const id of ended) {
+      await audit.record(tx, {
+        action: "group.membership.ended",
+        resourceType: "group_membership",
+        resourceId: id,
+      });
+    }
+    await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
   }
 
   /** Adds a person to a group with a function. The person must be an active (or paused) club member. */

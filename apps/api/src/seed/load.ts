@@ -4,7 +4,9 @@
 // set-based transaction as superuser, recorded in history as a system job.
 // Per club: 200 people (120 children with a parent each, 40 adult members,
 // 40 parents who are not members), 8 teams with two leaders each, and a
-// club manager. Default size 1,000 clubs, about 200,000 people.
+// club manager. Default size 1,000 clubs, about 200,000 people. Plus one
+// large club (P1.2, the member register's budgets): 10,000 members in 40
+// teams, half with photo consent, some paused, a few protected.
 
 import type { SeedEnvironment } from "./environment.ts";
 
@@ -74,6 +76,34 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
       SELECT p.club_id, g.id, p.id, CASE WHEN p.n <= 128 THEN 'head_coach' ELSE 'assistant_coach' END
       FROM lp AS p JOIN lg AS g ON g.club_id = p.club_id AND g.g = 1 + (p.n - 121) % 8
       WHERE p.n BETWEEN 121 AND 136;
+    -- The large club.
+    CREATE TEMP TABLE bc ON COMMIT DROP AS SELECT uuidv7() AS id;
+    INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number)
+      SELECT id, 'Storklubben', 'load-large', 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK', 'approval', 10001 FROM bc;
+    CREATE TEMP TABLE bp ON COMMIT DROP AS
+      SELECT n, uuidv7() AS id FROM generate_series(1, 10000) AS n;
+    INSERT INTO people (id, given_name, family_name, birth_date, gender, protected_identity)
+      SELECT id, (${list(GIVEN)})[1 + n % ${GIVEN.length}], (${list(FAMILY)})[1 + (n / 7) % ${FAMILY.length}],
+             current_date - ((6 + n % 60) * 365 + n % 300), (ARRAY['female', 'male'])[1 + n % 2], n % 1000 = 0
+      FROM bp;
+    INSERT INTO club_memberships (club_id, person_id, status, membership_type, valid_from)
+      SELECT bc.id, bp.id, CASE WHEN n % 50 = 0 THEN 'paused' ELSE 'active' END,
+             CASE WHEN n % 20 = 0 THEN 'supporting' ELSE 'active' END,
+             now() - make_interval(days => n % 3650)
+      FROM bp CROSS JOIN bc;
+    INSERT INTO club_profiles (club_id, person_id, member_number, shared_fields)
+      SELECT bc.id, bp.id, n, CASE WHEN n % 3 = 0 THEN ARRAY['phone', 'gender'] ELSE '{}'::text[] END
+      FROM bp CROSS JOIN bc;
+    INSERT INTO club_role_assignments (club_id, person_id, role)
+      SELECT bc.id, bp.id, r.role FROM bp CROSS JOIN bc
+      CROSS JOIN (VALUES ('club_manager'), ('registrar')) AS r(role) WHERE bp.n = 1;
+    CREATE TEMP TABLE bg ON COMMIT DROP AS SELECT g, uuidv7() AS id FROM generate_series(1, 40) AS g;
+    INSERT INTO groups (id, club_id, name, kind, admission_mode)
+      SELECT bg.id, bc.id, 'Lag ' || g, 'team', 'direct' FROM bg CROSS JOIN bc;
+    INSERT INTO group_memberships (club_id, group_id, person_id, function)
+      SELECT bc.id, bg.id, bp.id, 'member' FROM bp CROSS JOIN bc JOIN bg ON bg.g = 1 + bp.n % 40;
+    INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id)
+      SELECT bc.id, bp.id, 'photo_publication', 'v1', bp.id FROM bp CROSS JOIN bc WHERE n % 2 = 0;
     COMMIT;
     ANALYZE;
   `);

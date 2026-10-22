@@ -55,6 +55,9 @@ describe("tenant isolation of club-owned tables", () => {
         INSERT INTO club_manager_reassignments (club_id, person_id, operator_person_id, reason)
         VALUES (${a.id}, ${member.id}, ${family.guardian.id}, 'Board minutes 2026-03')`);
       await tx.execute(sql`
+        INSERT INTO member_exports (club_id, requested_by_person_id, columns)
+        VALUES (${a.id}, ${a.manager.id}, '{name}')`);
+      await tx.execute(sql`
         INSERT INTO support_access_grants (club_id, operator_person_id, granted_by_person_id, reason, expires_at)
         VALUES (${a.id}, ${family.guardian.id}, ${a.manager.id}, 'Import help', now() + interval '1 day')`);
     });

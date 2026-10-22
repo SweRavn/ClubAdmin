@@ -79,8 +79,9 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "sara",
       ],
       "memberships": {
-        "active": 26,
+        "active": 25,
         "left": 1,
+        "paused": 1,
       },
       "slug": "strandvikens-vk",
       "supportGrants": [],
@@ -442,7 +443,9 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "pendingGuardianInvitations": 0,
       "protected": false,
-      "roles": [],
+      "roles": [
+        "svk: registrar",
+      ],
     },
     "jonas": {
       "account": {
@@ -494,7 +497,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "guardians": [],
       "hasBirthDate": true,
       "memberships": [
-        "svk: active (active)",
+        "svk: paused (active)",
         "ikn: active (supporting)",
         "fil: active (active)",
       ],

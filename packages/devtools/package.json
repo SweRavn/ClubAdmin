@@ -29,6 +29,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
-    "@clubadmin/db": "workspace:*"
+    "@clubadmin/db": "workspace:*",
+    "@clubadmin/server-kit": "workspace:*"
   }
 }

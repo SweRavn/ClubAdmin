@@ -262,6 +262,10 @@ class CoreSeeder {
       }
       if (m.status === "left") {
         await this.s.memberships.leaveClub(this.as(m.person, m.club, m.until), personId);
+      } else if (m.status === "paused") {
+        await this.s.memberships.updateMembership(this.as(club.actor, m.club), personId, {
+          status: "paused",
+        });
       }
       await this.backdate("club_memberships", m.club, where, {
         from: this.env.clock.past(m.since),
@@ -549,6 +553,18 @@ class CoreSeeder {
           VALUES (${id}, ${clubId}, ${i.kind}, ${email}, ${hashInvitationSecret(secret)},
                   ${i.group ? this.id(i.group) : null}, ${this.env.clock.at(i.expiresIn)}, ${maxUses},
                   ${this.id(i.createdBy)})`),
+      );
+    }
+    // Records of past exports (the export expired; the file is gone).
+    for (const x of r.memberExports) {
+      const at = this.env.clock.past(x.at) ?? new Date();
+      await this.inClub(x.requestedBy, x.club, (tx, clubId) =>
+        tx.execute(sql`
+          INSERT INTO member_exports (club_id, requested_by_person_id, status, columns, row_count,
+            expires_at, created_at, updated_at)
+          VALUES (${clubId}, ${this.id(x.requestedBy)}, 'expired',
+            ${`{${x.columns.join(",")}}`}::text[], ${x.rowCount},
+            ${new Date(at.getTime() + 86_400_000)}, ${at}, ${at})`),
       );
     }
     for (const operator of r.operators) await this.env.addPlatformOperator(this.id(operator));

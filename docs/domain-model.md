@@ -135,7 +135,42 @@ longer written, see below), `membership_type` (active, supporting, honorary,
 family), `valid_from`, `valid_to` (set exactly when `status = left`). Joining
 follows `join_policy`: `open` → active at once, `approval` → a join request
 the club decides, `invite_only` → only by invitation. Leaving also ends the
-person's group memberships, ownerships and roles in the club.
+person's group memberships, ownerships and roles in the club. Registrars and
+club managers pause, resume and end memberships and change their type in the
+member register (P1.2, `PATCH /clubs/:clubId/members/:personId/membership`);
+ending one on an earlier day sets `valid_to` to the end of that day in the
+club's time zone (its groups and roles end at once), and the last club
+manager's membership cannot end.
+
+### The member register (P1.2)
+`app.register_entries` lists, per club, everyone who is or was a member, with
+their current membership (or their last, if they left); `applied` is never
+listed. It joins people only through the club's memberships and profiles
+(tenant row-level security), and its `visible` column is the database
+backstop for protected identity: pages contain only rows the viewer may see;
+counts may include protected members without identity (not for a name
+search, which would reveal them). Search matches part of "given family" name
+(trigram index) or the member number. Filters: status (default active and
+paused), membership type, group, club role, birth year range, gender (only if
+shared with the club), missing consent. Access (`registerAccess`): **full**
+for club managers and registrars (every field the profile shows them, plus
+roles and missing consents; protected members marked), **limited** for the
+board roles `chair`, `vice_chair`, `treasurer`, `secretary`, `board_member`,
+`deputy_board_member` (name, member number, membership type, groups; only
+the name, type and group filters; never protected members).
+
+### `member_exports`
+A CSV export of the register (club-owned): `requested_by_person_id`, `status`
+(queued, ready, failed, expired), `filter` (the register filter: IDs and enum
+values only), `columns`, `include_protected`, `row_count`, `object_key`
+(`exports/<club_id>/<id>.csv` in the files bucket), `expires_at` (24 hours
+after it is ready), `error_code`. The insert trigger queues the worker job
+(`members:export`), which writes the file in batches to object storage in the
+requester's language (UTF-8 with byte order mark, formulas neutralised,
+protected members only when included, then marked "do not share") and fails
+the export if the requester has lost the role. Only the requester downloads
+it (a pre-signed link valid five minutes); `members:expire_exports` deletes
+the file after 24 hours and keeps the row as a record.
 
 ### `groups` (ADR 0019)
 `id`, `club_id`, `parent_group_id` (optional hierarchy: section → team), `kind`
@@ -368,7 +403,9 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `club.read` | club | insiders |
 | `club.settings.update` | club | club managers, with MFA |
 | `club.roles.manage` | club | club managers, with MFA |
-| `club.members.read` | club | club managers, registrars (the member register, P1.2; today it only shows the web app's "Members" entry) |
+| `club.members.read` | club | the member register (P1.2): club managers and registrars (full), the board roles (limited); see "The member register" |
+| `club.members.manage` | club | registrars; club managers with MFA (pause, resume, end, change type) |
+| `club.members.export` | club | club managers and registrars, with MFA and a login in the last 15 minutes |
 | `group.read` | group | insiders; archived groups only managers, registrars and owners |
 | `group.update` | group | club managers, owners |
 | `group.owners.manage` | group | club managers; owners if the club allows co-owners |

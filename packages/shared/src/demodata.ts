@@ -21,6 +21,7 @@ import {
   SHAREABLE_PERSON_FIELDS,
   WAITLIST_STATUSES,
 } from "./domain/core.ts";
+import { MEMBER_EXPORT_COLUMNS } from "./domain/members.ts";
 import { PostalAddressSchema } from "./domain/schemas.ts";
 import { z } from "./zod.ts";
 
@@ -142,9 +143,9 @@ export const DemoRelationshipsFileSchema = z.object({
       person: key,
       club: key,
       membershipType: z.enum(MEMBERSHIP_TYPES).default("active"),
-      /** active (added by `by`, default the club's actor), applied (join request pending), left. */
+      /** active (added by `by`, default the club's actor), paused (by the club's actor), left. */
       /** Applications are join requests (joinRequests below), not memberships (P1.1). */
-      status: z.enum(["active", "left"]).default("active"),
+      status: z.enum(["active", "paused", "left"]).default("active"),
       by: key.nullable().default(null),
       since,
       until: since,
@@ -260,6 +261,18 @@ export const DemoRelationshipsFileSchema = z.object({
       expiresIn: RelativeTimeSchema,
     }),
   ),
+  /** Past exports of the member register (P1.2): records only, their files are gone. */
+  memberExports: z
+    .array(
+      z.object({
+        club: key,
+        requestedBy: key,
+        columns: z.array(z.enum(MEMBER_EXPORT_COLUMNS)).min(1),
+        rowCount: z.number().int().min(0),
+        at: RelativeTimeSchema,
+      }),
+    )
+    .default([]),
 });
 export type DemoRelationships = z.infer<typeof DemoRelationshipsFileSchema>;
 

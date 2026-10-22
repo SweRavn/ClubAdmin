@@ -38,6 +38,8 @@ export const DOMAIN_EVENTS = {
     change: z.enum(["appointed", "removed", "handed_over", "claimed", "reassigned"]),
   }),
   "club_creation_request.decided": z.object({ requestId: id }),
+  /** Member register (P1.2): every club manager hears about an export. */
+  "members.exported": z.object({ exportId: id, clubId: id }),
 } as const;
 
 export type DomainEventType = keyof typeof DOMAIN_EVENTS;

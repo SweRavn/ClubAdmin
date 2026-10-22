@@ -11,6 +11,7 @@ import { ClubsModule } from "./modules/clubs/index.ts";
 import { GroupsModule } from "./modules/groups/index.ts";
 import { GuardianshipsModule } from "./modules/guardianships/index.ts";
 import { JoiningModule } from "./modules/joining/index.ts";
+import { MembersModule } from "./modules/members/index.ts";
 import { MembershipsModule } from "./modules/memberships/index.ts";
 import { OnboardingModule } from "./modules/onboarding/index.ts";
 import { PeopleModule } from "./modules/people/index.ts";
@@ -31,6 +32,7 @@ const MODULES = [
   MembershipsModule,
   GuardianshipsModule,
   JoiningModule,
+  MembersModule,
   PersonProfilesModule,
   BackupsModule,
 ];

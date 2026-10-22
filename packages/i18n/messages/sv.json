@@ -194,7 +194,43 @@
   },
   "members": {
     "title": "Medlemmar i {club}",
-    "comingSoon": "Medlemsregistret kommer i en senare version. Till dess kan du se medlemmarna i varje grupp."
+    "searchLabel": "Sök på namn eller medlemsnummer",
+    "filters": "Filter",
+    "status": "Status",
+    "type": "Medlemstyp",
+    "group": "Grupp",
+    "role": "Roll",
+    "bornFrom": "Född från (år)",
+    "bornTo": "Född till och med (år)",
+    "gender": "Kön (där det delats)",
+    "missingConsent": "Saknar samtycke",
+    "any": "Alla",
+    "apply": "Visa",
+    "clear": "Rensa filter",
+    "sort": "Sortera efter",
+    "sortName": "Namn",
+    "sortMemberNumber": "Medlemsnummer",
+    "sortJoined": "Inträdesdatum",
+    "order": "Ordning",
+    "orderAsc": "Stigande",
+    "orderDesc": "Fallande",
+    "total": "{count, plural, one {# medlem} other {# medlemmar}}",
+    "facet": "{label} ({count})",
+    "empty": "Inga medlemmar matchar.",
+    "limited": "Du ser styrelsens lista: namn, medlemsnummer, medlemstyp och grupper.",
+    "memberNumber": "Nr {number}",
+    "born": "Född {date}",
+    "missingConsents": "Saknar samtycke för: {purposes}",
+    "exports": "Exporter",
+    "export": "Exportera listan",
+    "membershipTitle": "Medlemskap",
+    "pause": "Gör medlemskapet vilande",
+    "resume": "Återuppta medlemskapet",
+    "changeType": "Byt medlemstyp",
+    "end": "Avsluta medlemskapet",
+    "endedOn": "Sista dag",
+    "endHint": "När medlemskapet avslutas avslutas också personens grupper, gruppansvar och roller i föreningen.",
+    "updated": "Medlemskapet har ändrats."
   },
   "time": {
     "viewerZone": "{time} hos dig ({zone})"
@@ -317,6 +353,10 @@
       "approvedBody": "Din ansökan om att skapa {club} har godkänts. Du är dess första föreningsansvariga.\n\nÖppna föreningen:\n{url}",
       "rejectedSubject": "Din ansökan om att skapa {club}",
       "rejectedBody": "Din ansökan om att skapa {club} har inte godkänts.{hasMessage, select, yes {\n\nMeddelande:\n{message}} other {}}"
+    },
+    "membersExported": {
+      "subject": "{club}: medlemsregistret har exporterats",
+      "body": "{requester} har exporterat medlemsregistret i {club} ({columns}).{includeProtected, select, yes {\n\nExporten innehåller medlemmar med skyddade personuppgifter.} other {}}\n\nAlla föreningsansvariga får det här mejlet vid varje export. Se exporterna:\n{url}"
     }
   },
   "profileForm": {
@@ -472,6 +512,67 @@
     "rate_limited": "För många försök. Försök igen senare.",
     "invalid_input": "Kontrollera formuläret.",
     "validation": "Kontrollera formuläret.",
-    "failed": "Det gick inte. Försök igen."
+    "failed": "Det gick inte. Försök igen.",
+    "register_filter_not_allowed": "Det filtret är inte tillgängligt för dig.",
+    "export_limit_reached": "För många exporter i dag. Försök igen i morgon.",
+    "export_not_available": "Exporten kan inte längre laddas ner.",
+    "export_storage_unavailable": "Exporter är inte tillgängliga i den här installationen.",
+    "invalid_end_date": "Slutdatumet får inte ligga i framtiden eller före medlemskapets början.",
+    "reauthentication_required": "Logga in igen först för att exportera (du loggade in för mer än 15 minuter sedan).",
+    "membership_status_invalid": "Medlemskapet kan inte ändras på det sättet."
+  },
+  "memberExport": {
+    "columns": {
+      "name": "Namn",
+      "memberNumber": "Medlemsnummer",
+      "birthDate": "Födelsedatum",
+      "gender": "Kön",
+      "status": "Status",
+      "membershipType": "Medlemstyp",
+      "joinedOn": "Inträde",
+      "leftOn": "Utträde",
+      "groups": "Grupper",
+      "roles": "Roller",
+      "phone": "Telefon",
+      "address": "Adress",
+      "guardians": "Vårdnadshavare",
+      "missingConsents": "Saknade samtycken"
+    },
+    "protectedColumn": "Skyddade personuppgifter: dela inte",
+    "protectedYes": "SKYDDAD"
+  },
+  "membershipTypes": {
+    "active": "Aktiv",
+    "supporting": "Stödmedlem",
+    "honorary": "Hedersmedlem",
+    "family": "Familjemedlem"
+  },
+  "consentPurposes": {
+    "photo_publication": "Publicering av foto",
+    "video_publication": "Publicering av video",
+    "streaming": "Livesändning",
+    "marketing": "Marknadsföring",
+    "federation_sharing": "Delning med förbund"
+  },
+  "memberExports": {
+    "title": "Exporter av medlemsregistret",
+    "intro": "Exporter förbereds i bakgrunden. Bara den som beställde en export kan ladda ner den, under 24 timmar. Alla föreningsansvariga får veta om varje export.",
+    "filterNote": "Exporten innehåller medlemmarna i listan du kom från (dess sökning och filter).",
+    "columns": "Kolumner",
+    "includeProtected": "Ta med medlemmar med skyddade personuppgifter (markerade ”dela inte”)",
+    "create": "Exportera",
+    "requested": "Exporten förbereds. Ladda om sidan om en stund.",
+    "list": "Senaste exporterna",
+    "empty": "Inga exporter än.",
+    "byProtected": "Någon med skyddade personuppgifter",
+    "rows": "{count, plural, one {# medlem} other {# medlemmar}}",
+    "download": "Ladda ner",
+    "mfa": "Exporter kräver inloggning med en andra faktor. Logga ut och logga in igen med den.",
+    "status": {
+      "queued": "Förbereds",
+      "ready": "Klar",
+      "failed": "Misslyckades",
+      "expired": "Har gått ut"
+    }
   }
 }

@@ -68,11 +68,11 @@ function lookup(catalogue: Catalogue, key: string): string | undefined {
   return typeof node === "string" ? node : undefined;
 }
 
-/** Renders a message of the email namespace; Norwegian falls back to English. */
-export function render(locale: Locale, key: string, values: Values): string {
+/** Renders a message of the email namespace (or another prefix); Norwegian falls back to English. */
+export function render(locale: Locale, key: string, values: Values, namespace = "email."): string {
   const message =
-    lookup(catalogues[locale], `email.${key}`) ?? lookup(catalogues.en, `email.${key}`);
-  if (!message) throw new Error(`missing message email.${key}`);
+    lookup(catalogues[locale], `${namespace}${key}`) ?? lookup(catalogues.en, `${namespace}${key}`);
+  if (!message) throw new Error(`missing message ${namespace}${key}`);
   return String(new IntlMessageFormat(message, locale).format(values));
 }
 
@@ -144,6 +144,7 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
       "join_request.decided",
       "club.manager.changed",
       "club_creation_request.decided",
+      "members.exported",
     ],
     async handle(event, tx) {
       switch (event.type) {
@@ -284,6 +285,52 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
             render(locale, `clubCreation.${kind}Body`, values),
             request.name,
           );
+          return;
+        }
+        case "members.exported": {
+          const { exportId, clubId } = DOMAIN_EVENTS["members.exported"].parse(event.payload);
+          await inClub(tx, clubId);
+          const { rows } = await tx.execute<{
+            requested_by_person_id: string;
+            columns: string[];
+            include_protected: boolean;
+          }>(sql`
+            SELECT requested_by_person_id, columns, include_protected
+            FROM public.member_exports WHERE id = ${exportId}`);
+          const exported = rows[0];
+          const c = await club(tx, clubId);
+          if (!exported || !c) return;
+          const { rows: managers } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM public.club_role_assignments
+            WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL`);
+          // Managers see protected people of their club (ADR 0022).
+          const requester = await nameFor(tx, exported.requested_by_person_id);
+          for (const to of await recipients(
+            tx,
+            managers.map((m) => m.person_id),
+          )) {
+            const locale = pickLocale(to.locale, c.default_locale);
+            const columns = new Intl.ListFormat(locale, { type: "conjunction" }).format(
+              exported.columns.map((column) =>
+                render(locale, `memberExport.columns.${column}`, {}, ""),
+              ),
+            );
+            const values = {
+              club: c.name,
+              requester,
+              columns,
+              includeProtected: exported.include_protected ? "yes" : "no",
+              url: link(`/clubs/${clubId}/members/exports`),
+            };
+            await send(
+              event,
+              to,
+              locale,
+              render(locale, "membersExported.subject", values),
+              render(locale, "membersExported.body", values),
+              c.name,
+            );
+          }
           return;
         }
         default:

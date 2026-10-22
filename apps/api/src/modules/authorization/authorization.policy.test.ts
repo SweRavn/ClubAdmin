@@ -12,7 +12,7 @@ import {
   personResource,
   relationships,
 } from "../../testing/authorization.ts";
-import { policyFor, policyGaps, profileAccess } from "./authorization.policy.ts";
+import { policyFor, policyGaps, profileAccess, registerAccess } from "./authorization.policy.ts";
 import type { Resource } from "./policy.ts";
 import type { Actor, RelationshipSet } from "./relationship-set.ts";
 
@@ -160,8 +160,30 @@ const CASES: Record<Permission, Case[]> = {
   "club.members.read": [
     { name: "manager", actor: manager, resource: clubR, allowed: true },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer (limited)", actor: treasurer, resource: clubR, allowed: true },
+    { name: "chair (limited)", actor: chair, resource: clubR, allowed: true },
+    {
+      name: "auditor",
+      actor: as({ ...member(), roles: [{ clubId: club, role: "auditor" }] }),
+      resource: clubR,
+      allowed: false,
+    },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.members.manage": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.members.export": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
   "group.read": [
@@ -478,6 +500,25 @@ describe("policies", () => {
         resource: platformR,
       }),
     ).toBe(true);
+  });
+});
+
+describe("registerAccess", () => {
+  it("gives administrators the full register and the board the limited one", () => {
+    expect(registerAccess(manager, club)).toBe("full");
+    expect(registerAccess(registrar, club)).toBe("full");
+    expect(registerAccess(treasurer, club)).toBe("limited");
+    expect(registerAccess(chair, club)).toBe("limited");
+    expect(registerAccess(coach, club)).toBeNull();
+    expect(registerAccess(otherClubManager, club)).toBeNull();
+  });
+
+  it("requires a second factor for exports, and for managers changing memberships", () => {
+    const exports = policyFor("club.members.export")!;
+    expect(exports.requiresMfa({ actor: registrar, resource: clubR })).toBe(true);
+    const manage = policyFor("club.members.manage")!;
+    expect(manage.requiresMfa({ actor: managerWithoutMfa, resource: clubR })).toBe(true);
+    expect(manage.requiresMfa({ actor: registrar, resource: clubR })).toBe(false);
   });
 });
 

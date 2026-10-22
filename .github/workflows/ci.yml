@@ -124,7 +124,7 @@ jobs:
 
       - name: Start the API, the worker and the web app (DEV_AUTH on, as in development)
         run: |
-          echo "127.0.0.1 clubadmin.localhost auth.clubadmin.localhost api.clubadmin.localhost mail.clubadmin.localhost" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 clubadmin.localhost auth.clubadmin.localhost api.clubadmin.localhost mail.clubadmin.localhost s3.clubadmin.localhost" | sudo tee -a /etc/hosts
           set -a; . ./.env.local; set +a
           pnpm --filter @clubadmin/api build
           pnpm --filter @clubadmin/worker build
@@ -286,7 +286,7 @@ jobs:
 
       - name: Start the API (DEV_AUTH on, as in development)
         run: |
-          echo "127.0.0.1 clubadmin.localhost auth.clubadmin.localhost api.clubadmin.localhost mail.clubadmin.localhost" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 clubadmin.localhost auth.clubadmin.localhost api.clubadmin.localhost mail.clubadmin.localhost s3.clubadmin.localhost" | sudo tee -a /etc/hosts
           set -a; . ./.env.local; set +a
           pnpm --filter @clubadmin/api build
           (cd apps/api && nohup node --enable-source-maps --import ./dist/instrumentation.js ./dist/main.js > "$RUNNER_TEMP/api.log" 2>&1 &)

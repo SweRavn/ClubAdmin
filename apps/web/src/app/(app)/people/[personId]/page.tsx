@@ -2,15 +2,17 @@
 // A person's profile as the viewer may see it: the API leaves out fields the
 // relationship does not include (docs/domain-model.md, "Field visibility").
 import { enumKey } from "@clubadmin/i18n";
+import { MEMBERSHIP_TYPES } from "@clubadmin/shared";
 import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import {
   ActionForm,
   buttonClass,
+  inputClass,
   secondaryButtonClass,
 } from "../../../../components/action-form.tsx";
-import { FormError } from "../../../../components/form-error.tsx";
+import { FormError, Notice } from "../../../../components/form-error.tsx";
 import {
   getClubGroups,
   getClubManagers,
@@ -52,6 +54,13 @@ export default async function PersonPage({ params, searchParams }: Props) {
       )
     : undefined;
   const isActiveMember = profile.club?.membership?.status === "active";
+  // Registrars and club managers change memberships here (P1.2).
+  const registerClub = profile.club?.membership
+    ? mine.clubs.find(
+        (c) => c.club.id === profile.club!.clubId && c.permissions.includes("club.members.manage"),
+      )
+    : undefined;
+  const membership = profile.club?.membership;
   const managers =
     managedClub && isActiveMember && personId !== me.personId
       ? await getClubManagers(managedClub.club.id)
@@ -142,6 +151,77 @@ export default async function PersonPage({ params, searchParams }: Props) {
       ) : null}
 
       <FormError code={query.error} />
+      {query.updated ? <Notice>{t("members.updated")}</Notice> : null}
+      {registerClub &&
+      membership &&
+      membership.status !== "left" &&
+      membership.status !== "applied" ? (
+        <section
+          aria-labelledby="person-membership"
+          className="space-y-3"
+          data-testid="membership-actions"
+        >
+          <h2 id="person-membership" className="text-lg font-semibold">
+            {t("members.membershipTitle")}
+          </h2>
+          <p className="text-sm">
+            {t(enumKey("membershipTypes", membership.membershipType))}
+            {" · "}
+            {t(enumKey("membershipStatus", membership.status))}
+          </p>
+          <div className="flex flex-wrap items-end gap-2">
+            <ActionForm action="update-membership">
+              <input type="hidden" name="clubId" value={registerClub.club.id} />
+              <input type="hidden" name="personId" value={personId} />
+              <input
+                type="hidden"
+                name="change"
+                value={membership.status === "paused" ? "resume" : "pause"}
+              />
+              <button type="submit" className={secondaryButtonClass} data-testid="membership-pause">
+                {membership.status === "paused" ? t("members.resume") : t("members.pause")}
+              </button>
+            </ActionForm>
+            <ActionForm action="update-membership" className="flex items-end gap-2">
+              <input type="hidden" name="clubId" value={registerClub.club.id} />
+              <input type="hidden" name="personId" value={personId} />
+              <input type="hidden" name="change" value="type" />
+              <label className="block space-y-1">
+                <span className="text-sm">{t("members.type")}</span>
+                <select
+                  name="membershipType"
+                  defaultValue={membership.membershipType}
+                  className={inputClass}
+                >
+                  {MEMBERSHIP_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {t(enumKey("membershipTypes", type))}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className={secondaryButtonClass}>
+                {t("members.changeType")}
+              </button>
+            </ActionForm>
+          </div>
+          <ActionForm action="update-membership" className="space-y-2">
+            <input type="hidden" name="clubId" value={registerClub.club.id} />
+            <input type="hidden" name="personId" value={personId} />
+            <input type="hidden" name="change" value="end" />
+            <p className="text-sm text-muted">{t("members.endHint")}</p>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="block space-y-1">
+                <span className="text-sm">{t("members.endedOn")}</span>
+                <input type="date" name="endedOn" className={inputClass} />
+              </label>
+              <button type="submit" className={secondaryButtonClass} data-testid="membership-end">
+                {t("members.end")}
+              </button>
+            </div>
+          </ActionForm>
+        </section>
+      ) : null}
       {managers && managedClub && !alreadyManager ? (
         <section
           aria-labelledby="person-manager"

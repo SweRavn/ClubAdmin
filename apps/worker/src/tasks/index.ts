@@ -3,6 +3,7 @@
 // rows are stored in the database and may appear in logs.
 
 import { type Database, outbox, type OutboxHandler, sql } from "@clubadmin/db";
+import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 
@@ -10,12 +11,15 @@ import { generateInvoicesTask } from "../billing.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
+import { expireMemberExportsTask, memberExportTask } from "./members.ts";
 
 export interface TaskDependencies {
   db: Database;
   outboxHandlers: readonly OutboxHandler[];
   historyRetentionMonths: number;
   historyPartitionsAhead: number;
+  /** S3_* (member exports); null when not configured. */
+  storage?: ObjectStorage | null;
 }
 
 /** Does nothing; used to check that jobs are picked up. */
@@ -78,6 +82,8 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "guardianships:flag_adult_wards": flagAdultWardsTask(deps.db),
     "ops:backup_metrics": backupMetricsTask(deps.db),
     "joining:retention": joiningRetentionTask(deps.db),
+    "members:export": memberExportTask(deps.db, deps.storage ?? null),
+    "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
     "billing:generate_invoices": generateInvoicesTask,
   };
 }
@@ -86,7 +92,8 @@ export function createTaskList(deps: TaskDependencies): TaskList {
  * Graphile Worker crontab: heartbeat every minute (at most one queued),
  * history partition maintenance daily at 03:17 UTC and the adult-ward check
  * daily at 04:23 UTC (both catching up after downtime), backup metrics every
- * five minutes, joining retention daily at 04:53 UTC.
+ * five minutes, joining retention daily at 04:53 UTC, expired member exports
+ * every ten minutes.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -94,6 +101,7 @@ export const crontab = [
   "23 4 * * * guardianships:flag_adult_wards ?fill=2d",
   "*/5 * * * * ops:backup_metrics ?max=1",
   "53 4 * * * joining:retention ?fill=2d",
+  "*/10 * * * * members:expire_exports ?max=1",
 ].join("\n");
 
 /** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */

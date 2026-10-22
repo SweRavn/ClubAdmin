@@ -7,5 +7,6 @@
 export * from "./clubs.ts";
 export * from "./groups.ts";
 export * from "./joining.ts";
+export * from "./members.ts";
 export * from "./people.ts";
 export * from "./platform.ts";

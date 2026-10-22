@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { createDatabase } from "@clubadmin/db";
 import { createLogger, loadEnvFiles, onShutdown } from "@clubadmin/server-kit";
+import { ObjectStorage, objectStorageConfig } from "@clubadmin/server-kit/object-storage";
 import { run } from "graphile-worker";
 import { Redis } from "ioredis";
 
@@ -21,6 +22,8 @@ const db = createDatabase({
 const valkey = config.VALKEY_URL
   ? new Redis(config.VALKEY_URL, { maxRetriesPerRequest: 3, connectionName: "clubadmin-worker" })
   : undefined;
+const storageConfig = objectStorageConfig(config);
+const storage = storageConfig ? new ObjectStorage(storageConfig) : null;
 // Reconnects automatically; a failed handler is retried by the outbox.
 valkey?.on("error", () => undefined);
 
@@ -52,13 +55,31 @@ const runner = await run({
     }),
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
+    storage,
   }),
   crontab: config.BILLING_ENABLED ? `${crontab}\n${BILLING_CRONTAB}` : crontab,
 });
 logger.info(
-  { concurrency: config.WORKER_CONCURRENCY, mail: config.SMTP_URL ? "smtp" : "off" },
+  {
+    concurrency: config.WORKER_CONCURRENCY,
+    mail: config.SMTP_URL ? "smtp" : "off",
+    objectStorage: storage ? "s3" : "off",
+  },
   "worker started",
 );
+
+// Backstop for member exports (P1.2): the bucket deletes them after two days
+// even if the expiry job does not run.
+if (storage) {
+  storage
+    .ensureExpiryRule({ id: "member-exports", prefix: "exports/", days: 2 })
+    .then((result) => {
+      if (result === "conflict") {
+        logger.warn("the files bucket has other lifecycle rules: add one for exports/ (docs/gdpr.md)");
+      }
+    })
+    .catch((error: unknown) => logger.warn({ err: error }, "could not set the bucket lifecycle rule"));
+}
 
 onShutdown(logger, async () => {
   await runner.stop();

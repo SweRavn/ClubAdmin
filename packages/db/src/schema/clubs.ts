@@ -158,6 +158,9 @@ export const clubMemberships = pgTable(
       .on(t.clubId, t.personId)
       .where(sql`${t.validTo} IS NULL`),
     index("club_memberships_club_person_idx").on(t.clubId, t.personId),
+    // The member register (P1.2): filters by status and type, "joined" sorting.
+    index("club_memberships_register_idx").on(t.clubId, t.status, t.membershipType),
+    index("club_memberships_joined_idx").on(t.clubId, t.validFrom, t.id),
     index("club_memberships_person_active_idx")
       .on(t.personId)
       .where(sql`${t.validTo} IS NULL`),

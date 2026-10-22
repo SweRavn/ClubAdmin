@@ -12,7 +12,8 @@
     "./config": "./src/config.ts",
     "./env": "./src/env.ts",
     "./dev-tokens": "./src/dev-tokens.ts",
-    "./invitations": "./src/invitations.ts"
+    "./invitations": "./src/invitations.ts",
+    "./object-storage": "./src/object-storage.ts"
   },
   "scripts": {
     "lint": "eslint .",

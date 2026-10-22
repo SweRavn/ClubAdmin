@@ -4,7 +4,12 @@
 // otherwise (EndpointRegistry) and the policy tests cover each with allow
 // and deny cases.
 
-import { type Permission, PERMISSIONS } from "@clubadmin/shared";
+import {
+  type ClubRole,
+  type Permission,
+  PERMISSIONS,
+  type RegisterAccess,
+} from "@clubadmin/shared";
 
 import { type ClubResource, definePolicy, type PersonResource, type Policy } from "./policy.ts";
 import type { Actor } from "./relationship-set.ts";
@@ -50,6 +55,28 @@ export function profileAccess(actor: Actor, resource: PersonResource): ProfileAc
 const isAdmin = (actor: Actor, clubId: string) =>
   actor.hasClubRole(clubId, "club_manager", "registrar");
 
+/** Board roles: the limited member register (P1.2). */
+export const BOARD_ROLES: readonly ClubRole[] = [
+  "chair",
+  "vice_chair",
+  "treasurer",
+  "secretary",
+  "board_member",
+  "deputy_board_member",
+];
+
+/**
+ * How much of the member register the actor sees (P1.2), or null:
+ * - full: club managers and registrars (every field, protected members marked);
+ * - limited: board roles (name, member number, membership type, groups;
+ *   never protected members).
+ */
+export function registerAccess(actor: Actor, clubId: string): RegisterAccess | null {
+  if (isAdmin(actor, clubId)) return "full";
+  if (actor.hasClubRole(clubId, ...BOARD_ROLES)) return "limited";
+  return null;
+}
+
 export const POLICIES: readonly Policy[] = [
   definePolicy("club.read", "club", ({ actor, resource }) =>
     actor.hasClubRelationship(resource.clubId),
@@ -66,9 +93,30 @@ export const POLICIES: readonly Policy[] = [
     ({ actor, resource }) => actor.isClubManager(resource.clubId),
     { mfa: true },
   ),
-  // The member register (P1.2); the web shell shows its navigation entry.
-  definePolicy("club.members.read", "club", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
+  // The member register (P1.2): full for administrators, limited for the board.
+  definePolicy(
+    "club.members.read",
+    "club",
+    ({ actor, resource }) => registerAccess(actor, resource.clubId) !== null,
+  ),
+  // Pausing, resuming, ending and retyping memberships: registrars, and club
+  // managers with a second factor.
+  definePolicy(
+    "club.members.manage",
+    "club",
+    ({ actor, resource }) => isAdmin(actor, resource.clubId),
+    {
+      mfa: ({ actor, resource }) => !actor.hasClubRole(resource.clubId, "registrar"),
+    },
+  ),
+  // Exports of the register (the controller adds @RecentAuth(15)).
+  definePolicy(
+    "club.members.export",
+    "club",
+    ({ actor, resource }) => isAdmin(actor, resource.clubId),
+    {
+      mfa: true,
+    },
   ),
   // Group structure is not personal data: anyone related to the club sees its
   // groups; archived ones only those who administer them.

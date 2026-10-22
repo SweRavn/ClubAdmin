@@ -4,13 +4,19 @@
 // the pages work without client JavaScript. The route handler
 // (app/actions/[action]/route.ts) checks the session and the CSRF token.
 
-import { isUuid } from "@clubadmin/shared";
+import {
+  isUuid,
+  MEMBER_EXPORT_COLUMNS,
+  type MemberExportColumn,
+  MEMBERSHIP_TYPES,
+  RegisterFilterSchema,
+} from "@clubadmin/shared";
 
 import { safeReturnTo } from "./return-to.ts";
 
 export interface ApiCall {
   path: string;
-  method: "POST" | "PUT" | "DELETE";
+  method: "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
 }
 
@@ -33,6 +39,23 @@ const optional = (value: string) => (value === "" ? undefined : value);
 const back = (form: FormData, fallback = "/") => safeReturnTo(text(form, "back"), fallback);
 const withParam = (path: string, key: string, value: string) =>
   `${path}${path.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}`;
+
+/** The register filter carried by the export form (hidden fields, as in the list's URL). */
+function exportFilter(form: FormData): Record<string, unknown> {
+  const raw: Record<string, unknown> = {};
+  for (const key of Object.keys(RegisterFilterSchema.shape)) {
+    const value = text(form, `filter.${key}`);
+    if (!value) continue;
+    raw[key] =
+      key === "status" || key === "type"
+        ? value.split(",")
+        : key === "bornFrom" || key === "bornTo"
+          ? Number(value)
+          : value;
+  }
+  const parsed = RegisterFilterSchema.safeParse(raw);
+  return parsed.success ? parsed.data : {};
+}
 
 export const FORM_ACTIONS: Record<string, FormAction> = {
   "complete-profile": {
@@ -162,6 +185,49 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
         : null;
     },
     done: (form) => back(form),
+  },
+  // Member register (P1.2).
+  "create-member-export": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const columns = form
+        .getAll("column")
+        .filter((c): c is MemberExportColumn =>
+          (MEMBER_EXPORT_COLUMNS as readonly unknown[]).includes(c),
+        );
+      if (!clubId || columns.length === 0) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/member-exports`,
+        method: "POST",
+        body: {
+          filter: exportFilter(form),
+          columns,
+          includeProtected: text(form, "includeProtected") === "on",
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "requested", "1"),
+  },
+  "update-membership": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      const change = text(form, "change");
+      if (!clubId || !personId) return null;
+      const path = `/api/v1/clubs/${clubId}/members/${personId}/membership`;
+      if (change === "pause") return { path, method: "PATCH", body: { status: "paused" } };
+      if (change === "resume") return { path, method: "PATCH", body: { status: "active" } };
+      if (change === "end") {
+        const endedOn = optional(text(form, "endedOn"));
+        return { path, method: "PATCH", body: { status: "left", endedOn } };
+      }
+      const type = text(form, "membershipType");
+      if (change === "type" && (MEMBERSHIP_TYPES as readonly string[]).includes(type)) {
+        return { path, method: "PATCH", body: { membershipType: type } };
+      }
+      return null;
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
   },
   "respond-handover": {
     call: (form) => {

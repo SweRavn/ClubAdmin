@@ -194,7 +194,43 @@
   },
   "members": {
     "title": "Members of {club}",
-    "comingSoon": "The member register arrives in a later version. Until then, see the members of each group."
+    "searchLabel": "Search by name or member number",
+    "filters": "Filters",
+    "status": "Status",
+    "type": "Membership type",
+    "group": "Group",
+    "role": "Role",
+    "bornFrom": "Born from (year)",
+    "bornTo": "Born up to (year)",
+    "gender": "Gender (where shared)",
+    "missingConsent": "Missing consent",
+    "any": "Any",
+    "apply": "Show",
+    "clear": "Clear filters",
+    "sort": "Sort by",
+    "sortName": "Name",
+    "sortMemberNumber": "Member number",
+    "sortJoined": "Join date",
+    "order": "Order",
+    "orderAsc": "Ascending",
+    "orderDesc": "Descending",
+    "total": "{count, plural, one {# member} other {# members}}",
+    "facet": "{label} ({count})",
+    "empty": "No members match.",
+    "limited": "You see the board's list: name, member number, membership type and groups.",
+    "memberNumber": "No. {number}",
+    "born": "Born {date}",
+    "missingConsents": "No consent for: {purposes}",
+    "exports": "Exports",
+    "export": "Export this list",
+    "membershipTitle": "Membership",
+    "pause": "Pause membership",
+    "resume": "Resume membership",
+    "changeType": "Change type",
+    "end": "End membership",
+    "endedOn": "Last day",
+    "endHint": "Ending a membership also ends the person's groups, group ownerships and club roles.",
+    "updated": "The membership was updated."
   },
   "time": {
     "viewerZone": "{time} for you ({zone})"
@@ -317,6 +353,10 @@
       "approvedBody": "Your request to create {club} was approved. You are its first club manager.\n\nOpen the club:\n{url}",
       "rejectedSubject": "Your request to create {club}",
       "rejectedBody": "Your request to create {club} was not approved.{hasMessage, select, yes {\n\nMessage:\n{message}} other {}}"
+    },
+    "membersExported": {
+      "subject": "{club}: the member register was exported",
+      "body": "{requester} exported the member register of {club} ({columns}).{includeProtected, select, yes {\n\nThe export includes members with protected identity.} other {}}\n\nEvery club manager gets this email for each export. See the exports:\n{url}"
     }
   },
   "profileForm": {
@@ -472,6 +512,67 @@
     "rate_limited": "Too many attempts. Try again later.",
     "invalid_input": "Please check the form.",
     "validation": "Please check the form.",
-    "failed": "That did not work. Try again."
+    "failed": "That did not work. Try again.",
+    "register_filter_not_allowed": "That filter is not available to you.",
+    "export_limit_reached": "Too many exports today. Try again tomorrow.",
+    "export_not_available": "This export can no longer be downloaded.",
+    "export_storage_unavailable": "Exports are not available on this installation.",
+    "invalid_end_date": "The end date cannot be in the future or before the membership started.",
+    "reauthentication_required": "For exports, log in again first (you logged in more than 15 minutes ago).",
+    "membership_status_invalid": "This membership cannot be changed that way."
+  },
+  "memberExport": {
+    "columns": {
+      "name": "Name",
+      "memberNumber": "Member number",
+      "birthDate": "Birth date",
+      "gender": "Gender",
+      "status": "Status",
+      "membershipType": "Membership type",
+      "joinedOn": "Joined",
+      "leftOn": "Left",
+      "groups": "Groups",
+      "roles": "Roles",
+      "phone": "Phone",
+      "address": "Address",
+      "guardians": "Guardians",
+      "missingConsents": "Missing consents"
+    },
+    "protectedColumn": "Protected identity: do not share",
+    "protectedYes": "PROTECTED"
+  },
+  "membershipTypes": {
+    "active": "Active",
+    "supporting": "Supporting",
+    "honorary": "Honorary",
+    "family": "Family"
+  },
+  "consentPurposes": {
+    "photo_publication": "Photo publication",
+    "video_publication": "Video publication",
+    "streaming": "Live streaming",
+    "marketing": "Marketing",
+    "federation_sharing": "Sharing with federations"
+  },
+  "memberExports": {
+    "title": "Exports of the member register",
+    "intro": "Exports are prepared in the background. Only the person who asked for one can download it, for 24 hours. Every club manager is told about each export.",
+    "filterNote": "The export contains the members of the list you came from (its search and filters).",
+    "columns": "Columns",
+    "includeProtected": "Include members with protected identity (marked “do not share”)",
+    "create": "Export",
+    "requested": "The export is being prepared. Reload this page in a moment.",
+    "list": "Recent exports",
+    "empty": "No exports yet.",
+    "byProtected": "Someone with protected identity",
+    "rows": "{count, plural, one {# member} other {# members}}",
+    "download": "Download",
+    "mfa": "Exports need a login with a second factor. Log out and log in again with it.",
+    "status": {
+      "queued": "Being prepared",
+      "ready": "Ready",
+      "failed": "Failed",
+      "expired": "Expired"
+    }
   }
 }

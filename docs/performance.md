@@ -31,6 +31,9 @@ budgets are requirements; CI measures them.
 - `pg_stat_statements` + slow-query log; CI integration tests fail on queries
   without index usage on seeded large-volume data (`pnpm db:seed --scenario load`).
 - PgBouncer in transaction mode in front of Postgres for the hosted service.
+- JIT compilation is off for the application roles (`db:bootstrap`): for
+  short OLTP queries it costs more than it saves (about 90 ms on a page of a
+  10,000-member register).
 
 ### API
 - Permission set loaded once per request, cached in Valkey with version
@@ -99,9 +102,22 @@ budgets are requirements; CI measures them.
   BEGIN/COMMIT). A role change reaches the API through the worker in well
   under a second (`worker.integration.test.ts`). The query-plans test also
   covers the relationship set, a roster page and a club's protected set.
+- Member register (P1.2, `register-plans.integration.test.ts`: one club with
+  10,000 members among 100,000 people, as the club's registrar with row-level
+  security): p95 of a 50-row page sorted by name about 80–95 ms, search as you
+  type about 70–90 ms, a group with missing consent about 20 ms, facets about
+  35 ms (budget 100 ms; the test allows 150 ms on shared runners). A page
+  is one statement (filters, count, groups, roles, consents and guardians of
+  its people) plus the names and the cached protected set. Sorting the whole
+  club by name dominates; the register view reaches people through the
+  club's memberships (no per-row `can_see_person`), and its outer joins let
+  counts skip people. The query plans use indexes for every club table and,
+  for searches and filters, for people. Exports of 10,000 members take about
+  a second in the worker (batches of 1,000 into a multipart upload).
 - Seeding (P0.8): `pnpm db:reset` with the demo scenario about 7 s including
   the build (budget 15 s; the seed itself about 4 s); `pnpm db:reset --scenario
-  load` (1,000 clubs, 200,000 people) about 100 s locally (budget 10 minutes,
+  load` (1,000 clubs, 200,000 people, plus one club of 10,000 members for the
+  register) about 100 s locally (budget 10 minutes,
   nightly workflow). The nightly job only seeds so far; measuring the budgets
   against that data is [#10](https://github.com/SweRavn/ClubAdmin/issues/10).
 - Web (P0.9, ADR 0027), on the production build behind Caddy in CI:

@@ -35,6 +35,11 @@ export async function bootstrapRoles(
   passwords: BootstrapOptions["passwords"],
 ): Promise<void> {
   await client.query(readFileSync(ROLES_SQL, "utf8"));
+  // The application runs short queries: JIT compilation costs more than it
+  // saves (about 90 ms on a page of a 10,000-member register, P1.2).
+  for (const role of [ROLES.app, ROLES.operator]) {
+    await client.query(`ALTER ROLE ${client.escapeIdentifier(role)} SET jit = off`);
+  }
   for (const [key, password] of Object.entries(passwords) as [RoleKey, string][]) {
     await client.query(
       `ALTER ROLE ${client.escapeIdentifier(ROLES[key])} LOGIN PASSWORD ${client.escapeLiteral(password)}`,

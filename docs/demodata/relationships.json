@@ -125,7 +125,8 @@
     {
       "person": "lars",
       "club": "svk",
-      "since": "-1y"
+      "since": "-1y",
+      "status": "paused"
     },
     {
       "person": "ola",
@@ -238,6 +239,12 @@
       "club": "fil",
       "role": "board_member",
       "since": "-2y"
+    },
+    {
+      "person": "johan",
+      "club": "svk",
+      "role": "registrar",
+      "since": "-6mo"
     }
   ],
   "groupMemberships": [
@@ -501,6 +508,20 @@
       "grantedBy": "karin",
       "reason": "Help importing the member register",
       "expiresIn": "+7d"
+    }
+  ],
+  "memberExports": [
+    {
+      "club": "svk",
+      "requestedBy": "sara",
+      "columns": [
+        "name",
+        "memberNumber",
+        "membershipType",
+        "groups"
+      ],
+      "rowCount": 14,
+      "at": "-3d"
     }
   ]
 }

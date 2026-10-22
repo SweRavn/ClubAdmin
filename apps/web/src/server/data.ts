@@ -16,6 +16,7 @@ import {
   isUuid,
   JoinRequestListSchema,
   ManagerListSchema,
+  MemberExportListSchema,
   MeResponseSchema,
   MyClubCreationRequestsSchema,
   MyClubsSchema,
@@ -25,6 +26,8 @@ import {
   MyProfileSchema,
   MyWardsSchema,
   PersonProfileSchema,
+  RegisterFacetsSchema,
+  RegisterPageSchema,
   SessionListSchema,
   SourceResponseSchema,
   VersionResponseSchema,
@@ -160,6 +163,20 @@ export const getClubInvitations = cache((clubId: string) =>
 );
 export const getClubManagers = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/managers`, ManagerListSchema),
+);
+
+// Member register (P1.2).
+export const getRegister = cache((clubId: string, query: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/members?${query}`, RegisterPageSchema),
+);
+export const getRegisterFacets = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/members/facets`, RegisterFacetsSchema),
+);
+/** Recent exports, or null without a second factor (the API answers 403). */
+export const getMemberExports = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/member-exports?limit=50`, MemberExportListSchema, {
+    nullOn: [403],
+  }),
 );
 
 /** Which club an invitation link is for, without a session; null if it is not usable. */

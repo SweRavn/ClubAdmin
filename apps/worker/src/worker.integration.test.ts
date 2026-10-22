@@ -8,8 +8,9 @@ import {
   createTestDatabase,
   type TestDatabase,
 } from "@clubadmin/db/testing";
-import { createLogger } from "@clubadmin/server-kit";
+import { createLogger, loadEnvFiles } from "@clubadmin/server-kit";
 import { emailInvitationToken } from "@clubadmin/server-kit/invitations";
+import { ObjectStorage, objectStorageConfig } from "@clubadmin/server-kit/object-storage";
 import { relationshipVersionKey, uuidv7 } from "@clubadmin/shared";
 import { run, runOnce } from "graphile-worker";
 import { Redis } from "ioredis";
@@ -23,6 +24,7 @@ import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 import { deleteExpiredJoiningData } from "./tasks/joining.ts";
+import { expireMemberExports, runMemberExport } from "./tasks/members.ts";
 
 let t: TestDatabase;
 const logger = graphileLogger(
@@ -329,6 +331,163 @@ describe("transactional email (P1.1)", () => {
     expect(managerMails.every((m) => m.text.includes("Nils Ek"))).toBe(true);
     expect(new Set(managerMails.map((m) => m.messageId)).size).toBe(2);
     void manager;
+  });
+});
+
+describe("member exports (P1.2)", () => {
+  // Garage of the local services (.env.local).
+  loadEnvFiles();
+  const config = objectStorageConfig({
+    S3_ENDPOINT: process.env.S3_ENDPOINT,
+    S3_REGION: process.env.S3_REGION ?? "garage",
+    S3_BUCKET_FILES: process.env.S3_BUCKET_FILES ?? "clubadmin-files",
+    S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
+    S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+  });
+  if (!config) throw new Error("S3_* must be set (pnpm dev:services)");
+  const storage = new ObjectStorage(config);
+  const fetchFile = async (key: string) =>
+    fetch(storage.presignDownload(key, { expiresSeconds: 60, filename: "test.csv" }));
+
+  async function clubWithMembers() {
+    const club = uuidv7();
+    const [manager, anna, nadia, formula] = [uuidv7(), uuidv7(), uuidv7(), uuidv7()];
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        `INSERT INTO people (id, given_name, family_name, birth_date, phone, protected_identity) VALUES
+           ($1, 'Maja', 'Chef', '1980-01-01', NULL, false),
+           ($2, 'Anna', 'Berg', '2017-04-02', '+46 70 111 11 11', false),
+           ($3, 'Nadia', 'Skyddad', '2016-01-01', NULL, true),
+           ($4, '=HYPERLINK("x")', 'Test', '2001-01-01', NULL, false)`,
+        [manager, anna, nadia, formula],
+      );
+      await session.query(
+        `INSERT INTO accounts (person_id, email, email_verified_at, locale) VALUES ($1, $2, now(), 'sv')`,
+        [manager, `maja-${manager.slice(-8)}@example.test`],
+      );
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Export IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+        [club, `export-${club.slice(-8)}`],
+      );
+      await session.query(
+        `INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')`,
+        [club, manager],
+      );
+      for (const person of [manager, anna, nadia, formula]) {
+        await session.query(
+          `INSERT INTO club_memberships (club_id, person_id, status, valid_from)
+           VALUES ($1, $2, 'active', '2024-03-01T12:00:00Z')`,
+          [club, person],
+        );
+        await session.query(
+          `INSERT INTO club_profiles (club_id, person_id, shared_fields) VALUES ($1, $2, $3)`,
+          [club, person, person === anna ? "{phone}" : "{}"],
+        );
+      }
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    return { club, manager, anna, nadia };
+  }
+
+  const requestExport = (club: string, manager: string, includeProtected: boolean) =>
+    t.db.withSystem("test", { clubId: club }, async (tx) => {
+      const { rows } = await tx.execute<{ id: string }>(sql`
+        INSERT INTO member_exports (club_id, requested_by_person_id, columns, include_protected)
+        VALUES (${club}, ${manager}, '{name,memberNumber,phone,joinedOn}', ${includeProtected})
+        RETURNING id`);
+      return rows[0]!.id;
+    });
+
+  it("writes the CSV in the requester's language, without protected members unless chosen", async () => {
+    const { club, manager } = await clubWithMembers();
+    const exportId = await requestExport(club, manager, false);
+    expect(await runMemberExport(t.db, storage, exportId, club)).toBe(3);
+    const { rows } = await t.query("admin", "SELECT * FROM member_exports WHERE id = $1", [
+      exportId,
+    ]);
+    expect(rows[0]).toMatchObject({
+      status: "ready",
+      row_count: 3,
+      object_key: `exports/${club}/${exportId}.csv`,
+    });
+    const res = await fetchFile(rows[0]!.object_key as string);
+    expect(res.status).toBe(200);
+    const bytes = Buffer.from(await res.arrayBuffer());
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const lines = bytes.subarray(3).toString("utf8").trimEnd().split("\r\n");
+    expect(lines[0]).toBe("Namn,Medlemsnummer,Telefon,Inträde");
+    expect(lines).toHaveLength(4);
+    expect(lines.some((l) => l.includes("Nadia"))).toBe(false);
+    // Phone only where shared; formulas neutralised; ISO dates in the club's time zone.
+    expect(lines.find((l) => l.startsWith("Anna Berg"))).toMatch(
+      /^Anna Berg,\d+,'\+46 70 111 11 11,2024-03-01$/,
+    );
+    expect(lines.find((l) => l.includes("HYPERLINK"))).toMatch(/^"'=HYPERLINK\(""x""\) Test",/);
+
+    const marked = await requestExport(club, manager, true);
+    expect(await runMemberExport(t.db, storage, marked, club)).toBe(4);
+    const text = await (await fetchFile(`exports/${club}/${marked}.csv`)).text();
+    expect(text).toContain("Skyddade personuppgifter: dela inte");
+    expect(text).toMatch(/Nadia Skyddad,\d+,,2024-03-01,SKYDDAD/);
+  });
+
+  it("refuses requesters who lost the role, and deletes files after 24 hours", async () => {
+    const { club, manager, anna } = await clubWithMembers();
+    const refused = await requestExport(club, anna, false);
+    expect(await runMemberExport(t.db, storage, refused, club)).toBeNull();
+    const failed = await t.query(
+      "admin",
+      "SELECT status, error_code FROM member_exports WHERE id = $1",
+      [refused],
+    );
+    expect(failed.rows[0]).toEqual({ status: "failed", error_code: "not_allowed" });
+
+    const exportId = await requestExport(club, manager, false);
+    await runMemberExport(t.db, storage, exportId, club);
+    await t.query(
+      "admin",
+      "UPDATE member_exports SET expires_at = now() - interval '1 minute' WHERE id = $1",
+      [exportId],
+    );
+    const result = await expireMemberExports(t.db, storage);
+    expect(result.expired).toBeGreaterThanOrEqual(1);
+    const { rows } = await t.query(
+      "admin",
+      "SELECT status, object_key FROM member_exports WHERE id = $1",
+      [exportId],
+    );
+    expect(rows[0]).toEqual({ status: "expired", object_key: null });
+    expect((await fetchFile(`exports/${club}/${exportId}.csv`)).status).toBe(404);
+  });
+
+  it("sets the bucket's lifecycle rule for exports once", async () => {
+    const rule = { id: "member-exports", prefix: "exports/", days: 2 };
+    expect(["added", "present"]).toContain(await storage.ensureExpiryRule(rule));
+    expect(await storage.ensureExpiryRule(rule)).toBe("present");
+  });
+
+  it("emails every club manager about an export", async () => {
+    const { club, manager } = await clubWithMembers();
+    const exportId = await requestExport(club, manager, true);
+    const eventId = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "members.exported", { exportId, clubId: club }),
+    );
+    const provider = memoryMailProvider();
+    await outbox.dispatch(t.db, eventId, [
+      mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: undefined }),
+    ]);
+    expect(provider.sent).toHaveLength(1);
+    const [mail] = provider.sent;
+    expect(mail!.subject).toBe("Export IF: medlemsregistret har exporterats");
+    expect(mail!.text).toContain("Maja Chef har exporterat medlemsregistret i Export IF");
+    expect(mail!.text).toContain("Namn, Medlemsnummer, Telefon och Inträde");
+    expect(mail!.text).toContain("skyddade personuppgifter");
+    expect(mail!.text).toContain(`https://clubadmin.test/clubs/${club}/members/exports`);
   });
 });
 

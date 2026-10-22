@@ -23,6 +23,7 @@ export * as tables from "./infra/tables.ts";
 export { dataKeyStore, type StoredDataKey } from "./keys.ts";
 export type { MigrationStatus } from "./migrate.ts";
 export { type DispatchResult, outbox, type OutboxEvent, type OutboxHandler } from "./outbox.ts";
+export { DEFAULT_REGISTER_STATUSES, registerConditions, registerSortKey } from "./register.ts";
 export * as schema from "./schema/index.ts";
 // Query operators for repositories (only packages/db depends on drizzle-orm).
 export {
@@ -35,6 +36,7 @@ export {
   isNull,
   ne,
   or,
+  type SQL,
   sql,
   type SQLWrapper,
 } from "drizzle-orm";

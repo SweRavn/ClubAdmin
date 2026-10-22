@@ -25,20 +25,20 @@ with content type `application/problem+json`:
 | Type | Status | Meaning |
 |---|---|---|
 | <a id="bad-request"></a>`bad-request` | 400 | Malformed request, e.g. invalid JSON, a pagination `cursor` that is not an item of the list (`detail` `invalid_cursor`) or an `X-On-Behalf-Of` that is not a person ID |
-| <a id="validation"></a>`validation` | 400 | Request does not match the schema; see `errors` |
+| <a id="validation"></a>`validation` | 400 | Request does not match the schema; see `errors`. Also `detail` `invalid_end_date` (a membership cannot end in the future or before it started) |
 | <a id="unauthenticated"></a>`unauthenticated` | 401 | Not logged in, or the session expired |
-| <a id="forbidden"></a>`forbidden` | 403 | Logged in but not allowed: the caller has a relationship with the resource's club but lacks the permission. Also `detail` `not_guardian_with_act_on_behalf` for an `X-On-Behalf-Of` the caller may not use; for joining (P1.1) `email_not_verified`, `not_guardian` (applying for someone who is not one's ward), `role_preset_not_allowed`, `club_creation_not_allowed`. |
+| <a id="forbidden"></a>`forbidden` | 403 | Logged in but not allowed: the caller has a relationship with the resource's club but lacks the permission. Also `detail` `not_guardian_with_act_on_behalf` for an `X-On-Behalf-Of` the caller may not use; for joining (P1.1) `email_not_verified`, `not_guardian` (applying for someone who is not one's ward), `role_preset_not_allowed`, `club_creation_not_allowed`; for the member register (P1.2) `register_filter_not_allowed` (the board's limited list filters by name, type and group only). |
 | <a id="mfa-required"></a>`mfa-required` | 403 | The endpoint needs a login with a second factor (passkey or one-time code); `detail` is `mfa_required`. Clients start a step-up login. |
 | <a id="reauthentication-required"></a>`reauthentication-required` | 403 | The endpoint needs a recent login (`detail` `recent_auth_required`); clients ask the user to log in again. |
 | <a id="not-found"></a>`not-found` | 404 | Resource does not exist, or you may not know that it exists: anything in a club you have no relationship with, and people you may not see (ADR 0025) |
 | <a id="method-not-allowed"></a>`method-not-allowed` | 405 | HTTP method not supported for this resource |
-| <a id="conflict"></a>`conflict` | 409 | Conflicts with the current state, e.g. a concurrent change. Joining (P1.1) `detail` codes: `profile_incomplete`, `join_request_exists`, `already_member`, `creation_request_exists`, `club_slug_taken`, `invitation_invalid` (expired, revoked, used up or unknown), `invitation_email_mismatch`, `last_club_manager`, `not_a_member`, `handover_invalid`, `club_has_manager`, `too_young_for_account` |
+| <a id="conflict"></a>`conflict` | 409 | Conflicts with the current state, e.g. a concurrent change. Joining (P1.1) `detail` codes: `profile_incomplete`, `join_request_exists`, `already_member`, `creation_request_exists`, `club_slug_taken`, `invitation_invalid` (expired, revoked, used up or unknown), `invitation_email_mismatch`, `last_club_manager`, `not_a_member`, `handover_invalid`, `club_has_manager`, `too_young_for_account`. Member register (P1.2): `export_not_available` (the export is not ready, expired or failed), `membership_status_invalid` |
 | <a id="payload-too-large"></a>`payload-too-large` | 413 | Request body larger than the limit (1 MB by default) |
 | <a id="unsupported-media-type"></a>`unsupported-media-type` | 415 | Content type not accepted |
-| <a id="rate-limited"></a>`rate-limited` | 429 | Too many requests (per IP, per account or, for rosters, per club; `docs/security.md`); wait for the `Retry-After` seconds |
+| <a id="rate-limited"></a>`rate-limited` | 429 | Too many requests (per IP, per account or, for rosters, per club; `docs/security.md`); wait for the `Retry-After` seconds. `detail` `export_limit_reached`: the daily limit of member register exports (P1.2), no `Retry-After` |
 | <a id="internal"></a>`internal` | 500 | Unexpected error on the server (logged with the request ID) |
 | <a id="not-implemented"></a>`not-implemented` | 501 | Not implemented yet |
-| <a id="unavailable"></a>`unavailable` | 503 | Temporarily unavailable, e.g. during shutdown, or a first login while the rate-limit store is unreachable |
+| <a id="unavailable"></a>`unavailable` | 503 | Temporarily unavailable, e.g. during shutdown, or a first login while the rate-limit store is unreachable; `export_storage_unavailable` when object storage is not configured |
 | <a id="entitlement-required"></a>`entitlement-required` | 402 | The club's plan does not include the feature (`detail`: the feature key); only with billing on. Apps show an upgrade hint or "not available". A feature switched off for the whole installation (`FEATURE_*=false`) answers `not-found` instead |
 | <a id="club-read-only"></a>`club-read-only` | 409 | The club is read-only (for example unpaid, or set by an operator): reads and exports work, changes do not. Data is never deleted |
 | <a id="club-suspended"></a>`club-suspended` | 409 | An operator suspended the club: only exports work |

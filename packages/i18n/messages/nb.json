@@ -194,7 +194,43 @@
   },
   "members": {
     "title": "Medlemmer i {club}",
-    "comingSoon": "Medlemsregisteret kommer i en senere versjon. Inntil da kan du se medlemmene i hver gruppe."
+    "searchLabel": "Søk på navn eller medlemsnummer",
+    "filters": "Filtre",
+    "status": "Status",
+    "type": "Medlemstype",
+    "group": "Gruppe",
+    "role": "Rolle",
+    "bornFrom": "Født fra (år)",
+    "bornTo": "Født til og med (år)",
+    "gender": "Kjønn (der det er delt)",
+    "missingConsent": "Mangler samtykke",
+    "any": "Alle",
+    "apply": "Vis",
+    "clear": "Fjern filtre",
+    "sort": "Sorter etter",
+    "sortName": "Navn",
+    "sortMemberNumber": "Medlemsnummer",
+    "sortJoined": "Innmeldingsdato",
+    "order": "Rekkefølge",
+    "orderAsc": "Stigende",
+    "orderDesc": "Synkende",
+    "total": "{count, plural, one {# medlem} other {# medlemmer}}",
+    "facet": "{label} ({count})",
+    "empty": "Ingen medlemmer passer.",
+    "limited": "Du ser styrets liste: navn, medlemsnummer, medlemstype og grupper.",
+    "memberNumber": "Nr. {number}",
+    "born": "Født {date}",
+    "missingConsents": "Mangler samtykke for: {purposes}",
+    "exports": "Eksporter",
+    "export": "Eksporter listen",
+    "membershipTitle": "Medlemskap",
+    "pause": "Sett medlemskapet på pause",
+    "resume": "Gjenoppta medlemskapet",
+    "changeType": "Bytt medlemstype",
+    "end": "Avslutt medlemskapet",
+    "endedOn": "Siste dag",
+    "endHint": "Når medlemskapet avsluttes, avsluttes også personens grupper, gruppeansvar og roller i klubben.",
+    "updated": "Medlemskapet er endret."
   },
   "time": {
     "viewerZone": "{time} hos deg ({zone})"
@@ -317,6 +353,10 @@
       "approvedBody": "Søknaden din om å opprette {club} er godkjent. Du er den første klubbansvarlige.\n\nÅpne klubben:\n{url}",
       "rejectedSubject": "Søknaden din om å opprette {club}",
       "rejectedBody": "Søknaden din om å opprette {club} ble ikke godkjent.{hasMessage, select, yes {\n\nMelding:\n{message}} other {}}"
+    },
+    "membersExported": {
+      "subject": "{club}: medlemsregisteret er eksportert",
+      "body": "{requester} har eksportert medlemsregisteret i {club} ({columns}).{includeProtected, select, yes {\n\nEksporten inneholder medlemmer med skjermede personopplysninger.} other {}}\n\nAlle klubbansvarlige får denne e-posten ved hver eksport. Se eksportene:\n{url}"
     }
   },
   "profileForm": {
@@ -472,6 +512,67 @@
     "rate_limited": "For mange forsøk. Prøv igjen senere.",
     "invalid_input": "Sjekk skjemaet.",
     "validation": "Sjekk skjemaet.",
-    "failed": "Det gikk ikke. Prøv igjen."
+    "failed": "Det gikk ikke. Prøv igjen.",
+    "register_filter_not_allowed": "Det filteret er ikke tilgjengelig for deg.",
+    "export_limit_reached": "For mange eksporter i dag. Prøv igjen i morgen.",
+    "export_not_available": "Eksporten kan ikke lenger lastes ned.",
+    "export_storage_unavailable": "Eksporter er ikke tilgjengelige i denne installasjonen.",
+    "invalid_end_date": "Sluttdatoen kan ikke være i fremtiden eller før medlemskapet startet.",
+    "reauthentication_required": "Logg inn på nytt først for å eksportere (du logget inn for mer enn 15 minutter siden).",
+    "membership_status_invalid": "Medlemskapet kan ikke endres på den måten."
+  },
+  "memberExport": {
+    "columns": {
+      "name": "Navn",
+      "memberNumber": "Medlemsnummer",
+      "birthDate": "Fødselsdato",
+      "gender": "Kjønn",
+      "status": "Status",
+      "membershipType": "Medlemstype",
+      "joinedOn": "Innmeldt",
+      "leftOn": "Utmeldt",
+      "groups": "Grupper",
+      "roles": "Roller",
+      "phone": "Telefon",
+      "address": "Adresse",
+      "guardians": "Foresatte",
+      "missingConsents": "Manglende samtykker"
+    },
+    "protectedColumn": "Skjermede personopplysninger: ikke del",
+    "protectedYes": "SKJERMET"
+  },
+  "membershipTypes": {
+    "active": "Aktiv",
+    "supporting": "Støttemedlem",
+    "honorary": "Æresmedlem",
+    "family": "Familiemedlem"
+  },
+  "consentPurposes": {
+    "photo_publication": "Publisering av bilder",
+    "video_publication": "Publisering av video",
+    "streaming": "Direktesending",
+    "marketing": "Markedsføring",
+    "federation_sharing": "Deling med forbund"
+  },
+  "memberExports": {
+    "title": "Eksporter av medlemsregisteret",
+    "intro": "Eksporter klargjøres i bakgrunnen. Bare den som bestilte en eksport kan laste den ned, i 24 timer. Alle klubbansvarlige får beskjed om hver eksport.",
+    "filterNote": "Eksporten inneholder medlemmene i listen du kom fra (søket og filtrene).",
+    "columns": "Kolonner",
+    "includeProtected": "Ta med medlemmer med skjermede personopplysninger (merket «ikke del»)",
+    "create": "Eksporter",
+    "requested": "Eksporten klargjøres. Last inn siden på nytt om litt.",
+    "list": "Siste eksporter",
+    "empty": "Ingen eksporter ennå.",
+    "byProtected": "Noen med skjermede personopplysninger",
+    "rows": "{count, plural, one {# medlem} other {# medlemmer}}",
+    "download": "Last ned",
+    "mfa": "Eksporter krever innlogging med en andre faktor. Logg ut og logg inn igjen med den.",
+    "status": {
+      "queued": "Klargjøres",
+      "ready": "Klar",
+      "failed": "Mislyktes",
+      "expired": "Utløpt"
+    }
   }
 }

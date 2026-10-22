@@ -131,8 +131,8 @@ club has roughly 10 named/central users plus generated players.
 | 7 | **Sara Ahmed** | 35 | yes | SVK **club manager** + **treasurer** + F2017 **team manager** (cash desk) + parent of Alva → several roles in one club, second manager; MFA required |
 | 8 | **Alva Ahmed** | 9 | no | SVK F2017 player; **no photo consent** → tests consent filtering |
 | 9 | **Gunilla Berg** | 68 | yes | Grandmother of Alva, **relative** with view-only rights → restricted guardian kind |
-| 10 | **Johan Nilsson** | 27 | yes | SVK Herr senior player and F2017 **assistant coach**; background check **expires in 20 days** → reminder flow |
-| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior** and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
+| 10 | **Johan Nilsson** | 27 | yes | SVK **registrar** (the full member register without manager rights, P1.2), Herr senior player and F2017 **assistant coach**; background check **expires in 20 days** → reminder flow |
+| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior** (membership **paused**, P1.2) and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
 | 12 | **Ingrid Haugen** | 12 | no | Daughter of Lars, FIL J2014 player |
 | 13 | **Karin Ek** | 52 | yes | IKN **club manager** + **safeguarding officer**; employed part-time as club administrator (staff, time reporting) |
 | 14 | **Ahmed Yilmaz** | 47 | yes | IKN P2012 **head coach**; background check **expired** → must be flagged |
@@ -186,11 +186,20 @@ checks (clearances), billing plans, chat rooms, the anonymisation schedule
   Johan's application (last year), Oskar and Liam got their own logins, and a
   system job expired an offer on F2017's waiting list (yesterday). Sara's
   attendance correction comes with the attendance module.
+- **Member register** (P1.2): Johan is SVK's registrar, Lars's SVK membership
+  is paused and Ola's ended; Elsa and Maja gave photo consent, the others in
+  F2017 (Alva among them) did not. Sara exported SVK's register three days
+  ago (name, member number, membership type, groups); the record is in the
+  exports list, its file expired. Peter (IKN treasurer) sees IKN's limited
+  board list, never Nadia.
 
 ## Load scenario
 
 1,000 clubs, ~200,000 people (per club 120 children with a parent each, 40
 adult members, 40 parents who are not members, 8 teams with two leaders, a
-club manager), `--size` sets the number of clubs. Activities and attendance
+club manager), `--size` sets the number of clubs, plus **Storklubben**: one
+club of 10,000 members in 40 teams (half with photo consent, every 50th
+membership paused, a few protected) for the member register's budgets
+(P1.2). Activities and attendance
 (5 years) and chat messages (10 million) are added by their modules. Used by
 the performance tests (`performance.md`).

@@ -58,6 +58,13 @@ export const DOMAIN_ERRORS = {
   invitation_email_unavailable: "unavailable",
   role_preset_not_allowed: "forbidden",
   club_has_manager: "conflict",
+  // Member register (P1.2)
+  register_filter_not_allowed: "forbidden",
+  export_limit_reached: "rate-limited",
+  export_not_available: "conflict",
+  export_storage_unavailable: "unavailable",
+  invalid_end_date: "validation",
+  membership_status_invalid: "conflict",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

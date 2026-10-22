@@ -180,6 +180,7 @@ export const ENV_TEMPLATE: EnvSection[] = [
     variables: [
       { key: "S3_PORT", value: "3900" },
       { key: "S3_ENDPOINT", value: "http://127.0.0.1:3900" },
+      { key: "S3_PUBLIC_ENDPOINT", value: "https://s3.${APP_DOMAIN}" },
       { key: "S3_REGION", value: "garage" },
       { key: "S3_BUCKET_FILES", value: "clubadmin-files" },
       { key: "S3_BUCKET_BACKUPS", value: "clubadmin-backups" },

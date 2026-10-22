@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { baseConfigShape, parseConfig } from "@clubadmin/server-kit";
+import { objectStorageConfigShape } from "@clubadmin/server-kit/object-storage";
 import { z } from "@clubadmin/shared";
 
 export const workerConfigSchema = z.object({
   ...baseConfigShape,
+  ...objectStorageConfigShape,
   /** clubadmin_app connection: jobs and their database work are subject to row-level security. */
   DATABASE_URL: z.string().min(1, "required: the worker stores its jobs in PostgreSQL"),
   /** Valkey of the API: domain events invalidate its authorization caches. */

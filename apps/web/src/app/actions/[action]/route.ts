@@ -56,13 +56,16 @@ export async function POST(
     : null;
   if (res.ok) return redirectTo(safeReturnTo(action.done(form, body)));
   const detail = (body as { detail?: unknown } | null)?.detail;
+  const type = (body as { type?: string } | null)?.type ?? "";
   const code =
-    res.status === 403 && (body as { type?: string } | null)?.type?.endsWith("#mfa-required")
+    res.status === 403 && type.endsWith("#mfa-required")
       ? "mfa_required"
-      : typeof detail === "string" && /^[a-z_]+$/.test(detail)
-        ? detail
-        : res.status === 429
-          ? "rate_limited"
-          : "failed";
+      : res.status === 403 && type.endsWith("#reauthentication-required")
+        ? "reauthentication_required"
+        : typeof detail === "string" && /^[a-z_]+$/.test(detail)
+          ? detail
+          : res.status === 429
+            ? "rate_limited"
+            : "failed";
   return redirectTo(withError(back, code));
 }

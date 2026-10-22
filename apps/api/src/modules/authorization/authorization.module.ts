@@ -9,6 +9,7 @@ import { AuthorizationCache } from "./authorization-cache.ts";
 import { PersonVisibility } from "./person-visibility.service.ts";
 import { PersonPresenter } from "./presenters/person.presenter.ts";
 import { PersonProfilePresenter } from "./presenters/person-profile.presenter.ts";
+import { RegisterPresenter } from "./presenters/register.presenter.ts";
 
 @Module({
   providers: [
@@ -41,7 +42,18 @@ import { PersonProfilePresenter } from "./presenters/person-profile.presenter.ts
       inject: [PersonPresenter],
       useFactory: (people: PersonPresenter) => new PersonProfilePresenter(people),
     },
+    {
+      provide: RegisterPresenter,
+      inject: [PersonPresenter],
+      useFactory: (people: PersonPresenter) => new RegisterPresenter(people),
+    },
   ],
-  exports: [AuthorizationService, PersonVisibility, PersonPresenter, PersonProfilePresenter],
+  exports: [
+    AuthorizationService,
+    PersonVisibility,
+    PersonPresenter,
+    PersonProfilePresenter,
+    RegisterPresenter,
+  ],
 })
 export class AuthorizationModule {}

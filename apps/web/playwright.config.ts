@@ -38,5 +38,6 @@ export default defineConfig({
         },
         // Changes the demo data: after the specs that read it.
         { name: "joining", testMatch: /joining\.spec\.ts/, dependencies: ["dev-auth"] },
+        { name: "members", testMatch: /members\.spec\.ts/, dependencies: ["joining"] },
       ],
 });

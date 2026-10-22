@@ -318,6 +318,36 @@ describe("with the API", () => {
     expect(await entry("lars", "svk-herr", flagged)).toBeUndefined();
   });
 
+  // P1.2 acceptance: the registers of the demo clubs.
+  it("lets Johan find Elsa and list F2017 without photo consent; Peter sees IKN's limited list", async () => {
+    type Page = {
+      access: string;
+      items: { person: { id: string }; birthDate?: unknown; phone?: unknown }[];
+    };
+    const register = async (viewer: string, club: string, query: string) =>
+      (await get(viewer, `/api/v1/clubs/${id(club)}/members?limit=200${query}`)).json<Page>();
+    const ids = (page: Page) => page.items.map((i) => i.person.id);
+
+    const els = await register("johan", "svk", "&q=els");
+    expect(els.access).toBe("full");
+    expect(ids(els)).toContain(id("elsa"));
+    const noPhoto = await register(
+      "johan",
+      "svk",
+      `&groupId=${id("svk-f2017")}&missingConsent=photo_publication`,
+    );
+    expect(ids(noPhoto)).toContain(id("alva"));
+    expect(ids(noPhoto)).not.toContain(id("elsa"));
+    // Lars's membership in SVK is paused, Ola's ended.
+    expect(ids(await register("johan", "svk", "&status=paused"))).toEqual([id("lars")]);
+    expect(ids(await register("johan", "svk", "&status=left"))).toContain(id("ola"));
+
+    const peter = await register("peter", "ikn", "");
+    expect(peter.access).toBe("limited");
+    expect(ids(peter)).not.toContain(id("nadia"));
+    expect(peter.items.every((i) => i.birthDate === undefined && i.phone === undefined)).toBe(true);
+  });
+
   it("hides Samira (protected guardian) from a coach, not from the club manager", async () => {
     const guardians = async (viewer: string) =>
       (await get(viewer, `/api/v1/people/${id("nadia")}?clubId=${id("ikn")}`)).json<{
@@ -346,7 +376,7 @@ describe("minimal and load scenarios", () => {
     }
   });
 
-  it("load --size 2: two clubs of 200 people", async () => {
+  it("load --size 2: two clubs of 200 people and the large club of 10,000 members", async () => {
     const { t } = await seeded("load", 2);
     try {
       const { rows } = await t.query<{
@@ -360,7 +390,7 @@ describe("minimal and load scenarios", () => {
                 (SELECT count(*) FROM club_memberships)::int AS members,
                 (SELECT count(*) FROM club_role_assignments WHERE role = 'club_manager')::int AS managers`,
       );
-      expect(rows[0]).toEqual({ clubs: 2, people: 400, members: 320, managers: 2 });
+      expect(rows[0]).toEqual({ clubs: 3, people: 10_400, members: 10_320, managers: 3 });
     } finally {
       await t.drop();
     }
