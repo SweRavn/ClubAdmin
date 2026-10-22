@@ -30,6 +30,7 @@ Ordered so each package only depends on earlier ones. Prompts:
 | P1.1 | Self sign-up, club creation, club managers (multiple, hand-over), join policies and requests, invitations (ADR 0018) |
 | P1.2 | Member register UI (search, filter, export) with field-level permissions |
 | P1.3 | Guardian/child management: "Add child" without email, invite co-guardian, merge duplicates, "give own login" with the child's own email, relative access, age transitions |
+| P1.3b | Adding members by hand and importing them from CSV/Excel (columns mapped, preview, duplicates within the club, any number of guardians per child; `step_parent` and `foster_parent` kinds) |
 | P1.4 | Activities: recurring trainings, matches, locations, in-app calendar |
 | P1.5 | Responses (attending / not attending) and attendance taking |
 | P1.6 | Events with sign-up forms, deadlines, capacity, waiting lists |
