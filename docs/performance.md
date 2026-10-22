@@ -141,7 +141,8 @@ budgets are requirements; CI measures them.
     `apps/mobile/scripts/measure-cold-start.sh` force-stops the app five
     times and takes the time from the activity start to the app's "home ready
     (cache)" log line; the median must stay under 2 s (shown in the job
-    summary).
+    summary). First measurement (P0.10, CI run 31): median 989 ms (857–1049 ms
+    over five runs).
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.
 - OpenTelemetry traces in production; alerts when budgets are exceeded.

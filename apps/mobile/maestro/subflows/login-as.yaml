@@ -5,9 +5,12 @@ appId: ${APP_ID}
 - launchApp:
     clearState: true
     clearKeychain: true
+# The login screen, then scroll to the persona (it appears once the picker has
+# loaded the personas). Waiting for the picker itself is unreliable: it is
+# taller than the screen.
 - extendedWaitUntil:
     visible:
-      id: "persona-picker"
+      id: "login-screen"
     timeout: 30000
 - scrollUntilVisible:
     element:
