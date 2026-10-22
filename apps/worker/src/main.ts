@@ -75,10 +75,14 @@ if (storage) {
     .ensureExpiryRule({ id: "member-exports", prefix: "exports/", days: 2 })
     .then((result) => {
       if (result === "conflict") {
-        logger.warn("the files bucket has other lifecycle rules: add one for exports/ (docs/gdpr.md)");
+        logger.warn(
+          "the files bucket has other lifecycle rules: add one for exports/ (docs/gdpr.md)",
+        );
       }
     })
-    .catch((error: unknown) => logger.warn({ err: error }, "could not set the bucket lifecycle rule"));
+    .catch((error: unknown) =>
+      logger.warn({ err: error }, "could not set the bucket lifecycle rule"),
+    );
 }
 
 onShutdown(logger, async () => {

@@ -76,8 +76,7 @@ export function registerPageQuery(clubId: string, page: RegisterPageInput) {
   // person filter, or counting only visible rows), one materialised pass
   // serves both; otherwise the count runs on its own, without people, and
   // the page can follow an index for member number and join date.
-  const sharedPass =
-    !page.countHidden || PERSON_FILTERS.some((f) => page.filter[f] !== undefined);
+  const sharedPass = !page.countHidden || PERSON_FILTERS.some((f) => page.filter[f] !== undefined);
   const anchor = sql`anchor AS (
       SELECT ${key} AS k, e.person_id FROM app.register_entries e
       WHERE e.club_id = ${clubId} AND e.person_id = ${page.cursor}

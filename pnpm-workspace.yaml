@@ -60,7 +60,7 @@ catalog:
   eslint-plugin-simple-import-sort: ^14.0.0
   # Must equal the exact version @nestjs/platform-fastify depends on (one Fastify
   # instance type); Renovate updates them together.
-  fastify: 5.12.5
+  fastify: 5.12.7
   globals: ^17.0.0
   graphile-worker: ^0.18.0
   import-in-the-middle: ^3.0.0
@@ -109,6 +109,9 @@ overrides:
   # xcode (Expo's iOS config plugins, build time) pins uuid 7 (GHSA-w5hq-g745-h8pq);
   # it only calls uuid.v4(), which uuid 11 still provides for require().
   "xcode>uuid": ^11.1.1
+  # @nestjs/platform-fastify 12.1.3 pins fastify 5.12.5 (GHSA-389g-gv7q-r4x8,
+  # fixed in 5.12.6); 12.2.0 depends on 5.12.7. Remove once 12.2.0 is installed.
+  "@nestjs/platform-fastify>fastify": 5.12.7
 
 # Explicitly accepted peer-dependency mismatches (keep this list short).
 peerDependencyRules:

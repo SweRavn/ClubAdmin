@@ -6,7 +6,11 @@ import { ObjectStorage, objectStorageConfig, presignGetUrl } from "./object-stor
 describe("object storage", () => {
   it("is off without an endpoint and credentials", () => {
     expect(
-      objectStorageConfig({ S3_REGION: "garage", S3_BUCKET_FILES: "files", S3_ENDPOINT: "http://s3" }),
+      objectStorageConfig({
+        S3_REGION: "garage",
+        S3_BUCKET_FILES: "files",
+        S3_ENDPOINT: "http://s3",
+      }),
     ).toBeNull();
   });
 
@@ -26,7 +30,9 @@ describe("object storage", () => {
     expect(url.pathname).toBe("/clubadmin-files/exports/club/one.csv");
     expect(url.searchParams.get("X-Amz-Expires")).toBe("300");
     expect(url.searchParams.get("X-Amz-SignedHeaders")).toBe("host");
-    expect(url.searchParams.get("response-content-disposition")).toBe('attachment; filename="ab.csv"');
+    expect(url.searchParams.get("response-content-disposition")).toBe(
+      'attachment; filename="ab.csv"',
+    );
   });
 
   // AWS's documented example of query-string authentication (Signature Version 4).

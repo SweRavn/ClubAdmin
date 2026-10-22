@@ -195,6 +195,7 @@ describe("member register plans (10,000 members, 100,000 people)", () => {
         Math.round(ms.sort((a, b) => a - b)[Math.floor(ms.length * 0.95) - 1]!),
       ]),
     );
-    for (const [name, ms] of Object.entries(p95)) expect(ms, `${name}: p95 ${ms} ms`).toBeLessThan(150);
+    for (const [name, ms] of Object.entries(p95))
+      expect(ms, `${name}: p95 ${ms} ms`).toBeLessThan(150);
   }, 300_000);
 });

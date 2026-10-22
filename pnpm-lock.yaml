@@ -130,8 +130,8 @@ catalogs:
       specifier: ^14.0.0
       version: 14.0.0
     fastify:
-      specifier: 5.12.5
-      version: 5.12.5
+      specifier: 5.12.7
+      version: 5.12.7
     globals:
       specifier: ^17.0.0
       version: 17.13.0
@@ -230,6 +230,7 @@ catalogs:
 overrides:
   '@esbuild-kit/core-utils>esbuild': ^0.25.0
   xcode>uuid: ^11.1.1
+  '@nestjs/platform-fastify>fastify': 5.12.7
 
 importers:
 
@@ -297,7 +298,7 @@ importers:
         version: 12.1.3(@nestjs/common@12.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.1.3(@nestjs/common@12.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
       fastify:
         specifier: 'catalog:'
-        version: 5.12.5
+        version: 5.12.7
       ioredis:
         specifier: 'catalog:'
         version: 5.11.1
@@ -5241,8 +5242,8 @@ packages:
   fastify-plugin@6.0.1:
     resolution: {integrity: sha512-4wW4RxSmvPXLrh5mgQEiu43qU3bw44N2ss4FTkTkQIbprUhE+/s43QX0j/ttcztdWK7PEkHqVthdc5GdEGDvjA==}
 
-  fastify@5.12.5:
-    resolution: {integrity: sha512-OB2k1dlxs5/NAABqeKV2FUHkSD2BbENsCak8yULVcymn3fHIPDVa9TI3SDnJSWYSllZmSYuZXy2gTnsT+Sut1A==}
+  fastify@5.12.7:
+    resolution: {integrity: sha512-v4pEPsTRPuqlDIYiQFB+BHjVN4SdHX9u0ABk0ZDUKbbdY1vsNryUd1j4Z+jQEZajvYIVk047Kimva9/AJ79GYw==}
 
   fastq@1.20.3:
     resolution: {integrity: sha512-XKv5nnLs6nLF71NgiKJLIZFLkPyIEuOselLG7ujZnGrRfQK8HpvY+WqKhAJUAdLomwVHErVS4LfxFlPq0/FTAw==}
@@ -9844,7 +9845,7 @@ snapshots:
       '@nestjs/common': 12.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 12.1.3(@nestjs/common@12.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)
       fast-querystring: 1.1.2
-      fastify: 5.12.5
+      fastify: 5.12.7
       find-my-way: 9.9.0
       light-my-request: 6.6.0
       path-to-regexp: 8.4.2
@@ -12769,7 +12770,7 @@ snapshots:
 
   fastify-plugin@6.0.1: {}
 
-  fastify@5.12.5:
+  fastify@5.12.7:
     dependencies:
       '@fastify/ajv-compiler': 4.0.7
       '@fastify/error': 4.2.1
