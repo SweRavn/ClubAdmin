@@ -67,7 +67,7 @@ catalog:
   intl-messageformat: ^10.7.18
   ioredis: ^5.11.0
   jose: ^6.2.12
-  next: ^16.0.0
+  next: ^16.4.1
   next-intl: ^4.14.0
   nodemailer: ^10.1.1
   openapi-fetch: ^0.17.0
