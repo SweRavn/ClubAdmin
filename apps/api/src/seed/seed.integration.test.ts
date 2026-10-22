@@ -192,13 +192,13 @@ describe("demo scenario", () => {
       actor: id("anna"),
     });
 
-    // Anna approved Johan's application last year.
+    // Anna approved Johan's join request last year.
     const { rows: johan } = await first.query<{ id: string }>(
       "admin",
-      "SELECT id FROM club_memberships WHERE person_id = $1 AND club_id = $2",
+      "SELECT id FROM join_requests WHERE person_id = $1 AND club_id = $2 AND status = 'approved'",
       [id("johan"), id("svk")],
     );
-    const approved = await change("public.club_memberships", johan[0]!.id, "status");
+    const approved = await change("public.join_requests", johan[0]!.id, "status");
     expect(approved).toMatchObject({ actor: id("anna") });
     expect(approved!.days).toBeGreaterThanOrEqual(364);
 

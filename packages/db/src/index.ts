@@ -9,7 +9,7 @@ export {
 } from "./authorization-cache.ts";
 export { inClub } from "./club-context.ts";
 export type { ActorContext, ActorKind, TenantContext } from "./context.ts";
-export { createDatabase, type Database, type Tx } from "./database.ts";
+export { createDatabase, type Database, savepoint, type Tx } from "./database.ts";
 export {
   databaseError,
   type DatabaseErrorInfo,

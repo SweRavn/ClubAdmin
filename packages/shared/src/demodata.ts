@@ -143,7 +143,8 @@ export const DemoRelationshipsFileSchema = z.object({
       club: key,
       membershipType: z.enum(MEMBERSHIP_TYPES).default("active"),
       /** active (added by `by`, default the club's actor), applied (join request pending), left. */
-      status: z.enum(["active", "applied", "left"]).default("active"),
+      /** Applications are join requests (joinRequests below), not memberships (P1.1). */
+      status: z.enum(["active", "left"]).default("active"),
       by: key.nullable().default(null),
       since,
       until: since,

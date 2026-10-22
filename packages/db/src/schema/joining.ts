@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Getting into a club or group: waiting lists (ADR 0019), join requests and
-// invitations (ADR 0018). Schema only in P0.5, so later packages have stable
-// names; the flows come in P1.1 (joining) and P1.10 (waiting lists).
+// invitations (ADR 0018), and requests to create a club (CLUB_CREATION=approval).
+// Waiting lists are schema only until P1.10.
 
 import {
+  CLUB_CREATION_REQUEST_STATUSES,
   CLUB_ROLES,
+  type ClubCreationRequestStatus,
   type ClubRole,
   INVITATION_KINDS,
   type InvitationKind,
+  JOIN_POLICIES,
   JOIN_REQUEST_STATUSES,
+  type JoinPolicy,
   type JoinRequestStatus,
   WAITLIST_STATUSES,
   type WaitlistStatus,
@@ -80,7 +84,11 @@ export const groupWaitlistEntries = pgTable(
   ],
 );
 
-/** Schema only in P0.5; the flow comes in P1.1. */
+/**
+ * A person (or a guardian for a ward) asking to join a club with
+ * join_policy = approval (ADR 0018). The only record of an application:
+ * approving creates the active membership (P1.1).
+ */
 export const joinRequests = pgTable(
   "join_requests",
   {
@@ -94,7 +102,10 @@ export const joinRequests = pgTable(
     /** Group preferences as a hint for the club. */
     preferredGroupIds: uuid().array().notNull().default([]),
     decidedByPersonId: uuid().references(() => people.id),
+    /** Set when approved, rejected or withdrawn. */
     decidedAt: timestamp(tz),
+    /** The club's message to the applicant with the decision. */
+    decisionMessage: text(),
     ...timestamps,
   },
   (t) => [
@@ -107,7 +118,12 @@ export const joinRequests = pgTable(
   ],
 );
 
-/** Schema only in P0.5; the flow comes in P1.1. */
+/**
+ * Email, link or code invitations to a club, with optional group and role
+ * presets (ADR 0018). Only a hash of the secret is stored: link tokens and
+ * codes are random and shown once; email tokens are derived from the ID
+ * (HMAC, ADR 0032) so the worker can put them in the email.
+ */
 export const invitations = pgTable(
   "invitations",
   {
@@ -145,4 +161,84 @@ export const invitations = pgTable(
     uniqueIndex("invitations_token_unique").on(t.tokenHash),
     index("invitations_club_idx").on(t.clubId, t.createdAt),
   ],
+);
+
+/** Who accepted an invitation (a link or code can be used several times). */
+export const invitationAcceptances = pgTable(
+  "invitation_acceptances",
+  {
+    id: id(),
+    clubId: clubRef(),
+    invitationId: uuid()
+      .notNull()
+      .references(() => invitations.id),
+    personId: personRef(),
+    acceptedAt: timestamp(tz).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("invitation_acceptances_unique").on(t.invitationId, t.personId),
+    index("invitation_acceptances_person_idx").on(t.personId),
+  ],
+);
+
+/**
+ * A request to create a club (CLUB_CREATION=approval), decided by a platform
+ * operator. Global (no club yet): visible to the requester and operators.
+ */
+export const clubCreationRequests = pgTable(
+  "club_creation_requests",
+  {
+    id: id(),
+    requestedByPersonId: personRef(),
+    status: text().$type<ClubCreationRequestStatus>().notNull().default("pending"),
+    name: text().notNull(),
+    shortName: text(),
+    slug: text().notNull(),
+    country: text().notNull(),
+    defaultLocale: text(),
+    timeZone: text(),
+    currency: text(),
+    joinPolicy: text().$type<JoinPolicy>(),
+    organizationNumber: text(),
+    decidedByPersonId: uuid().references(() => people.id),
+    decidedAt: timestamp(tz),
+    decisionMessage: text(),
+    /** The club created on approval (not club-owned: the request is global). */
+    createdClubId: uuid(),
+    ...timestamps,
+  },
+  (t) => [
+    check("club_creation_requests_status", oneOf(t.status, CLUB_CREATION_REQUEST_STATUSES)),
+    check(
+      "club_creation_requests_join_policy",
+      sql`${t.joinPolicy} IS NULL OR ${oneOf(t.joinPolicy, JOIN_POLICIES)}`,
+    ),
+    check(
+      "club_creation_requests_club",
+      sql`(${t.status} = 'approved') = (${t.createdClubId} IS NOT NULL)`,
+    ),
+    uniqueIndex("club_creation_requests_pending_unique")
+      .on(t.requestedByPersonId)
+      .where(sql`${t.status} = 'pending'`),
+    index("club_creation_requests_status_idx").on(t.status, t.createdAt),
+  ],
+);
+
+/**
+ * A platform operator appointing a club manager on the club's documented
+ * request (ADR 0018, recovery when no manager is left). The reason is kept
+ * for the club's managers to read.
+ */
+export const clubManagerReassignments = pgTable(
+  "club_manager_reassignments",
+  {
+    id: id(),
+    clubId: clubRef(),
+    personId: personRef(),
+    operatorPersonId: personRef(),
+    reason: text().notNull(),
+    ...timestamps,
+  },
+  (t) => [index("club_manager_reassignments_club_idx").on(t.clubId, t.createdAt)],
 );

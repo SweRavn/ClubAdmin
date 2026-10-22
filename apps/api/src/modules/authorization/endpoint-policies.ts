@@ -17,6 +17,7 @@ const RESOURCE_PARAMS = {
   club: ":clubId",
   group: ":groupId",
   person: ":personId",
+  handover: ":handoverId",
 } as const;
 
 export class EndpointPolicyError extends Error {

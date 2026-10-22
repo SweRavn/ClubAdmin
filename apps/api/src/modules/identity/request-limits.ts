@@ -18,6 +18,7 @@ type LimitsConfig = Pick<
   | "RATE_LIMIT_CLUB_BULK_MAX"
   | "RATE_LIMIT_ACCOUNT_BULK_MAX"
   | "RATE_LIMIT_PROVISIONING_MAX"
+  | "RATE_LIMIT_JOINING_MAX"
 >;
 
 /** Rate-limit subject for a principal: the account, or the person for DEV_AUTH children. */
@@ -27,7 +28,7 @@ const subjectOf = (principal: Principal) =>
 export class RequestLimits {
   private readonly limiter: RateLimiter;
   private readonly rules: Record<
-    "account" | "clubBulk" | "accountBulk" | "rejectedToken" | "provisioning",
+    "account" | "clubBulk" | "accountBulk" | "rejectedToken" | "provisioning" | "joining",
     RateLimitRule
   >;
 
@@ -45,6 +46,7 @@ export class RequestLimits {
         windowMs: 60_000,
         failClosed: true,
       },
+      joining: { name: "joining", max: config.RATE_LIMIT_JOINING_MAX, windowMs: 3_600_000 },
     };
   }
 
@@ -62,6 +64,11 @@ export class RequestLimits {
   /** A request whose token was rejected counts like an unauthenticated one. */
   rejectedToken(ip: string): Promise<void> {
     return this.limiter.enforce(this.rules.rejectedToken, ip);
+  }
+
+  /** Club search, join requests, invitations and club creation, per account and hour. */
+  joining(principal: Principal): Promise<void> {
+    return this.limiter.enforce(this.rules.joining, subjectOf(principal));
   }
 
   /** Account creation on the first login, shared across API instances. */

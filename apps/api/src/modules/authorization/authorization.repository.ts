@@ -225,3 +225,20 @@ export function protectedSetQuery(clubId: string) {
       )
     )`;
 }
+
+export async function loadHandoverScope(
+  tx: Tx,
+  handoverId: string,
+): Promise<{ clubId: string; fromPersonId: string; toPersonId: string } | null> {
+  const { rows } = await tx.execute<{
+    club_id: string;
+    from_person_id: string;
+    to_person_id: string;
+  }>(
+    sql`SELECT club_id, from_person_id, to_person_id FROM public.club_manager_handovers WHERE id = ${handoverId}`,
+  );
+  const row = rows[0];
+  return row
+    ? { clubId: row.club_id, fromPersonId: row.from_person_id, toPersonId: row.to_person_id }
+    : null;
+}

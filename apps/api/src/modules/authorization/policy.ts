@@ -30,9 +30,22 @@ export interface PersonResource {
   groups: PersonGroupRow[];
 }
 
-/** The installation as a whole (operator endpoints); no IDs. */
+/** Who may create clubs in this installation (CLUB_CREATION, ADR 0018). */
+export type ClubCreationMode = "open" | "approval" | "operators_only";
+
+/** The installation as a whole (operator endpoints, club creation); no IDs. */
 export interface PlatformResource {
   kind: "platform";
+  clubCreation: ClubCreationMode;
+}
+
+/** A club manager hand-over proposal (:handoverId), readable by its two parties. */
+export interface HandoverResource {
+  kind: "handover";
+  handoverId: string;
+  clubId: string;
+  fromPersonId: string;
+  toPersonId: string;
 }
 
 export interface Resources {
@@ -40,6 +53,7 @@ export interface Resources {
   club: ClubResource;
   group: GroupResource;
   person: PersonResource;
+  handover: HandoverResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

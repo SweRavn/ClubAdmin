@@ -14,9 +14,9 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /**
  * Which resource the authorization module loads for the policy (from
- * :clubId, :groupId, :personId; "platform": the installation, for operators).
+ * :clubId, :groupId, :personId, :handoverId; "platform": the installation).
  */
-export type EndpointResource = "platform" | "club" | "group" | "person";
+export type EndpointResource = "platform" | "club" | "group" | "person" | "handover";
 
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any
@@ -46,6 +46,12 @@ export interface EndpointOptions {
   status?: number;
   /** Override the global per-IP rate limit for this route. */
   rateLimit?: { max: number; timeWindowMs: number };
+  /**
+   * An extra per-account budget (docs/security.md, "Rate limits"): "joining"
+   * for club search, join requests, invitations and club creation (anti-abuse,
+   * ADR 0018).
+   */
+  accountLimit?: "joining";
   /**
    * Pages through a club's people (rosters, later exports): also counts
    * against the per-club and per-account bulk-read budgets. Needs a club or

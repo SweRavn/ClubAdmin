@@ -2,7 +2,11 @@
 import { and, eq, isNull, schema, sql, type Tx } from "@clubadmin/db";
 import type { ClubRole } from "@clubadmin/shared";
 
-const { clubRoleAssignments: roles, clubManagerHandovers: handovers } = schema;
+const {
+  clubRoleAssignments: roles,
+  clubManagerHandovers: handovers,
+  clubManagerReassignments: reassignments,
+} = schema;
 
 export type RoleAssignmentRow = typeof roles.$inferSelect;
 export type HandoverRow = typeof handovers.$inferSelect;
@@ -114,4 +118,41 @@ export async function activeAssignments(
     .select({ personId: roles.personId, role: roles.role })
     .from(roles)
     .where(and(eq(roles.clubId, clubId), isNull(roles.validTo)));
+}
+
+/** Current holders of a role with the start of their assignment, longest first. */
+export async function activeHoldersSince(
+  tx: Tx,
+  clubId: string,
+  role: ClubRole,
+): Promise<{ personId: string; validFrom: Date }[]> {
+  return tx
+    .select({ personId: roles.personId, validFrom: roles.validFrom })
+    .from(roles)
+    .where(and(eq(roles.clubId, clubId), eq(roles.role, role), isNull(roles.validTo)))
+    .orderBy(roles.validFrom, roles.personId);
+}
+
+/** Open, unexpired hand-overs to or from the person, in all clubs (own_relationships). */
+export async function openHandoversOfPerson(tx: Tx, personId: string): Promise<HandoverRow[]> {
+  return tx
+    .select()
+    .from(handovers)
+    .where(
+      and(
+        eq(handovers.status, "proposed"),
+        sql`${handovers.expiresAt} > now()`,
+        sql`(${handovers.fromPersonId} = ${personId} OR ${handovers.toPersonId} = ${personId})`,
+      ),
+    )
+    .orderBy(handovers.createdAt)
+    .limit(50);
+}
+
+export async function insertReassignment(
+  tx: Tx,
+  values: typeof reassignments.$inferInsert,
+): Promise<string> {
+  const [row] = await tx.insert(reassignments).values(values).returning({ id: reassignments.id });
+  return row!.id;
 }

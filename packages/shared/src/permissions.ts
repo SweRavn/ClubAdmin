@@ -22,6 +22,13 @@ export const PERMISSIONS = [
   "billing.plans.read",
   "billing.subscription.read",
   "billing.subscription.manage",
+  "club.create",
+  "club.creation.decide",
+  "club.join_requests.manage",
+  "club.invitations.manage",
+  "club.handover.respond",
+  "club.managers.claim",
+  "club.managers.reassign",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

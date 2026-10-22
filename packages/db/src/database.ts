@@ -5,7 +5,7 @@
 // record history and audit events see them, and PgBouncer transaction pooling
 // keeps working.
 
-import { DrizzleQueryError } from "drizzle-orm";
+import { DrizzleQueryError, sql } from "drizzle-orm";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import type pg from "pg";
 
@@ -112,4 +112,20 @@ export function createDatabase(options: PoolOptions): Database {
     },
     close: () => pool.end(),
   };
+}
+
+/**
+ * Runs `fn` under a savepoint: if it throws (e.g. a unique violation the
+ * caller expects), the transaction rolls back to before `fn` and stays usable.
+ */
+export async function savepoint<T>(tx: Tx, fn: () => Promise<T>): Promise<T> {
+  await tx.execute(sql.raw("SAVEPOINT clubadmin_savepoint"));
+  try {
+    const result = await fn();
+    await tx.execute(sql.raw("RELEASE SAVEPOINT clubadmin_savepoint"));
+    return result;
+  } catch (error) {
+    await tx.execute(sql.raw("ROLLBACK TO SAVEPOINT clubadmin_savepoint"));
+    throw error;
+  }
 }

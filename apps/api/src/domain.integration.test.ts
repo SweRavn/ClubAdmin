@@ -49,6 +49,12 @@ describe("tenant isolation of club-owned tables", () => {
         INSERT INTO invitations (club_id, kind, email, token_hash, expires_at, created_by_person_id)
         VALUES (${a.id}, 'email', 'nora@example.test', 'hash', now() + interval '7 days', ${a.manager.id})`);
       await tx.execute(sql`
+        INSERT INTO invitation_acceptances (club_id, invitation_id, person_id)
+        SELECT ${a.id}, id, ${member.id} FROM invitations WHERE club_id = ${a.id}`);
+      await tx.execute(sql`
+        INSERT INTO club_manager_reassignments (club_id, person_id, operator_person_id, reason)
+        VALUES (${a.id}, ${member.id}, ${family.guardian.id}, 'Board minutes 2026-03')`);
+      await tx.execute(sql`
         INSERT INTO support_access_grants (club_id, operator_person_id, granted_by_person_id, reason, expires_at)
         VALUES (${a.id}, ${family.guardian.id}, ${a.manager.id}, 'Import help', now() + interval '1 day')`);
     });

@@ -72,23 +72,31 @@ export class MembershipsService {
   }
 
   /**
-   * Self-service join (the person, or a guardian for a child), following the
-   * club's join_policy (ADR 0018): `open` → active, `approval` → applied,
-   * `invite_only` → refused (invitations come in P1.1).
+   * Immediate self-service join (the person, or a guardian for a child) of a
+   * club with join_policy = open (ADR 0018). Other clubs decide on a join
+   * request (joining module, P1.1) or invite; this refuses them.
    */
   joinClub(
     context: TenantContext,
     personId: string,
     options: { membershipType?: MembershipType } = {},
   ): Promise<ClubMembership> {
-    return this.db.withTenant(context, async (tx) => {
-      const club = await this.clubs.getClubInTx(tx, context.clubId);
-      if (club.joinPolicy === "invite_only" || club.status !== "active") {
-        throw new DomainError("join_not_allowed");
-      }
-      const status = club.joinPolicy === "open" ? "active" : "applied";
-      return this.createMembershipInTx(tx, context, personId, status, options.membershipType);
-    });
+    return this.db.withTenant(context, (tx) =>
+      this.joinOpenClubInTx(tx, context, personId, options.membershipType),
+    );
+  }
+
+  async joinOpenClubInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+    membershipType?: MembershipType,
+  ): Promise<ClubMembership> {
+    const club = await this.clubs.getClubInTx(tx, context.clubId);
+    if (club.joinPolicy !== "open" || club.status !== "active") {
+      throw new DomainError("join_not_allowed");
+    }
+    return this.createMembershipInTx(tx, context, personId, "active", membershipType);
   }
 
   /** Administrative add (club manager or registrar; P0.7 authorizes): active immediately. */
@@ -109,26 +117,6 @@ export class MembershipsService {
     membershipType?: MembershipType,
   ): Promise<ClubMembership> {
     return this.createMembershipInTx(tx, context, personId, "active", membershipType);
-  }
-
-  approveMembership(context: TenantContext, membershipId: string): Promise<ClubMembership> {
-    return this.db.withTenant(context, async (tx) => {
-      const membership = await repo.findMembership(tx, membershipId);
-      if (!membership) throw new DomainError("not_found");
-      if (membership.status !== "applied") throw new DomainError("invalid_input");
-      await repo.updateMembership(tx, membershipId, { status: "active" });
-      await audit.record(tx, {
-        action: "membership.approved",
-        resourceType: "club_membership",
-        resourceId: membershipId,
-        changedFields: ["status"],
-      });
-      await outbox.publish(tx, "membership.changed", {
-        clubId: context.clubId,
-        personId: membership.personId,
-      });
-      return { ...membership, status: "active" };
-    });
   }
 
   /**
@@ -168,7 +156,19 @@ export class MembershipsService {
     personId: string,
     fn: GroupFunction = "member",
   ): Promise<GroupMembership> {
-    return this.db.withTenant(context, async (tx) => {
+    return this.db.withTenant(context, (tx) =>
+      this.addToGroupInTx(tx, context, groupId, personId, fn),
+    );
+  }
+
+  async addToGroupInTx(
+    tx: Tx,
+    context: TenantContext,
+    groupId: string,
+    personId: string,
+    fn: GroupFunction = "member",
+  ): Promise<GroupMembership> {
+    {
       parseInput(GroupFunctionSchema, fn);
       const group = await this.groups.getGroupInTx(tx, groupId);
       if (group.archivedAt) throw new DomainError("group_archived");
@@ -197,7 +197,7 @@ export class MembershipsService {
       });
       await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
       return row;
-    });
+    }
   }
 
   endGroupMembership(context: TenantContext, groupMembershipId: string): Promise<void> {
@@ -289,6 +289,17 @@ export class MembershipsService {
     return this.db.withSystem(jobName, { clubId }, (tx) => repo.activeMemberIds(tx, clubId));
   }
 
+  /** Whether the person has an open membership (any status) in the club. */
+  async hasOpenMembershipInTx(tx: Tx, clubId: string, personId: string): Promise<boolean> {
+    return (await repo.findOpenMembership(tx, clubId, personId)) !== null;
+  }
+
+  /** Whether the person is an active (or paused) member of the club. */
+  async isMemberInTx(tx: Tx, clubId: string, personId: string): Promise<boolean> {
+    const membership = await repo.findOpenMembership(tx, clubId, personId);
+    return membership?.status === "active" || membership?.status === "paused";
+  }
+
   /** Clubs where the person has an open membership (as visible to the transaction). */
   async clubIdsOfPersonInTx(tx: Tx, personId: string): Promise<string[]> {
     return (await repo.clubsOfPersonQuery(tx, personId)).map((c) => c.clubId);
@@ -298,7 +309,7 @@ export class MembershipsService {
     tx: Tx,
     context: TenantContext,
     personId: string,
-    status: "active" | "applied",
+    status: "active",
     membershipType: MembershipType = "active",
   ): Promise<ClubMembership> {
     parseInput(MembershipTypeSchema, membershipType);

@@ -5,6 +5,7 @@
 // the database for every writer.
 
 import {
+  type ActorContext,
   audit,
   type Database,
   isUniqueViolation,
@@ -113,6 +114,71 @@ export class RolesService {
     });
   }
 
+  /** Managers with the start of their role, longest-serving first. */
+  managers(context: TenantContext): Promise<{ personId: string; validFrom: Date }[]> {
+    return this.db.withTenant(context, (tx) =>
+      repo.activeHoldersSince(tx, context.clubId, "club_manager"),
+    );
+  }
+
+  /** Open hand-over proposals to and from the acting person, in all clubs. */
+  myOpenHandovers(context: ActorContext): Promise<Handover[]> {
+    return this.db.withActor(context, (tx) =>
+      repo.openHandoversOfPerson(tx, actorPersonId(context)),
+    );
+  }
+
+  /** Ends the person's manager role (removal or stepping down); never the last manager. */
+  async endManagerInTx(tx: Tx, context: TenantContext, personId: string): Promise<void> {
+    await this.clubs.lockClubInTx(tx, context.clubId);
+    const assignment = await repo.findActiveAssignment(
+      tx,
+      context.clubId,
+      personId,
+      "club_manager",
+    );
+    if (!assignment) throw new DomainError("not_found");
+    await this.endAssignmentInTx(tx, context, assignment);
+  }
+
+  /**
+   * Recovery (ADR 0018): makes the person a manager of a club without one
+   * (board chair claiming the role), or on the club's documented request
+   * (operator, `reason` kept for the club's managers).
+   */
+  async recoverManagerInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+    recovery: { by: "chair" } | { by: "operator"; reason: string },
+  ): Promise<void> {
+    await this.clubs.lockClubInTx(tx, context.clubId);
+    const managers = await repo.activeHolders(tx, context.clubId, "club_manager");
+    if (recovery.by === "chair" && managers.length > 0) throw new DomainError("club_has_manager");
+    if (managers.includes(personId)) throw new DomainError("role_already_assigned");
+    const assignment = await this.assignRoleInTx(tx, context, personId, "club_manager");
+    if (recovery.by === "chair") {
+      await audit.record(tx, {
+        action: "club.manager.claimed",
+        resourceType: "club_role_assignment",
+        resourceId: assignment.id,
+      });
+      return;
+    }
+    const id = await repo.insertReassignment(tx, {
+      clubId: context.clubId,
+      personId,
+      operatorPersonId: actorPersonId(context),
+      reason: recovery.reason,
+    });
+    await audit.record(tx, {
+      action: "club.manager.reassigned",
+      resourceType: "club_manager_reassignment",
+      resourceId: id,
+      changedFields: ["person_id", "reason"],
+    });
+  }
+
   activeManagers(context: TenantContext): Promise<string[]> {
     return this.db.withTenant(context, (tx) =>
       repo.activeHolders(tx, context.clubId, "club_manager"),
@@ -200,6 +266,11 @@ export class RolesService {
         action: "club.manager.handover.accepted",
         resourceType: "club_manager_handover",
         resourceId: handover.id,
+      });
+      await outbox.publish(tx, "club.manager.changed", {
+        clubId: context.clubId,
+        personId: me,
+        change: "handed_over",
       });
       return { ...handover, status: "accepted" };
     });

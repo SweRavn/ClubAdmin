@@ -172,6 +172,16 @@ export class PeopleService {
     });
   }
 
+  /**
+   * Names of people who asked an operator to create a club (no club yet, so
+   * no club access path): read without an actor for the operators' queue.
+   */
+  requesterSummaries(personIds: readonly string[]): Promise<repo.PersonSummaryRow[]> {
+    return this.db.withSystem("ops:club-creation-requests", {}, (tx) =>
+      repo.findSummaries(tx, personIds),
+    );
+  }
+
   /** Access log: someone other than the person viewed a protected person's profile (ADR 0022). */
   recordProtectedView(context: Context, personId: string): Promise<void> {
     return runAs(this.db, context, (tx) =>

@@ -11,7 +11,8 @@
     "./crypto": "./src/crypto.ts",
     "./config": "./src/config.ts",
     "./env": "./src/env.ts",
-    "./dev-tokens": "./src/dev-tokens.ts"
+    "./dev-tokens": "./src/dev-tokens.ts",
+    "./invitations": "./src/invitations.ts"
   },
   "scripts": {
     "lint": "eslint .",

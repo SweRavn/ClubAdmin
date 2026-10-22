@@ -29,6 +29,15 @@ export const DOMAIN_EVENTS = {
   "guardianship.invited": z.object({ invitationId: id, wardPersonId: id }),
   /** The ward reached the adult age: notify them and their guardians (P1.7). */
   "guardianship.ward.adult": z.object({ guardianshipId: id, wardPersonId: id }),
+  /** Joining (P1.1): emails to the invited person, the applicant, the managers. */
+  "invitation.created": z.object({ invitationId: id, clubId: id }),
+  "join_request.decided": z.object({ joinRequestId: id, clubId: id }),
+  "club.manager.changed": z.object({
+    clubId: id,
+    personId: id,
+    change: z.enum(["appointed", "removed", "handed_over", "claimed", "reassigned"]),
+  }),
+  "club_creation_request.decided": z.object({ requestId: id }),
 } as const;
 
 export type DomainEventType = keyof typeof DOMAIN_EVENTS;

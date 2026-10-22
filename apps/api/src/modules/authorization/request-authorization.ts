@@ -72,3 +72,13 @@ export const operatorTenant = (
   requestId: context.requestId ?? null,
   clubId,
 });
+
+/** An operator acting outside a club (global tables, e.g. club creation requests). */
+export const operatorActor = (context: {
+  personId?: string | null;
+  requestId?: string | null;
+}): ActorContext => ({
+  actorKind: "operator",
+  personId: context.personId ?? null,
+  requestId: context.requestId ?? null,
+});

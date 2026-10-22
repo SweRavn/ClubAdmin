@@ -50,6 +50,13 @@
       "when": 1792667415699,
       "tag": "0006_billing_entitlements",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792679448489,
+      "tag": "0007_joining",
+      "breakpoints": true
     }
   ]
 }

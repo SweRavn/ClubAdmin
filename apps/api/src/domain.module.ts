@@ -10,6 +10,7 @@ import { ClubsApiModule } from "./modules/clubs/clubs-api.module.ts";
 import { ClubsModule } from "./modules/clubs/index.ts";
 import { GroupsModule } from "./modules/groups/index.ts";
 import { GuardianshipsModule } from "./modules/guardianships/index.ts";
+import { JoiningModule } from "./modules/joining/index.ts";
 import { MembershipsModule } from "./modules/memberships/index.ts";
 import { OnboardingModule } from "./modules/onboarding/index.ts";
 import { PeopleModule } from "./modules/people/index.ts";
@@ -29,6 +30,7 @@ const MODULES = [
   GroupsModule,
   MembershipsModule,
   GuardianshipsModule,
+  JoiningModule,
   PersonProfilesModule,
   BackupsModule,
 ];

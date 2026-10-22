@@ -8,23 +8,21 @@ import { useCoreDatabase } from "../../testing/core.ts";
 const c = useCoreDatabase();
 
 describe("club memberships", () => {
-  it("joining follows the club's join policy", async () => {
+  it("joins open clubs at once; other clubs decide on a join request", async () => {
     const open = await buildClub(c.s, { joinPolicy: "open" });
     const approval = await buildClub(c.s);
     const inviteOnly = await buildClub(c.s, { joinPolicy: "invite_only" });
     const p = await buildPerson(c.s);
 
     expect((await c.s.memberships.joinClub(actor(p.id, open.id), p.id)).status).toBe("active");
-    const applied = await c.s.memberships.joinClub(actor(p.id, approval.id), p.id);
-    expect(applied.status).toBe("applied");
+    await expect(c.s.memberships.joinClub(actor(p.id, approval.id), p.id)).rejects.toSatisfy((e) =>
+      isDomainError(e, "join_not_allowed"),
+    );
     await expect(c.s.memberships.joinClub(actor(p.id, inviteOnly.id), p.id)).rejects.toSatisfy(
       (e) => isDomainError(e, "join_not_allowed"),
     );
     await expect(c.s.memberships.joinClub(actor(p.id, open.id), p.id)).rejects.toSatisfy((e) =>
       isDomainError(e, "already_member"),
-    );
-    expect((await c.s.memberships.approveMembership(approval.ctx, applied.id)).status).toBe(
-      "active",
     );
   });
 

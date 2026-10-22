@@ -166,6 +166,14 @@ describe("permission matrix", () => {
     MatrixPersona,
     number
   >;
+  const ALL_NOT_FOUND = Object.fromEntries(MATRIX_PERSONAS.map((p) => [p, 404])) as Record<
+    MatrixPersona,
+    number
+  >;
+  // Club insiders without the permission: 403; outsiders and the operator (no grant): 404.
+  const CLUB_FORBIDDEN = { ...ALL_FORBIDDEN, outsider: 404, operator: 404 };
+  /** Managers and registrars get `status`, other insiders 403. */
+  const ADMINS = (status: number) => ({ ...CLUB_FORBIDDEN, manager: status, registrar: status });
 
   /**
    * Every endpoint with a permission (and the own-data reads) must be listed
@@ -225,6 +233,88 @@ describe("permission matrix", () => {
       expected: OPERATOR_CLUB,
       body: { status: "active" },
     },
+    // Joining (P1.1). Writes aimed at IDs that do not exist: allowed callers
+    // get the service's 404, the others the policy's 403 (or 404 outside the
+    // club). The flows themselves: joining.integration.test.ts.
+    "POST /api/v1/clubs": {
+      url: () => "/api/v1/clubs",
+      // CLUB_CREATION defaults to operators_only when self-hosted; the operator needs MFA.
+      expected: ALL_FORBIDDEN,
+      body: { name: "Matrix IF", slug: "matrix-if", country: "SE" },
+    },
+    "GET /api/v1/ops/club-creation-requests": {
+      url: () => "/api/v1/ops/club-creation-requests",
+      expected: ALL_FORBIDDEN,
+    },
+    "POST /api/v1/ops/club-creation-requests/:requestId/decision": {
+      url: () => `/api/v1/ops/club-creation-requests/${uuidv7()}/decision`,
+      expected: ALL_FORBIDDEN,
+      body: { decision: "reject" },
+    },
+    "GET /api/v1/clubs/:clubId/join-requests": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/join-requests`,
+      expected: ADMINS(200),
+    },
+    "POST /api/v1/clubs/:clubId/join-requests/:joinRequestId/decision": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/join-requests/${uuidv7()}/decision`,
+      expected: ADMINS(404),
+      body: { decision: "reject" },
+    },
+    "GET /api/v1/clubs/:clubId/invitations": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invitations`,
+      expected: ADMINS(200),
+    },
+    "POST /api/v1/clubs/:clubId/invitations": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invitations`,
+      expected: ADMINS(201),
+      body: { kind: "link" },
+    },
+    "POST /api/v1/clubs/:clubId/invitations/:invitationId/revoke": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invitations/${uuidv7()}/revoke`,
+      expected: ADMINS(404),
+    },
+    "GET /api/v1/clubs/:clubId/managers": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/managers`,
+      expected: INSIDERS,
+    },
+    // club.roles.manage needs a second factor: even the manager gets 403 here.
+    "POST /api/v1/clubs/:clubId/managers": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/managers`,
+      expected: CLUB_FORBIDDEN,
+      body: { personId: uuidv7() },
+    },
+    "DELETE /api/v1/clubs/:clubId/managers/:personId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/managers/${uuidv7()}`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "POST /api/v1/clubs/:clubId/manager-handovers": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/manager-handovers`,
+      expected: CLUB_FORBIDDEN,
+      body: { toPersonId: uuidv7() },
+    },
+    // Only a board chair (none in the scenario), with a second factor.
+    "POST /api/v1/clubs/:clubId/managers/claim": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/managers/claim`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "POST /api/v1/ops/clubs/:clubId/managers": {
+      url: () => `/api/v1/ops/clubs/${m.clubA.id}/managers`,
+      expected: OPERATOR_CLUB,
+      body: { personId: uuidv7(), reason: "Board minutes 2026-10-01" },
+    },
+    // A hand-over exists only for its two parties: everyone else gets 404.
+    "POST /api/v1/manager-handovers/:handoverId/accept": {
+      url: () => `/api/v1/manager-handovers/${uuidv7()}/accept`,
+      expected: ALL_NOT_FOUND,
+    },
+    "POST /api/v1/manager-handovers/:handoverId/decline": {
+      url: () => `/api/v1/manager-handovers/${uuidv7()}/decline`,
+      expected: ALL_NOT_FOUND,
+    },
+    "POST /api/v1/manager-handovers/:handoverId/cancel": {
+      url: () => `/api/v1/manager-handovers/${uuidv7()}/cancel`,
+      expected: ALL_NOT_FOUND,
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -254,7 +344,7 @@ describe("permission matrix", () => {
       const actual: Record<string, number> = {};
       for (const persona of MATRIX_PERSONAS) {
         const token = await devToken(personaId(persona));
-        const method = endpoint.split(" ")[0] as "GET" | "POST" | "PUT";
+        const method = endpoint.split(" ")[0] as "GET" | "POST" | "PUT" | "DELETE";
         const res = await inject({
           method,
           url: url(),
@@ -322,6 +412,8 @@ describe("reads", () => {
     expect((await permissions(m.registrar.id))?.permissions).toEqual([
       "club.read",
       "club.members.read",
+      "club.join_requests.manage",
+      "club.invitations.manage",
     ]);
     // Listed without a second factor; the endpoints ask for it.
     expect((await permissions(m.manager.id))?.permissions).toEqual(

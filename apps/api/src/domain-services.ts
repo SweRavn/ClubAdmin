@@ -10,6 +10,7 @@ import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
+import { InvitationsService, JoinRequestsService } from "./modules/joining/index.ts";
 import { MembershipsService } from "./modules/memberships/index.ts";
 import { OnboardingService } from "./modules/onboarding/index.ts";
 import { PeopleService } from "./modules/people/index.ts";
@@ -29,11 +30,18 @@ export interface CoreServices {
   groups: GroupsService;
   memberships: MembershipsService;
   guardianships: GuardianshipsService;
+  joinRequests: JoinRequestsService;
+  invitations: InvitationsService;
 }
 
 export function createCoreServices(
   db: Database,
-  options: { encryption: FieldEncryption; defaultCountry?: string },
+  options: {
+    encryption: FieldEncryption;
+    defaultCountry?: string;
+    invitationTokenKey?: string;
+    webUrl?: string;
+  },
 ): CoreServices {
   const { encryption } = options;
   const people = new PeopleService(db, encryption);
@@ -42,18 +50,34 @@ export function createCoreServices(
   const profiles = new ClubProfilesService(db);
   const groups = new GroupsService(db, clubs);
   const memberships = new MembershipsService(db, { clubs, profiles, groups, roles });
+  const defaultCountry = options.defaultCountry ?? "SE";
+  const accounts = new AccountsService(db, { people, memberships, clubs, defaultCountry });
+  const joinRequests = new JoinRequestsService(db, { clubs, groups, memberships, accounts });
   return {
     encryption,
     people,
     merge: new PersonMergeService(db, { people, profiles }),
-    accounts: new AccountsService(db, {
-      people,
-      memberships,
-      clubs,
-      defaultCountry: options.defaultCountry ?? "SE",
-    }),
+    accounts,
     clubs,
-    onboarding: new OnboardingService(db, { clubs, memberships, roles }),
+    onboarding: new OnboardingService(db, {
+      clubs,
+      memberships,
+      roles,
+      people,
+      accounts,
+      defaultCountry,
+    }),
+    joinRequests,
+    invitations: new InvitationsService(db, {
+      clubs,
+      groups,
+      memberships,
+      roles,
+      accounts,
+      joinRequests,
+      tokenKey: options.invitationTokenKey,
+      webUrl: options.webUrl ?? "https://clubadmin.localhost",
+    }),
     roles,
     profiles,
     groups,

@@ -18,13 +18,16 @@ import { policyFor } from "./authorization.policy.ts";
 import {
   loadGroupScope,
   loadGroupsOfPeople,
+  loadHandoverScope,
   loadPersonInClub,
   loadRelationshipSet,
 } from "./authorization.repository.ts";
 import type { AuthorizationCache } from "./authorization-cache.ts";
 import type {
+  ClubCreationMode,
   ClubResource,
   GroupResource,
+  HandoverResource,
   PersonResource,
   Resource,
   ResourceKind,
@@ -50,10 +53,16 @@ const queryParam = (request: FastifyRequest, name: string): string | undefined =
 export class AuthorizationService {
   private readonly db: Database;
   private readonly cache: AuthorizationCache;
+  private readonly clubCreation: ClubCreationMode;
 
-  constructor(db: Database, cache: AuthorizationCache) {
+  constructor(
+    db: Database,
+    cache: AuthorizationCache,
+    options: { clubCreation: ClubCreationMode } = { clubCreation: "operators_only" },
+  ) {
     this.db = db;
     this.cache = cache;
+    this.clubCreation = options.clubCreation;
   }
 
   /** The person's relationship set: Valkey (current version) or one query. */
@@ -112,7 +121,7 @@ export class AuthorizationService {
 
   private denial(actor: Actor, resource: Resource): "not-found" | "forbidden" {
     if (resource.kind === "platform") return "forbidden";
-    if (resource.kind === "person") return "not-found";
+    if (resource.kind === "person" || resource.kind === "handover") return "not-found";
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
 
@@ -123,14 +132,30 @@ export class AuthorizationService {
   ): Promise<Resource> {
     switch (kind) {
       case "platform":
-        return Promise.resolve({ kind: "platform" });
+        return Promise.resolve({ kind: "platform", clubCreation: this.clubCreation });
       case "club":
         return Promise.resolve(this.clubResource(request));
       case "group":
         return this.groupResource(authorization, request);
       case "person":
         return this.personResource(authorization, request);
+      case "handover":
+        return this.handoverResource(authorization, request);
     }
+  }
+
+  /** Hand-overs are readable only by their two parties (RLS, own_relationships). */
+  private async handoverResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+  ): Promise<HandoverResource> {
+    const handoverId = param(request, "handoverId");
+    if (!handoverId || !isUuid(handoverId)) throw new ProblemError("not-found");
+    const scope = await this.db.withActor(authorization.context, (tx) =>
+      loadHandoverScope(tx, handoverId),
+    );
+    if (!scope) throw new ProblemError("not-found");
+    return { kind: "handover", handoverId, ...scope };
   }
 
   private clubResource(request: FastifyRequest): ClubResource {

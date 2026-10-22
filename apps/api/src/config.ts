@@ -52,6 +52,8 @@ export const apiConfigSchema = z
     RATE_LIMIT_CLUB_BULK_MAX: z.coerce.number().int().positive().default(1200),
     /** Bulk reads per account and window. */
     RATE_LIMIT_ACCOUNT_BULK_MAX: z.coerce.number().int().positive().default(240),
+    /** Club searches, join requests, invitation acceptances and club creations per account and hour. */
+    RATE_LIMIT_JOINING_MAX: z.coerce.number().int().positive().default(120),
     /** First logins (account creation) per client IP and minute. */
     RATE_LIMIT_PROVISIONING_MAX: z.coerce.number().int().positive().default(10),
     /** App versions below this must update (GET /meta/client, ADR 0029); per platform with _IOS / _ANDROID. */
@@ -116,3 +118,9 @@ export const loadApiConfig = (env: NodeJS.ProcessEnv = process.env): ApiConfig =
 
 /** Dependency-injection token for the configuration. */
 export const API_CONFIG = Symbol("API_CONFIG");
+
+/** CLUB_CREATION, or its default: open on the hosted service, operators only when self-hosted (ADR 0018). */
+export const clubCreationMode = (
+  config: Pick<ApiConfig, "CLUB_CREATION" | "DEPLOYMENT_MODE">,
+): "open" | "approval" | "operators_only" =>
+  config.CLUB_CREATION ?? (config.DEPLOYMENT_MODE === "hosted" ? "open" : "operators_only");

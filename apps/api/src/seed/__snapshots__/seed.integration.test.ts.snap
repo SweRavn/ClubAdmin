@@ -19,7 +19,6 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "memberships": {
         "active": 11,
-        "applied": 1,
       },
       "slug": "fjordvik-il",
       "supportGrants": [],
@@ -67,6 +66,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "joinPolicy": "approval",
       "joinRequests": [
+        "johan by johan: approved",
         "viktor by henrik: pending",
       ],
       "locale": "sv-SE",
@@ -691,9 +691,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "camilla: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
       ],
       "hasBirthDate": true,
-      "memberships": [
-        "fil: applied (active)",
-      ],
+      "memberships": [],
       "pendingGuardianInvitations": 0,
       "protected": false,
       "roles": [],

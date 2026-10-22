@@ -3,7 +3,6 @@ import {
   type ClubDetail,
   ClubDetailSchema,
   ClubParamsSchema,
-  type ClubResponse,
 } from "@clubadmin/shared";
 import { Controller } from "@nestjs/common";
 
@@ -17,23 +16,8 @@ import {
 } from "../authorization/index.ts";
 import { PeopleService } from "../people/index.ts";
 import { RolesService } from "../roles/index.ts";
-import { type Club, ClubsService } from "./clubs.service.ts";
-
-export function toClubResponse(club: Club): ClubResponse {
-  return {
-    id: club.id,
-    name: club.name,
-    shortName: club.shortName,
-    slug: club.slug,
-    country: club.country,
-    logo: club.logo,
-    defaultLocale: club.defaultLocale,
-    timeZone: club.timeZone,
-    currency: club.currency,
-    status: club.status,
-    joinPolicy: club.joinPolicy,
-  };
-}
+import { toClubResponse } from "./club-response.ts";
+import { ClubsService } from "./clubs.service.ts";
 
 @Controller("clubs")
 export class ClubsController {

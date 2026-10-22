@@ -57,6 +57,8 @@ export const baseConfigShape = {
   >),
   USER_SIGNUP: z.enum(["open", "invite_only"]).default("open"),
   CLUB_CREATION: z.enum(["open", "approval", "operators_only"]).optional(),
+  /** Derives the tokens of email invitations (api and worker; at least 32 characters, ADR 0032). */
+  INVITATION_TOKEN_KEY: z.string().min(32).optional(),
   DEFAULT_COUNTRY: z
     .string()
     .regex(/^[A-Z]{2}$/, "two-letter country code")

@@ -40,6 +40,11 @@ export const ENV_TEMPLATE: EnvSection[] = [
       { key: "BILLING_ENABLED", value: "false" },
       { key: "USER_SIGNUP", value: "open" },
       { key: "CLUB_CREATION", value: "open" },
+      {
+        key: "INVITATION_TOKEN_KEY",
+        value: () => hex(32),
+        comment: "Derives the tokens of email invitations (API and worker, ADR 0032)",
+      },
       { key: "DEFAULT_COUNTRY", value: "SE" },
       { key: "DEV_AUTH", value: "true" },
       {

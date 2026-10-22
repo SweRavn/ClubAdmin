@@ -47,6 +47,17 @@ export const DOMAIN_ERRORS = {
   // guardianships
   guardianship_exists: "conflict",
   invitation_invalid: "conflict",
+  // Sign-up and joining (P1.1)
+  profile_incomplete: "conflict",
+  email_not_verified: "forbidden",
+  club_creation_not_allowed: "forbidden",
+  creation_request_exists: "conflict",
+  join_request_exists: "conflict",
+  not_guardian: "forbidden",
+  invitation_email_mismatch: "conflict",
+  invitation_email_unavailable: "unavailable",
+  role_preset_not_allowed: "forbidden",
+  club_has_manager: "conflict",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { Module } from "@nestjs/common";
 
+import { API_CONFIG, type ApiConfig, clubCreationMode } from "../../config.ts";
 import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform/infra/database.ts";
 import { VALKEY_CLIENT, type ValkeyClient } from "../../platform/infra/valkey.ts";
 import { AuthorizationService } from "./authorization.service.ts";
@@ -18,9 +19,11 @@ import { PersonProfilePresenter } from "./presenters/person-profile.presenter.ts
     },
     {
       provide: AuthorizationService,
-      inject: [DATABASE, AuthorizationCache],
-      useFactory: (db: OptionalDatabase, cache: AuthorizationCache) =>
-        new AuthorizationService(requireDatabase(db), cache),
+      inject: [DATABASE, AuthorizationCache, API_CONFIG],
+      useFactory: (db: OptionalDatabase, cache: AuthorizationCache, config: ApiConfig) =>
+        new AuthorizationService(requireDatabase(db), cache, {
+          clubCreation: clubCreationMode(config),
+        }),
     },
     {
       provide: PersonVisibility,

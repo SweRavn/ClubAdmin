@@ -65,7 +65,20 @@ const operatorWithGrant = as(
 const operatorWithoutGrant = as({ operator: true }, { mfa: true });
 
 const clubR = clubResource(club);
-const platformR: Resource = { kind: "platform" };
+const platformR: Resource = { kind: "platform", clubCreation: "approval" };
+const operatorsOnlyR: Resource = { kind: "platform", clubCreation: "operators_only" };
+const successorSet = relationships({ ...member() });
+const successor = actorOf(successorSet);
+const proposerSet = relationships({ ...member(), roles: [{ clubId: club, role: "club_manager" }] });
+const proposer = actorOf(proposerSet);
+const handoverR: Resource = {
+  kind: "handover",
+  handoverId: uuidv7(),
+  clubId: club,
+  fromPersonId: proposerSet.personId,
+  toPersonId: successorSet.personId,
+};
+const chair = as({ ...member(), roles: [{ clubId: club, role: "chair" }] }, { mfa: true });
 const teamR = groupResource(club, team, { ancestorIds: [section] });
 const archivedTeamR = groupResource(club, team, { ancestorIds: [section], archived: true });
 const coOwnersTeamR = groupResource(club, team, {
@@ -343,6 +356,65 @@ const CASES: Record<Permission, Case[]> = {
     { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
     { name: "club manager", actor: manager, resource: clubR, allowed: false },
   ],
+  "club.create": [
+    { name: "anyone (open or approval)", actor: outsider, resource: platformR, allowed: true },
+    {
+      name: "operator (operators_only)",
+      actor: operatorWithoutGrant,
+      resource: operatorsOnlyR,
+      allowed: true,
+    },
+    {
+      name: "club manager (operators_only)",
+      actor: manager,
+      resource: operatorsOnlyR,
+      allowed: false,
+    },
+    {
+      name: "outsider (operators_only)",
+      actor: outsider,
+      resource: operatorsOnlyR,
+      allowed: false,
+    },
+  ],
+  "club.creation.decide": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+  ],
+  "club.join_requests.manage": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.invitations.manage": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "group owner", actor: sectionOwner, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+  ],
+  "club.handover.respond": [
+    { name: "successor", actor: successor, resource: handoverR, allowed: true },
+    { name: "proposer", actor: proposer, resource: handoverR, allowed: true },
+    { name: "another manager", actor: manager, resource: handoverR, allowed: false },
+    { name: "outsider", actor: outsider, resource: handoverR, allowed: false },
+  ],
+  "club.managers.claim": [
+    { name: "chair", actor: chair, resource: clubR, allowed: true },
+    {
+      name: "board member",
+      actor: as({ ...member(), roles: [{ clubId: club, role: "board_member" }] }),
+      resource: clubR,
+      allowed: false,
+    },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+  ],
+  "club.managers.reassign": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
+    { name: "club manager", actor: manager, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+  ],
   "ops.backup.read": [
     { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
     { name: "club manager", actor: manager, resource: platformR, allowed: false },
@@ -376,6 +448,17 @@ describe("policies", () => {
         `${permission} deny case`,
       ).toBe(true);
     }
+  });
+
+  it("requires a second factor to create clubs only where operators create them", () => {
+    const create = policyFor("club.create")!;
+    expect(create.requiresMfa({ actor: outsider, resource: platformR })).toBe(false);
+    expect(create.requiresMfa({ actor: operatorWithoutGrant, resource: operatorsOnlyR })).toBe(
+      true,
+    );
+    expect(policyFor("club.managers.claim")!.requiresMfa({ actor: chair, resource: clubR })).toBe(
+      true,
+    );
   });
 
   it("requires a second factor for club administration", () => {

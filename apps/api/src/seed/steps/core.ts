@@ -246,10 +246,6 @@ class CoreSeeder {
       const by = m.by ?? club.actor;
       const personId = this.id(m.person);
       const where = sql`club_id = ${club.id} AND person_id = ${personId}`;
-      if (m.status === "applied") {
-        await this.applied(m.person, m.club, by, m.since);
-        continue;
-      }
       const ctx = this.as(by, m.club, m.since);
       const selfService = by === m.person || this.isGuardian(by, m.person);
       if (selfService && club.joinPolicy === "open") {
@@ -268,34 +264,13 @@ class CoreSeeder {
     // Applications approved in the past (history.json).
     for (const h of this.data.history) {
       if (h.action !== "membership.approve") continue;
-      const membership = await this.s.memberships.joinClub(
-        this.as(h.person, h.club, h.appliedAt),
-        this.id(h.person),
-      );
-      await this.s.memberships.approveMembership(this.as(h.actor, h.club, h.at), membership.id);
-      await this.backdate("club_memberships", h.club, sql`id = ${membership.id}`, {
-        from: this.env.clock.past(h.appliedAt),
+      const [request] = await this.s.joinRequests.request(this.as(h.person, h.club, h.appliedAt), {
+        personIds: [this.id(h.person)],
+      });
+      await this.s.joinRequests.decide(this.as(h.actor, h.club, h.at), request!.joinRequestId!, {
+        decision: "approve",
       });
     }
-  }
-
-  /**
-   * A membership application waiting for approval (the join flows of P1.1
-   * create these; here the row is written as the applicant's guardian).
-   */
-  private async applied(
-    person: string,
-    club: string,
-    by: string,
-    since: RelativeTime | null,
-  ): Promise<void> {
-    const ctx = this.as(by, club, since);
-    await this.env.db.withTenant(ctx, async (tx) => {
-      await this.s.profiles.ensureProfileInTx(tx, ctx, this.id(person));
-      await tx.execute(sql`
-        INSERT INTO club_memberships (club_id, person_id, status)
-        VALUES (${ctx.clubId}, ${this.id(person)}, 'applied')`);
-    });
   }
 
   /** Manager hand-overs: proposed a week before, accepted (or still open) at `at`. */

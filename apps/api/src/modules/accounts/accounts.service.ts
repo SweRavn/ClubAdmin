@@ -108,6 +108,22 @@ export class AccountsService {
     return this.db.withActor(context, (tx) => repo.findByPerson(tx, actorPersonId(context)));
   }
 
+  /** The acting person's account in any transaction (own_account policy). */
+  ownAccountInTx(tx: Tx, personId: string): Promise<Account | null> {
+    return repo.findByPerson(tx, personId);
+  }
+
+  /**
+   * What a signed-up person needs before any club action (ADR 0018): a
+   * verified login email and a completed profile (birth date, for age rules).
+   */
+  async requireReadyForClubsInTx(tx: Tx, personId: string): Promise<void> {
+    const account = await repo.findByPerson(tx, personId);
+    if (!account?.emailVerifiedAt) throw new DomainError("email_not_verified");
+    const person = await this.people.getPersonInTx(tx, personId);
+    if (!person.birthDate) throw new DomainError("profile_incomplete");
+  }
+
   /** The account's preferences (all null for a person without an account). */
   getPreferences(context: ActorContext): Promise<Preferences> {
     return this.db.withActor(context, async (tx) =>

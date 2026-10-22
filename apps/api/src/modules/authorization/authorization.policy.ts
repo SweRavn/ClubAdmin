@@ -150,6 +150,48 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("billing.subscription.manage", "club", ({ actor }) => actor.isOperator(), {
     mfa: true,
   }),
+  // Joining (P1.1, ADR 0018). Club creation follows CLUB_CREATION: anyone
+  // logged in (open, approval: the service then files a request), only
+  // operators (operators_only, with a second factor). The service also
+  // requires a completed profile.
+  definePolicy(
+    "club.create",
+    "platform",
+    ({ actor, resource }) => resource.clubCreation !== "operators_only" || actor.isOperator(),
+    { mfa: ({ resource }) => resource.clubCreation === "operators_only" },
+  ),
+  definePolicy("club.creation.decide", "platform", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
+  definePolicy("club.join_requests.manage", "club", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
+  ),
+  // Role presets additionally need club.roles.manage (checked by the controller).
+  definePolicy("club.invitations.manage", "club", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
+  ),
+  // The successor accepts or declines, the proposer cancels (the service
+  // checks which); nobody else sees the proposal.
+  definePolicy(
+    "club.handover.respond",
+    "handover",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null &&
+      (actor.isSelf(resource.toPersonId) || actor.isSelf(resource.fromPersonId)),
+  ),
+  // Recovery (ADR 0018): the board chair, when no manager is left (the
+  // service checks that), with a second factor.
+  definePolicy(
+    "club.managers.claim",
+    "club",
+    ({ actor, resource }) => actor.hasClubRole(resource.clubId, "chair"),
+    { mfa: true },
+  ),
+  // Recovery by an operator on the club's documented request; gives the
+  // operator no access to club data.
+  definePolicy("club.managers.reassign", "club", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

@@ -110,6 +110,14 @@ export type WaitlistStatus = (typeof WAITLIST_STATUSES)[number];
 export const JOIN_REQUEST_STATUSES = ["pending", "approved", "rejected", "withdrawn"] as const;
 export type JoinRequestStatus = (typeof JOIN_REQUEST_STATUSES)[number];
 
+export const CLUB_CREATION_REQUEST_STATUSES = [
+  "pending",
+  "approved",
+  "rejected",
+  "withdrawn",
+] as const;
+export type ClubCreationRequestStatus = (typeof CLUB_CREATION_REQUEST_STATUSES)[number];
+
 export const INVITATION_KINDS = ["email", "link", "code"] as const;
 export type InvitationKind = (typeof INVITATION_KINDS)[number];
 

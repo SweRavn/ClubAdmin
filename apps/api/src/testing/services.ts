@@ -21,10 +21,15 @@ export function testEncryption(): FieldEncryption {
 
 export function createCoreServices(
   db: Database,
-  options: { encryption?: FieldEncryption; defaultCountry?: string } = {},
+  options: {
+    encryption?: FieldEncryption;
+    defaultCountry?: string;
+    invitationTokenKey?: string;
+  } = {},
 ): CoreServices {
   return createServices(db, {
     encryption: options.encryption ?? testEncryption(),
     ...(options.defaultCountry ? { defaultCountry: options.defaultCountry } : {}),
+    ...(options.invitationTokenKey ? { invitationTokenKey: options.invitationTokenKey } : {}),
   });
 }
