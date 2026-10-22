@@ -46,3 +46,4 @@ test the foundation by hand.
 | Prompt | Depends on |
 |---|---|
 | [P1.1 Sign-up, club creation, club managers, joining and invitations](P1.1-signup-clubs-and-joining.md) | P0.12 |
+| [P1.2 Member register: search, filter, export](P1.2-member-register.md) | P1.1 |
