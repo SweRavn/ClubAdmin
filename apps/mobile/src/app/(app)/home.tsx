@@ -32,16 +32,20 @@ import { useTheme } from "../../theme.ts";
 /**
  * Logs when Home first shows data, and whether it came from the persisted
  * cache, for the cold-start measurement (scripts/measure-cold-start.sh reads
- * it from logcat). Not in production builds; no personal data.
+ * it from logcat). Not in production builds; no personal data. Data from the
+ * cache was fetched before Home mounted (restoring the cache also restores
+ * the query's update count, so isFetchedAfterMount cannot tell).
  */
-function useColdStartMarker(ready: boolean, fromCache: boolean) {
+function useColdStartMarker(dataUpdatedAt: number | undefined) {
   const logged = useRef(false);
+  const mountedAt = useRef(Date.now());
   useEffect(() => {
-    if (!ready || logged.current) return;
+    if (dataUpdatedAt === undefined || logged.current) return;
     if (BUILD_VARIANT !== "development" && BUILD_VARIANT !== "preview") return;
     logged.current = true;
-    console.info(`ClubAdmin: home ready (${fromCache ? "cache" : "network"})`);
-  }, [ready, fromCache]);
+    const source = dataUpdatedAt < mountedAt.current ? "cache" : "network";
+    console.info(`ClubAdmin: home ready (${source})`);
+  }, [dataUpdatedAt]);
 }
 
 export default function Home() {
@@ -54,7 +58,7 @@ export default function Home() {
   const groups = useMyGroups();
   const wards = useMyWards();
   const { club: current, setClub } = useCurrentClub();
-  useColdStartMarker(clubs.data !== undefined, !clubs.isFetchedAfterMount);
+  useColdStartMarker(clubs.data === undefined ? undefined : clubs.dataUpdatedAt);
 
   const refreshing = me.isRefetching || clubs.isRefetching || groups.isRefetching;
   const refresh = () => {
