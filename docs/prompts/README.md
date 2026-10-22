@@ -40,3 +40,9 @@ before starting the next one.
 
 After P0.9 the maintainer can log in to the web app as any demo persona and
 test the foundation by hand.
+
+## Phase 1 — MVP
+
+| Prompt | Depends on |
+|---|---|
+| [P1.1 Sign-up, club creation, club managers, joining and invitations](P1.1-signup-clubs-and-joining.md) | P0.12 |
