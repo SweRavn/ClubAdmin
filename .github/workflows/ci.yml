@@ -250,7 +250,11 @@ jobs:
           export APP_VARIANT=development
           pnpm exec expo prebuild --platform android --no-install --clean
           cd android
-          ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon --console=plain
+          # Android lint of the libraries runs out of Metaspace on the runner and adds
+          # nothing for this unpublished build; store builds keep it.
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g/' gradle.properties
+          ./gradlew assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon --console=plain \
+            -x lintVitalRelease -x lintVitalAnalyzeRelease -x lintVitalReportRelease
           echo "APK=$PWD/app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_ENV"
 
       - name: Install Maestro
