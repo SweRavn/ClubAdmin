@@ -1,0 +1,24 @@
+# OSV-Scanner exceptions (Security workflow). Each entry: a known
+# vulnerability without a usable fix, why it does not affect ClubAdmin, and
+# a date by which it is looked at again. Tracked in
+# https://github.com/SweRavn/ClubAdmin/issues/13.
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2027-01-31
+reason = "braces 3.0.3 (no fixed version): through micromatch in Jest and Metro, build and test tools only; never in the API, the web app or the app bundle, and fed only our own file globs."
+
+[[IgnoredVulns]]
+id = "GHSA-86w9-cpqp-85rv"
+ignoreUntil = 2027-01-31
+reason = "node-forge 1.4.0 (no fixed version): used by @expo/cli for the development server's certificates only; not in the app bundle or any server."
+
+[[IgnoredVulns]]
+id = "GHSA-hp3w-g68c-fv3c"
+ignoreUntil = 2027-01-31
+reason = "sprintf-js 1.0.3 (no fixed version): through argparse/js-yaml 3 in Jest's coverage instrumentation (babel-plugin-istanbul), test tooling only."
+
+[[IgnoredVulns]]
+id = "GHSA-vcc3-ghjq-m6fr"
+ignoreUntil = 2027-01-31
+reason = "decode-uri-component 0.2.2: the fixed 0.5.0 is ESM-only and breaks query-string 7, which expo-router requires; it only decodes the app's own deep links (clubadmin://...). Revisit with the next Expo SDK."

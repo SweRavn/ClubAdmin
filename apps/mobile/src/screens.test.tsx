@@ -18,8 +18,8 @@ import type {
   MyGroups,
   MyWards,
   RosterEntry,
-} from "../api/queries.ts";
-import { ClubProvider } from "../state/club.tsx";
+} from "./api/queries.ts";
+import { ClubProvider } from "./state/club.tsx";
 
 const ANNA = "0199a000-0000-7000-8000-000000000001";
 const ELSA = "0199a000-0000-7000-8000-000000000003";
@@ -42,7 +42,7 @@ jest.mock("expo-router", () => {
   };
 });
 
-jest.mock("../state/session.tsx", () => ({
+jest.mock("./state/session.tsx", () => ({
   useSession: () => ({
     status: "signedIn",
     personId: "0199a000-0000-7000-8000-000000000001",
@@ -193,7 +193,7 @@ function renderScreen(node: ReactNode) {
 describe("screens", () => {
   it("Home shows clubs, roles, groups, the ward's groups and the viewing-as switcher", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
-    const Home = (require("./(app)/home.tsx") as { default: () => ReactNode }).default;
+    const Home = (require("./app/(app)/home.tsx") as { default: () => ReactNode }).default;
     renderScreen(<Home />);
     expect(screen.getByText("Hi Anna Lindqvist")).toBeTruthy();
     expect(screen.getAllByText("Strandvikens Volleybollklubb").length).toBeGreaterThan(0);
@@ -207,7 +207,8 @@ describe("screens", () => {
   it("Group shows owners, leaders and members with the protected icon, tolerating new values", () => {
     mockParams = { groupId: F2017 };
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
-    const Group = (require("./(app)/groups/[groupId].tsx") as { default: () => ReactNode }).default;
+    const Group = (require("./app/(app)/groups/[groupId].tsx") as { default: () => ReactNode })
+      .default;
     renderScreen(<Group />);
     expect(screen.getByText("Sara Ahmed")).toBeTruthy();
     expect(screen.getAllByText("Erik Johansson").length).toBeGreaterThan(0);
@@ -221,7 +222,8 @@ describe("screens", () => {
   it("an invalid ID in a deep link shows not found", () => {
     mockParams = { groupId: "../../etc/passwd" };
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
-    const Group = (require("./(app)/groups/[groupId].tsx") as { default: () => ReactNode }).default;
+    const Group = (require("./app/(app)/groups/[groupId].tsx") as { default: () => ReactNode })
+      .default;
     renderScreen(<Group />);
     expect(screen.getByText("Not found")).toBeTruthy();
   });

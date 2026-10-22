@@ -39,6 +39,11 @@ export const apiConfigSchema = z
     /** Requests per client IP and window without a valid login (docs/security.md, "Rate limits"). */
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+    /** Prefix of the rate-limit counters in Valkey (deployments or test runs sharing one Valkey). */
+    RATE_LIMIT_NAMESPACE: z
+      .string()
+      .regex(/^[a-z0-9-]+$/)
+      .default("clubadmin"),
     /** Requests per account and window. */
     RATE_LIMIT_ACCOUNT_MAX: z.coerce.number().int().positive().default(600),
     /** Requests per client IP and window with a login: a backstop for shared addresses. */

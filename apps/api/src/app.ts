@@ -117,7 +117,7 @@ export async function createApp(
     keyGenerator: (request) => `${hasBearer(request) ? "auth" : "anon"}:${request.ip}`,
     timeWindow: config.RATE_LIMIT_WINDOW_MS,
     // Shared across API instances via Valkey; in-memory when Valkey is not configured.
-    ...(valkey ? { redis: valkey, nameSpace: "clubadmin:rate-limit:" } : {}),
+    ...(valkey ? { redis: valkey, nameSpace: `${config.RATE_LIMIT_NAMESPACE}:rate-limit:` } : {}),
     // If Valkey is unreachable, serve the request rather than failing it.
     skipOnError: true,
     allowList: (request) => request.url.startsWith("/health/"),

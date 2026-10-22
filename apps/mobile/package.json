@@ -12,7 +12,7 @@
     "prebuild": "expo prebuild --clean",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --maxWorkers=2",
     "licenses:generate": "node scripts/generate-licenses.mts",
     "bundle:check": "node scripts/check-bundle.mts"
   },
@@ -62,6 +62,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:mobile",
     "@types/react-dom": "catalog:mobile",
+    "babel-preset-expo": "~57.0.15",
     "eslint": "catalog:",
     "jest": "~29.7.0",
     "jest-expo": "~57.0.6",
@@ -78,7 +79,7 @@
       "<rootDir>/jest.setup.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!(?:\\.pnpm/[^/]+/node_modules/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|expo-.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|use-intl|@formatjs/.*|intl-messageformat|icu-minify|@schummar/.*|@tanstack/.*|@clubadmin/.*|standard-navigation))"
+      "node_modules/(?!(?:\\.pnpm/[^/]+/node_modules/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|expo-.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|use-intl|@formatjs/.*|intl-messageformat|icu-minify|@schummar/.*|@tanstack/.*|@clubadmin/.*|standard-navigation|uuid))"
     ]
   }
 }

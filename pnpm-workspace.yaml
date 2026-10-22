@@ -104,6 +104,9 @@ overrides:
   # drizzle-kit's legacy loader pins esbuild 0.18 (GHSA-67mh-4wv8-2f99); use the
   # 0.25 line drizzle-kit itself depends on.
   "@esbuild-kit/core-utils>esbuild": ^0.25.0
+  # xcode (Expo's iOS config plugins, build time) pins uuid 7 (GHSA-w5hq-g745-h8pq);
+  # it only calls uuid.v4(), which uuid 11 still provides for require().
+  "xcode>uuid": ^11.1.1
 
 # Explicitly accepted peer-dependency mismatches (keep this list short).
 peerDependencyRules:

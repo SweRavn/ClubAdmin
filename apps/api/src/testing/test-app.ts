@@ -77,6 +77,9 @@ export const NO_RATE_LIMITS = {
   RATE_LIMIT_CLUB_BULK_MAX: "100000",
   RATE_LIMIT_ACCOUNT_BULK_MAX: "100000",
   RATE_LIMIT_PROVISIONING_MAX: "100000",
+  // Own counters: requests from 127.0.0.1 here must not count against the
+  // API that the end-to-end tests run next to it.
+  RATE_LIMIT_NAMESPACE: "test",
 } as const;
 
 export interface TestApp {

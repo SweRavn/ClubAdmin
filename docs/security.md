@@ -195,7 +195,9 @@ later phase. Backup and disaster recovery are in
 ### Development process
 - Branch protection, required review, CI: lint, typecheck, tests, licence check,
   dependency scanning (OSV-Scanner), container scanning (Trivy),
-  static analysis (CodeQL), secret scanning.
+  static analysis (CodeQL), secret scanning. Vulnerabilities without a usable
+  fix are listed in `osv-scanner.toml` with the reason they do not affect us
+  and a review date ([#13](https://github.com/SweRavn/ClubAdmin/issues/13)).
 - Security-relevant PRs (auth, policies, RLS, crypto, uploads) need an extra
   reviewer and a checklist.
 - Yearly external penetration test once the hosted service has real users;

@@ -7,7 +7,8 @@ visibility as the web; settings, sessions and the About screen with the
 source link and third-party licences. Cached data is shown at once, also
 offline, from an encrypted per-account cache.
 
-- Screens: `src/app` (Expo Router). Data: `src/api` (the generated client,
+- Screens: `src/app` (Expo Router; it bundles every file there, so tests
+  live outside it). Data: `src/api` (the generated client,
   TanStack Query). Login: `src/auth`. Cache: `src/cache`. Language and time
   zone: `src/i18n` (messages from `@clubadmin/i18n`).
 - People are shown only through `PersonName` (`src/components/person-name.tsx`,

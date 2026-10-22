@@ -59,7 +59,7 @@ export class IdentityModule {
           provide: RequestLimits,
           inject: [API_CONFIG, VALKEY_CLIENT],
           useFactory: (c: ApiConfig, valkey: ValkeyClient) =>
-            new RequestLimits(new RateLimiter(valkey), c),
+            new RequestLimits(new RateLimiter(valkey, c.RATE_LIMIT_NAMESPACE), c),
         },
         {
           provide: IdentityService,

@@ -26,20 +26,22 @@ export interface RateLimitResult {
   retryAfter: number;
 }
 
-const KEY_PREFIX = "clubadmin:ratelimit:";
 const MEMORY_MAX_KEYS = 100_000;
 
 export class RateLimiter {
   private readonly store: Redis | undefined;
+  private readonly prefix: string;
   private readonly memory = new Map<string, { count: number; resetAt: number }>();
 
-  constructor(store: Redis | undefined) {
+  /** `namespace` separates counters of deployments (or test runs) sharing one Valkey. */
+  constructor(store: Redis | undefined, namespace = "clubadmin") {
     this.store = store;
+    this.prefix = `${namespace}:ratelimit:`;
   }
 
   /** Counts one request against `rule` for `subject`. */
   async hit(rule: RateLimitRule, subject: string): Promise<RateLimitResult> {
-    const key = `${KEY_PREFIX}${rule.name}:${subject}`;
+    const key = `${this.prefix}${rule.name}:${subject}`;
     if (!this.store) return this.hitMemory(key, rule);
     try {
       const results = await this.store
