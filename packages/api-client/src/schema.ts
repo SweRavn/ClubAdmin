@@ -223,6 +223,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/meta/client": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Supported app versions, feature flags and server capabilities (ADR 0029) */
+    get: operations["Meta_client"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/meta/source": {
     parameters: {
       query?: never;
@@ -527,6 +544,11 @@ export interface components {
       device: string;
       idpSessionId: string | null;
       devAuth: boolean;
+      /**
+       * @default web
+       * @enum {string}
+       */
+      client: "web" | "mobile";
     };
     MyWards: {
       wards: {
@@ -537,6 +559,28 @@ export interface components {
           "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
         )[];
       }[];
+    };
+    ClientInfoResponse: {
+      /** @example 1 */
+      apiVersion: number;
+      /** @example 0.0.0 */
+      serverVersion: string;
+      apps: {
+        ios: components["schemas"]["AppSupport"];
+        android: components["schemas"]["AppSupport"];
+      };
+      features: string[];
+      flags: {
+        [key: string]: boolean;
+      };
+    };
+    AppSupport: {
+      /** @example 1.0.0 */
+      minimumVersion: string;
+      /** @example 1.0.0 */
+      recommendedVersion: string;
+      /** Format: uri */
+      storeUrl: string | null;
     };
     SourceResponse: {
       /**
@@ -1371,6 +1415,44 @@ export interface operations {
         };
         content: {
           "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meta_client: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClientInfoResponse"];
         };
       };
       /** @description Too many requests */

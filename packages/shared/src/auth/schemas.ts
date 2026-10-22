@@ -90,6 +90,24 @@ export const PersonaListSchema = z
   .openapi("PersonaList");
 export type PersonaList = z.infer<typeof PersonaListSchema>;
 
+/** POST /dev/tokens (DEV_AUTH only): log the mobile app in as a persona. */
+export const DevTokenRequestSchema = z
+  .object({ personId: z.uuid(), mfa: z.boolean().default(false) })
+  .openapi("DevTokenRequest");
+export const DevTokenResponseSchema = z
+  .object({
+    accessToken: z.string(),
+    /** Development tokens carry everything in the access token; there is no ID token. */
+    idToken: z.null(),
+    /** When the access token expires; the app asks for a new one (there is no refresh token). */
+    expiresAt: z.iso.datetime(),
+    /** The session (`sid`) the token belongs to. */
+    sessionId: z.string(),
+  })
+  .openapi("DevTokenResponse");
+export type DevTokenRequest = z.infer<typeof DevTokenRequestSchema>;
+export type DevTokenResponse = z.infer<typeof DevTokenResponseSchema>;
+
 /** Header carrying a "give own login" invitation token through sign-up (ADR 0020). */
 export const ACCOUNT_INVITATION_HEADER = "x-clubadmin-invitation";
 /** Header carrying the ID token issued together with the access token (ADR 0024). */

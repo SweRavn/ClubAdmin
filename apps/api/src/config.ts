@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { baseConfigShape, envBoolean, envList, parseConfig } from "@clubadmin/server-kit";
-import { devAuthViolation, z } from "@clubadmin/shared";
+import { AppVersionSchema, devAuthViolation, z } from "@clubadmin/shared";
 
 export const apiConfigSchema = z
   .object({
@@ -22,6 +22,8 @@ export const apiConfigSchema = z
     AUTH_ISSUER: z.url().optional(),
     /** Required audience of access tokens: the Zitadel project ID (pnpm auth:configure). */
     AUTH_AUDIENCE: z.string().optional(),
+    /** Client ID of the mobile app in Zitadel (pnpm auth:configure): its sessions are listed in /me/sessions. */
+    AUTH_MOBILE_CLIENT_ID: z.string().optional(),
     /** JWKS URL; defaults to the issuer's /oauth/v2/keys. */
     AUTH_JWKS_URL: z.url().optional(),
     /** Zitadel API base URL for session revocation; defaults to AUTH_ISSUER. */
@@ -34,8 +36,32 @@ export const apiConfigSchema = z
     DEV_AUTH_KEY: z.string().min(32).optional(),
     BODY_LIMIT_BYTES: z.coerce.number().int().positive().default(1_048_576),
     REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+    /** Requests per client IP and window without a valid login (docs/security.md, "Rate limits"). */
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+    /** Requests per account and window. */
+    RATE_LIMIT_ACCOUNT_MAX: z.coerce.number().int().positive().default(600),
+    /** Requests per client IP and window with a login: a backstop for shared addresses. */
+    RATE_LIMIT_IP_BACKSTOP: z.coerce.number().int().positive().default(6000),
+    /** Bulk reads (endpoints marked bulkRead) per club and window. */
+    RATE_LIMIT_CLUB_BULK_MAX: z.coerce.number().int().positive().default(1200),
+    /** Bulk reads per account and window. */
+    RATE_LIMIT_ACCOUNT_BULK_MAX: z.coerce.number().int().positive().default(240),
+    /** First logins (account creation) per client IP and minute. */
+    RATE_LIMIT_PROVISIONING_MAX: z.coerce.number().int().positive().default(10),
+    /** App versions below this must update (GET /meta/client, ADR 0029); per platform with _IOS / _ANDROID. */
+    MOBILE_MIN_VERSION: AppVersionSchema.default("0.0.0"),
+    MOBILE_MIN_VERSION_IOS: AppVersionSchema.optional(),
+    MOBILE_MIN_VERSION_ANDROID: AppVersionSchema.optional(),
+    /** App versions below this are asked to update. */
+    MOBILE_RECOMMENDED_VERSION: AppVersionSchema.default("0.0.0"),
+    MOBILE_RECOMMENDED_VERSION_IOS: AppVersionSchema.optional(),
+    MOBILE_RECOMMENDED_VERSION_ANDROID: AppVersionSchema.optional(),
+    /** Store pages of the published apps. */
+    MOBILE_STORE_URL_IOS: z.url().optional(),
+    MOBILE_STORE_URL_ANDROID: z.url().optional(),
+    /** Feature flags for the apps: "name,other=false" (a bare name is on). */
+    FEATURE_FLAGS: z.string().default(""),
     /** Serve /api/v1/openapi.json. Defaults to on in development only. */
     OPENAPI_ENABLED: envBoolean(false).optional(),
   })

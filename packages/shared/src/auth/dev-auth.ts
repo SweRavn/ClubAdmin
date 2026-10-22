@@ -8,6 +8,8 @@ export const DEV_AUTH_ISSUER = "clubadmin-dev";
 export const DEV_AUTH_AUDIENCE = "clubadmin-api";
 /** Subject prefix of development tokens: `dev:<personId>`. */
 export const DEV_AUTH_SUBJECT_PREFIX = "dev:";
+/** Client (`azp`) of development tokens minted for the mobile app (POST /dev/tokens). */
+export const DEV_AUTH_MOBILE_CLIENT = "clubadmin-dev-mobile";
 
 export interface DevAuthSettings {
   DEV_AUTH: boolean;

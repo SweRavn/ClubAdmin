@@ -7,7 +7,7 @@ import { z } from "../zod.ts";
 
 /** Encrypted session record (tokens), written and read by the BFF only. */
 export const sessionKey = (sessionId: string) => `bff:session:${sessionId}`;
-/** Hash handle → StoredSessionMetadata JSON, for listing and revoking a person's sessions. */
+/** Hash handle → StoredSessionMetadata JSON, for listing and revoking a person's sessions (web and mobile). */
 export const personSessionsKey = (personId: string) => `bff:person-sessions:${personId}`;
 
 export const SessionMetadataSchema = z
@@ -24,12 +24,20 @@ export const SessionMetadataSchema = z
     /** Zitadel session ID (`sid`), ended when the session is revoked. */
     idpSessionId: z.string().nullable(),
     devAuth: z.boolean(),
+    /** Browser session (web BFF) or the mobile app. Records written before P0.10 are web. */
+    client: z.enum(["web", "mobile"]).default("web"),
   })
   .openapi("Session");
 export type SessionMetadata = z.infer<typeof SessionMetadataSchema>;
 
-/** What the index stores: the metadata plus the (secret) session ID, for revoking. */
-export const StoredSessionMetadataSchema = SessionMetadataSchema.extend({ storageId: z.string() });
+/**
+ * What the index stores: the metadata plus the (secret) BFF session ID, for
+ * revoking. Mobile sessions have no BFF record (null): the app holds its
+ * tokens, and revoking ends the Zitadel session.
+ */
+export const StoredSessionMetadataSchema = SessionMetadataSchema.extend({
+  storageId: z.string().nullable(),
+});
 export type StoredSessionMetadata = z.infer<typeof StoredSessionMetadataSchema>;
 
 /** Sessions live as long as the identity provider's refresh tokens may be idle. */

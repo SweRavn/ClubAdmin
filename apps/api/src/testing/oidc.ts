@@ -12,6 +12,7 @@ import { accessTokenHash } from "../modules/identity/index.ts";
 
 export const TEST_AUDIENCE = "test-project";
 export const TEST_CLIENT = "test-web-client";
+export const TEST_MOBILE_CLIENT = "test-mobile-client";
 
 export interface IssuedTokens {
   accessToken: string;
@@ -27,6 +28,8 @@ export interface UserClaims {
   amr?: string[];
   authTime?: number;
   sid?: string;
+  /** OIDC client (azp, client_id); defaults to the web client. */
+  clientId?: string;
 }
 
 export interface FakeIssuer {
@@ -90,7 +93,7 @@ export async function startFakeIssuer(): Promise<FakeIssuer> {
     async issue(claims, options = {}) {
       const key = keys.find((k) => k.kid === options.kid) ?? keys.at(-1)!;
       const expiresIn = options.expiresIn ?? "10m";
-      const accessToken = await new SignJWT({ client_id: TEST_CLIENT })
+      const accessToken = await new SignJWT({ client_id: claims.clientId ?? TEST_CLIENT })
         .setProtectedHeader({ alg: "RS256", kid: key.kid, typ: "JWT" })
         .setIssuer(issuer)
         .setSubject(claims.sub)
@@ -104,7 +107,7 @@ export async function startFakeIssuer(): Promise<FakeIssuer> {
         amr: claims.amr ?? ["pwd"],
         auth_time: claims.authTime ?? Math.floor(Date.now() / 1000),
         sid: claims.sid ?? uuidv7(),
-        azp: TEST_CLIENT,
+        azp: claims.clientId ?? TEST_CLIENT,
         ...(claims.email !== undefined
           ? { email: claims.email, email_verified: claims.emailVerified ?? true }
           : {}),

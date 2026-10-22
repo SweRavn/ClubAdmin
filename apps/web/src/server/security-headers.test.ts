@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from "vitest";
 
-import { onBehalfApplies } from "./api.ts";
 import { contentSecurityPolicy, newNonce, SECURITY_HEADERS } from "./security-headers.ts";
 
 const directives = (policy: string) =>
@@ -57,20 +56,5 @@ describe("content security policy", () => {
     expect(names).toEqual(
       expect.arrayContaining(["X-Frame-Options", "X-Content-Type-Options", "Referrer-Policy"]),
     );
-  });
-});
-
-describe("X-On-Behalf-Of", () => {
-  it.each([
-    ["/api/v1/me/clubs", true],
-    ["/api/v1/me/groups", true],
-    ["/api/v1/groups/x/members?cursor=y", true],
-    ["/api/v1/me", false],
-    ["/api/v1/me/wards", false],
-    ["/api/v1/me/sessions/abc", false],
-    ["/api/v1/me/preferences", false],
-    ["/api/v1/meta/source", false],
-  ])("%s → %s", (path, expected) => {
-    expect(onBehalfApplies(path)).toBe(expected);
   });
 });

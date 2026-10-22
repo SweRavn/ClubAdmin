@@ -30,6 +30,9 @@ export interface CreateAppOptions {
 
 const REQUEST_ID_HEADER = "x-request-id";
 
+const hasBearer = (request: FastifyRequest) =>
+  /^Bearer\s+\S/i.test(request.headers.authorization ?? "");
+
 /** Accept the proxy's request ID only if it is a UUID; otherwise make a new one. */
 export function requestIdFrom(header: string | string[] | undefined): string {
   const value = Array.isArray(header) ? header[0] : header;
@@ -107,7 +110,11 @@ export async function createApp(
   const valkey = app.get<ValkeyClient>(VALKEY_CLIENT);
   await app.register(fastifyRateLimit, {
     global: true,
-    max: config.RATE_LIMIT_MAX,
+    // Per client IP. Requests with a bearer token get the much higher backstop
+    // and their own counter: they are limited per account by the AuthGuard,
+    // which also counts rejected tokens against the unauthenticated limit.
+    max: (request) => (hasBearer(request) ? config.RATE_LIMIT_IP_BACKSTOP : config.RATE_LIMIT_MAX),
+    keyGenerator: (request) => `${hasBearer(request) ? "auth" : "anon"}:${request.ip}`,
     timeWindow: config.RATE_LIMIT_WINDOW_MS,
     // Shared across API instances via Valkey; in-memory when Valkey is not configured.
     ...(valkey ? { redis: valkey, nameSpace: "clubadmin:rate-limit:" } : {}),

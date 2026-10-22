@@ -33,3 +33,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0025](0025-authorization-engine.md) | Authorization engine: relationship sets, resource scopes and visibility | Accepted |
 | [0026](0026-demo-data-location.md) | Demo data as data files in `docs/demodata/`, seeded by the API app | Accepted |
 | [0027](0027-web-performance-budgets-in-ci.md) | Web shell: production build, CSP with Trusted Types, performance budgets in CI | Accepted |
+| [0029](0029-api-compatibility.md) | API compatibility: `/api/v1` only grows | Accepted |

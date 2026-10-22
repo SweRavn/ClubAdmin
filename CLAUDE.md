@@ -114,6 +114,7 @@ API:
 
 ```
 pnpm api:client       # regenerate packages/api-client (openapi.json + types); commit the result
+pnpm api:breaking     # fail on breaking API changes against origin/main (ADR 0029; needs Go)
 pnpm test:integration # integration tests against the local services (needs pnpm dev:services)
 pnpm --filter @clubadmin/api build && pnpm --filter @clubadmin/api bench   # request-pipeline benchmark
 ```
@@ -174,7 +175,9 @@ only run if listed in `onlyBuiltDependencies`.
 - Terminology: "group" in code and data (`groups`, `group_memberships`); "team"
   is one `kind` of group and a UI label.
 - API: REST, JSON, `/api/v1/...`, plural resources, ISO 8601 times, errors as
-  RFC 9457 problem details.
+  RFC 9457 problem details. `/api/v1` only grows (ADR 0029): add fields and
+  endpoints, deprecate instead of removing or renaming; clients ignore
+  unknown fields and enum values.
 - Tests: every policy has allow and deny tests (`authorization.policy.test.ts`
   fails otherwise); every endpoint with a permission is in the permission
   matrix (`authorization.integration.test.ts`, "matrix" scenario in

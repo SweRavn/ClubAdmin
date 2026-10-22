@@ -1,0 +1,4 @@
+# Breaking API changes that were decided anyway (ADR 0029). Each line is an
+# oasdiff error as `pnpm api:breaking` prints it ("GET /api/v1/... <message>"),
+# followed by the ADR or issue that allows it, e.g. "(ADR 0031)" or "(#42)".
+# Remove lines once the change has reached origin/main.

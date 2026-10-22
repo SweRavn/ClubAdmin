@@ -79,12 +79,6 @@ export const ENV_TEMPLATE: EnvSection[] = [
       { key: "CORS_ORIGINS", value: "${PUBLIC_WEB_URL}" },
       { key: "SOURCE_URL", value: "https://github.com/SweRavn/ClubAdmin" },
       { key: "OPENAPI_ENABLED", value: "true" },
-      {
-        key: "RATE_LIMIT_MAX",
-        value: "3000",
-        comment:
-          "Requests per client IP and minute; higher than the production default: one browser, and the web app makes several API calls per page (#11)",
-      },
       { key: "WORKER_CONCURRENCY", value: "5" },
       {
         key: "OTEL_EXPORTER_OTLP_ENDPOINT",

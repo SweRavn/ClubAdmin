@@ -21,6 +21,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Full history: the breaking-change check compares with the base commit.
+          fetch-depth: 0
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -61,6 +63,14 @@ jobs:
             echo "::error::packages/api-client is out of date. Run 'pnpm api:client' and commit the result."
             exit 1
           }
+
+      # ADR 0029: within /api/v1 the API only grows. oasdiff runs through Go's
+      # module proxy (Go is on the runner image; GOTOOLCHAIN=auto fetches the
+      # version oasdiff needs).
+      - name: No breaking API changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: pnpm api:breaking "$BASE_SHA"
 
   services:
     name: Local services, integration and end-to-end tests

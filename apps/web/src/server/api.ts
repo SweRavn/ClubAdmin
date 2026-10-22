@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Server-to-server calls from the BFF to the API with the session's tokens.
 
+import { onBehalfApplies } from "@clubadmin/api-client";
 import { ID_TOKEN_HEADER, ON_BEHALF_OF_HEADER } from "@clubadmin/shared";
 
 import { webConfig } from "./config.ts";
@@ -8,17 +9,6 @@ import { webConfig } from "./config.ts";
 export interface ApiTokens {
   accessToken: string;
   idToken: string | null;
-}
-
-/**
- * Whether a call is made for the ward while "viewing as" one: everything
- * except the logged-in person's own account (who they are, their wards,
- * sessions and preferences) and public metadata.
- */
-export function onBehalfApplies(path: string): boolean {
-  const pathname = path.split("?")[0]!.replace(/\/+$/, "");
-  if (pathname === "/api/v1/me") return false;
-  return !/^\/api\/v1\/(me\/(wards|sessions|preferences|security)|meta|dev)(\/|$)/.test(pathname);
 }
 
 export function apiUrl(path: string): string {

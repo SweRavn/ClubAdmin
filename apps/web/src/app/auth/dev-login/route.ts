@@ -2,6 +2,7 @@
 // DEV_AUTH persona login (form on /login). Exists only when DEV_AUTH is
 // on, which the server refuses outside development.
 
+import { DEV_TOKEN_SECONDS, mintDevToken } from "@clubadmin/server-kit/dev-tokens";
 import { isUuid, MeResponseSchema } from "@clubadmin/shared";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -9,7 +10,6 @@ import { apiFetch } from "../../../server/api.ts";
 import { webConfig } from "../../../server/config.ts";
 import { SESSION_COOKIE } from "../../../server/cookies.ts";
 import { isSameOrigin } from "../../../server/csrf.ts";
-import { DEV_TOKEN_SECONDS, mintDevToken } from "../../../server/dev-tokens.ts";
 import { describeDevice } from "../../../server/device.ts";
 import {
   formText,

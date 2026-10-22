@@ -10,7 +10,8 @@
     "./telemetry": "./src/telemetry.ts",
     "./crypto": "./src/crypto.ts",
     "./config": "./src/config.ts",
-    "./env": "./src/env.ts"
+    "./env": "./src/env.ts",
+    "./dev-tokens": "./src/dev-tokens.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -32,6 +33,7 @@
     "@opentelemetry/sdk-trace-base": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
     "import-in-the-middle": "catalog:",
+    "jose": "catalog:",
     "pino": "catalog:"
   },
   "devDependencies": {

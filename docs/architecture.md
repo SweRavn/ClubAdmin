@@ -264,7 +264,8 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   verified email that changed in Zitadel is taken over on the next login.
   With a "give own login" invitation (`X-ClubAdmin-Invitation`, ADR 0020) the
   new login is linked to the invited person instead. At most 10 first logins
-  per client IP and minute.
+  per client IP and minute (Valkey, shared by all instances; refused while
+  Valkey is unreachable).
 - **Web (BFF, `apps/web`):** Next.js route handlers `/auth/login/start`,
   `/auth/callback`, `/auth/logout` (and `/auth/dev-login`) do authorization
   code + PKCE with `openid-client`. Tokens stay in Valkey, encrypted with
@@ -276,11 +277,21 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   the session's token, from the site's own origin. The login adds exactly one
   API call (`GET /api/v1/me`). `api.clubadmin.localhost` serves the API
   directly for clients with their own tokens (mobile).
-- **Sessions:** `GET /api/v1/me/sessions` lists the person's browser sessions
-  from the BFF's index in Valkey (by a public handle, never the session ID);
-  `DELETE /api/v1/me/sessions/:id` removes the session (that browser is logged
-  out on its next request) and ends the Zitadel session (machine user
-  `clubadmin-api`, `ZITADEL_API_TOKEN`).
+- **Sessions:** `GET /api/v1/me/sessions` lists the person's sessions from an
+  index in Valkey (by a public handle, never the session ID): browser sessions
+  written by the BFF, and mobile app sessions the API registers on the first
+  request of a Zitadel session from the mobile client (`azp` =
+  `AUTH_MOBILE_CLIENT_ID`; device and app version from the `X-Client-*`
+  headers, never a device identifier). `DELETE /api/v1/me/sessions/:id`
+  removes the session (a browser is logged out on its next request) and ends
+  the Zitadel session (machine user `clubadmin-api`, `ZITADEL_API_TOKEN`), so
+  the app's refresh token stops working; its access token may live out its 10
+  minutes.
+- **Rate limits** (`docs/security.md`): per client IP for requests without a
+  valid login (`@fastify/rate-limit`), per account in the `AuthGuard` once the
+  token is verified (with a much higher per-IP backstop), and per club and
+  account for `bulkRead` endpoints; counters in Valkey
+  (`platform/http/rate-limiter.ts`).
 - **Mobile:** authorization-code flow with PKCE via the system browser; refresh
   token in the OS secure store (Keychain/Keystore) (P0.10).
 - Short-lived access and ID tokens (10 min), rotating refresh tokens (30 days
@@ -290,7 +301,9 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   personal identity numbers (enforced with the permissions, P0.7).
 - **Development:** with `DEV_AUTH=true` the login page shows a persona picker
   (`GET /api/v1/dev/personas`, only registered then); the BFF signs HS256
-  tokens with `DEV_AUTH_KEY` (`iss = clubadmin-dev`) for the chosen person,
+  tokens with `DEV_AUTH_KEY` (`iss = clubadmin-dev`,
+  `@clubadmin/server-kit/dev-tokens`), and the API does the same for the
+  mobile app (`POST /api/v1/dev/tokens`, no refresh token), for the chosen person,
   with or without MFA. API and web refuse to start with `DEV_AUTH=true` unless
   `NODE_ENV=development` and `DEPLOYMENT_MODE=self_hosted`, and log a warning
   on every start (see `seed-data.md`).
@@ -402,10 +415,11 @@ forbids name fields and name columns elsewhere; the view
 | Errors | `ProblemDetailsFilter`, `ProblemError` | Everything becomes RFC 9457 problem details ([problem types](api/problems.md)); titles translated from `Accept-Language`. Unknown errors → 500 with no internals. |
 | Request IDs | `app.ts` | `X-Request-Id` accepted from the proxy if it is a UUID, otherwise a new UUIDv7; returned on every response and logged. |
 | Logging | `@clubadmin/server-kit` `createLogger` (pino) | One line per request with the route template, status and duration; never bodies or query strings. Every log object passes through the shared redaction (`packages/shared/src/logging/redact.ts`). |
-| Security headers, CORS, limits | `app.ts` | Helmet (CSP `default-src 'none'`), CORS limited to `CORS_ORIGINS`, 1 MB body limit, request timeout, global rate limit per IP in Valkey (in-memory without Valkey; fails open if Valkey is down). |
+| Security headers, CORS, limits | `app.ts` | Helmet (CSP `default-src 'none'`), CORS limited to `CORS_ORIGINS`, 1 MB body limit, request timeout, rate limit per IP in Valkey (in-memory without Valkey; fails open if Valkey is down); per-account and per-club limits in the `AuthGuard` (Authentication, above). |
 | Health | `/health/live`, `/health/ready` | Outside `/api/v1`, not rate limited. Readiness checks PostgreSQL and Valkey and answers 503 if one fails. |
 | AGPL | `/api/v1/meta/source`, `/api/v1/meta/version` | Source URL of the exact running commit (`SOURCE_URL` + `GIT_COMMIT`). |
-| OpenAPI | `/api/v1/openapi.json` (development) and `pnpm api:client` | Committed to `packages/api-client/openapi.json`; a test fails when it is out of date. |
+| Apps | `/api/v1/meta/client` | Supported app versions, feature flags and server capabilities (ADR 0029). |
+| OpenAPI | `/api/v1/openapi.json` (development) and `pnpm api:client` | Committed to `packages/api-client/openapi.json`; a test fails when it is out of date. `pnpm api:breaking` (CI) fails on breaking changes against the base commit (ADR 0029). |
 | Telemetry | `@clubadmin/server-kit/telemetry`, loaded with `node --import` | OTLP traces and metrics only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; query strings and personal-data attributes are scrubbed from spans. |
 | Module boundaries | `dependency-cruiser.config.mjs` (`pnpm lint`) | Modules import each other only through `index.ts`; packages never import apps; no cycles. |
 

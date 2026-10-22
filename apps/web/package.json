@@ -37,7 +37,6 @@
     "@clubadmin/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "ioredis": "catalog:",
-    "jose": "catalog:",
     "next": "catalog:",
     "next-intl": "catalog:",
     "openid-client": "catalog:",

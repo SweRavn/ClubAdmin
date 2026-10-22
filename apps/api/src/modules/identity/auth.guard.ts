@@ -14,6 +14,8 @@ import { ProblemError } from "../../platform/http/problem-error.ts";
 import type { AuthorizationService } from "../authorization/index.ts";
 import type { IdentityService } from "./identity.service.ts";
 import { RECENT_AUTH, REQUIRE_MFA } from "./principal.ts";
+import type { RequestLimits } from "./request-limits.ts";
+import type { SessionsService } from "./sessions.service.ts";
 import { TokenError, type TokenVerifier } from "./token-verifier.ts";
 
 const header = (request: FastifyRequest, name: string): string | undefined => {
@@ -27,17 +29,27 @@ export class AuthGuard implements CanActivate {
   private readonly verifier: TokenVerifier;
   private readonly identity: IdentityService;
   private readonly authorization: AuthorizationService;
+  private readonly limits: RequestLimits;
+  private readonly sessions: SessionsService;
+  /** OIDC clients whose sessions are registered in /me/sessions by the API (the mobile app). */
+  private readonly mobileClients: ReadonlySet<string>;
 
   constructor(
     reflector: Reflector,
     verifier: TokenVerifier,
     identity: IdentityService,
     authorization: AuthorizationService,
+    limits: RequestLimits,
+    sessions: SessionsService,
+    mobileClients: ReadonlySet<string>,
   ) {
     this.reflector = reflector;
     this.verifier = verifier;
     this.identity = identity;
     this.authorization = authorization;
+    this.limits = limits;
+    this.sessions = sessions;
+    this.mobileClients = mobileClients;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -62,6 +74,8 @@ export class AuthGuard implements CanActivate {
       verified = await this.verifier.verify(bearer, header(request, ID_TOKEN_HEADER));
     } catch (error) {
       if (!(error instanceof TokenError)) throw error;
+      // It escaped the unauthenticated per-IP limit (app.ts) by carrying a token.
+      await this.limits.rejectedToken(request.ip);
       // A bad token on a public endpoint is ignored rather than refused.
       if (isPublic) return true;
       request.log.info({ reason: error.message }, "access token rejected");
@@ -73,6 +87,15 @@ export class AuthGuard implements CanActivate {
       ip: request.ip,
       ...(invitation ? { invitationToken: invitation } : {}),
     });
+    await this.limits.account(request.principal);
+    if (verified.clientId && verified.sessionId && this.mobileClients.has(verified.clientId)) {
+      this.sessions.touchMobile(
+        request.principal.personId,
+        verified.sessionId,
+        request,
+        request.principal.dev,
+      );
+    }
 
     // Public endpoints never act on the caller's relationships.
     if (isPublic) return true;
@@ -80,6 +103,13 @@ export class AuthGuard implements CanActivate {
     request.authz = await this.authorization.forRequest(request, request.principal);
     if ("permission" in endpoint.access) {
       await this.authorization.authorize(request.authz, endpoint.access.permission, request);
+    }
+    if (endpoint.bulkRead) {
+      const resource = request.authz.resource;
+      if (resource?.kind !== "club" && resource?.kind !== "group") {
+        throw new Error("bulkRead endpoints need a club or group resource");
+      }
+      await this.limits.bulkRead(request.principal, resource.clubId);
     }
     const handler = context.getHandler();
     const controller = context.getClass();

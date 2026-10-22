@@ -6,6 +6,7 @@ import createClient, { type Client, type Middleware } from "openapi-fetch";
 
 import type { components, paths } from "./schema.ts";
 
+export { onBehalfApplies } from "./on-behalf.ts";
 export type { components, paths } from "./schema.ts";
 export type ProblemDetails = components["schemas"]["ProblemDetails"];
 

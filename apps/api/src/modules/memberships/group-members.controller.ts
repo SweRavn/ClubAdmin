@@ -52,6 +52,7 @@ export class GroupMembersController {
     access: { permission: "group.members.read", resource: "group" },
     request: { params: GroupParamsSchema, query: PageQuerySchema },
     response: GroupMemberListSchema,
+    bulkRead: true,
   })
   async listMembers(
     @CurrentAuthorization() authz: RequestAuthorization,

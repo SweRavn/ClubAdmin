@@ -25,6 +25,8 @@ export interface VerifiedToken {
   authTime: Date | null;
   /** Identity-provider session (sid). */
   sessionId: string | null;
+  /** The OIDC client the token was issued to (azp / client_id), e.g. the mobile app. */
+  clientId: string | null;
   email: string | null;
   emailVerified: boolean;
   givenName: string | null;
@@ -131,6 +133,7 @@ export class TokenVerifier {
       amr: strings(id?.amr),
       authTime: seconds(id?.auth_time),
       sessionId: str(id?.sid),
+      clientId: str(id?.azp) ?? str(access.client_id) ?? str(access.azp),
       email: str(id?.email),
       emailVerified: id?.email_verified === true,
       givenName: str(id?.given_name),
@@ -184,6 +187,7 @@ export class TokenVerifier {
       amr: strings(payload.amr),
       authTime: seconds(payload.auth_time),
       sessionId: str(payload.sid),
+      clientId: str(payload.azp),
       email: null,
       emailVerified: false,
       givenName: null,

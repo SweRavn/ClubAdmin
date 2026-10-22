@@ -8,10 +8,17 @@ export class ProblemError extends Error {
   /** Shown to the client. Must not contain personal data. */
   readonly detail: string | undefined;
   readonly errors: ValidationIssue[] | undefined;
+  /** Seconds, sent as Retry-After with 429 answers. */
+  readonly retryAfter: number | undefined;
 
   constructor(
     slug: ProblemSlug,
-    options: { detail?: string; errors?: ValidationIssue[]; cause?: unknown } = {},
+    options: {
+      detail?: string;
+      errors?: ValidationIssue[];
+      cause?: unknown;
+      retryAfter?: number;
+    } = {},
   ) {
     super(options.detail ?? slug, { cause: options.cause });
     this.name = "ProblemError";
@@ -19,5 +26,6 @@ export class ProblemError extends Error {
     this.status = PROBLEM_TYPES[slug];
     this.detail = options.detail;
     this.errors = options.errors;
+    this.retryAfter = options.retryAfter;
   }
 }

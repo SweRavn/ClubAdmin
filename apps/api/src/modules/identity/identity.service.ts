@@ -9,6 +9,7 @@ import { isDomainError } from "../../platform/domain/domain-error.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
 import type { AccountsService } from "../accounts/index.ts";
 import type { Principal } from "./principal.ts";
+import type { RequestLimits } from "./request-limits.ts";
 import { isMfa, type VerifiedToken } from "./token-verifier.ts";
 
 interface CachedAccount {
@@ -28,16 +29,15 @@ export interface ResolveOptions {
 
 const CACHE_TTL_MS = 5 * 60_000;
 const CACHE_MAX = 10_000;
-/** First logins (account creation) per client IP and minute. */
-export const PROVISIONING_LIMIT = 10;
 
 export class IdentityService {
   private readonly accounts: AccountsService;
+  private readonly limits: RequestLimits;
   private readonly cache = new Map<string, CachedAccount>();
-  private readonly provisioning = new Map<string, { count: number; resetAt: number }>();
 
-  constructor(accounts: AccountsService) {
+  constructor(accounts: AccountsService, limits: RequestLimits) {
     this.accounts = accounts;
+    this.limits = limits;
   }
 
   async resolve(token: VerifiedToken, options: ResolveOptions = {}): Promise<Principal> {
@@ -107,7 +107,7 @@ export class IdentityService {
       // The first request after login must carry the ID token (verified email, names).
       throw new ProblemError("unauthenticated", { detail: "verified_email_required" });
     }
-    this.limitProvisioning(options.ip ?? "unknown");
+    await this.limits.provisioning(options.ip ?? "unknown");
     const account = {
       email: token.email,
       emailVerifiedAt: new Date(),
@@ -141,18 +141,6 @@ export class IdentityService {
       // email_taken: this address already belongs to another account; no merge by email.
       throw error;
     }
-  }
-
-  private limitProvisioning(ip: string): void {
-    const now = Date.now();
-    const entry = this.provisioning.get(ip);
-    if (!entry || entry.resetAt <= now) {
-      this.provisioning.set(ip, { count: 1, resetAt: now + 60_000 });
-      if (this.provisioning.size > CACHE_MAX) this.provisioning.clear();
-      return;
-    }
-    entry.count += 1;
-    if (entry.count > PROVISIONING_LIMIT) throw new ProblemError("rate-limited");
   }
 
   private fromCache(key: string): CachedAccount | undefined {

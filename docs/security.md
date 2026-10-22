@@ -50,8 +50,10 @@ later phase. Backup and disaster recovery are in
   by a state cookie (no login CSRF). Logout removes the session, revokes the
   refresh token and ends the Zitadel session.
 - Rate limits: `/auth/*` 30 requests per IP and minute (BFF, Valkey); first
-  logins (account creation) 10 per IP and minute (API; in memory, so per API
-  instance, [#7](https://github.com/SweRavn/ClubAdmin/issues/7)); the global API limit.
+  logins (account creation) 10 per IP and minute, shared by all API instances
+  through Valkey and **failing closed** (`503`) when Valkey is configured but
+  unreachable, so an outage cannot be used to create accounts in bulk; the
+  API limits below.
 - Token contents are never logged (tests); rejected tokens are logged with the
   reason only.
 - Step-up authentication for sensitive actions (exporting member data, viewing
@@ -136,11 +138,29 @@ later phase. Backup and disaster recovery are in
 - User content (rich text) sanitised server-side with an allow list.
 - Uploads go directly to object storage via short-lived pre-signed URLs, are
   scanned before becoming visible, and are served from a separate origin.
-- Request body limits, timeouts and rate limits per IP, per account and per club.
-  Today the API has a global limit per client IP; the web app forwards the
-  browser's address (`X-Forwarded-For`, the API trusts it as a proxy). Limits
-  per account and per club, and sizing them for the web app's several API
-  calls per page, are [#11](https://github.com/SweRavn/ClubAdmin/issues/11).
+- Request body limits and timeouts.
+- **Rate limits** (fixed one-minute windows in Valkey, shared by all API
+  instances; in memory without Valkey; `429` problem details with
+  `Retry-After`; requests are let through if Valkey is unreachable, except
+  account creation above). Defaults, all configurable (`RATE_LIMIT_*`):
+
+  | Counted per | Applies to | Default per minute |
+  |---|---|---|
+  | Client IP | Requests without a valid login (no token, or a rejected one) | 300 |
+  | Account | Every authenticated request (a guardian acting for a ward uses the guardian's budget) | 600 |
+  | Client IP | Authenticated requests: backstop against token stuffing from one address | 6,000 |
+  | Club | Bulk reads (`bulkRead` endpoints: rosters, later exports) | 1,200 |
+  | Account | Bulk reads | 240 |
+
+  Sizing: a web page view makes about five API calls (`/me`, `/me/clubs`,
+  `/me/wards`, the page's own data), a mobile cold start about six (`/me`,
+  `/me/clubs`, `/me/groups`, `/me/wards`, `/meta/client`, the screen's data).
+  600 per account allows about 100 page views a minute, far more than a person
+  clicks. The IP backstop lets about 50 busy members share one address (club
+  house, school, mobile carrier NAT). The web app forwards the browser's
+  address (`X-Forwarded-For`, the API trusts it as a proxy), so the per-IP
+  limits apply to browsers, not to the web server. The local environment uses
+  the same defaults.
 - Secrets via environment/secret store (SOPS + age for the hosted
   infrastructure); never in the repository; rotated on staff changes.
 

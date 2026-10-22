@@ -11,7 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { devToken, TEST_DEV_AUTH_KEY } from "../testing/oidc.ts";
 import { summariseSeed } from "../testing/seed-summary.ts";
 import { createCoreServices } from "../testing/services.ts";
-import { createTestApp, type TestApp } from "../testing/test-app.ts";
+import { createTestApp, NO_RATE_LIMITS, type TestApp } from "../testing/test-app.ts";
 import { type DemoData, loadDemoData } from "./demodata.ts";
 import { type Scenario, seed } from "./runner.ts";
 import { SeedClock } from "./time.ts";
@@ -218,7 +218,7 @@ describe("with the API", () => {
         DATABASE_URL: first.url("app"),
         DEV_AUTH: "true",
         DEV_AUTH_KEY: TEST_DEV_AUTH_KEY,
-        RATE_LIMIT_MAX: "100000",
+        ...NO_RATE_LIMITS,
       },
       [],
     );

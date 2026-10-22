@@ -69,6 +69,16 @@ export class TestController {
 @Module({ controllers: [TestController] })
 export class TestModule {}
 
+/** Rate limits high enough that tests making many requests never reach them. */
+export const NO_RATE_LIMITS = {
+  RATE_LIMIT_MAX: "100000",
+  RATE_LIMIT_ACCOUNT_MAX: "100000",
+  RATE_LIMIT_IP_BACKSTOP: "100000",
+  RATE_LIMIT_CLUB_BULK_MAX: "100000",
+  RATE_LIMIT_ACCOUNT_BULK_MAX: "100000",
+  RATE_LIMIT_PROVISIONING_MAX: "100000",
+} as const;
+
 export interface TestApp {
   app: NestFastifyApplication;
   logs: Record<string, unknown>[];

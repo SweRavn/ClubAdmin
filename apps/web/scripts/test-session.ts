@@ -8,9 +8,9 @@
 //
 //   node apps/web/scripts/test-session.ts <personId>   → prints the cookie header
 
+import { DEV_TOKEN_SECONDS, mintDevToken } from "@clubadmin/server-kit/dev-tokens";
 import { Redis } from "ioredis";
 
-import { DEV_TOKEN_SECONDS, mintDevToken } from "../src/server/dev-tokens.ts";
 import { newCsrfToken, newSessionHandle, SessionStore } from "../src/server/session-store.ts";
 
 export async function createTestSession(personId: string): Promise<{ id: string; csrf: string }> {

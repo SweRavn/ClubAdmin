@@ -846,6 +846,14 @@
           },
           "devAuth": {
             "type": "boolean"
+          },
+          "client": {
+            "type": "string",
+            "enum": [
+              "web",
+              "mobile"
+            ],
+            "default": "web"
           }
         },
         "required": [
@@ -901,6 +909,80 @@
         },
         "required": [
           "wards"
+        ]
+      },
+      "ClientInfoResponse": {
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "type": "integer",
+            "example": 1
+          },
+          "serverVersion": {
+            "type": "string",
+            "example": "0.0.0"
+          },
+          "apps": {
+            "type": "object",
+            "properties": {
+              "ios": {
+                "$ref": "#/components/schemas/AppSupport"
+              },
+              "android": {
+                "$ref": "#/components/schemas/AppSupport"
+              }
+            },
+            "required": [
+              "ios",
+              "android"
+            ]
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "flags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        },
+        "required": [
+          "apiVersion",
+          "serverVersion",
+          "apps",
+          "features",
+          "flags"
+        ]
+      },
+      "AppSupport": {
+        "type": "object",
+        "properties": {
+          "minimumVersion": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+){0,2}$",
+            "example": "1.0.0"
+          },
+          "recommendedVersion": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d+){0,2}$",
+            "example": "1.0.0"
+          },
+          "storeUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          }
+        },
+        "required": [
+          "minimumVersion",
+          "recommendedVersion",
+          "storeUrl"
         ]
       },
       "SourceResponse": {
@@ -2131,6 +2213,47 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta/client": {
+      "get": {
+        "operationId": "Meta_client",
+        "summary": "Supported app versions, feature flags and server capabilities (ADR 0029)",
+        "tags": [
+          "meta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientInfoResponse"
                 }
               }
             }

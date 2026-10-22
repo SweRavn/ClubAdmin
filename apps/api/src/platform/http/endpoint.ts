@@ -41,8 +41,14 @@ export interface EndpointOptions {
   /** Successful response body. Output is validated and unknown fields are stripped. */
   response: z.ZodType;
   status?: number;
-  /** Override the global rate limit for this route. */
+  /** Override the global per-IP rate limit for this route. */
   rateLimit?: { max: number; timeWindowMs: number };
+  /**
+   * Pages through a club's people (rosters, later exports): also counts
+   * against the per-club and per-account bulk-read budgets. Needs a club or
+   * group resource.
+   */
+  bulkRead?: boolean;
   /** Leave out of the OpenAPI document. */
   hidden?: boolean;
 }

@@ -4,8 +4,9 @@
 // rotation, and destroy on logout or when a refresh token is rejected (it may
 // have been stolen and used: refresh-token reuse).
 
+import { DEV_TOKEN_SECONDS, mintDevToken } from "@clubadmin/server-kit/dev-tokens";
+
 import { webConfig } from "./config.ts";
-import { DEV_TOKEN_SECONDS, mintDevToken } from "./dev-tokens.ts";
 import { client, oidcClient } from "./oidc.ts";
 import {
   newCsrfToken,

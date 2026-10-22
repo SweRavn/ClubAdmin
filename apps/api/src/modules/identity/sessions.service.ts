@@ -1,16 +1,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Lists and revokes a person's browser sessions. The web BFF keeps them in
-// Valkey (packages/shared/src/auth/sessions.ts); revoking deletes the BFF
+// Lists and revokes a person's sessions. The web BFF keeps browser sessions
+// in Valkey (packages/shared/src/auth/sessions.ts); revoking deletes the BFF
 // session (the browser is logged out on its next request) and ends the
-// Zitadel session, so the person must log in again there too.
+// Zitadel session, so the person must log in again there too. Mobile app
+// sessions are registered here on their first request (touchMobile); the app
+// holds its own tokens, so revoking ends the Zitadel session, after which
+// the app's refresh token no longer works (its access token may live out its
+// 10 minutes, docs/security.md).
+
+import { createHash } from "node:crypto";
 
 import { type ActorContext, audit, type Database } from "@clubadmin/db";
 import {
+  CLIENT_DEVICE_HEADER,
+  CLIENT_PLATFORM_HEADER,
+  CLIENT_VERSION_HEADER,
   personSessionsKey,
+  SESSION_TTL_SECONDS,
   sessionKey,
   type SessionMetadata,
+  type StoredSessionMetadata,
   StoredSessionMetadataSchema,
 } from "@clubadmin/shared";
+import type { FastifyRequest } from "fastify";
 
 import type { ValkeyClient } from "../../platform/infra/valkey.ts";
 
@@ -37,10 +49,42 @@ export function zitadelSessions(baseUrl: string, token: string): ZitadelSessions
   };
 }
 
+/** How often a mobile session's lastSeenAt is written (per API instance and session). */
+const TOUCH_INTERVAL_MS = 5 * 60_000;
+const TOUCHED_MAX = 50_000;
+/** A revoked mobile session is not registered again by its still-valid access token. */
+const revokedKey = (handle: string) => `api:revoked-session:${handle}`;
+const REVOKED_TTL_SECONDS = 15 * 60;
+
+/** Public handle of a mobile session: derived from the Zitadel session, so it is stable. */
+export const mobileSessionHandle = (idpSessionId: string) =>
+  `m-${createHash("sha256").update(idpSessionId).digest("base64url").slice(0, 22)}`;
+
+const headerText = (request: FastifyRequest, name: string, max: number) => {
+  const value = request.headers[name];
+  const text = (Array.isArray(value) ? value[0] : value) ?? "";
+  // Printable text only; this is shown back to the person in the session list.
+  return text
+    .replace(/[^\p{L}\p{N} ._()/,+-]/gu, "")
+    .trim()
+    .slice(0, max);
+};
+
+/** "Pixel 8 (Android 16), app 1.0.0" from the app's headers; never a device identifier. */
+export function mobileDevice(request: FastifyRequest): string {
+  const device = headerText(request, CLIENT_DEVICE_HEADER, 60);
+  const platform = headerText(request, CLIENT_PLATFORM_HEADER, 10);
+  const version = headerText(request, CLIENT_VERSION_HEADER, 20);
+  const name = device || (platform === "ios" ? "iOS" : platform === "android" ? "Android" : "");
+  return [name || "ClubAdmin app", version ? `app ${version}` : ""].filter(Boolean).join(", ");
+}
+
 export class SessionsService {
   private readonly db: Database;
   private readonly valkey: ValkeyClient;
   private readonly zitadel: ZitadelSessions | undefined;
+  /** Mobile session handle → when it may be written again. */
+  private readonly touched = new Map<string, number>();
 
   constructor(db: Database, valkey: ValkeyClient, zitadel: ZitadelSessions | undefined) {
     this.db = db;
@@ -70,14 +114,65 @@ export class SessionsService {
     if (!raw) return false;
     const metadata = StoredSessionMetadataSchema.safeParse(JSON.parse(raw));
     const tx = this.valkey.multi().hdel(personSessionsKey(personId), handle);
-    if (metadata.success) tx.del(sessionKey(metadata.data.storageId));
+    if (metadata.success && metadata.data.storageId) tx.del(sessionKey(metadata.data.storageId));
+    if (metadata.success && metadata.data.client === "mobile") {
+      tx.set(revokedKey(handle), "1", "EX", REVOKED_TTL_SECONDS);
+    }
     await tx.exec();
-    if (metadata.success && metadata.data.idpSessionId && this.zitadel) {
+    this.touched.delete(handle);
+    if (metadata.success && metadata.data.idpSessionId && !metadata.data.devAuth && this.zitadel) {
       await this.zitadel.end(metadata.data.idpSessionId);
     }
     await this.db.withActor(context, (tx) =>
       audit.record(tx, { action: "session.revoked", resourceType: "session" }),
     );
     return true;
+  }
+
+  /**
+   * Registers or refreshes a mobile app session in the person's session list.
+   * Written at most every few minutes per session; never delays the request
+   * (errors are ignored: the list is informational).
+   */
+  touchMobile(
+    personId: string,
+    idpSessionId: string,
+    request: FastifyRequest,
+    devAuth: boolean,
+  ): void {
+    const valkey = this.valkey;
+    if (!valkey) return;
+    const handle = mobileSessionHandle(idpSessionId);
+    const now = Date.now();
+    if ((this.touched.get(handle) ?? 0) > now) return;
+    if (this.touched.size >= TOUCHED_MAX) this.touched.clear();
+    this.touched.set(handle, now + TOUCH_INTERVAL_MS);
+    const key = personSessionsKey(personId);
+    void (async () => {
+      const [revoked, raw] = await Promise.all([
+        valkey.exists(revokedKey(handle)),
+        valkey.hget(key, handle),
+      ]);
+      if (revoked) return;
+      const existing = raw ? StoredSessionMetadataSchema.safeParse(JSON.parse(raw)) : null;
+      const at = new Date(now).toISOString();
+      const metadata: StoredSessionMetadata = {
+        id: handle,
+        storageId: null,
+        createdAt: existing?.success ? existing.data.createdAt : at,
+        lastSeenAt: at,
+        device: mobileDevice(request),
+        idpSessionId,
+        devAuth,
+        client: "mobile",
+      };
+      await valkey
+        .multi()
+        .hset(key, handle, JSON.stringify(metadata))
+        .expire(key, SESSION_TTL_SECONDS)
+        .exec();
+    })().catch(() => {
+      this.touched.delete(handle);
+    });
   }
 }

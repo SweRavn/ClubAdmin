@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { parseFeatureFlags } from "@clubadmin/shared";
 import { Controller, Get, Module } from "@nestjs/common";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { loadApiConfig } from "./config.ts";
+import { appSupport } from "./platform/meta/meta.controller.ts";
 import { createTestApp, type TestApp } from "./testing/test-app.ts";
 
 let t: TestApp;
@@ -70,6 +73,44 @@ describe("meta", () => {
       license: "AGPL-3.0-only",
       commit: "unknown",
     });
+  });
+
+  it("tells apps the supported versions, flags and server features, cacheably", async () => {
+    const res = await inject({ method: "GET", url: "/api/v1/meta/client" });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["cache-control"]).toBe("public, max-age=300");
+    const body = res.json<{ apiVersion: number; features: string[]; apps: unknown }>();
+    expect(body.apiVersion).toBe(1);
+    expect(body.features).toContain("sessions.mobile");
+    expect(body.apps).toEqual({
+      ios: { minimumVersion: "0.0.0", recommendedVersion: "0.0.0", storeUrl: null },
+      android: { minimumVersion: "0.0.0", recommendedVersion: "0.0.0", storeUrl: null },
+    });
+  });
+
+  it("takes app versions and flags from configuration, per platform", () => {
+    const config = loadApiConfig({
+      NODE_ENV: "test",
+      MOBILE_MIN_VERSION: "1.2",
+      MOBILE_RECOMMENDED_VERSION: "1.4.0",
+      MOBILE_MIN_VERSION_IOS: "1.3.0",
+      MOBILE_RECOMMENDED_VERSION_ANDROID: "1.0.0",
+      MOBILE_STORE_URL_ANDROID: "https://play.google.com/store/apps/details?id=example",
+      FEATURE_FLAGS: "chat, calendar=false",
+    });
+    expect(appSupport(config, "IOS")).toEqual({
+      minimumVersion: "1.3.0",
+      recommendedVersion: "1.4.0",
+      storeUrl: null,
+    });
+    // A recommendation below the minimum is raised to the minimum.
+    expect(appSupport(config, "ANDROID")).toEqual({
+      minimumVersion: "1.2",
+      recommendedVersion: "1.2",
+      storeUrl: "https://play.google.com/store/apps/details?id=example",
+    });
+    expect(parseFeatureFlags(config.FEATURE_FLAGS)).toEqual({ chat: true, calendar: false });
+    expect(() => loadApiConfig({ NODE_ENV: "test", MOBILE_MIN_VERSION: "v1" })).toThrow();
   });
 
   it("sets security headers", async () => {

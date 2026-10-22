@@ -6,6 +6,9 @@
 import { createTestDatabase, type TestDatabase } from "@clubadmin/db/testing";
 import {
   ACCOUNT_INVITATION_HEADER,
+  CLIENT_DEVICE_HEADER,
+  CLIENT_PLATFORM_HEADER,
+  CLIENT_VERSION_HEADER,
   ID_TOKEN_HEADER,
   personSessionsKey,
   sessionKey,
@@ -23,9 +26,10 @@ import {
   startFakeIssuer,
   TEST_AUDIENCE,
   TEST_DEV_AUTH_KEY,
+  TEST_MOBILE_CLIENT,
 } from "../../testing/oidc.ts";
 import { type CoreServices, createCoreServices } from "../../testing/services.ts";
-import { createTestApp, type TestApp } from "../../testing/test-app.ts";
+import { createTestApp, NO_RATE_LIMITS, type TestApp } from "../../testing/test-app.ts";
 
 let t: TestDatabase;
 let s: CoreServices;
@@ -42,12 +46,13 @@ beforeAll(async () => {
   app = await createTestApp(
     {
       NODE_ENV: "development",
-      RATE_LIMIT_MAX: "100000",
+      ...NO_RATE_LIMITS,
       DATABASE_URL: t.url("app"),
       VALKEY_URL: process.env.VALKEY_URL ?? "redis://127.0.0.1:6379",
       AUTH_ISSUER: issuer.issuer,
       AUTH_AUDIENCE: TEST_AUDIENCE,
       AUTH_JWKS_URL: issuer.jwksUrl,
+      AUTH_MOBILE_CLIENT_ID: TEST_MOBILE_CLIENT,
       ZITADEL_API_URL: issuer.issuer,
       ZITADEL_API_TOKEN: "test-token",
       DEV_AUTH: "true",
@@ -344,9 +349,121 @@ describe("sessions", () => {
     expect(foreign.statusCode).toBe(404);
     await valkey.del(personSessionsKey(me.personId));
   });
+
+  it("lists the mobile app's sessions, and revoking one ends the Zitadel session for good", async () => {
+    const sid = `zitadel-mobile-${uuidv7()}`;
+    const tokens = await issuer.issue({
+      sub: uuidv7(),
+      email: `m-${uuidv7().slice(-8)}@example.test`,
+      sid,
+      clientId: TEST_MOBILE_CLIENT,
+    });
+    const app = {
+      [CLIENT_PLATFORM_HEADER]: "android",
+      [CLIENT_VERSION_HEADER]: "1.2.0",
+      [CLIENT_DEVICE_HEADER]: "Pixel 8 (Android 16)<script>",
+    };
+    const sessions = async () => {
+      // Registration happens after the response; wait for it.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return (
+        await inject({
+          method: "GET",
+          url: "/api/v1/me/sessions",
+          headers: withTokens(tokens, app),
+        })
+      ).json<{
+        sessions: {
+          id: string;
+          client: string;
+          device: string;
+          current: boolean;
+          devAuth: boolean;
+        }[];
+      }>().sessions;
+    };
+    const listed = await sessions();
+    expect(listed).toHaveLength(1);
+    expect(listed[0]).toMatchObject({
+      client: "mobile",
+      device: "Pixel 8 (Android 16)script, app 1.2.0",
+      current: true,
+      devAuth: false,
+    });
+
+    const handle = listed[0]!.id;
+    expect(handle).not.toContain(sid);
+    const revoke = await inject({
+      method: "DELETE",
+      url: `/api/v1/me/sessions/${handle}`,
+      headers: withTokens(tokens),
+    });
+    expect(revoke.statusCode).toBe(204);
+    expect(issuer.deletedSessions).toContain(sid);
+    // The access token still works until it expires, but does not register the session again.
+    expect(await sessions()).toEqual([]);
+  });
+
+  it("does not list web or unknown clients as mobile sessions", async () => {
+    const tokens = await issuer.issue({
+      sub: uuidv7(),
+      email: `w-${uuidv7().slice(-8)}@example.test`,
+    });
+    await inject({ method: "GET", url: "/api/v1/me", headers: withTokens(tokens) });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const list = await inject({
+      method: "GET",
+      url: "/api/v1/me/sessions",
+      headers: withTokens(tokens),
+    });
+    expect(list.json()).toEqual({ sessions: [] });
+  });
 });
 
 describe("DEV_AUTH", () => {
+  it("issues development tokens for the mobile app, listed as a development session", async () => {
+    const person = await buildPerson(s);
+    const res = await inject({
+      method: "POST",
+      url: "/api/v1/dev/tokens",
+      payload: { personId: person.id, mfa: true },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{
+      accessToken: string;
+      idToken: null;
+      expiresAt: string;
+      sessionId: string;
+    }>();
+    expect(body.idToken).toBeNull();
+    expect(new Date(body.expiresAt).getTime()).toBeGreaterThan(Date.now());
+    const headers = {
+      authorization: `Bearer ${body.accessToken}`,
+      [CLIENT_PLATFORM_HEADER]: "ios",
+    };
+    const me = await inject({ method: "GET", url: "/api/v1/me", headers });
+    expect(me.json()).toMatchObject({ personId: person.id, mfa: true });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const list = await inject({ method: "GET", url: "/api/v1/me/sessions", headers });
+    expect(list.json<{ sessions: unknown[] }>().sessions).toEqual([
+      expect.objectContaining({ client: "mobile", devAuth: true, device: "iOS", current: true }),
+    ]);
+    // A development session is not a Zitadel session: revoking does not call Zitadel.
+    const id = list.json<{ sessions: { id: string }[] }>().sessions[0]!.id;
+    const before = issuer.deletedSessions.length;
+    await inject({ method: "DELETE", url: `/api/v1/me/sessions/${id}`, headers });
+    expect(issuer.deletedSessions).toHaveLength(before);
+  });
+
+  it("refuses development tokens for invalid input", async () => {
+    const res = await inject({
+      method: "POST",
+      url: "/api/v1/dev/tokens",
+      payload: { personId: "not-a-uuid" },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
   it("logs in as any person with a development token; MFA can be toggled", async () => {
     const family = await buildFamily(s);
     const child = await inject({
@@ -382,6 +499,12 @@ describe("DEV_AUTH", () => {
     try {
       const inj = (o: InjectOptions) => off.app.getHttpAdapter().getInstance().inject(o);
       expect((await inj({ method: "GET", url: "/api/v1/dev/personas" })).statusCode).toBe(404);
+      const tokens = await inj({
+        method: "POST",
+        url: "/api/v1/dev/tokens",
+        payload: { personId: uuidv7() },
+      });
+      expect(tokens.statusCode).toBe(404);
       const family = await buildFamily(s);
       const res = await inj({
         method: "GET",

@@ -17,6 +17,8 @@ const config = loadApiConfig({
   NODE_ENV: "test",
   LOG_LEVEL: "silent",
   RATE_LIMIT_MAX: "100000000",
+  RATE_LIMIT_IP_BACKSTOP: "100000000",
+  RATE_LIMIT_ACCOUNT_MAX: "100000000",
 });
 const app = await createApp(config, {
   logger: createLogger({ service: "bench", level: "silent" }),

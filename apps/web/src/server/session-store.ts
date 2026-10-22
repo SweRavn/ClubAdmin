@@ -70,6 +70,7 @@ export class SessionStore {
       device: record.device,
       idpSessionId: record.idpSessionId,
       devAuth: record.devAuth,
+      client: "web",
     };
     await this.valkey
       .multi()

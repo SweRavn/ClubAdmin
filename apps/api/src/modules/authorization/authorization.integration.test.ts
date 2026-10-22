@@ -37,7 +37,7 @@ import {
   type MatrixScenario,
 } from "../../testing/scenarios.ts";
 import { type CoreServices, createCoreServices } from "../../testing/services.ts";
-import { createTestApp, type TestApp } from "../../testing/test-app.ts";
+import { createTestApp, NO_RATE_LIMITS, type TestApp } from "../../testing/test-app.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
 import { AuthorizationService } from "./authorization.service.ts";
 import { PersonPresenter } from "./presenters/person.presenter.ts";
@@ -108,7 +108,7 @@ beforeAll(async () => {
       DEV_AUTH: "true",
       DEV_AUTH_KEY: TEST_DEV_AUTH_KEY,
       // The matrix and the benchmark send many requests from one address.
-      RATE_LIMIT_MAX: "100000",
+      ...NO_RATE_LIMITS,
     },
     [OnBehalfModule],
   );
