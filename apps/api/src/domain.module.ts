@@ -8,6 +8,7 @@ import { ClubProfilesModule } from "./modules/club-profiles/index.ts";
 // Not in the clubs module's index: it depends on the roles module, which depends on clubs.
 import { ClubsApiModule } from "./modules/clubs/clubs-api.module.ts";
 import { ClubsModule } from "./modules/clubs/index.ts";
+import { FamiliesModule } from "./modules/families/index.ts";
 import { GroupsModule } from "./modules/groups/index.ts";
 import { GuardianshipsModule } from "./modules/guardianships/index.ts";
 import { JoiningModule } from "./modules/joining/index.ts";
@@ -31,6 +32,7 @@ const MODULES = [
   GroupsModule,
   MembershipsModule,
   GuardianshipsModule,
+  FamiliesModule,
   JoiningModule,
   MembersModule,
   PersonProfilesModule,

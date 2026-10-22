@@ -242,3 +242,22 @@ export async function loadHandoverScope(
     ? { clubId: row.club_id, fromPersonId: row.from_person_id, toPersonId: row.to_person_id }
     : null;
 }
+
+/**
+ * The person a family resource is about, as visible to the actor (P1.3): the
+ * ward of a guardianship or guardian invitation, the kept person of a merge.
+ */
+export async function loadFamilyResourcePerson(
+  tx: Tx,
+  kind: "guardianship" | "invitation" | "merge",
+  id: string,
+): Promise<string | null> {
+  const query =
+    kind === "guardianship"
+      ? sql`SELECT ward_person_id AS person_id FROM public.guardianships WHERE id = ${id}`
+      : kind === "invitation"
+        ? sql`SELECT ward_person_id AS person_id FROM public.guardian_invitations WHERE id = ${id}`
+        : sql`SELECT kept_person_id AS person_id FROM public.people_merges WHERE id = ${id}`;
+  const { rows } = await tx.execute<{ person_id: string }>(query);
+  return rows[0]?.person_id ?? null;
+}

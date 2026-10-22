@@ -138,8 +138,10 @@ describe("demo scenario", () => {
       );
     }
     for (const g of r.guardianships.filter((x) => x.status === "active")) {
+      // Guardianships a club manager ended (with a reason) stay as history.
+      const status = g.ended ? "ended" : "active";
       expect(
-        summary[g.ward]!.guardians.some((x) => x.startsWith(`${g.guardian}: ${g.kind} active`)),
+        summary[g.ward]!.guardians.some((x) => x.startsWith(`${g.guardian}: ${g.kind} ${status}`)),
         `${g.guardian} of ${g.ward}`,
       ).toBe(true);
     }

@@ -26,6 +26,7 @@ import { AccountsService } from "./accounts.service.ts";
           memberships,
           clubs,
           defaultCountry: config.DEFAULT_COUNTRY,
+          invitationTokenKey: config.INVITATION_TOKEN_KEY,
         }),
     },
   ],

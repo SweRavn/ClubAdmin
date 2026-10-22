@@ -357,6 +357,23 @@
     "membersExported": {
       "subject": "{club}: medlemsregisteret er eksportert",
       "body": "{requester} har eksportert medlemsregisteret i {club} ({columns}).{includeProtected, select, yes {\n\nEksporten inneholder medlemmer med skjermede personopplysninger.} other {}}\n\nAlle klubbansvarlige får denne e-posten ved hver eksport. Se eksportene:\n{url}"
+    },
+    "footerPlain": "Denne e-posten ble sendt av ClubAdmin.",
+    "family": {
+      "invitationSubject": "{hasInviter, select, yes {{inviter} inviterer deg} other {Du er invitert}} til ClubAdmin",
+      "invitationBody": "{hasInviter, select, yes {{inviter} inviterer deg} other {Du er invitert}} til ClubAdmin som {kind, select, parent {forelder} legal_guardian {verge} relative {slektning} other {kontaktperson}} for {hasWard, select, yes {{ward}} other {et barn eller en ungdom}}.\n\nTakk ja (logg inn, eller opprett en innlogging med denne e-postadressen):\n{url}\n\nInvitasjonen gjelder til {expires}. Hvis du ikke ventet den, kan du se bort fra e-posten.",
+      "acceptedSubject": "{person} har takket ja til invitasjonen din",
+      "acceptedBody": "{person} har takket ja til invitasjonen din og er nå knyttet til {ward} som {kind, select, parent {forelder} legal_guardian {verge} relative {slektning} other {kontaktperson}}.\n\nSe familien din i ClubAdmin:\n{url}",
+      "ownLoginSubject": "Din egen innlogging til ClubAdmin",
+      "ownLoginBody": "Hei {name}!\n\nNå kan du logge inn i ClubAdmin selv. Medlemskapene, gruppene og historikken din er som før.\n\nLogg inn eller opprett innloggingen din med denne e-postadressen:\n{url}\n\nLenken gjelder til {expires}.",
+      "ownLoginAgeSubject": "{ward} kan nå få egen innlogging",
+      "ownLoginAgeBody": "{ward} har nådd alderen for egen innlogging til ClubAdmin, med egen e-postadresse. Alt om medlemskap og historikk blir værende.\n\nGi {ward} egen innlogging på familiesiden:\n{url}",
+      "adultYoungSubject": "Du bestemmer hvem som beholder tilgangen",
+      "adultYoungBody": "Du har nådd myndighetsalderen. Foresatte har fortsatt tilgang til kontoen og opplysningene dine i ClubAdmin til du bestemmer noe annet.\n\nVelg for hver foresatt om de skal beholde tilgangen:\n{url}",
+      "adultGuardianSubject": "{ward} har nådd myndighetsalderen",
+      "adultGuardianBody": "{ward} har nådd myndighetsalderen. Tilgangen din fortsetter til {ward} bestemmer noe annet; for å bestemme trenger {ward} egen innlogging til ClubAdmin.\n\nGi {ward} egen innlogging på familiesiden:\n{url}",
+      "adultEndedSubject": "Tilgangen din som foresatt er avsluttet",
+      "adultEndedBody": "{hasWard, select, yes {{ward}} other {Ungdommen}} har nådd myndighetsalderen og bestemt at tilgangen din som {kind, select, parent {forelder} legal_guardian {verge} relative {slektning} other {kontaktperson}} avsluttes. Du ser ikke lenger opplysningene deres i ClubAdmin.\n\n{url}"
     }
   },
   "profileForm": {
@@ -519,7 +536,24 @@
     "export_storage_unavailable": "Eksporter er ikke tilgjengelige i denne installasjonen.",
     "invalid_end_date": "Sluttdatoen kan ikke være i fremtiden eller før medlemskapet startet.",
     "reauthentication_required": "Logg inn på nytt først for å eksportere (du logget inn for mer enn 15 minutter siden).",
-    "membership_status_invalid": "Medlemskapet kan ikke endres på den måten."
+    "membership_status_invalid": "Medlemskapet kan ikke endres på den måten.",
+    "birth_date_in_future": "Fødselsdatoen kan ikke være i fremtiden.",
+    "rights_not_allowed": "De rettighetene kan ikke gis her.",
+    "guardianship_kind_not_allowed": "Den typen kobling er ikke mulig her.",
+    "too_young_to_link": "Du kan knytte personer til deg fra samtykkealderen.",
+    "reason_required": "Oppgi en begrunnelse.",
+    "adult_decision_not_open": "Dette er allerede bestemt.",
+    "invitation_not_pending": "Invitasjonen er ikke lenger åpen.",
+    "guardianship_exists": "Personen er allerede knyttet.",
+    "merge_not_allowed": "De to kan ikke slås sammen.",
+    "merge_undo_expired": "Tiden for å angre har gått ut.",
+    "merge_undo_conflict": "Noe har endret seg siden sammenslåingen; den kan ikke angres automatisk.",
+    "account_exists": "Personen har allerede en innlogging.",
+    "invitation_email_unavailable": "Invitasjoner via e-post er ikke tilgjengelig her.",
+    "not_allowed": "Du har ikke lov til det.",
+    "not_on_behalf": "Bytt tilbake til deg selv først.",
+    "invalid_personal_identity_number": "Fødselsnummeret er ikke gyldig.",
+    "personal_identity_number_mismatch": "Fødselsnummeret stemmer ikke med fødselsdatoen."
   },
   "memberExport": {
     "columns": {
@@ -574,5 +608,140 @@
       "failed": "Mislyktes",
       "expired": "Utløpt"
     }
+  },
+  "family": {
+    "title": "Familie",
+    "children": "Mine barn",
+    "noChildren": "Du har ikke lagt til noen barn.",
+    "age": "{age} år",
+    "born": "Født {date, date, long}",
+    "hasLogin": "Har egen innlogging",
+    "myRights": "Dine rettigheter: {rights}",
+    "guardiansOf": "Foresatte og andre knyttet til {name}",
+    "you": "Deg",
+    "recordedByClub": "Registrert av klubben",
+    "noRights": "Ingen rettigheter",
+    "consentNote": "Samtykke: {note}",
+    "rights": "Hva personen kan gjøre",
+    "actOnBehalfWarning": "Gir samme rett som en foresatt: personen kan melde på, svare og handle på vegne av den du knytter. Kryss bare av hvis du virkelig mener det.",
+    "rightsOnlyLinked": "Rettighetene gjelder slektninger og kontaktpersoner; foreldre og verger har alltid full rett.",
+    "changeRights": "Endre rettigheter",
+    "saveRights": "Lagre rettigheter",
+    "end": "Avslutt kobling",
+    "endOwn": "Avslutt min kobling",
+    "confirmEnd": "Ja, avslutt koblingen",
+    "confirmEndOwn": "Ja, jeg vil ikke lenger ha tilgang",
+    "endReason": "Begrunnelse (kreves for forelder eller verge)",
+    "pending": "Invitasjon sendt",
+    "expires": "gjelder til {date, date, medium}",
+    "resend": "Send igjen",
+    "revoke": "Trekk tilbake",
+    "invite": "Inviter foresatt, slektning eller kontaktperson",
+    "inviteByEmail": "Inviter via e-post",
+    "addWithoutLogin": "Legg til noen uten innlogging",
+    "email": "E-postadresse",
+    "kind": "Som",
+    "givenName": "Fornavn",
+    "familyName": "Etternavn",
+    "phone": "Telefon",
+    "sendInvitation": "Send invitasjon",
+    "add": "Legg til",
+    "sharedWithMe": "Delt med meg",
+    "sharedGuardians": "Foresatte: {names}",
+    "ownLogin": {
+      "title": "Gi egen innlogging",
+      "email": "Barnets egen e-postadresse",
+      "send": "Send invitasjon til innlogging",
+      "rule": "Fra {age} år kan et barn få egen innlogging med egen e-postadresse; medlemskap og historikk blir værende."
+    },
+    "helpers": {
+      "title": "Personer som hjelper meg",
+      "intro": "Slektninger og kontaktpersoner du knytter til deg ser bare det du velger, for eksempel timeplanen din.",
+      "none": "Ingen er knyttet til deg.",
+      "add": "Knytt noen til meg",
+      "tooYoung": "Du kan knytte personer til deg fra samtykkealderen; frem til da gjør de foresatte det."
+    },
+    "addChild": {
+      "title": "Legg til barn",
+      "intro": "Et barn trenger ingen e-postadresse. Du kan melde på, svare og se timeplanen for barnet.",
+      "birthDate": "Fødselsdato",
+      "pin": "Fødselsnummer (valgfritt)",
+      "pinCountry": "Land for nummeret",
+      "countries": {
+        "SE": "Sverige",
+        "NO": "Norge"
+      },
+      "iAm": "Jeg er barnets",
+      "submit": "Legg til barn"
+    },
+    "duplicates": {
+      "title": "Mulige duplikater",
+      "notice": "{name} kan finnes to ganger i ClubAdmin.",
+      "noClubs": "Ingen klubber",
+      "guardians": "Foresatte: {names}",
+      "merge": "Slå sammen",
+      "otherMerges": "En foresatt til begge kan slå dem sammen.",
+      "merged": "{name} ble slått sammen. Du kan angre til {date, date, medium}.",
+      "undo": "Angre"
+    },
+    "notices": {
+      "added": "Barnet ble lagt til.",
+      "invited": "Invitasjonen ble sendt.",
+      "linked": "Personen ble knyttet.",
+      "resent": "Invitasjonen ble sendt igjen med en ny lenke.",
+      "updated": "Lagret.",
+      "ended": "Koblingen ble avsluttet.",
+      "accepted": "Du takket ja til invitasjonen.",
+      "acceptedProtected": "Du takket ja til invitasjonen. Barnet har beskyttet identitet: vurder å beskytte deg selv også, på profilen din.",
+      "ownLogin": "Invitasjonen til innlogging ble sendt.",
+      "merged": "De to ble slått sammen.",
+      "undone": "Sammenslåingen ble angret."
+    },
+    "landing": {
+      "title": "Invitasjon",
+      "intro": "{hasInviter, select, yes {{inviter} inviterer deg} other {Du er invitert}} som {kind} for {hasWard, select, yes {{ward}} other {et barn eller en ungdom}}.",
+      "rights": "Du vil kunne: {rights}",
+      "email": "Logg inn (eller opprett en innlogging) med e-postadressen invitasjonen ble sendt til.",
+      "accept": "Takk ja",
+      "login": "Logg inn eller registrer deg for å takke ja",
+      "invalid": "Invitasjonen gjelder ikke lenger. Be den som inviterte deg om å sende en ny."
+    },
+    "adult": {
+      "title": "Dine foresatte",
+      "intro": "Du har nådd myndighetsalderen. Du bestemmer hvilke av de foresatte som skal beholde tilgang til kontoen og opplysningene dine i ClubAdmin.",
+      "keepMeans": "Behold tilgang: de ser og kan gjøre det samme som før.",
+      "endMeans": "Avslutt tilgang: de ser ikke lenger opplysningene dine. De får vite at tilgangen er avsluttet, men ikke hvorfor.",
+      "later": "Du kan også avslutte tilgang senere på familiesiden.",
+      "keep": "Behold tilgang",
+      "end": "Avslutt tilgang",
+      "kept": "Beholder tilgang",
+      "none": "Det er ingenting å bestemme.",
+      "saved": "Beslutningen din ble lagret."
+    },
+    "club": {
+      "none": "Ingen foresatte registrert.",
+      "add": "Legg til fra papirsøknad eller skjema",
+      "search": "Søk i registeret",
+      "searchButton": "Søk",
+      "newPerson": "Ny person uten innlogging",
+      "consentNote": "Merknad om samtykke (slektninger og kontaktpersoner)",
+      "consentHint": "For eksempel: skriftlig samtykke fra foresatt finnes, med dato. Vises bare for klubbens administratorer og familien."
+    },
+    "clubDuplicates": {
+      "title": "Duplikater",
+      "intro": "Medlemmer med samme fødselsdato og etternavn, eller samme fødselsnummer. Klubbansvarlige slår dem sammen (med totrinnsbekreftelse).",
+      "none": "Ingen duplikater funnet."
+    }
+  },
+  "guardianRights": {
+    "act_on_behalf": "Handle på vegne av personen",
+    "receive_messages": "Motta meldinger",
+    "view_schedule": "Se timeplanen",
+    "sign_up": "Melde på aktiviteter",
+    "see_medical": "Se medisinske opplysninger"
+  },
+  "duplicateReasons": {
+    "name_and_birth_date": "Samme fødselsdato og etternavn",
+    "personal_identity_number": "Samme fødselsnummer"
   }
 }

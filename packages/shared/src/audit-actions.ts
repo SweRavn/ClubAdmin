@@ -65,6 +65,10 @@ export const AUDIT_ACTIONS = [
   "guardianship.ward.adult",
   "guardianship.updated",
   "guardianship.ended",
+  "guardianship.invitation.resent",
+  "guardianship.invitation.revoked",
+  "guardianship.invitation.accepted",
+  "guardianship.adult.decided",
   "backup.restore.verified",
 ] as const;
 

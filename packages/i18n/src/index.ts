@@ -105,7 +105,9 @@ export type EnumNamespace =
   | "membershipTypes"
   | "consentPurposes"
   | "memberExports.status"
-  | "memberExport.columns";
+  | "memberExport.columns"
+  | "guardianRights"
+  | "duplicateReasons";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

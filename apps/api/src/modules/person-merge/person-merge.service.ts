@@ -10,7 +10,7 @@
 // club manager for two members of their club (rows in that club only).
 // A person with a login cannot be merged away; merge into them instead.
 
-import { audit, type Database, inClub, outbox, type Tx } from "@clubadmin/db";
+import { audit, type Database, inClub, outbox, type TenantContext, type Tx } from "@clubadmin/db";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import type { PersonReference } from "../../platform/domain/person-references.ts";
@@ -40,6 +40,9 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
 ];
 
 export type PersonMerge = repo.MergeRow;
+export type { DuplicateCandidate, DuplicateDetails } from "./person-merge.repository.ts";
+type DuplicatePerson = Awaited<ReturnType<PeopleService["duplicateCandidatePeople"]>>[number];
+type ClubDuplicate = Awaited<ReturnType<PeopleService["clubDuplicates"]>>[number];
 
 const referenceKey = (r: { table: string; column: string }) => `${r.table}.${r.column}`;
 
@@ -156,6 +159,41 @@ export class PersonMergeService {
         undone: true,
       });
     });
+  }
+
+  /**
+   * Duplicate candidates of a guardian: pairs of their wards (as a full
+   * guardian) and their own or their co-guardians' wards (P1.3). The details
+   * of co-guardians' wards are read without an actor, for the candidates'
+   * IDs only; the controller leaves out people the guardian may not see.
+   */
+  familyDuplicates(context: Context): Promise<{
+    candidates: repo.DuplicateCandidate[];
+    people: DuplicatePerson[];
+    details: repo.DuplicateDetails[];
+    merges: PersonMerge[];
+  }> {
+    return runAs(this.db, context, async (tx) => {
+      const me = actorPersonId(context);
+      const candidates = await repo.familyDuplicateCandidates(tx);
+      const merges = await repo.undoableMergesBy(tx, me);
+      const ids = [...new Set(candidates.flatMap((c) => [c.personId, c.duplicatePersonId]))];
+      if (ids.length === 0) return { candidates, people: [], details: [], merges };
+      const job = "person-merge:family_duplicates";
+      const [people, details] = await Promise.all([
+        this.people.duplicateCandidatePeople(job, ids),
+        this.db.withSystem(job, {}, (system) => repo.duplicateDetails(system, ids)),
+      ]);
+      return { candidates, people, details, merges };
+    });
+  }
+
+  /** Pairs of the club's members that look like the same person, paged (club administrators). */
+  clubDuplicates(
+    context: TenantContext,
+    options: { after: [string, string] | null; limit: number },
+  ): Promise<ClubDuplicate[]> {
+    return this.people.clubDuplicates(context, options);
   }
 
   private async authorizeUndo(tx: Tx, context: Context, keptPersonId: string): Promise<void> {

@@ -12,6 +12,7 @@ import { createApp } from "../app.ts";
 import { loadApiConfig } from "../config.ts";
 import { Endpoint } from "../platform/http/endpoint.ts";
 import { ProblemError } from "../platform/http/problem-error.ts";
+import { TEST_INVITATION_TOKEN_KEY } from "./services.ts";
 
 const EchoBody = z.object({ email: z.email(), count: z.number().int().min(1) });
 
@@ -104,6 +105,7 @@ export async function createTestApp(
   const config = loadApiConfig({
     NODE_ENV: "test",
     LOG_LEVEL: "debug",
+    INVITATION_TOKEN_KEY: TEST_INVITATION_TOKEN_KEY,
     // CI runs the integration suite with billing off and on (P0.12).
     ...(process.env.BILLING_ENABLED ? { BILLING_ENABLED: process.env.BILLING_ENABLED } : {}),
     ...env,

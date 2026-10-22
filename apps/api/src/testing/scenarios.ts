@@ -33,6 +33,10 @@ export interface MatrixScenario {
   parent: BuiltPerson;
   relative: BuiltPerson;
   child: Person;
+  /** The child's sibling (parent's ward, member of club A, no group): target of family writes in the matrix. */
+  sibling: Person;
+  /** The relative's guardianship of the child (view_schedule only). */
+  relativeGuardianshipId: string;
   outsider: BuiltPerson;
   operator: BuiltPerson;
 }
@@ -88,13 +92,19 @@ export async function buildMatrixScenario(
     birthDate: "2016-05-01",
   });
   const relative = await buildPerson(s);
-  await s.guardianships.addGuardian(actor(parent.id), {
+  const relativeGuardianship = await s.guardianships.addGuardian(actor(parent.id), {
     guardianPersonId: relative.id,
     wardPersonId: child.id,
     kind: "relative",
   });
   await s.memberships.addMember(a, child.id);
   await s.memberships.addToGroup(a, team.id, child.id);
+  const { child: sibling } = await s.guardianships.addChild(actor(parent.id), {
+    givenName: "Siv",
+    familyName: parent.familyName,
+    birthDate: "2018-02-01",
+  });
+  await s.memberships.addMember(a, sibling.id);
 
   const operator = await buildPerson(s);
   await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
@@ -114,6 +124,8 @@ export async function buildMatrixScenario(
     parent,
     relative,
     child,
+    sibling,
+    relativeGuardianshipId: relativeGuardianship.id,
     outsider: clubB.manager,
     operator,
   };

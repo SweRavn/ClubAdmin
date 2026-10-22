@@ -105,6 +105,14 @@ export const MyWardsSchema = z
         person: PersonSummarySchema,
         kind: z.enum(GUARDIANSHIP_KINDS),
         rights: z.array(z.enum(GUARDIANSHIP_RIGHTS)),
+        /** Full guardians only (P1.3). */
+        birthDate: z.iso.date().nullable().optional(),
+        /** Clubs the ward is an active or paused member of. */
+        clubs: z.array(z.object({ id: z.uuid(), name: z.string() })).optional(),
+        /** Full guardians only: the ward has their own login. */
+        hasLogin: z.boolean().optional(),
+        /** Full guardians only: from which age "Give own login" is possible (the strictest country pack). */
+        ownLoginFromAge: z.number().int().optional(),
       }),
     ),
   })

@@ -4,7 +4,7 @@
 // duplicate matching; protected persons never have an address stored.
 
 import { getCountryPack, isSupportedCountry } from "@clubadmin/country-packs";
-import { audit, type Database, outbox, type Tx } from "@clubadmin/db";
+import { audit, type Database, outbox, type TenantContext, type Tx } from "@clubadmin/db";
 import {
   type CreatePersonInput,
   CreatePersonSchema,
@@ -180,6 +180,38 @@ export class PeopleService {
     return this.db.withSystem("ops:club-creation-requests", {}, (tx) =>
       repo.findSummaries(tx, personIds),
     );
+  }
+
+  /**
+   * The ward and the inviter of a valid guardian invitation, for its landing
+   * page (the holder of the link is not related to them yet). Pass the rows
+   * to the family presenter, which leaves out protected people.
+   */
+  invitationPeople(personIds: readonly string[]): Promise<repo.PersonSummaryRow[]> {
+    return this.db.withSystem("guardianships:invitation_lookup", {}, (tx) =>
+      repo.findSummaries(tx, personIds),
+    );
+  }
+
+  /**
+   * Names and birth dates of duplicate candidates found by
+   * app.family_duplicate_candidates (person-merge module), read without an
+   * actor: a co-guardian's ward is not reachable by the guardian. Only for
+   * those IDs; pass the rows to PersonPresenter.
+   */
+  duplicateCandidatePeople(
+    job: string,
+    personIds: readonly string[],
+  ): Promise<(repo.PersonSummaryRow & { birthDate: string | null })[]> {
+    return this.db.withSystem(job, {}, (tx) => repo.findDuplicatePeople(tx, personIds));
+  }
+
+  /** Pairs of the club's members that look like the same person (keyset-paged). */
+  clubDuplicates(
+    context: TenantContext,
+    options: { after: [string, string] | null; limit: number },
+  ): Promise<repo.DuplicatePair[]> {
+    return this.db.withTenant(context, (tx) => repo.clubDuplicates(tx, context.clubId, options));
   }
 
   /** Access log: someone other than the person viewed a protected person's profile (ADR 0022). */

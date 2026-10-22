@@ -20,6 +20,8 @@ export interface TaskDependencies {
   historyPartitionsAhead: number;
   /** S3_* (member exports); null when not configured. */
   storage?: ObjectStorage | null;
+  /** DEFAULT_COUNTRY: age rules for wards without clubs (P1.3). */
+  defaultCountry?: string;
 }
 
 /** Does nothing; used to check that jobs are picked up. */
@@ -79,7 +81,9 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     heartbeat,
     "outbox:dispatch": outboxDispatch(deps),
     "history:maintain_partitions": maintainHistoryPartitions(deps),
-    "guardianships:flag_adult_wards": flagAdultWardsTask(deps.db),
+    "guardianships:flag_adult_wards": flagAdultWardsTask(deps.db, {
+      defaultCountry: deps.defaultCountry ?? "SE",
+    }),
     "ops:backup_metrics": backupMetricsTask(deps.db),
     "joining:retention": joiningRetentionTask(deps.db),
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
@@ -90,8 +94,9 @@ export function createTaskList(deps: TaskDependencies): TaskList {
 
 /**
  * Graphile Worker crontab: heartbeat every minute (at most one queued),
- * history partition maintenance daily at 03:17 UTC and the adult-ward check
- * daily at 04:23 UTC (both catching up after downtime), backup metrics every
+ * history partition maintenance daily at 03:17 UTC and the wards' age checks
+ * (adult age, own-login age) daily at 04:23 UTC (both catching up after
+ * downtime), backup metrics every
  * five minutes, joining retention daily at 04:53 UTC, expired member exports
  * every ten minutes.
  */

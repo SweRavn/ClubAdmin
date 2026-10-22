@@ -11,14 +11,18 @@ import {
 } from "../../platform/http/endpoint-registry.ts";
 import { policyFor, policyGaps } from "./authorization.policy.ts";
 
-/** Path parameter each resource loader reads (the person loader also reads ?clubId; the platform none). */
-const RESOURCE_PARAMS = {
+/**
+ * Path parameters each resource loader reads, any one of them (the person
+ * loader also reads ?clubId and resolves guardianships, guardian invitations
+ * and merges to their person; the platform none).
+ */
+const RESOURCE_PARAMS: Record<string, readonly string[] | null> = {
   platform: null,
-  club: ":clubId",
-  group: ":groupId",
-  person: ":personId",
-  handover: ":handoverId",
-} as const;
+  club: [":clubId"],
+  group: [":groupId"],
+  person: [":personId", ":guardianshipId", ":invitationId", ":mergeId"],
+  handover: [":handoverId"],
+};
 
 export class EndpointPolicyError extends Error {
   constructor(problems: string[]) {
@@ -41,9 +45,12 @@ export function endpointPolicyProblems(endpoints: readonly RegisteredEndpoint[])
     if (policy.resource !== resource) {
       problems.push(`${name}: ${permission} checks a ${policy.resource}, not a ${resource}`);
     }
-    const param = RESOURCE_PARAMS[resource];
-    if (param !== null && !endpoint.fullPath.split("/").includes(param)) {
-      problems.push(`${name}: a ${resource} resource needs the path parameter ${param}`);
+    const params = RESOURCE_PARAMS[resource] ?? null;
+    const segments = endpoint.fullPath.split("/");
+    if (params !== null && !params.some((p) => segments.includes(p))) {
+      problems.push(
+        `${name}: a ${resource} resource needs the path parameter ${params.join(" or ")}`,
+      );
     }
   }
   return problems;

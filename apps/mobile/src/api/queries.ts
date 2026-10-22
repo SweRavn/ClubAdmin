@@ -49,6 +49,23 @@ export function useMyWards() {
   });
 }
 
+export type WardGuardians = Schemas["WardGuardians"];
+
+/** A ward's guardians, relatives and contact persons (P1.3, read-only in the app). */
+export function useWardGuardians(wardId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["me", personId, "wards", wardId, "guardians"],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/me/wards/{personId}/guardians", {
+          params: { path: { personId: wardId } },
+        }),
+      ),
+    enabled: personId !== null,
+  });
+}
+
 /** Keys for data that follows "viewing as". */
 function useScope() {
   const { personId, viewingAs } = useSession();

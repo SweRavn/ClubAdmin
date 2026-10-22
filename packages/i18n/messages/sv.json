@@ -357,6 +357,23 @@
     "membersExported": {
       "subject": "{club}: medlemsregistret har exporterats",
       "body": "{requester} har exporterat medlemsregistret i {club} ({columns}).{includeProtected, select, yes {\n\nExporten innehåller medlemmar med skyddade personuppgifter.} other {}}\n\nAlla föreningsansvariga får det här mejlet vid varje export. Se exporterna:\n{url}"
+    },
+    "footerPlain": "Det här mejlet skickades av ClubAdmin.",
+    "family": {
+      "invitationSubject": "{hasInviter, select, yes {{inviter} bjuder in dig} other {Du är inbjuden}} till ClubAdmin",
+      "invitationBody": "{hasInviter, select, yes {{inviter} bjuder in dig} other {Du är inbjuden}} till ClubAdmin som {kind, select, parent {förälder} legal_guardian {vårdnadshavare} relative {släkting} other {kontaktperson}} till {hasWard, select, yes {{ward}} other {ett barn eller en ungdom}}.\n\nTacka ja (logga in, eller skapa en inloggning med den här e-postadressen):\n{url}\n\nInbjudan gäller till {expires}. Om du inte väntade dig den kan du bortse från mejlet.",
+      "acceptedSubject": "{person} har tackat ja till din inbjudan",
+      "acceptedBody": "{person} har tackat ja till din inbjudan och är nu kopplad till {ward} som {kind, select, parent {förälder} legal_guardian {vårdnadshavare} relative {släkting} other {kontaktperson}}.\n\nSe din familj i ClubAdmin:\n{url}",
+      "ownLoginSubject": "Din egen inloggning till ClubAdmin",
+      "ownLoginBody": "Hej {name}!\n\nNu kan du logga in i ClubAdmin själv. Dina medlemskap, grupper och din historik finns kvar som de är.\n\nLogga in eller skapa din inloggning med den här e-postadressen:\n{url}\n\nLänken gäller till {expires}.",
+      "ownLoginAgeSubject": "{ward} kan nu få en egen inloggning",
+      "ownLoginAgeBody": "{ward} har nått åldern för en egen inloggning till ClubAdmin, med en egen e-postadress. Allt om medlemskap och historik finns kvar.\n\nGe {ward} en egen inloggning på familjesidan:\n{url}",
+      "adultYoungSubject": "Du bestämmer vem som behåller åtkomst",
+      "adultYoungBody": "Du har nått myndighetsåldern. Dina vårdnadshavare har kvar åtkomst till ditt konto och dina uppgifter i ClubAdmin tills du bestämmer något annat.\n\nVälj för varje vårdnadshavare om hen ska behålla åtkomsten:\n{url}",
+      "adultGuardianSubject": "{ward} har nått myndighetsåldern",
+      "adultGuardianBody": "{ward} har nått myndighetsåldern. Din åtkomst fortsätter tills {ward} bestämmer något annat; för att bestämma behöver {ward} en egen inloggning till ClubAdmin.\n\nGe {ward} en egen inloggning på familjesidan:\n{url}",
+      "adultEndedSubject": "Din åtkomst som vårdnadshavare har upphört",
+      "adultEndedBody": "{hasWard, select, yes {{ward}} other {Ungdomen}} har nått myndighetsåldern och bestämt att din åtkomst som {kind, select, parent {förälder} legal_guardian {vårdnadshavare} relative {släkting} other {kontaktperson}} upphör. Du ser inte längre hens uppgifter i ClubAdmin.\n\n{url}"
     }
   },
   "profileForm": {
@@ -519,7 +536,24 @@
     "export_storage_unavailable": "Exporter är inte tillgängliga i den här installationen.",
     "invalid_end_date": "Slutdatumet får inte ligga i framtiden eller före medlemskapets början.",
     "reauthentication_required": "Logga in igen först för att exportera (du loggade in för mer än 15 minuter sedan).",
-    "membership_status_invalid": "Medlemskapet kan inte ändras på det sättet."
+    "membership_status_invalid": "Medlemskapet kan inte ändras på det sättet.",
+    "birth_date_in_future": "Födelsedatumet kan inte ligga i framtiden.",
+    "rights_not_allowed": "De rättigheterna kan inte ges här (att agera för någon bara för släktingar, valt av en vårdnadshavare eller en vuxen).",
+    "guardianship_kind_not_allowed": "Den sortens koppling går inte här.",
+    "too_young_to_link": "Du kan koppla personer till dig från samtyckesåldern.",
+    "reason_required": "Ange ett skäl.",
+    "adult_decision_not_open": "Det här är redan bestämt.",
+    "invitation_not_pending": "Inbjudan är inte längre öppen.",
+    "guardianship_exists": "Personen är redan kopplad.",
+    "merge_not_allowed": "De två kan inte slås ihop (en person med inloggning slås aldrig ihop in i en annan).",
+    "merge_undo_expired": "Tiden för att ångra har gått ut.",
+    "merge_undo_conflict": "Något har ändrats sedan sammanslagningen; den kan inte ångras automatiskt.",
+    "account_exists": "Personen har redan en inloggning.",
+    "invitation_email_unavailable": "Inbjudningar via e-post finns inte i den här installationen.",
+    "not_allowed": "Du får inte göra det.",
+    "not_on_behalf": "Byt tillbaka till dig själv först.",
+    "invalid_personal_identity_number": "Personnumret är inte giltigt.",
+    "personal_identity_number_mismatch": "Personnumret stämmer inte med födelsedatumet."
   },
   "memberExport": {
     "columns": {
@@ -574,5 +608,140 @@
       "failed": "Misslyckades",
       "expired": "Har gått ut"
     }
+  },
+  "family": {
+    "title": "Familj",
+    "children": "Mina barn",
+    "noChildren": "Du har inte lagt till några barn.",
+    "age": "{age} år",
+    "born": "Född {date, date, long}",
+    "hasLogin": "Har egen inloggning",
+    "myRights": "Dina rättigheter: {rights}",
+    "guardiansOf": "Vårdnadshavare och andra kopplade till {name}",
+    "you": "Du",
+    "recordedByClub": "Registrerad av föreningen",
+    "noRights": "Inga rättigheter",
+    "consentNote": "Samtycke: {note}",
+    "rights": "Vad personen får göra",
+    "actOnBehalfWarning": "Ger samma rätt som en vårdnadshavare: personen kan anmäla, svara och agera för den du kopplar. Kryssa bara i om du verkligen menar det.",
+    "rightsOnlyLinked": "Rättigheterna gäller släktingar och kontaktpersoner; föräldrar och vårdnadshavare har alltid full rätt.",
+    "changeRights": "Ändra rättigheter",
+    "saveRights": "Spara rättigheter",
+    "end": "Avsluta koppling",
+    "endOwn": "Avsluta min koppling",
+    "confirmEnd": "Ja, avsluta kopplingen",
+    "confirmEndOwn": "Ja, jag vill inte längre ha åtkomst",
+    "endReason": "Skäl (krävs för förälder eller vårdnadshavare)",
+    "pending": "Inbjudan skickad",
+    "expires": "gäller till {date, date, medium}",
+    "resend": "Skicka igen",
+    "revoke": "Återkalla",
+    "invite": "Bjud in vårdnadshavare, släkting eller kontaktperson",
+    "inviteByEmail": "Bjud in via e-post",
+    "addWithoutLogin": "Lägg till någon utan inloggning",
+    "email": "E-postadress",
+    "kind": "Som",
+    "givenName": "Förnamn",
+    "familyName": "Efternamn",
+    "phone": "Telefon",
+    "sendInvitation": "Skicka inbjudan",
+    "add": "Lägg till",
+    "sharedWithMe": "Delat med mig",
+    "sharedGuardians": "Vårdnadshavare: {names}",
+    "ownLogin": {
+      "title": "Ge egen inloggning",
+      "email": "Barnets egen e-postadress",
+      "send": "Skicka inbjudan till inloggning",
+      "rule": "Från {age} år kan ett barn få en egen inloggning med egen e-postadress; medlemskap och historik finns kvar."
+    },
+    "helpers": {
+      "title": "Personer som hjälper mig",
+      "intro": "Släktingar och kontaktpersoner som du kopplar till dig ser bara det du väljer, till exempel ditt schema.",
+      "none": "Ingen är kopplad till dig.",
+      "add": "Koppla någon till mig",
+      "tooYoung": "Du kan koppla personer till dig från samtyckesåldern; fram till dess gör dina vårdnadshavare det."
+    },
+    "addChild": {
+      "title": "Lägg till barn",
+      "intro": "Ett barn behöver ingen e-postadress. Du kan anmäla, svara och se schemat för barnet.",
+      "birthDate": "Födelsedatum",
+      "pin": "Personnummer (frivilligt)",
+      "pinCountry": "Land för numret",
+      "countries": {
+        "SE": "Sverige",
+        "NO": "Norge"
+      },
+      "iAm": "Jag är barnets",
+      "submit": "Lägg till barn"
+    },
+    "duplicates": {
+      "title": "Möjliga dubbletter",
+      "notice": "{name} kan finnas två gånger i ClubAdmin.",
+      "noClubs": "Inga föreningar",
+      "guardians": "Vårdnadshavare: {names}",
+      "merge": "Slå ihop",
+      "otherMerges": "En vårdnadshavare till båda kan slå ihop dem.",
+      "merged": "{name} slogs ihop. Du kan ångra till {date, date, medium}.",
+      "undo": "Ångra"
+    },
+    "notices": {
+      "added": "Barnet lades till.",
+      "invited": "Inbjudan skickades.",
+      "linked": "Personen kopplades.",
+      "resent": "Inbjudan skickades igen med en ny länk.",
+      "updated": "Sparat.",
+      "ended": "Kopplingen avslutades.",
+      "accepted": "Du tackade ja till inbjudan.",
+      "acceptedProtected": "Du tackade ja till inbjudan. Barnet har skyddad identitet: överväg att skydda dig själv också, på din profil.",
+      "ownLogin": "Inbjudan till inloggning skickades.",
+      "merged": "De två slogs ihop.",
+      "undone": "Sammanslagningen ångrades."
+    },
+    "landing": {
+      "title": "Inbjudan",
+      "intro": "{hasInviter, select, yes {{inviter} bjuder in dig} other {Du är inbjuden}} som {kind} till {hasWard, select, yes {{ward}} other {ett barn eller en ungdom}}.",
+      "rights": "Du kommer att kunna: {rights}",
+      "email": "Logga in (eller skapa en inloggning) med e-postadressen som inbjudan skickades till.",
+      "accept": "Tacka ja",
+      "login": "Logga in eller registrera dig för att tacka ja",
+      "invalid": "Inbjudan gäller inte längre. Be den som bjöd in dig att skicka en ny."
+    },
+    "adult": {
+      "title": "Dina vårdnadshavare",
+      "intro": "Du har nått myndighetsåldern. Du bestämmer vilka av dina vårdnadshavare som ska ha kvar åtkomst till ditt konto och dina uppgifter i ClubAdmin.",
+      "keepMeans": "Behåll åtkomst: de ser och kan göra samma sak som förut.",
+      "endMeans": "Avsluta åtkomst: de ser inte längre dina uppgifter. De får veta att åtkomsten upphört, men inte varför.",
+      "later": "Du kan också avsluta åtkomst senare på familjesidan.",
+      "keep": "Behåll åtkomst",
+      "end": "Avsluta åtkomst",
+      "kept": "Behåller åtkomst",
+      "none": "Det finns inget att bestämma.",
+      "saved": "Ditt beslut sparades."
+    },
+    "club": {
+      "none": "Inga vårdnadshavare registrerade.",
+      "add": "Lägg till från pappersansökan eller blankett",
+      "search": "Sök i registret",
+      "searchButton": "Sök",
+      "newPerson": "Ny person utan inloggning",
+      "consentNote": "Notering om samtycke (släktingar och kontaktpersoner)",
+      "consentHint": "Till exempel: skriftligt samtycke från vårdnadshavare finns, med datum. Visas bara för föreningens administratörer och familjen."
+    },
+    "clubDuplicates": {
+      "title": "Dubbletter",
+      "intro": "Medlemmar med samma födelsedatum och efternamn, eller samma personnummer. Föreningsansvariga slår ihop dem (med tvåstegsverifiering).",
+      "none": "Inga dubbletter hittades."
+    }
+  },
+  "guardianRights": {
+    "act_on_behalf": "Agera för personen",
+    "receive_messages": "Få meddelanden",
+    "view_schedule": "Se schemat",
+    "sign_up": "Anmäla till aktiviteter",
+    "see_medical": "Se medicinska uppgifter"
+  },
+  "duplicateReasons": {
+    "name_and_birth_date": "Samma födelsedatum och efternamn",
+    "personal_identity_number": "Samma personnummer"
   }
 }

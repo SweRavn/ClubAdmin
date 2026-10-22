@@ -84,13 +84,29 @@ export const GUARDIANSHIP_RIGHTS = [
 ] as const;
 export type GuardianshipRight = (typeof GUARDIANSHIP_RIGHTS)[number];
 
-/** Defaults per kind: parents and legal guardians get full rights, others view-only. */
+/** Defaults per kind: parents and legal guardians get full rights; relatives the schedule; contact persons the schedule and messages. */
 export const DEFAULT_GUARDIANSHIP_RIGHTS: Record<GuardianshipKind, readonly GuardianshipRight[]> = {
   parent: GUARDIANSHIP_RIGHTS,
   legal_guardian: GUARDIANSHIP_RIGHTS,
   relative: ["view_schedule"],
-  contact_person: ["view_schedule"],
+  contact_person: ["view_schedule", "receive_messages"],
 };
+
+/** Parents and legal guardians: full rights; relatives and contact persons hold only the rights chosen for them. */
+export const FULL_GUARDIANSHIP_KINDS = [
+  "parent",
+  "legal_guardian",
+] as const satisfies readonly GuardianshipKind[];
+export const LINKED_GUARDIANSHIP_KINDS = [
+  "relative",
+  "contact_person",
+] as const satisfies readonly GuardianshipKind[];
+export const isFullGuardianshipKind = (kind: GuardianshipKind): boolean =>
+  (FULL_GUARDIANSHIP_KINDS as readonly string[]).includes(kind);
+
+/** The young person's decision per guardian at the adult age (P1.3). */
+export const ADULT_DECISIONS = ["kept", "ended"] as const;
+export type AdultDecision = (typeof ADULT_DECISIONS)[number];
 
 export const GUARDIANSHIP_STATUSES = ["pending", "active", "ended"] as const;
 export type GuardianshipStatus = (typeof GUARDIANSHIP_STATUSES)[number];

@@ -51,7 +51,13 @@ export function createCoreServices(
   const groups = new GroupsService(db, clubs);
   const memberships = new MembershipsService(db, { clubs, profiles, groups, roles });
   const defaultCountry = options.defaultCountry ?? "SE";
-  const accounts = new AccountsService(db, { people, memberships, clubs, defaultCountry });
+  const accounts = new AccountsService(db, {
+    people,
+    memberships,
+    clubs,
+    defaultCountry,
+    invitationTokenKey: options.invitationTokenKey,
+  });
   const joinRequests = new JoinRequestsService(db, { clubs, groups, memberships, accounts });
   return {
     encryption,
@@ -82,6 +88,11 @@ export function createCoreServices(
     profiles,
     groups,
     memberships,
-    guardianships: new GuardianshipsService(db, people),
+    guardianships: new GuardianshipsService(db, {
+      people,
+      accounts,
+      memberships,
+      tokenKey: options.invitationTokenKey,
+    }),
   };
 }

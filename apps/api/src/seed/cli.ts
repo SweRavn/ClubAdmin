@@ -98,7 +98,12 @@ async function main(command: string | undefined, argv: string[]): Promise<number
     await seed(
       {
         db,
-        services: createCoreServices(db, { encryption: FieldEncryption.fromConfig(process.env) }),
+        services: createCoreServices(db, {
+          encryption: FieldEncryption.fromConfig(process.env),
+          // Guardian invitations derive their link from it; emails only go out with the same key.
+          invitationTokenKey:
+            process.env.INVITATION_TOKEN_KEY ?? "seed-only-invitation-token-key-0000000000",
+        }),
         addPlatformOperator: (personId) =>
           asAdmin(async (query) => {
             await query("BEGIN");

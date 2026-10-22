@@ -127,6 +127,7 @@ class CoreSeeder {
     await this.roles();
     await this.groups();
     await this.groupMemberships();
+    await this.clubGuardians();
     await this.ownLogins();
     await this.generatedMembers();
     await this.clubData();
@@ -207,12 +208,30 @@ class CoreSeeder {
     }
   }
 
-  /** Co-guardians (invitation, accepted or pending) and relatives added by a full guardian. */
+  /**
+   * Co-guardians (invitation, accepted, pending or revoked), relatives added
+   * by a full guardian, and people without login linked by a full guardian
+   * or the adult ward (P1.3). Recorded by a club: clubGuardians().
+   */
   private async guardians(): Promise<void> {
     for (const g of this.data.relationships.guardianships) {
-      if (g.via === "addChild") continue;
+      if (g.via === "addChild" || g.via === "club") continue;
       const by = g.by ?? this.personas.get(g.ward)?.createdBy;
       if (!by) throw new Error(`guardianship of ${g.ward}: who adds ${g.guardian}?`);
+      if (g.via === "linked") {
+        const p = this.personas.get(g.guardian)!;
+        await this.s.guardianships.addLinkedPerson(
+          this.as(by, null, p.createdAt),
+          {
+            wardPersonId: this.id(g.ward),
+            person: { givenName: p.givenName, familyName: p.familyName, phone: p.phone },
+            kind: g.kind,
+            ...(g.rights ? { rights: g.rights } : {}),
+          },
+          { id: p.id },
+        );
+        continue;
+      }
       if (g.via === "addGuardian") {
         await this.s.guardianships.addGuardian(this.as(by), {
           guardianPersonId: this.id(g.guardian),
@@ -224,13 +243,16 @@ class CoreSeeder {
       }
       const email = this.personas.get(g.guardian)?.email;
       if (!email) throw new Error(`invited guardian ${g.guardian} has no email`);
-      const { token } = await this.s.guardianships.inviteCoGuardian(this.as(by), {
+      const { token, invitationId } = await this.s.guardianships.inviteCoGuardian(this.as(by), {
         wardPersonId: this.id(g.ward),
         email,
         kind: g.kind,
+        ...(g.rights ? { rights: g.rights } : {}),
       });
       if (g.status === "active") {
         await this.s.guardianships.acceptInvitation(this.as(g.guardian), token);
+      } else if (g.status === "revoked") {
+        await this.s.guardianships.revokeInvitation(this.as(by), invitationId);
       }
     }
   }
@@ -411,6 +433,46 @@ class CoreSeeder {
   }
 
   /** "Give own login": the guardian invites the child's address, the child signs up. */
+  /**
+   * Guardianships a club recorded from a paper form (P1.3), some later ended
+   * by a club manager with a reason; then the worker's adult-age flags.
+   */
+  private async clubGuardians(): Promise<void> {
+    const ended: { id: string; by: string; club: string; reason: string }[] = [];
+    for (const g of this.data.relationships.guardianships) {
+      if (g.via !== "club") continue;
+      if (!g.club || !g.by) throw new Error(`club guardianship of ${g.ward}: club and by needed`);
+      const p = this.personas.get(g.guardian)!;
+      const { guardianship } = await this.s.guardianships.recordGuardian(
+        this.as(g.by, g.club),
+        {
+          wardPersonId: this.id(g.ward),
+          guardian: { person: { givenName: p.givenName, familyName: p.familyName, phone: p.phone } },
+          kind: g.kind,
+          ...(g.rights ? { rights: g.rights } : {}),
+          ...(g.consentNote ? { consentNote: g.consentNote } : {}),
+        },
+        { id: p.id },
+      );
+      if (g.ended) ended.push({ id: guardianship.id, club: g.club, ...g.ended });
+    }
+    for (const e of ended) {
+      await this.s.guardianships.endGuardianship(this.as(e.by, e.club), e.id, {
+        allowedBy: "club_manager",
+        reason: e.reason,
+      });
+    }
+    // What guardianships:flag_adult_wards would have done on the birthday.
+    for (const g of this.data.relationships.guardianships.filter((x) => x.adultFlagged)) {
+      await this.env.db.withSystem("seed:adult-flag", {}, (tx) =>
+        tx.execute(sql`
+          UPDATE guardianships SET ward_adult_flagged_at = now()
+          WHERE guardian_person_id = ${this.id(g.guardian)} AND ward_person_id = ${this.id(g.ward)}
+            AND valid_to IS NULL`),
+      );
+    }
+  }
+
   private async ownLogins(): Promise<void> {
     for (const o of this.data.relationships.ownLogins) {
       const p = this.personas.get(o.person)!;

@@ -4,6 +4,8 @@
 // their guardians and wards, and clubs the person belongs to (migration 0001).
 
 import {
+  ADULT_DECISIONS,
+  type AdultDecision,
   GENDERS,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
@@ -132,9 +134,32 @@ export const guardianships = pgTable(
     createdByPersonId: uuid().references(() => people.id),
     /** Set by the worker when the ward reaches the country pack's adult age (not ended automatically). */
     wardAdultFlaggedAt: timestamp(tz),
+    /** The young person's decision at the adult age (P1.3): kept or ended; null until they decide. */
+    adultDecision: text().$type<AdultDecision>(),
+    adultDecidedAt: timestamp(tz),
+    /** Who chose the rights of a relative or contact person (the guardian, the adult ward or the club's registrar). */
+    grantedByPersonId: uuid().references(() => people.id),
+    /** The club that recorded the link from a paper form (it may end it again; FK in migration 0009). */
+    recordedByClubId: uuid(),
+    /** A note that written consent exists (paper forms); shown only to the club's administrators, the ward and their guardians. */
+    consentNote: text(),
+    /** Why a club manager ended a full guardian's guardianship; never in audit events. */
+    endedReason: text(),
+    /** The worker told this guardian once that the ward may now get their own login. */
+    ownLoginAgeNotifiedAt: timestamp(tz),
     ...timestamps,
   },
   (t) => [
+    check(
+      "guardianships_adult_decision",
+      sql`${t.adultDecision} IS NULL OR ${oneOf(t.adultDecision, ADULT_DECISIONS)}`,
+    ),
+    check(
+      "guardianships_adult_decided",
+      sql`(${t.adultDecision} IS NULL) = (${t.adultDecidedAt} IS NULL)`,
+    ),
+    check("guardianships_consent_note_length", sql`char_length(${t.consentNote}) <= 500`),
+    check("guardianships_ended_reason_length", sql`char_length(${t.endedReason}) <= 500`),
     check("guardianships_kind", oneOf(t.kind, GUARDIANSHIP_KINDS)),
     check("guardianships_rights", subsetOf(t.rights, GUARDIANSHIP_RIGHTS)),
     check("guardianships_status", oneOf(t.status, GUARDIANSHIP_STATUSES)),
@@ -178,6 +203,8 @@ export const guardianInvitations = pgTable(
     acceptedByPersonId: uuid().references(() => people.id),
     guardianshipId: uuid().references(() => guardianships.id),
     revokedAt: timestamp(tz),
+    /** Last resend: the link changes (the token is derived from the ID and this time). */
+    resentAt: timestamp(tz),
     ...timestamps,
   },
   (t) => [
@@ -221,6 +248,8 @@ export const peopleMerges = pgTable(
   (t) => [
     index("people_merges_kept_idx").on(t.keptPersonId),
     index("people_merges_merged_idx").on(t.mergedPersonId),
+    // "My merges that can still be undone" (P1.3).
+    index("people_merges_merged_by_idx").on(t.mergedByPersonId),
   ],
 );
 

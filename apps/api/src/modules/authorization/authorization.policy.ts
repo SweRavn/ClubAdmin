@@ -178,6 +178,57 @@ export const POLICIES: readonly Policy[] = [
         : actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId, "act_on_behalf"),
     { mfa: ({ resource }) => resource.clubId !== null },
   ),
+  // Families (P1.3). The ward and every active guardian see the ward's
+  // guardians (the presenter shows relatives names only).
+  definePolicy(
+    "person.guardians.read",
+    "person",
+    ({ actor, resource }) =>
+      actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId),
+  ),
+  // Inviting, linking and changing rights: full guardians, and the ward
+  // themselves for relatives and contact persons (the service checks the
+  // kind and the consent age). Never a relative, never on behalf of someone.
+  definePolicy(
+    "person.guardians.manage",
+    "person",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null &&
+      (actor.isFullGuardianOf(resource.personId) || actor.isSelf(resource.personId)),
+  ),
+  // Merging duplicates: a full guardian (of both: the service checks the
+  // duplicate), or a club manager with a second factor for two members of
+  // the club (clubId in the query).
+  definePolicy(
+    "person.merge",
+    "person",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null &&
+      (actor.isFullGuardianOf(resource.personId) ||
+        (resource.clubId !== null &&
+          resource.inClub !== null &&
+          actor.isClubManager(resource.clubId))),
+    { mfa: ({ actor, resource }) => !actor.isFullGuardianOf(resource.personId) },
+  ),
+  // "Give own login": full guardians; club managers and registrars of a club
+  // the person is a member of (clubId in the query).
+  definePolicy(
+    "person.own_login.invite",
+    "person",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null &&
+      (actor.isFullGuardianOf(resource.personId) ||
+        (resource.clubId !== null &&
+          resource.inClub?.membership != null &&
+          isAdmin(actor, resource.clubId))),
+  ),
+  // Guardianships as the club sees them (paper applications): club managers
+  // and registrars. Ending a full guardian's guardianship needs a club
+  // manager with a second factor and a reason (checked by the controller and
+  // the service).
+  definePolicy("club.guardians.manage", "club", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
+  ),
   // Operator endpoints (backup status): platform operators, who are also the
   // administrators of a self-hosted installation; with a second factor.
   definePolicy("ops.backup.read", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),

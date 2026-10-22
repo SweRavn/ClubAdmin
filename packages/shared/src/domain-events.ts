@@ -23,12 +23,18 @@ export const DOMAIN_EVENTS = {
   "person.merged": z.object({ keptPersonId: id, mergedPersonId: id, undone: z.boolean() }),
   /** Notify the old address (P1.7). */
   "account.email.changed": z.object({ accountId: id, personId: id }),
-  /** Send the own-login invitation email (P1.7). */
+  /** Send the own-login invitation email (P1.3). */
   "account.invited": z.object({ invitationId: id, personId: id }),
-  /** Send the invitation email (P1.7). */
+  /** Send the invitation email (P1.3; also after a resend, with the new link). */
   "guardianship.invited": z.object({ invitationId: id, wardPersonId: id }),
-  /** The ward reached the adult age: notify them and their guardians (P1.7). */
+  /** Tell the inviter their invitation was accepted (P1.3). */
+  "guardianship.invitation.accepted": z.object({ invitationId: id, wardPersonId: id }),
+  /** The ward reached the adult age: notify them, or their guardians without a login (P1.3). */
   "guardianship.ward.adult": z.object({ guardianshipId: id, wardPersonId: id }),
+  /** The ward may now get their own login: tell this guardian once (P1.3). */
+  "guardianship.ward.own_login_age": z.object({ guardianshipId: id, wardPersonId: id }),
+  /** The young person ended this guardian's access at the adult age: tell the guardian (P1.3). */
+  "guardianship.adult.ended": z.object({ guardianshipId: id, wardPersonId: id }),
   /** Joining (P1.1): emails to the invited person, the applicant, the managers. */
   "invitation.created": z.object({ invitationId: id, clubId: id }),
   "join_request.decided": z.object({ joinRequestId: id, clubId: id }),

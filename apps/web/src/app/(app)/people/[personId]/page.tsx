@@ -12,13 +12,16 @@ import {
   inputClass,
   secondaryButtonClass,
 } from "../../../../components/action-form.tsx";
+import { GuardianRow, RightsFields } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import {
   getClubGroups,
+  getClubGuardians,
   getClubManagers,
   getMe,
   getMyClubs,
   getPerson,
+  getRegister,
 } from "../../../../server/data.ts";
 
 type Props = {
@@ -61,6 +64,26 @@ export default async function PersonPage({ params, searchParams }: Props) {
       )
     : undefined;
   const membership = profile.club?.membership;
+  // Guardians as the club sees them, from paper applications and forms (P1.3).
+  const guardianClub = profile.club
+    ? mine.clubs.find(
+        (c) =>
+          c.club.id === profile.club!.clubId && c.permissions.includes("club.guardians.manage"),
+      )
+    : undefined;
+  const clubGuardians = guardianClub
+    ? await getClubGuardians(guardianClub.club.id, personId)
+    : null;
+  const guardianQ = typeof query.guardianQ === "string" ? query.guardianQ.trim().slice(0, 100) : "";
+  const candidates =
+    guardianClub && clubGuardians && guardianQ.length >= 2
+      ? (
+          await getRegister(
+            guardianClub.club.id,
+            new URLSearchParams({ q: guardianQ, limit: "10" }).toString(),
+          )
+        ).items.filter((m) => m.person.id !== personId)
+      : [];
   const managers =
     managedClub && isActiveMember && personId !== me.personId
       ? await getClubManagers(managedClub.club.id)
@@ -250,7 +273,140 @@ export default async function PersonPage({ params, searchParams }: Props) {
         </section>
       ) : null}
 
-      {profile.guardians?.length ? (
+      {clubGuardians && guardianClub ? (
+        <section
+          aria-labelledby="club-guardians"
+          className="space-y-3"
+          data-testid="club-guardians"
+        >
+          <h2 id="club-guardians" className="text-lg font-semibold">
+            {t("person.guardians")}
+          </h2>
+          {clubGuardians.guardians.length === 0 ? (
+            <p className="text-muted">{t("family.club.none")}</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {clubGuardians.guardians.map((g) => (
+                <GuardianRow
+                  key={g.guardianshipId}
+                  entry={g}
+                  allowActOnBehalf={false}
+                  clubId={guardianClub.club.id}
+                />
+              ))}
+            </ul>
+          )}
+          <details>
+            <summary className="cursor-pointer" data-testid="open-club-guardian">
+              {t("family.club.add")}
+            </summary>
+            <div className="mt-3 space-y-4">
+              <form method="get" className="flex flex-wrap items-end gap-2">
+                <input type="hidden" name="clubId" value={guardianClub.club.id} />
+                <label className="block space-y-1">
+                  <span className="text-sm">{t("family.club.search")}</span>
+                  <input
+                    name="guardianQ"
+                    defaultValue={guardianQ}
+                    className={inputClass}
+                    data-testid="guardian-search"
+                  />
+                </label>
+                <button type="submit" className={secondaryButtonClass}>
+                  {t("family.club.searchButton")}
+                </button>
+              </form>
+              {candidates.length ? (
+                <ul className="space-y-2" data-testid="guardian-candidates">
+                  {candidates.map((m) => (
+                    <li key={m.person.id}>
+                      <ActionForm
+                        action="club-add-guardian"
+                        className="flex flex-wrap items-center gap-2"
+                      >
+                        <input type="hidden" name="clubId" value={guardianClub.club.id} />
+                        <input type="hidden" name="personId" value={personId} />
+                        <input type="hidden" name="guardianPersonId" value={m.person.id} />
+                        <PersonName person={m.person} protectedLabel={protectedLabel} />
+                        <select
+                          name="kind"
+                          className="rounded-md border border-border bg-bg px-2 py-1"
+                          defaultValue="parent"
+                        >
+                          <option value="parent">{t("guardianKinds.parent")}</option>
+                          <option value="legal_guardian">
+                            {t("guardianKinds.legal_guardian")}
+                          </option>
+                        </select>
+                        <button
+                          type="submit"
+                          className={secondaryButtonClass}
+                          data-testid="add-candidate"
+                        >
+                          {t("family.add")}
+                        </button>
+                      </ActionForm>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <ActionForm
+                action="club-add-guardian"
+                className="space-y-2 rounded-md border border-border p-3"
+                testId="club-guardian-form"
+              >
+                <h3 className="font-medium">{t("family.club.newPerson")}</h3>
+                <input type="hidden" name="clubId" value={guardianClub.club.id} />
+                <input type="hidden" name="personId" value={personId} />
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <label className="block space-y-1">
+                    <span className="text-sm">{t("family.givenName")}</span>
+                    <input name="givenName" required maxLength={100} className={inputClass} />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-sm">{t("family.familyName")}</span>
+                    <input name="familyName" required maxLength={100} className={inputClass} />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-sm">{t("family.phone")}</span>
+                    <input type="tel" name="phone" className={inputClass} />
+                  </label>
+                </div>
+                <label className="block space-y-1">
+                  <span className="text-sm">{t("family.kind")}</span>
+                  <select name="kind" className={inputClass} defaultValue="contact_person">
+                    {(["parent", "legal_guardian", "relative", "contact_person"] as const).map(
+                      (k) => (
+                        <option key={k} value={k}>
+                          {t(enumKey("guardianKinds", k))}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+                <RightsFields
+                  selected={["view_schedule", "receive_messages"]}
+                  allowActOnBehalf={false}
+                  idPrefix="club-guardian"
+                />
+                <label className="block space-y-1">
+                  <span className="text-sm">{t("family.club.consentNote")}</span>
+                  <input
+                    name="consentNote"
+                    maxLength={500}
+                    className={inputClass}
+                    data-testid="consent-note"
+                  />
+                  <span className="block text-xs text-muted">{t("family.club.consentHint")}</span>
+                </label>
+                <button type="submit" className={buttonClass} data-testid="club-guardian-submit">
+                  {t("family.add")}
+                </button>
+              </ActionForm>
+            </div>
+          </details>
+        </section>
+      ) : profile.guardians?.length ? (
         <section aria-labelledby="person-guardians">
           <h2 id="person-guardians" className="mb-2 text-lg font-semibold">
             {t("person.guardians")}

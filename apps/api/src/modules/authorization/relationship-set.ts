@@ -198,6 +198,19 @@ export class Actor {
     );
   }
 
+  /**
+   * Parent or legal guardian of the person, with the right to act for them
+   * (not a relative or contact person, even one given that right).
+   */
+  isFullGuardianOf(personId: string): boolean {
+    return this.relationships.wards.some(
+      (w) =>
+        w.personId === personId &&
+        (w.kind === "parent" || w.kind === "legal_guardian") &&
+        w.rights.includes("act_on_behalf"),
+    );
+  }
+
   /** Guardian (with the right) of an active or paused member of the club. */
   isGuardianOfClubMember(clubId: string, right?: GuardianshipRight): boolean {
     return this.relationships.wardMemberships.some(

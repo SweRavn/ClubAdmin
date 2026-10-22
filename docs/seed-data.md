@@ -46,6 +46,15 @@ This document describes the same data in prose and tables; keep both in step.
   with fixed demo secrets that `pnpm db:seed` prints:
   `/join/demo-svk-strandviken-invitation-link` and the code `KNB7DEMA`.
   Karin's open hand-over to Peter in IKN shows in Peter's "In progress".
+- **Families (P1.3):** Jonas's pending invitation as Nadia's second guardian
+  and Anna's revoked invitation of Gunilla (relative of Elsa); the duplicate
+  Elsa (Mikael added her again; Anna accepted as second parent) for the merge
+  notice; Vera (13, no login) for "Give own login"; Tilde (18, IKN) with
+  both guardianships flagged at the adult age; Nils, Alva's contact person
+  without login linked by Sara; Bo, the LSS contact person Emma linked to
+  herself; Petra, recorded by Johan from a paper application as Maja's
+  mother and ended by Anna with a reason. The adult-age flags are set as the
+  worker would (`guardianships:flag_adult_wards`).
 - **The `load` scenario** is the documented exception to writing through the
   services: one set-based transaction as superuser, recorded as a system job.
 
@@ -149,6 +158,13 @@ club has roughly 10 named/central users plus generated players.
 | 25 | **Jonas Karimi** | 41 | yes | Second guardian of Nadia, **invited** as guardian by Samira (pending), prompted to enable protection |
 | 26 | **Camilla Dahl** | 40 | yes | Mother of Sofie; applied for her in FIL (join request with J2014 as preferred group) |
 | 27 | **Viktor Malm** | 8 | no | Son of Henrik (see 22): #2 on SVK F2017's waiting list, pending join request |
+| 28 | **Vera Ahmed** | 13 | no | Alva's sister, no club: Sara can **give her her own login** (P1.3) |
+| 29 | **Elsa Lindqvist** (duplicate) | 9 | no | Elsa added again by Mikael (same birth date, no clubs), Anna invited as second parent → **merge notice** for Anna and Mikael, merge and undo |
+| 30 | **Nils Granqvist** | — | no | Alva's neighbour who drives to training: **contact person without login**, linked by Sara (schedule and messages) |
+| 31 | **Bo Stöd** | — | no | Emma's **LSS contact person**, linked by Emma herself |
+| 32 | **Tilde Yilmaz** | 18 | yes | IKN, own login; just reached the adult age (guardianships flagged) → **adult decision** page for Ahmed and Leyla |
+| 33 | **Leyla Yilmaz** | 45 | yes | Tilde's mother, invited by Ahmed as second guardian |
+| 34 | **Petra Johansson** | — | no | Recorded by Johan (SVK registrar) as Maja's mother **from a paper application**; ended by Anna (club manager) **with a reason** (history) |
 
 Ahmed is Liam's parent; Liam, like Oskar, was created as a child and got his
 own login (half a year ago). The waiting list of F2017 has five waiting, one

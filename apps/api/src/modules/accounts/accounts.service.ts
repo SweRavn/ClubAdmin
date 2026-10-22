@@ -4,9 +4,9 @@
 // own person, so duplicates are detected by the unique index, never by
 // looking up other people's accounts.
 
-import { createHash, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 
-import { ageOn, getCountryPack, isSupportedCountry } from "@clubadmin/country-packs";
+import { ageOn, type AgeRules, getCountryPack, isSupportedCountry } from "@clubadmin/country-packs";
 import {
   type ActorContext,
   audit,
@@ -15,6 +15,7 @@ import {
   outbox,
   type Tx,
 } from "@clubadmin/db";
+import { accountInvitationToken } from "@clubadmin/server-kit/invitations";
 import {
   EmailSchema,
   type Preferences,
@@ -69,6 +70,7 @@ export class AccountsService {
   private readonly memberships: MembershipsService;
   private readonly clubs: ClubsService;
   private readonly defaultCountry: string;
+  private readonly tokenKey: string | undefined;
 
   constructor(
     db: Database,
@@ -77,6 +79,8 @@ export class AccountsService {
       memberships: MembershipsService;
       clubs: ClubsService;
       defaultCountry: string;
+      /** INVITATION_TOKEN_KEY: own-login invitations are emailed with a derived link (P1.3). */
+      invitationTokenKey?: string | undefined;
     },
   ) {
     this.db = db;
@@ -84,6 +88,7 @@ export class AccountsService {
     this.memberships = deps.memberships;
     this.clubs = deps.clubs;
     this.defaultCountry = deps.defaultCountry;
+    this.tokenKey = deps.invitationTokenKey;
   }
 
   /** Creates the acting person's own account (sign-up; the IdP verified the email). */
@@ -275,36 +280,46 @@ export class AccountsService {
   }
 
   /**
-   * "Give own login" (ADR 0020): a full guardian (or a club manager of a club
-   * the person belongs to) invites the person's own email. Returns the secret
-   * token for the link; only its hash is stored. The UI comes in P1.3.
+   * "Give own login" (ADR 0020): a full guardian (or a club manager or
+   * registrar of a club the person belongs to) invites the person's own
+   * email. The link's token is derived from the invitation's ID with
+   * INVITATION_TOKEN_KEY (the worker emails it); only its hash is stored.
    */
   createOwnLoginInvitation(
     context: Context,
     personId: string,
     email: string,
-  ): Promise<{ invitationId: string; token: string }> {
+  ): Promise<{ invitationId: string; token: string; expiresAt: Date }> {
+    const key = this.tokenKey;
+    if (!key) throw new DomainError("invitation_email_unavailable");
     return runAs(this.db, context, async (tx) => {
       const actor = actorPersonId(context);
       const allowed =
         (await repo.actorIsFullGuardianOf(tx, personId)) ||
-        (hasClub(context) && (await repo.actorIsClubManager(tx)));
+        (hasClub(context) &&
+          (await repo.actorHasClubRole(tx, ["club_manager", "registrar"])) &&
+          (await this.memberships.isMemberInTx(tx, context.clubId, personId)));
       if (!allowed) throw new DomainError("not_allowed");
       const person = await this.people.getPersonInTx(tx, personId);
-      if (await repo.findByPersonId(tx, personId)) throw new DomainError("account_exists");
+      // Accounts are visible only to their own person: ask the database.
+      if ((await repo.peopleWithAccount(tx, [personId])).has(personId))
+        throw new DomainError("account_exists");
       if (
         !person.birthDate ||
         ageOn(person.birthDate) < (await this.ownAccountMinAge(tx, personId))
       ) {
         throw new DomainError("too_young_for_account");
       }
-      const token = randomBytes(32).toString("base64url");
+      const id = uuidv7();
+      const token = accountInvitationToken(key, id);
+      const expiresAt = new Date(Date.now() + ACCOUNT_INVITATION_VALID_DAYS * 86_400_000);
       const invitation = await repo.insertInvitation(tx, {
+        id,
         personId,
         email: parseInput(EmailSchema, email),
         tokenHash: hashToken(token),
         createdByPersonId: actor,
-        expiresAt: new Date(Date.now() + ACCOUNT_INVITATION_VALID_DAYS * 86_400_000),
+        expiresAt,
       });
       await audit.record(tx, {
         action: "account.invitation.created",
@@ -312,7 +327,7 @@ export class AccountsService {
         resourceId: invitation.id,
       });
       await outbox.publish(tx, "account.invited", { invitationId: invitation.id, personId });
-      return { invitationId: invitation.id, token };
+      return { invitationId: invitation.id, token, expiresAt };
     });
   }
 
@@ -339,15 +354,38 @@ export class AccountsService {
   }
 
   private async ownAccountMinAge(tx: Tx, personId: string): Promise<number> {
+    return (await this.ageRulesInTx(tx, personId)).ownAccountMinAge;
+  }
+
+  /**
+   * The age rules for a person: the strictest (highest) of the country packs
+   * of their clubs, the deployment's default country without clubs (P1.3).
+   * Only the clubs visible to the transaction count (the person, their
+   * guardians, a club they belong to).
+   */
+  async ageRulesInTx(tx: Tx, personId: string): Promise<AgeRules> {
     const clubIds = await this.memberships.clubIdsOfPersonInTx(tx, personId);
-    const countries = new Set((await this.clubs.findClubsInTx(tx, clubIds)).map((c) => c.country));
-    if (countries.size === 0) countries.add(this.defaultCountry);
-    return Math.max(
-      ...[...countries]
-        .filter(isSupportedCountry)
-        .map((c) => getCountryPack(c).ageRules.ownAccountMinAge),
-      getCountryPack(this.defaultCountry).ageRules.ownAccountMinAge,
-    );
+    const countries = (await this.clubs.findClubsInTx(tx, clubIds)).map((c) => c.country);
+    return this.ageRulesFor(countries);
+  }
+
+  /** The strictest age rules of these countries (the default country if none is supported). */
+  ageRulesFor(countries: readonly string[]): AgeRules {
+    const packs = [...new Set(countries)]
+      .filter(isSupportedCountry)
+      .map((c) => getCountryPack(c).ageRules);
+    if (packs.length === 0) packs.push(getCountryPack(this.defaultCountry).ageRules);
+    return {
+      consentAge: Math.max(...packs.map((p) => p.consentAge)),
+      ownAccountMinAge: Math.max(...packs.map((p) => p.ownAccountMinAge)),
+      adultAge: Math.max(...packs.map((p) => p.adultAge)),
+    };
+  }
+
+  /** Which of these (reachable) people have a login (accounts are otherwise private). */
+  peopleWithAccount(context: ActorContext, personIds: readonly string[]): Promise<Set<string>> {
+    if (personIds.length === 0) return Promise.resolve(new Set());
+    return this.db.withActor(context, (tx) => repo.peopleWithAccount(tx, personIds));
   }
 
   private async insert(tx: Tx, personId: string, input: NewAccount): Promise<Account> {

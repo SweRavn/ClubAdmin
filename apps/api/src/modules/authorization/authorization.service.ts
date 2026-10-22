@@ -16,6 +16,7 @@ import type { Principal } from "../../platform/http/principal.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
 import { policyFor } from "./authorization.policy.ts";
 import {
+  loadFamilyResourcePerson,
   loadGroupScope,
   loadGroupsOfPeople,
   loadHandoverScope,
@@ -178,12 +179,42 @@ export class AuthorizationService {
     return { kind: "group", groupId, ...scope };
   }
 
+  /**
+   * The person of a person-scoped route: :personId, or the person behind a
+   * :guardianshipId, :invitationId (the ward) or :mergeId (the kept person).
+   */
+  private async personIdOf(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+  ): Promise<string> {
+    const personId = param(request, "personId");
+    if (personId !== undefined) {
+      if (!isUuid(personId)) throw new ProblemError("not-found");
+      return personId;
+    }
+    const keys = [
+      ["guardianshipId", "guardianship"],
+      ["invitationId", "invitation"],
+      ["mergeId", "merge"],
+    ] as const;
+    for (const [name, kind] of keys) {
+      const id = param(request, name);
+      if (id === undefined) continue;
+      if (!isUuid(id)) throw new ProblemError("not-found");
+      const found = await this.db.withActor(authorization.context, (tx) =>
+        loadFamilyResourcePerson(tx, kind, id),
+      );
+      if (!found) throw new ProblemError("not-found");
+      return found;
+    }
+    throw new ProblemError("not-found");
+  }
+
   private async personResource(
     authorization: RequestAuthorization,
     request: FastifyRequest,
   ): Promise<PersonResource> {
-    const personId = param(request, "personId");
-    if (!personId || !isUuid(personId)) throw new ProblemError("not-found");
+    const personId = await this.personIdOf(authorization, request);
     const clubId = queryParam(request, "clubId") ?? null;
     if (clubId !== null && !isUuid(clubId)) throw new ProblemError("bad-request");
     const resource: PersonResource = { kind: "person", personId, clubId, inClub: null, groups: [] };

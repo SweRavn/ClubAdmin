@@ -9,7 +9,11 @@ import {
   type TestDatabase,
 } from "@clubadmin/db/testing";
 import { createLogger, loadEnvFiles } from "@clubadmin/server-kit";
-import { emailInvitationToken } from "@clubadmin/server-kit/invitations";
+import {
+  accountInvitationToken,
+  emailInvitationToken,
+  guardianInvitationToken,
+} from "@clubadmin/server-kit/invitations";
 import { ObjectStorage, objectStorageConfig } from "@clubadmin/server-kit/object-storage";
 import { relationshipVersionKey, uuidv7 } from "@clubadmin/shared";
 import { run, runOnce } from "graphile-worker";
@@ -21,7 +25,7 @@ import { graphileLogger } from "./graphile-logger.ts";
 import { mailHandler, memoryMailProvider } from "./mail.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { readBackupMetrics } from "./tasks/backup-metrics.ts";
-import { flagAdultWards } from "./tasks/guardianships.ts";
+import { flagAdultWards, notifyOwnLoginAge } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 import { deleteExpiredJoiningData } from "./tasks/joining.ts";
 import { expireMemberExports, runMemberExport } from "./tasks/members.ts";
@@ -114,8 +118,8 @@ describe("guardianships:flag_adult_wards", () => {
     );
     const ids = rows[0]!;
     // On 2026-06-01 the first ward turns 18, the second the day after.
-    expect(await flagAdultWards(t.db, "2026-06-01")).toBe(1);
-    expect(await flagAdultWards(t.db, "2026-06-01")).toBe(0);
+    expect(await flagAdultWards(t.db, { defaultCountry: "SE", today: "2026-06-01" })).toBe(1);
+    expect(await flagAdultWards(t.db, { defaultCountry: "SE", today: "2026-06-01" })).toBe(0);
 
     const { rows: state } = await t.query<{ id: string; status: string; flagged: boolean }>(
       "admin",
@@ -134,6 +138,81 @@ describe("guardianships:flag_adult_wards", () => {
       [ids.adult],
     );
     expect(events[0]?.n).toBe(1);
+  });
+
+  it("uses the country packs of the ward's clubs, the default country without clubs (#6)", async () => {
+    const [club, g, w] = [uuidv7(), uuidv7(), uuidv7()];
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        `INSERT INTO people (id, given_name, family_name, birth_date) VALUES
+           ($1, 'G', 'N', '1980-01-01'), ($2, 'W', 'N', '2008-07-01')`,
+        [g, w],
+      );
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Norsk IL', $2, 'NO', 'nb-NO', 'Europe/Oslo', 'NOK')`,
+        [club, `norsk-${club.slice(-8)}`],
+      );
+      await session.query(
+        "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')",
+        [club, g],
+      );
+      await session.query(
+        "INSERT INTO club_memberships (club_id, person_id, status) VALUES ($1, $2, 'active')",
+        [club, w],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    const { rows } = await t.query<{ g: string }>(
+      "admin",
+      `INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights)
+       VALUES ($1, $2, 'parent', '{}') RETURNING id AS g`,
+      [g, w],
+    );
+    const flagged = async () =>
+      (
+        await t.query<{ flagged: boolean }>(
+          "admin",
+          "SELECT ward_adult_flagged_at IS NOT NULL AS flagged FROM guardianships WHERE id = $1",
+          [rows[0]!.g],
+        )
+      ).rows[0]?.flagged;
+    await flagAdultWards(t.db, { defaultCountry: "SE", today: "2026-06-30" });
+    expect(await flagged()).toBe(false);
+    await flagAdultWards(t.db, { defaultCountry: "SE", today: "2026-07-01" });
+    expect(await flagged()).toBe(true);
+  });
+});
+
+describe("guardianships: own-login age", () => {
+  it("tells each full guardian once when a ward without login reaches the age", async () => {
+    const { rows } = await t.query<{ parent: string; relative: string }>(
+      "admin",
+      `WITH p AS (INSERT INTO people (given_name, family_name, birth_date) VALUES ('P', 'O', '1980-01-01') RETURNING id),
+            r AS (INSERT INTO people (given_name, family_name, birth_date) VALUES ('R', 'O', '1950-01-01') RETURNING id),
+            w AS (INSERT INTO people (given_name, family_name, birth_date) VALUES ('W', 'O', '2013-03-10') RETURNING id),
+            old AS (INSERT INTO people (given_name, family_name, birth_date) VALUES ('Old', 'O', '2000-03-10') RETURNING id),
+            gp AS (INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights)
+                   SELECT p.id, w.id, 'parent', '{}' FROM p, w RETURNING id),
+            gr AS (INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights)
+                   SELECT r.id, w.id, 'relative', '{}' FROM r, w RETURNING id),
+            go AS (INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights)
+                   SELECT p.id, old.id, 'parent', '{}' FROM p, old RETURNING id)
+       SELECT (SELECT id FROM gp) AS parent, (SELECT id FROM gr) AS relative`,
+    );
+    expect(await notifyOwnLoginAge(t.db, { defaultCountry: "SE", today: "2026-03-09" })).toBe(0);
+    // The parent only (not the relative, not the long-grown ward).
+    expect(await notifyOwnLoginAge(t.db, { defaultCountry: "SE", today: "2026-03-10" })).toBe(1);
+    expect(await notifyOwnLoginAge(t.db, { defaultCountry: "SE", today: "2026-03-11" })).toBe(0);
+    const { rows: events } = await t.query<{ id: string }>(
+      "admin",
+      "SELECT payload ->> 'guardianshipId' AS id FROM outbox.events WHERE type = 'guardianship.ward.own_login_age'",
+    );
+    expect(events.map((e) => e.id)).toEqual([rows[0]!.parent]);
   });
 });
 
@@ -331,6 +410,148 @@ describe("transactional email (P1.1)", () => {
     expect(managerMails.every((m) => m.text.includes("Nils Ek"))).toBe(true);
     expect(new Set(managerMails.map((m) => m.messageId)).size).toBe(2);
     void manager;
+  });
+});
+
+describe("family emails (P1.3)", () => {
+  const key = "worker-test-invitation-key-0123456789";
+  const handler = (provider: ReturnType<typeof memoryMailProvider>) =>
+    mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: key });
+
+  async function family(options: { protectedWard?: boolean } = {}) {
+    const [anna, mikael, child] = [uuidv7(), uuidv7(), uuidv7()];
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        `INSERT INTO people (id, given_name, family_name, birth_date, protected_identity) VALUES
+           ($1, 'Anna', 'Lindqvist', '1984-01-01', false),
+           ($2, 'Mikael', 'Lindqvist', '1983-01-01', false),
+           ($3, 'Elsa', 'Lindqvist', '2013-03-10', $4)`,
+        [anna, mikael, child, options.protectedWard ?? false],
+      );
+      await session.query(
+        `INSERT INTO accounts (person_id, email, email_verified_at, locale) VALUES
+           ($1, $3, now(), 'sv'), ($2, $4, now(), 'en')`,
+        [
+          anna,
+          mikael,
+          `anna-${anna.slice(-8)}@example.test`,
+          `mikael-${mikael.slice(-8)}@example.test`,
+        ],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    return { anna, mikael, child };
+  }
+
+  it("sends the invitation in the inviter's language with the link, never naming a protected ward; resends get the new link", async () => {
+    for (const protectedWard of [false, true]) {
+      const { anna, child } = await family({ protectedWard });
+      const invitationId = uuidv7();
+      await t.query(
+        "admin",
+        `INSERT INTO guardian_invitations (id, ward_person_id, invited_by_person_id, email, token_hash, kind, rights, expires_at)
+         VALUES ($1::uuid, $2, $3, 'gunilla@example.test', $1::text, 'relative', '{view_schedule}', now() + interval '14 days')`,
+        [invitationId, child, anna],
+      );
+      const provider = memoryMailProvider();
+      const event = await t.db.withSystem("test", {}, (tx) =>
+        outbox.publish(tx, "guardianship.invited", { invitationId, wardPersonId: child }),
+      );
+      await outbox.dispatch(t.db, event, [handler(provider)]);
+      const [mail] = provider.sent;
+      expect(mail!.to).toBe("gunilla@example.test");
+      expect(mail!.subject).toBe("Anna Lindqvist bjuder in dig till ClubAdmin");
+      expect(mail!.text).toContain("som släkting till");
+      expect(mail!.text).toContain(
+        `https://clubadmin.test/guardian-invitations/${guardianInvitationToken(key, invitationId, null)}`,
+      );
+      expect(mail!.text.includes("Elsa")).toBe(!protectedWard);
+      expect(mail!.text).toContain("Det här mejlet skickades av ClubAdmin.");
+
+      const resentAt = new Date();
+      await t.query("admin", "UPDATE guardian_invitations SET resent_at = $2 WHERE id = $1", [
+        invitationId,
+        resentAt,
+      ]);
+      const again = await t.db.withSystem("test", {}, (tx) =>
+        outbox.publish(tx, "guardianship.invited", { invitationId, wardPersonId: child }),
+      );
+      await outbox.dispatch(t.db, again, [handler(provider)]);
+      expect(provider.sent[1]!.text).toContain(
+        guardianInvitationToken(key, invitationId, resentAt),
+      );
+    }
+  });
+
+  it("tells the inviter about the acceptance, the young person about the own login and the guardians about the ages", async () => {
+    const { anna, mikael, child } = await family();
+    const invitationId = uuidv7();
+    const { rows } = await t.query<{ id: string }>(
+      "admin",
+      `WITH g AS (INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights)
+                  VALUES ($3, $2, 'parent', '{act_on_behalf}') RETURNING id)
+       INSERT INTO guardian_invitations (id, ward_person_id, invited_by_person_id, email, token_hash, kind, rights, expires_at,
+         accepted_at, accepted_by_person_id, guardianship_id)
+       SELECT $1::uuid, $2, $4, 'mikael@example.test', $1::text, 'parent', '{}', now() + interval '1 day', now(), $3, g.id FROM g
+       RETURNING guardianship_id AS id`,
+      [invitationId, child, mikael, anna],
+    );
+    const provider = memoryMailProvider();
+    const dispatch = async (
+      type: Parameters<typeof outbox.publish>[1],
+      payload: Record<string, string>,
+    ) => {
+      const id = await t.db.withSystem("test", {}, (tx) =>
+        outbox.publish(tx, type, payload as never),
+      );
+      await outbox.dispatch(t.db, id, [handler(provider)]);
+    };
+    await dispatch("guardianship.invitation.accepted", { invitationId, wardPersonId: child });
+    expect(provider.sent.at(-1)).toMatchObject({
+      subject: "Mikael Lindqvist har tackat ja till din inbjudan",
+    });
+
+    const accountInvitation = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO account_invitations (id, person_id, email, token_hash, created_by_person_id, expires_at)
+       VALUES ($1::uuid, $2, 'elsa@example.test', $1::text, $3, now() + interval '14 days')`,
+      [accountInvitation, child, anna],
+    );
+    await dispatch("account.invited", { invitationId: accountInvitation, personId: child });
+    const own = provider.sent.at(-1)!;
+    expect(own).toMatchObject({
+      to: "elsa@example.test",
+      subject: "Din egen inloggning till ClubAdmin",
+    });
+    expect(own.text).toContain(
+      `https://clubadmin.test/login?invitation=${accountInvitationToken(key, accountInvitation)}`,
+    );
+
+    const guardianshipId = rows[0]!.id;
+    await dispatch("guardianship.ward.own_login_age", { guardianshipId, wardPersonId: child });
+    expect(provider.sent.at(-1)).toMatchObject({
+      subject: "Elsa Lindqvist can now get their own login",
+    });
+    // Adult age without a login of their own: the guardian hears about it.
+    await dispatch("guardianship.ward.adult", { guardianshipId, wardPersonId: child });
+    expect(provider.sent.at(-1)).toMatchObject({
+      subject: "Elsa Lindqvist has reached the adult age",
+    });
+
+    await t.query(
+      "admin",
+      "UPDATE guardianships SET status = 'ended', valid_to = now(), adult_decision = 'ended', adult_decided_at = now() WHERE id = $1",
+      [guardianshipId],
+    );
+    await dispatch("guardianship.adult.ended", { guardianshipId, wardPersonId: child });
+    const ended = provider.sent.at(-1)!;
+    expect(ended.subject).toBe("Your access as guardian has ended");
+    expect(ended.text).toContain("Elsa Lindqvist has reached the adult age and decided");
   });
 });
 
@@ -539,8 +760,26 @@ describe("joining:retention", () => {
       await t.query("admin", `ALTER TABLE join_requests ENABLE TRIGGER set_updated_at`);
       await t.query("admin", `ALTER TABLE invitations ENABLE TRIGGER set_updated_at`);
     }
+    await t.query(
+      "admin",
+      `INSERT INTO guardian_invitations (ward_person_id, invited_by_person_id, email, token_hash, kind, rights, expires_at)
+       VALUES ($1, $1, 'old@example.test', $2, 'parent', '{}', now() - interval '13 months'),
+              ($1, $1, 'recent@example.test', $3, 'parent', '{}', now() - interval '1 month')`,
+      [person, `g-old-${club}`, `g-recent-${club}`],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO account_invitations (person_id, email, token_hash, created_by_person_id, expires_at)
+       VALUES ($1, 'own@example.test', $2, $1, now() - interval '13 months')`,
+      [person, `a-old-${club}`],
+    );
     const deleted = await deleteExpiredJoiningData(t.db);
-    expect(deleted).toMatchObject({ joinRequests: 1, invitations: 1 });
+    expect(deleted).toMatchObject({
+      joinRequests: 1,
+      invitations: 1,
+      guardianInvitations: 1,
+      accountInvitations: 1,
+    });
     const { rows } = await t.query<{ token_hash: string }>(
       "admin",
       "SELECT token_hash FROM invitations WHERE club_id = $1",

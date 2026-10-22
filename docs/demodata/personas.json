@@ -518,6 +518,134 @@
         "child",
         "waiting list"
       ]
+    },
+    {
+      "key": "vera",
+      "number": 28,
+      "id": "0199a000-0000-7000-8000-000000000028",
+      "givenName": "Vera",
+      "familyName": "Ahmed",
+      "age": 13,
+      "birthday": "02-11",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "sara",
+      "createdAt": "-13y",
+      "description": "Alva's sister, 13 and without login: Sara can give her her own login.",
+      "tags": [
+        "child without login",
+        "own-login age"
+      ]
+    },
+    {
+      "key": "elsa-duplicate",
+      "number": 29,
+      "id": "0199a000-0000-7000-8000-000000000029",
+      "givenName": "Elsa",
+      "familyName": "Lindqvist",
+      "age": 9,
+      "birthday": "05-20",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "mikael",
+      "createdAt": "-2mo",
+      "description": "Elsa added a second time by Mikael (no clubs): Anna and Mikael see the merge notice.",
+      "tags": [
+        "duplicate"
+      ]
+    },
+    {
+      "key": "nils",
+      "number": 30,
+      "id": "0199a000-0000-7000-8000-000000000030",
+      "givenName": "Nils",
+      "familyName": "Granqvist",
+      "age": null,
+      "gender": "male",
+      "login": "none",
+      "email": null,
+      "phone": "+46 70 174 06 30",
+      "createdAt": "-3mo",
+      "description": "Alva's neighbour who drives to training: contact person without login, linked by Sara (schedule and messages).",
+      "tags": [
+        "contact person",
+        "no login"
+      ]
+    },
+    {
+      "key": "bo",
+      "number": 31,
+      "id": "0199a000-0000-7000-8000-000000000031",
+      "givenName": "Bo",
+      "familyName": "Stöd",
+      "age": null,
+      "gender": "male",
+      "login": "none",
+      "email": null,
+      "phone": "+46 70 174 06 31",
+      "createdAt": "-1mo",
+      "description": "Emma's LSS contact person, linked by Emma herself (schedule and messages).",
+      "tags": [
+        "contact person",
+        "adult's helper"
+      ]
+    },
+    {
+      "key": "tilde",
+      "number": 32,
+      "id": "0199a000-0000-7000-8000-000000000032",
+      "givenName": "Tilde",
+      "familyName": "Yilmaz",
+      "age": 18,
+      "birthday": "01-05",
+      "gender": "female",
+      "login": "account",
+      "email": "tilde.yilmaz@example.test",
+      "createdBy": "ahmed",
+      "createdAt": "-18y",
+      "description": "Liam's sister in IKN, just 18: decides which of her guardians keep access.",
+      "tags": [
+        "adult age",
+        "decision"
+      ]
+    },
+    {
+      "key": "leyla",
+      "number": 33,
+      "id": "0199a000-0000-7000-8000-000000000033",
+      "givenName": "Leyla",
+      "familyName": "Yilmaz",
+      "age": 45,
+      "birthday": "08-19",
+      "gender": "female",
+      "login": "account",
+      "email": "leyla.yilmaz@example.test",
+      "phone": "+46 70 174 06 33",
+      "createdAt": "-10y",
+      "description": "Tilde's mother, invited by Ahmed as second guardian.",
+      "tags": [
+        "parent"
+      ]
+    },
+    {
+      "key": "petra",
+      "number": 34,
+      "id": "0199a000-0000-7000-8000-000000000034",
+      "givenName": "Petra",
+      "familyName": "Johansson",
+      "age": null,
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "phone": "+46 70 174 06 34",
+      "createdAt": "-1y",
+      "description": "Recorded by Johan (SVK registrar) as Maja's mother from a paper application; ended by Anna with a reason (court decision).",
+      "tags": [
+        "paper form",
+        "ended guardianship"
+      ]
     }
   ]
 }

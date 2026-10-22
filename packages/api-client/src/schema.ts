@@ -88,6 +88,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/duplicates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Pairs of the club's members that look like the same person (birth date and family name, or personal identity number)
+     * @description Requires permission `club.guardians.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubGuardians_duplicates"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/entitlements": {
     parameters: {
       query?: never;
@@ -122,6 +142,26 @@ export interface paths {
     get: operations["Groups_listGroups"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/guardianships/{guardianshipId}/end": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * End a guardianship of a member: links the club recorded; a full guardian's only by a club manager (second factor, reason)
+     * @description Requires permission `club.guardians.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["ClubGuardians_end"];
     delete?: never;
     options?: never;
     head?: never;
@@ -361,6 +401,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/members/{personId}/guardians": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A member's guardians, relatives and contact persons as the club sees them
+     * @description Requires permission `club.guardians.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubGuardians_list"];
+    put?: never;
+    /**
+     * Record a guardian from a paper application: a member of the club or a new person without login
+     * @description Requires permission `club.guardians.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["ClubGuardians_add"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/members/{personId}/membership": {
     parameters: {
       query?: never;
@@ -485,6 +549,117 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/guardian-invitations/{invitationId}/resend": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send an invitation again with a new link (the old link stops working)
+     * @description Requires permission `person.guardians.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Family_resend"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/guardian-invitations/{invitationId}/revoke": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Revoke an invitation (its link stops working)
+     * @description Requires permission `person.guardians.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Family_revoke"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/guardian-invitations/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept an invitation with the token from its link; the login email must be the invited address */
+    post: operations["Family_accept"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/guardian-invitations/lookup": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** What an invitation link is for (unknown, expired, revoked and used links are not found) */
+    get: operations["Family_lookup"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/guardianships/{guardianshipId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change what a relative or contact person may do (a full guardian, or the adult ward for their own links)
+     * @description Requires permission `person.guardians.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["Family_updateRights"];
+    trace?: never;
+  };
+  "/api/v1/guardianships/{guardianshipId}/end": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** End a guardianship: my own, or a relative's or contact person's (a full guardian, or the ward) */
+    post: operations["Family_end"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/invitations/accept": {
     parameters: {
       query?: never;
@@ -596,6 +771,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/adult-guardians": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My guardians flagged at the adult age, with my decision for each */
+    get: operations["Family_adultGuardians"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/adult-guardians/{guardianshipId}/decision": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Keep or end a guardian's access at the adult age (only the young person, once) */
+    post: operations["Family_decide"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/club-creation-requests": {
     parameters: {
       query?: never;
@@ -622,6 +831,23 @@ export interface paths {
     };
     /** My clubs (or my ward's, with X-On-Behalf-Of): membership and roles */
     get: operations["Me_myClubs"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/duplicates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Pairs among my wards and my co-guardians' wards that look like the same person, and my undoable merges */
+    get: operations["Family_duplicates"];
     put?: never;
     post?: never;
     delete?: never;
@@ -784,6 +1010,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/trusted-people": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The relatives and contact persons linked to me, with their rights */
+    get: operations["Family_trustedPeople"];
+    put?: never;
+    /** Link a relative or contact person to myself (adult, or from the consent age): by email or without login */
+    post: operations["Family_linkTrustedPerson"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/wards": {
     parameters: {
       query?: never;
@@ -791,10 +1035,55 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** The people I am a guardian of, with my rights */
+    /** The people I am a guardian of, with my rights (full guardians also see age, clubs and own login) */
     get: operations["Me_myWards"];
     put?: never;
-    post?: never;
+    /** Add a child without email; the caller becomes their parent (or legal guardian) */
+    post: operations["Family_addChild"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/wards/{personId}/guardian-invitations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Invite a co-guardian, relative or contact person by email (rights for the latter two)
+     * @description Requires permission `person.guardians.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Family_invite"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/wards/{personId}/guardians": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A ward's guardians, relatives and contact persons, and pending invitations (relatives see names only)
+     * @description Requires permission `person.guardians.read` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Family_wardGuardians"];
+    put?: never;
+    /**
+     * Link a relative or contact person without login (name and phone) to a ward
+     * @description Requires permission `person.guardians.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Family_addLinked"];
     delete?: never;
     options?: never;
     head?: never;
@@ -946,6 +1235,66 @@ export interface paths {
     get: operations["PersonProfiles_getProfile"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/people/{personId}/merge": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Merge a duplicate into this person (never one with a login); undoable for 30 days
+     * @description Requires permission `person.merge` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["PeopleFamily_merge"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/people/{personId}/own-login-invitations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Give own login: invite the person's own email (from the country pack's own-login age; not for people with a login)
+     * @description Requires permission `person.own_login.invite` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["PeopleFamily_ownLogin"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/people/merges/{mergeId}/undo": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Undo a merge within its period (refused when something changed since)
+     * @description Requires permission `person.merge` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["PeopleFamily_undo"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1124,6 +1473,17 @@ export interface components {
       /** @enum {string} */
       accessState: "active" | "read_only" | "suspended";
     };
+    ClubDuplicates: {
+      items: {
+        person: components["schemas"]["PersonSummary"];
+        duplicate: components["schemas"]["PersonSummary"];
+        /** Format: date */
+        birthDate: string | null;
+        /** @enum {string} */
+        reason: "name_and_birth_date" | "personal_identity_number";
+      }[];
+      nextCursor: string | null;
+    };
     Entitlements: {
       /**
        * @example {
@@ -1188,6 +1548,10 @@ export interface components {
       /** @enum {string} */
       admissionMode: "direct" | "waitlist" | "closed";
       archived: boolean;
+    };
+    Ok: {
+      /** @enum {boolean} */
+      ok: true;
     };
     InvitationList: {
       items: components["schemas"]["Invitation"][];
@@ -1306,10 +1670,6 @@ export interface components {
           /** @default 14 */
           expiresInDays: number;
         };
-    Ok: {
-      /** @enum {boolean} */
-      ok: true;
-    };
     JoinRequestList: {
       items: {
         /** Format: uuid */
@@ -1548,6 +1908,35 @@ export interface components {
         "photo_publication" | "video_publication" | "streaming" | "marketing" | "federation_sharing"
       )[];
     };
+    ClubGuardians: {
+      ward: components["schemas"]["PersonSummary"];
+      guardians: components["schemas"]["GuardianEntry"][];
+    };
+    GuardianEntry: {
+      /** Format: uuid */
+      guardianshipId: string;
+      person: components["schemas"]["PersonSummary"];
+      /** @enum {string} */
+      kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+      rights: (
+        "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+      )[];
+      /** @enum {string} */
+      status: "pending" | "active" | "ended";
+      /** Format: date-time */
+      since: string;
+      phone?: string | null;
+      recordedByClub: boolean;
+      consentNote?: string | null;
+      isYou: boolean;
+      canEnd: boolean;
+      canChangeRights: boolean;
+    };
+    GuardianshipCreated: {
+      /** Format: uuid */
+      guardianshipId: string;
+      person: components["schemas"]["PersonSummary"];
+    };
     Membership: {
       /** Format: uuid */
       personId: string;
@@ -1632,6 +2021,42 @@ export interface components {
       nextCursor: string | null;
       totalCount: number;
     };
+    GuardianInvitationCreated: {
+      /** Format: uuid */
+      invitationId: string;
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    GuardianInvitationAccepted: {
+      /** Format: uuid */
+      guardianshipId: string;
+      ward: components["schemas"]["PersonSummary"];
+      /** @enum {string} */
+      kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+      suggestProtection: boolean;
+    };
+    GuardianInvitationLookup: {
+      /** @enum {string} */
+      kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+      rights: (
+        "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+      )[];
+      wardGivenName: string | null;
+      inviterName: string | null;
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    GuardianshipResult: {
+      /** Format: uuid */
+      guardianshipId: string;
+      /** @enum {string} */
+      kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+      rights: (
+        "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+      )[];
+      /** @enum {string} */
+      status: "pending" | "active" | "ended";
+    };
     InvitationAccepted: {
       /** Format: uuid */
       clubId: string;
@@ -1666,6 +2091,19 @@ export interface components {
       timeZone: string | null;
       /** @enum {string|null} */
       theme: "light" | "dark" | "system" | null;
+    };
+    AdultGuardians: {
+      guardians: {
+        /** Format: uuid */
+        guardianshipId: string;
+        person: components["schemas"]["PersonSummary"];
+        /** @enum {string} */
+        kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+        /** Format: date-time */
+        flaggedAt: string;
+        /** @enum {string|null} */
+        decision: "kept" | "ended" | null;
+      }[];
     };
     MyClubCreationRequests: {
       items: components["schemas"]["ClubCreationRequest"][];
@@ -1712,6 +2150,11 @@ export interface components {
           | "person.profile.read"
           | "person.profile.update"
           | "person.protection.set"
+          | "person.guardians.read"
+          | "person.guardians.manage"
+          | "person.merge"
+          | "person.own_login.invite"
+          | "club.guardians.manage"
           | "ops.backup.read"
           | "club.access_state.update"
           | "billing.plans.read"
@@ -1725,6 +2168,42 @@ export interface components {
           | "club.managers.claim"
           | "club.managers.reassign"
         )[];
+      }[];
+    };
+    FamilyDuplicates: {
+      pairs: {
+        person: {
+          person: components["schemas"]["PersonSummary"];
+          /** Format: date */
+          birthDate: string | null;
+          clubs: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+          }[];
+          guardians: components["schemas"]["PersonSummary"][];
+        };
+        duplicate: {
+          person: components["schemas"]["PersonSummary"];
+          /** Format: date */
+          birthDate: string | null;
+          clubs: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+          }[];
+          guardians: components["schemas"]["PersonSummary"][];
+        };
+        /** @enum {string} */
+        reason: "name_and_birth_date" | "personal_identity_number";
+        canMerge: boolean;
+      }[];
+      merges: {
+        /** Format: uuid */
+        mergeId: string;
+        kept: components["schemas"]["PersonSummary"];
+        /** Format: date-time */
+        undoUntil: string;
       }[];
     };
     MyGroups: {
@@ -1827,6 +2306,31 @@ export interface components {
        */
       client: "web" | "mobile";
     };
+    TrustedPeople: {
+      canLink: boolean;
+      people: components["schemas"]["GuardianEntry"][];
+      invitations: components["schemas"]["PendingGuardianInvitation"][];
+    };
+    PendingGuardianInvitation: {
+      /** Format: uuid */
+      invitationId: string;
+      /** @enum {string} */
+      kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+      rights: (
+        "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+      )[];
+      email?: string;
+      /** Format: date-time */
+      expiresAt: string;
+      /** Format: date-time */
+      resentAt: string | null;
+      canManage: boolean;
+    };
+    TrustedPersonCreated: {
+      invitation: components["schemas"]["GuardianInvitationCreated"] &
+        (Record<string, never> | null);
+      guardianship: components["schemas"]["GuardianshipCreated"] & (Record<string, never> | null);
+    };
     MyWards: {
       wards: {
         person: components["schemas"]["PersonSummary"];
@@ -1835,7 +2339,26 @@ export interface components {
         rights: (
           "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
         )[];
+        /** Format: date */
+        birthDate?: string | null;
+        clubs?: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        }[];
+        hasLogin?: boolean;
+        ownLoginFromAge?: number;
       }[];
+    };
+    ChildAdded: {
+      person: components["schemas"]["PersonSummary"];
+      /** Format: uuid */
+      guardianshipId: string;
+    };
+    WardGuardians: {
+      ward: components["schemas"]["PersonSummary"];
+      guardians: components["schemas"]["GuardianEntry"][];
+      invitations: components["schemas"]["PendingGuardianInvitation"][];
     };
     ClientInfoResponse: {
       /** @example 1 */
@@ -1997,6 +2520,20 @@ export interface components {
         kind: "parent" | "legal_guardian" | "relative" | "contact_person";
         phone?: string | null;
       }[];
+    };
+    MergeResult: {
+      /** Format: uuid */
+      mergeId: string;
+      /** Format: uuid */
+      keptPersonId: string;
+      /** Format: date-time */
+      undoUntil: string;
+    };
+    OwnLoginInvitationCreated: {
+      /** Format: uuid */
+      invitationId: string;
+      /** Format: date-time */
+      expiresAt: string;
     };
     HealthResponse: {
       /** @enum {string} */
@@ -2388,6 +2925,85 @@ export interface operations {
       };
     };
   };
+  ClubGuardians_duplicates: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubDuplicates"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Entitlements_get: {
     parameters: {
       query?: never;
@@ -2485,6 +3101,89 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["GroupList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubGuardians_end: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        guardianshipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          reason?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
         };
       };
       /** @description Invalid request */
@@ -3744,6 +4443,183 @@ export interface operations {
       };
     };
   };
+  ClubGuardians_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubGuardians"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubGuardians_add: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          guardian:
+            | {
+                /** Format: uuid */
+                personId: string;
+              }
+            | {
+                person: {
+                  givenName: string;
+                  familyName: string;
+                  phone?: string | null;
+                };
+              };
+          /** @enum {string} */
+          kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+          rights?: (
+            "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+          )[];
+          consentNote?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianshipCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Members_updateMembership: {
     parameters: {
       query?: never;
@@ -4292,6 +5168,429 @@ export interface operations {
       };
     };
   };
+  Family_resend: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        invitationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianInvitationCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_revoke: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        invitationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_accept: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          token: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianInvitationAccepted"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_lookup: {
+    parameters: {
+      query: {
+        token: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianInvitationLookup"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_updateRights: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        guardianshipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          rights: (
+            "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+          )[];
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianshipResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_end: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        guardianshipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Invitations_accept: {
     parameters: {
       query?: never;
@@ -4695,6 +5994,136 @@ export interface operations {
       };
     };
   };
+  Family_adultGuardians: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdultGuardians"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_decide: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        guardianshipId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** @enum {string} */
+          decision: "keep" | "end";
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianshipResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Onboarding_myRequests: {
     parameters: {
       query?: never;
@@ -4767,6 +6196,62 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MyClubs"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_duplicates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["FamilyDuplicates"];
         };
       };
       /** @description Not logged in */
@@ -5413,6 +6898,151 @@ export interface operations {
       };
     };
   };
+  Family_trustedPeople: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TrustedPeople"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_linkTrustedPerson: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json":
+          | {
+              email: string;
+              /** @enum {string} */
+              kind: "relative" | "contact_person";
+              rights?: (
+                "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+              )[];
+            }
+          | {
+              person: {
+                givenName: string;
+                familyName: string;
+                phone?: string | null;
+              };
+              /** @enum {string} */
+              kind: "relative" | "contact_person";
+              rights?: (
+                "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+              )[];
+            };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TrustedPersonCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Me_myWards: {
     parameters: {
       query?: never;
@@ -5442,6 +7072,345 @@ export interface operations {
       };
       /** @description Not allowed */
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_addChild: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          givenName: string;
+          familyName: string;
+          /** Format: date */
+          birthDate: string;
+          /** @enum {string|null} */
+          gender?: "female" | "male" | "other" | null;
+          personalIdentityNumber?: {
+            country: string;
+            value: string;
+          } | null;
+          /**
+           * @default parent
+           * @enum {string}
+           */
+          kind?: "parent" | "legal_guardian";
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ChildAdded"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_invite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          email: string;
+          /** @enum {string} */
+          kind: "parent" | "legal_guardian" | "relative" | "contact_person";
+          rights?: (
+            "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+          )[];
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianInvitationCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_wardGuardians: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WardGuardians"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Family_addLinked: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          person: {
+            givenName: string;
+            familyName: string;
+            phone?: string | null;
+          };
+          /** @enum {string} */
+          kind: "relative" | "contact_person";
+          rights?: (
+            "act_on_behalf" | "receive_messages" | "view_schedule" | "sign_up" | "see_medical"
+          )[];
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GuardianshipCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -5906,6 +7875,253 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PersonProfile"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  PeopleFamily_merge: {
+    parameters: {
+      query?: {
+        clubId?: string;
+      };
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          /** Format: uuid */
+          duplicatePersonId: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MergeResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  PeopleFamily_ownLogin: {
+    parameters: {
+      query?: {
+        clubId?: string;
+      };
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          email: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OwnLoginInvitationCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  PeopleFamily_undo: {
+    parameters: {
+      query?: {
+        clubId?: string;
+      };
+      header?: never;
+      path: {
+        mergeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
         };
       };
       /** @description Invalid request */

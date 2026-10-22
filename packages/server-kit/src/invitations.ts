@@ -22,6 +22,33 @@ export const randomInvitationCode = (): string =>
 export const emailInvitationToken = (key: string, invitationId: string): string =>
   createHmac("sha256", key).update(`club-invitation:${invitationId}`, "utf8").digest("base64url");
 
+/**
+ * Guardian invitations (P1.3): derived from the ID and the version (the time
+ * of the last resend, or 0), so resending gives a new link and the old one
+ * stops working.
+ */
+export const guardianInvitationToken = (
+  key: string,
+  invitationId: string,
+  version: Date | null,
+): string =>
+  createHmac("sha256", key)
+    .update(`guardian-invitation:${invitationId}:${version?.getTime() ?? 0}`, "utf8")
+    .digest("base64url");
+
+/** "Give own login" invitations (P1.3, ADR 0020). */
+export const accountInvitationToken = (key: string, invitationId: string): string =>
+  createHmac("sha256", key)
+    .update(`account-invitation:${invitationId}`, "utf8")
+    .digest("base64url");
+
+export const guardianInvitationUrl = (webUrl: string, token: string): string =>
+  new URL(`/guardian-invitations/${encodeURIComponent(token)}`, webUrl).toString();
+
+/** The own-login page: log in or sign up with the invited address (P0.6 carries ?invitation=). */
+export const accountInvitationUrl = (webUrl: string, token: string): string =>
+  new URL(`/login?invitation=${encodeURIComponent(token)}`, webUrl).toString();
+
 /** The web page that accepts an invitation link. */
 export const invitationUrl = (webUrl: string, token: string): string =>
   new URL(`/join/${encodeURIComponent(token)}`, webUrl).toString();

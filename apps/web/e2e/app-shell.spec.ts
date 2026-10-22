@@ -162,7 +162,8 @@ test("Anna views as Elsa and as Oskar, then as herself", async ({ browser }) => 
     await page.getByTestId("viewing-as").click();
     await Promise.all([
       page.waitForEvent("framenavigated"),
-      page.getByRole("menuitem", { name }).click(),
+      // The demo has a duplicate Elsa (P1.3, merged in families.spec.ts): the real one comes first.
+      page.getByRole("menuitem", { name }).first().click(),
     ]);
   };
   await expect(page.getByTestId("viewing-as-banner")).toHaveCount(0);

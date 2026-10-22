@@ -357,6 +357,23 @@
     "membersExported": {
       "subject": "{club}: the member register was exported",
       "body": "{requester} exported the member register of {club} ({columns}).{includeProtected, select, yes {\n\nThe export includes members with protected identity.} other {}}\n\nEvery club manager gets this email for each export. See the exports:\n{url}"
+    },
+    "footerPlain": "This email was sent by ClubAdmin.",
+    "family": {
+      "invitationSubject": "{hasInviter, select, yes {{inviter} invites you} other {You are invited}} to ClubAdmin",
+      "invitationBody": "{hasInviter, select, yes {{inviter} invites you} other {You are invited}} to ClubAdmin as {kind, select, parent {parent} legal_guardian {legal guardian} relative {relative} other {contact person}} of {hasWard, select, yes {{ward}} other {a child or young person}}.\n\nAccept the invitation (log in, or create a login with this email address):\n{url}\n\nThe invitation is valid until {expires}. If you did not expect it, you can ignore this email.",
+      "acceptedSubject": "{person} accepted your invitation",
+      "acceptedBody": "{person} accepted your invitation and is now linked to {ward} as {kind, select, parent {parent} legal_guardian {legal guardian} relative {relative} other {contact person}}.\n\nSee your family in ClubAdmin:\n{url}",
+      "ownLoginSubject": "Your own login to ClubAdmin",
+      "ownLoginBody": "Hi {name},\n\nYou can now log in to ClubAdmin yourself. Your memberships, groups and history stay as they are.\n\nLog in or create your login with this email address:\n{url}\n\nThe link is valid until {expires}.",
+      "ownLoginAgeSubject": "{ward} can now get their own login",
+      "ownLoginAgeBody": "{ward} has reached the age at which they can get their own login to ClubAdmin, with their own email address. Everything about their memberships and history stays.\n\nGive {ward} their own login on the family page:\n{url}",
+      "adultYoungSubject": "You decide who keeps access",
+      "adultYoungBody": "You have reached the adult age. Your guardians still have access to your account and data in ClubAdmin until you decide otherwise.\n\nChoose, for each guardian, whether they keep access:\n{url}",
+      "adultGuardianSubject": "{ward} has reached the adult age",
+      "adultGuardianBody": "{ward} has reached the adult age. Your access continues until {ward} decides otherwise; to decide, {ward} needs their own login to ClubAdmin.\n\nGive {ward} their own login on the family page:\n{url}",
+      "adultEndedSubject": "Your access as guardian has ended",
+      "adultEndedBody": "{hasWard, select, yes {{ward}} other {The young person}} has reached the adult age and decided that your access as {kind, select, parent {parent} legal_guardian {legal guardian} relative {relative} other {contact person}} ends. You no longer see their data in ClubAdmin.\n\n{url}"
     }
   },
   "profileForm": {
@@ -519,7 +536,24 @@
     "export_storage_unavailable": "Exports are not available on this installation.",
     "invalid_end_date": "The end date cannot be in the future or before the membership started.",
     "reauthentication_required": "For exports, log in again first (you logged in more than 15 minutes ago).",
-    "membership_status_invalid": "This membership cannot be changed that way."
+    "membership_status_invalid": "This membership cannot be changed that way.",
+    "birth_date_in_future": "The birth date cannot be in the future.",
+    "rights_not_allowed": "Those rights cannot be given here (acting on behalf only for relatives, chosen by a guardian or an adult).",
+    "guardianship_kind_not_allowed": "That kind of link is not possible here.",
+    "too_young_to_link": "You can link people to yourself from the consent age.",
+    "reason_required": "Give a reason.",
+    "adult_decision_not_open": "This has already been decided.",
+    "invitation_not_pending": "The invitation is no longer open.",
+    "guardianship_exists": "This person is already linked.",
+    "merge_not_allowed": "These two cannot be merged (a person with a login is never merged away).",
+    "merge_undo_expired": "The time to undo has passed.",
+    "merge_undo_conflict": "Something changed since the merge; it cannot be undone automatically.",
+    "account_exists": "This person already has a login.",
+    "invitation_email_unavailable": "Email invitations are not available on this installation.",
+    "not_allowed": "You may not do that.",
+    "not_on_behalf": "Switch back to yourself first.",
+    "invalid_personal_identity_number": "The personal identity number is not valid.",
+    "personal_identity_number_mismatch": "The personal identity number does not match the birth date."
   },
   "memberExport": {
     "columns": {
@@ -574,5 +608,140 @@
       "failed": "Failed",
       "expired": "Expired"
     }
+  },
+  "family": {
+    "title": "Family",
+    "children": "My children",
+    "noChildren": "You have not added any children.",
+    "age": "{age} years",
+    "born": "Born {date, date, long}",
+    "hasLogin": "Has own login",
+    "myRights": "Your rights: {rights}",
+    "guardiansOf": "Guardians and others linked to {name}",
+    "you": "You",
+    "recordedByClub": "Recorded by the club",
+    "noRights": "No rights",
+    "consentNote": "Consent: {note}",
+    "rights": "What they may do",
+    "actOnBehalfWarning": "Gives the same rights as a guardian: they can apply, answer and act for the person. Only tick this if you really mean it.",
+    "rightsOnlyLinked": "The rights apply to relatives and contact persons; parents and legal guardians always have full rights.",
+    "changeRights": "Change rights",
+    "saveRights": "Save rights",
+    "end": "End link",
+    "endOwn": "End my link",
+    "confirmEnd": "Yes, end this link",
+    "confirmEndOwn": "Yes, I no longer want access",
+    "endReason": "Reason (required for a parent or legal guardian)",
+    "pending": "Invitation sent",
+    "expires": "valid until {date, date, medium}",
+    "resend": "Resend",
+    "revoke": "Revoke",
+    "invite": "Invite a guardian, relative or contact person",
+    "inviteByEmail": "Invite by email",
+    "addWithoutLogin": "Add someone without login",
+    "email": "Email address",
+    "kind": "As",
+    "givenName": "First name",
+    "familyName": "Last name",
+    "phone": "Phone",
+    "sendInvitation": "Send invitation",
+    "add": "Add",
+    "sharedWithMe": "Shared with me",
+    "sharedGuardians": "Guardians: {names}",
+    "ownLogin": {
+      "title": "Give own login",
+      "email": "Their own email address",
+      "send": "Send the login invitation",
+      "rule": "From {age} years a child can get their own login with their own email address; memberships and history stay."
+    },
+    "helpers": {
+      "title": "People who help me",
+      "intro": "Relatives and contact persons you link to yourself see only what you choose, for example your schedule.",
+      "none": "Nobody is linked to you.",
+      "add": "Link someone to me",
+      "tooYoung": "You can link people to yourself from the consent age; until then your guardians do it."
+    },
+    "addChild": {
+      "title": "Add child",
+      "intro": "A child needs no email address. You can apply for them, answer for them and see their schedule.",
+      "birthDate": "Birth date",
+      "pin": "Personal identity number (optional)",
+      "pinCountry": "Country of the number",
+      "countries": {
+        "SE": "Sweden",
+        "NO": "Norway"
+      },
+      "iAm": "I am the child's",
+      "submit": "Add child"
+    },
+    "duplicates": {
+      "title": "Possible duplicates",
+      "notice": "{name} may be in ClubAdmin twice.",
+      "noClubs": "No clubs",
+      "guardians": "Guardians: {names}",
+      "merge": "Merge",
+      "otherMerges": "A guardian of both can merge them.",
+      "merged": "{name} was merged. You can undo this until {date, date, medium}.",
+      "undo": "Undo"
+    },
+    "notices": {
+      "added": "The child was added.",
+      "invited": "The invitation was sent.",
+      "linked": "The person was linked.",
+      "resent": "The invitation was sent again with a new link.",
+      "updated": "Saved.",
+      "ended": "The link was ended.",
+      "accepted": "You accepted the invitation.",
+      "acceptedProtected": "You accepted the invitation. The child has protected identity: consider protecting yourself too, on your profile.",
+      "ownLogin": "The login invitation was sent.",
+      "merged": "The two were merged.",
+      "undone": "The merge was undone."
+    },
+    "landing": {
+      "title": "Invitation",
+      "intro": "{hasInviter, select, yes {{inviter} invites you} other {You are invited}} as {kind} of {hasWard, select, yes {{ward}} other {a child or young person}}.",
+      "rights": "You will be able to: {rights}",
+      "email": "Log in (or create a login) with the email address the invitation was sent to.",
+      "accept": "Accept the invitation",
+      "login": "Log in or sign up to accept",
+      "invalid": "This invitation is no longer valid. Ask the person who invited you to send a new one."
+    },
+    "adult": {
+      "title": "Your guardians",
+      "intro": "You have reached the adult age. You decide which of your guardians keep access to your account and your data in ClubAdmin.",
+      "keepMeans": "Keep access: they continue to see and do what they could before.",
+      "endMeans": "End access: they no longer see your data. They are told that their access ended, not why.",
+      "later": "You can also end access later on the family page.",
+      "keep": "Keep access",
+      "end": "End access",
+      "kept": "Keeps access",
+      "none": "There is nothing to decide.",
+      "saved": "Your decision was saved."
+    },
+    "club": {
+      "none": "No guardians recorded.",
+      "add": "Add from a paper application or form",
+      "search": "Find in the register",
+      "searchButton": "Search",
+      "newPerson": "New person without login",
+      "consentNote": "Consent note (relatives and contact persons)",
+      "consentHint": "For example: written consent from the guardian on file, dated. Shown only to the club's administrators and the family."
+    },
+    "clubDuplicates": {
+      "title": "Duplicates",
+      "intro": "Members with the same birth date and last name, or the same personal identity number. Club managers merge them (with a second factor).",
+      "none": "No duplicates found."
+    }
+  },
+  "guardianRights": {
+    "act_on_behalf": "Act on their behalf",
+    "receive_messages": "Receive messages",
+    "view_schedule": "See the schedule",
+    "sign_up": "Sign up for activities",
+    "see_medical": "See medical notes"
+  },
+  "duplicateReasons": {
+    "name_and_birth_date": "Same birth date and last name",
+    "personal_identity_number": "Same personal identity number"
   }
 }

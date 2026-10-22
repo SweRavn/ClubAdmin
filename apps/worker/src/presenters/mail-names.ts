@@ -27,3 +27,27 @@ export async function nameFor(tx: Tx, personId: string): Promise<string> {
   );
   return rows[0]?.name ?? "";
 }
+
+/**
+ * Names outside a club (family emails, P1.3): the display name and the given
+ * name, or null for a person with global protected identity, for recipients
+ * who are not (yet) family of them, such as an invitee.
+ */
+export async function unprotectedNames(
+  tx: Tx,
+  personId: string,
+): Promise<{ name: string; first: string } | null> {
+  const { rows } = await tx.execute<{ name: string; given: string; protected: boolean }>(sql`
+    SELECT given_name || ' ' || family_name AS name, given_name AS given, protected_identity AS protected
+    FROM public.people WHERE id = ${personId}`);
+  const row = rows[0];
+  return row && !row.protected ? { name: row.name, first: row.given } : null;
+}
+
+/** The given name, for the person's own emails (an own-login invitation). */
+export async function givenNameFor(tx: Tx, personId: string): Promise<string> {
+  const { rows } = await tx.execute<{ given: string }>(
+    sql`SELECT given_name AS given FROM public.people WHERE id = ${personId}`,
+  );
+  return rows[0]?.given ?? "";
+}

@@ -13,7 +13,9 @@ export const PERSONAS = {
   elsa: { id: person(3), name: "Elsa Lindqvist" },
   oskar: { id: person(4), name: "Oskar Lindqvist" },
   erik: { id: person(5), name: "Erik Johansson" },
+  sara: { id: person(7), name: "Sara Ahmed" },
   alva: { id: person(8), name: "Alva Ahmed" },
+  gunilla: { id: person(9), name: "Gunilla Berg" },
   johan: { id: person(10), name: "Johan Nilsson" },
   lars: { id: person(11), name: "Lars Haugen" },
   liam: { id: person(15), name: "Liam Yilmaz" },
@@ -21,6 +23,9 @@ export const PERSONAS = {
   emma: { id: person(21), name: "Emma Svensson" },
   samira: { id: person(23), name: "Samira Karimi" },
   nadia: { id: person(24), name: "Nadia Karimi" },
+  vera: { id: person(28), name: "Vera Ahmed" },
+  elsaDuplicate: { id: person(29), name: "Elsa Lindqvist" },
+  tilde: { id: person(32), name: "Tilde Yilmaz" },
 } as const;
 
 export const CLUBS = { svk: club(1), ikn: club(2), fil: club(3) } as const;

@@ -5,12 +5,17 @@
 // not-found page, 403 → the forbidden page.
 
 import {
+  AdultGuardiansSchema,
   ClubDetailSchema,
+  ClubDuplicatesSchema,
+  ClubGuardiansSchema,
   ClubSearchResultSchema,
+  FamilyDuplicatesSchema,
   GroupDetailSchema,
   type GroupList,
   GroupListSchema,
   GroupMemberListSchema,
+  GuardianInvitationLookupSchema,
   InvitationListSchema,
   InvitationLookupSchema,
   isUuid,
@@ -30,7 +35,9 @@ import {
   RegisterPageSchema,
   SessionListSchema,
   SourceResponseSchema,
+  TrustedPeopleSchema,
   VersionResponseSchema,
+  WardGuardiansSchema,
   type z,
 } from "@clubadmin/shared";
 import { cookies, headers } from "next/headers";
@@ -178,6 +185,48 @@ export const getMemberExports = cache((clubId: string) =>
     nullOn: [403],
   }),
 );
+
+// Families (P1.3).
+export const getWardGuardians = cache((personId: string) =>
+  required(`/api/v1/me/wards/${requireId(personId)}/guardians`, WardGuardiansSchema),
+);
+export const getTrustedPeople = cache(() =>
+  required("/api/v1/me/trusted-people", TrustedPeopleSchema),
+);
+export const getFamilyDuplicates = cache(() =>
+  required("/api/v1/me/duplicates", FamilyDuplicatesSchema),
+);
+export const getAdultGuardians = cache(() =>
+  required("/api/v1/me/adult-guardians", AdultGuardiansSchema),
+);
+/** A member's guardians as the club sees them, or null without club.guardians.manage. */
+export const getClubGuardians = cache((clubId: string, personId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/members/${requireId(personId)}/guardians`,
+    ClubGuardiansSchema,
+    { nullOn: [403, 404] },
+  ),
+);
+export const getClubDuplicates = cache((clubId: string, cursor: string | null) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/duplicates?limit=50${
+      cursor && /^[0-9a-f-]{36}:[0-9a-f-]{36}$/.test(cursor) ? `&cursor=${cursor}` : ""
+    }`,
+    ClubDuplicatesSchema,
+  ),
+);
+
+/** What a guardian invitation link is for, without a session; null if it is not usable. */
+export const lookupGuardianInvitation = cache(async (token: string) => {
+  const res = await apiFetch(
+    `/api/v1/guardian-invitations/lookup?token=${encodeURIComponent(token)}`,
+    null,
+    { forwardedFor: (await headers()).get("x-forwarded-for") },
+  );
+  if (res.ok) return GuardianInvitationLookupSchema.parse(await res.json());
+  if (res.status === 409 || res.status === 400 || res.status === 404) return null;
+  throw new ApiResponseError(res.status, res.headers.get("x-request-id"));
+});
 
 /** Which club an invitation link is for, without a session; null if it is not usable. */
 export const lookupInvitation = cache(async (token: string) => {

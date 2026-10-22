@@ -14,7 +14,7 @@ import {
 } from "../../testing/authorization.ts";
 import { policyFor, policyGaps, profileAccess, registerAccess } from "./authorization.policy.ts";
 import type { Resource } from "./policy.ts";
-import type { Actor, RelationshipSet } from "./relationship-set.ts";
+import { Actor, type RelationshipSet } from "./relationship-set.ts";
 
 const club = uuidv7();
 const otherClub = uuidv7();
@@ -53,6 +53,13 @@ const relative = as({
   wardGroups: [{ personId: ward, clubId: club, groupId: team, function: "member" }],
 });
 const outsider = as({});
+const relativeActing = as({
+  wards: [{ personId: ward, kind: "relative", rights: ["act_on_behalf", "view_schedule"] }],
+});
+const onBehalf = Actor.onBehalfOf(parentSet, ward, {
+  principalPersonId: parentSet.personId,
+  mfa: false,
+})!;
 const otherClubManager = as({
   ...member(otherClub),
   roles: [{ clubId: otherClub, role: "club_manager" }],
@@ -354,6 +361,103 @@ const CASES: Record<Permission, Case[]> = {
       allowed: false,
     },
   ],
+  "person.guardians.read": [
+    {
+      name: "the ward",
+      actor: as({ personId: ward }),
+      resource: personResource(ward, null),
+      allowed: true,
+    },
+    { name: "a parent", actor: parent, resource: personResource(ward, null), allowed: true },
+    { name: "a relative", actor: relative, resource: personResource(ward, null), allowed: true },
+    {
+      name: "the club's manager",
+      actor: manager,
+      resource: personResource(ward, club),
+      allowed: false,
+    },
+    { name: "a stranger", actor: outsider, resource: personResource(ward, null), allowed: false },
+  ],
+  "person.guardians.manage": [
+    { name: "a parent", actor: parent, resource: personResource(ward, null), allowed: true },
+    {
+      name: "the ward themselves",
+      actor: as({ personId: ward }),
+      resource: personResource(ward, null),
+      allowed: true,
+    },
+    { name: "a relative", actor: relative, resource: personResource(ward, null), allowed: false },
+    {
+      name: "a relative given act_on_behalf",
+      actor: relativeActing,
+      resource: personResource(ward, null),
+      allowed: false,
+    },
+    {
+      name: "a parent acting on behalf of the ward",
+      actor: onBehalf,
+      resource: personResource(ward, null),
+      allowed: false,
+    },
+    {
+      name: "the club's manager",
+      actor: manager,
+      resource: personResource(ward, club),
+      allowed: false,
+    },
+  ],
+  "person.merge": [
+    { name: "a parent", actor: parent, resource: personResource(ward, null), allowed: true },
+    {
+      name: "the club's manager for a member",
+      actor: manager,
+      resource: playerInTeam(),
+      allowed: true,
+    },
+    { name: "a registrar", actor: registrar, resource: playerInTeam(), allowed: false },
+    { name: "a relative", actor: relative, resource: personResource(ward, null), allowed: false },
+    {
+      name: "another club's manager",
+      actor: otherClubManager,
+      resource: personResource(player, club, { inClub: false }),
+      allowed: false,
+    },
+    {
+      name: "a parent acting on behalf of the ward",
+      actor: onBehalf,
+      resource: personResource(ward, null),
+      allowed: false,
+    },
+  ],
+  "person.own_login.invite": [
+    { name: "a parent", actor: parent, resource: personResource(ward, null), allowed: true },
+    {
+      name: "the club's registrar for a member",
+      actor: registrar,
+      resource: playerInTeam(),
+      allowed: true,
+    },
+    {
+      name: "the club's manager for a member",
+      actor: manager,
+      resource: playerInTeam(),
+      allowed: true,
+    },
+    { name: "a coach", actor: coach, resource: playerInTeam(), allowed: false },
+    { name: "a relative", actor: relative, resource: personResource(ward, null), allowed: false },
+    {
+      name: "a parent acting on behalf of the ward",
+      actor: onBehalf,
+      resource: personResource(ward, null),
+      allowed: false,
+    },
+  ],
+  "club.guardians.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "a parent of a member", actor: parent, resource: clubR, allowed: false },
+  ],
   "club.access_state.update": [
     { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
     { name: "club manager", actor: manager, resource: clubR, allowed: false },
@@ -486,6 +590,9 @@ describe("policies", () => {
   it("requires a second factor for club administration", () => {
     const settings = policyFor("club.settings.update")!;
     expect(settings.requiresMfa({ actor: managerWithoutMfa, resource: clubR })).toBe(true);
+    const merge = policyFor("person.merge")!;
+    expect(merge.requiresMfa({ actor: manager, resource: playerInTeam() })).toBe(true);
+    expect(merge.requiresMfa({ actor: parent, resource: personResource(ward, null) })).toBe(false);
     const protection = policyFor("person.protection.set")!;
     expect(protection.requiresMfa({ actor: manager, resource: playerInTeam() })).toBe(true);
     expect(protection.requiresMfa({ actor: parent, resource: personResource(ward, null) })).toBe(

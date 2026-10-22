@@ -88,3 +88,22 @@ export async function actorIsClubManager(tx: Tx): Promise<boolean> {
   const { rows } = await tx.execute<{ ok: boolean }>(sql`SELECT app.is_club_manager() AS ok`);
   return rows[0]?.ok === true;
 }
+
+export async function actorHasClubRole(tx: Tx, roles: readonly string[]): Promise<boolean> {
+  const { rows } = await tx.execute<{ ok: boolean }>(
+    sql`SELECT app.has_club_role(string_to_array(${roles.join(",")}, ',')) AS ok`,
+  );
+  return rows[0]?.ok === true;
+}
+
+/** People among these who have a login (app.person_has_account: only reachable people). */
+export async function peopleWithAccount(
+  tx: Tx,
+  personIds: readonly string[],
+): Promise<Set<string>> {
+  if (personIds.length === 0) return new Set();
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT id FROM unnest(string_to_array(${personIds.join(",")}, ',')::uuid[]) AS id
+    WHERE app.person_has_account(id)`);
+  return new Set(rows.map((r) => r.id));
+}

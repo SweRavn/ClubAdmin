@@ -3,7 +3,7 @@
 // from a duplicate to the kept person, and back on undo. Identifiers come from
 // constant declarations, checked by assertSafeReference.
 
-import { eq, schema, sql, type Tx } from "@clubadmin/db";
+import { and, desc, eq, isNull, schema, sql, type Tx } from "@clubadmin/db";
 
 import {
   assertSafeReference,
@@ -181,4 +181,77 @@ export async function actorIsFullGuardianOfBoth(tx: Tx, a: string, b: string): P
 export async function actorIsClubManager(tx: Tx): Promise<boolean> {
   const { rows } = await tx.execute<{ ok: boolean }>(sql`SELECT app.is_club_manager() AS ok`);
   return rows[0]?.ok === true;
+}
+
+export interface DuplicateCandidate {
+  personId: string;
+  duplicatePersonId: string;
+  reason: "name_and_birth_date" | "personal_identity_number";
+}
+
+/** A guardian's candidates (app.family_duplicate_candidates: their wards and their co-guardians'). */
+export async function familyDuplicateCandidates(tx: Tx): Promise<DuplicateCandidate[]> {
+  const { rows } = await tx.execute<{
+    person_id: string;
+    duplicate_person_id: string;
+    reason: DuplicateCandidate["reason"];
+  }>(sql`SELECT * FROM app.family_duplicate_candidates()`);
+  return rows.map((r) => ({
+    personId: r.person_id,
+    duplicatePersonId: r.duplicate_person_id,
+    reason: r.reason,
+  }));
+}
+
+export interface DuplicateDetails {
+  id: string;
+  clubs: { id: string; name: string }[];
+  guardianIds: string[];
+}
+
+/**
+ * What the duplicate notice shows of each person besides names (system
+ * transaction: a co-guardian's ward is not reachable by the guardian; the IDs
+ * come from app.family_duplicate_candidates only).
+ */
+export async function duplicateDetails(
+  tx: Tx,
+  personIds: readonly string[],
+): Promise<DuplicateDetails[]> {
+  if (personIds.length === 0) return [];
+  const { rows } = await tx.execute<{
+    id: string;
+    clubs: { id: string; name: string }[];
+    guardian_ids: string[];
+  }>(sql`
+    SELECT p.id,
+      coalesce((
+        SELECT jsonb_agg(jsonb_build_object('id', c.id, 'name', c.name) ORDER BY c.name)
+        FROM public.club_memberships m JOIN public.clubs c ON c.id = m.club_id
+        WHERE m.person_id = p.id AND m.valid_to IS NULL AND m.status IN ('active', 'paused')
+      ), '[]') AS clubs,
+      coalesce((
+        SELECT array_agg(g.guardian_person_id ORDER BY g.id) FROM public.guardianships g
+        WHERE g.ward_person_id = p.id AND g.status = 'active' AND g.valid_to IS NULL
+          AND g.kind IN ('parent', 'legal_guardian')
+      ), '{}') AS guardian_ids
+    FROM public.people p
+    WHERE p.id = ANY (string_to_array(${personIds.join(",")}, ',')::uuid[])`);
+  return rows.map((r) => ({ id: r.id, clubs: r.clubs, guardianIds: r.guardian_ids }));
+}
+
+/** The actor's merges that can still be undone (people_merges_kept_idx is not needed: few rows per person). */
+export function undoableMergesBy(tx: Tx, personId: string): Promise<MergeRow[]> {
+  return tx
+    .select()
+    .from(peopleMerges)
+    .where(
+      and(
+        eq(peopleMerges.mergedByPersonId, personId),
+        isNull(peopleMerges.undoneAt),
+        sql`${peopleMerges.undoUntil} > now()`,
+      ),
+    )
+    .orderBy(desc(peopleMerges.id))
+    .limit(20);
 }

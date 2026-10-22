@@ -56,7 +56,11 @@ describe("guardianships", () => {
       "SELECT token_hash FROM guardian_invitations WHERE email = 'someone@example.test'",
     );
     expect(rows[0]?.token_hash).not.toBe(token);
-    const invitee = await buildPerson(c.s);
+    const wrongAddress = await buildPerson(c.s);
+    await expect(
+      c.s.guardianships.acceptInvitation(actor(wrongAddress.id), token),
+    ).rejects.toSatisfy((e) => isDomainError(e, "invitation_email_mismatch"));
+    const invitee = await buildPerson(c.s, { email: "someone@example.test" });
     await c.s.guardianships.acceptInvitation(actor(invitee.id), token);
     const late = await buildPerson(c.s);
     await expect(c.s.guardianships.acceptInvitation(actor(late.id), token)).rejects.toSatisfy((e) =>
@@ -112,7 +116,13 @@ describe("guardianships", () => {
         allowedBy: "club_manager",
       }),
     ).rejects.toSatisfy((e) => isDomainError(e, "not_allowed"));
-    await c.s.guardianships.endGuardianship(club.ctx, second!.id, { allowedBy: "club_manager" });
+    await expect(
+      c.s.guardianships.endGuardianship(club.ctx, second!.id, { allowedBy: "club_manager" }),
+    ).rejects.toSatisfy((e) => isDomainError(e, "reason_required"));
+    await c.s.guardianships.endGuardianship(club.ctx, second!.id, {
+      allowedBy: "club_manager",
+      reason: "Court decision on custody",
+    });
     const guardians = await c.s.guardianships.guardiansOf(
       actor(family.guardian.id),
       family.child.id,

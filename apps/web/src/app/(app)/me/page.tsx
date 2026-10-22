@@ -25,6 +25,11 @@ export default async function AccountPage() {
           </a>
         </li>
         <li>
+          <a href="/me/family" className="text-accent underline" data-testid="me-family">
+            {t("family.title")}
+          </a>
+        </li>
+        <li>
           <a href="/me/preferences" className="text-accent underline">
             {t("userMenu.language")}
           </a>

@@ -5,7 +5,12 @@
 // (app/actions/[action]/route.ts) checks the session and the CSRF token.
 
 import {
+  addChildInput,
+  GUARDIANSHIP_KINDS,
+  GUARDIANSHIP_RIGHTS,
+  type GuardianshipRight,
   isUuid,
+  linkedPersonInput,
   MEMBER_EXPORT_COLUMNS,
   type MemberExportColumn,
   MEMBERSHIP_TYPES,
@@ -57,7 +62,214 @@ function exportFilter(form: FormData): Record<string, unknown> {
   return parsed.success ? parsed.data : {};
 }
 
+/** Checked rights of a relative or contact person (checkboxes named "right"). */
+const rightsOf = (form: FormData): GuardianshipRight[] =>
+  form
+    .getAll("right")
+    .filter((r): r is GuardianshipRight => (GUARDIANSHIP_RIGHTS as readonly unknown[]).includes(r));
+const kindOf = (form: FormData) => {
+  const kind = text(form, "kind");
+  return (GUARDIANSHIP_KINDS as readonly string[]).includes(kind) ? kind : null;
+};
+const isLinked = (kind: string) => kind === "relative" || kind === "contact_person";
+/** A person without login (name, phone) from the form's person fields. */
+const newPerson = (form: FormData) => linkedPersonInput((name) => text(form, name));
+
+/** Families (P1.3). */
+const FAMILY_ACTIONS: Record<string, FormAction> = {
+  "add-child": {
+    call: (form) => {
+      const country = text(form, "pinCountry");
+      const pin = text(form, "personalIdentityNumber");
+      return {
+        path: "/api/v1/me/wards",
+        method: "POST",
+        body: addChildInput((name) => text(form, name), {
+          kind: text(form, "kind") === "legal_guardian" ? "legal_guardian" : "parent",
+          ...(pin ? { personalIdentityNumber: { country: country || "SE", value: pin } } : {}),
+        }),
+      };
+    },
+    done: (form) => withParam(back(form, "/me/family"), "added", "1"),
+  },
+  "invite-guardian": {
+    call: (form) => {
+      const wardId = id(form, "wardId");
+      const kind = kindOf(form);
+      if (!wardId || !kind) return null;
+      return {
+        path:
+          wardId === text(form, "selfId")
+            ? "/api/v1/me/trusted-people"
+            : `/api/v1/me/wards/${wardId}/guardian-invitations`,
+        method: "POST",
+        body: {
+          email: text(form, "email"),
+          kind,
+          ...(isLinked(kind) ? { rights: rightsOf(form) } : {}),
+        },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/family"), "invited", "1"),
+  },
+  "add-linked-person": {
+    call: (form) => {
+      const wardId = id(form, "wardId");
+      const kind = kindOf(form);
+      if (!wardId || !kind || !isLinked(kind)) return null;
+      return {
+        path:
+          wardId === text(form, "selfId")
+            ? "/api/v1/me/trusted-people"
+            : `/api/v1/me/wards/${wardId}/guardians`,
+        method: "POST",
+        body: { person: newPerson(form), kind, rights: rightsOf(form) },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/family"), "linked", "1"),
+  },
+  "resend-guardian-invitation": {
+    call: (form) => {
+      const invitationId = id(form, "invitationId");
+      return invitationId
+        ? { path: `/api/v1/guardian-invitations/${invitationId}/resend`, method: "POST" }
+        : null;
+    },
+    done: (form) => withParam(back(form, "/me/family"), "resent", "1"),
+  },
+  "revoke-guardian-invitation": {
+    call: (form) => {
+      const invitationId = id(form, "invitationId");
+      return invitationId
+        ? { path: `/api/v1/guardian-invitations/${invitationId}/revoke`, method: "POST" }
+        : null;
+    },
+    done: (form) => back(form, "/me/family"),
+  },
+  "update-guardian-rights": {
+    call: (form) => {
+      const guardianshipId = id(form, "guardianshipId");
+      return guardianshipId
+        ? {
+            path: `/api/v1/guardianships/${guardianshipId}`,
+            method: "PATCH",
+            body: { rights: rightsOf(form) },
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form, "/me/family"), "updated", "1"),
+  },
+  "end-guardianship": {
+    call: (form) => {
+      const guardianshipId = id(form, "guardianshipId");
+      if (!guardianshipId || text(form, "confirm") !== "on") return null;
+      return { path: `/api/v1/guardianships/${guardianshipId}/end`, method: "POST" };
+    },
+    done: (form) => withParam(back(form, "/me/family"), "ended", "1"),
+  },
+  "accept-guardian-invitation": {
+    call: (form) => {
+      const token = text(form, "token");
+      return token
+        ? { path: "/api/v1/guardian-invitations/accept", method: "POST", body: { token } }
+        : null;
+    },
+    done: (_form, result) =>
+      (result as { suggestProtection?: boolean } | null)?.suggestProtection
+        ? "/me/family?accepted=protected"
+        : "/me/family?accepted=1",
+  },
+  "give-own-login": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      return personId
+        ? {
+            path: `/api/v1/people/${personId}/own-login-invitations`,
+            method: "POST",
+            body: { email: text(form, "email") },
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form, "/me/family"), "ownLogin", "1"),
+  },
+  "merge-people": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      const duplicateId = id(form, "duplicatePersonId");
+      const clubId = id(form, "clubId");
+      if (!personId || !duplicateId) return null;
+      return {
+        path: `/api/v1/people/${personId}/merge${clubId ? `?clubId=${clubId}` : ""}`,
+        method: "POST",
+        body: { duplicatePersonId: duplicateId },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/family"), "merged", "1"),
+  },
+  "undo-merge": {
+    call: (form) => {
+      const mergeId = id(form, "mergeId");
+      const clubId = id(form, "clubId");
+      return mergeId
+        ? {
+            path: `/api/v1/people/merges/${mergeId}/undo${clubId ? `?clubId=${clubId}` : ""}`,
+            method: "POST",
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form, "/me/family"), "undone", "1"),
+  },
+  "adult-decision": {
+    call: (form) => {
+      const guardianshipId = id(form, "guardianshipId");
+      const decision = text(form, "decision");
+      if (!guardianshipId || (decision !== "keep" && decision !== "end")) return null;
+      return {
+        path: `/api/v1/me/adult-guardians/${guardianshipId}/decision`,
+        method: "POST",
+        body: { decision },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/family/adult"), "decided", "1"),
+  },
+  "club-add-guardian": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      const kind = kindOf(form);
+      if (!clubId || !personId || !kind) return null;
+      const existing = id(form, "guardianPersonId");
+      return {
+        path: `/api/v1/clubs/${clubId}/members/${personId}/guardians`,
+        method: "POST",
+        body: {
+          guardian: existing ? { personId: existing } : { person: newPerson(form) },
+          kind,
+          ...(isLinked(kind)
+            ? { rights: rightsOf(form), consentNote: optional(text(form, "consentNote")) }
+            : {}),
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "club-end-guardianship": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const guardianshipId = id(form, "guardianshipId");
+      if (!clubId || !guardianshipId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/guardianships/${guardianshipId}/end`,
+        method: "POST",
+        body: { reason: optional(text(form, "reason")) },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
+  ...FAMILY_ACTIONS,
   "complete-profile": {
     call: (form) => ({
       path: "/api/v1/me/profile",

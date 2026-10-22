@@ -21,7 +21,7 @@ export async function ActionForm({
 }) {
   const [session, path] = await Promise.all([requireSession(), currentPath()]);
   const url = new URL(back ?? path, "https://internal.invalid");
-  for (const key of ["error", "decided", "requested", "updated"]) url.searchParams.delete(key);
+  for (const key of NOTICE_PARAMS) url.searchParams.delete(key);
   return (
     <form method="post" action={`/actions/${action}`} className={className} data-testid={testId}>
       <input type="hidden" name="csrf" value={session.record.csrf} />
@@ -30,6 +30,23 @@ export async function ActionForm({
     </form>
   );
 }
+
+/** Result flags the actions add to the return path (shown once as a notice). */
+const NOTICE_PARAMS = [
+  "error",
+  "decided",
+  "requested",
+  "updated",
+  "added",
+  "invited",
+  "linked",
+  "resent",
+  "ended",
+  "accepted",
+  "ownLogin",
+  "merged",
+  "undone",
+];
 
 export const buttonClass = "rounded-md bg-accent px-4 py-2 text-sm text-accent-fg";
 export const secondaryButtonClass =

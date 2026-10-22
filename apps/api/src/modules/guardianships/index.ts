@@ -4,6 +4,9 @@ export { GuardianshipsModule } from "./guardianships.module.ts";
 export { GUARDIANSHIP_PERSON_REFERENCES } from "./guardianships.references.ts";
 export {
   GUARDIAN_INVITATION_VALID_DAYS,
+  type GuardianInvitation,
+  guardianInvitationPending,
   type Guardianship,
   GuardianshipsService,
+  type WardViewer,
 } from "./guardianships.service.ts";

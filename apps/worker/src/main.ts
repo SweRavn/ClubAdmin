@@ -56,6 +56,7 @@ const runner = await run({
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
     storage,
+    defaultCountry: config.DEFAULT_COUNTRY,
   }),
   crontab: config.BILLING_ENABLED ? `${crontab}\n${BILLING_CRONTAB}` : crontab,
 });

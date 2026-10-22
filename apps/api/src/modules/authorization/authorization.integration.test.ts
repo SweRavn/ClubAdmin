@@ -181,7 +181,12 @@ describe("permission matrix", () => {
    */
   const MATRIX: Record<
     string,
-    { url: () => string; expected: Record<MatrixPersona, number>; body?: Record<string, unknown> }
+    {
+      url: () => string;
+      expected: Record<MatrixPersona, number>;
+      /** A function when it needs the scenario (built in beforeAll). */
+      body?: Record<string, unknown> | (() => Record<string, unknown>);
+    }
   > = {
     "GET /api/v1/me/clubs": { url: () => "/api/v1/me/clubs", expected: ALL_OK },
     "GET /api/v1/me/wards": { url: () => "/api/v1/me/wards", expected: ALL_OK },
@@ -344,6 +349,74 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/member-exports/${uuidv7()}/download`,
       expected: CLUB_FORBIDDEN,
     },
+    // Families (P1.3): the flows are in families.integration.test.ts. People
+    // and family resources the caller cannot reach are 404 (their existence
+    // is information).
+    "GET /api/v1/me/wards/:personId/guardians": {
+      url: () => `/api/v1/me/wards/${m.child.id}/guardians`,
+      expected: { ...ALL_NOT_FOUND, parent: 200, relative: 200 },
+    },
+    "POST /api/v1/me/wards/:personId/guardian-invitations": {
+      url: () => `/api/v1/me/wards/${m.sibling.id}/guardian-invitations`,
+      expected: { ...ALL_NOT_FOUND, parent: 201 },
+      body: { email: "matrix-aunt@example.test", kind: "relative" },
+    },
+    "POST /api/v1/me/wards/:personId/guardians": {
+      url: () => `/api/v1/me/wards/${m.sibling.id}/guardians`,
+      expected: { ...ALL_NOT_FOUND, parent: 201 },
+      body: { person: { givenName: "Matrix", familyName: "Neighbour" }, kind: "contact_person" },
+    },
+    "POST /api/v1/guardian-invitations/:invitationId/resend": {
+      url: () => `/api/v1/guardian-invitations/${uuidv7()}/resend`,
+      expected: ALL_NOT_FOUND,
+    },
+    "POST /api/v1/guardian-invitations/:invitationId/revoke": {
+      url: () => `/api/v1/guardian-invitations/${uuidv7()}/revoke`,
+      expected: ALL_NOT_FOUND,
+    },
+    "PATCH /api/v1/guardianships/:guardianshipId": {
+      url: () => `/api/v1/guardianships/${m.relativeGuardianshipId}`,
+      expected: { ...ALL_NOT_FOUND, parent: 200 },
+      body: { rights: ["view_schedule"] },
+    },
+    // A merge of a person with a login is refused (409); club managers need a second factor.
+    "POST /api/v1/people/:personId/merge": {
+      url: () => `/api/v1/people/${m.child.id}/merge?clubId=${m.clubA.id}`,
+      expected: { ...ALL_NOT_FOUND, parent: 409, manager: 403 },
+      body: () => ({ duplicatePersonId: m.member.id }),
+    },
+    "POST /api/v1/people/merges/:mergeId/undo": {
+      url: () => `/api/v1/people/merges/${uuidv7()}/undo`,
+      expected: ALL_NOT_FOUND,
+    },
+    // The child is below the own-login age (409 for everyone allowed).
+    "POST /api/v1/people/:personId/own-login-invitations": {
+      url: () => `/api/v1/people/${m.child.id}/own-login-invitations?clubId=${m.clubA.id}`,
+      expected: { ...ALL_NOT_FOUND, parent: 409, manager: 409, registrar: 409 },
+      body: { email: "liv@example.test" },
+    },
+    "GET /api/v1/clubs/:clubId/members/:personId/guardians": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/members/${m.child.id}/guardians`,
+      expected: ADMINS(200),
+    },
+    "POST /api/v1/clubs/:clubId/members/:personId/guardians": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/members/${m.sibling.id}/guardians`,
+      expected: ADMINS(201),
+      body: {
+        guardian: { person: { givenName: "Paper", familyName: "Form" } },
+        kind: "contact_person",
+        consentNote: "Signed form on file",
+      },
+    },
+    "POST /api/v1/clubs/:clubId/guardianships/:guardianshipId/end": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/guardianships/${uuidv7()}/end`,
+      expected: ADMINS(404),
+      body: {},
+    },
+    "GET /api/v1/clubs/:clubId/duplicates": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duplicates`,
+      expected: ADMINS(200),
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -362,8 +435,9 @@ describe("permission matrix", () => {
     expect(endpoints.filter((e) => !(e in MATRIX))).toEqual([]);
   });
 
-  for (const [endpoint, { url, expected, body }] of Object.entries(MATRIX)) {
+  for (const [endpoint, { url, expected, body: bodyOf }] of Object.entries(MATRIX)) {
     it(endpoint, async (test) => {
+      const body = typeof bodyOf === "function" ? bodyOf() : bodyOf;
       const registered = app.app
         .get(EndpointRegistry)
         .all()
@@ -400,6 +474,9 @@ describe("tenant isolation", () => {
       `/api/v1/clubs/${m.clubA.id}/members`,
       `/api/v1/clubs/${m.clubA.id}/members/facets`,
       `/api/v1/clubs/${m.clubA.id}/member-exports`,
+      `/api/v1/clubs/${m.clubA.id}/members/${m.child.id}/guardians`,
+      `/api/v1/clubs/${m.clubA.id}/duplicates`,
+      `/api/v1/me/wards/${m.child.id}/guardians`,
     ];
     for (const url of urls) {
       const res = await get(m.outsider.id, url, { mfa: true });
@@ -446,6 +523,7 @@ describe("reads", () => {
       "club.members.read",
       "club.members.manage",
       "club.members.export",
+      "club.guardians.manage",
       "club.join_requests.manage",
       "club.invitations.manage",
     ]);
@@ -818,7 +896,7 @@ describe("performance budgets", () => {
     await valkey.del(relationshipSetKey(m.parent.id));
     const { queries, result } = await countQueries(() => service.relationshipSet(m.parent.id));
     expect(queries).toBe(1);
-    expect(result.wards).toHaveLength(1);
+    expect(result.wards).toHaveLength(2);
     const warm = await countQueries(() => service.relationshipSet(m.parent.id));
     expect(warm.queries).toBe(0);
   });

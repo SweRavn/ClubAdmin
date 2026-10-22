@@ -99,7 +99,19 @@ No password data (that lives in Zitadel).
   person already has the same open relationship, the duplicate's is ended.
   The duplicate stays as a stub with `merged_into_person_id`. A person with a
   login cannot be merged away (merge into them instead). A club manager's
-  merge only moves rows in clubs the manager can see ([#5](https://github.com/SweRavn/ClubAdmin/issues/5)).
+  merge (with a second factor) moves the global rows and the rows of that
+  club only; the duplicate's rows in clubs the manager cannot see stay with
+  the stub, and the families merge them as guardians of both (by design,
+  [#5](https://github.com/SweRavn/ClubAdmin/issues/5)).
+- **Duplicate detection** (P1.3) is computed, never stored: same birth date
+  and family name (`people_duplicate_idx`) or the same personal identity
+  number hash (`people_pin_hash_idx`). For a guardian
+  (`GET /me/duplicates`, `app.family_duplicate_candidates()`): pairs of one
+  of their wards and another ward of theirs or of their full co-guardians;
+  a pair is listed only if the guardian may see both people (a protected
+  duplicate of a co-guardian stays hidden), and "Merge" only for a full
+  guardian of both. For a club (`GET /clubs/{clubId}/duplicates`, managers
+  and registrars): pairs of its members, keyset-paged.
 - **"Give own login"**: when the child reaches `own_account_min_age` (country
   pack, default 13), a guardian (or the club) enters the child's own email. An
   invitation goes to that address; when the child completes sign-up, the
@@ -107,8 +119,18 @@ No password data (that lives in Zitadel).
   groups are kept. The invitation is an `account_invitations` row
   (`person_id`, `email`, `token_hash`, `created_by_person_id`, `expires_at`,
   `accepted_at`, `revoked_at`); the account must be created with that
-  (verified) email. Guardians keep their rights until `adult_age`; then the
-  young person decides which guardian access continues.
+  (verified) email. The link's token is derived from the invitation's ID
+  with `INVITATION_TOKEN_KEY` (the worker emails it); a daily job tells each
+  full guardian once when a ward without login reaches the age. Guardians
+  keep their rights until `adult_age`; then the young person decides which
+  guardian access continues (below).
+- **Adult decision** (P1.3): the worker flags each open guardianship when
+  the ward reaches `adult_age` of the strictest country pack of the ward's
+  clubs (the default country without clubs). The young person (with their
+  own login) chooses per guardian `keep` or `end` (`adult_decision`,
+  `adult_decided_at`), once; ending tells the guardian by email that access
+  ended, not why. A young person with their own login cannot end a full
+  guardian's guardianship before that.
 - Messages for a child without account go to guardians with
   `receive_messages`.
 
@@ -289,17 +311,42 @@ successor manager and ends the proposer's role in one transaction.
 `receive_messages`, `view_schedule`, `sign_up`, `see_medical`), `status`
 (`pending`, `active`, `ended`; invitations are separate rows, see above),
 `valid_from`, `valid_to`, `created_by_person_id`, `ward_adult_flagged_at`
-(set by the worker when the ward reaches `adult_age`; the guardianship is
-not ended automatically; the worker currently uses the highest `adult_age` of
-all country packs, [#6](https://github.com/SweRavn/ClubAdmin/issues/6)).
-- `parent`/`legal_guardian` default to full rights.
-- `relative` (grandparent, older sibling) defaults to view-only and must be
-  granted by a guardian.
+(set by the worker when the ward reaches `adult_age` of their clubs' country
+packs; the guardianship is not ended automatically), `adult_decision`,
+`adult_decided_at`, `granted_by_person_id` (who chose a relative's or contact
+person's rights), `recorded_by_club_id` and `consent_note` (a club recorded
+it from a paper form), `ended_reason` (a club manager ended a full
+guardian's guardianship; never in audit events), `own_login_age_notified_at`.
+A ward can have any number of guardians (one open guardianship per guardian
+and ward).
+- `parent`/`legal_guardian` have full rights.
+- **Relatives** (grandparent, older sibling, aunt) and **contact persons**
+  (a neighbour who drives, a family-home contact, an LSS contact person or
+  trustee of an adult) hold only the rights chosen per link: any of
+  `view_schedule`, `receive_messages`, `sign_up`, `see_medical`; defaults:
+  relative `view_schedule`, contact person `view_schedule` and
+  `receive_messages`. `act_on_behalf` only for relatives, explicitly chosen
+  by a full guardian, the adult ward or the club (with a warning in the UI).
+  Each later feature enforces the right it needs (schedule P1.4, sign-up
+  P1.5/P1.6, messages P1.7, medical notes later).
+- Who links them: a full guardian while the ward is under `adult_age`; the
+  ward themselves from `consent_age` (with their own login; acting on
+  behalf only from `adult_age`); a club's registrar or manager from a paper
+  form with a consent note. The linked person is invited by email (accepted
+  with their own login, the login email must match), chosen from the club's
+  register (clubs only), or a new person without login (name, phone). A
+  relative or contact person never links others or changes rights.
+- Who ends them: the linked person themselves, a full guardian of a minor
+  ward, the ward (from `consent_age`), or the club for links it recorded.
+  Full guardians: only the guardian themselves, a club manager with MFA and
+  a reason, or the young person's adult decision.
+- What they see: the ward's name and what the rights allow; the guardians'
+  names, never their phone numbers or invitations. Clubs see the links of
+  their members like guardians (managers, registrars, the ward's group
+  leaders). `club_profiles.emergency_contacts` stay for people the club only
+  needs to call.
 - A guardianship becomes visible to a club only when the ward is a member of
   that club.
-- Two guardians in separate households are both full guardians; neither can
-  remove the other (only a club manager with evidence, audited). A guardian
-  can end their own guardianship and those of relatives they granted.
 
 ### Protected identity (ADR 0022)
 For people with protected personal data (in Sweden *skyddade
@@ -414,6 +461,11 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `person.profile.read` | person (`?clubId`) | the person and their guardians with `act_on_behalf`; in the club: managers and registrars, owners and leaders of the person's groups, and (unless the person is protected) people in the same group, their guardians, support access |
 | `person.profile.update` | person | the person, guardians with `act_on_behalf` |
 | `person.protection.set` | person | global flag: the person, guardians with `act_on_behalf` (the service requires a parent or legal guardian); club flag (`?clubId`): club managers, with MFA |
+| `person.guardians.read` | person (`:personId`) | the ward, any active guardian of the ward (relatives see names only, no invitations) |
+| `person.guardians.manage` | person (`:personId`, or the ward of `:guardianshipId`/`:invitationId`) | full guardians with `act_on_behalf`, the ward themselves (the service allows relatives and contact persons only, from `consent_age`); never a relative, never on behalf of someone |
+| `person.merge` | person (`:personId`, the kept person of `:mergeId`; `?clubId`) | a full guardian (the service requires one of both people); a club manager with MFA for two members of the club |
+| `person.own_login.invite` | person (`?clubId`) | full guardians; club managers and registrars of a club the person is a member of |
+| `club.guardians.manage` | club | club managers, registrars; ending a full guardian's guardianship only a club manager with MFA and a reason |
 | `ops.backup.read` | platform (the installation, no IDs) | platform operators (in a self-hosted installation its administrators), with MFA: `GET /api/v1/ops/backup-status` |
 | `club.access_state.update` | club | platform operators, with MFA (read-only and suspended clubs, also with billing off) |
 | `billing.plans.read` | platform | platform operators, with MFA (billing on only) |
@@ -429,7 +481,11 @@ includes owners of parent groups; "leader" is any function except `member`.
 
 Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
 `/me/preferences`, `/me/profile`, `/me/join-requests`,
-`/me/club-creation-requests`, `/me/manager-handovers`) need only a login, as
+`/me/club-creation-requests`, `/me/manager-handovers`, and for families
+`POST /me/wards`, `/me/trusted-people`, `/me/duplicates`,
+`/me/adult-guardians`, accepting a guardian invitation and ending a
+guardianship, where the service checks who may) need only a login; looking
+up a guardian invitation by its link is public. So
 do the club search, asking to join (the service checks each person is the
 caller or a ward with `act_on_behalf`) and accepting an invitation; looking
 up an invitation by its link or code is public. Appointing, removing and

@@ -91,6 +91,15 @@ export default async function MembersPage({ params, searchParams }: Props) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold">{t("members.title", { club: club.name })}</h1>
+        {permissions.includes("club.guardians.manage") ? (
+          <a
+            href={`/clubs/${club.id}/duplicates`}
+            className="text-accent underline"
+            data-testid="register-duplicates"
+          >
+            {t("family.clubDuplicates.title")}
+          </a>
+        ) : null}
         {permissions.includes("club.members.export") ? (
           <a
             href={`/clubs/${club.id}/members/exports${query ? `?${query}` : ""}`}

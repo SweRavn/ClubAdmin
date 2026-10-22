@@ -149,6 +149,9 @@ export default function Settings() {
             />
           </View>
         </Row>
+        <Row onPress={() => router.push("/settings/family")} testID="open-family">
+          <Body>{t("family.title")}</Body>
+        </Row>
         <Row onPress={() => router.push("/settings/sessions")} testID="open-sessions">
           <Body>{t("userMenu.sessions")}</Body>
         </Row>

@@ -19,6 +19,9 @@ export function testEncryption(): FieldEncryption {
   );
 }
 
+/** INVITATION_TOKEN_KEY of the integration tests (guardian and own-login invitations need one). */
+export const TEST_INVITATION_TOKEN_KEY = "test-invitation-token-key-with-32-characters";
+
 export function createCoreServices(
   db: Database,
   options: {
@@ -30,6 +33,6 @@ export function createCoreServices(
   return createServices(db, {
     encryption: options.encryption ?? testEncryption(),
     ...(options.defaultCountry ? { defaultCountry: options.defaultCountry } : {}),
-    ...(options.invitationTokenKey ? { invitationTokenKey: options.invitationTokenKey } : {}),
+    invitationTokenKey: options.invitationTokenKey ?? TEST_INVITATION_TOKEN_KEY,
   });
 }

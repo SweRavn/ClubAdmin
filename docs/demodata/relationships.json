@@ -85,6 +85,74 @@
       "ward": "sofie",
       "kind": "parent",
       "via": "addChild"
+    },
+    {
+      "guardian": "sara",
+      "ward": "vera",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "mikael",
+      "ward": "elsa-duplicate",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
+      "guardian": "anna",
+      "ward": "elsa-duplicate",
+      "kind": "parent",
+      "via": "invitation",
+      "by": "mikael"
+    },
+    {
+      "guardian": "gunilla",
+      "ward": "elsa",
+      "kind": "relative",
+      "via": "invitation",
+      "by": "anna",
+      "status": "revoked"
+    },
+    {
+      "guardian": "nils",
+      "ward": "alva",
+      "kind": "contact_person",
+      "via": "linked",
+      "by": "sara"
+    },
+    {
+      "guardian": "bo",
+      "ward": "emma",
+      "kind": "contact_person",
+      "via": "linked",
+      "by": "emma"
+    },
+    {
+      "guardian": "ahmed",
+      "ward": "tilde",
+      "kind": "parent",
+      "via": "addChild",
+      "adultFlagged": true
+    },
+    {
+      "guardian": "leyla",
+      "ward": "tilde",
+      "kind": "parent",
+      "via": "invitation",
+      "by": "ahmed",
+      "adultFlagged": true
+    },
+    {
+      "guardian": "petra",
+      "ward": "maja",
+      "kind": "parent",
+      "via": "club",
+      "club": "svk",
+      "by": "johan",
+      "ended": {
+        "by": "anna",
+        "reason": "Tingsrättens beslut om vårdnad"
+      }
     }
   ],
   "memberships": [
@@ -187,6 +255,12 @@
       "person": "ingrid",
       "club": "fil",
       "since": "-2y"
+    },
+    {
+      "person": "tilde",
+      "club": "ikn",
+      "by": "ahmed",
+      "since": "-5y"
     }
   ],
   "roles": [
@@ -377,6 +451,11 @@
       "person": "liam",
       "by": "ahmed",
       "at": "-6mo"
+    },
+    {
+      "person": "tilde",
+      "by": "ahmed",
+      "at": "-2y"
     }
   ],
   "employments": [

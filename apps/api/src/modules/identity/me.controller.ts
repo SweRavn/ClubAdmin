@@ -200,25 +200,66 @@ export class MeController {
     };
   }
 
+  /**
+   * Three queries: the wards (people), their clubs and which of them have a
+   * login (only for wards the caller is a full guardian of); the protected
+   * set is not needed (family sees family).
+   */
   @Endpoint({
     method: "GET",
     path: "wards",
-    summary: "The people I am a guardian of, with my rights",
+    summary:
+      "The people I am a guardian of, with my rights (full guardians also see age, clubs and own login)",
     tags: ["identity"],
     access: { authenticated: true },
     response: MyWardsSchema,
   })
   async myWards(@CurrentAuthorization() authz: RequestAuthorization): Promise<MyWards> {
-    const { wards } = authz.actor.relationships;
-    const rows = await this.people.summaries(
-      authz.context,
-      wards.map((w) => w.personId),
-    );
+    const { wards, wardMemberships } = authz.actor.relationships;
+    const full = wards
+      .filter((w) => w.kind === "parent" || w.kind === "legal_guardian")
+      .map((w) => w.personId);
+    const clubIds = [...new Set(wardMemberships.map((m) => m.clubId))];
+    const [rows, clubs, withLogin] = await Promise.all([
+      this.people.getPeople(
+        authz.context,
+        wards.map((w) => w.personId),
+      ),
+      this.clubs.findClubs(authz.context, clubIds),
+      this.accounts.peopleWithAccount(authz.context, full),
+    ]);
     const shown = new Map((await this.presenter.present(authz, null, rows)).map((p) => [p.id, p]));
+    const people = new Map(rows.map((p) => [p.id, p]));
+    const clubById = new Map(clubs.map((c) => [c.id, c]));
     return {
       wards: wards.flatMap((w) => {
         const person = shown.get(w.personId);
-        return person ? [{ person, kind: w.kind, rights: w.rights }] : [];
+        if (!person) return [];
+        const wardClubs = wardMemberships
+          .filter(
+            (m) => m.personId === w.personId && (m.status === "active" || m.status === "paused"),
+          )
+          .flatMap((m) => {
+            const club = clubById.get(m.clubId);
+            return club ? [{ id: club.id, name: club.name, country: club.country }] : [];
+          });
+        const isFull = full.includes(w.personId);
+        return [
+          {
+            person,
+            kind: w.kind,
+            rights: w.rights,
+            clubs: wardClubs.map(({ id, name }) => ({ id, name })),
+            ...(isFull
+              ? {
+                  birthDate: people.get(w.personId)?.birthDate ?? null,
+                  hasLogin: withLogin.has(w.personId),
+                  ownLoginFromAge: this.accounts.ageRulesFor(wardClubs.map((c) => c.country))
+                    .ownAccountMinAge,
+                }
+              : {}),
+          },
+        ];
       }),
     };
   }

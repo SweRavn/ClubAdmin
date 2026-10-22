@@ -131,11 +131,23 @@ export const DemoRelationshipsFileSchema = z.object({
       guardian: key,
       ward: key,
       kind: z.enum(GUARDIANSHIP_KINDS),
-      /** addGuardian (by a full guardian), or an e-mail invitation accepted or still pending. */
-      via: z.enum(["addChild", "addGuardian", "invitation"]),
+      /**
+       * addGuardian (by a full guardian), an e-mail invitation (accepted,
+       * pending or revoked), a person without login linked by a full
+       * guardian or the adult ward (`linked`, P1.3), or recorded by a club
+       * from a paper form (`club`, by its registrar or manager).
+       */
+      via: z.enum(["addChild", "addGuardian", "invitation", "linked", "club"]),
       by: key.nullable().default(null),
-      status: z.enum(["active", "pending"]).default("active"),
+      status: z.enum(["active", "pending", "revoked"]).default("active"),
       rights: z.array(z.enum(GUARDIANSHIP_RIGHTS)).nullable().default(null),
+      /** `club`: the club that records it, and the consent note for relatives and contact persons. */
+      club: key.nullable().default(null),
+      consentNote: z.string().nullable().default(null),
+      /** Ended by a club manager of `club` with a reason (history). */
+      ended: z.object({ by: key, reason: z.string() }).nullable().default(null),
+      /** The worker has flagged it at the ward's adult age (the decision page). */
+      adultFlagged: z.boolean().default(false),
     }),
   ),
   memberships: z.array(

@@ -106,6 +106,18 @@ later phase. Backup and disaster recovery are in
   invitations are indistinguishable from unknown ones. Club search and
   invitation lookup read across clubs only through `app.search_clubs` and
   `app.find_club_invitation` (narrow `lookup_read` policies while they run).
+- Guardian and own-login invitations (P1.3): the token is an HMAC of the
+  invitation ID (and, for guardian invitations, the time of the last resend)
+  with `INVITATION_TOKEN_KEY`, so a resend gives a new link and the old one
+  stops working; only a SHA-256 hash is stored, single use, 14 days. The
+  link is the only place the token appears (path of
+  `/guardian-invitations/<token>` or `?invitation=` of the login). Lookup
+  and accept are rate-limited (per IP; accept also per account,
+  `joining`); unknown, expired, revoked and used tokens are
+  indistinguishable. Accepting needs the caller's verified login email to be
+  the invited address (`invitation_email_mismatch`, only for a valid token).
+  The landing page and the email name the ward (given name) and the inviter
+  only if they are not protected.
 - Platform operators have no club access unless the club grants time-limited
   support access (`support_access_grants`), used only with a second factor;
   protected persons stay hidden from them.

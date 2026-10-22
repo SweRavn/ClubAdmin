@@ -47,6 +47,17 @@ export const DOMAIN_ERRORS = {
   // guardianships
   guardianship_exists: "conflict",
   invitation_invalid: "conflict",
+  // Families (P1.3)
+  birth_date_in_future: "validation",
+  rights_not_allowed: "forbidden",
+  guardianship_kind_not_allowed: "forbidden",
+  too_young_to_link: "conflict",
+  reason_required: "validation",
+  adult_decision_not_open: "conflict",
+  invitation_not_pending: "conflict",
+  person_has_account: "conflict",
+  /** A club manager without a second factor ending a full guardian's guardianship. */
+  mfa_required: "mfa-required",
   // Sign-up and joining (P1.1)
   profile_incomplete: "conflict",
   email_not_verified: "forbidden",

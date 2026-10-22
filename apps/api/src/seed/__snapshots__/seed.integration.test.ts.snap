@@ -45,7 +45,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "karin",
       ],
       "memberships": {
-        "active": 20,
+        "active": 21,
       },
       "slug": "ik-norrbacka",
       "supportGrants": [
@@ -286,6 +286,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "guardians": [
         "sara: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
         "gunilla: relative active [view_schedule]",
+        "nils: contact_person active [view_schedule, receive_messages]",
       ],
       "hasBirthDate": true,
       "memberships": [
@@ -313,6 +314,17 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "svk: chair",
         "svk: club_manager",
       ],
+    },
+    "bo": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": false,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
     },
     "camilla": {
       "account": {
@@ -343,6 +355,20 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "memberships": [
         "svk: active (active)",
       ],
+      "pendingGuardianInvitations": 1,
+      "protected": false,
+      "roles": [],
+    },
+    "elsa-duplicate": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [
+        "anna: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+        "mikael: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [],
       "pendingGuardianInvitations": 0,
       "protected": false,
       "roles": [],
@@ -354,7 +380,9 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       },
       "clubProtected": [],
       "groups": [],
-      "guardians": [],
+      "guardians": [
+        "bo: contact_person active [view_schedule, receive_messages]",
+      ],
       "hasBirthDate": true,
       "memberships": [],
       "pendingGuardianInvitations": 0,
@@ -508,6 +536,20 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "fil: club_manager",
       ],
     },
+    "leyla": {
+      "account": {
+        "email": "leyla.yilmaz@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
     "liam": {
       "account": {
         "email": "liam.yilmaz@example.test",
@@ -537,6 +579,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "guardians": [
         "erik: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+        "petra: parent ended [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
       ],
       "hasBirthDate": true,
       "memberships": [
@@ -576,6 +619,17 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "pendingGuardianInvitations": 1,
       "protected": true,
+      "roles": [],
+    },
+    "nils": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": false,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
       "roles": [],
     },
     "nora": {
@@ -655,6 +709,17 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "ikn: treasurer",
       ],
     },
+    "petra": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": false,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
     "samira": {
       "account": {
         "email": "samira.karimi@example.test",
@@ -696,6 +761,38 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "groups": [],
       "guardians": [
         "camilla: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "tilde": {
+      "account": {
+        "email": "tilde.yilmaz@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [
+        "ahmed: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+        "leyla: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
+      ],
+      "hasBirthDate": true,
+      "memberships": [
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [],
+    },
+    "vera": {
+      "account": null,
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [
+        "sara: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
       ],
       "hasBirthDate": true,
       "memberships": [],

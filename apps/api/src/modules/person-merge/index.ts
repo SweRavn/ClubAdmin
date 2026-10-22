@@ -2,6 +2,8 @@
 // Public interface of the person-merge module (part of the people area).
 export { PersonMergeModule } from "./person-merge.module.ts";
 export {
+  type DuplicateCandidate,
+  type DuplicateDetails,
   MERGE_UNDO_DAYS,
   PERSON_REFERENCES,
   type PersonMerge,
