@@ -86,7 +86,7 @@ function s3Get(env: OpsEnv, query: string): Promise<S3Response> {
   const headers = signV4({
     method: "GET",
     url,
-    region: env.get("BACKUP_S3_REGION") ?? "us-east-1",
+    region: required(env, "BACKUP_S3_REGION"),
     accessKeyId: required(env, "BACKUP_S3_ACCESS_KEY_ID"),
     secretAccessKey: required(env, "BACKUP_S3_SECRET_ACCESS_KEY"),
   });

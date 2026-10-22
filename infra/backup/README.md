@@ -84,8 +84,9 @@ runbook 1's club export, a new full backup and `pnpm ops:verify-backup`.
 ## Self-hosting: any S3-compatible target
 
 1. Create a bucket at a provider other than the one running ClubAdmin (any
-   S3-compatible storage: AWS S3, Backblaze B2, Wasabi, Scaleway, OVH,
-   Hetzner, MinIO, Garage at another site). Turn on versioning, and object
+   S3-compatible storage, for example Scaleway, OVH, Hetzner, UpCloud, or
+   Garage at another site; ClubAdmin depends on no particular provider,
+   ADR 0011). Set the provider's region: there is no default. Turn on versioning, and object
    lock if the provider has it (below).
 2. Create credentials that can read and write that bucket only. For the file
    replica: a second bucket (versioning on) and read-only credentials for the

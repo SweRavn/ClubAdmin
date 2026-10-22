@@ -65,7 +65,8 @@ repo() {
     *:*) export "PGBACKREST_REPO${n}_STORAGE_PORT=${endpoint##*:}" ;;
   esac
   export "PGBACKREST_REPO${n}_S3_BUCKET=$bucket"
-  export "PGBACKREST_REPO${n}_S3_REGION=${BACKUP_S3_REGION:-us-east-1}"
+  # No default region: it is part of the signature and provider-specific.
+  export "PGBACKREST_REPO${n}_S3_REGION=${BACKUP_S3_REGION:?BACKUP_S3_REGION is not set (the S3 provider's region)}"
   export "PGBACKREST_REPO${n}_S3_URI_STYLE=${BACKUP_S3_URI_STYLE:-host}"
   export "PGBACKREST_REPO${n}_S3_KEY=$key_id"
   export "PGBACKREST_REPO${n}_S3_KEY_SECRET=$key_secret"

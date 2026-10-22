@@ -146,7 +146,12 @@ export const objectStorageConfigShape = {
   S3_ENDPOINT: z.url().optional(),
   /** The endpoint browsers reach for pre-signed downloads; defaults to S3_ENDPOINT. */
   S3_PUBLIC_ENDPOINT: z.url().optional(),
-  S3_REGION: z.string().default("us-east-1"),
+  /**
+   * The provider's region (part of every request signature). No default: a
+   * guessed region only works for some providers (ADR 0011); required with
+   * S3_ENDPOINT (objectStorageConfigIssues).
+   */
+  S3_REGION: z.string().min(1).optional(),
   S3_BUCKET_FILES: z.string().default("clubadmin-files"),
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
@@ -161,15 +166,31 @@ export interface ObjectStorageConfig {
   secretAccessKey: string;
 }
 
+/** Settings that only make sense together (for the API's and worker's config checks). */
+export function objectStorageConfigIssues(env: {
+  S3_ENDPOINT?: string | undefined;
+  S3_REGION?: string | undefined;
+}): { variable: string; message: string }[] {
+  return env.S3_ENDPOINT && !env.S3_REGION
+    ? [
+        {
+          variable: "S3_REGION",
+          message: "required when S3_ENDPOINT is set (the provider's region)",
+        },
+      ]
+    : [];
+}
+
 export function objectStorageConfig(env: {
   S3_ENDPOINT?: string | undefined;
   S3_PUBLIC_ENDPOINT?: string | undefined;
-  S3_REGION: string;
+  S3_REGION?: string | undefined;
   S3_BUCKET_FILES: string;
   S3_ACCESS_KEY_ID?: string | undefined;
   S3_SECRET_ACCESS_KEY?: string | undefined;
 }): ObjectStorageConfig | null {
   if (!env.S3_ENDPOINT || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) return null;
+  if (!env.S3_REGION) throw new Error("S3_REGION is required when S3_ENDPOINT is set");
   return {
     endpoint: env.S3_ENDPOINT,
     publicEndpoint: env.S3_PUBLIC_ENDPOINT ?? env.S3_ENDPOINT,

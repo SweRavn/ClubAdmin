@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from "vitest";
 
-import { ObjectStorage, objectStorageConfig, presignGetUrl } from "./object-storage.ts";
+import {
+  ObjectStorage,
+  objectStorageConfig,
+  objectStorageConfigIssues,
+  presignGetUrl,
+} from "./object-storage.ts";
 
 describe("object storage", () => {
   it("is off without an endpoint and credentials", () => {
@@ -12,6 +17,21 @@ describe("object storage", () => {
         S3_ENDPOINT: "http://s3",
       }),
     ).toBeNull();
+  });
+
+  it("has no default region: it is required with an endpoint", () => {
+    expect(objectStorageConfigIssues({})).toEqual([]);
+    expect(objectStorageConfigIssues({ S3_ENDPOINT: "http://s3" })).toEqual([
+      expect.objectContaining({ variable: "S3_REGION" }),
+    ]);
+    expect(() =>
+      objectStorageConfig({
+        S3_ENDPOINT: "http://s3",
+        S3_BUCKET_FILES: "files",
+        S3_ACCESS_KEY_ID: "id",
+        S3_SECRET_ACCESS_KEY: "secret",
+      }),
+    ).toThrow(/S3_REGION/);
   });
 
   it("pre-signs downloads on the public endpoint, path style", () => {

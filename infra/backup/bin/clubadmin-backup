@@ -47,6 +47,18 @@ sql() {
   psql -X -q -At -v ON_ERROR_STOP=1 -h "$SOCKET" -U "$DB_USER" -d "$DATABASE" "$@"
 }
 
+# The region of a configured S3 endpoint ($1: endpoint variable, $2: region
+# variable). No default: the region is part of the signature and
+# provider-specific, so a missing one fails instead of guessing.
+region_of() {
+  eval "endpoint_value=\${$1:-} region_value=\${$2:-}"
+  if [ -n "$endpoint_value" ] && [ -z "$region_value" ]; then
+    echo "$2 is not set (the S3 provider's region)" >&2
+    return 1
+  fi
+  printf '%s' "$region_value"
+}
+
 # rclone remotes from the environment: "backup" (the backup bucket),
 # "source" (the application's files bucket) and "replica" (second provider).
 rclone_env() {
@@ -54,20 +66,20 @@ rclone_env() {
   RCLONE_CONFIG_BACKUP_TYPE=s3
   RCLONE_CONFIG_BACKUP_PROVIDER=Other
   RCLONE_CONFIG_BACKUP_ENDPOINT="$scheme://${BACKUP_S3_ENDPOINT:-}"
-  RCLONE_CONFIG_BACKUP_REGION=${BACKUP_S3_REGION:-us-east-1}
+  RCLONE_CONFIG_BACKUP_REGION=$(region_of BACKUP_S3_ENDPOINT BACKUP_S3_REGION) || exit 1
   RCLONE_CONFIG_BACKUP_ACCESS_KEY_ID=$(secret BACKUP_S3_ACCESS_KEY_ID)
   RCLONE_CONFIG_BACKUP_SECRET_ACCESS_KEY=$(secret BACKUP_S3_SECRET_ACCESS_KEY)
   RCLONE_CONFIG_BACKUP_FORCE_PATH_STYLE=$([ "${BACKUP_S3_URI_STYLE:-host}" = "path" ] && echo true || echo false)
   RCLONE_CONFIG_SOURCE_TYPE=s3
   RCLONE_CONFIG_SOURCE_PROVIDER=Other
   RCLONE_CONFIG_SOURCE_ENDPOINT=${FILES_SOURCE_S3_ENDPOINT:-}
-  RCLONE_CONFIG_SOURCE_REGION=${FILES_SOURCE_S3_REGION:-us-east-1}
+  RCLONE_CONFIG_SOURCE_REGION=$(region_of FILES_SOURCE_S3_ENDPOINT FILES_SOURCE_S3_REGION) || exit 1
   RCLONE_CONFIG_SOURCE_ACCESS_KEY_ID=$(secret FILES_SOURCE_S3_ACCESS_KEY_ID)
   RCLONE_CONFIG_SOURCE_SECRET_ACCESS_KEY=$(secret FILES_SOURCE_S3_SECRET_ACCESS_KEY)
   RCLONE_CONFIG_REPLICA_TYPE=s3
   RCLONE_CONFIG_REPLICA_PROVIDER=Other
   RCLONE_CONFIG_REPLICA_ENDPOINT=${FILES_REPLICA_S3_ENDPOINT:-}
-  RCLONE_CONFIG_REPLICA_REGION=${FILES_REPLICA_S3_REGION:-us-east-1}
+  RCLONE_CONFIG_REPLICA_REGION=$(region_of FILES_REPLICA_S3_ENDPOINT FILES_REPLICA_S3_REGION) || exit 1
   RCLONE_CONFIG_REPLICA_ACCESS_KEY_ID=$(secret FILES_REPLICA_S3_ACCESS_KEY_ID)
   RCLONE_CONFIG_REPLICA_SECRET_ACCESS_KEY=$(secret FILES_REPLICA_S3_SECRET_ACCESS_KEY)
   export RCLONE_CONFIG_BACKUP_TYPE RCLONE_CONFIG_BACKUP_PROVIDER RCLONE_CONFIG_BACKUP_ENDPOINT \

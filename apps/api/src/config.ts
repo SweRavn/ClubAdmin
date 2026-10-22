@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { baseConfigShape, envBoolean, envList, parseConfig } from "@clubadmin/server-kit";
-import { objectStorageConfigShape } from "@clubadmin/server-kit/object-storage";
+import {
+  objectStorageConfigIssues,
+  objectStorageConfigShape,
+} from "@clubadmin/server-kit/object-storage";
 import { AppVersionSchema, devAuthViolation, z } from "@clubadmin/shared";
 
 export const apiConfigSchema = z
@@ -88,6 +91,9 @@ export const apiConfigSchema = z
   .superRefine((config, ctx) => {
     const devAuth = devAuthViolation(config);
     if (devAuth) ctx.addIssue({ code: "custom", path: ["DEV_AUTH"], message: devAuth });
+    for (const issue of objectStorageConfigIssues(config)) {
+      ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
+    }
     if (config.DEV_AUTH && !config.DEV_AUTH_KEY) {
       ctx.addIssue({
         code: "custom",

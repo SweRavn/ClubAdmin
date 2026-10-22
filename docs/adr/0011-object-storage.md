@@ -5,8 +5,14 @@
 **Context.** Documents, images, attachments and exports should not live in the
 database.
 
-**Decision.** Use the S3 API only. Hosted: the provider's object storage with
-versioning, replicated to a second provider. Self-host: Garage (AGPL-3.0) in
+**Decision.** Use the S3 API only, as a protocol: ClubAdmin depends on no
+particular provider and on no AWS service, SDK or account (the request
+signing is the S3 protocol's Signature Version 4, which every S3-compatible
+service uses). Hosted: object storage at a European provider (for example
+Scaleway, OVH, Hetzner or UpCloud) with versioning, replicated to a second,
+independent European provider (docs/hosting-and-billing.md, data in the
+EU/EEA). Configuration names the provider's endpoint and region explicitly:
+there is no default region. Self-host: Garage (AGPL-3.0) in
 compose; SeaweedFS as alternative. MinIO not used (community edition in
 maintenance mode, no binaries). Uploads/downloads via short-lived pre-signed
 URLs; files scanned with ClamAV before being made visible; per-club key prefix;
