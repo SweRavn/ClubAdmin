@@ -1485,10 +1485,12 @@ export interface components {
       /** Format: date */
       birthDate: string | null;
       complete: boolean;
+      /** @enum {string} */
+      clubCreation: "create" | "request" | "not_allowed";
     };
     CompleteProfileRequest: {
-      givenName: string;
-      familyName: string;
+      givenName?: string;
+      familyName?: string;
       /** Format: date */
       birthDate: string;
     };

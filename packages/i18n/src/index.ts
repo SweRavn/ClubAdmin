@@ -89,7 +89,19 @@ export function withFallback(locale: Locale): Catalogue {
 
 /** Namespaces whose keys are the values of an API enum (roles, group kinds, ...). */
 export type EnumNamespace =
-  "roles" | "functions" | "kinds" | "membershipStatus" | "guardianKinds" | "genders" | "locales";
+  | "roles"
+  | "functions"
+  | "kinds"
+  | "membershipStatus"
+  | "guardianKinds"
+  | "genders"
+  | "locales"
+  | "joinPolicies"
+  | "joinRequestStatus"
+  | "invitationKinds"
+  | "invitationStates"
+  | "creationStatus"
+  | "joinErrors";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

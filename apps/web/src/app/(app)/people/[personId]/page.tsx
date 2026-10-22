@@ -5,7 +5,19 @@ import { enumKey } from "@clubadmin/i18n";
 import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { getClubGroups, getPerson } from "../../../../server/data.ts";
+import {
+  ActionForm,
+  buttonClass,
+  secondaryButtonClass,
+} from "../../../../components/action-form.tsx";
+import { FormError } from "../../../../components/form-error.tsx";
+import {
+  getClubGroups,
+  getClubManagers,
+  getMe,
+  getMyClubs,
+  getPerson,
+} from "../../../../server/data.ts";
 
 type Props = {
   params: Promise<{ personId: string }>;
@@ -25,11 +37,26 @@ export async function generateMetadata({ params, searchParams }: Props) {
 export default async function PersonPage({ params, searchParams }: Props) {
   const { personId } = await params;
   const clubId = await clubIdOf(searchParams);
-  const [t, locale, profile] = await Promise.all([
+  const [t, locale, profile, me, mine, query] = await Promise.all([
     getTranslations(),
     getLocale(),
     getPerson(personId, clubId),
+    getMe(),
+    getMyClubs(),
+    searchParams,
   ]);
+  // Club managers start appointments and hand-overs from an active member's profile (P1.1).
+  const managedClub = profile.club
+    ? mine.clubs.find(
+        (c) => c.club.id === profile.club!.clubId && c.permissions.includes("club.roles.manage"),
+      )
+    : undefined;
+  const isActiveMember = profile.club?.membership?.status === "active";
+  const managers =
+    managedClub && isActiveMember && personId !== me.personId
+      ? await getClubManagers(managedClub.club.id)
+      : null;
+  const alreadyManager = managers?.items.some((m) => m.person.id === personId) ?? false;
   const groupNames = profile.club?.groups?.length
     ? new Map((await getClubGroups(profile.club.clubId)).map((g) => [g.id, g.name]))
     : new Map<string, string>();
@@ -111,6 +138,35 @@ export default async function PersonPage({ params, searchParams }: Props) {
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      <FormError code={query.error} />
+      {managers && managedClub && !alreadyManager ? (
+        <section
+          aria-labelledby="person-manager"
+          className="space-y-2"
+          data-testid="manager-actions"
+        >
+          <h2 id="person-manager" className="text-lg font-semibold">
+            {t("managers.title")}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            <ActionForm action="appoint-manager">
+              <input type="hidden" name="clubId" value={managedClub.club.id} />
+              <input type="hidden" name="personId" value={personId} />
+              <button type="submit" className={buttonClass}>
+                {t("managers.appoint")}
+              </button>
+            </ActionForm>
+            <ActionForm action="propose-handover" back={`/clubs/${managedClub.club.id}/managers`}>
+              <input type="hidden" name="clubId" value={managedClub.club.id} />
+              <input type="hidden" name="personId" value={personId} />
+              <button type="submit" className={secondaryButtonClass} data-testid="propose-handover">
+                {t("managers.handOverTo")}
+              </button>
+            </ActionForm>
+          </div>
         </section>
       ) : null}
 

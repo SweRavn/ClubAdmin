@@ -37,7 +37,9 @@
     "label": "Huvudmeny",
     "home": "Hem",
     "groups": "Grupper",
-    "members": "Medlemmar"
+    "members": "Medlemmar",
+    "joinRequests": "Ansökningar",
+    "invitations": "Inbjudningar"
   },
   "clubSwitcher": {
     "label": "Förening: {club}",
@@ -124,7 +126,17 @@
     "text": "Du är inte med i någon förening ännu.",
     "findClub": "Hitta en förening",
     "createClub": "Skapa en förening",
-    "comingSoon": "Att gå med i och skapa föreningar kommer i nästa version."
+    "comingSoon": "Gå med i eller skapa en förening i webbappen.",
+    "requestClub": "Ansök om att skapa en förening",
+    "creationNotAllowed": "På den här servern skapar bara administratörerna föreningar.",
+    "completeProfile": "Fyll i din profil först",
+    "completeProfileText": "Föreningar behöver ditt namn och födelsedatum innan du kan gå med.",
+    "haveCode": "Jag har en inbjudningskod",
+    "code": "Inbjudningskod",
+    "useCode": "Använd koden",
+    "haveLink": "Har du fått en länk? Öppna den bara.",
+    "startTitle": "Välkommen! Hur vill du börja?",
+    "startText": "Gå med i en förening du känner, be en förening att ta in dig eller starta en ny förening."
   },
   "club": {
     "overview": "Översikt",
@@ -137,7 +149,9 @@
     "language": "Språk",
     "timeZone": "Tidszon",
     "localTime": "Tid hos föreningen",
-    "logo": "Logotyp för {club}"
+    "logo": "Logotyp för {club}",
+    "welcome": "Välkommen till föreningen!",
+    "created": "Föreningen är skapad. Du är dess första föreningsansvariga."
   },
   "groups": {
     "title": "Grupper i {club}",
@@ -304,5 +318,160 @@
       "rejectedSubject": "Din ansökan om att skapa {club}",
       "rejectedBody": "Din ansökan om att skapa {club} har inte godkänts.{hasMessage, select, yes {\n\nMeddelande:\n{message}} other {}}"
     }
+  },
+  "profileForm": {
+    "title": "Din profil",
+    "intro": "Ditt namn och födelsedatum. Födelsedatumet behövs för föreningarnas åldersregler och kan inte ändras här senare.",
+    "givenName": "Förnamn",
+    "familyName": "Efternamn",
+    "birthDate": "Födelsedatum",
+    "save": "Spara"
+  },
+  "pending": {
+    "title": "Pågående",
+    "joinRequest": "Ansökan till {club} för {person}",
+    "creationRequest": "Ansökan om att skapa {club}",
+    "withdraw": "Dra tillbaka",
+    "joined": "Du är nu medlem.",
+    "requested": "Din ansökan är skickad. Föreningen tar ställning.",
+    "creationRequested": "Din ansökan om att skapa en förening har skickats till administratörerna.",
+    "handover": "{from} vill lämna över rollen som föreningsansvarig i {club} till dig.",
+    "accept": "Tacka ja",
+    "decline": "Tacka nej"
+  },
+  "findClub": {
+    "title": "Hitta en förening",
+    "search": "Föreningens namn eller ort",
+    "searchButton": "Sök",
+    "empty": "Inga föreningar hittades. Föreningar som bara tar emot inbjudna medlemmar visas inte.",
+    "prompt": "Skriv minst två bokstäver.",
+    "more": "Fler föreningar",
+    "ask": "Ansök om medlemskap",
+    "for": "Vem vill gå med?",
+    "yourself": "Jag",
+    "message": "Meddelande till föreningen (valfritt)",
+    "send": "Skicka ansökan"
+  },
+  "createClubForm": {
+    "title": "Skapa en förening",
+    "requestTitle": "Ansök om att skapa en förening",
+    "requestIntro": "En administratör för den här servern granskar nya föreningar innan de skapas.",
+    "name": "Föreningens namn",
+    "shortName": "Kortnamn (valfritt)",
+    "slug": "Webbadress",
+    "slugHint": "Små bokstäver, siffror och bindestreck, t.ex. sjoviks-vk.",
+    "country": "Land",
+    "joinPolicy": "Hur man går med",
+    "create": "Skapa föreningen",
+    "request": "Skicka ansökan"
+  },
+  "joinPolicies": {
+    "open": "Alla går med direkt",
+    "approval": "Föreningen godkänner ansökningar",
+    "invite_only": "Endast via inbjudan"
+  },
+  "joinRequestStatus": {
+    "pending": "Väntar",
+    "approved": "Godkänd",
+    "rejected": "Inte godkänd",
+    "withdrawn": "Tillbakadragen"
+  },
+  "creationStatus": {
+    "pending": "Väntar",
+    "approved": "Godkänd",
+    "rejected": "Inte godkänd",
+    "withdrawn": "Tillbakadragen"
+  },
+  "joinRequests": {
+    "title": "Ansökningar",
+    "empty": "Inga väntande ansökningar.",
+    "requestedBy": "Ansökt av {name}",
+    "preferred": "Vill gärna gå med i: {groups}",
+    "message": "Meddelande",
+    "approve": "Godkänn",
+    "reject": "Avslå",
+    "decisionMessage": "Meddelande till den sökande (valfritt)",
+    "decided": "Klart."
+  },
+  "invitations": {
+    "title": "Inbjudningar",
+    "create": "Ny inbjudan",
+    "kind": "Typ",
+    "email": "E-postadress",
+    "group": "Grupp (valfritt)",
+    "noGroup": "Ingen grupp",
+    "role": "Roll (endast föreningsansvariga)",
+    "noRole": "Ingen roll",
+    "maxUses": "Hur många som får använda den (valfritt)",
+    "expiresInDays": "Giltig i (dagar)",
+    "submit": "Skapa inbjudan",
+    "created": "Inbjudan är klar. Kopiera den nu: den visas bara en gång.",
+    "sent": "Inbjudan skickas med e-post.",
+    "copy": "Kopiera",
+    "copied": "Kopierad",
+    "empty": "Inga inbjudningar än.",
+    "uses": "Använd {uses} av {max} gånger",
+    "usesUnlimited": "Använd {uses} gånger",
+    "expires": "Giltig till {date}",
+    "revoke": "Återkalla",
+    "createdBy": "Skapad av {name}"
+  },
+  "invitationKinds": {
+    "email": "E-post",
+    "link": "Länk",
+    "code": "Kod"
+  },
+  "invitationStates": {
+    "active": "Aktiv",
+    "expired": "Har gått ut",
+    "revoked": "Återkallad",
+    "used_up": "Förbrukad"
+  },
+  "joinLanding": {
+    "title": "Inbjudan till {club}",
+    "invalid": "Inbjudan gäller inte längre. Be föreningen om en ny.",
+    "login": "Logga in eller skapa ett konto för att tacka ja",
+    "accept": "Gå med i {club}",
+    "intro": "Du har bjudits in att gå med i {club} i ClubAdmin."
+  },
+  "managers": {
+    "title": "Föreningsansvariga",
+    "since": "sedan {date}",
+    "appoint": "Gör till föreningsansvarig",
+    "appointHint": "Välj en aktiv medlem med personens ID (medlemslistan kommer med medlemsregistret).",
+    "personId": "Medlemmens person-ID",
+    "remove": "Ta bort",
+    "stepDown": "Kliv av",
+    "handOver": "Lämna över till …",
+    "handOverSubmit": "Föreslå",
+    "pendingHandover": "Väntar på att {name} tackar ja (till {date}).",
+    "cancel": "Dra tillbaka förslaget",
+    "lastManager": "En förening behöver alltid minst en föreningsansvarig.",
+    "manage": "Hantera föreningsansvariga",
+    "handOverTo": "Lämna över min roll som föreningsansvarig till den här personen"
+  },
+  "joinErrors": {
+    "profile_incomplete": "Fyll i din profil först.",
+    "email_not_verified": "Bekräfta din e-postadress först.",
+    "join_request_exists": "Det finns redan en väntande ansökan.",
+    "already_member": "Redan medlem i föreningen.",
+    "not_guardian": "Du kan bara ansöka för dig själv och dina barn.",
+    "not_found": "Hittades inte.",
+    "invitation_invalid": "Inbjudan gäller inte längre.",
+    "invitation_email_mismatch": "Inbjudan skickades till en annan e-postadress. Logga in med den adressen.",
+    "role_preset_not_allowed": "Bara föreningsansvariga kan bjuda in med en roll.",
+    "last_club_manager": "En förening behöver alltid minst en föreningsansvarig.",
+    "not_a_member": "Bara aktiva medlemmar kan bli föreningsansvariga.",
+    "club_slug_taken": "Webbadressen är upptagen.",
+    "creation_request_exists": "Du har redan en väntande ansökan.",
+    "club_creation_not_allowed": "Du får inte skapa föreningar här.",
+    "too_young_for_account": "Du är för ung för ett eget konto; en vårdnadshavare kan lägga till dig.",
+    "handover_invalid": "Överlämningen är inte längre öppen.",
+    "club_has_manager": "Föreningen har fortfarande en föreningsansvarig.",
+    "mfa_required": "Det här kräver inloggning med tvåfaktorsautentisering. Logga ut och logga in igen med den.",
+    "rate_limited": "För många försök. Försök igen senare.",
+    "invalid_input": "Kontrollera formuläret.",
+    "validation": "Kontrollera formuläret.",
+    "failed": "Det gick inte. Försök igen."
   }
 }

@@ -40,6 +40,22 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       label: t("nav.groups"),
       current: pathname.startsWith(`/clubs/${club.id}/groups`) || pathname.startsWith("/groups/"),
     });
+    if (club.mine?.permissions.includes("club.join_requests.manage")) {
+      nav.push({
+        key: "join-requests",
+        href: `/clubs/${club.id}/join-requests`,
+        label: t("nav.joinRequests"),
+        current: pathname.startsWith(`/clubs/${club.id}/join-requests`),
+      });
+    }
+    if (club.mine?.permissions.includes("club.invitations.manage")) {
+      nav.push({
+        key: "invitations",
+        href: `/clubs/${club.id}/invitations`,
+        label: t("nav.invitations"),
+        current: pathname.startsWith(`/clubs/${club.id}/invitations`),
+      });
+    }
     if (club.mine?.permissions.includes("club.members.read")) {
       nav.push({
         key: "members",

@@ -191,6 +191,18 @@ export class OnboardingController {
   private async toProfile(authz: RequestAuthorization, person: Person): Promise<MyProfile> {
     const summary = await this.presenter.presentOne(authz, null, person);
     if (!summary) throw new DomainError("not_found");
-    return { person: summary, birthDate: person.birthDate, complete: person.birthDate !== null };
+    const operator = authz.actor.isOperator();
+    const clubCreation =
+      this.mode === "open" || operator
+        ? "create"
+        : this.mode === "approval"
+          ? "request"
+          : "not_allowed";
+    return {
+      person: summary,
+      birthDate: person.birthDate,
+      complete: person.birthDate !== null,
+      clubCreation,
+    };
   }
 }

@@ -6,14 +6,23 @@
 
 import {
   ClubDetailSchema,
+  ClubSearchResultSchema,
   GroupDetailSchema,
   type GroupList,
   GroupListSchema,
   GroupMemberListSchema,
+  InvitationListSchema,
+  InvitationLookupSchema,
   isUuid,
+  JoinRequestListSchema,
+  ManagerListSchema,
   MeResponseSchema,
+  MyClubCreationRequestsSchema,
   MyClubsSchema,
   MyGroupsSchema,
+  MyHandoversSchema,
+  MyJoinRequestsSchema,
+  MyProfileSchema,
   MyWardsSchema,
   PersonProfileSchema,
   SessionListSchema,
@@ -124,6 +133,47 @@ export const getClubGroups = cache(async (clubId: string): Promise<GroupList["it
     cursor = page.nextCursor;
   } while (cursor);
   return items;
+});
+
+// Joining (P1.1).
+export const getMyProfile = cache(() => required("/api/v1/me/profile", MyProfileSchema));
+export const getMyJoinRequests = cache(() =>
+  required("/api/v1/me/join-requests", MyJoinRequestsSchema),
+);
+export const getMyCreationRequests = cache(() =>
+  required("/api/v1/me/club-creation-requests", MyClubCreationRequestsSchema),
+);
+export const getMyHandovers = cache(() =>
+  required("/api/v1/me/manager-handovers", MyHandoversSchema),
+);
+export const searchClubs = cache((q: string, cursor: string | null) => {
+  const query = new URLSearchParams({ limit: "20" });
+  if (q) query.set("q", q);
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(`/api/v1/clubs?${query.toString()}`, ClubSearchResultSchema);
+});
+export const getClubJoinRequests = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/join-requests?limit=100`, JoinRequestListSchema),
+);
+export const getClubInvitations = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/invitations?limit=100`, InvitationListSchema),
+);
+export const getClubManagers = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/managers`, ManagerListSchema),
+);
+
+/** Which club an invitation link is for, without a session; null if it is not usable. */
+export const lookupInvitation = cache(async (token: string) => {
+  const res = await apiFetch(
+    `/api/v1/invitations/lookup?token=${encodeURIComponent(token)}`,
+    null,
+    {
+      forwardedFor: (await headers()).get("x-forwarded-for"),
+    },
+  );
+  if (res.ok) return InvitationLookupSchema.parse(await res.json());
+  if (res.status === 409 || res.status === 400 || res.status === 404) return null;
+  throw new ApiResponseError(res.status, res.headers.get("x-request-id"));
 });
 
 /** Public metadata for the footer; null if the API cannot be reached (the page still renders). */

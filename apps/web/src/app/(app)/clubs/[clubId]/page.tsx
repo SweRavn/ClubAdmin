@@ -5,21 +5,29 @@ import { EmptyState, PersonName } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
 import { ClubTime } from "../../../../components/club-time.tsx";
-import { getClub, getClubGroups } from "../../../../server/data.ts";
+import { Notice } from "../../../../components/form-error.tsx";
+import { getClub, getClubGroups, getMyClubs } from "../../../../server/data.ts";
 
-type Params = { params: Promise<{ clubId: string }> };
+type Params = {
+  params: Promise<{ clubId: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export async function generateMetadata({ params }: Params) {
   return { title: (await getClub((await params).clubId)).name };
 }
 
-export default async function ClubPage({ params }: Params) {
-  const { clubId } = await params;
-  const [t, club, groups] = await Promise.all([
+export default async function ClubPage({ params, searchParams }: Params) {
+  const [{ clubId }, query] = await Promise.all([params, searchParams]);
+  const [t, club, groups, mine] = await Promise.all([
     getTranslations(),
     getClub(clubId),
     getClubGroups(clubId),
+    getMyClubs(),
   ]);
+  const canManage =
+    mine.clubs.find((c) => c.club.id === club.id)?.permissions.includes("club.roles.manage") ??
+    false;
   const topLevel = groups.filter((g) => g.parentGroupId === null && !g.archived);
 
   return (
@@ -39,6 +47,9 @@ export default async function ClubPage({ params }: Params) {
         </h1>
       </div>
 
+      {query.welcome ? <Notice>{t("club.welcome")}</Notice> : null}
+      {query.created ? <Notice>{t("club.created")}</Notice> : null}
+
       <section
         aria-labelledby="club-details"
         className="rounded-lg border border-border bg-raised p-4"
@@ -57,9 +68,16 @@ export default async function ClubPage({ params }: Params) {
       </section>
 
       <section aria-labelledby="club-managers">
-        <h2 id="club-managers" className="mb-2 text-lg font-semibold">
-          {t("club.managers")}
-        </h2>
+        <div className="mb-2 flex items-baseline gap-3">
+          <h2 id="club-managers" className="text-lg font-semibold">
+            {t("club.managers")}
+          </h2>
+          {canManage ? (
+            <a href={`/clubs/${club.id}/managers`} className="text-sm text-accent underline">
+              {t("managers.manage")}
+            </a>
+          ) : null}
+        </div>
         {club.managers.length === 0 ? (
           <p className="text-muted">{t("club.noManagers")}</p>
         ) : (

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Home: my clubs, my groups and my children's groups, with role badges; the
-// onboarding placeholder for people without a club.
+// onboarding for people without a club (P1.1) and what is in progress.
 import { enumKey } from "@clubadmin/i18n";
 import type { MyGroups } from "@clubadmin/shared";
-import { EmptyState, personLabel, RoleBadge } from "@clubadmin/ui";
+import { personLabel, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
+import { FormError, Notice } from "../../components/form-error.tsx";
+import { InProgress, Onboarding } from "../../components/joining-panels.tsx";
 import { getMe, getMyClubs, getMyGroups, getMyWards } from "../../server/data.ts";
 
 export async function generateMetadata() {
@@ -13,14 +15,25 @@ export async function generateMetadata() {
   return { title: t("home.title") };
 }
 
-export default async function HomePage() {
-  const [t, me, clubs, groups, wards] = await Promise.all([
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+
+export default async function HomePage({ searchParams }: Props) {
+  const [t, me, clubs, groups, wards, params] = await Promise.all([
     getTranslations(),
     getMe(),
     getMyClubs(),
     getMyGroups(),
     getMyWards(),
+    searchParams,
   ]);
+
+  const notice = params.joined
+    ? t("pending.joined")
+    : params.requested
+      ? t("pending.requested")
+      : params.creationRequested
+        ? t("pending.creationRequested")
+        : null;
 
   if (clubs.clubs.length === 0 && groups.groups.length === 0 && groups.wards.length === 0) {
     return (
@@ -28,36 +41,10 @@ export default async function HomePage() {
         <h1 className="text-2xl font-semibold">
           {t("home.greeting", { name: personLabel(me.person) })}
         </h1>
-        <div data-testid="onboarding">
-          <EmptyState
-            title={t("onboarding.title")}
-            actions={
-              <>
-                <button
-                  type="button"
-                  disabled
-                  aria-describedby="onboarding-soon"
-                  className={disabledButton}
-                >
-                  {t("onboarding.findClub")}
-                </button>
-                <button
-                  type="button"
-                  disabled
-                  aria-describedby="onboarding-soon"
-                  className={disabledButton}
-                >
-                  {t("onboarding.createClub")}
-                </button>
-              </>
-            }
-          >
-            <p>{t("onboarding.text")}</p>
-            <p id="onboarding-soon" className="mt-1 text-sm">
-              {t("onboarding.comingSoon")}
-            </p>
-          </EmptyState>
-        </div>
+        {notice ? <Notice>{notice}</Notice> : null}
+        <FormError code={params.error} />
+        <InProgress />
+        <Onboarding />
       </div>
     );
   }
@@ -69,6 +56,9 @@ export default async function HomePage() {
       <h1 className="text-2xl font-semibold">
         {t("home.greeting", { name: personLabel(me.person) })}
       </h1>
+      {notice ? <Notice>{notice}</Notice> : null}
+      <FormError code={params.error} />
+      <InProgress />
 
       {clubs.clubs.length > 0 ? (
         <section aria-labelledby="my-clubs">
@@ -118,9 +108,6 @@ export default async function HomePage() {
     </div>
   );
 }
-
-const disabledButton =
-  "rounded-md border border-border px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60";
 
 async function GroupList({
   groups,

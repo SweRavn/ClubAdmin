@@ -7,6 +7,8 @@ export const SESSION_COOKIE = "__Host-session";
 export const CSRF_COOKIE = "__Host-csrf";
 /** Binds a login flow (state) to the browser that started it. */
 export const FLOW_COOKIE = "__Host-auth-flow";
+/** The one-time link or code of a new invitation, for its page (2 minutes, that path only). */
+export const INVITATION_SECRET_COOKIE = "ca-invitation";
 
 export const sessionCookieOptions = {
   httpOnly: true,

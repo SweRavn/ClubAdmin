@@ -37,7 +37,9 @@
     "label": "Hovedmeny",
     "home": "Hjem",
     "groups": "Grupper",
-    "members": "Medlemmer"
+    "members": "Medlemmer",
+    "joinRequests": "Søknader",
+    "invitations": "Invitasjoner"
   },
   "clubSwitcher": {
     "label": "Klubb: {club}",
@@ -124,7 +126,17 @@
     "text": "Du er ikke med i noen klubb ennå.",
     "findClub": "Finn en klubb",
     "createClub": "Opprett en klubb",
-    "comingSoon": "Å bli med i og opprette klubber kommer i neste versjon."
+    "comingSoon": "Bli med i eller opprett en klubb i nettappen.",
+    "requestClub": "Søk om å opprette en klubb",
+    "creationNotAllowed": "På denne serveren er det bare administratorene som oppretter klubber.",
+    "completeProfile": "Fyll ut profilen din først",
+    "completeProfileText": "Klubber trenger navnet og fødselsdatoen din før du kan bli med.",
+    "haveCode": "Jeg har en invitasjonskode",
+    "code": "Invitasjonskode",
+    "useCode": "Bruk koden",
+    "haveLink": "Har du fått en lenke? Bare åpne den.",
+    "startTitle": "Velkommen! Hvordan vil du begynne?",
+    "startText": "Bli med i en klubb du kjenner, be en klubb om å ta deg inn, eller start en ny klubb."
   },
   "club": {
     "overview": "Oversikt",
@@ -137,7 +149,9 @@
     "language": "Språk",
     "timeZone": "Tidssone",
     "localTime": "Tid hos klubben",
-    "logo": "Logo for {club}"
+    "logo": "Logo for {club}",
+    "welcome": "Velkommen til klubben!",
+    "created": "Klubben er opprettet. Du er den første klubbansvarlige."
   },
   "groups": {
     "title": "Grupper i {club}",
@@ -304,5 +318,160 @@
       "rejectedSubject": "Søknaden din om å opprette {club}",
       "rejectedBody": "Søknaden din om å opprette {club} ble ikke godkjent.{hasMessage, select, yes {\n\nMelding:\n{message}} other {}}"
     }
+  },
+  "profileForm": {
+    "title": "Profilen din",
+    "intro": "Navnet og fødselsdatoen din. Fødselsdatoen trengs for klubbenes aldersregler og kan ikke endres her senere.",
+    "givenName": "Fornavn",
+    "familyName": "Etternavn",
+    "birthDate": "Fødselsdato",
+    "save": "Lagre"
+  },
+  "pending": {
+    "title": "Pågående",
+    "joinRequest": "Søknad til {club} for {person}",
+    "creationRequest": "Søknad om å opprette {club}",
+    "withdraw": "Trekk tilbake",
+    "joined": "Du er nå medlem.",
+    "requested": "Søknaden din er sendt. Klubben avgjør.",
+    "creationRequested": "Søknaden din om å opprette en klubb er sendt til administratorene.",
+    "handover": "{from} vil overlate rollen som klubbansvarlig i {club} til deg.",
+    "accept": "Takk ja",
+    "decline": "Takk nei"
+  },
+  "findClub": {
+    "title": "Finn en klubb",
+    "search": "Klubbens navn eller sted",
+    "searchButton": "Søk",
+    "empty": "Fant ingen klubber. Klubber som bare tar imot inviterte medlemmer vises ikke.",
+    "prompt": "Skriv minst to bokstaver.",
+    "more": "Flere klubber",
+    "ask": "Søk om medlemskap",
+    "for": "Hvem vil bli med?",
+    "yourself": "Meg",
+    "message": "Melding til klubben (valgfritt)",
+    "send": "Send søknad"
+  },
+  "createClubForm": {
+    "title": "Opprett en klubb",
+    "requestTitle": "Søk om å opprette en klubb",
+    "requestIntro": "En administrator for denne serveren går gjennom nye klubber før de opprettes.",
+    "name": "Klubbens navn",
+    "shortName": "Kortnavn (valgfritt)",
+    "slug": "Nettadresse",
+    "slugHint": "Små bokstaver, tall og bindestrek, f.eks. fjordvik-il.",
+    "country": "Land",
+    "joinPolicy": "Hvordan man blir med",
+    "create": "Opprett klubben",
+    "request": "Send søknaden"
+  },
+  "joinPolicies": {
+    "open": "Alle blir med med en gang",
+    "approval": "Klubben godkjenner søknader",
+    "invite_only": "Bare med invitasjon"
+  },
+  "joinRequestStatus": {
+    "pending": "Venter",
+    "approved": "Godkjent",
+    "rejected": "Ikke godkjent",
+    "withdrawn": "Trukket tilbake"
+  },
+  "creationStatus": {
+    "pending": "Venter",
+    "approved": "Godkjent",
+    "rejected": "Ikke godkjent",
+    "withdrawn": "Trukket tilbake"
+  },
+  "joinRequests": {
+    "title": "Søknader",
+    "empty": "Ingen ventende søknader.",
+    "requestedBy": "Søkt av {name}",
+    "preferred": "Vil gjerne være med i: {groups}",
+    "message": "Melding",
+    "approve": "Godkjenn",
+    "reject": "Avslå",
+    "decisionMessage": "Melding til søkeren (valgfritt)",
+    "decided": "Ferdig."
+  },
+  "invitations": {
+    "title": "Invitasjoner",
+    "create": "Ny invitasjon",
+    "kind": "Type",
+    "email": "E-postadresse",
+    "group": "Gruppe (valgfritt)",
+    "noGroup": "Ingen gruppe",
+    "role": "Rolle (bare klubbansvarlige)",
+    "noRole": "Ingen rolle",
+    "maxUses": "Hvor mange som kan bruke den (valgfritt)",
+    "expiresInDays": "Gyldig i (dager)",
+    "submit": "Opprett invitasjonen",
+    "created": "Invitasjonen er klar. Kopier den nå: den vises bare én gang.",
+    "sent": "Invitasjonen sendes på e-post.",
+    "copy": "Kopier",
+    "copied": "Kopiert",
+    "empty": "Ingen invitasjoner ennå.",
+    "uses": "Brukt {uses} av {max} ganger",
+    "usesUnlimited": "Brukt {uses} ganger",
+    "expires": "Gyldig til {date}",
+    "revoke": "Trekk tilbake",
+    "createdBy": "Opprettet av {name}"
+  },
+  "invitationKinds": {
+    "email": "E-post",
+    "link": "Lenke",
+    "code": "Kode"
+  },
+  "invitationStates": {
+    "active": "Aktiv",
+    "expired": "Utløpt",
+    "revoked": "Trukket tilbake",
+    "used_up": "Oppbrukt"
+  },
+  "joinLanding": {
+    "title": "Invitasjon til {club}",
+    "invalid": "Invitasjonen gjelder ikke lenger. Be klubben om en ny.",
+    "login": "Logg inn eller opprett en konto for å takke ja",
+    "accept": "Bli med i {club}",
+    "intro": "Du er invitert til å bli med i {club} i ClubAdmin."
+  },
+  "managers": {
+    "title": "Klubbansvarlige",
+    "since": "siden {date}",
+    "appoint": "Gjør til klubbansvarlig",
+    "appointHint": "Velg et aktivt medlem med personens ID (medlemslisten kommer med medlemsregisteret).",
+    "personId": "Medlemmets person-ID",
+    "remove": "Fjern",
+    "stepDown": "Gå av",
+    "handOver": "Overlat til …",
+    "handOverSubmit": "Foreslå",
+    "pendingHandover": "Venter på at {name} takker ja (til {date}).",
+    "cancel": "Trekk forslaget",
+    "lastManager": "En klubb trenger alltid minst én klubbansvarlig.",
+    "manage": "Administrer klubbansvarlige",
+    "handOverTo": "Overlat rollen min som klubbansvarlig til denne personen"
+  },
+  "joinErrors": {
+    "profile_incomplete": "Fyll ut profilen din først.",
+    "email_not_verified": "Bekreft e-postadressen din først.",
+    "join_request_exists": "Det finnes allerede en ventende søknad.",
+    "already_member": "Allerede medlem i klubben.",
+    "not_guardian": "Du kan bare søke for deg selv og barna dine.",
+    "not_found": "Ikke funnet.",
+    "invitation_invalid": "Invitasjonen gjelder ikke lenger.",
+    "invitation_email_mismatch": "Invitasjonen ble sendt til en annen e-postadresse. Logg inn med den adressen.",
+    "role_preset_not_allowed": "Bare klubbansvarlige kan invitere med en rolle.",
+    "last_club_manager": "En klubb trenger alltid minst én klubbansvarlig.",
+    "not_a_member": "Bare aktive medlemmer kan bli klubbansvarlige.",
+    "club_slug_taken": "Nettadressen er opptatt.",
+    "creation_request_exists": "Du har allerede en ventende søknad.",
+    "club_creation_not_allowed": "Du kan ikke opprette klubber her.",
+    "too_young_for_account": "Du er for ung for en egen konto; en foresatt kan legge deg til.",
+    "handover_invalid": "Overleveringen er ikke lenger åpen.",
+    "club_has_manager": "Klubben har fortsatt en klubbansvarlig.",
+    "mfa_required": "Dette krever innlogging med tofaktorautentisering. Logg ut og logg inn igjen med den.",
+    "rate_limited": "For mange forsøk. Prøv igjen senere.",
+    "invalid_input": "Sjekk skjemaet.",
+    "validation": "Sjekk skjemaet.",
+    "failed": "Det gikk ikke. Prøv igjen."
   }
 }

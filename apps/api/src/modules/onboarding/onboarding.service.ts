@@ -136,7 +136,12 @@ export class OnboardingService {
     const current = await people.getPerson(context, me);
     // The birth date is set once here; later changes go through the profile.
     const { birthDate, ...names } = data;
-    return people.updateProfile(context, me, current.birthDate ? names : { ...names, birthDate });
+    const changes = Object.fromEntries(Object.entries(names).filter(([, v]) => v !== undefined));
+    return people.updateProfile(
+      context,
+      me,
+      current.birthDate ? changes : { ...changes, birthDate },
+    );
   }
 
   // --- Club creation ---------------------------------------------------------

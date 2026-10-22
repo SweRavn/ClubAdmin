@@ -25,9 +25,12 @@ const message = z.string().trim().min(1).max(1000);
 
 // --- Profile ------------------------------------------------------------
 
-/** Completing the profile after sign-up: the birth date is needed for age rules. */
+/**
+ * Completing the profile after sign-up: the birth date is needed for age
+ * rules; the name comes from sign-up and can be corrected here.
+ */
 export const CompleteProfileSchema = z
-  .object({ givenName: name, familyName: name, birthDate: z.iso.date() })
+  .object({ givenName: name.optional(), familyName: name.optional(), birthDate: z.iso.date() })
   .strict()
   .openapi("CompleteProfileRequest");
 export type CompleteProfileInput = z.infer<typeof CompleteProfileSchema>;
@@ -38,6 +41,8 @@ export const MyProfileSchema = z
     birthDate: z.iso.date().nullable(),
     /** Name and birth date are known: the person may create clubs and join. */
     complete: z.boolean(),
+    /** What POST /clubs does for this person (CLUB_CREATION, ADR 0018). */
+    clubCreation: z.enum(["create", "request", "not_allowed"]),
   })
   .openapi("MyProfile");
 export type MyProfile = z.infer<typeof MyProfileSchema>;

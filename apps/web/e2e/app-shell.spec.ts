@@ -231,11 +231,12 @@ test("a roster longer than a page loads the next page on request", async ({ brow
   await page.context().close();
 });
 
-test("Emma, without a club, gets the onboarding placeholder", async ({ browser }) => {
+test("Emma, without a club, gets the onboarding", async ({ browser }) => {
   const page = await asPersona(browser, PERSONAS.emma);
   const onboarding = page.getByTestId("onboarding");
-  await expect(onboarding.getByRole("button", { name: "Hitta en förening" })).toBeDisabled();
-  await expect(onboarding.getByRole("button", { name: "Skapa en förening" })).toBeDisabled();
+  await expect(onboarding.getByTestId("find-club")).toHaveAttribute("href", "/clubs/find");
+  await expect(onboarding.getByTestId("create-club")).toHaveAttribute("href", "/clubs/new");
+  await expect(onboarding.getByTestId("invitation-code")).toBeVisible();
   await page.context().close();
 });
 

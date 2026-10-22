@@ -36,5 +36,7 @@ export default defineConfig({
           testMatch: /(dev-auth|app-shell)\.spec\.ts/,
           dependencies: ["zitadel"],
         },
+        // Changes the demo data: after the specs that read it.
+        { name: "joining", testMatch: /joining\.spec\.ts/, dependencies: ["dev-auth"] },
       ],
 });

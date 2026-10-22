@@ -122,12 +122,15 @@ jobs:
           pnpm db:reset --scenario load --size 10
           pnpm db:reset
 
-      - name: Start the API and the web app (DEV_AUTH on, as in development)
+      - name: Start the API, the worker and the web app (DEV_AUTH on, as in development)
         run: |
           echo "127.0.0.1 clubadmin.localhost auth.clubadmin.localhost api.clubadmin.localhost mail.clubadmin.localhost" | sudo tee -a /etc/hosts
           set -a; . ./.env.local; set +a
           pnpm --filter @clubadmin/api build
+          pnpm --filter @clubadmin/worker build
           (cd apps/api && nohup node --enable-source-maps --import ./dist/instrumentation.js ./dist/main.js > "$RUNNER_TEMP/api.log" 2>&1 &)
+          # Outbox handlers: cache invalidation after membership changes, emails (Mailpit).
+          (cd apps/worker && nohup node --enable-source-maps --import ./dist/instrumentation.js ./dist/main.js > "$RUNNER_TEMP/worker.log" 2>&1 &)
           (cd apps/web && NEXT_TELEMETRY_DISABLED=1 nohup pnpm exec next dev --port 3000 > "$RUNNER_TEMP/web.log" 2>&1 &)
           for url in http://127.0.0.1:4000/health/ready http://127.0.0.1:3000/login; do
             timeout 120 sh -c "until curl -sf -o /dev/null $url; do sleep 2; done"
@@ -195,7 +198,7 @@ jobs:
         if: failure()
         run: |
           docker compose --project-name clubadmin logs --no-color --tail 300
-          tail -n 200 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log" "$RUNNER_TEMP/web-prod.log" || true
+          tail -n 200 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/worker.log" "$RUNNER_TEMP/web.log" "$RUNNER_TEMP/web-prod.log" || true
 
   # Backups (P0.11, docs/operations/backup-restore.md): PostgreSQL with
   # pgBackRest and the backup sidecar against Garage; full backup, writes,

@@ -37,7 +37,9 @@
     "label": "Main",
     "home": "Home",
     "groups": "Groups",
-    "members": "Members"
+    "members": "Members",
+    "joinRequests": "Join requests",
+    "invitations": "Invitations"
   },
   "clubSwitcher": {
     "label": "Club: {club}",
@@ -124,7 +126,17 @@
     "text": "You are not part of a club yet.",
     "findClub": "Find a club",
     "createClub": "Create a club",
-    "comingSoon": "Joining and creating clubs arrive in the next version."
+    "comingSoon": "Join or create a club in the web app.",
+    "requestClub": "Ask to create a club",
+    "creationNotAllowed": "On this server only the administrators create clubs.",
+    "completeProfile": "Complete your profile first",
+    "completeProfileText": "Clubs need your name and birth date before you can join.",
+    "haveCode": "I have an invitation code",
+    "code": "Invitation code",
+    "useCode": "Use the code",
+    "haveLink": "Got a link? Just open it.",
+    "startTitle": "Welcome! How do you want to start?",
+    "startText": "Join a club you know, ask a club to take you in, or start a new club."
   },
   "club": {
     "overview": "Overview",
@@ -137,7 +149,9 @@
     "language": "Language",
     "timeZone": "Time zone",
     "localTime": "Time at the club",
-    "logo": "Logo of {club}"
+    "logo": "Logo of {club}",
+    "welcome": "Welcome to the club!",
+    "created": "The club has been created. You are its first club manager."
   },
   "groups": {
     "title": "Groups in {club}",
@@ -304,5 +318,160 @@
       "rejectedSubject": "Your request to create {club}",
       "rejectedBody": "Your request to create {club} was not approved.{hasMessage, select, yes {\n\nMessage:\n{message}} other {}}"
     }
+  },
+  "profileForm": {
+    "title": "Your profile",
+    "intro": "Your name and birth date. The birth date is needed for the clubs' age rules and cannot be changed here later.",
+    "givenName": "First name",
+    "familyName": "Last name",
+    "birthDate": "Birth date",
+    "save": "Save"
+  },
+  "pending": {
+    "title": "In progress",
+    "joinRequest": "Request to join {club} for {person}",
+    "creationRequest": "Request to create {club}",
+    "withdraw": "Withdraw",
+    "joined": "You are now a member.",
+    "requested": "Your request has been sent. The club will decide.",
+    "creationRequested": "Your request to create a club has been sent to the administrators.",
+    "handover": "{from} wants to hand over the manager role of {club} to you.",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "findClub": {
+    "title": "Find a club",
+    "search": "Club name or city",
+    "searchButton": "Search",
+    "empty": "No clubs found. Clubs that only take invited members are not listed.",
+    "prompt": "Type at least two letters.",
+    "more": "More clubs",
+    "ask": "Ask to join",
+    "for": "Who wants to join?",
+    "yourself": "Me",
+    "message": "Message to the club (optional)",
+    "send": "Send request"
+  },
+  "createClubForm": {
+    "title": "Create a club",
+    "requestTitle": "Ask to create a club",
+    "requestIntro": "An administrator of this server reviews new clubs before they are created.",
+    "name": "Club name",
+    "shortName": "Short name (optional)",
+    "slug": "Web address",
+    "slugHint": "Lower-case letters, digits and hyphens, e.g. sjoviks-vk.",
+    "country": "Country",
+    "joinPolicy": "How people join",
+    "create": "Create the club",
+    "request": "Send the request"
+  },
+  "joinPolicies": {
+    "open": "Anyone joins at once",
+    "approval": "The club approves requests",
+    "invite_only": "Invitation only"
+  },
+  "joinRequestStatus": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Not approved",
+    "withdrawn": "Withdrawn"
+  },
+  "creationStatus": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Not approved",
+    "withdrawn": "Withdrawn"
+  },
+  "joinRequests": {
+    "title": "Join requests",
+    "empty": "No pending requests.",
+    "requestedBy": "Requested by {name}",
+    "preferred": "Would like to join: {groups}",
+    "message": "Message",
+    "approve": "Approve",
+    "reject": "Reject",
+    "decisionMessage": "Message to the applicant (optional)",
+    "decided": "Done."
+  },
+  "invitations": {
+    "title": "Invitations",
+    "create": "New invitation",
+    "kind": "Kind",
+    "email": "Email address",
+    "group": "Group (optional)",
+    "noGroup": "No group",
+    "role": "Role (club managers only)",
+    "noRole": "No role",
+    "maxUses": "How many people may use it (optional)",
+    "expiresInDays": "Valid for (days)",
+    "submit": "Create the invitation",
+    "created": "The invitation is ready. Copy it now: it is shown only once.",
+    "sent": "The invitation email is on its way.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "empty": "No invitations yet.",
+    "uses": "Used {uses} of {max} times",
+    "usesUnlimited": "Used {uses} times",
+    "expires": "Valid until {date}",
+    "revoke": "Revoke",
+    "createdBy": "Created by {name}"
+  },
+  "invitationKinds": {
+    "email": "Email",
+    "link": "Link",
+    "code": "Code"
+  },
+  "invitationStates": {
+    "active": "Active",
+    "expired": "Expired",
+    "revoked": "Revoked",
+    "used_up": "Used up"
+  },
+  "joinLanding": {
+    "title": "Invitation to {club}",
+    "invalid": "This invitation is no longer valid. Ask the club for a new one.",
+    "login": "Log in or create an account to accept",
+    "accept": "Join {club}",
+    "intro": "You have been invited to join {club} in ClubAdmin."
+  },
+  "managers": {
+    "title": "Club managers",
+    "since": "since {date}",
+    "appoint": "Make manager",
+    "appointHint": "Choose an active member by their ID (member list comes with the member register).",
+    "personId": "Member's person ID",
+    "remove": "Remove",
+    "stepDown": "Step down",
+    "handOver": "Hand over to…",
+    "handOverSubmit": "Propose",
+    "pendingHandover": "Waiting for {name} to accept (until {date}).",
+    "cancel": "Withdraw the proposal",
+    "lastManager": "A club always needs at least one manager.",
+    "manage": "Manage club managers",
+    "handOverTo": "Hand over my manager role to this person"
+  },
+  "joinErrors": {
+    "profile_incomplete": "Complete your profile first.",
+    "email_not_verified": "Verify your email address first.",
+    "join_request_exists": "There is already a pending request.",
+    "already_member": "Already a member of this club.",
+    "not_guardian": "You can only apply for yourself and your children.",
+    "not_found": "Not found.",
+    "invitation_invalid": "This invitation is no longer valid.",
+    "invitation_email_mismatch": "This invitation was sent to another email address. Log in with that address.",
+    "role_preset_not_allowed": "Only club managers can invite with a role.",
+    "last_club_manager": "A club always needs at least one manager.",
+    "not_a_member": "Only active members can become managers.",
+    "club_slug_taken": "This web address is taken.",
+    "creation_request_exists": "You already have a pending request.",
+    "club_creation_not_allowed": "You may not create clubs here.",
+    "too_young_for_account": "You are too young for your own account; a guardian can add you.",
+    "handover_invalid": "The hand-over is no longer open.",
+    "club_has_manager": "The club still has a manager.",
+    "mfa_required": "This needs a login with a second factor. Log out and log in again with it.",
+    "rate_limited": "Too many attempts. Try again later.",
+    "invalid_input": "Please check the form.",
+    "validation": "Please check the form.",
+    "failed": "That did not work. Try again."
   }
 }

@@ -2163,12 +2163,21 @@
           },
           "complete": {
             "type": "boolean"
+          },
+          "clubCreation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "request",
+              "not_allowed"
+            ]
           }
         },
         "required": [
           "person",
           "birthDate",
-          "complete"
+          "complete",
+          "clubCreation"
         ]
       },
       "CompleteProfileRequest": {
@@ -2190,8 +2199,6 @@
           }
         },
         "required": [
-          "givenName",
-          "familyName",
           "birthDate"
         ],
         "additionalProperties": false
