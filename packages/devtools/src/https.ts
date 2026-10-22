@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { request } from "node:https";
+import { connect, type DetailedPeerCertificate } from "node:tls";
 
 export interface HttpsResponse {
   status: number;
@@ -61,4 +62,56 @@ export function fetchWithCa(ca: string): typeof fetch {
     });
     return new Response(res.status === 204 ? null : res.body, { status: res.status });
   }) as typeof fetch;
+}
+
+const CERTIFICATE_ERRORS = new Set([
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+  "UNABLE_TO_GET_ISSUER_CERT",
+  "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+  "SELF_SIGNED_CERT_IN_CHAIN",
+  "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "CERT_SIGNATURE_FAILURE",
+  "CERT_HAS_EXPIRED",
+  "CERT_NOT_YET_VALID",
+  "ERR_TLS_CERT_ALTNAME_INVALID",
+]);
+
+/** True for a TLS error saying the server's certificate could not be verified. */
+export function isCertificateError(error: unknown): error is Error & { code: string } {
+  const code = (error as { code?: unknown } | null)?.code;
+  return error instanceof Error && typeof code === "string" && CERTIFICATE_ERRORS.has(code);
+}
+
+/**
+ * The certificate chain a server presents for `url` (without verifying it),
+ * one line per certificate, for error messages.
+ */
+export function servedChain(url: string, connectTo = "127.0.0.1"): Promise<string[]> {
+  const target = new URL(url);
+  return new Promise((resolve, reject) => {
+    const socket = connect(
+      {
+        host: connectTo,
+        port: target.port === "" ? 443 : Number(target.port),
+        servername: target.hostname,
+        rejectUnauthorized: false,
+      },
+      () => {
+        const lines: string[] = [];
+        const seen = new Set<string>();
+        let cert: DetailedPeerCertificate | undefined = socket.getPeerCertificate(true);
+        while (cert?.fingerprint256 && !seen.has(cert.fingerprint256)) {
+          seen.add(cert.fingerprint256);
+          const subject = String(cert.subject.CN || cert.subjectaltname || "?");
+          const issuer = String(cert.issuer.CN || "?");
+          lines.push(`${subject} (issuer: ${issuer}, valid until ${cert.valid_to})`);
+          cert = cert.issuerCertificate;
+        }
+        socket.end();
+        resolve(lines);
+      },
+    );
+    socket.setTimeout(5_000, () => socket.destroy(new Error(`timeout connecting to ${url}`)));
+    socket.on("error", reject);
+  });
 }

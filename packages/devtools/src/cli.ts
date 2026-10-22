@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Entry point for the pnpm dev:* scripts. Usage: node packages/devtools/src/cli.ts <command>
 
+import { X509Certificate } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 
 import { bootstrap, migrate, passwordsFromEnv } from "@clubadmin/db/admin";
 
 import { exportCaddyRootCert } from "./caddy.ts";
-import { compose } from "./compose.ts";
+import { compose, DEV_SERVICES, notRunning, PROJECT_NAME, serviceStates } from "./compose.ts";
 import { doctor } from "./doctor.ts";
 import { ensureEnvLocal, loadEnv, requireEnv, setEnvValues } from "./env.ts";
 import { setupGarage } from "./garage.ts";
-import { fetchWithCa } from "./https.ts";
+import { fetchWithCa, isCertificateError, servedChain } from "./https.ts";
 import { caddyRootCertFile } from "./paths.ts";
 import { run } from "./process.ts";
 import { smoke } from "./smoke.ts";
@@ -79,18 +80,64 @@ async function authConfigure(print: boolean): Promise<boolean> {
   return true;
 }
 
+/**
+ * authConfigure for `pnpm dev:services`. If Caddy serves a certificate its own
+ * local CA does not verify (for example a stale chain after Caddy renewed its
+ * intermediate certificate), Caddy is recreated once; if that does not help,
+ * the error says what was served and how to start over.
+ */
+async function authConfigureLocal(): Promise<boolean> {
+  try {
+    return await authConfigure(false);
+  } catch (error) {
+    if (!isCertificateError(error)) throw error;
+    console.log(`Zitadel: Caddy's certificate does not verify (${error.code}); recreating Caddy…`);
+  }
+  if ((await compose(["up", "--detach", "--wait", "--force-recreate", "caddy"])) !== 0) {
+    console.error("\nCaddy did not start again. Run `pnpm dev:logs caddy`.");
+    return false;
+  }
+  try {
+    return await authConfigure(false);
+  } catch (error) {
+    if (!isCertificateError(error)) throw error;
+    const issuer = requireEnv(loadEnv(), "AUTH_ISSUER");
+    const ca = new X509Certificate(localCa());
+    const served = await servedChain(issuer).catch((cause: unknown) => [String(cause)]);
+    console.error(`
+The HTTPS certificate for ${issuer} cannot be verified with Caddy's local CA (${error.code}).
+  Caddy's CA:  ${ca.subject.replace(/^CN=/, "")} (SHA-256 ${ca.fingerprint256.slice(0, 23)}…)
+  Served by 127.0.0.1:${new URL(issuer).port || "443"}:
+${served.map((line) => `    ${line}`).join("\n")}
+If the issuer above is not Caddy Local Authority, another program answers on that port.
+Otherwise start Caddy over with a new CA:
+  pnpm dev:down && docker volume rm ${PROJECT_NAME}_caddy-data && pnpm dev:services && pnpm dev:trust-ca`);
+    return false;
+  }
+}
+
 async function startServices(full: boolean): Promise<boolean> {
   const added = ensureEnvLocal();
   if (added.length > 0) console.log(`.env.local: generated ${added.length} setting(s).`);
 
   console.log("Starting services (first start downloads images and can take a few minutes)…");
-  if (
-    (await compose(["up", "--detach", "--wait", "--wait-timeout", "300", "--remove-orphans"], {
+  const up = (args: string[]) =>
+    compose(["up", "--detach", "--wait", "--wait-timeout", "300", "--remove-orphans", ...args], {
       full,
-    })) !== 0
-  ) {
-    console.error("\nServices did not become healthy. Run `pnpm dev:doctor` and `pnpm dev:logs`.");
-    return false;
+    });
+  if ((await up([])) !== 0) {
+    // Docker Desktop on WSL loses bind-mount sources when it restarts; such
+    // containers only start again once recreated.
+    const stopped = notRunning(serviceStates(), [...DEV_SERVICES, ...(full ? ["clamav"] : [])]);
+    if (stopped.length > 0) {
+      console.log(`\nRecreating containers that did not start: ${stopped.join(", ")}…`);
+    }
+    if (stopped.length === 0 || (await up(["--force-recreate", ...stopped])) !== 0) {
+      console.error(
+        "\nServices did not become healthy. Run `pnpm dev:doctor` and `pnpm dev:logs`.",
+      );
+      return false;
+    }
   }
 
   const env = loadEnv();
@@ -115,7 +162,7 @@ async function startServices(full: boolean): Promise<boolean> {
       : `Database: up to date (${migrated.alreadyApplied} migrations)`,
   );
 
-  await authConfigure(false);
+  if (!(await authConfigureLocal())) return false;
 
   const port = env.get("CADDY_HTTPS_PORT") ?? "443";
   const suffix = port === "443" ? "" : `:${port}`;

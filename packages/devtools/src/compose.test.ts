@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from "vitest";
 
-import { composeBaseArgs, parseComposePs } from "./compose.ts";
+import { composeBaseArgs, notRunning, parseComposePs } from "./compose.ts";
 import { nodeVersionCheck } from "./doctor.ts";
+import { isCertificateError } from "./https.ts";
 import { trustSteps } from "./trust-ca.ts";
 
 describe("parseComposePs", () => {
@@ -20,6 +21,33 @@ describe("parseComposePs", () => {
       { service: "valkey", state: "running", health: "" },
     ]);
     expect(parseComposePs("")).toEqual([]);
+  });
+});
+
+describe("notRunning", () => {
+  it("lists services that exited, were only created or do not exist", () => {
+    const states = [
+      { service: "postgres", state: "running", health: "healthy" },
+      { service: "caddy", state: "created", health: "" },
+      { service: "mailpit", state: "exited", health: "" },
+    ];
+    expect(notRunning(states, ["postgres", "caddy", "mailpit", "valkey"])).toEqual([
+      "caddy",
+      "mailpit",
+      "valkey",
+    ]);
+  });
+});
+
+describe("isCertificateError", () => {
+  it("recognises TLS verification errors only", () => {
+    const tls = Object.assign(new Error("unable to get local issuer certificate"), {
+      code: "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+    });
+    const refused = Object.assign(new Error("connect ECONNREFUSED"), { code: "ECONNREFUSED" });
+    expect(isCertificateError(tls)).toBe(true);
+    expect(isCertificateError(refused)).toBe(false);
+    expect(isCertificateError("UNABLE_TO_GET_ISSUER_CERT_LOCALLY")).toBe(false);
   });
 });
 

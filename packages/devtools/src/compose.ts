@@ -73,3 +73,15 @@ export function parseComposePs(output: string): ServiceState[] {
     };
   });
 }
+
+/**
+ * Services from `services` that are not running. After a failed `up` these are
+ * the ones to recreate: Docker Desktop on WSL loses a container's bind-mount
+ * sources when it restarts, and such a container only starts again once it is
+ * recreated (data lives in named volumes, so recreating is safe).
+ */
+export function notRunning(states: readonly ServiceState[], services: readonly string[]): string[] {
+  return services.filter(
+    (service) => states.find((state) => state.service === service)?.state !== "running",
+  );
+}

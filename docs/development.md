@@ -170,6 +170,17 @@ the template is rebuilt automatically when migrations change.
   With a non-standard HTTPS port, URLs include it (`https://clubadmin.localhost:8443`).
 - **A service is unhealthy:** `pnpm dev:logs <service>`. Zitadel needs Postgres
   and takes up to a minute on first start.
+- **A container does not start after Docker Desktop or WSL restarted**
+  (`error mounting ... docker-desktop-bind-mounts ... no such file or directory`):
+  Docker Desktop has lost the container's bind-mount source. `pnpm dev:services`
+  recreates containers that did not start once by itself; by hand:
+  `docker compose -p clubadmin rm -sf <service>`, then `pnpm dev:services`.
+- **`unable to get local issuer certificate` while configuring Zitadel:** the
+  certificate Caddy serves does not verify with its own local CA.
+  `pnpm dev:services` recreates Caddy once; if that is not enough it prints the
+  served chain. If the issuer is not "Caddy Local Authority", another program
+  answers on the HTTPS port; otherwise start over with a new CA:
+  `pnpm dev:down && docker volume rm clubadmin_caddy-data && pnpm dev:services && pnpm dev:trust-ca`.
 - **Docker Hub rate limit (HTTP 429):** log in with `docker login` or wait and retry.
 
 See also [`infra/docker/README.md`](../infra/docker/README.md) for details
