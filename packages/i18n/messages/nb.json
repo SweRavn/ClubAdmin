@@ -27,7 +27,8 @@
     "retry": "Prøv igjen",
     "save": "Lagre",
     "yes": "Ja",
-    "no": "Nei"
+    "no": "Nei",
+    "other": "Annet"
   },
   "nav": {
     "label": "Hovedmeny",
@@ -245,5 +246,37 @@
     "female": "Kvinne",
     "male": "Mann",
     "other": "Annet"
+  },
+  "mobile": {
+    "settings": "Innstillinger",
+    "about": "Om appen",
+    "security": "Sikkerhet",
+    "theme": "Utseende",
+    "themes": {
+      "light": "Lyst",
+      "dark": "Mørkt",
+      "system": "Samme som enheten"
+    },
+    "biometricUnlock": "Lås opp med Face ID eller fingeravtrykk",
+    "unlock": "Lås opp",
+    "unlockPrompt": "Lås opp ClubAdmin",
+    "cancel": "Avbryt",
+    "offline": "Du er frakoblet. Lagrede data vises.",
+    "savedAt": "Lagret {time}",
+    "loadFailed": "Kunne ikke hente. Sjekk tilkoblingen og prøv igjen.",
+    "stepUpTitle": "Ikke tilgjengelig i appen ennå",
+    "stepUpBody": "Dette krever totrinnsbekreftelse. Bruk nettappen inntil videre.",
+    "updateRequiredTitle": "Oppdater ClubAdmin",
+    "updateRequiredBody": "Serveren støtter ikke lenger denne versjonen av appen. Installer den nyeste versjonen for å fortsette.",
+    "updateAvailable": "En nyere versjon av appen er tilgjengelig.",
+    "openStore": "Åpne butikken",
+    "dismiss": "Ikke nå",
+    "currentClub": "valgt",
+    "selected": "valgt",
+    "thisDevice": "Denne enheten",
+    "clientApp": "App",
+    "clientWeb": "Nettleser",
+    "update": "Oppdatering {id}",
+    "licences": "Lisenser for tredjepartskode"
   }
 }

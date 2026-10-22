@@ -15,8 +15,16 @@
       "type": "oidc",
       "appType": "OIDC_APP_TYPE_NATIVE",
       "authMethodType": "OIDC_AUTH_METHOD_TYPE_NONE",
-      "redirectUris": ["clubadmin://auth/callback"],
-      "postLogoutRedirectUris": ["clubadmin://auth/logout"]
+      "redirectUris": [
+        "clubadmin://auth/callback",
+        "clubadmin-preview://auth/callback",
+        "clubadmin-dev://auth/callback"
+      ],
+      "postLogoutRedirectUris": [
+        "clubadmin://auth/logout",
+        "clubadmin-preview://auth/logout",
+        "clubadmin-dev://auth/logout"
+      ]
     },
     "api": {
       "type": "api",

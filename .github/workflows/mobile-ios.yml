@@ -1,0 +1,45 @@
+name: Mobile iOS build
+
+# The iOS simulator build of the app (P0.10). Manual: macOS runners are slow
+# and expensive, and the Android job in ci.yml covers the shared code.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    name: iOS simulator build (development variant)
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (pnpm version from package.json)
+        run: corepack enable
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate the native project (runs CocoaPods)
+        working-directory: apps/mobile
+        env:
+          APP_VARIANT: development
+        run: pnpm exec expo prebuild --platform ios --clean
+
+      - name: Build for the simulator
+        working-directory: apps/mobile/ios
+        env:
+          APP_VARIANT: development
+        run: |
+          workspace="$(ls -d *.xcworkspace | head -1)"
+          scheme="${workspace%.xcworkspace}"
+          xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
+            -sdk iphonesimulator -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build

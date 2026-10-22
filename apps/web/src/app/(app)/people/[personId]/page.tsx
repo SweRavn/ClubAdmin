@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // A person's profile as the viewer may see it: the API leaves out fields the
 // relationship does not include (docs/domain-model.md, "Field visibility").
-
+import { enumKey } from "@clubadmin/i18n";
 import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
 
@@ -45,7 +45,11 @@ export default async function PersonPage({ params, searchParams }: Props) {
       ),
     });
   if (profile.gender)
-    rows.push({ key: "gender", label: t("person.gender"), value: t(`genders.${profile.gender}`) });
+    rows.push({
+      key: "gender",
+      label: t("person.gender"),
+      value: t(enumKey("genders", profile.gender)),
+    });
   if (profile.phone) rows.push({ key: "phone", label: t("person.phone"), value: profile.phone });
   if (profile.address)
     rows.push({
@@ -69,7 +73,7 @@ export default async function PersonPage({ params, searchParams }: Props) {
     rows.push({
       key: "membership",
       label: t("person.membership"),
-      value: t(`membershipStatus.${profile.club.membership.status}`),
+      value: t(enumKey("membershipStatus", profile.club.membership.status)),
     });
 
   return (
@@ -102,7 +106,7 @@ export default async function PersonPage({ params, searchParams }: Props) {
                   {groupNames.get(g.groupId) ?? g.groupId}
                 </a>
                 {g.functions.map((fn) => (
-                  <RoleBadge key={fn} label={t(`functions.${fn}`)} />
+                  <RoleBadge key={fn} label={t(enumKey("functions", fn))} />
                 ))}
               </li>
             ))}
@@ -119,7 +123,7 @@ export default async function PersonPage({ params, searchParams }: Props) {
             {profile.guardians.map((g) => (
               <li key={g.person.id} className="flex flex-wrap items-center gap-2">
                 <PersonName person={g.person} protectedLabel={protectedLabel} />
-                <RoleBadge label={t(`guardianKinds.${g.kind}`)} />
+                <RoleBadge label={t(enumKey("guardianKinds", g.kind))} />
                 {g.phone ? <span className="text-sm text-muted">{g.phone}</span> : null}
               </li>
             ))}

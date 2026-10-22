@@ -1,0 +1,31 @@
+# Real login with Zitadel: PKCE in a Custom Tab with the e2e user.
+# env: EMAIL, PASSWORD (created by the CI job through Zitadel's API)
+appId: ${APP_ID}
+name: Log in with Zitadel
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- tapOn:
+    id: "login-zitadel"
+- extendedWaitUntil:
+    visible: "(?i).*(login ?name|e-?post|användarnamn|e-?mail).*"
+    timeout: 60000
+- tapOn: "(?i).*(login ?name|e-?post|användarnamn|e-?mail).*"
+- inputText: ${EMAIL}
+- tapOn: "(?i)(fortsätt|next|continue)"
+- extendedWaitUntil:
+    visible: "(?i).*(lösenord|password).*"
+    timeout: 30000
+- tapOn: "(?i).*(lösenord|password).*"
+- inputText: ${PASSWORD}
+- tapOn: "(?i)(fortsätt|next|continue)"
+- runFlow:
+    when:
+      visible: "(?i).*(använd inte 2-faktor|hoppa över|skip).*"
+    commands:
+      - tapOn: "(?i).*(använd inte 2-faktor|hoppa över|skip).*"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 60000

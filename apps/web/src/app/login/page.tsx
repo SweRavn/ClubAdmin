@@ -2,7 +2,7 @@
 // Login page: the real login (Zitadel) and, with DEV_AUTH, the persona
 // picker grouped by club with the personas' descriptions and tags from
 // docs/demodata (GET /api/v1/dev/personas).
-
+import { enumKey } from "@clubadmin/i18n";
 import { type PersonaList, PersonaListSchema } from "@clubadmin/shared";
 import { personLabel, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
@@ -104,7 +104,7 @@ async function DevPicker({ personas, returnTo }: { personas: Persona[]; returnTo
         name: club?.clubName ?? t("login.dev.noClub"),
         entries: [],
       };
-      group.entries.push({ persona, roles: club?.roles.map((r) => t(`roles.${r}`)) ?? [] });
+      group.entries.push({ persona, roles: club?.roles.map((r) => t(enumKey("roles", r))) ?? [] });
       groups.set(key, group);
     }
   }

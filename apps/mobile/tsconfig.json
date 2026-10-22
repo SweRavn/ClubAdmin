@@ -1,0 +1,24 @@
+{
+  "extends": "@clubadmin/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023"],
+    "types": ["jest", "node"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
+    "declaration": false,
+    "customConditions": ["react-native"]
+  },
+  "include": [
+    "src",
+    "plugins",
+    "scripts",
+    "*.ts",
+    "scripts/*.mts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": ["node_modules", "android", "ios"]
+}

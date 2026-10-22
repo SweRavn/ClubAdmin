@@ -292,8 +292,12 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   token is verified (with a much higher per-IP backstop), and per club and
   account for `bulkRead` endpoints; counters in Valkey
   (`platform/http/rate-limiter.ts`).
-- **Mobile:** authorization-code flow with PKCE via the system browser; refresh
-  token in the OS secure store (Keychain/Keystore) (P0.10).
+- **Mobile** (P0.10, ADR 0028): authorization code with PKCE in the system
+  browser for the native `mobile` client; refresh token in the OS secure
+  store (Keychain/Keystore), access and ID tokens in memory. Development
+  builds log in as personas with tokens from `POST /api/v1/dev/tokens`. A
+  revoked app session is refused by the API (deny list), also with
+  refreshed tokens.
 - Short-lived access and ID tokens (10 min), rotating refresh tokens (30 days
   idle, 90 days at most).
 - MFA (passkey or TOTP) is **required** for roles with elevated access: board,
@@ -319,8 +323,9 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   BFF), the browser's time zone.
 - **Shared UI** (`packages/ui`): design tokens as Tailwind CSS v4 theme
   variables (`tokens.css`, light and dark theme: the browser's preference or
-  the account's), `PersonName` and `personLabel` (the only way to show a
-  name; they take a `PersonSummary` and nothing with more fields),
+  the account's), `PersonName` (the only way to show a name; it takes a
+  `PersonSummary` and nothing with more fields; its text comes from
+  `personLabel` in `packages/shared`, shared with the mobile app),
   `ProtectedBadge` (crossed camera, tooltip), `RoleBadge`, `ClubSwitcher`,
   `Menu` (Radix UI, loaded on first use), `DataList` (keyset pagination,
   virtualised above 200 rows), `DateTime`, `EmptyState`. Components take
@@ -351,6 +356,39 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   ESLint rule `clubadmin/no-jsx-literal-strings` forbids user-facing text in
   JSX, and `clubadmin/person-names-in-presenters` forbids name fields in the
   web app outside `PersonName`.
+
+## Mobile app (`apps/mobile`, P0.10)
+
+- **Stack** (ADR 0028): Expo SDK 57, React Native, Hermes, Expo Router
+  (`src/app`), TanStack Query over the generated `@clubadmin/api-client`,
+  use-intl with the catalogues of `packages/i18n`. No web packages
+  (`packages/ui` is web-only; the app has its own `PersonName`,
+  `ProtectedBadge`, `RoleBadge`, `DateTime`).
+- **API calls** go directly to the API (`api.clubadmin.localhost` locally)
+  with `Authorization`, `X-Id-Token`, `X-On-Behalf-Of` where
+  `onBehalfApplies` (shared with the web BFF) says so, `Accept-Language` and
+  `X-Client-Platform/Version/Device` (session list). A 401 triggers one
+  refresh and one retry; a second 401 ends the login. 429 answers are
+  retried after `Retry-After`.
+- **Screens:** login (Zitadel, persona picker in development builds), home
+  (my clubs with the club switcher, my groups, my children's groups,
+  "viewing as"), club overview, groups tree, group (owners, leaders,
+  members, keyset-paginated), profile, settings (language, time zone, theme,
+  biometric unlock, sessions, about, logout), about (version, "Source code",
+  licences). Deep links (`clubadmin://groups/<id>` and so on) accept UUIDs
+  only.
+- **Offline:** the query cache is persisted to MMKV, encrypted per account,
+  and shown at once on start; requests pause while offline (NetInfo) and run
+  when the app returns to the foreground. Data older than 15 minutes shows
+  its age. Read-only: writes come with the outbox (P1.5).
+- **Locale:** the same chains as the web: language from the user's
+  preference, the current club, the device, English; time zone from the
+  user, the club, the device.
+- **Compatibility:** responses are used as the generated types describe
+  them, never parsed strictly; unknown enum values show as "Other"
+  (`enumKey`); `GET /meta/client` decides "update required/available" and
+  which server features the app uses (ADR 0029). JavaScript updates through
+  `expo-updates` (runtime version = native fingerprint).
 
 ## Authorization
 

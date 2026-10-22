@@ -27,7 +27,8 @@
     "retry": "Försök igen",
     "save": "Spara",
     "yes": "Ja",
-    "no": "Nej"
+    "no": "Nej",
+    "other": "Övrigt"
   },
   "nav": {
     "label": "Huvudmeny",
@@ -245,5 +246,37 @@
     "female": "Kvinna",
     "male": "Man",
     "other": "Annat"
+  },
+  "mobile": {
+    "settings": "Inställningar",
+    "about": "Om appen",
+    "security": "Säkerhet",
+    "theme": "Utseende",
+    "themes": {
+      "light": "Ljust",
+      "dark": "Mörkt",
+      "system": "Samma som enheten"
+    },
+    "biometricUnlock": "Lås upp med Face ID eller fingeravtryck",
+    "unlock": "Lås upp",
+    "unlockPrompt": "Lås upp ClubAdmin",
+    "cancel": "Avbryt",
+    "offline": "Du är offline. Sparade uppgifter visas.",
+    "savedAt": "Sparat {time}",
+    "loadFailed": "Det gick inte att hämta. Kontrollera anslutningen och försök igen.",
+    "stepUpTitle": "Inte tillgängligt i appen än",
+    "stepUpBody": "Det här kräver tvåstegsverifiering. Använd webbappen så länge.",
+    "updateRequiredTitle": "Uppdatera ClubAdmin",
+    "updateRequiredBody": "Servern stöder inte längre den här versionen av appen. Installera den senaste versionen för att fortsätta.",
+    "updateAvailable": "En nyare version av appen finns.",
+    "openStore": "Öppna butiken",
+    "dismiss": "Inte nu",
+    "currentClub": "vald",
+    "selected": "vald",
+    "thisDevice": "Den här enheten",
+    "clientApp": "App",
+    "clientWeb": "Webbläsare",
+    "update": "Uppdatering {id}",
+    "licences": "Licenser för tredjepartskod"
   }
 }

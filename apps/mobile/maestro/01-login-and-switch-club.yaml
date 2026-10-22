@@ -1,0 +1,33 @@
+# Log in as a persona, switch between clubs, open a group (Erik coaches in SVK and IKN).
+appId: ${APP_ID}
+name: Log in as a persona and switch club
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000005
+- tapOn:
+    id: "club-0199a000-0000-7000-8001-000000000002"
+- extendedWaitUntil:
+    visible:
+      id: "club-screen"
+    timeout: 20000
+- assertVisible: "IK Norrbacka"
+- back
+- tapOn:
+    id: "club-0199a000-0000-7000-8001-000000000001"
+- extendedWaitUntil:
+    visible:
+      id: "club-screen"
+    timeout: 20000
+- assertVisible: "Strandvikens Volleybollklubb"
+- back
+- scrollUntilVisible:
+    element:
+      id: "group-0199a000-0000-7000-8002-000000000001"
+- tapOn:
+    id: "group-0199a000-0000-7000-8002-000000000001"
+- extendedWaitUntil:
+    visible:
+      id: "group-screen"
+    timeout: 20000

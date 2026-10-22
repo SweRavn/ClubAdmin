@@ -1,0 +1,22 @@
+# Logs in as a demo persona through the DEV_AUTH picker (development builds).
+# env: PERSONA (the person's ID, docs/demodata)
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible:
+      id: "persona-picker"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "persona-${PERSONA}"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "persona-${PERSONA}"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 30000

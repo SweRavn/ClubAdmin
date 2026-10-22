@@ -51,8 +51,10 @@ budgets are requirements; CI measures them.
   the member bundle.
 
 ### Mobile
-- Persisted query cache (MMKV/SQLite): app shows the last known schedule
-  instantly, refreshes in background.
+- Persisted query cache (MMKV, encrypted per account; ADR 0028): the app
+  shows the last known data instantly, refreshes in background.
+- Screens request what they need in parallel (Home: `/me`, `/me/clubs`,
+  `/me/groups`, `/me/wards`; `/meta/client` alongside, never blocking).
 - Offline outbox for attendance and chat messages taken without coverage
   (sports halls often have bad reception).
 - Push notifications carry IDs, not data; the app fetches the data.
@@ -121,6 +123,25 @@ budgets are requirements; CI measures them.
     group page (menus, tooltip) at 4× CPU slowdown and fails if an
     interaction takes 200 ms or more to paint (Event Timing). At P0.9 the
     slowest took about 100 ms.
+- Rate limits (P0.10): an authenticated request pays one Valkey round trip
+  for the per-account counter (fixed window: `INCR`, `PEXPIRE NX`, `PTTL` in
+  one transaction), about 0.12 ms median and 0.22 ms p95 locally; bulk reads
+  two more; mobile requests one more for the session deny list, at most
+  every 10 seconds per session and instance. The pipeline benchmark
+  (`/health/live`, not rate limited) is unchanged: p95 0.44 ms.
+- Mobile (P0.10, ADR 0028):
+  - `pnpm --filter @clubadmin/mobile bundle:check` bundles the production
+    variant and fails above 4.6 MiB of Hermes bytecode, or if development-only
+    code is in it. At P0.10: 4.16 MiB on Android (4.2 MB on iOS). React
+    Native, Expo Router and React Navigation make up most of it; the
+    catalogues of all three languages and the licence list are about 0.1 MiB.
+  - Cold start to Home with cached data, on a release build of the
+    development variant on the CI Android emulator (API 34, x86_64,
+    software rendering, no network needed for the first frame):
+    `apps/mobile/scripts/measure-cold-start.sh` force-stops the app five
+    times and takes the time from the activity start to the app's "home ready
+    (cache)" log line; the median must stay under 2 s (shown in the job
+    summary).
 - k6 load tests against the `load` seed scenario (1,000 clubs, 200,000 people)
   in nightly CI.
 - OpenTelemetry traces in production; alerts when budgets are exceeded.

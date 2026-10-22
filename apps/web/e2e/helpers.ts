@@ -76,3 +76,14 @@ export async function enrolTotp(loginName: string): Promise<string> {
   await zitadel("POST", `/v2/users/${userId}/totp/verify`, { code: totp(secret) });
   return secret;
 }
+
+/** Creates a human user with a verified email and a password (as an admin would). */
+export async function createUser(email: string, password: string): Promise<string> {
+  const { userId } = await zitadel<{ userId: string }>("POST", "/v2/users/human", {
+    username: email,
+    profile: { givenName: "Mia", familyName: "Mobil" },
+    email: { email, isVerified: true },
+    password: { password, changeRequired: false },
+  });
+  return userId;
+}

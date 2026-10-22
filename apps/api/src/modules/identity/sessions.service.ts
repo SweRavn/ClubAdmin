@@ -3,10 +3,11 @@
 // in Valkey (packages/shared/src/auth/sessions.ts); revoking deletes the BFF
 // session (the browser is logged out on its next request) and ends the
 // Zitadel session, so the person must log in again there too. Mobile app
-// sessions are registered here on their first request (touchMobile); the app
-// holds its own tokens, so revoking ends the Zitadel session, after which
-// the app's refresh token no longer works (its access token may live out its
-// 10 minutes, docs/security.md).
+// sessions are registered here on their first request (touchMobile). The app
+// holds its own tokens, and ending the Zitadel session does not invalidate
+// its refresh token (checked against Zitadel in apps/web/e2e), so revoking
+// also puts the session on a deny list: the AuthGuard refuses every token of
+// that Zitadel session from then on, refreshed or not (ADR 0028).
 
 import { createHash } from "node:crypto";
 
@@ -52,9 +53,12 @@ export function zitadelSessions(baseUrl: string, token: string): ZitadelSessions
 /** How often a mobile session's lastSeenAt is written (per API instance and session). */
 const TOUCH_INTERVAL_MS = 5 * 60_000;
 const TOUCHED_MAX = 50_000;
-/** A revoked mobile session is not registered again by its still-valid access token. */
+/** Revoked mobile sessions, by handle: their tokens are refused (deny list). */
 const revokedKey = (handle: string) => `api:revoked-session:${handle}`;
-const REVOKED_TTL_SECONDS = 15 * 60;
+/** As long as the session's refresh tokens can live (Zitadel: 90 days at most). */
+const REVOKED_TTL_SECONDS = 90 * 86_400;
+/** How long one API instance trusts a "not revoked" answer (revocation reaches other instances within this). */
+const NOT_REVOKED_CACHE_MS = 10_000;
 
 /** Public handle of a mobile session: derived from the Zitadel session, so it is stable. */
 export const mobileSessionHandle = (idpSessionId: string) =>
@@ -85,6 +89,8 @@ export class SessionsService {
   private readonly zitadel: ZitadelSessions | undefined;
   /** Mobile session handle → when it may be written again. */
   private readonly touched = new Map<string, number>();
+  /** Mobile session handle → until when it is known not to be revoked. */
+  private readonly notRevoked = new Map<string, number>();
 
   constructor(db: Database, valkey: ValkeyClient, zitadel: ZitadelSessions | undefined) {
     this.db = db;
@@ -120,6 +126,7 @@ export class SessionsService {
     }
     await tx.exec();
     this.touched.delete(handle);
+    this.notRevoked.delete(handle);
     if (metadata.success && metadata.data.idpSessionId && !metadata.data.devAuth && this.zitadel) {
       await this.zitadel.end(metadata.data.idpSessionId);
     }
@@ -127,6 +134,25 @@ export class SessionsService {
       audit.record(tx, { action: "session.revoked", resourceType: "session" }),
     );
     return true;
+  }
+
+  /**
+   * Whether a mobile app session was revoked (its tokens must be refused).
+   * Fails open when Valkey is unreachable, like the rate limits.
+   */
+  async isRevoked(idpSessionId: string): Promise<boolean> {
+    if (!this.valkey) return false;
+    const handle = mobileSessionHandle(idpSessionId);
+    const now = Date.now();
+    if ((this.notRevoked.get(handle) ?? 0) > now) return false;
+    try {
+      if ((await this.valkey.exists(revokedKey(handle))) === 1) return true;
+    } catch {
+      return false;
+    }
+    if (this.notRevoked.size >= TOUCHED_MAX) this.notRevoked.clear();
+    this.notRevoked.set(handle, now + NOT_REVOKED_CACHE_MS);
+    return false;
   }
 
   /**

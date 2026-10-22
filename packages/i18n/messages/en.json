@@ -27,7 +27,8 @@
     "retry": "Try again",
     "save": "Save",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "other": "Other"
   },
   "nav": {
     "label": "Main",
@@ -245,5 +246,37 @@
     "female": "Female",
     "male": "Male",
     "other": "Other"
+  },
+  "mobile": {
+    "settings": "Settings",
+    "about": "About the app",
+    "security": "Security",
+    "theme": "Appearance",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "Same as the device"
+    },
+    "biometricUnlock": "Unlock with Face ID or fingerprint",
+    "unlock": "Unlock",
+    "unlockPrompt": "Unlock ClubAdmin",
+    "cancel": "Cancel",
+    "offline": "You are offline. Showing saved data.",
+    "savedAt": "Saved {time}",
+    "loadFailed": "Could not load. Check your connection and try again.",
+    "stepUpTitle": "Not available in the app yet",
+    "stepUpBody": "This needs two-factor authentication. Use the web app for now.",
+    "updateRequiredTitle": "Update ClubAdmin",
+    "updateRequiredBody": "This version of the app is no longer supported by the server. Install the latest version to continue.",
+    "updateAvailable": "A newer version of the app is available.",
+    "openStore": "Open the store",
+    "dismiss": "Not now",
+    "currentClub": "current",
+    "selected": "selected",
+    "thisDevice": "This device",
+    "clientApp": "App",
+    "clientWeb": "Browser",
+    "update": "Update {id}",
+    "licences": "Third-party licences"
   }
 }

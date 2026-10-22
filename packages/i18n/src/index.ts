@@ -87,6 +87,22 @@ export function withFallback(locale: Locale): Catalogue {
   return merge(catalogues[DEFAULT_LOCALE], catalogues[locale]);
 }
 
+/** Namespaces whose keys are the values of an API enum (roles, group kinds, ...). */
+export type EnumNamespace =
+  "roles" | "functions" | "kinds" | "membershipStatus" | "guardianKinds" | "genders" | "locales";
+
+/**
+ * The message key for an enum value from the API. A newer server may send a
+ * value this client does not know yet (ADR 0029): it is shown as "Other",
+ * never as a raw key or an error.
+ */
+export function enumKey(namespace: EnumNamespace, value: string): MessageKey {
+  const key = `${namespace}.${value}`;
+  return (
+    lookup(catalogues[DEFAULT_LOCALE], key) === undefined ? "common.other" : key
+  ) as MessageKey;
+}
+
 export function translate(locale: Locale, key: MessageKey): string {
   return lookup(catalogues[locale], key) ?? lookup(catalogues[DEFAULT_LOCALE], key) ?? key;
 }

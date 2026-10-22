@@ -15,13 +15,21 @@ export class ApiError extends Error {
   readonly status: number;
   readonly problem: ProblemDetails | undefined;
   readonly requestId: string | undefined;
+  /** Seconds to wait before retrying (Retry-After of a 429 answer). */
+  readonly retryAfter: number | undefined;
 
-  constructor(status: number, problem: ProblemDetails | undefined, requestId: string | undefined) {
+  constructor(
+    status: number,
+    problem: ProblemDetails | undefined,
+    requestId: string | undefined,
+    retryAfter?: number,
+  ) {
     super(problem?.title ?? `API request failed with status ${status}`);
     this.name = "ApiError";
     this.status = status;
     this.problem = problem;
     this.requestId = requestId ?? problem?.requestId;
+    this.retryAfter = retryAfter;
   }
 
   /** The problem type slug, e.g. "validation" or "not-found". */
@@ -63,7 +71,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       if (response.headers.get("content-type")?.includes("application/problem+json")) {
         problem = (await response.clone().json()) as ProblemDetails;
       }
-      throw new ApiError(response.status, problem, requestId);
+      const retryAfter = Number(response.headers.get("retry-after"));
+      throw new ApiError(
+        response.status,
+        problem,
+        requestId,
+        Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined,
+      );
     },
   };
   client.use(middleware);

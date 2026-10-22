@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Language and time zone of the account (null: the club's, then the browser's).
-
+import { enumKey } from "@clubadmin/i18n";
 import { UI_LOCALES } from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
 
@@ -48,7 +48,7 @@ export default async function PreferencesPage({ searchParams }: Props) {
             <option value="">{t("preferences.automatic")}</option>
             {UI_LOCALES.map((l) => (
               <option key={l} value={l} lang={l}>
-                {t(`locales.${l}`)}
+                {t(enumKey("locales", l))}
               </option>
             ))}
           </select>

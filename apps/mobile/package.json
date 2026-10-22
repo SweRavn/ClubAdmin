@@ -1,0 +1,84 @@
+{
+  "name": "@clubadmin/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ClubAdmin for iOS and Android (Expo). Built in P0.10.",
+  "license": "AGPL-3.0-only",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "prebuild": "expo prebuild --clean",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "licenses:generate": "node scripts/generate-licenses.mts",
+    "bundle:check": "node scripts/check-bundle.mts"
+  },
+  "dependencies": {
+    "@clubadmin/api-client": "workspace:*",
+    "@clubadmin/i18n": "workspace:*",
+    "@clubadmin/shared": "workspace:*",
+    "@formatjs/intl-pluralrules": "6.3.15",
+    "@react-native-community/netinfo": "12.0.1",
+    "@tanstack/query-sync-storage-persister": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-query-persist-client": "catalog:",
+    "expo": "~57.0.29",
+    "expo-application": "~57.0.3",
+    "expo-auth-session": "~57.0.16",
+    "expo-constants": "~57.0.22",
+    "expo-crypto": "~57.0.4",
+    "expo-device": "~57.0.2",
+    "expo-file-system": "~57.0.7",
+    "expo-linking": "~57.0.13",
+    "expo-local-authentication": "~57.0.3",
+    "expo-localization": "~57.0.2",
+    "expo-router": "~57.0.27",
+    "expo-screen-capture": "~57.0.4",
+    "expo-secure-store": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.26",
+    "expo-web-browser": "~57.0.3",
+    "react": "catalog:mobile",
+    "react-dom": "catalog:mobile",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-mmkv": "4.3.2",
+    "react-native-nitro-modules": "0.37.1",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-svg": "15.15.4",
+    "react-native-worklets": "0.10.1",
+    "use-intl": "4.14.9"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@react-native/metro-config": "0.86.3",
+    "@testing-library/react-native": "13.3.3",
+    "@types/jest": "29.5.14",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:mobile",
+    "@types/react-dom": "catalog:mobile",
+    "eslint": "catalog:",
+    "jest": "~29.7.0",
+    "jest-expo": "~57.0.6",
+    "react-test-renderer": "catalog:mobile",
+    "typescript": "catalog:"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "testMatch": [
+      "<rootDir>/src/**/*.test.ts?(x)",
+      "<rootDir>/plugins/**/*.test.ts"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest.setup.ts"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(?:\\.pnpm/[^/]+/node_modules/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|expo-.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|react-native-svg|use-intl|@formatjs/.*|intl-messageformat|icu-minify|@schummar/.*|@tanstack/.*|@clubadmin/.*|standard-navigation))"
+    ]
+  }
+}

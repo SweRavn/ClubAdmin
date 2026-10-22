@@ -10,6 +10,7 @@ import {
   type Catalogue,
   catalogues,
   COMPLETE_LOCALES,
+  enumKey,
   format,
   keysOf,
   localeOf,
@@ -115,5 +116,13 @@ describe("format", () => {
   it("fills placeholders", () => {
     expect(format("sv", "account.loggedInAs", { name: "Anna" })).toBe("Inloggad som Anna");
     expect(format("en", "account.loggedInAs")).toBe("Logged in as {name}");
+  });
+});
+
+describe("enumKey", () => {
+  it("uses the value's message, and 'Other' for values a newer API added", () => {
+    expect(enumKey("functions", "head_coach")).toBe("functions.head_coach");
+    expect(enumKey("functions", "goalkeeper_coach")).toBe("common.other");
+    expect(translate("sv", enumKey("kinds", "something_new"))).toBe("Övrigt");
   });
 });

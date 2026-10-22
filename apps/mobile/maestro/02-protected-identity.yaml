@@ -1,0 +1,30 @@
+# Protected identity (ADR 0022): Liam (a member of IKN, not of F2015) does
+# not see Nadia; Erik (coach in IKN F2015) sees her with the crossed-camera icon.
+appId: ${APP_ID}
+name: Protected identity
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000015
+- openLink: ${APP_SCHEME}://groups/0199a000-0000-7000-8002-000000000007
+- extendedWaitUntil:
+    visible:
+      id: "group-screen"
+    timeout: 20000
+- assertNotVisible:
+    id: "person-0199a000-0000-7000-8000-000000000024"
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000005
+- openLink: ${APP_SCHEME}://groups/0199a000-0000-7000-8002-000000000007
+- extendedWaitUntil:
+    visible:
+      id: "group-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "person-0199a000-0000-7000-8000-000000000024"
+- assertVisible:
+    id: "protected-badge"

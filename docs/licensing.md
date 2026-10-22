@@ -63,8 +63,14 @@ by the CI check when added.
 | next-intl (web i18n; server-side only at P0.9) | MIT |
 | Tailwind CSS (`tailwindcss`, `@tailwindcss/postcss`; build time) | MIT |
 | Radix UI primitives (`@radix-ui/react-dropdown-menu`) | MIT |
-| react-native-mmkv | MIT |
-| i18next, i18next-icu | MIT |
+| Mobile app (P0.10): expo-auth-session, expo-web-browser, expo-secure-store, expo-local-authentication, expo-localization, expo-updates, expo-screen-capture, expo-crypto, expo-file-system and the other `expo-*` modules | MIT |
+| react-native-mmkv, react-native-nitro-modules | MIT |
+| react-native-svg, react-native-safe-area-context, react-native-screens, react-native-reanimated, react-native-worklets, react-native-gesture-handler, `@react-native-community/netinfo` | MIT |
+| use-intl (mobile i18n, next-intl's core), `@formatjs/intl-pluralrules` | MIT |
+| `@tanstack/react-query-persist-client`, `@tanstack/query-sync-storage-persister` | MIT |
+| jest, jest-expo, `@testing-library/react-native` (mobile tests; dev only) | MIT |
+| Maestro (mobile end-to-end flows; CI tool, not a dependency) | Apache-2.0 |
+| oasdiff (breaking-change check; CI tool run through Go's module proxy, not a dependency) | Apache-2.0 |
 | `openid-client` / `jose` (OIDC/JWT) | MIT |
 | Stripe SDK (`stripe`) | MIT |
 | @faker-js/faker (seed data) | MIT |
@@ -146,9 +152,12 @@ our own code. Third-party code keeps its own licence. Therefore:
   copyleft; we publish our source anyway). **GPL, LGPL and AGPL third-party
   code is not allowed in `apps/mobile`** or in packages it bundles, because our
   exception cannot cover it.
-- Every library proposed so far for the mobile app (React Native, Expo SDK,
-  Expo Router, TanStack Query, react-native-mmkv, i18next, jose, our own
-  packages) is MIT or Apache-2.0, so **nothing in the proposed stack changes**.
+- Every library in the mobile app (React Native, Expo SDK and modules, Expo
+  Router, TanStack Query, react-native-mmkv, use-intl, our own packages) is
+  MIT, Apache-2.0 or BSD; `pnpm licenses:check --mobile` checks the app's
+  whole production dependency tree, and the app's About screen lists every
+  package with its licence (`apps/mobile/src/licenses.json`, generated from
+  the lockfile and kept current by CI).
 - CI runs a separate, stricter licence check for the mobile bundle
   (`pnpm licenses:check --mobile`).
 

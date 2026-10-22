@@ -42,7 +42,9 @@ const DEFAULT_EXPORT_ALLOWED = [
   "apps/web/src/app/**/{page,layout,loading,error,not-found,forbidden,unauthorized,template,default,route}.tsx",
   // next-intl reads its request configuration from the default export.
   "apps/web/src/i18n/request.ts",
-  "apps/mobile/app/**/*.tsx",
+  // Expo Router screens and the Expo config plugins are default exports.
+  "apps/mobile/src/app/**/*.tsx",
+  "apps/mobile/plugins/*.ts",
 ];
 
 /**
@@ -129,10 +131,14 @@ export function createConfig({ tsconfigRootDir }) {
       rules: { "clubadmin/person-names-in-presenters": "error" },
     },
     {
-      // The web app shows names only through PersonName/personLabel (packages/ui),
-      // which take a PersonSummary from the API (ADR 0022).
-      files: ["apps/web/src/**/*.{ts,tsx}", "packages/ui/src/**/*.{ts,tsx}"],
-      ignores: ["packages/ui/src/person-name.tsx", "**/*.test.{ts,tsx}"],
+      // The apps show names only through PersonName/personLabel (personLabel
+      // in packages/shared), which take a PersonSummary from the API (ADR 0022).
+      files: [
+        "apps/web/src/**/*.{ts,tsx}",
+        "packages/ui/src/**/*.{ts,tsx}",
+        "apps/mobile/src/**/*.{ts,tsx}",
+      ],
+      ignores: ["**/*.test.{ts,tsx}"],
       rules: {
         "clubadmin/person-names-in-presenters": [
           "error",
@@ -142,7 +148,7 @@ export function createConfig({ tsconfigRootDir }) {
     },
     {
       // User-facing text comes from the message catalogues (CLAUDE.md rule 9).
-      files: ["apps/web/src/**/*.tsx", "packages/ui/src/**/*.tsx"],
+      files: ["apps/web/src/**/*.tsx", "packages/ui/src/**/*.tsx", "apps/mobile/src/**/*.tsx"],
       ignores: ["**/*.test.tsx"],
       rules: { "clubadmin/no-jsx-literal-strings": "error" },
     },

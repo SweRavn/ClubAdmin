@@ -2,7 +2,7 @@
 // A group: details, owners, leaders and members. People appear only as the
 // API presents them (PersonSummary): hidden people are not in the response,
 // protected people the viewer may see carry the crossed-camera icon.
-
+import { enumKey } from "@clubadmin/i18n";
 import { GROUP_FUNCTIONS, type GroupFunction } from "@clubadmin/shared";
 import { EmptyState, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
@@ -45,8 +45,9 @@ export default async function GroupPage({ params, searchParams }: Params) {
   const rosterTexts = {
     protectedTooltip: protectedLabel,
     functions: Object.fromEntries(
-      GROUP_FUNCTIONS.map((fn) => [fn, t(`functions.${fn}`)]),
+      GROUP_FUNCTIONS.map((fn) => [fn, t(enumKey("functions", fn))]),
     ) as Record<GroupFunction, string>,
+    otherFunction: t("common.other"),
   };
 
   return (
@@ -70,7 +71,7 @@ export default async function GroupPage({ params, searchParams }: Params) {
           data-testid="group-name"
         >
           {group.name}
-          <RoleBadge label={t(`kinds.${group.kind}`)} />
+          <RoleBadge label={t(enumKey("kinds", group.kind))} />
           {group.archived ? <RoleBadge label={t("groups.archived")} /> : null}
         </h1>
         <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
@@ -145,7 +146,7 @@ export default async function GroupPage({ params, searchParams }: Params) {
                     {entry.functions
                       .filter((fn) => fn !== "member")
                       .map((fn) => (
-                        <RoleBadge key={fn} tone="accent" label={t(`functions.${fn}`)} />
+                        <RoleBadge key={fn} tone="accent" label={t(enumKey("functions", fn))} />
                       ))}
                   </li>
                 ))}

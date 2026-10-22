@@ -39,8 +39,21 @@ later phase. Backup and disaster recovery are in
   breached-password check (known gap, ADR 0005, [#1](https://github.com/SweRavn/ClubAdmin/issues/1)).
 - Access and ID tokens live 10 minutes; refresh tokens rotate on every use,
   expire after 30 days idle (90 days at most), and a rejected refresh (already
-  used: possible theft) ends the session. Users see and revoke their sessions
-  (`/api/v1/me/sessions`); revoking also ends the Zitadel session.
+  used: possible theft) ends the session. Users see and revoke their sessions,
+  browsers and app installations (`/api/v1/me/sessions`); revoking also ends
+  the Zitadel session. Ending a Zitadel session does not invalidate the
+  mobile app's refresh token, so a revoked app session goes on a deny list
+  and the API refuses all its tokens, refreshed ones included, within
+  seconds (ADR 0028).
+- Mobile app: authorization code with PKCE in the system browser; the
+  refresh token in the OS secure store (Keychain/Keystore, this device only),
+  access tokens in memory; the cached data encrypted per account with a key
+  in the secure store, excluded from device backups and wiped on logout or a
+  change of account. Screens with protected people block screenshots
+  (Android `FLAG_SECURE`) and blur the iOS app switcher. Development builds
+  (persona picker, trust in the local CA) have their own app ID and are
+  never published; the production bundle is checked for development code in
+  CI.
 - Web: tokens never reach the browser (BFF): they are stored in Valkey,
   encrypted with `SESSION_ENCRYPTION_KEY`. Cookies `__Host-session`
   (`HttpOnly; Secure; SameSite=Lax; Path=/`) and `__Host-csrf`; every login

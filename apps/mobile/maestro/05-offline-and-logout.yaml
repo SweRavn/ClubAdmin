@@ -1,0 +1,42 @@
+# Offline: after a session, the app opens with cached data in airplane mode.
+# Logout wipes tokens and cache: the next start shows the login screen.
+appId: ${APP_ID}
+name: Offline cold start and logout
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000005
+- assertVisible: ".*Erik Johansson.*"
+# Let the throttled cache writer persist the queries.
+- waitForAnimationToEnd:
+    timeout: 3000
+- setAirplaneMode: enabled
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 20000
+- assertVisible:
+    id: "offline-banner"
+- assertVisible:
+    id: "club-0199a000-0000-7000-8001-000000000001"
+- setAirplaneMode: disabled
+- tapOn:
+    id: "open-settings"
+- scrollUntilVisible:
+    element:
+      id: "logout"
+- tapOn:
+    id: "logout"
+- extendedWaitUntil:
+    visible:
+      id: "login-screen"
+    timeout: 20000
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "login-screen"
+    timeout: 20000

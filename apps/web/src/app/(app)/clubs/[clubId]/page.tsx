@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Club overview: name, logo, managers, top-level groups, the club's time zone.
-
+import { enumKey } from "@clubadmin/i18n";
 import { EmptyState, PersonName } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
@@ -97,7 +97,7 @@ export default async function ClubPage({ params }: Params) {
                   className="inline-block rounded-md border border-border px-3 py-1.5 hover:bg-surface"
                 >
                   {group.name}{" "}
-                  <span className="text-sm text-muted">· {t(`kinds.${group.kind}`)}</span>
+                  <span className="text-sm text-muted">· {t(enumKey("kinds", group.kind))}</span>
                 </a>
               </li>
             ))}

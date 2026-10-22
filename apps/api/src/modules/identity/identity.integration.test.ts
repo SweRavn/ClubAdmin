@@ -352,9 +352,11 @@ describe("sessions", () => {
 
   it("lists the mobile app's sessions, and revoking one ends the Zitadel session for good", async () => {
     const sid = `zitadel-mobile-${uuidv7()}`;
+    const tokensSub = uuidv7();
+    const tokensEmail = `m-${uuidv7().slice(-8)}@example.test`;
     const tokens = await issuer.issue({
-      sub: uuidv7(),
-      email: `m-${uuidv7().slice(-8)}@example.test`,
+      sub: tokensSub,
+      email: tokensEmail,
       sid,
       clientId: TEST_MOBILE_CLIENT,
     });
@@ -384,6 +386,9 @@ describe("sessions", () => {
     };
     const listed = await sessions();
     expect(listed).toHaveLength(1);
+    const personId = (
+      await inject({ method: "GET", url: "/api/v1/me", headers: withTokens(tokens) })
+    ).json<{ personId: string }>().personId;
     expect(listed[0]).toMatchObject({
       client: "mobile",
       device: "Pixel 8 (Android 16)script, app 1.2.0",
@@ -400,8 +405,31 @@ describe("sessions", () => {
     });
     expect(revoke.statusCode).toBe(204);
     expect(issuer.deletedSessions).toContain(sid);
-    // The access token still works until it expires, but does not register the session again.
-    expect(await sessions()).toEqual([]);
+    // Zitadel may still refresh the app's tokens, so the API refuses the whole
+    // session from now on (deny list), and it is not registered again.
+    const refused = await inject({
+      method: "GET",
+      url: "/api/v1/me",
+      headers: withTokens(tokens, app),
+    });
+    expect(refused.statusCode).toBe(401);
+    expect(refused.json()).toMatchObject({ detail: "session_revoked" });
+    const refreshed = await issuer.issue({
+      sub: tokensSub,
+      email: tokensEmail,
+      sid,
+      clientId: TEST_MOBILE_CLIENT,
+    });
+    expect(
+      (await inject({ method: "GET", url: "/api/v1/me", headers: withTokens(refreshed, app) }))
+        .statusCode,
+    ).toBe(401);
+    // Public endpoints treat the tokens as anonymous.
+    expect(
+      (await inject({ method: "GET", url: "/api/v1/meta/client", headers: withTokens(tokens) }))
+        .statusCode,
+    ).toBe(200);
+    expect(await valkey.hlen(personSessionsKey(personId))).toBe(0);
   });
 
   it("does not list web or unknown clients as mobile sessions", async () => {

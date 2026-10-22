@@ -8,6 +8,8 @@ import { PersonName, RoleBadge } from "@clubadmin/ui";
 export interface RosterTexts {
   protectedTooltip: string;
   functions: Record<GroupFunction, string>;
+  /** For a function a newer API added (ADR 0029). */
+  otherFunction: string;
 }
 
 export function RosterEntry({
@@ -30,7 +32,7 @@ export function RosterEntry({
         <RoleBadge
           key={fn}
           tone={fn === "member" ? "neutral" : "accent"}
-          label={texts.functions[fn]}
+          label={texts.functions[fn] ?? texts.otherFunction}
         />
       ))}
     </span>

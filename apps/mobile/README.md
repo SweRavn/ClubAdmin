@@ -1,10 +1,20 @@
 # @clubadmin/mobile
 
-The Expo (React Native) app for iOS and Android. It is created in
-[P0.10](../../docs/prompts/P0.10-mobile-shell.md).
+The Expo (React Native) app for iOS and Android (P0.10, ADR 0028): log in
+with Zitadel (PKCE) or, in development builds, as a demo persona; my clubs,
+groups and children's groups; group rosters and profiles with the same
+visibility as the web; settings, sessions and the About screen with the
+source link and third-party licences. Cached data is shown at once, also
+offline, from an encrypted per-account cache.
 
-Until then this folder has no `package.json`, so it is not a workspace
-package and `pnpm licenses:check --mobile` has nothing to check.
-
-Everything bundled into the app must pass the stricter mobile licence check:
-no GPL, LGPL or AGPL third-party code (see `docs/licensing.md`).
+- Screens: `src/app` (Expo Router). Data: `src/api` (the generated client,
+  TanStack Query). Login: `src/auth`. Cache: `src/cache`. Language and time
+  zone: `src/i18n` (messages from `@clubadmin/i18n`).
+- People are shown only through `PersonName` (`src/components/person-name.tsx`,
+  text from `personLabel` in `@clubadmin/shared`); user-facing text only from
+  the message catalogues (ESLint).
+- Everything bundled into the app must pass the stricter mobile licence check:
+  no GPL, LGPL or AGPL third-party code (`pnpm licenses:check --mobile`,
+  `docs/licensing.md`).
+- Running it, variants, emulators and tests: `docs/development.md`,
+  "Mobile app".

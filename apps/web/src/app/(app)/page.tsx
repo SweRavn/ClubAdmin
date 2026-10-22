@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Home: my clubs, my groups and my children's groups, with role badges; the
 // onboarding placeholder for people without a club.
-
+import { enumKey } from "@clubadmin/i18n";
 import type { MyGroups } from "@clubadmin/shared";
 import { EmptyState, personLabel, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
@@ -86,10 +86,10 @@ export default async function HomePage() {
                 </a>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {membership ? (
-                    <RoleBadge label={t(`membershipStatus.${membership.status}`)} />
+                    <RoleBadge label={t(enumKey("membershipStatus", membership.status))} />
                   ) : null}
                   {roles.map((role) => (
-                    <RoleBadge key={role} tone="accent" label={t(`roles.${role}`)} />
+                    <RoleBadge key={role} tone="accent" label={t(enumKey("roles", role))} />
                   ))}
                 </div>
               </li>
@@ -147,14 +147,14 @@ async function GroupList({
             {group.name}
           </a>
           <span className="text-sm text-muted">
-            {t(`kinds.${group.kind}`)} · {club.name}
+            {t(enumKey("kinds", group.kind))} · {club.name}
           </span>
           <span className="ml-auto flex flex-wrap gap-1">
             {functions.map((fn) => (
               <RoleBadge
                 key={fn}
                 tone={fn === "member" ? "neutral" : "accent"}
-                label={t(`functions.${fn}`)}
+                label={t(enumKey("functions", fn))}
               />
             ))}
           </span>

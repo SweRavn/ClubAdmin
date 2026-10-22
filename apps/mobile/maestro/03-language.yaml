@@ -1,0 +1,10 @@
+# Language chain: Lars has Norwegian as his preference, also in Swedish clubs.
+appId: ${APP_ID}
+name: Language follows the user's preference
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000011
+- assertVisible: "Mine klubber"
+- assertVisible: "Hjem"

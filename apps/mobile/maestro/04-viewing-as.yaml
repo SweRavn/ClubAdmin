@@ -1,0 +1,21 @@
+# "Viewing as": Anna switches to her daughter Elsa and back.
+appId: ${APP_ID}
+name: Viewing as a ward
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- scrollUntilVisible:
+    element:
+      id: "viewing-as-0199a000-0000-7000-8000-000000000003"
+- tapOn:
+    id: "viewing-as-0199a000-0000-7000-8000-000000000003"
+- extendedWaitUntil:
+    visible:
+      id: "viewing-as-banner"
+    timeout: 20000
+- tapOn:
+    id: "viewing-as-stop"
+- assertNotVisible:
+    id: "viewing-as-banner"

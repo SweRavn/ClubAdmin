@@ -2,7 +2,7 @@
 // The club's groups as a tree (sections, teams, training groups...), with
 // kind labels. Group structure is not personal data (everyone related to
 // the club sees it).
-
+import { enumKey } from "@clubadmin/i18n";
 import type { GroupResponse } from "@clubadmin/shared";
 import { EmptyState, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
@@ -46,7 +46,7 @@ export default async function GroupsPage({ params }: Params) {
               >
                 {group.name}
               </a>
-              <RoleBadge label={t(`kinds.${group.kind}`)} />
+              <RoleBadge label={t(enumKey("kinds", group.kind))} />
               {group.archived ? <RoleBadge label={t("groups.archived")} /> : null}
             </span>
             {tree(group.id, level + 1)}

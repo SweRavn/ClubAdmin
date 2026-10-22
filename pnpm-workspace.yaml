@@ -42,7 +42,9 @@ catalog:
   "@swc/cli": ^0.8.0
   "@swc/core": ^1.15.0
   "@tailwindcss/postcss": ^4.1.0
+  "@tanstack/query-sync-storage-persister": ^5.90.0
   "@tanstack/react-query": ^5.90.0
+  "@tanstack/react-query-persist-client": ^5.90.0
   "@tanstack/react-virtual": ^3.13.0
   "@types/node": ^24.0.0
   "@types/pg": ^8.15.0
@@ -83,6 +85,16 @@ catalog:
   unplugin-swc: ^2.0.0
   vitest: ^5.0.0
   zod: ^4.0.0
+# The mobile app's React must equal the version its React Native release
+# renders with (Expo SDK 57: React 19.2.3), which may lag the web's.
+catalogs:
+  mobile:
+    "@types/react": ~19.2.0
+    "@types/react-dom": ~19.2.0
+    react: 19.2.3
+    react-dom: 19.2.3
+    react-test-renderer: 19.2.3
+
 engineStrict: true
 minimumReleaseAge: 10080
 

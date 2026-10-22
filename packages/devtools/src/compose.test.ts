@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { composeBaseArgs, notRunning, parseComposePs } from "./compose.ts";
 import { nodeVersionCheck } from "./doctor.ts";
 import { isCertificateError } from "./https.ts";
-import { trustSteps } from "./trust-ca.ts";
+import { androidEmulatorSteps, iosSimulatorSteps, trustSteps } from "./trust-ca.ts";
 
 describe("parseComposePs", () => {
   it("parses newline-delimited JSON", () => {
@@ -79,5 +79,25 @@ describe("trustSteps", () => {
 
   it("has no automatic steps on Windows", () => {
     expect(trustSteps("win32", "C:\\ca.crt")).toEqual([]);
+  });
+});
+
+describe("trust-ca on simulators and emulators", () => {
+  it("adds the CA to booted iOS simulators", () => {
+    expect(iosSimulatorSteps("/ca.crt")).toEqual([
+      { command: "xcrun", args: ["simctl", "keychain", "booted", "add-root-cert", "/ca.crt"] },
+    ]);
+  });
+
+  it("puts the CA in the emulator's user store and forwards port 443", () => {
+    const steps = androidEmulatorSteps("/ca.crt", "1a2b3c4d");
+    expect(steps.map((s) => [s.command, ...s.args].join(" "))).toEqual([
+      "adb root",
+      "adb wait-for-device",
+      "adb shell mkdir -p /data/misc/user/0/cacerts-added",
+      "adb push /ca.crt /data/misc/user/0/cacerts-added/1a2b3c4d.0",
+      "adb shell chmod 644 /data/misc/user/0/cacerts-added/1a2b3c4d.0",
+      "adb reverse tcp:443 tcp:443",
+    ]);
   });
 });

@@ -126,6 +126,57 @@ After changing an endpoint, run `pnpm api:client` and commit the regenerated
 `packages/api-client` files (a test fails otherwise). `pnpm test:integration`
 runs the tests that need the local services.
 
+## Mobile app
+
+The Expo app (`apps/mobile`, ADR 0028) talks to the same local services over
+HTTPS (`https://api.clubadmin.localhost`, Zitadel at
+`https://auth.clubadmin.localhost`). `pnpm dev` does not start Metro; run the
+services and the API (`pnpm dev`), then:
+
+```sh
+pnpm --filter @clubadmin/mobile android   # build and run a development build on the emulator/device
+pnpm --filter @clubadmin/mobile ios       # macOS: on the iOS simulator
+pnpm --filter @clubadmin/mobile start     # Metro only, for an installed development build
+```
+
+You need the Android SDK (Android Studio) with an emulator image
+(Google APIs, API 34+, x86_64 or arm64), JDK 17, and on macOS Xcode for iOS.
+On WSL, build for Android from WSL with the SDK installed there, or run
+Metro in WSL and the emulator on Windows (`adb` over TCP); iOS needs a Mac.
+
+- **Variants:** `APP_VARIANT=development` (default; bundle ID
+  `org.clubadmin.app.dev`, scheme `clubadmin-dev://`, persona picker, trusts
+  Caddy's local CA), `preview` and `production` (`APP_VARIANT=production
+  pnpm exec expo prebuild ...`). Release builds must set `APP_VARIANT`.
+  The build reads `AUTH_MOBILE_CLIENT_ID`, `AUTH_PROJECT_ID`,
+  `AUTH_ISSUER` and `MOBILE_API_URL` from the environment (`set -a; .
+  ./.env.local; set +a` before building), and `EXPO_UPDATES_URL` for
+  over-the-air updates.
+- **iOS simulator:** it shares this machine's network; `pnpm dev:trust-ca
+  --ios` adds Caddy's CA to the booted simulators. The names must resolve
+  (see `pnpm dev:doctor`).
+- **Android emulator:** start it, then `pnpm dev:trust-ca --android`: it
+  puts Caddy's CA in the emulator's user store (for Chrome, which shows the
+  Zitadel login) and forwards port 443 on the emulator to this machine
+  (`adb reverse`, needs a Google APIs image where `adb root` works; run it
+  again after the emulator restarts). The emulator must resolve
+  `*.clubadmin.localhost` to its own loopback: on Linux with
+  systemd-resolved this works out of the box; otherwise start the emulator
+  with `-dns-server` pointing at a resolver that answers them (CI uses
+  dnsmasq with `--address=/clubadmin.localhost/127.0.0.1`).
+- **Logging in:** development builds show the persona picker (`DEV_AUTH`,
+  tokens from `POST /api/v1/dev/tokens`); "Log in with email" uses Zitadel
+  in the system browser.
+- **Tests:** `pnpm --filter @clubadmin/mobile test` (Jest, also part of
+  `pnpm test`); end-to-end flows with [Maestro](https://maestro.dev) in
+  `apps/mobile/maestro/` (`maestro test -e APP_ID=org.clubadmin.app.dev -e
+  APP_SCHEME=clubadmin-dev apps/mobile/maestro/03-language.yaml`; CI runs
+  them all, see `apps/mobile/scripts/ci-android-e2e.sh`).
+- **Checks:** `pnpm --filter @clubadmin/mobile bundle:check` (production
+  bundle without development code, size budget), `pnpm licenses:check
+  --mobile`, and after changing dependencies `pnpm --filter
+  @clubadmin/mobile licenses:generate` (the About screen's licence list).
+
 ## Database
 
 `pnpm dev:services` creates the database roles and applies all migrations.
@@ -146,7 +197,7 @@ the template is rebuilt automatically when migrations change.
 | `pnpm dev:logs [service]` | Follow logs, e.g. `pnpm dev:logs zitadel` |
 | `pnpm dev:clean [--yes]` | Stop services and **delete all their data** |
 | `pnpm dev:doctor` | Check tools, ports, names, certificates and service health |
-| `pnpm dev:trust-ca [--print]` | Install Caddy's local CA in the OS trust store |
+| `pnpm dev:trust-ca [--print]` | Install Caddy's local CA in the OS trust store; `--ios` booted simulators, `--android` the running emulator (also forwards port 443) |
 | `pnpm dev:smoke` | End-to-end check of every service (also run in CI) |
 | `pnpm auth:configure [--print]` | Apply `infra/zitadel/` to Zitadel (idempotent); `--print` shows the results instead of writing `.env.local` |
 

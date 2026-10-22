@@ -16,7 +16,7 @@ import { fetchWithCa, isCertificateError, servedChain } from "./https.ts";
 import { caddyRootCertFile } from "./paths.ts";
 import { run } from "./process.ts";
 import { smoke } from "./smoke.ts";
-import { trustCa } from "./trust-ca.ts";
+import { trustCa, trustCaOnDevice } from "./trust-ca.ts";
 import { configureZitadel } from "./zitadel.ts";
 import { readZitadelAdminPat } from "./zitadel-pat.ts";
 
@@ -28,7 +28,8 @@ const USAGE = `Usage: pnpm dev[:command]
   logs [service] follow service logs
   clean          stop services and delete all their data (--yes to skip the question)
   doctor         check this machine and the running services
-  trust-ca       trust Caddy's local CA in the OS (--print to only show the commands)
+  trust-ca       trust Caddy's local CA in the OS (--print to only show the commands);
+                 --ios: booted iOS simulators, --android: the running Android emulator
   smoke          check that every service works end to end
   auth-configure apply infra/zitadel/ to Zitadel (also run by services); --print only prints the results`;
 
@@ -217,6 +218,9 @@ async function main(argv: string[]): Promise<number> {
     case "doctor":
       return (await doctor()) ? 0 : 1;
     case "trust-ca":
+      if (flag("--ios") || flag("--android")) {
+        return (await trustCaOnDevice(flag("--ios") ? "ios" : "android", flag("--print"))) ? 0 : 1;
+      }
       return (await trustCa(flag("--print"))) ? 0 : 1;
     case "smoke":
       return (await smoke()) ? 0 : 1;
