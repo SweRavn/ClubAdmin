@@ -8,6 +8,20 @@ name: Log in with Zitadel
     clearKeychain: true
 - tapOn:
     id: "login-zitadel"
+# Chrome's first-run screens on a fresh emulator (Custom Tab).
+- extendedWaitUntil:
+    visible: "(?i).*(login ?name|e-?post|användarnamn|e-?mail|use without an account|accept & continue).*"
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "(?i)(use without an account|accept & continue)"
+    commands:
+      - tapOn: "(?i)(use without an account|accept & continue)"
+- runFlow:
+    when:
+      visible: "(?i)(no,? thanks|no thanks)"
+    commands:
+      - tapOn: "(?i)(no,? thanks|no thanks)"
 - extendedWaitUntil:
     visible: "(?i).*(login ?name|e-?post|användarnamn|e-?mail).*"
     timeout: 60000

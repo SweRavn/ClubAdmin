@@ -48,6 +48,12 @@ scripts/measure-cold-start.sh "$app_id" 5 2000 | tee "$out/cold-start.txt"
 
 flows offline maestro/05-offline-and-logout.yaml
 
+# The Custom Tab is Chrome, which shows its first-run screens on a fresh
+# emulator. Skip them (Chrome reads this file on emulator images); the flow
+# also dismisses them in case it does not.
+adb shell 'echo "_ --disable-fre --no-default-browser-check --no-first-run" > /data/local/tmp/chrome-command-line' || true
+adb shell am set-debug-app --persistent com.android.chrome || true
+
 password="Maestro-$(date +%s)aA1"
 email="$(node scripts/create-e2e-user.mts "$password")"
 flows zitadel -e EMAIL="$email" -e PASSWORD="$password" maestro/06-zitadel-login.yaml
