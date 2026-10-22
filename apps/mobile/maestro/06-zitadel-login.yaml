@@ -34,10 +34,21 @@ name: Log in with Zitadel
 - tapOn: "(?i).*(lösenord|password).*"
 - inputText: ${PASSWORD}
 - tapOn: "(?i)(fortsätt|next|continue)"
+# Zitadel offers 2-factor setup after the password (skippable, see
+# mfaInitSkipLifetime in infra/zitadel). Wait for that page or the app, then
+# scroll to the skip button, which can be below the fold.
+- extendedWaitUntil:
+    visible: "(?i).*(2-factor|2-faktor|tvåfaktor).*"
+    timeout: 30000
+    optional: true
 - runFlow:
     when:
-      visible: "(?i).*(använd inte 2-faktor|hoppa över|skip).*"
+      visible: "(?i).*(2-factor|2-faktor|tvåfaktor).*"
     commands:
+      - scrollUntilVisible:
+          element: "(?i).*(använd inte 2-faktor|hoppa över|skip).*"
+          direction: DOWN
+          timeout: 15000
       - tapOn: "(?i).*(använd inte 2-faktor|hoppa över|skip).*"
 - extendedWaitUntil:
     visible:
