@@ -18,10 +18,26 @@ export NODE_EXTRA_CA_CERTS="$PWD/../../.local/caddy-root.crt"
 # Caddy's CA in the emulator's user store, port 443 forwarded to Caddy.
 pnpm --dir ../.. dev:trust-ca --android
 adb install -r "$APK"
+adb logcat -c || true
+
+# On failure: what the screen shows and the app's log, in the job log (the
+# Maestro screenshots are in the uploaded report).
+diagnose() {
+  echo "::group::Screen texts after the failed flow"
+  maestro hierarchy 2>/dev/null | grep -oE '"(text|accessibilityText|resource-id)" *: *"[^"]+"' | sort -u | head -100 || true
+  echo "::endgroup::"
+  echo "::group::logcat (React Native, crashes)"
+  adb logcat -d -v time >"$out/logcat.txt" || true
+  grep -E "ReactNativeJS|ReactNative|AndroidRuntime|FATAL|ClubAdmin|Nitro|MMKV|SecureStore" "$out/logcat.txt" | tail -200 || true
+  echo "::endgroup::"
+}
 
 flows() {
-  maestro test --format junit --output "$out/$1.xml" --debug-output "$out/$1" \
-    -e APP_ID="$app_id" -e APP_SCHEME="$scheme" "${@:2}"
+  if ! maestro test --format junit --output "$out/$1.xml" --debug-output "$out/$1" \
+    -e APP_ID="$app_id" -e APP_SCHEME="$scheme" "${@:2}"; then
+    diagnose
+    return 1
+  fi
 }
 
 flows personas maestro/01-login-and-switch-club.yaml maestro/02-protected-identity.yaml \
