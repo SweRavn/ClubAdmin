@@ -5,6 +5,7 @@ import { enumKey } from "@clubadmin/i18n";
 import type { MyGroups } from "@clubadmin/shared";
 import { personLabel, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { FormError, Notice } from "../../components/form-error.tsx";
 import { InProgress, Onboarding } from "../../components/joining-panels.tsx";
@@ -43,7 +44,9 @@ export default async function HomePage({ searchParams }: Props) {
         </h1>
         {notice ? <Notice>{notice}</Notice> : null}
         <FormError code={params.error} />
-        <InProgress />
+        <Suspense fallback={null}>
+          <InProgress />
+        </Suspense>
         <Onboarding />
       </div>
     );
@@ -58,7 +61,10 @@ export default async function HomePage({ searchParams }: Props) {
       </h1>
       {notice ? <Notice>{notice}</Notice> : null}
       <FormError code={params.error} />
-      <InProgress />
+      {/* Streamed: the hand-overs and requests must not hold back the page (LCP budget). */}
+      <Suspense fallback={null}>
+        <InProgress />
+      </Suspense>
 
       {clubs.clubs.length > 0 ? (
         <section aria-labelledby="my-clubs">
