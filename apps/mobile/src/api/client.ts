@@ -13,6 +13,7 @@ import {
   ID_TOKEN_HEADER,
   ON_BEHALF_OF_HEADER,
 } from "@clubadmin/shared";
+import { randomUUID } from "expo-crypto";
 
 import type { TokenSet } from "../auth/tokens.ts";
 
@@ -68,6 +69,11 @@ export function authorizedFetch(context: RequestContext, base: typeof fetch = fe
   };
 }
 
-export function createAppApiClient(baseUrl: string, context: RequestContext): ApiClient {
-  return createApiClient({ baseUrl, fetch: authorizedFetch(context) });
+export function createAppApiClient(
+  baseUrl: string,
+  context: RequestContext,
+  base: typeof fetch = fetch,
+): ApiClient {
+  // Hermes has no Web Crypto (globalThis.crypto): request IDs come from expo-crypto.
+  return createApiClient({ baseUrl, fetch: authorizedFetch(context, base), requestId: randomUUID });
 }

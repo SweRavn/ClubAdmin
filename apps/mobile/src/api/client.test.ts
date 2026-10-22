@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import type { TokenSet } from "../auth/tokens.ts";
-import { authorizedFetch, type RequestContext } from "./client.ts";
+import { authorizedFetch, createAppApiClient, type RequestContext } from "./client.ts";
+
+jest.mock("expo-crypto", () => ({ randomUUID: () => "0199d2a0-0000-4000-8000-000000000001" }));
 
 const set = (name: string): TokenSet => ({
   accessToken: name,
@@ -90,5 +92,34 @@ describe("authorizedFetch", () => {
     expect(res.status).toBe(401);
     expect(renew).not.toHaveBeenCalled();
     expect(base).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("createAppApiClient", () => {
+  it("works without Web Crypto, as on Hermes (request IDs from expo-crypto)", async () => {
+    const webCrypto = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+    Object.defineProperty(globalThis, "crypto", { value: undefined, configurable: true });
+    try {
+      const base = jest.fn((_request: Request) =>
+        Promise.resolve(
+          new Response(JSON.stringify({ clubs: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+        ),
+      );
+      const api = createAppApiClient(
+        "https://api.example",
+        context(),
+        base as unknown as typeof fetch,
+      );
+      const result = await api.GET("/api/v1/me/clubs");
+      expect(result.data).toEqual({ clubs: [] });
+      expect(base.mock.calls[0]![0].headers.get("x-request-id")).toBe(
+        "0199d2a0-0000-4000-8000-000000000001",
+      );
+    } finally {
+      if (webCrypto) Object.defineProperty(globalThis, "crypto", webCrypto);
+    }
   });
 });
