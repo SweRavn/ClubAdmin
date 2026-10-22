@@ -281,5 +281,28 @@
     "clientWeb": "Nettleser",
     "update": "Oppdatering {id}",
     "licences": "Lisenser for tredjepartskode"
+  },
+  "email": {
+    "footer": "Denne e-posten ble sendt av ClubAdmin på vegne av {club}.",
+    "invitation": {
+      "subject": "Invitasjon til {club}",
+      "body": "{hasInviter, select, yes {{inviter} inviterer deg} other {Du er invitert}} til å bli med i {club} i ClubAdmin.\n\nGodta invitasjonen:\n{url}\n\nInvitasjonen gjelder til {expires}. Hvis du ikke ventet den, kan du se bort fra denne e-posten."
+    },
+    "joinRequest": {
+      "approvedSubject": "{club}: velkommen!",
+      "approvedBody": "{club} har godkjent søknaden om at {person} blir med i klubben.{hasMessage, select, yes {\n\nMelding fra klubben:\n{message}} other {}}\n\nÅpne ClubAdmin:\n{url}",
+      "rejectedSubject": "{club}: søknaden din om medlemskap",
+      "rejectedBody": "{club} har ikke godkjent søknaden om at {person} blir med i klubben.{hasMessage, select, yes {\n\nMelding fra klubben:\n{message}} other {}}"
+    },
+    "managers": {
+      "subject": "{club}: klubbansvarlige er endret",
+      "body": "{change, select, appointed {{person} er nå klubbansvarlig.} removed {{person} er ikke lenger klubbansvarlig.} handed_over {{person} har tatt over som klubbansvarlig.} claimed {{person}, styrelederen, har tatt over rollen som klubbansvarlig.} other {Support har utnevnt {person} til klubbansvarlig etter klubbens ønske.}}\n\nSe klubbens ansvarlige:\n{url}"
+    },
+    "clubCreation": {
+      "approvedSubject": "Klubben din {club} er opprettet",
+      "approvedBody": "Søknaden din om å opprette {club} er godkjent. Du er den første klubbansvarlige.\n\nÅpne klubben:\n{url}",
+      "rejectedSubject": "Søknaden din om å opprette {club}",
+      "rejectedBody": "Søknaden din om å opprette {club} ble ikke godkjent.{hasMessage, select, yes {\n\nMelding:\n{message}} other {}}"
+    }
   }
 }

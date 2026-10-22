@@ -30,7 +30,7 @@ import { actorPersonId, parseInput } from "../../platform/domain/run.ts";
 import type { AccountsService } from "../accounts/index.ts";
 import type { Club, ClubsService } from "../clubs/index.ts";
 import type { MembershipsService } from "../memberships/index.ts";
-import type { PeopleService,Person } from "../people/index.ts";
+import type { PeopleService, Person } from "../people/index.ts";
 import type { Handover, RolesService } from "../roles/index.ts";
 import * as repo from "./onboarding.repository.ts";
 

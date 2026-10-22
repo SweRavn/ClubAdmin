@@ -21,8 +21,7 @@ import {
   randomInvitationCode,
   randomInvitationToken,
 } from "@clubadmin/server-kit/invitations";
-import type {
-  INVITATION_STATES} from "@clubadmin/shared";
+import type { INVITATION_STATES } from "@clubadmin/shared";
 import {
   type CreateInvitationInput,
   CreateInvitationSchema,

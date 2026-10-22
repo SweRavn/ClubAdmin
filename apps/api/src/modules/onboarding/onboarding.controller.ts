@@ -32,9 +32,8 @@ import {
   type RequestAuthorization,
 } from "../authorization/index.ts";
 import { toClubResponse } from "../clubs/index.ts";
-import { PeopleService,type Person } from "../people/index.ts";
+import { PeopleService, type Person } from "../people/index.ts";
 import { type ClubCreationRequest, OnboardingService } from "./onboarding.service.ts";
-
 
 function toRequest(request: ClubCreationRequest): ClubCreationRequestResponse {
   return {

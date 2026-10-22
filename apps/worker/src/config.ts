@@ -14,6 +14,11 @@ export const workerConfigSchema = z.object({
   /** Record history kept for this many months (ADR 0017). */
   HISTORY_RETENTION_MONTHS: z.coerce.number().int().min(1).default(24),
   HISTORY_PARTITIONS_AHEAD: z.coerce.number().int().min(1).max(24).default(3),
+  /** Transactional email (ADR 0032): an SMTP URL (smtp:// or smtps://, with credentials if needed). */
+  SMTP_URL: z.string().optional(),
+  MAIL_FROM_ADDRESS: z.email().default("noreply@clubadmin.invalid"),
+  /** Links in emails point here. */
+  PUBLIC_WEB_URL: z.url().default("https://clubadmin.localhost"),
 });
 
 export type WorkerConfig = z.infer<typeof workerConfigSchema>;

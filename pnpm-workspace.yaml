@@ -47,6 +47,7 @@ catalog:
   "@tanstack/react-query-persist-client": ^5.90.0
   "@tanstack/react-virtual": ^3.13.0
   "@types/node": ^24.0.0
+  "@types/nodemailer": ^8.0.2
   "@types/pg": ^8.15.0
   "@types/react": ^19.2.0
   "@types/react-dom": ^19.2.0
@@ -55,33 +56,34 @@ catalog:
   dependency-cruiser: ^18.0.0
   drizzle-kit: ^0.31.11
   drizzle-orm: ^0.45.3
-  eslint-plugin-simple-import-sort: ^14.0.0
   eslint: ^10.0.0
+  eslint-plugin-simple-import-sort: ^14.0.0
   # Must equal the exact version @nestjs/platform-fastify depends on (one Fastify
   # instance type); Renovate updates them together.
   fastify: 5.12.5
   globals: ^17.0.0
   graphile-worker: ^0.18.0
   import-in-the-middle: ^3.0.0
+  intl-messageformat: ^10.7.18
   ioredis: ^5.11.0
-  intl-messageformat: ^10.7.0
   jose: ^6.2.12
-  next-intl: ^4.14.0
   next: ^16.0.0
+  next-intl: ^4.14.0
+  nodemailer: ^10.1.1
   openapi-fetch: ^0.17.0
   openapi-typescript: ^7.13.0
   openid-client: ^6.8.0
   pg: ^8.20.0
   pino: ^10.0.0
   prettier: ^3.9.0
-  react-dom: ^19.2.0
   react: ^19.2.0
+  react-dom: ^19.2.0
   reflect-metadata: ^0.2.2
   rxjs: ^7.8.0
   tailwindcss: ^4.1.0
   turbo: ^2.11.0
-  typescript-eslint: ^8.70.0
   typescript: ~6.0.2
+  typescript-eslint: ^8.70.0
   unplugin-swc: ^2.0.0
   vitest: ^5.0.0
   zod: ^4.0.0

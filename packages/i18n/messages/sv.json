@@ -281,5 +281,28 @@
     "clientWeb": "Webbläsare",
     "update": "Uppdatering {id}",
     "licences": "Licenser för tredjepartskod"
+  },
+  "email": {
+    "footer": "Det här mejlet skickades av ClubAdmin för {club}.",
+    "invitation": {
+      "subject": "Inbjudan till {club}",
+      "body": "{hasInviter, select, yes {{inviter} bjuder in dig} other {Du är inbjuden}} att gå med i {club} i ClubAdmin.\n\nTacka ja till inbjudan:\n{url}\n\nInbjudan gäller till {expires}. Om du inte väntade dig den kan du strunta i det här mejlet."
+    },
+    "joinRequest": {
+      "approvedSubject": "{club}: välkommen!",
+      "approvedBody": "{club} har godkänt ansökan om att {person} ska gå med i föreningen.{hasMessage, select, yes {\n\nMeddelande från föreningen:\n{message}} other {}}\n\nÖppna ClubAdmin:\n{url}",
+      "rejectedSubject": "{club}: din ansökan om medlemskap",
+      "rejectedBody": "{club} har inte godkänt ansökan om att {person} ska gå med i föreningen.{hasMessage, select, yes {\n\nMeddelande från föreningen:\n{message}} other {}}"
+    },
+    "managers": {
+      "subject": "{club}: föreningsansvariga har ändrats",
+      "body": "{change, select, appointed {{person} är nu föreningsansvarig.} removed {{person} är inte längre föreningsansvarig.} handed_over {{person} har tagit över som föreningsansvarig.} claimed {{person}, styrelsens ordförande, har tagit över rollen som föreningsansvarig.} other {Supporten har utsett {person} till föreningsansvarig på föreningens begäran.}}\n\nSe föreningens ansvariga:\n{url}"
+    },
+    "clubCreation": {
+      "approvedSubject": "Din förening {club} har skapats",
+      "approvedBody": "Din ansökan om att skapa {club} har godkänts. Du är dess första föreningsansvariga.\n\nÖppna föreningen:\n{url}",
+      "rejectedSubject": "Din ansökan om att skapa {club}",
+      "rejectedBody": "Din ansökan om att skapa {club} har inte godkänts.{hasMessage, select, yes {\n\nMeddelande:\n{message}} other {}}"
+    }
   }
 }

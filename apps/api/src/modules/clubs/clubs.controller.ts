@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import {
-  type ClubDetail,
-  ClubDetailSchema,
-  ClubParamsSchema,
-} from "@clubadmin/shared";
+import { type ClubDetail, ClubDetailSchema, ClubParamsSchema } from "@clubadmin/shared";
 import { Controller } from "@nestjs/common";
 
 import { Endpoint } from "../../platform/http/endpoint.ts";

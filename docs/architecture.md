@@ -503,6 +503,10 @@ Outbox handlers besides the authorization cache: `entitlements-cache`
 (`club.entitlements.changed` → Valkey channel `entitlements:invalidate`) and,
 with billing on in the hosted service, `billing-trial` (`club.created` → a
 trial on the default plan). See docs/hosting-and-billing.md and ADR 0031.
+With `SMTP_URL` set, `mail` sends the transactional emails of P1.1
+(`invitation.created`, `join_request.decided`, `club.manager.changed`,
+`club_creation_request.decided`), rendered from the `email` namespace of the
+message catalogues in the recipient's language (ADR 0032).
 
 ## Country packs
 

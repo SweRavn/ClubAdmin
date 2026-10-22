@@ -99,6 +99,9 @@ catalogs:
     '@types/node':
       specifier: ^24.0.0
       version: 24.19.2
+    '@types/nodemailer':
+      specifier: ^8.0.2
+      version: 8.0.2
     '@types/pg':
       specifier: ^8.15.0
       version: 8.23.1
@@ -139,7 +142,7 @@ catalogs:
       specifier: ^3.0.0
       version: 3.5.2
     intl-messageformat:
-      specifier: ^10.7.0
+      specifier: ^10.7.18
       version: 10.7.18
     ioredis:
       specifier: ^5.11.0
@@ -153,6 +156,9 @@ catalogs:
     next-intl:
       specifier: ^4.14.0
       version: 4.14.9
+    nodemailer:
+      specifier: ^10.1.1
+      version: 10.1.1
     openapi-fetch:
       specifier: ^0.17.0
       version: 0.17.0
@@ -568,6 +574,9 @@ importers:
       '@clubadmin/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@clubadmin/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@clubadmin/server-kit':
         specifier: workspace:*
         version: link:../../packages/server-kit
@@ -580,9 +589,15 @@ importers:
       graphile-worker:
         specifier: 'catalog:'
         version: 0.18.0(typescript@6.0.3)
+      intl-messageformat:
+        specifier: 'catalog:'
+        version: 10.7.18
       ioredis:
         specifier: 'catalog:'
         version: 5.11.1
+      nodemailer:
+        specifier: 'catalog:'
+        version: 10.1.1
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -599,6 +614,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.2
+      '@types/nodemailer':
+        specifier: 'catalog:'
+        version: 8.0.2
       chokidar:
         specifier: 'catalog:'
         version: 5.0.0
@@ -3823,6 +3841,9 @@ packages:
   '@types/node@24.19.2':
     resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
 
+  '@types/nodemailer@8.0.2':
+    resolution: {integrity: sha512-c7M5ox8p0nEOfbJ2E9Qcmt8/QCu/VzsiAhzBiZbvky2PhKZDHpKB3sQHBM5MEZNkCfBOaS6S9//AGPRTNB7IaA==}
+
   '@types/pg-pool@2.0.7':
     resolution: {integrity: sha512-U4CwmGVQcbEuqpyju8/ptOKg6gEC+Tqsvj2xS9o1g71bUh8twxnC6ZL5rZKCsGN0iyH0CwgUyc9VR5owNQF9Ng==}
 
@@ -6469,6 +6490,10 @@ packages:
   node-releases@2.0.58:
     resolution: {integrity: sha512-BdiKAgbfRlvfMq/XzO/AF9NPmaA8a+YpLAyAFTVFBj3gARrAIfWvNq7Q7NE4se3KgFu0KkrvQMxTS0XVnsGzHg==}
     engines: {node: '>=18'}
+
+  nodemailer@10.1.1:
+    resolution: {integrity: sha512-pbqZRoeYUO+1E8TJ/11WeY4D2EVujj1hsYjz3qff/vUFDtGnmi7p3iqzTFslYOfQ6PnjVcWxx/CIUSHCSrO/QA==}
+    engines: {node: '>=20.0.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -11200,6 +11225,10 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
+  '@types/nodemailer@8.0.2':
+    dependencies:
+      '@types/node': 24.19.2
+
   '@types/pg-pool@2.0.7':
     dependencies:
       '@types/pg': 8.23.1
@@ -14398,6 +14427,8 @@ snapshots:
   node-int64@0.4.0: {}
 
   node-releases@2.0.58: {}
+
+  nodemailer@10.1.1: {}
 
   normalize-path@3.0.0: {}
 

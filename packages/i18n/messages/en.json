@@ -281,5 +281,28 @@
     "clientWeb": "Browser",
     "update": "Update {id}",
     "licences": "Third-party licences"
+  },
+  "email": {
+    "footer": "This email was sent by ClubAdmin on behalf of {club}.",
+    "invitation": {
+      "subject": "Invitation to {club}",
+      "body": "{hasInviter, select, yes {{inviter} invites you} other {You are invited}} to join {club} in ClubAdmin.\n\nAccept the invitation:\n{url}\n\nThe invitation is valid until {expires}. If you did not expect it, you can ignore this email."
+    },
+    "joinRequest": {
+      "approvedSubject": "{club}: welcome!",
+      "approvedBody": "{club} approved the request for {person} to join the club.{hasMessage, select, yes {\n\nMessage from the club:\n{message}} other {}}\n\nOpen ClubAdmin:\n{url}",
+      "rejectedSubject": "{club}: your request to join",
+      "rejectedBody": "{club} did not approve the request for {person} to join the club.{hasMessage, select, yes {\n\nMessage from the club:\n{message}} other {}}"
+    },
+    "managers": {
+      "subject": "{club}: club managers changed",
+      "body": "{change, select, appointed {{person} is now a club manager.} removed {{person} is no longer a club manager.} handed_over {{person} has taken over as club manager.} claimed {{person}, the board chair, has taken over the manager role.} other {Support appointed {person} as club manager on the club's request.}}\n\nSee the club's managers:\n{url}"
+    },
+    "clubCreation": {
+      "approvedSubject": "Your club {club} has been created",
+      "approvedBody": "Your request to create {club} was approved. You are its first club manager.\n\nOpen the club:\n{url}",
+      "rejectedSubject": "Your request to create {club}",
+      "rejectedBody": "Your request to create {club} was not approved.{hasMessage, select, yes {\n\nMessage:\n{message}} other {}}"
+    }
   }
 }

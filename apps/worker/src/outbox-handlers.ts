@@ -8,6 +8,7 @@ import { AUTHZ_VERSION_TTL_SECONDS } from "@clubadmin/shared";
 import type { Redis } from "ioredis";
 
 import { billingTrialHandler, entitlementsCacheHandler } from "./billing.ts";
+import { mailHandler, type MailHandlerOptions } from "./mail.ts";
 
 /** Version counters in Valkey (INCR is safe to repeat: a newer version only forces a reload). */
 export function valkeyCacheVersions(valkey: Redis): CacheVersions {
@@ -26,8 +27,11 @@ export function createOutboxHandlers(deps: {
   valkey?: Redis | undefined;
   /** Billing on (P0.12): trials for new clubs on the hosted service. */
   billing?: { hosted: boolean; defaultPlan: string; trialDays: number } | undefined;
+  /** Transactional email (P1.1); without SMTP_URL no email is sent. */
+  mail?: MailHandlerOptions | undefined;
 }): OutboxHandler[] {
   const handlers: OutboxHandler[] = [];
+  if (deps.mail) handlers.push(mailHandler(deps.mail));
   // Without Valkey the API caches nothing across requests, so there is nothing to invalidate.
   if (deps.valkey) {
     handlers.push(

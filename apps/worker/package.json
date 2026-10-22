@@ -22,6 +22,7 @@
     "@swc/cli": "catalog:",
     "@swc/core": "catalog:",
     "@types/node": "catalog:",
+    "@types/nodemailer": "catalog:",
     "chokidar": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
@@ -30,11 +31,14 @@
   "dependencies": {
     "@clubadmin/country-packs": "workspace:*",
     "@clubadmin/db": "workspace:*",
+    "@clubadmin/i18n": "workspace:*",
     "@clubadmin/server-kit": "workspace:*",
     "@clubadmin/shared": "workspace:*",
     "@opentelemetry/api": "catalog:",
     "graphile-worker": "catalog:",
+    "intl-messageformat": "catalog:",
     "ioredis": "catalog:",
+    "nodemailer": "catalog:",
     "zod": "catalog:"
   }
 }

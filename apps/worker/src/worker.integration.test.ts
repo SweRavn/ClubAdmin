@@ -9,6 +9,7 @@ import {
   type TestDatabase,
 } from "@clubadmin/db/testing";
 import { createLogger } from "@clubadmin/server-kit";
+import { emailInvitationToken } from "@clubadmin/server-kit/invitations";
 import { relationshipVersionKey, uuidv7 } from "@clubadmin/shared";
 import { run, runOnce } from "graphile-worker";
 import { Redis } from "ioredis";
@@ -16,6 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { billingTrialHandler } from "./billing.ts";
 import { graphileLogger } from "./graphile-logger.ts";
+import { mailHandler, memoryMailProvider } from "./mail.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards } from "./tasks/guardianships.ts";
@@ -210,6 +212,122 @@ describe("billing trial (club.created, hosted with billing on)", () => {
       [club],
     );
     expect(count.rows[0]).toEqual({ n: 1 });
+  });
+});
+
+describe("transactional email (P1.1)", () => {
+  const key = "worker-test-invitation-key-0123456789";
+
+  /** A club with a manager (account, Swedish) and a member (account, English). */
+  async function clubWithManager(options: { protectedManager?: boolean } = {}) {
+    const club = uuidv7();
+    const manager = uuidv7();
+    const member = uuidv7();
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        `INSERT INTO people (id, given_name, family_name, protected_identity) VALUES
+           ($1, 'Anna', 'Berg', $3), ($2, 'Nils', 'Ek', false)`,
+        [manager, member, options.protectedManager ?? false],
+      );
+      await session.query(
+        `INSERT INTO accounts (person_id, email, email_verified_at, locale) VALUES
+           ($1, $3, now(), 'sv'), ($2, $4, now(), 'en')`,
+        [
+          manager,
+          member,
+          `anna-${manager.slice(-8)}@example.test`,
+          `nils-${member.slice(-8)}@example.test`,
+        ],
+      );
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Mail IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+        [club, `mail-${club.slice(-8)}`],
+      );
+      await session.query(
+        `INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')`,
+        [club, manager],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    return { club, manager, member };
+  }
+
+  it("sends an invitation with the derived link; a protected inviter stays unnamed", async () => {
+    for (const protectedManager of [false, true]) {
+      const { club, manager } = await clubWithManager({ protectedManager });
+      const invitationId = uuidv7();
+      await t.query(
+        "admin",
+        `INSERT INTO invitations (id, club_id, kind, email, token_hash, expires_at, created_by_person_id, max_uses)
+         VALUES ($1, $2, 'email', 'nora@example.test', $4, now() + interval '14 days', $3, 1)`,
+        [invitationId, club, manager, `hash-${invitationId}`],
+      );
+      const eventId = await t.db.withSystem("test", { clubId: club }, (tx) =>
+        outbox.publish(tx, "invitation.created", { invitationId, clubId: club }),
+      );
+      const provider = memoryMailProvider();
+      await outbox.dispatch(t.db, eventId, [
+        mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: key }),
+      ]);
+      expect(provider.sent).toHaveLength(1);
+      const [mail] = provider.sent;
+      expect(mail!.to).toBe("nora@example.test");
+      expect(mail!.subject).toBe("Inbjudan till Mail IF");
+      expect(mail!.text).toContain(
+        `https://clubadmin.test/join/${emailInvitationToken(key, invitationId)}`,
+      );
+      expect(mail!.text.includes("Anna Berg")).toBe(!protectedManager);
+    }
+  });
+
+  it("tells the applicant about the decision, and every manager about manager changes", async () => {
+    const { club, manager, member } = await clubWithManager();
+    const requestId = uuidv7();
+    await t.db.withSystem("test", { clubId: club }, (tx) =>
+      tx.execute(sql`
+        INSERT INTO join_requests (id, club_id, person_id, requested_by_person_id, status, decided_at, decision_message)
+        VALUES (${requestId}, ${club}, ${member}, ${member}, 'approved', now(), 'Training on Tuesdays')`),
+    );
+    const decided = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "join_request.decided", { joinRequestId: requestId, clubId: club }),
+    );
+    const provider = memoryMailProvider();
+    const handler = mailHandler({
+      provider,
+      webUrl: "https://clubadmin.test",
+      invitationTokenKey: key,
+    });
+    await outbox.dispatch(t.db, decided, [handler]);
+    expect(provider.sent.map((m) => [m.subject, m.text.includes("Training on Tuesdays")])).toEqual([
+      ["Mail IF: welcome!", true],
+    ]);
+
+    await t.query(
+      "admin",
+      "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')",
+      [club, member],
+    );
+    const changed = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "club.manager.changed", {
+        clubId: club,
+        personId: member,
+        change: "appointed",
+      }),
+    );
+    await outbox.dispatch(t.db, changed, [handler]);
+    const managerMails = provider.sent.slice(1);
+    expect(managerMails.map((m) => m.subject).sort()).toEqual([
+      "Mail IF: club managers changed",
+      "Mail IF: föreningsansvariga har ändrats",
+    ]);
+    expect(managerMails.every((m) => m.text.includes("Nils Ek"))).toBe(true);
+    expect(new Set(managerMails.map((m) => m.messageId)).size).toBe(2);
+    void manager;
   });
 });
 

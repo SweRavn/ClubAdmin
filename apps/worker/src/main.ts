@@ -6,6 +6,7 @@ import { Redis } from "ioredis";
 
 import { loadWorkerConfig } from "./config.ts";
 import { graphileLogger } from "./graphile-logger.ts";
+import { smtpMailProvider } from "./mail.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { BILLING_CRONTAB, createTaskList, crontab } from "./tasks/index.ts";
 
@@ -41,13 +42,23 @@ const runner = await run({
             trialDays: config.BILLING_TRIAL_DAYS,
           }
         : undefined,
+      mail: config.SMTP_URL
+        ? {
+            provider: smtpMailProvider({ url: config.SMTP_URL, from: config.MAIL_FROM_ADDRESS }),
+            webUrl: config.PUBLIC_WEB_URL,
+            invitationTokenKey: config.INVITATION_TOKEN_KEY,
+          }
+        : undefined,
     }),
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
   }),
   crontab: config.BILLING_ENABLED ? `${crontab}\n${BILLING_CRONTAB}` : crontab,
 });
-logger.info({ concurrency: config.WORKER_CONCURRENCY }, "worker started");
+logger.info(
+  { concurrency: config.WORKER_CONCURRENCY, mail: config.SMTP_URL ? "smtp" : "off" },
+  "worker started",
+);
 
 onShutdown(logger, async () => {
   await runner.stop();
