@@ -56,7 +56,7 @@ pnpm dev:down          # stop services, keep data
 | Emails sent by the system | http://127.0.0.1:8025 or https://mail.clubadmin.localhost |
 | PostgreSQL | `127.0.0.1:5432`, connection string `DATABASE_ADMIN_URL` in `.env.local` |
 | Valkey | `127.0.0.1:6379` |
-| Object storage (S3 API) | `http://127.0.0.1:3900`, buckets `clubadmin-files` and `clubadmin-backups` |
+| Object storage (S3 API) | `http://127.0.0.1:3900`, buckets `clubadmin-files`, `clubadmin-backups` and `clubadmin-files-replica` (the last two with the separate backup key) |
 
 When the web app is not running, https://clubadmin.localhost shows a
 placeholder page served by Caddy.
@@ -187,12 +187,33 @@ migrations, run `pnpm db:migrate` (or `pnpm dev:services` again).
 `pnpm test:integration` clones a migrated template database per test file;
 the template is rebuilt automatically when migrations change.
 
+PostgreSQL runs from the image in `infra/backup/` (PostgreSQL 18 with
+pgBackRest); `pnpm dev:services` builds it the first time and whenever
+`infra/backup/` changes (Alpine's package mirror must be reachable).
+
+### Backups
+
+Off by default. `pnpm dev:services --backup` sets `BACKUP_ENABLED=true` in
+`.env.local` (set it to `false` to turn backups off again), archives WAL and
+starts the backup sidecar, which takes a first full backup into Garage's
+`clubadmin-backups` bucket. Then:
+
+```sh
+pnpm ops:backup diff          # a backup now
+pnpm ops:verify-backup        # restore into a temporary container and check it
+pnpm dev:logs backup
+pnpm db:reset --scenario minimal && bash infra/backup/ci-drill.sh   # the CI drill
+```
+
+Settings, schedules and restores: `infra/backup/README.md` and
+`infra/backup/runbooks/`.
+
 ## Commands
 
 | Command | Does |
 |---|---|
 | `pnpm dev` | Start services, then `turbo run dev` for all apps |
-| `pnpm dev:services [--full]` | Start services only; `--full` also starts ClamAV (slow first start) |
+| `pnpm dev:services [--full] [--backup]` | Start services only; `--full` also starts ClamAV (slow first start); `--backup` turns on backups (kept in `.env.local`) |
 | `pnpm dev:down` | Stop services; data is kept |
 | `pnpm dev:logs [service]` | Follow logs, e.g. `pnpm dev:logs zitadel` |
 | `pnpm dev:clean [--yes]` | Stop services and **delete all their data** |

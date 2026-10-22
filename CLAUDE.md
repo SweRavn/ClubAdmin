@@ -74,9 +74,10 @@ packages/
   country-packs/  Country-specific rules (se, no, ...)
   server-kit/ Server bootstrap shared by api and worker: config, logging, telemetry
   devtools/   pnpm dev:* tooling (docker compose, doctor, smoke test)
+  ops/        pnpm ops:* operator tooling (backup verification, restores, ledger replay)
 infra/
   docker/     Dockerfiles, docker-compose for dev and self-hosting
-  backup/     pgBackRest config, restore runbooks and scripts
+  backup/     PostgreSQL image with pgBackRest, backup sidecar, restore runbooks
 docs/         Design documents, ADRs, prompts; demo data in docs/demodata (ADR 0026)
 ```
 
@@ -99,7 +100,7 @@ Local development (see `docs/development.md`):
 
 ```
 pnpm dev              # start services (docker compose) + all apps in watch mode
-pnpm dev:services     # services only (--full adds ClamAV)
+pnpm dev:services     # services only (--full adds ClamAV; --backup turns on backups)
 pnpm dev:down         # stop services, keep data
 pnpm dev:clean        # stop services and delete their data
 pnpm dev:doctor       # check tools, ports, certificates, service health
@@ -133,6 +134,17 @@ pnpm db:generate      # write a migration from changes in packages/db/src/schema
 pnpm --filter @clubadmin/db bench   # cost of tenant transactions and history triggers
 pnpm db:seed          # load the demo scenario (docs/seed-data.md, data in docs/demodata)
 pnpm db:reset         # drop, recreate, migrate, seed; development only (--scenario demo|minimal|load)
+```
+
+Backups (see `docs/operations/backup-restore.md`, runbooks in `infra/backup/runbooks/`):
+
+```
+pnpm ops:backup full|diff|monthly|files   # run a backup now (backup sidecar)
+pnpm ops:verify-backup [--time <ISO>]     # restore into a temporary container, check, record
+pnpm ops:restore [--time <ISO>]           # in-place restore, replays the deletion ledger
+pnpm ops:replay-ledger                    # erase everyone in the deletion ledger again
+pnpm ops:object-lock                      # is the backup bucket immutable?
+bash infra/backup/ci-drill.sh             # the CI backup drill against the local services
 ```
 
 Dependency versions shared across packages are defined once in the `catalog:`

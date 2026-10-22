@@ -30,7 +30,13 @@ export interface PersonResource {
   groups: PersonGroupRow[];
 }
 
+/** The installation as a whole (operator endpoints); no IDs. */
+export interface PlatformResource {
+  kind: "platform";
+}
+
 export interface Resources {
+  platform: PlatformResource;
   club: ClubResource;
   group: GroupResource;
   person: PersonResource;

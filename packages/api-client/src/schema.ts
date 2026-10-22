@@ -274,6 +274,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/ops/backup-status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Last successful backups and restore verification, with warnings when they are too old (operators)
+     * @description Requires permission `ops.backup.read` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Backups_status"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/people/{personId}": {
     parameters: {
       query?: never;
@@ -486,6 +506,7 @@ export interface components {
           | "person.profile.read"
           | "person.profile.update"
           | "person.protection.set"
+          | "ops.backup.read"
         )[];
       }[];
     };
@@ -597,6 +618,74 @@ export interface components {
       version: string;
       /** @example c366744 */
       commit: string;
+    };
+    BackupStatus: {
+      backupsEnabled: boolean;
+      database: {
+        /** Format: date-time */
+        lastSuccessAt: string | null;
+        lastLabel: string | null;
+        /** Format: date-time */
+        lastRunAt: string | null;
+        /** @example succeeded */
+        lastRunStatus: string | null;
+        sizeBytes: number | null;
+      };
+      monthly: {
+        /** Format: date-time */
+        lastSuccessAt: string | null;
+        lastLabel: string | null;
+        /** Format: date-time */
+        lastRunAt: string | null;
+        /** @example succeeded */
+        lastRunStatus: string | null;
+        sizeBytes: number | null;
+      };
+      files: {
+        /** Format: date-time */
+        lastSuccessAt: string | null;
+        lastLabel: string | null;
+        /** Format: date-time */
+        lastRunAt: string | null;
+        /** @example succeeded */
+        lastRunStatus: string | null;
+        sizeBytes: number | null;
+      };
+      ledger: {
+        /** Format: date-time */
+        lastSuccessAt: string | null;
+        lastLabel: string | null;
+        /** Format: date-time */
+        lastRunAt: string | null;
+        /** @example succeeded */
+        lastRunStatus: string | null;
+        sizeBytes: number | null;
+      };
+      verification: {
+        /** Format: date-time */
+        lastPassedAt: string | null;
+        /** Format: date-time */
+        lastRunAt: string | null;
+        /** @example passed */
+        lastRunStatus: string | null;
+        label: string | null;
+        checks: {
+          name: string;
+          status: string;
+          detail?: string;
+        }[];
+      };
+      /**
+       * @example [
+       *       "restore_verification_stale"
+       *     ]
+       */
+      warnings: string[];
+      thresholds: {
+        backupHours: number;
+        filesHours: number;
+        verificationDays: number;
+      };
     };
     PersonProfile: {
       person: components["schemas"]["PersonSummary"];
@@ -1529,6 +1618,71 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["VersionResponse"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Backups_status: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BackupStatus"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
       /** @description Too many requests */

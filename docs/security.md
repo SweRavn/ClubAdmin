@@ -115,7 +115,11 @@ later phase. Backup and disaster recovery are in
 - TLS 1.3 everywhere (Caddy), HSTS preload, internal traffic on a private
   network; database connections use TLS.
 - Encryption at rest: encrypted volumes; backups encrypted client-side before
-  leaving the host.
+  leaving the host (pgBackRest, AES-256-CBC, `BACKUP_CIPHER_PASS` from the
+  secret store, never in a file on the database host). Backup credentials are
+  separate from the application's: the application's S3 key cannot read or
+  delete backups; the backup key only reads the files bucket
+  (docs/operations/backup-restore.md, ADR 0030).
 - Field-level envelope encryption (AES-256-GCM, per-club data keys wrapped by a
   master key kept outside the database) for: personal identity numbers,
   medical/allergy notes, salary data, bank details. Implementation

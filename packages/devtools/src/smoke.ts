@@ -146,14 +146,18 @@ export async function smoke(): Promise<boolean> {
     }),
   );
 
-  for (const bucketKey of ["S3_BUCKET_FILES", "S3_BUCKET_BACKUPS"]) {
+  // The backup bucket has its own credentials, separate from the application's.
+  for (const [bucketKey, keyPrefix] of [
+    ["S3_BUCKET_FILES", "S3"],
+    ["S3_BUCKET_BACKUPS", "BACKUP_S3"],
+  ] as const) {
     const bucket = env.get(bucketKey) ?? "";
     results.push(
       await check(`Garage: write, read and delete in bucket ${bucket}`, async () => {
         const credentials = {
           region: requireEnv(env, "S3_REGION"),
-          accessKeyId: requireEnv(env, "S3_ACCESS_KEY_ID"),
-          secretAccessKey: requireEnv(env, "S3_SECRET_ACCESS_KEY"),
+          accessKeyId: requireEnv(env, `${keyPrefix}_ACCESS_KEY_ID`),
+          secretAccessKey: requireEnv(env, `${keyPrefix}_SECRET_ACCESS_KEY`),
         };
         const url = new URL(
           `${requireEnv(env, "S3_ENDPOINT")}/${bucket}/smoke-test/${randomUUID()}.txt`,

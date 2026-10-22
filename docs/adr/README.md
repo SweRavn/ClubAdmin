@@ -35,3 +35,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0027](0027-web-performance-budgets-in-ci.md) | Web shell: production build, CSP with Trusted Types, performance budgets in CI | Accepted |
 | [0028](0028-mobile-app.md) | Mobile app: login, development tokens, encrypted cache, updates and per-account rate limits | Accepted |
 | [0029](0029-api-compatibility.md) | API compatibility: `/api/v1` only grows | Accepted |
+| [0030](0030-backup-implementation.md) | Backups: one PostgreSQL image, ledger outside the backups, erasure core in SQL | Accepted |

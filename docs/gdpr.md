@@ -42,7 +42,13 @@
   the person everywhere: `people` row anonymised, messages kept as
   "deleted user" if the room requires history, otherwise deleted. The person's
   values are also scrubbed from the record history (the fact that a change
-  happened is kept).
+  happened is kept). The database function `privacy.erase_person` does this
+  for the data that exists so far (people row: names emptied, birth date kept
+  as the year, identity number, phone and address removed; login email
+  replaced; club notes and emergency contacts; invitations; record history)
+  and records the person in the deletion ledger; it is idempotent, so it is
+  run again for every ledger entry after a restore (ADR 0030). The erasure
+  job and its triggers (account deletion, retention) come in P1.8.
 - **Objection / consent withdrawal:** one click per consent; effects apply
   immediately (e.g. hidden from photo galleries and streams).
 - Guardians exercise rights for children below the consent age; teenagers get
@@ -59,7 +65,7 @@
 | Background-check verification metadata | While role is held + 1 year |
 | Audit log | 2 years (security) |
 | Record history | 2 years (configurable); personal values scrubbed on erasure |
-| Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore) |
+| Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
 
 ## Protected identity
 

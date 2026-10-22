@@ -175,6 +175,14 @@ describe("permission matrix", () => {
       url: () => `/api/v1/people/${m.child.id}?clubId=${m.clubA.id}`,
       expected: PROFILE,
     },
+    // Operators only, with a second factor (these tokens have none): see backups.integration.test.ts.
+    "GET /api/v1/ops/backup-status": {
+      url: () => "/api/v1/ops/backup-status",
+      expected: Object.fromEntries(MATRIX_PERSONAS.map((p) => [p, 403])) as Record<
+        MatrixPersona,
+        number
+      >,
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {

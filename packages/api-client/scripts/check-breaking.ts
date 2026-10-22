@@ -20,6 +20,11 @@ const SPEC = "packages/api-client/openapi.json";
 const packageDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const repoRoot = dirname(dirname(packageDir));
 const allowedFile = join(packageDir, "breaking-changes-allowed.txt");
+/**
+ * oasdiff checks whose level ADR 0029 changes: new enum values in responses
+ * are allowed (clients show a neutral fallback for values they do not know).
+ */
+const levelsFile = join(packageDir, "oasdiff-levels.txt");
 
 const git = (...args: string[]) =>
   spawnSync("git", args, { cwd: repoRoot, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
@@ -91,6 +96,8 @@ const result = spawnSync(
     "ERR",
     "--err-ignore",
     allowedFile,
+    "--severity-levels",
+    levelsFile,
   ],
   { cwd: repoRoot, stdio: "inherit", env: { ...process.env, GOTOOLCHAIN: "auto" } },
 );

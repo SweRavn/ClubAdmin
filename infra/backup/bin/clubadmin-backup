@@ -1,0 +1,336 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-only
+# The backup sidecar's commands (docs/operations/backup-restore.md):
+#
+#   serve                  sidecar entry point: create the stanza, take a first
+#                          full backup if there is none, then run the schedules
+#   backup full|diff|incr  database backup to repo1 (point-in-time recovery)
+#   backup monthly         full backup to repo2 (kept 12 months)
+#   files                  replicate the files bucket to the second provider
+#   ledger-export          copy the deletion ledger (IDs only) next to the backups
+#   ledger-cat             print the exported ledger (JSON)
+#   files-check            object keys on stdin (one per line): print those
+#                          missing from the file replica
+#   restore [--time T] [--set LABEL] [--delta] [--scratch]
+#                          restore the database into PGDATA (PostgreSQL stopped);
+#                          --scratch: for a temporary copy, never archives WAL
+#   info | check | stanza  pgBackRest info, check, stanza-create
+#
+# Every backup and replication run is recorded in ops.backup_runs.
+set -eu
+
+PATH=/usr/local/bin:$PATH
+ENV_FILE=/run/clubadmin-backup.env
+SOCKET=/var/run/postgresql
+DATABASE=${POSTGRES_DB:-clubadmin}
+DB_USER=${POSTGRES_USER:-postgres}
+
+log() {
+  printf '%s clubadmin-backup: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2
+}
+
+die() {
+  log "$*"
+  exit 1
+}
+
+secret() {
+  eval "file=\${${1}_FILE:-}"
+  if [ -n "$file" ]; then
+    cat "$file"
+  else
+    eval "printf '%s' \"\${${1}:-}\""
+  fi
+}
+
+sql() {
+  psql -X -q -At -v ON_ERROR_STOP=1 -h "$SOCKET" -U "$DB_USER" -d "$DATABASE" "$@"
+}
+
+# rclone remotes from the environment: "backup" (the backup bucket),
+# "source" (the application's files bucket) and "replica" (second provider).
+rclone_env() {
+  scheme=https
+  RCLONE_CONFIG_BACKUP_TYPE=s3
+  RCLONE_CONFIG_BACKUP_PROVIDER=Other
+  RCLONE_CONFIG_BACKUP_ENDPOINT="$scheme://${BACKUP_S3_ENDPOINT:-}"
+  RCLONE_CONFIG_BACKUP_REGION=${BACKUP_S3_REGION:-us-east-1}
+  RCLONE_CONFIG_BACKUP_ACCESS_KEY_ID=$(secret BACKUP_S3_ACCESS_KEY_ID)
+  RCLONE_CONFIG_BACKUP_SECRET_ACCESS_KEY=$(secret BACKUP_S3_SECRET_ACCESS_KEY)
+  RCLONE_CONFIG_BACKUP_FORCE_PATH_STYLE=$([ "${BACKUP_S3_URI_STYLE:-host}" = "path" ] && echo true || echo false)
+  RCLONE_CONFIG_SOURCE_TYPE=s3
+  RCLONE_CONFIG_SOURCE_PROVIDER=Other
+  RCLONE_CONFIG_SOURCE_ENDPOINT=${FILES_SOURCE_S3_ENDPOINT:-}
+  RCLONE_CONFIG_SOURCE_REGION=${FILES_SOURCE_S3_REGION:-us-east-1}
+  RCLONE_CONFIG_SOURCE_ACCESS_KEY_ID=$(secret FILES_SOURCE_S3_ACCESS_KEY_ID)
+  RCLONE_CONFIG_SOURCE_SECRET_ACCESS_KEY=$(secret FILES_SOURCE_S3_SECRET_ACCESS_KEY)
+  RCLONE_CONFIG_REPLICA_TYPE=s3
+  RCLONE_CONFIG_REPLICA_PROVIDER=Other
+  RCLONE_CONFIG_REPLICA_ENDPOINT=${FILES_REPLICA_S3_ENDPOINT:-}
+  RCLONE_CONFIG_REPLICA_REGION=${FILES_REPLICA_S3_REGION:-us-east-1}
+  RCLONE_CONFIG_REPLICA_ACCESS_KEY_ID=$(secret FILES_REPLICA_S3_ACCESS_KEY_ID)
+  RCLONE_CONFIG_REPLICA_SECRET_ACCESS_KEY=$(secret FILES_REPLICA_S3_SECRET_ACCESS_KEY)
+  export RCLONE_CONFIG_BACKUP_TYPE RCLONE_CONFIG_BACKUP_PROVIDER RCLONE_CONFIG_BACKUP_ENDPOINT \
+    RCLONE_CONFIG_BACKUP_REGION RCLONE_CONFIG_BACKUP_ACCESS_KEY_ID RCLONE_CONFIG_BACKUP_SECRET_ACCESS_KEY \
+    RCLONE_CONFIG_BACKUP_FORCE_PATH_STYLE \
+    RCLONE_CONFIG_SOURCE_TYPE RCLONE_CONFIG_SOURCE_PROVIDER RCLONE_CONFIG_SOURCE_ENDPOINT \
+    RCLONE_CONFIG_SOURCE_REGION RCLONE_CONFIG_SOURCE_ACCESS_KEY_ID RCLONE_CONFIG_SOURCE_SECRET_ACCESS_KEY \
+    RCLONE_CONFIG_REPLICA_TYPE RCLONE_CONFIG_REPLICA_PROVIDER RCLONE_CONFIG_REPLICA_ENDPOINT \
+    RCLONE_CONFIG_REPLICA_REGION RCLONE_CONFIG_REPLICA_ACCESS_KEY_ID RCLONE_CONFIG_REPLICA_SECRET_ACCESS_KEY
+  RCLONE_FLAGS="--config /dev/null --s3-no-check-bucket"
+  if [ "${BACKUP_S3_VERIFY_TLS:-true}" = "false" ]; then
+    RCLONE_FLAGS="$RCLONE_FLAGS --no-check-certificate"
+  fi
+  if [ -n "${BACKUP_S3_CA_FILE:-}" ]; then
+    RCLONE_FLAGS="$RCLONE_FLAGS --ca-cert $BACKUP_S3_CA_FILE"
+  fi
+}
+
+ledger_object() {
+  printf 'backup:%s%s/deletion-ledger/%s' "${BACKUP_S3_BUCKET:?BACKUP_S3_BUCKET is not set}" "${BACKUP_PATH:-/clubadmin}" "$1"
+}
+
+# Starts a row in ops.backup_runs; prints its ID (empty if the table does not exist yet).
+run_start() {
+  sql -v kind="$1" -v counts="$2" <<'SQL' 2>/dev/null || true
+INSERT INTO ops.backup_runs (kind, row_counts)
+VALUES (:'kind', CASE WHEN :'counts' = 'yes' THEN ops.key_table_counts() END)
+RETURNING id;
+SQL
+}
+
+# run_finish ID STATUS [LABEL] [SIZE] [ERROR]
+run_finish() {
+  [ -n "$1" ] || return 0
+  sql -v id="$1" -v status="$2" -v label="${3:-}" -v size="${4:-}" -v error="${5:-}" <<'SQL' || log "could not record the run in ops.backup_runs"
+UPDATE ops.backup_runs
+SET status = :'status', finished_at = now(),
+    label = nullif(:'label', ''), size_bytes = nullif(:'size', '')::bigint,
+    error = nullif(:'error', '')
+WHERE id = :'id';
+SQL
+}
+
+# Last lines of a failed tool's output, for ops.backup_runs.error.
+tail_of() {
+  tail -n 8 "$1" | cut -c 1-400
+}
+
+cmd_backup() {
+  kind=${1:-}
+  case "$kind" in
+    full | diff | incr) args="--repo=1 --type=$kind" repo=1 ;;
+    monthly)
+      [ "${BACKUP_MONTHLY:-true}" = "true" ] || die "monthly backups are disabled (BACKUP_MONTHLY=false)"
+      args="--repo=2 --type=full" repo=2
+      ;;
+    *) die "usage: clubadmin-backup backup full|diff|incr|monthly" ;;
+  esac
+  id=$(run_start "$kind" yes)
+  out=$(mktemp)
+  log "starting $kind backup"
+  # shellcheck disable=SC2086 # $args is a list of options
+  if clubadmin-pgbackrest backup $args >"$out" 2>&1; then
+    cat "$out" >&2
+    info=$(clubadmin-pgbackrest info --output=json --repo="$repo")
+    details=$(sql -v info="$info" <<'SQL'
+SELECT b ->> 'label', b -> 'info' -> 'repository' ->> 'delta'
+FROM jsonb_array_elements((:'info')::jsonb -> 0 -> 'backup') AS b
+ORDER BY b -> 'timestamp' ->> 'stop' DESC LIMIT 1;
+SQL
+)
+    label=${details%%|*}
+    size=${details##*|}
+    run_finish "$id" succeeded "$label" "$size"
+    log "$kind backup $label finished ($size bytes in the repository)"
+    rm -f "$out"
+    cmd_ledger_export || true
+  else
+    status=$?
+    cat "$out" >&2
+    run_finish "$id" failed "" "" "$(tail_of "$out")"
+    rm -f "$out"
+    die "$kind backup failed (exit $status)"
+  fi
+}
+
+cmd_files() {
+  if [ -z "${FILES_REPLICA_S3_BUCKET:-}" ] || [ -z "${FILES_SOURCE_S3_BUCKET:-}" ]; then
+    log "file replication is not configured (FILES_SOURCE_S3_BUCKET, FILES_REPLICA_S3_BUCKET)"
+    cmd_ledger_export
+    return 0
+  fi
+  rclone_env
+  id=$(run_start files no)
+  out=$(mktemp)
+  log "replicating files: $FILES_SOURCE_S3_BUCKET -> $FILES_REPLICA_S3_BUCKET"
+  # shellcheck disable=SC2086
+  if rclone $RCLONE_FLAGS sync "source:$FILES_SOURCE_S3_BUCKET" "replica:$FILES_REPLICA_S3_BUCKET" \
+    --fast-list --checksum --transfers 4 --stats-one-line --stats 0 >"$out" 2>&1; then
+    # shellcheck disable=SC2086
+    size=$(rclone $RCLONE_FLAGS size "replica:$FILES_REPLICA_S3_BUCKET" --json 2>/dev/null \
+      | sed -n 's/.*"bytes":\([0-9]*\).*/\1/p')
+    run_finish "$id" succeeded "" "$size"
+    log "file replication finished (${size:-?} bytes)"
+    rm -f "$out"
+  else
+    status=$?
+    cat "$out" >&2
+    run_finish "$id" failed "" "" "$(tail_of "$out")"
+    rm -f "$out"
+    cmd_ledger_export || true
+    die "file replication failed (exit $status)"
+  fi
+  cmd_ledger_export
+}
+
+# The deletion ledger lives in the database, which a restore rolls back; this
+# copy outside the backups lets the restore procedure erase people again who
+# were erased after the restore point.
+cmd_ledger_export() {
+  rclone_env
+  id=$(run_start ledger no)
+  ledger=$(sql -c "SELECT coalesce(json_agg(json_build_object('person_id', person_id, 'erased_at', erased_at, 'reason', reason) ORDER BY erased_at, person_id), '[]') FROM privacy.deletion_ledger") || {
+    run_finish "$id" failed "" "" "could not read privacy.deletion_ledger"
+    die "could not read the deletion ledger"
+  }
+  out=$(mktemp)
+  # shellcheck disable=SC2086
+  if printf '%s\n' "$ledger" | rclone $RCLONE_FLAGS rcat "$(ledger_object ledger.json)" >"$out" 2>&1 \
+    && printf '%s\n' "$ledger" | rclone $RCLONE_FLAGS rcat "$(ledger_object "archive/$(date -u +%Y-%m-%d).json")" >>"$out" 2>&1; then
+    run_finish "$id" succeeded "" "${#ledger}"
+    rm -f "$out"
+  else
+    cat "$out" >&2
+    run_finish "$id" failed "" "" "$(tail_of "$out")"
+    rm -f "$out"
+    die "deletion ledger export failed"
+  fi
+}
+
+cmd_ledger_cat() {
+  rclone_env
+  # shellcheck disable=SC2086
+  rclone $RCLONE_FLAGS cat "$(ledger_object ledger.json)"
+}
+
+cmd_files_check() {
+  rclone_env
+  [ -n "${FILES_REPLICA_S3_BUCKET:-}" ] || die "FILES_REPLICA_S3_BUCKET is not set"
+  while IFS= read -r key; do
+    [ -n "$key" ] || continue
+    # shellcheck disable=SC2086
+    if ! rclone $RCLONE_FLAGS lsf "replica:$FILES_REPLICA_S3_BUCKET/$key" 2>/dev/null | grep -q .; then
+      printf '%s\n' "$key"
+    fi
+  done
+}
+
+cmd_restore() {
+  time="" set_label="" delta="" scratch=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --time) time=$2 && shift 2 ;;
+      --set) set_label=$2 && shift 2 ;;
+      --delta) delta=yes && shift ;;
+      --scratch) scratch=yes && shift ;;
+      *) die "unknown restore option $1" ;;
+    esac
+  done
+  if pg_isready -q -h "$SOCKET" 2>/dev/null; then
+    die "PostgreSQL is running on this data directory; stop it before restoring"
+  fi
+  data=${PGDATA:-/var/lib/postgresql/18/docker}
+  mkdir -p "$data"
+  chmod 0700 "$data"
+  if [ -n "$time" ]; then
+    # ISO 8601 (2026-10-22T09:20:50.947Z) as pgBackRest wants it (2026-10-22 09:20:50.947+00).
+    time=$(printf '%s' "$time" | sed 's/T/ /; s/Z$/+00/')
+    set -- --type=time "--target=$time" --target-action=promote
+  else
+    # The latest backup and all archived WAL, then promote.
+    set -- --type=default
+  fi
+  [ -z "$set_label" ] || set -- "$@" "--set=$set_label"
+  # --delta reuses matching files of an existing data directory (faster).
+  if [ -n "$delta" ] && [ -f "$data/PG_VERSION" ]; then
+    set -- "$@" --delta
+  fi
+  # A temporary copy must never push WAL into the production repositories.
+  [ -z "$scratch" ] || set -- "$@" --archive-mode=off
+  log "restoring into $data ${time:+to $time}"
+  clubadmin-pgbackrest restore "$@"
+  log "restore finished; start PostgreSQL to replay WAL and promote"
+}
+
+cmd_serve() {
+  [ "$(id -u)" = "0" ] || die "serve runs as root (it schedules jobs as postgres)"
+  [ "${BACKUP_ENABLED:-false}" = "true" ] || die "BACKUP_ENABLED is not true; the backup sidecar has nothing to do"
+  umask 077
+  # Cron jobs do not inherit the container's environment.
+  env | grep -E '^(BACKUP_|FILES_|POSTGRES_USER=|POSTGRES_DB=|PGDATA=|TZ=)' \
+    | sed "s/'/'\\\\''/g; s/^\([^=]*\)=\(.*\)$/export \1='\2'/" >"$ENV_FILE"
+  umask 022
+
+  log "waiting for PostgreSQL"
+  until pg_isready -q -h "$SOCKET"; do sleep 2; done
+  gosu postgres clubadmin-pgbackrest stanza-create
+  if ! gosu postgres clubadmin-pgbackrest check; then
+    log "pgBackRest check failed; WAL archiving may not work yet (is BACKUP_ENABLED=true set for postgres too?)"
+  fi
+  if [ "${BACKUP_INITIAL_FULL:-true}" = "true" ] \
+    && ! gosu postgres clubadmin-pgbackrest info --repo=1 --output=json | grep -q '"label"'; then
+    log "no full backup yet: taking one now"
+    gosu postgres clubadmin-backup backup full || log "first full backup failed"
+  fi
+
+  mkdir -p /etc/crontabs
+  {
+    echo "${BACKUP_SCHEDULE_FULL:-0 2 * * 0} /usr/local/bin/clubadmin-backup cron backup full"
+    echo "${BACKUP_SCHEDULE_DIFF:-0 2 * * 1-6} /usr/local/bin/clubadmin-backup cron backup diff"
+    if [ "${BACKUP_MONTHLY:-true}" = "true" ]; then
+      echo "${BACKUP_SCHEDULE_MONTHLY:-30 3 1 * *} /usr/local/bin/clubadmin-backup cron backup monthly"
+    fi
+    echo "${BACKUP_SCHEDULE_FILES:-17 * * * *} /usr/local/bin/clubadmin-backup cron files"
+  } >/etc/crontabs/root
+  log "schedules:"
+  sed 's/^/  /' /etc/crontabs/root >&2
+  if command -v crond >/dev/null 2>&1; then
+    exec crond -f -l 8 -c /etc/crontabs
+  fi
+  exec busybox crond -f -l 8 -c /etc/crontabs
+}
+
+# A cron job: the sidecar's environment, as postgres, output to the container log.
+cmd_cron() {
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  exec gosu postgres /usr/local/bin/clubadmin-backup "$@" >>/proc/1/fd/1 2>>/proc/1/fd/2
+}
+
+command=${1:-}
+[ $# -gt 0 ] && shift
+
+case "$command" in
+  serve) cmd_serve ;;
+  cron) cmd_cron "$@" ;;
+  "" | help | -h | --help) awk 'NR > 2 && /^set -eu/ { exit } NR > 2' "$0" | sed 's/^# \{0,1\}//' ;;
+  *)
+    # Everything else reads the data directory or writes as its owner.
+    if [ "$(id -u)" = "0" ]; then
+      exec gosu postgres "$0" "$command" "$@"
+    fi
+    case "$command" in
+      backup) cmd_backup "$@" ;;
+      files) cmd_files ;;
+      ledger-export) cmd_ledger_export ;;
+      ledger-cat) cmd_ledger_cat ;;
+      files-check) cmd_files_check ;;
+      restore) cmd_restore "$@" ;;
+      info) exec clubadmin-pgbackrest info "$@" ;;
+      check) exec clubadmin-pgbackrest check "$@" ;;
+      stanza) exec clubadmin-pgbackrest stanza-create "$@" ;;
+      *) die "unknown command $command (see clubadmin-backup help)" ;;
+    esac
+    ;;
+esac

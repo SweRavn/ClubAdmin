@@ -11,8 +11,13 @@ import {
 } from "../../platform/http/endpoint-registry.ts";
 import { policyFor, policyGaps } from "./authorization.policy.ts";
 
-/** Path parameter each resource loader reads (the person loader also reads ?clubId). */
-const RESOURCE_PARAMS = { club: ":clubId", group: ":groupId", person: ":personId" } as const;
+/** Path parameter each resource loader reads (the person loader also reads ?clubId; the platform none). */
+const RESOURCE_PARAMS = {
+  platform: null,
+  club: ":clubId",
+  group: ":groupId",
+  person: ":personId",
+} as const;
 
 export class EndpointPolicyError extends Error {
   constructor(problems: string[]) {
@@ -35,10 +40,9 @@ export function endpointPolicyProblems(endpoints: readonly RegisteredEndpoint[])
     if (policy.resource !== resource) {
       problems.push(`${name}: ${permission} checks a ${policy.resource}, not a ${resource}`);
     }
-    if (!endpoint.fullPath.split("/").includes(RESOURCE_PARAMS[resource])) {
-      problems.push(
-        `${name}: a ${resource} resource needs the path parameter ${RESOURCE_PARAMS[resource]}`,
-      );
+    const param = RESOURCE_PARAMS[resource];
+    if (param !== null && !endpoint.fullPath.split("/").includes(param)) {
+      problems.push(`${name}: a ${resource} resource needs the path parameter ${param}`);
     }
   }
   return problems;

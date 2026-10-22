@@ -48,9 +48,10 @@ function fakeGarage() {
       }
       case "/v2/AllowBucketKey": {
         const bucket = [...state.buckets.values()].find((b) => b.id === body.bucketId);
+        const permissions = body.permissions as { read: boolean; write: boolean };
         bucket?.keys.push({
           accessKeyId: body.accessKeyId as string,
-          permissions: { read: true, write: true },
+          permissions: { read: permissions.read, write: permissions.write },
         });
         return json(200, bucket);
       }
@@ -79,11 +80,42 @@ describe("setupGarage", () => {
       "applied single-node cluster layout",
       "imported access key GK000000000000000000000001",
       "created bucket files",
-      "granted read/write on files",
+      "granted read/write on files to GK000000000000000000000001",
       "created bucket backups",
-      "granted read/write on backups",
+      "granted read/write on backups to GK000000000000000000000001",
     ]);
     expect(state.layoutVersion).toBe(1);
     expect(await setupGarage(setup, fetchImpl)).toEqual([]);
+  });
+
+  it("gives further keys only their own grants", async () => {
+    const { state, fetchImpl } = fakeGarage();
+    const backupKey = {
+      accessKeyId: "GK000000000000000000000002",
+      secretAccessKey: "backup-secret",
+      name: "clubadmin-dev-backup",
+      grants: [
+        { bucket: "files", write: false },
+        { bucket: "backups", write: true },
+        { bucket: "files-replica", write: true },
+      ],
+    };
+    const changes = await setupGarage(
+      { ...setup, buckets: ["files"], keys: [backupKey] },
+      fetchImpl,
+    );
+    expect(changes).toContain("granted read on files to GK000000000000000000000002");
+    expect(changes).toContain("created bucket files-replica");
+    expect(state.buckets.get("files")?.keys).toEqual([
+      { accessKeyId: "GK000000000000000000000001", permissions: { read: true, write: true } },
+      { accessKeyId: "GK000000000000000000000002", permissions: { read: true, write: false } },
+    ]);
+    // The application's key is not given the backup buckets.
+    expect(state.buckets.get("backups")?.keys.map((k) => k.accessKeyId)).toEqual([
+      "GK000000000000000000000002",
+    ]);
+    expect(
+      await setupGarage({ ...setup, buckets: ["files"], keys: [backupKey] }, fetchImpl),
+    ).toEqual([]);
   });
 });

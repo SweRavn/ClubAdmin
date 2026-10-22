@@ -37,3 +37,9 @@ api.{$APP_DOMAIN} {
 mail.{$APP_DOMAIN} {
 	reverse_proxy mailpit:8025
 }
+
+# Garage's S3 API over HTTPS, for pgBackRest in the backup containers
+# (pnpm dev:services --backup). Path-style requests keep the host name.
+s3.{$APP_DOMAIN} {
+	reverse_proxy garage:3900
+}

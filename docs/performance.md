@@ -16,6 +16,8 @@ budgets are requirements; CI measures them.
 | Mobile: cold start to usable schedule | < 2 s; cached data shown immediately |
 | Chat message delivery (online recipient) | < 300 ms |
 | Calendar feed (`.ics`) request, p95 | < 50 ms (served from precomputed schedule, ETag/`304`) |
+| Backups | No effect on the API budgets above (pgBackRest with 2 processes, zstd); measured under the load scenario: [#14](https://github.com/SweRavn/ClubAdmin/issues/14) |
+| Restore (RTO planning) | < 30 minutes for a 10 GB database (docs/operations/backup-restore.md) |
 
 ## Design rules
 

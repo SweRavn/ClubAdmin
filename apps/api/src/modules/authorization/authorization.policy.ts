@@ -130,6 +130,9 @@ export const POLICIES: readonly Policy[] = [
         : actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId, "act_on_behalf"),
     { mfa: ({ resource }) => resource.clubId !== null },
   ),
+  // Operator endpoints (backup status): platform operators, who are also the
+  // administrators of a self-hosted installation; with a second factor.
+  definePolicy("ops.backup.read", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

@@ -1,0 +1,99 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-only
+# Runs pgBackRest with its configuration taken from the BACKUP_* environment
+# variables (no configuration file on disk). Secrets can come from files
+# (BACKUP_CIPHER_PASS_FILE, BACKUP_S3_SECRET_ACCESS_KEY_FILE, ...), for
+# example Docker secrets, so they are not part of the container's settings.
+#
+# Repositories (same bucket and credentials, separate paths):
+#   repo1  weekly full + daily differential backups, WAL for point-in-time
+#          recovery; kept BACKUP_RETENTION_DAYS (35) days
+#   repo2  monthly full backups, kept BACKUP_MONTHLY_RETENTION (12) backups;
+#          WAL only for those backups' consistency
+set -eu
+
+# Reads NAME, or the contents of the file in NAME_FILE.
+secret() {
+  eval "file=\${${1}_FILE:-}"
+  if [ -n "$file" ]; then
+    cat "$file"
+  else
+    eval "printf '%s' \"\${${1}:-}\""
+  fi
+}
+
+require() {
+  if [ -z "$2" ]; then
+    echo "clubadmin-pgbackrest: $1 is not set" >&2
+    exit 64
+  fi
+}
+
+endpoint=${BACKUP_S3_ENDPOINT:-}
+bucket=${BACKUP_S3_BUCKET:-}
+key_id=$(secret BACKUP_S3_ACCESS_KEY_ID)
+key_secret=$(secret BACKUP_S3_SECRET_ACCESS_KEY)
+cipher_pass=$(secret BACKUP_CIPHER_PASS)
+require BACKUP_S3_ENDPOINT "$endpoint"
+require BACKUP_S3_BUCKET "$bucket"
+require BACKUP_S3_ACCESS_KEY_ID "$key_id"
+require BACKUP_S3_SECRET_ACCESS_KEY "$key_secret"
+require BACKUP_CIPHER_PASS "$cipher_pass"
+
+path=${BACKUP_PATH:-/clubadmin}
+
+export PGBACKREST_STANZA=${BACKUP_STANZA:-clubadmin}
+# Commands pgBackRest writes (restore_command after a restore) use this wrapper.
+export PGBACKREST_CMD=/usr/local/bin/clubadmin-pgbackrest
+export PGBACKREST_PG1_PATH=${PGDATA:-/var/lib/postgresql/18/docker}
+export PGBACKREST_PG1_SOCKET_PATH=/var/run/postgresql
+export PGBACKREST_PG1_USER=${POSTGRES_USER:-postgres}
+export PGBACKREST_PROCESS_MAX=${BACKUP_PROCESS_MAX:-2}
+export PGBACKREST_COMPRESS_TYPE=zst
+export PGBACKREST_START_FAST=y
+export PGBACKREST_ARCHIVE_TIMEOUT=${BACKUP_ARCHIVE_TIMEOUT:-120}
+export PGBACKREST_LOG_LEVEL_CONSOLE=${BACKUP_LOG_LEVEL:-info}
+export PGBACKREST_LOG_LEVEL_STDERR=warn
+export PGBACKREST_LOG_LEVEL_FILE=off
+export PGBACKREST_LOCK_PATH=/tmp/pgbackrest
+
+repo() {
+  n=$1
+  export "PGBACKREST_REPO${n}_TYPE=s3"
+  export "PGBACKREST_REPO${n}_S3_ENDPOINT=${endpoint%%:*}"
+  case "$endpoint" in
+    *:*) export "PGBACKREST_REPO${n}_STORAGE_PORT=${endpoint##*:}" ;;
+  esac
+  export "PGBACKREST_REPO${n}_S3_BUCKET=$bucket"
+  export "PGBACKREST_REPO${n}_S3_REGION=${BACKUP_S3_REGION:-us-east-1}"
+  export "PGBACKREST_REPO${n}_S3_URI_STYLE=${BACKUP_S3_URI_STYLE:-host}"
+  export "PGBACKREST_REPO${n}_S3_KEY=$key_id"
+  export "PGBACKREST_REPO${n}_S3_KEY_SECRET=$key_secret"
+  if [ "${BACKUP_S3_VERIFY_TLS:-true}" = "false" ]; then
+    export "PGBACKREST_REPO${n}_STORAGE_VERIFY_TLS=n"
+  fi
+  if [ -n "${BACKUP_S3_CA_FILE:-}" ]; then
+    export "PGBACKREST_REPO${n}_STORAGE_CA_FILE=$BACKUP_S3_CA_FILE"
+  fi
+  export "PGBACKREST_REPO${n}_CIPHER_TYPE=aes-256-cbc"
+  export "PGBACKREST_REPO${n}_CIPHER_PASS=$cipher_pass"
+}
+
+repo 1
+export PGBACKREST_REPO1_PATH="$path/repo1"
+# Time-based: keep full backups (and their WAL) so that every point of the
+# last BACKUP_RETENTION_DAYS days can be restored.
+export PGBACKREST_REPO1_RETENTION_FULL_TYPE=time
+export PGBACKREST_REPO1_RETENTION_FULL=${BACKUP_RETENTION_DAYS:-35}
+export PGBACKREST_REPO1_RETENTION_DIFF=${BACKUP_RETENTION_DIFF:-7}
+
+if [ "${BACKUP_MONTHLY:-true}" = "true" ]; then
+  repo 2
+  export PGBACKREST_REPO2_PATH="$path/repo2"
+  export PGBACKREST_REPO2_RETENTION_FULL_TYPE=count
+  export PGBACKREST_REPO2_RETENTION_FULL=${BACKUP_MONTHLY_RETENTION:-12}
+  export PGBACKREST_REPO2_RETENTION_ARCHIVE_TYPE=full
+  export PGBACKREST_REPO2_RETENTION_ARCHIVE=1
+fi
+
+exec pgbackrest "$@"

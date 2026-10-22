@@ -94,3 +94,27 @@ export const dataKeys = cryptoSchema.table("data_keys", {
   rewrappedAt: timestamp("rewrapped_at", tz),
   retiredAt: timestamp("retired_at", tz),
 });
+
+export const opsSchema = pgSchema("ops");
+export const backupRuns = opsSchema.table("backup_runs", {
+  id: uuid().primaryKey(),
+  kind: text().$type<"full" | "diff" | "incr" | "monthly" | "files" | "ledger">().notNull(),
+  status: text().$type<"running" | "succeeded" | "failed">().notNull(),
+  startedAt: timestamp("started_at", tz).notNull(),
+  finishedAt: timestamp("finished_at", tz),
+  label: text(),
+  sizeBytes: bigint("size_bytes", { mode: "number" }),
+  rowCounts: jsonb("row_counts").$type<Record<string, number>>(),
+  error: text(),
+});
+export const restoreVerifications = opsSchema.table("restore_verifications", {
+  id: uuid().primaryKey(),
+  status: text().$type<"running" | "passed" | "failed">().notNull(),
+  startedAt: timestamp("started_at", tz).notNull(),
+  finishedAt: timestamp("finished_at", tz),
+  targetTime: timestamp("target_time", tz),
+  label: text(),
+  checks: jsonb().$type<{ name: string; status: string; detail?: string }[]>().notNull(),
+  initiatedBy: text("initiated_by").notNull(),
+  durationMs: integer("duration_ms"),
+});

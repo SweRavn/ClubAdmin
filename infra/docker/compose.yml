@@ -7,9 +7,29 @@
 
 name: clubadmin
 
+# Backup repository settings (pgBackRest), shared by PostgreSQL (WAL
+# archiving) and the backup sidecar. See infra/backup/README.md.
+x-backup-repository: &backup-repository
+  BACKUP_ENABLED: ${BACKUP_ENABLED:-false}
+  BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+  BACKUP_S3_REGION: ${BACKUP_S3_REGION:-}
+  BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+  BACKUP_S3_URI_STYLE: ${BACKUP_S3_URI_STYLE:-host}
+  BACKUP_S3_VERIFY_TLS: ${BACKUP_S3_VERIFY_TLS:-true}
+  BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+  BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+  BACKUP_CIPHER_PASS: ${BACKUP_CIPHER_PASS:-}
+  BACKUP_PATH: ${BACKUP_PATH:-/clubadmin}
+  BACKUP_MONTHLY: ${BACKUP_MONTHLY:-true}
+
 services:
   postgres:
-    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    # PostgreSQL 18 (Alpine) with pgBackRest and rclone: infra/backup/Dockerfile.
+    image: clubadmin/postgres:18.6-backup
+    build:
+      context: ../backup
+      args:
+        SOURCE_HASH: ${BACKUP_IMAGE_HASH:-unknown}
     restart: unless-stopped
     command:
       - postgres
@@ -17,15 +37,26 @@ services:
       - shared_preload_libraries=pg_stat_statements
       - -c
       - pg_stat_statements.track=all
+      # Continuous WAL archiving with pgBackRest (RPO ≤ 5 minutes). The command
+      # discards segments unless BACKUP_ENABLED=true (infra/backup/README.md).
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=/usr/local/bin/clubadmin-pgbackrest-archive-push %p
+      - -c
+      - archive_timeout=300
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?set in .env.local}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.local}
       POSTGRES_DB: ${POSTGRES_DB:-clubadmin}
       ZITADEL_DB_USER: ${ZITADEL_DB_USER:-zitadel}
       ZITADEL_DB_PASSWORD: ${ZITADEL_DB_PASSWORD:?set in .env.local}
+      <<: *backup-repository
     volumes:
       # PostgreSQL 18 images keep data in a version-specific subdirectory of this path.
       - postgres-data:/var/lib/postgresql
+      # The socket directory, shared with the backup sidecar.
+      - postgres-socket:/var/run/postgresql
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
@@ -33,6 +64,46 @@ services:
       timeout: 5s
       retries: 30
       start_period: 5s
+    networks: [backend]
+
+  # Backup sidecar (profile "backup"): scheduled pgBackRest backups, file
+  # replication and the deletion-ledger export; also runs restores.
+  # pnpm dev:services --backup in development.
+  backup:
+    # The same image as postgres (built by that service).
+    image: clubadmin/postgres:18.6-backup
+    pull_policy: never
+    restart: unless-stopped
+    profiles: [backup]
+    command: ["clubadmin-backup", "serve"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env.local}
+      POSTGRES_DB: ${POSTGRES_DB:-clubadmin}
+      <<: *backup-repository
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-35}
+      BACKUP_MONTHLY_RETENTION: ${BACKUP_MONTHLY_RETENTION:-12}
+      BACKUP_PROCESS_MAX: ${BACKUP_PROCESS_MAX:-2}
+      BACKUP_INITIAL_FULL: ${BACKUP_INITIAL_FULL:-true}
+      BACKUP_SCHEDULE_FULL: ${BACKUP_SCHEDULE_FULL:-0 2 * * 0}
+      BACKUP_SCHEDULE_DIFF: ${BACKUP_SCHEDULE_DIFF:-0 2 * * 1-6}
+      BACKUP_SCHEDULE_MONTHLY: ${BACKUP_SCHEDULE_MONTHLY:-30 3 1 * *}
+      BACKUP_SCHEDULE_FILES: ${BACKUP_SCHEDULE_FILES:-17 * * * *}
+      FILES_SOURCE_S3_ENDPOINT: ${FILES_SOURCE_S3_ENDPOINT:-}
+      FILES_SOURCE_S3_REGION: ${FILES_SOURCE_S3_REGION:-}
+      FILES_SOURCE_S3_BUCKET: ${FILES_SOURCE_S3_BUCKET:-}
+      FILES_SOURCE_S3_ACCESS_KEY_ID: ${FILES_SOURCE_S3_ACCESS_KEY_ID:-}
+      FILES_SOURCE_S3_SECRET_ACCESS_KEY: ${FILES_SOURCE_S3_SECRET_ACCESS_KEY:-}
+      FILES_REPLICA_S3_ENDPOINT: ${FILES_REPLICA_S3_ENDPOINT:-}
+      FILES_REPLICA_S3_REGION: ${FILES_REPLICA_S3_REGION:-}
+      FILES_REPLICA_S3_BUCKET: ${FILES_REPLICA_S3_BUCKET:-}
+      FILES_REPLICA_S3_ACCESS_KEY_ID: ${FILES_REPLICA_S3_ACCESS_KEY_ID:-}
+      FILES_REPLICA_S3_SECRET_ACCESS_KEY: ${FILES_REPLICA_S3_SECRET_ACCESS_KEY:-}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - postgres-socket:/var/run/postgresql
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks: [backend]
 
   valkey:
@@ -151,6 +222,7 @@ networks:
 
 volumes:
   postgres-data:
+  postgres-socket:
   zitadel-bootstrap:
   garage-meta:
   garage-data:

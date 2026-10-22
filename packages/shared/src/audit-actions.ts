@@ -17,6 +17,7 @@ export const AUDIT_ACTIONS = [
   "person.merged",
   "person.merge.undone",
   "person.personal_identity_number.viewed",
+  "person.erased",
   "club.created",
   "club.settings.updated",
   "club.role.assigned",
@@ -41,6 +42,7 @@ export const AUDIT_ACTIONS = [
   "guardianship.ward.adult",
   "guardianship.updated",
   "guardianship.ended",
+  "backup.restore.verified",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

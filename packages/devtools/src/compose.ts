@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Thin wrapper around `docker compose` with this project's files and env files.
 
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { createHash } from "node:crypto";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 
-import { dockerDir, envFile, envLocalFile } from "./paths.ts";
+import { backupDir, dockerDir, envFile, envLocalFile } from "./paths.ts";
 import { capture, run } from "./process.ts";
 
 export const PROJECT_NAME = "clubadmin";
@@ -19,7 +20,14 @@ export const DEV_SERVICES = [
   "caddy",
 ] as const;
 
-export function composeBaseArgs(options: { full?: boolean } = {}): string[] {
+export interface ComposeOptions {
+  /** Profile "full": ClamAV. */
+  full?: boolean;
+  /** Profile "backup": the backup sidecar (BACKUP_ENABLED=true). */
+  backup?: boolean;
+}
+
+export function composeBaseArgs(options: ComposeOptions = {}): string[] {
   const args = [
     "compose",
     "--project-name",
@@ -33,11 +41,42 @@ export function composeBaseArgs(options: { full?: boolean } = {}): string[] {
     if (existsSync(file)) args.push("--env-file", file);
   }
   if (options.full) args.push("--profile", "full");
+  if (options.backup) args.push("--profile", "backup");
   return args;
 }
 
-export function compose(args: readonly string[], options: { full?: boolean } = {}) {
-  return run("docker", [...composeBaseArgs(options), ...args]);
+export function compose(args: readonly string[], options: ComposeOptions = {}) {
+  return run("docker", [...composeBaseArgs(options), ...args], {
+    ...process.env,
+    BACKUP_IMAGE_HASH: backupImageHash(),
+  });
+}
+
+/** The PostgreSQL image with pgBackRest (infra/backup), shared by postgres and the backup sidecar. */
+export const BACKUP_IMAGE = "clubadmin/postgres:18.6-backup";
+
+/** Hash of infra/backup's Dockerfile and scripts: the image is rebuilt when it changes. */
+export function backupImageHash(dir = backupDir): string {
+  const hash = createHash("sha256");
+  const files = ["Dockerfile", ...readdirSync(join(dir, "bin")).map((f) => join("bin", f))].sort();
+  for (const file of files) {
+    hash.update(`${relative(dir, join(dir, file))}\0`).update(readFileSync(join(dir, file)));
+  }
+  return hash.digest("hex").slice(0, 16);
+}
+
+/** Builds the PostgreSQL image if it is missing or older than infra/backup. */
+export async function ensureBackupImage(): Promise<boolean> {
+  const label = capture("docker", [
+    "image",
+    "inspect",
+    "--format",
+    '{{ index .Config.Labels "org.clubadmin.source-hash" }}',
+    BACKUP_IMAGE,
+  ]);
+  if (label.status === 0 && label.stdout.trim() === backupImageHash()) return true;
+  console.log(`Building ${BACKUP_IMAGE} (PostgreSQL with pgBackRest, infra/backup)…`);
+  return (await compose(["build", "postgres"])) === 0;
 }
 
 export function composeCapture(args: readonly string[], input?: string) {

@@ -32,6 +32,7 @@
     "@clubadmin/db": "workspace:*",
     "@clubadmin/server-kit": "workspace:*",
     "@clubadmin/shared": "workspace:*",
+    "@opentelemetry/api": "catalog:",
     "graphile-worker": "catalog:",
     "ioredis": "catalog:",
     "zod": "catalog:"

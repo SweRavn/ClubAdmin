@@ -1,0 +1,3826 @@
+{
+  "id": "8d53870f-4c4d-4a84-b2b1-dc53ffc3b8ea",
+  "prevId": "a67f675e-197e-4ec9-9d4f-7db9baf7c1f5",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.club_manager_handovers": {
+      "name": "club_manager_handovers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_person_id": {
+          "name": "from_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "to_person_id": {
+          "name": "to_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "club_manager_handovers_open_unique": {
+          "name": "club_manager_handovers_open_unique",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "from_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_manager_handovers\".\"status\" = 'proposed'",
+          "concurrently": false
+        },
+        "club_manager_handovers_to_idx": {
+          "name": "club_manager_handovers_to_idx",
+          "columns": [
+            {
+              "expression": "to_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_manager_handovers\".\"status\" = 'proposed'",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "club_manager_handovers_club_id_clubs_id_fk": {
+          "name": "club_manager_handovers_club_id_clubs_id_fk",
+          "tableFrom": "club_manager_handovers",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "club_manager_handovers_from_person_id_people_id_fk": {
+          "name": "club_manager_handovers_from_person_id_people_id_fk",
+          "tableFrom": "club_manager_handovers",
+          "columnsFrom": ["from_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "club_manager_handovers_to_person_id_people_id_fk": {
+          "name": "club_manager_handovers_to_person_id_people_id_fk",
+          "tableFrom": "club_manager_handovers",
+          "columnsFrom": ["to_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "club_manager_handovers_status": {
+          "name": "club_manager_handovers_status",
+          "value": "\"club_manager_handovers\".\"status\" IN ('proposed', 'accepted', 'declined', 'cancelled')"
+        },
+        "club_manager_handovers_not_self": {
+          "name": "club_manager_handovers_not_self",
+          "value": "\"club_manager_handovers\".\"from_person_id\" <> \"club_manager_handovers\".\"to_person_id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.club_memberships": {
+      "name": "club_memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "membership_type": {
+          "name": "membership_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "club_memberships_open_unique": {
+          "name": "club_memberships_open_unique",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_memberships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "club_memberships_club_person_idx": {
+          "name": "club_memberships_club_person_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "club_memberships_person_active_idx": {
+          "name": "club_memberships_person_active_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_memberships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "club_memberships_club_id_clubs_id_fk": {
+          "name": "club_memberships_club_id_clubs_id_fk",
+          "tableFrom": "club_memberships",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "club_memberships_person_id_people_id_fk": {
+          "name": "club_memberships_person_id_people_id_fk",
+          "tableFrom": "club_memberships",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "club_memberships_status": {
+          "name": "club_memberships_status",
+          "value": "\"club_memberships\".\"status\" IN ('applied', 'active', 'paused', 'left')"
+        },
+        "club_memberships_type": {
+          "name": "club_memberships_type",
+          "value": "\"club_memberships\".\"membership_type\" IN ('active', 'supporting', 'honorary', 'family')"
+        },
+        "club_memberships_valid_period": {
+          "name": "club_memberships_valid_period",
+          "value": "\"club_memberships\".\"valid_to\" IS NULL OR \"club_memberships\".\"valid_to\" > \"club_memberships\".\"valid_from\""
+        },
+        "club_memberships_left_has_valid_to": {
+          "name": "club_memberships_left_has_valid_to",
+          "value": "(\"club_memberships\".\"status\" = 'left') = (\"club_memberships\".\"valid_to\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.club_profiles": {
+      "name": "club_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_number": {
+          "name": "member_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "NULL"
+        },
+        "shared_fields": {
+          "name": "shared_fields",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "emergency_contacts": {
+          "name": "emergency_contacts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "protected_identity_club": {
+          "name": "protected_identity_club",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "club_profiles_person_idx": {
+          "name": "club_profiles_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "club_profiles_protected_idx": {
+          "name": "club_profiles_protected_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_profiles\".\"protected_identity_club\"",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "club_profiles_club_id_clubs_id_fk": {
+          "name": "club_profiles_club_id_clubs_id_fk",
+          "tableFrom": "club_profiles",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "club_profiles_person_id_people_id_fk": {
+          "name": "club_profiles_person_id_people_id_fk",
+          "tableFrom": "club_profiles",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "club_profiles_person_unique": {
+          "name": "club_profiles_person_unique",
+          "columns": ["club_id", "person_id"],
+          "nullsNotDistinct": false
+        },
+        "club_profiles_member_number_unique": {
+          "name": "club_profiles_member_number_unique",
+          "columns": ["club_id", "member_number"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "club_profiles_shared_fields": {
+          "name": "club_profiles_shared_fields",
+          "value": "\"club_profiles\".\"shared_fields\" <@ ARRAY['phone', 'address', 'personal_identity_number', 'gender']::text[]"
+        },
+        "club_profiles_member_number": {
+          "name": "club_profiles_member_number",
+          "value": "\"club_profiles\".\"member_number\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.club_role_assignments": {
+      "name": "club_role_assignments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assigned_by_person_id": {
+          "name": "assigned_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ended_by_person_id": {
+          "name": "ended_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "club_role_assignments_open_unique": {
+          "name": "club_role_assignments_open_unique",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_role_assignments\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "club_role_assignments_club_role_idx": {
+          "name": "club_role_assignments_club_role_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "role",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_role_assignments\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "club_role_assignments_person_idx": {
+          "name": "club_role_assignments_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"club_role_assignments\".\"valid_to\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "club_role_assignments_club_id_clubs_id_fk": {
+          "name": "club_role_assignments_club_id_clubs_id_fk",
+          "tableFrom": "club_role_assignments",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "club_role_assignments_person_id_people_id_fk": {
+          "name": "club_role_assignments_person_id_people_id_fk",
+          "tableFrom": "club_role_assignments",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "club_role_assignments_assigned_by_person_id_people_id_fk": {
+          "name": "club_role_assignments_assigned_by_person_id_people_id_fk",
+          "tableFrom": "club_role_assignments",
+          "columnsFrom": ["assigned_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "club_role_assignments_ended_by_person_id_people_id_fk": {
+          "name": "club_role_assignments_ended_by_person_id_people_id_fk",
+          "tableFrom": "club_role_assignments",
+          "columnsFrom": ["ended_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "club_role_assignments_role": {
+          "name": "club_role_assignments_role",
+          "value": "\"club_role_assignments\".\"role\" IN ('chair', 'vice_chair', 'treasurer', 'secretary', 'board_member', 'deputy_board_member', 'auditor', 'nomination_committee', 'club_manager', 'registrar', 'safeguarding_officer', 'communications', 'staff')"
+        },
+        "club_role_assignments_valid_period": {
+          "name": "club_role_assignments_valid_period",
+          "value": "\"club_role_assignments\".\"valid_to\" IS NULL OR \"club_role_assignments\".\"valid_to\" > \"club_role_assignments\".\"valid_from\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.clubs": {
+      "name": "clubs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "short_name": {
+          "name": "short_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "default_locale": {
+          "name": "default_locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time_zone": {
+          "name": "time_zone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organization_number": {
+          "name": "organization_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "federation_ids": {
+          "name": "federation_ids",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "address": {
+          "name": "address",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo": {
+          "name": "logo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "join_policy": {
+          "name": "join_policy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'approval'"
+        },
+        "next_member_number": {
+          "name": "next_member_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "owners_can_appoint_co_owners": {
+          "name": "owners_can_appoint_co_owners",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "group_owners_admit_to_club": {
+          "name": "group_owners_admit_to_club",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "clubs_slug_unique": {
+          "name": "clubs_slug_unique",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "clubs_status": {
+          "name": "clubs_status",
+          "value": "\"clubs\".\"status\" IN ('active', 'suspended', 'archived')"
+        },
+        "clubs_join_policy": {
+          "name": "clubs_join_policy",
+          "value": "\"clubs\".\"join_policy\" IN ('open', 'approval', 'invite_only')"
+        },
+        "clubs_country": {
+          "name": "clubs_country",
+          "value": "\"clubs\".\"country\" ~ '^[A-Z]{2}$'"
+        },
+        "clubs_currency": {
+          "name": "clubs_currency",
+          "value": "\"clubs\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "clubs_slug_shape": {
+          "name": "clubs_slug_shape",
+          "value": "\"clubs\".\"slug\" ~ '^[a-z0-9]+(-[a-z0-9]+)*$'"
+        },
+        "clubs_next_member_number": {
+          "name": "clubs_next_member_number",
+          "value": "\"clubs\".\"next_member_number\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.consents": {
+      "name": "consents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purpose": {
+          "name": "purpose",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text_version": {
+          "name": "text_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "given_by_person_id": {
+          "name": "given_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "given_at": {
+          "name": "given_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_by_person_id": {
+          "name": "revoked_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "consents_open_unique": {
+          "name": "consents_open_unique",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "purpose",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"consents\".\"revoked_at\" IS NULL",
+          "concurrently": false
+        },
+        "consents_person_idx": {
+          "name": "consents_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "consents_club_id_clubs_id_fk": {
+          "name": "consents_club_id_clubs_id_fk",
+          "tableFrom": "consents",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "consents_person_id_people_id_fk": {
+          "name": "consents_person_id_people_id_fk",
+          "tableFrom": "consents",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "consents_given_by_person_id_people_id_fk": {
+          "name": "consents_given_by_person_id_people_id_fk",
+          "tableFrom": "consents",
+          "columnsFrom": ["given_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "consents_revoked_by_person_id_people_id_fk": {
+          "name": "consents_revoked_by_person_id_people_id_fk",
+          "tableFrom": "consents",
+          "columnsFrom": ["revoked_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "consents_purpose": {
+          "name": "consents_purpose",
+          "value": "\"consents\".\"purpose\" IN ('photo_publication', 'video_publication', 'streaming', 'marketing', 'federation_sharing')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.employments": {
+      "name": "employments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "employment_type": {
+          "name": "employment_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hours_per_week": {
+          "name": "hours_per_week",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "employments_club_person_idx": {
+          "name": "employments_club_person_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "employments_person_idx": {
+          "name": "employments_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "employments_club_id_clubs_id_fk": {
+          "name": "employments_club_id_clubs_id_fk",
+          "tableFrom": "employments",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "employments_person_id_people_id_fk": {
+          "name": "employments_person_id_people_id_fk",
+          "tableFrom": "employments",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "employments_type": {
+          "name": "employments_type",
+          "value": "\"employments\".\"employment_type\" IN ('permanent', 'fixed_term', 'hourly', 'volunteer_stipend')"
+        },
+        "employments_period": {
+          "name": "employments_period",
+          "value": "\"employments\".\"ends_on\" IS NULL OR \"employments\".\"ends_on\" >= \"employments\".\"starts_on\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.group_memberships": {
+      "name": "group_memberships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "function": {
+          "name": "function",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'member'"
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "group_memberships_open_unique": {
+          "name": "group_memberships_open_unique",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "function",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"group_memberships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "group_memberships_group_idx": {
+          "name": "group_memberships_group_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"group_memberships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "group_memberships_person_idx": {
+          "name": "group_memberships_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"group_memberships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "group_memberships_club_id_clubs_id_fk": {
+          "name": "group_memberships_club_id_clubs_id_fk",
+          "tableFrom": "group_memberships",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_memberships_person_id_people_id_fk": {
+          "name": "group_memberships_person_id_people_id_fk",
+          "tableFrom": "group_memberships",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_memberships_group_fk": {
+          "name": "group_memberships_group_fk",
+          "tableFrom": "group_memberships",
+          "columnsFrom": ["club_id", "group_id"],
+          "tableTo": "groups",
+          "columnsTo": ["club_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "group_memberships_function": {
+          "name": "group_memberships_function",
+          "value": "\"group_memberships\".\"function\" IN ('member', 'head_coach', 'assistant_coach', 'team_manager', 'physio', 'other_leader')"
+        },
+        "group_memberships_valid_period": {
+          "name": "group_memberships_valid_period",
+          "value": "\"group_memberships\".\"valid_to\" IS NULL OR \"group_memberships\".\"valid_to\" > \"group_memberships\".\"valid_from\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.group_owners": {
+      "name": "group_owners",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assigned_by_person_id": {
+          "name": "assigned_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "group_owners_open_unique": {
+          "name": "group_owners_open_unique",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"group_owners\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "group_owners_group_idx": {
+          "name": "group_owners_group_idx",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"group_owners\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "group_owners_person_idx": {
+          "name": "group_owners_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"group_owners\".\"valid_to\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "group_owners_club_id_clubs_id_fk": {
+          "name": "group_owners_club_id_clubs_id_fk",
+          "tableFrom": "group_owners",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_owners_person_id_people_id_fk": {
+          "name": "group_owners_person_id_people_id_fk",
+          "tableFrom": "group_owners",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_owners_assigned_by_person_id_people_id_fk": {
+          "name": "group_owners_assigned_by_person_id_people_id_fk",
+          "tableFrom": "group_owners",
+          "columnsFrom": ["assigned_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_owners_group_fk": {
+          "name": "group_owners_group_fk",
+          "tableFrom": "group_owners",
+          "columnsFrom": ["club_id", "group_id"],
+          "tableTo": "groups",
+          "columnsTo": ["club_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "group_owners_valid_period": {
+          "name": "group_owners_valid_period",
+          "value": "\"group_owners\".\"valid_to\" IS NULL OR \"group_owners\".\"valid_to\" > \"group_owners\".\"valid_from\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.group_seasons": {
+      "name": "group_seasons",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season_id": {
+          "name": "season_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "group_seasons_club_id_clubs_id_fk": {
+          "name": "group_seasons_club_id_clubs_id_fk",
+          "tableFrom": "group_seasons",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_seasons_group_fk": {
+          "name": "group_seasons_group_fk",
+          "tableFrom": "group_seasons",
+          "columnsFrom": ["club_id", "group_id"],
+          "tableTo": "groups",
+          "columnsTo": ["club_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_seasons_season_fk": {
+          "name": "group_seasons_season_fk",
+          "tableFrom": "group_seasons",
+          "columnsFrom": ["club_id", "season_id"],
+          "tableTo": "seasons",
+          "columnsTo": ["club_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "group_seasons_unique": {
+          "name": "group_seasons_unique",
+          "columns": ["group_id", "season_id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "group_seasons_capacity": {
+          "name": "group_seasons_capacity",
+          "value": "\"group_seasons\".\"capacity\" IS NULL OR \"group_seasons\".\"capacity\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.groups": {
+      "name": "groups",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_group_id": {
+          "name": "parent_group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sport": {
+          "name": "sport",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birth_year_from": {
+          "name": "birth_year_from",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birth_year_to": {
+          "name": "birth_year_to",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender_category": {
+          "name": "gender_category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admission_mode": {
+          "name": "admission_mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'direct'"
+        },
+        "waitlist_visible_publicly": {
+          "name": "waitlist_visible_publicly",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "offer_reply_days": {
+          "name": "offer_reply_days",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 7
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "groups_club_idx": {
+          "name": "groups_club_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"groups\".\"archived_at\" IS NULL",
+          "concurrently": false
+        },
+        "groups_parent_idx": {
+          "name": "groups_parent_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "parent_group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "groups_club_id_clubs_id_fk": {
+          "name": "groups_club_id_clubs_id_fk",
+          "tableFrom": "groups",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "groups_parent_same_club_fk": {
+          "name": "groups_parent_same_club_fk",
+          "tableFrom": "groups",
+          "columnsFrom": ["club_id", "parent_group_id"],
+          "tableTo": "groups",
+          "columnsTo": ["club_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "groups_club_id_unique": {
+          "name": "groups_club_id_unique",
+          "columns": ["club_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "groups_kind": {
+          "name": "groups_kind",
+          "value": "\"groups\".\"kind\" IN ('section', 'team', 'training_group', 'age_group', 'committee', 'board', 'volunteers', 'other')"
+        },
+        "groups_admission_mode": {
+          "name": "groups_admission_mode",
+          "value": "\"groups\".\"admission_mode\" IN ('direct', 'waitlist', 'closed')"
+        },
+        "groups_gender_category": {
+          "name": "groups_gender_category",
+          "value": "\"groups\".\"gender_category\" IS NULL OR \"groups\".\"gender_category\" IN ('female', 'male', 'mixed', 'open')"
+        },
+        "groups_not_own_parent": {
+          "name": "groups_not_own_parent",
+          "value": "\"groups\".\"parent_group_id\" <> \"groups\".\"id\""
+        },
+        "groups_birth_years": {
+          "name": "groups_birth_years",
+          "value": "\"groups\".\"birth_year_from\" IS NULL OR \"groups\".\"birth_year_to\" IS NULL OR \"groups\".\"birth_year_to\" >= \"groups\".\"birth_year_from\""
+        },
+        "groups_capacity": {
+          "name": "groups_capacity",
+          "value": "\"groups\".\"capacity\" IS NULL OR \"groups\".\"capacity\" >= 0"
+        },
+        "groups_offer_reply_days": {
+          "name": "groups_offer_reply_days",
+          "value": "\"groups\".\"offer_reply_days\" BETWEEN 1 AND 60"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.seasons": {
+      "name": "seasons",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_on": {
+          "name": "starts_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_on": {
+          "name": "ends_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "seasons_club_idx": {
+          "name": "seasons_club_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "starts_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "seasons_club_id_clubs_id_fk": {
+          "name": "seasons_club_id_clubs_id_fk",
+          "tableFrom": "seasons",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "seasons_club_id_unique": {
+          "name": "seasons_club_id_unique",
+          "columns": ["club_id", "id"],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "seasons_period": {
+          "name": "seasons_period",
+          "value": "\"seasons\".\"ends_on\" > \"seasons\".\"starts_on\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.group_waitlist_entries": {
+      "name": "group_waitlist_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_by_person_id": {
+          "name": "requested_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'waiting'"
+        },
+        "queued_at": {
+          "name": "queued_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "priority": {
+          "name": "priority",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "offer_expires_at": {
+          "name": "offer_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "applicant_note": {
+          "name": "applicant_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_note": {
+          "name": "owner_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "out_of_order_reason": {
+          "name": "out_of_order_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_by_person_id": {
+          "name": "decided_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "group_waitlist_entries_open_unique": {
+          "name": "group_waitlist_entries_open_unique",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"group_waitlist_entries\".\"status\" IN ('waiting', 'offered')",
+          "concurrently": false
+        },
+        "group_waitlist_entries_order_idx": {
+          "name": "group_waitlist_entries_order_idx",
+          "columns": [
+            {
+              "expression": "group_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "priority",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "queued_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "group_waitlist_entries_person_idx": {
+          "name": "group_waitlist_entries_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "group_waitlist_entries_club_id_clubs_id_fk": {
+          "name": "group_waitlist_entries_club_id_clubs_id_fk",
+          "tableFrom": "group_waitlist_entries",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_waitlist_entries_person_id_people_id_fk": {
+          "name": "group_waitlist_entries_person_id_people_id_fk",
+          "tableFrom": "group_waitlist_entries",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_waitlist_entries_requested_by_person_id_people_id_fk": {
+          "name": "group_waitlist_entries_requested_by_person_id_people_id_fk",
+          "tableFrom": "group_waitlist_entries",
+          "columnsFrom": ["requested_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_waitlist_entries_decided_by_person_id_people_id_fk": {
+          "name": "group_waitlist_entries_decided_by_person_id_people_id_fk",
+          "tableFrom": "group_waitlist_entries",
+          "columnsFrom": ["decided_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "group_waitlist_entries_group_fk": {
+          "name": "group_waitlist_entries_group_fk",
+          "tableFrom": "group_waitlist_entries",
+          "columnsFrom": ["club_id", "group_id"],
+          "tableTo": "groups",
+          "columnsTo": ["club_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "group_waitlist_entries_status": {
+          "name": "group_waitlist_entries_status",
+          "value": "\"group_waitlist_entries\".\"status\" IN ('waiting', 'offered', 'accepted', 'declined', 'expired', 'admitted', 'withdrawn', 'removed')"
+        },
+        "group_waitlist_entries_offer": {
+          "name": "group_waitlist_entries_offer",
+          "value": "(\"group_waitlist_entries\".\"status\" = 'offered') <= (\"group_waitlist_entries\".\"offer_expires_at\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.invitations": {
+      "name": "invitations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role_preset": {
+          "name": "role_preset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_uses": {
+          "name": "max_uses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uses": {
+          "name": "uses",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_by_person_id": {
+          "name": "created_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accepted_by_person_id": {
+          "name": "accepted_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accepted_at": {
+          "name": "accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "invitations_token_unique": {
+          "name": "invitations_token_unique",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "invitations_club_idx": {
+          "name": "invitations_club_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "invitations_club_id_clubs_id_fk": {
+          "name": "invitations_club_id_clubs_id_fk",
+          "tableFrom": "invitations",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "invitations_created_by_person_id_people_id_fk": {
+          "name": "invitations_created_by_person_id_people_id_fk",
+          "tableFrom": "invitations",
+          "columnsFrom": ["created_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "invitations_accepted_by_person_id_people_id_fk": {
+          "name": "invitations_accepted_by_person_id_people_id_fk",
+          "tableFrom": "invitations",
+          "columnsFrom": ["accepted_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "invitations_group_fk": {
+          "name": "invitations_group_fk",
+          "tableFrom": "invitations",
+          "columnsFrom": ["club_id", "group_id"],
+          "tableTo": "groups",
+          "columnsTo": ["club_id", "id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "invitations_kind": {
+          "name": "invitations_kind",
+          "value": "\"invitations\".\"kind\" IN ('email', 'link', 'code')"
+        },
+        "invitations_email": {
+          "name": "invitations_email",
+          "value": "(\"invitations\".\"kind\" = 'email') = (\"invitations\".\"email\" IS NOT NULL)"
+        },
+        "invitations_role_preset": {
+          "name": "invitations_role_preset",
+          "value": "\"invitations\".\"role_preset\" IS NULL OR \"invitations\".\"role_preset\" IN ('chair', 'vice_chair', 'treasurer', 'secretary', 'board_member', 'deputy_board_member', 'auditor', 'nomination_committee', 'club_manager', 'registrar', 'safeguarding_officer', 'communications', 'staff')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.join_requests": {
+      "name": "join_requests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requested_by_person_id": {
+          "name": "requested_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preferred_group_ids": {
+          "name": "preferred_group_ids",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "decided_by_person_id": {
+          "name": "decided_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "join_requests_pending_unique": {
+          "name": "join_requests_pending_unique",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"join_requests\".\"status\" = 'pending'",
+          "concurrently": false
+        },
+        "join_requests_club_status_idx": {
+          "name": "join_requests_club_status_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "join_requests_person_idx": {
+          "name": "join_requests_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "join_requests_club_id_clubs_id_fk": {
+          "name": "join_requests_club_id_clubs_id_fk",
+          "tableFrom": "join_requests",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "join_requests_person_id_people_id_fk": {
+          "name": "join_requests_person_id_people_id_fk",
+          "tableFrom": "join_requests",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "join_requests_requested_by_person_id_people_id_fk": {
+          "name": "join_requests_requested_by_person_id_people_id_fk",
+          "tableFrom": "join_requests",
+          "columnsFrom": ["requested_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "join_requests_decided_by_person_id_people_id_fk": {
+          "name": "join_requests_decided_by_person_id_people_id_fk",
+          "tableFrom": "join_requests",
+          "columnsFrom": ["decided_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "join_requests_status": {
+          "name": "join_requests_status",
+          "value": "\"join_requests\".\"status\" IN ('pending', 'approved', 'rejected', 'withdrawn')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.account_invitations": {
+      "name": "account_invitations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by_person_id": {
+          "name": "created_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accepted_at": {
+          "name": "accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "account_invitations_token_unique": {
+          "name": "account_invitations_token_unique",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "account_invitations_person_idx": {
+          "name": "account_invitations_person_idx",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "account_invitations_person_id_people_id_fk": {
+          "name": "account_invitations_person_id_people_id_fk",
+          "tableFrom": "account_invitations",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "account_invitations_created_by_person_id_people_id_fk": {
+          "name": "account_invitations_created_by_person_id_people_id_fk",
+          "tableFrom": "account_invitations",
+          "columnsFrom": ["created_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "account_invitations_email_normalised": {
+          "name": "account_invitations_email_normalised",
+          "value": "\"account_invitations\".\"email\" = lower(btrim(\"account_invitations\".\"email\"))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.accounts": {
+      "name": "accounts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_verified_at": {
+          "name": "email_verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idp_subject": {
+          "name": "idp_subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time_zone": {
+          "name": "time_zone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "theme": {
+          "name": "theme",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notification_settings": {
+          "name": "notification_settings",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "accounts_person_unique": {
+          "name": "accounts_person_unique",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "accounts_email_unique": {
+          "name": "accounts_email_unique",
+          "columns": [
+            {
+              "expression": "lower(btrim(\"email\"))",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "accounts_idp_subject_unique": {
+          "name": "accounts_idp_subject_unique",
+          "columns": [
+            {
+              "expression": "idp_subject",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "accounts_person_id_people_id_fk": {
+          "name": "accounts_person_id_people_id_fk",
+          "tableFrom": "accounts",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "accounts_email_normalised": {
+          "name": "accounts_email_normalised",
+          "value": "\"accounts\".\"email\" = lower(btrim(\"accounts\".\"email\"))"
+        },
+        "accounts_email_shape": {
+          "name": "accounts_email_shape",
+          "value": "\"accounts\".\"email\" ~ '^[^@\\s]+@[^@\\s]+$'"
+        },
+        "accounts_theme": {
+          "name": "accounts_theme",
+          "value": "\"accounts\".\"theme\" IS NULL OR \"accounts\".\"theme\" IN ('light', 'dark', 'system')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guardian_invitations": {
+      "name": "guardian_invitations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "ward_person_id": {
+          "name": "ward_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invited_by_person_id": {
+          "name": "invited_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rights": {
+          "name": "rights",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accepted_at": {
+          "name": "accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accepted_by_person_id": {
+          "name": "accepted_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guardianship_id": {
+          "name": "guardianship_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guardian_invitations_token_unique": {
+          "name": "guardian_invitations_token_unique",
+          "columns": [
+            {
+              "expression": "token_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "guardian_invitations_ward_idx": {
+          "name": "guardian_invitations_ward_idx",
+          "columns": [
+            {
+              "expression": "ward_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "guardian_invitations_ward_person_id_people_id_fk": {
+          "name": "guardian_invitations_ward_person_id_people_id_fk",
+          "tableFrom": "guardian_invitations",
+          "columnsFrom": ["ward_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "guardian_invitations_invited_by_person_id_people_id_fk": {
+          "name": "guardian_invitations_invited_by_person_id_people_id_fk",
+          "tableFrom": "guardian_invitations",
+          "columnsFrom": ["invited_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "guardian_invitations_accepted_by_person_id_people_id_fk": {
+          "name": "guardian_invitations_accepted_by_person_id_people_id_fk",
+          "tableFrom": "guardian_invitations",
+          "columnsFrom": ["accepted_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "guardian_invitations_guardianship_id_guardianships_id_fk": {
+          "name": "guardian_invitations_guardianship_id_guardianships_id_fk",
+          "tableFrom": "guardian_invitations",
+          "columnsFrom": ["guardianship_id"],
+          "tableTo": "guardianships",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "guardian_invitations_kind": {
+          "name": "guardian_invitations_kind",
+          "value": "\"guardian_invitations\".\"kind\" IN ('parent', 'legal_guardian', 'relative', 'contact_person')"
+        },
+        "guardian_invitations_rights": {
+          "name": "guardian_invitations_rights",
+          "value": "\"guardian_invitations\".\"rights\" <@ ARRAY['act_on_behalf', 'receive_messages', 'view_schedule', 'sign_up', 'see_medical']::text[]"
+        },
+        "guardian_invitations_email_normalised": {
+          "name": "guardian_invitations_email_normalised",
+          "value": "\"guardian_invitations\".\"email\" = lower(btrim(\"guardian_invitations\".\"email\"))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.guardianships": {
+      "name": "guardianships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "guardian_person_id": {
+          "name": "guardian_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ward_person_id": {
+          "name": "ward_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rights": {
+          "name": "rights",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by_person_id": {
+          "name": "created_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ward_adult_flagged_at": {
+          "name": "ward_adult_flagged_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guardianships_open_unique": {
+          "name": "guardianships_open_unique",
+          "columns": [
+            {
+              "expression": "guardian_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ward_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"guardianships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "guardianships_guardian_idx": {
+          "name": "guardianships_guardian_idx",
+          "columns": [
+            {
+              "expression": "guardian_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"guardianships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        },
+        "guardianships_ward_idx": {
+          "name": "guardianships_ward_idx",
+          "columns": [
+            {
+              "expression": "ward_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"guardianships\".\"valid_to\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "guardianships_guardian_person_id_people_id_fk": {
+          "name": "guardianships_guardian_person_id_people_id_fk",
+          "tableFrom": "guardianships",
+          "columnsFrom": ["guardian_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "guardianships_ward_person_id_people_id_fk": {
+          "name": "guardianships_ward_person_id_people_id_fk",
+          "tableFrom": "guardianships",
+          "columnsFrom": ["ward_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "guardianships_created_by_person_id_people_id_fk": {
+          "name": "guardianships_created_by_person_id_people_id_fk",
+          "tableFrom": "guardianships",
+          "columnsFrom": ["created_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "guardianships_kind": {
+          "name": "guardianships_kind",
+          "value": "\"guardianships\".\"kind\" IN ('parent', 'legal_guardian', 'relative', 'contact_person')"
+        },
+        "guardianships_rights": {
+          "name": "guardianships_rights",
+          "value": "\"guardianships\".\"rights\" <@ ARRAY['act_on_behalf', 'receive_messages', 'view_schedule', 'sign_up', 'see_medical']::text[]"
+        },
+        "guardianships_status": {
+          "name": "guardianships_status",
+          "value": "\"guardianships\".\"status\" IN ('pending', 'active', 'ended')"
+        },
+        "guardianships_not_self": {
+          "name": "guardianships_not_self",
+          "value": "\"guardianships\".\"guardian_person_id\" <> \"guardianships\".\"ward_person_id\""
+        },
+        "guardianships_valid_period": {
+          "name": "guardianships_valid_period",
+          "value": "\"guardianships\".\"valid_to\" IS NULL OR \"guardianships\".\"valid_to\" > \"guardianships\".\"valid_from\""
+        },
+        "guardianships_ended_has_valid_to": {
+          "name": "guardianships_ended_has_valid_to",
+          "value": "(\"guardianships\".\"status\" = 'ended') = (\"guardianships\".\"valid_to\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.people": {
+      "name": "people",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "given_name": {
+          "name": "given_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "family_name": {
+          "name": "family_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "personal_identity_number": {
+          "name": "personal_identity_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "personal_identity_number_hash": {
+          "name": "personal_identity_number_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "protected_identity": {
+          "name": "protected_identity",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address": {
+          "name": "address",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deceased_at": {
+          "name": "deceased_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anonymized_at": {
+          "name": "anonymized_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "merged_into_person_id": {
+          "name": "merged_into_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by_person_id": {
+          "name": "created_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "people_pin_hash_idx": {
+          "name": "people_pin_hash_idx",
+          "columns": [
+            {
+              "expression": "personal_identity_number_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"people\".\"personal_identity_number_hash\" IS NOT NULL",
+          "concurrently": false
+        },
+        "people_duplicate_idx": {
+          "name": "people_duplicate_idx",
+          "columns": [
+            {
+              "expression": "birth_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lower(\"family_name\")",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "people_created_by_idx": {
+          "name": "people_created_by_idx",
+          "columns": [
+            {
+              "expression": "created_by_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "people_protected_idx": {
+          "name": "people_protected_idx",
+          "columns": [
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"people\".\"protected_identity\"",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "people_merged_into_person_id_people_id_fk": {
+          "name": "people_merged_into_person_id_people_id_fk",
+          "tableFrom": "people",
+          "columnsFrom": ["merged_into_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "people_created_by_person_id_people_id_fk": {
+          "name": "people_created_by_person_id_people_id_fk",
+          "tableFrom": "people",
+          "columnsFrom": ["created_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "people_protected_no_address": {
+          "name": "people_protected_no_address",
+          "value": "NOT \"people\".\"protected_identity\" OR \"people\".\"address\" IS NULL"
+        },
+        "people_gender": {
+          "name": "people_gender",
+          "value": "\"people\".\"gender\" IS NULL OR \"people\".\"gender\" IN ('female', 'male', 'other')"
+        },
+        "people_pin_with_hash": {
+          "name": "people_pin_with_hash",
+          "value": "(\"people\".\"personal_identity_number\" IS NULL) = (\"people\".\"personal_identity_number_hash\" IS NULL)"
+        },
+        "people_not_merged_into_self": {
+          "name": "people_not_merged_into_self",
+          "value": "\"people\".\"merged_into_person_id\" <> \"people\".\"id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.people_merges": {
+      "name": "people_merges",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "kept_person_id": {
+          "name": "kept_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "merged_person_id": {
+          "name": "merged_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "merged_by_person_id": {
+          "name": "merged_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "undo_until": {
+          "name": "undo_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "undone_at": {
+          "name": "undone_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "undone_by_person_id": {
+          "name": "undone_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "moved_references": {
+          "name": "moved_references",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "people_merges_kept_idx": {
+          "name": "people_merges_kept_idx",
+          "columns": [
+            {
+              "expression": "kept_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "people_merges_merged_idx": {
+          "name": "people_merges_merged_idx",
+          "columns": [
+            {
+              "expression": "merged_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "people_merges_kept_person_id_people_id_fk": {
+          "name": "people_merges_kept_person_id_people_id_fk",
+          "tableFrom": "people_merges",
+          "columnsFrom": ["kept_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "people_merges_merged_person_id_people_id_fk": {
+          "name": "people_merges_merged_person_id_people_id_fk",
+          "tableFrom": "people_merges",
+          "columnsFrom": ["merged_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "people_merges_merged_by_person_id_people_id_fk": {
+          "name": "people_merges_merged_by_person_id_people_id_fk",
+          "tableFrom": "people_merges",
+          "columnsFrom": ["merged_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "people_merges_undone_by_person_id_people_id_fk": {
+          "name": "people_merges_undone_by_person_id_people_id_fk",
+          "tableFrom": "people_merges",
+          "columnsFrom": ["undone_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.platform_operators": {
+      "name": "platform_operators",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "platform_operators_open_unique": {
+          "name": "platform_operators_open_unique",
+          "columns": [
+            {
+              "expression": "person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "where": "\"platform_operators\".\"valid_to\" IS NULL",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "platform_operators_person_id_people_id_fk": {
+          "name": "platform_operators_person_id_people_id_fk",
+          "tableFrom": "platform_operators",
+          "columnsFrom": ["person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "platform_operators_valid_period": {
+          "name": "platform_operators_valid_period",
+          "value": "\"platform_operators\".\"valid_to\" IS NULL OR \"platform_operators\".\"valid_to\" > \"platform_operators\".\"valid_from\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.support_access_grants": {
+      "name": "support_access_grants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "uuidv7()"
+        },
+        "club_id": {
+          "name": "club_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operator_person_id": {
+          "name": "operator_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "granted_by_person_id": {
+          "name": "granted_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoked_by_person_id": {
+          "name": "revoked_by_person_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "support_access_grants_operator_idx": {
+          "name": "support_access_grants_operator_idx",
+          "columns": [
+            {
+              "expression": "operator_person_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"support_access_grants\".\"revoked_at\" IS NULL",
+          "concurrently": false
+        },
+        "support_access_grants_club_idx": {
+          "name": "support_access_grants_club_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "support_access_grants_club_id_clubs_id_fk": {
+          "name": "support_access_grants_club_id_clubs_id_fk",
+          "tableFrom": "support_access_grants",
+          "columnsFrom": ["club_id"],
+          "tableTo": "clubs",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "support_access_grants_operator_person_id_people_id_fk": {
+          "name": "support_access_grants_operator_person_id_people_id_fk",
+          "tableFrom": "support_access_grants",
+          "columnsFrom": ["operator_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "support_access_grants_granted_by_person_id_people_id_fk": {
+          "name": "support_access_grants_granted_by_person_id_people_id_fk",
+          "tableFrom": "support_access_grants",
+          "columnsFrom": ["granted_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "support_access_grants_revoked_by_person_id_people_id_fk": {
+          "name": "support_access_grants_revoked_by_person_id_people_id_fk",
+          "tableFrom": "support_access_grants",
+          "columnsFrom": ["revoked_by_person_id"],
+          "tableTo": "people",
+          "columnsTo": ["id"],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "support_access_grants_expiry": {
+          "name": "support_access_grants_expiry",
+          "value": "\"support_access_grants\".\"expires_at\" > \"support_access_grants\".\"created_at\""
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

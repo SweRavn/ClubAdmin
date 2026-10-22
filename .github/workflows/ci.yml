@@ -190,6 +190,49 @@ jobs:
           docker compose --project-name clubadmin logs --no-color --tail 300
           tail -n 200 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log" "$RUNNER_TEMP/web-prod.log" || true
 
+  # Backups (P0.11, docs/operations/backup-restore.md): PostgreSQL with
+  # pgBackRest and the backup sidecar against Garage; full backup, writes,
+  # destroyed volume, point-in-time restore, deletion-ledger replay, then
+  # pnpm ops:verify-backup (infra/backup/ci-drill.sh).
+  backup:
+    name: Backup, restore and verification drill
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (pnpm version from package.json)
+        run: corepack enable
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Start services with backups, seed the minimal scenario
+        env:
+          # The drill takes the first full backup itself.
+          BACKUP_INITIAL_FULL: "false"
+        run: |
+          pnpm dev:services --backup
+          pnpm db:reset --scenario minimal
+
+      - name: Backup drill (full backup, PITR restore, ledger replay, verification)
+        run: bash infra/backup/ci-drill.sh
+
+      - name: Backup status as the API reports it
+        run: |
+          docker compose --project-name clubadmin exec -T postgres psql -U postgres -d clubadmin \
+            -c "SELECT kind, status, label, size_bytes, finished_at FROM ops.backup_runs ORDER BY started_at" \
+            -c "SELECT status, label, duration_ms, initiated_by FROM ops.restore_verifications ORDER BY started_at"
+
+      - name: Service logs
+        if: failure()
+        run: docker compose --project-name clubadmin --profile backup logs --no-color --tail 300 postgres backup garage caddy
+
   # The mobile app (P0.10, ADR 0028): a release build of the development
   # variant (JavaScript bundled, persona picker included, Caddy's CA trusted)
   # on an Android emulator against the local services, with the Maestro

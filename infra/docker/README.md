@@ -6,7 +6,8 @@ they pass the project name (`clubadmin`) and the `.env`/`.env.local` files.
 
 | Service | Image | Purpose | Dev port (127.0.0.1) |
 |---|---|---|---|
-| `postgres` | PostgreSQL 18 | Databases `clubadmin` (app) and `zitadel`; `pg_stat_statements` enabled. Application roles are created in P0.4. | 5432 |
+| `postgres` | PostgreSQL 18 with pgBackRest (`infra/backup/Dockerfile`, built by `pnpm dev:services`) | Databases `clubadmin` (app) and `zitadel`; `pg_stat_statements` enabled; WAL archiving (kept only with `BACKUP_ENABLED=true`). Application roles are created in P0.4. | 5432 |
+| `backup` | same image | Profile `backup` (`pnpm dev:services --backup`): scheduled backups, file replication, deletion-ledger export, restores (`infra/backup/README.md`). | — |
 | `valkey` | Valkey 9 | Cache, rate limits, pub/sub. No persistence (ADR 0010). | 6379 |
 | `zitadel` | Zitadel v4 | Identity provider (ADR 0005). First start creates the ClubAdmin instance, an admin user, and a machine user whose token is written to `/zitadel/bootstrap/admin.pat` (volume `zitadel-bootstrap`) for `pnpm auth:configure`. Login pages (built-in login UI v1) under `/ui/login`. | via Caddy |
 | `garage` | Garage v2 | S3-compatible object storage (ADR 0011). `pnpm dev` applies the single-node layout and creates the buckets and access key from `.env.local` through the admin API. | 3900 (S3), 3903 (admin) |
@@ -25,5 +26,8 @@ they pass the project name (`clubadmin`) and the `.env`/`.env.local` files.
 - **Garage** binds to IPv4 (`0.0.0.0`), because IPv6 is not available in every
   Docker setup.
 - **Self-hosting:** `compose.yml` is the starting point for the self-hosted
-  deployment. Production settings (real certificates, app containers, backups,
-  no published database ports) are added in later packages.
+  deployment. Backups: profile `backup` and the settings in
+  `infra/backup/README.md`. Production settings (real certificates, app
+  containers, no published database ports) are added in later packages.
+- **Caddy** also serves Garage's S3 API as `s3.clubadmin.localhost` inside the
+  Docker network (network alias), because pgBackRest only speaks HTTPS.

@@ -11,6 +11,7 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
   "app_meta.*": "migration bookkeeping",
   "graphile_worker.*": "job queue managed by Graphile Worker",
   "crypto.*": "wrapped encryption keys; no personal data, rotated by operators",
+  "ops.*": "backup and restore bookkeeping written by the backup tooling; no personal data",
 };
 
 export function isHistoryExcluded(qualifiedName: string): boolean {

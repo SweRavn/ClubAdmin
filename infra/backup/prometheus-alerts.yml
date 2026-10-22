@@ -1,0 +1,57 @@
+# Example Prometheus alert rules for backups (docs/operations/backup-restore.md,
+# "Monitoring"). The worker exports the gauges over OTLP
+# (apps/worker/src/tasks/backup-metrics.ts); with the OpenTelemetry
+# Collector's Prometheus exporter (or Prometheus's OTLP receiver) they arrive
+# under these names. Thresholds match GET /api/v1/ops/backup-status.
+groups:
+  - name: clubadmin-backups
+    rules:
+      - alert: ClubAdminDatabaseBackupStale
+        expr: time() - clubadmin_backup_last_success_timestamp_seconds{kind="database"} > 24 * 3600
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: No successful database backup for more than 24 hours
+          runbook: infra/backup/runbooks/README.md
+
+      - alert: ClubAdminDatabaseBackupFailed
+        expr: clubadmin_backup_last_run_failed{kind=~"database|monthly"} == 1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: The latest {{ $labels.kind }} backup failed (ops.backup_runs.error)
+
+      - alert: ClubAdminFileReplicationStale
+        expr: time() - clubadmin_backup_last_success_timestamp_seconds{kind="files"} > 3 * 3600
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: Files have not been replicated to the second provider for more than 3 hours
+
+      - alert: ClubAdminRestoreVerificationStale
+        expr: time() - clubadmin_restore_verification_last_success_timestamp_seconds > 8 * 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: No passed restore verification for more than 8 days (pnpm ops:verify-backup)
+
+      - alert: ClubAdminRestoreVerificationFailed
+        expr: clubadmin_restore_verification_last_run_failed == 1
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: The latest restore verification failed (ops.restore_verifications.checks)
+
+      # No metrics at all: the worker or the export is down, or backups were never set up.
+      - alert: ClubAdminBackupMetricsAbsent
+        expr: absent(clubadmin_backup_last_success_timestamp_seconds{kind="database"})
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: No backup metrics; check the worker and BACKUP_ENABLED

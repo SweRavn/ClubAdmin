@@ -186,6 +186,48 @@ export const ENV_TEMPLATE: EnvSection[] = [
     ],
   },
   {
+    title:
+      "Backups (infra/backup/README.md; pnpm dev:services --backup). Backup credentials are separate from the application's",
+    variables: [
+      { key: "BACKUP_ENABLED", value: "false" },
+      {
+        key: "BACKUP_S3_ENDPOINT",
+        value: "s3.${APP_DOMAIN}",
+        comment: "pgBackRest needs HTTPS: Garage through Caddy, inside the Docker network",
+      },
+      { key: "BACKUP_S3_REGION", value: "garage" },
+      { key: "BACKUP_S3_BUCKET", value: "${S3_BUCKET_BACKUPS}" },
+      { key: "BACKUP_S3_URI_STYLE", value: "path" },
+      {
+        key: "BACKUP_S3_VERIFY_TLS",
+        value: "false",
+        comment: "Development only (Caddy's local CA); always true in production",
+      },
+      { key: "BACKUP_S3_ACCESS_KEY_ID", value: () => `GK${hex(12)}` },
+      { key: "BACKUP_S3_SECRET_ACCESS_KEY", value: () => hex(32) },
+      {
+        key: "BACKUP_CIPHER_PASS",
+        value: () => randomBytes(32).toString("base64"),
+        comment: "Encrypts the backups (AES-256); losing it makes them unreadable",
+      },
+      { key: "BACKUP_PATH", value: "/clubadmin" },
+      { key: "FILES_SOURCE_S3_ENDPOINT", value: "http://garage:3900" },
+      { key: "FILES_SOURCE_S3_REGION", value: "garage" },
+      { key: "FILES_SOURCE_S3_BUCKET", value: "${S3_BUCKET_FILES}" },
+      { key: "FILES_SOURCE_S3_ACCESS_KEY_ID", value: "${BACKUP_S3_ACCESS_KEY_ID}" },
+      { key: "FILES_SOURCE_S3_SECRET_ACCESS_KEY", value: "${BACKUP_S3_SECRET_ACCESS_KEY}" },
+      {
+        key: "FILES_REPLICA_S3_ENDPOINT",
+        value: "http://garage:3900",
+        comment: "The second provider; in development another bucket of the same Garage",
+      },
+      { key: "FILES_REPLICA_S3_REGION", value: "garage" },
+      { key: "FILES_REPLICA_S3_BUCKET", value: "clubadmin-files-replica" },
+      { key: "FILES_REPLICA_S3_ACCESS_KEY_ID", value: "${BACKUP_S3_ACCESS_KEY_ID}" },
+      { key: "FILES_REPLICA_S3_SECRET_ACCESS_KEY", value: "${BACKUP_S3_SECRET_ACCESS_KEY}" },
+    ],
+  },
+  {
     title: "Email (Mailpit catches everything in development)",
     variables: [
       { key: "SMTP_PORT", value: "1025" },

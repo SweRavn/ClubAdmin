@@ -33,6 +33,8 @@ every API change either breaks installed apps or forces an app-store update.
   breaking changes. A decided exception is a line in
   `packages/api-client/breaking-changes-allowed.txt` that names this ADR, a
   later ADR or an issue; lines are removed once the change is on `main`.
+  `packages/api-client/oasdiff-levels.txt` lowers oasdiff checks this ADR
+  allows (a new enum value in a response) to info.
 - **Clients are tolerant:** they ignore unknown response fields, show a
   neutral fallback for enum values they do not know (never crash or hide the
   item), and fall back to the problem's translated `title` for problem types

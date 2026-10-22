@@ -111,6 +111,7 @@ export class AuthorizationService {
   }
 
   private denial(actor: Actor, resource: Resource): "not-found" | "forbidden" {
+    if (resource.kind === "platform") return "forbidden";
     if (resource.kind === "person") return "not-found";
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
@@ -121,6 +122,8 @@ export class AuthorizationService {
     request: FastifyRequest,
   ): Promise<Resource> {
     switch (kind) {
+      case "platform":
+        return Promise.resolve({ kind: "platform" });
       case "club":
         return Promise.resolve(this.clubResource(request));
       case "group":

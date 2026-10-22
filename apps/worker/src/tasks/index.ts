@@ -6,6 +6,7 @@ import { type Database, outbox, type OutboxHandler, sql } from "@clubadmin/db";
 import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 
+import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 
 export interface TaskDependencies {
@@ -73,16 +74,19 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "outbox:dispatch": outboxDispatch(deps),
     "history:maintain_partitions": maintainHistoryPartitions(deps),
     "guardianships:flag_adult_wards": flagAdultWardsTask(deps.db),
+    "ops:backup_metrics": backupMetricsTask(deps.db),
   };
 }
 
 /**
  * Graphile Worker crontab: heartbeat every minute (at most one queued),
  * history partition maintenance daily at 03:17 UTC and the adult-ward check
- * daily at 04:23 UTC (both catching up after downtime).
+ * daily at 04:23 UTC (both catching up after downtime), backup metrics every
+ * five minutes.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
   "17 3 * * * history:maintain_partitions ?fill=2d",
   "23 4 * * * guardianships:flag_adult_wards ?fill=2d",
+  "*/5 * * * * ops:backup_metrics ?max=1",
 ].join("\n");

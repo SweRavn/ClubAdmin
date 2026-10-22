@@ -65,6 +65,7 @@ const operatorWithGrant = as(
 const operatorWithoutGrant = as({ operator: true }, { mfa: true });
 
 const clubR = clubResource(club);
+const platformR: Resource = { kind: "platform" };
 const teamR = groupResource(club, team, { ancestorIds: [section] });
 const archivedTeamR = groupResource(club, team, { ancestorIds: [section], archived: true });
 const coOwnersTeamR = groupResource(club, team, {
@@ -318,6 +319,11 @@ const CASES: Record<Permission, Case[]> = {
       allowed: false,
     },
   ],
+  "ops.backup.read": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+    { name: "outsider", actor: outsider, resource: platformR, allowed: false },
+  ],
 };
 
 describe("policies", () => {
@@ -359,6 +365,12 @@ describe("policies", () => {
     expect(policyFor("club.read")!.requiresMfa({ actor: plainMember, resource: clubR })).toBe(
       false,
     );
+    expect(
+      policyFor("ops.backup.read")!.requiresMfa({
+        actor: operatorWithoutGrant,
+        resource: platformR,
+      }),
+    ).toBe(true);
   });
 });
 

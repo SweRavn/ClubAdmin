@@ -574,6 +574,9 @@ importers:
       '@clubadmin/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@opentelemetry/api':
+        specifier: 'catalog:'
+        version: 1.9.1
       graphile-worker:
         specifier: 'catalog:'
         version: 0.18.0(typescript@6.0.3)
@@ -762,6 +765,31 @@ importers:
       intl-messageformat:
         specifier: 'catalog:'
         version: 10.7.18
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.4(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(jsdom@20.0.3)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/ops:
+    dependencies:
+      '@clubadmin/db':
+        specifier: workspace:*
+        version: link:../db
+      '@clubadmin/devtools':
+        specifier: workspace:*
+        version: link:../devtools
+    devDependencies:
+      '@clubadmin/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
+      eslint:
+        specifier: 'catalog:'
+        version: 10.12.0(jiti@2.7.0)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3

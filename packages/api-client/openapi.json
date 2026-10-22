@@ -597,7 +597,8 @@
                       "group.members.manage",
                       "person.profile.read",
                       "person.profile.update",
-                      "person.protection.set"
+                      "person.protection.set",
+                      "ops.backup.read"
                     ]
                   }
                 }
@@ -1024,6 +1025,292 @@
         "required": [
           "version",
           "commit"
+        ]
+      },
+      "BackupStatus": {
+        "type": "object",
+        "properties": {
+          "backupsEnabled": {
+            "type": "boolean"
+          },
+          "database": {
+            "type": "object",
+            "properties": {
+              "lastSuccessAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastLabel": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lastRunAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastRunStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "succeeded"
+              },
+              "sizeBytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "lastSuccessAt",
+              "lastLabel",
+              "lastRunAt",
+              "lastRunStatus",
+              "sizeBytes"
+            ]
+          },
+          "monthly": {
+            "type": "object",
+            "properties": {
+              "lastSuccessAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastLabel": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lastRunAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastRunStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "succeeded"
+              },
+              "sizeBytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "lastSuccessAt",
+              "lastLabel",
+              "lastRunAt",
+              "lastRunStatus",
+              "sizeBytes"
+            ]
+          },
+          "files": {
+            "type": "object",
+            "properties": {
+              "lastSuccessAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastLabel": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lastRunAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastRunStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "succeeded"
+              },
+              "sizeBytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "lastSuccessAt",
+              "lastLabel",
+              "lastRunAt",
+              "lastRunStatus",
+              "sizeBytes"
+            ]
+          },
+          "ledger": {
+            "type": "object",
+            "properties": {
+              "lastSuccessAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastLabel": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lastRunAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastRunStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "succeeded"
+              },
+              "sizeBytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "lastSuccessAt",
+              "lastLabel",
+              "lastRunAt",
+              "lastRunStatus",
+              "sizeBytes"
+            ]
+          },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "lastPassedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastRunAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "lastRunStatus": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "passed"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "status"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "lastPassedAt",
+              "lastRunAt",
+              "lastRunStatus",
+              "label",
+              "checks"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "restore_verification_stale"
+            ]
+          },
+          "thresholds": {
+            "type": "object",
+            "properties": {
+              "backupHours": {
+                "type": "integer"
+              },
+              "filesHours": {
+                "type": "integer"
+              },
+              "verificationDays": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "backupHours",
+              "filesHours",
+              "verificationDays"
+            ]
+          }
+        },
+        "required": [
+          "backupsEnabled",
+          "database",
+          "monthly",
+          "files",
+          "ledger",
+          "verification",
+          "warnings",
+          "thresholds"
         ]
       },
       "PersonProfile": {
@@ -2336,6 +2623,83 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/backup-status": {
+      "get": {
+        "operationId": "Backups_status",
+        "summary": "Last successful backups and restore verification, with warnings when they are too old (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `ops.backup.read` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }

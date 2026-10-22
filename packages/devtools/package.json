@@ -5,6 +5,14 @@
   "description": "Local development tooling: pnpm dev orchestration, environment setup, doctor, smoke test",
   "license": "AGPL-3.0-only",
   "type": "module",
+  "exports": {
+    "./compose": "./src/compose.ts",
+    "./env": "./src/env.ts",
+    "./https": "./src/https.ts",
+    "./paths": "./src/paths.ts",
+    "./process": "./src/process.ts",
+    "./s3": "./src/s3.ts"
+  },
   "bin": {
     "clubadmin-dev": "./src/cli.ts"
   },

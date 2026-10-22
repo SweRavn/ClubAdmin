@@ -197,7 +197,14 @@ context through `app.current_club_id()`, `app.current_person_id()`,
   Failures retry with backoff (10 attempts), then the event is marked `failed`
   and an error is logged.
 - **Deletion ledger:** `privacy.deletion_ledger` (erased person IDs), re-applied
-  after restores.
+  after restores with `privacy.replay_deletion_ledger`, which runs the erasure
+  core `privacy.erase_person` for every entry (ADR 0030).
+- **Backups (`ops` schema):** `ops.backup_runs` and `ops.restore_verifications`,
+  written by the backup tooling (superuser), readable by the app role for
+  `GET /api/v1/ops/backup-status`; no personal data, no history trigger.
+  Tooling: `infra/backup/` (PostgreSQL image with pgBackRest, the backup
+  sidecar) and `packages/ops` (`pnpm ops:*`), see
+  docs/operations/backup-restore.md.
 
 ### Core domain tables (P0.5)
 
@@ -489,6 +496,7 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `outbox:dispatch` | per event (outbox trigger) | Delivers a domain event to its handlers once |
 | `history:maintain_partitions` | daily 03:17 UTC | Creates history partitions ahead, drops expired ones |
 | `guardianships:flag_adult_wards` | daily 04:23 UTC | Flags (never ends) guardianships whose ward reached the adult age (highest `adultAge` of all packs, as the job cannot see the ward's clubs), audits it and publishes `guardianship.ward.adult` |
+| `ops:backup_metrics` | every 5 minutes | Reads the latest backup runs and restore verification for the backup gauges (docs/operations/backup-restore.md, "Monitoring") |
 
 ## Country packs
 

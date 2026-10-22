@@ -12,8 +12,11 @@ export const ENDPOINT_METADATA = "clubadmin:endpoint";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-/** Which resource the authorization module loads for the policy (from :clubId, :groupId, :personId). */
-export type EndpointResource = "club" | "group" | "person";
+/**
+ * Which resource the authorization module loads for the policy (from
+ * :clubId, :groupId, :personId; "platform": the installation, for operators).
+ */
+export type EndpointResource = "platform" | "club" | "group" | "person";
 
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any

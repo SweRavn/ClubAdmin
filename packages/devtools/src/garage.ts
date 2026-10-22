@@ -1,13 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Idempotent setup of the single-node Garage cluster through its admin API (v2):
-// cluster layout, the access key from .env.local, and the buckets.
+// cluster layout, the access keys from .env.local, and the buckets.
+
+export interface GarageKey {
+  accessKeyId: string;
+  secretAccessKey: string;
+  name: string;
+  /** Buckets this key may use; read-only unless write is true. */
+  grants: readonly { bucket: string; write: boolean }[];
+}
 
 export interface GarageSetup {
   adminUrl: string;
   adminToken: string;
+  /** The application's key: read and write on every bucket in `buckets`. */
   accessKeyId: string;
   secretAccessKey: string;
   buckets: readonly string[];
+  /** Further keys with their own grants (backup credentials, separate from the application's). */
+  keys?: readonly GarageKey[];
   /** Capacity assigned to the single dev node, in bytes. */
   capacity?: number;
 }
@@ -86,45 +97,60 @@ export async function setupGarage(setup: GarageSetup, fetchImpl: Fetch = fetch):
     changes.push("applied single-node cluster layout");
   }
 
-  // 2. Access key with the credentials from .env.local.
-  const key = await client.call("GetKeyInfo", { query: { id: setup.accessKeyId } });
-  if (!key.ok) {
+  // 2. Access keys with the credentials from .env.local.
+  const keys: GarageKey[] = [
+    {
+      accessKeyId: setup.accessKeyId,
+      secretAccessKey: setup.secretAccessKey,
+      name: "clubadmin-dev",
+      grants: setup.buckets.map((bucket) => ({ bucket, write: true })),
+    },
+    ...(setup.keys ?? []),
+  ];
+  for (const k of keys) {
+    const key = await client.call("GetKeyInfo", { query: { id: k.accessKeyId } });
+    if (key.ok) continue;
     expect(
       await client.call("ImportKey", {
-        body: {
-          accessKeyId: setup.accessKeyId,
-          secretAccessKey: setup.secretAccessKey,
-          name: "clubadmin-dev",
-        },
+        body: { accessKeyId: k.accessKeyId, secretAccessKey: k.secretAccessKey, name: k.name },
       }),
       "ImportKey",
     );
-    changes.push(`imported access key ${setup.accessKeyId}`);
+    changes.push(`imported access key ${k.accessKeyId}`);
   }
 
-  // 3. Buckets, each readable and writable with that key.
-  for (const bucket of setup.buckets) {
+  // 3. Buckets, and each key's permissions on them.
+  const buckets = [...new Set(keys.flatMap((k) => k.grants.map((g) => g.bucket)))];
+  for (const bucket of buckets) {
     let info = await client.call<BucketInfo>("GetBucketInfo", { query: { globalAlias: bucket } });
     if (!info.ok) {
       info = await client.call<BucketInfo>("CreateBucket", { body: { globalAlias: bucket } });
       expect(info, `CreateBucket ${bucket}`);
       changes.push(`created bucket ${bucket}`);
     }
-    const granted = info.data.keys.some(
-      (k) => k.accessKeyId === setup.accessKeyId && k.permissions.read && k.permissions.write,
-    );
-    if (!granted) {
+    for (const k of keys) {
+      const grant = k.grants.find((g) => g.bucket === bucket);
+      if (!grant) continue;
+      const granted = info.data.keys.some(
+        (existing) =>
+          existing.accessKeyId === k.accessKeyId &&
+          existing.permissions.read &&
+          (!grant.write || existing.permissions.write),
+      );
+      if (granted) continue;
       expect(
         await client.call("AllowBucketKey", {
           body: {
             bucketId: info.data.id,
-            accessKeyId: setup.accessKeyId,
-            permissions: { read: true, write: true, owner: true },
+            accessKeyId: k.accessKeyId,
+            permissions: { read: true, write: grant.write, owner: grant.write },
           },
         }),
         `AllowBucketKey ${bucket}`,
       );
-      changes.push(`granted read/write on ${bucket}`);
+      changes.push(
+        `granted ${grant.write ? "read/write" : "read"} on ${bucket} to ${k.accessKeyId}`,
+      );
     }
   }
   return changes;

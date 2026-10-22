@@ -8,7 +8,14 @@ import { existsSync, readFileSync } from "node:fs";
 import { bootstrap, migrate, passwordsFromEnv } from "@clubadmin/db/admin";
 
 import { exportCaddyRootCert } from "./caddy.ts";
-import { compose, DEV_SERVICES, notRunning, PROJECT_NAME, serviceStates } from "./compose.ts";
+import {
+  compose,
+  DEV_SERVICES,
+  ensureBackupImage,
+  notRunning,
+  PROJECT_NAME,
+  serviceStates,
+} from "./compose.ts";
 import { doctor } from "./doctor.ts";
 import { ensureEnvLocal, loadEnv, requireEnv, setEnvValues } from "./env.ts";
 import { setupGarage } from "./garage.ts";
@@ -23,7 +30,8 @@ import { readZitadelAdminPat } from "./zitadel-pat.ts";
 const USAGE = `Usage: pnpm dev[:command]
 
   dev            start services, then all apps in watch mode
-  services       start services only (--full also starts ClamAV)
+  services       start services only (--full also starts ClamAV; --backup enables
+                 WAL archiving and the backup sidecar, kept in .env.local)
   down           stop services (data is kept)
   logs [service] follow service logs
   clean          stop services and delete all their data (--yes to skip the question)
@@ -117,10 +125,18 @@ Otherwise start Caddy over with a new CA:
   }
 }
 
-async function startServices(full: boolean): Promise<boolean> {
+async function startServices(full: boolean, enableBackup = false): Promise<boolean> {
   const added = ensureEnvLocal();
   if (added.length > 0) console.log(`.env.local: generated ${added.length} setting(s).`);
+  if (enableBackup && setEnvValues({ BACKUP_ENABLED: "true" }).length > 0) {
+    console.log(".env.local: BACKUP_ENABLED=true (set it to false to stop backups)");
+  }
+  const backup = loadEnv().get("BACKUP_ENABLED") === "true";
 
+  if (!(await ensureBackupImage())) {
+    console.error("\nThe PostgreSQL image (infra/backup) did not build.");
+    return false;
+  }
   console.log("Starting services (first start downloads images and can take a few minutes)…");
   const up = (args: string[]) =>
     compose(["up", "--detach", "--wait", "--wait-timeout", "300", "--remove-orphans", ...args], {
@@ -142,12 +158,26 @@ async function startServices(full: boolean): Promise<boolean> {
   }
 
   const env = loadEnv();
+  // The application's key gets the files bucket; the backup key (separate
+  // credentials) reads it and writes the backup and replica buckets.
   const changes = await setupGarage({
     adminUrl: `http://127.0.0.1:${env.get("GARAGE_ADMIN_PORT") ?? "3903"}`,
     adminToken: requireEnv(env, "GARAGE_ADMIN_TOKEN"),
     accessKeyId: requireEnv(env, "S3_ACCESS_KEY_ID"),
     secretAccessKey: requireEnv(env, "S3_SECRET_ACCESS_KEY"),
-    buckets: [requireEnv(env, "S3_BUCKET_FILES"), requireEnv(env, "S3_BUCKET_BACKUPS")],
+    buckets: [requireEnv(env, "S3_BUCKET_FILES")],
+    keys: [
+      {
+        accessKeyId: requireEnv(env, "BACKUP_S3_ACCESS_KEY_ID"),
+        secretAccessKey: requireEnv(env, "BACKUP_S3_SECRET_ACCESS_KEY"),
+        name: "clubadmin-dev-backup",
+        grants: [
+          { bucket: requireEnv(env, "S3_BUCKET_FILES"), write: false },
+          { bucket: requireEnv(env, "BACKUP_S3_BUCKET"), write: true },
+          { bucket: requireEnv(env, "FILES_REPLICA_S3_BUCKET"), write: true },
+        ],
+      },
+    ],
   });
   for (const change of changes) console.log(`Garage: ${change}`);
 
@@ -164,6 +194,15 @@ async function startServices(full: boolean): Promise<boolean> {
   );
 
   if (!(await authConfigureLocal())) return false;
+
+  // The backup sidecar needs the buckets and the migrated ops schema.
+  if (backup) {
+    if ((await compose(["up", "--detach", "--wait", "backup"], { backup })) !== 0) {
+      console.error("\nThe backup sidecar did not start. Run `pnpm dev:logs backup`.");
+      return false;
+    }
+    console.log("Backups: on (pnpm dev:logs backup; restores: infra/backup/runbooks)");
+  }
 
   const port = env.get("CADDY_HTTPS_PORT") ?? "443";
   const suffix = port === "443" ? "" : `:${port}`;
@@ -192,7 +231,7 @@ async function main(argv: string[]): Promise<number> {
 
   switch (command) {
     case "dev":
-      if (!(await startServices(flag("--full")))) return 1;
+      if (!(await startServices(flag("--full"), flag("--backup")))) return 1;
       // First start: load the demo scenario into the empty database (docs/seed-data.md).
       if ((await run("pnpm", ["db:seed", "--if-empty"], process.env)) !== 0) return 1;
       // Settings Node.js reads only at process start (Caddy's CA for https://auth.clubadmin.localhost).
@@ -202,11 +241,11 @@ async function main(argv: string[]): Promise<number> {
         NEXT_TELEMETRY_DISABLED: "1",
       });
     case "services":
-      return (await startServices(flag("--full"))) ? 0 : 1;
+      return (await startServices(flag("--full"), flag("--backup"))) ? 0 : 1;
     case "down":
-      return compose(["--profile", "full", "down"]);
+      return compose(["--profile", "full", "--profile", "backup", "down"]);
     case "logs":
-      return compose(["logs", "--follow", "--tail", "200", ...rest]);
+      return compose(["--profile", "backup", "logs", "--follow", "--tail", "200", ...rest]);
     case "clean":
       if (
         !flag("--yes") &&
@@ -214,7 +253,15 @@ async function main(argv: string[]): Promise<number> {
       ) {
         return 1;
       }
-      return compose(["--profile", "full", "down", "--volumes", "--remove-orphans"]);
+      return compose([
+        "--profile",
+        "full",
+        "--profile",
+        "backup",
+        "down",
+        "--volumes",
+        "--remove-orphans",
+      ]);
     case "doctor":
       return (await doctor()) ? 0 : 1;
     case "trust-ca":

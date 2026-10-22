@@ -16,6 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { graphileLogger } from "./graphile-logger.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
+import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 
@@ -127,6 +128,33 @@ describe("guardianships:flag_adult_wards", () => {
       [ids.adult],
     );
     expect(events[0]?.n).toBe(1);
+  });
+});
+
+describe("ops:backup_metrics", () => {
+  it("reads the last success per kind and whether the latest run failed (as clubadmin_app)", async () => {
+    await t.query(
+      "admin",
+      `INSERT INTO ops.backup_runs (kind, status, started_at, finished_at) VALUES
+         ('full', 'succeeded', '2026-10-20T02:00:00Z', '2026-10-20T02:10:00Z'),
+         ('diff', 'failed', '2026-10-21T02:00:00Z', '2026-10-21T02:01:00Z'),
+         ('monthly', 'failed', '2026-10-01T03:30:00Z', '2026-10-01T03:31:00Z'),
+         ('monthly', 'succeeded', '2026-10-02T03:30:00Z', '2026-10-02T03:40:00Z'),
+         ('files', 'succeeded', '2026-10-21T03:17:00Z', '2026-10-21T03:18:00Z')`,
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO ops.restore_verifications (status, started_at, finished_at, initiated_by)
+       VALUES ('passed', '2026-10-19T05:00:00Z', '2026-10-19T05:05:00Z', 'test')`,
+    );
+    const metrics = await readBackupMetrics(t.db);
+    expect(metrics.lastSuccess.get("database")).toBe(Date.parse("2026-10-20T02:10:00Z") / 1000);
+    expect(metrics.lastRunFailed.get("database")).toBe(1);
+    expect(metrics.lastRunFailed.get("files")).toBe(0);
+    // A later success clears the failure.
+    expect(metrics.lastRunFailed.get("monthly")).toBe(0);
+    expect(metrics.verificationLastSuccess).toBe(Date.parse("2026-10-19T05:05:00Z") / 1000);
+    expect(metrics.verificationLastRunFailed).toBe(0);
   });
 });
 

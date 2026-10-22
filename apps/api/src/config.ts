@@ -67,6 +67,14 @@ export const apiConfigSchema = z
     MOBILE_STORE_URL_ANDROID: z.url().optional(),
     /** Feature flags for the apps: "name,other=false" (a bare name is on). */
     FEATURE_FLAGS: z.string().default(""),
+    /** Backups are configured (infra/backup); otherwise GET /ops/backup-status warns. */
+    BACKUP_ENABLED: envBoolean(false),
+    /** Backup status warnings: database backup older than this many hours. */
+    BACKUP_WARN_AFTER_HOURS: z.coerce.number().int().positive().default(24),
+    /** File replication older than this many hours. */
+    FILES_BACKUP_WARN_AFTER_HOURS: z.coerce.number().int().positive().default(3),
+    /** No passed restore verification for this many days. */
+    RESTORE_VERIFICATION_WARN_AFTER_DAYS: z.coerce.number().int().positive().default(8),
     /** Serve /api/v1/openapi.json. Defaults to on in development only. */
     OPENAPI_ENABLED: envBoolean(false).optional(),
   })

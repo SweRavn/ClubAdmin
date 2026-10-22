@@ -17,6 +17,7 @@ export const PERMISSIONS = [
   "person.profile.read",
   "person.profile.update",
   "person.protection.set",
+  "ops.backup.read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

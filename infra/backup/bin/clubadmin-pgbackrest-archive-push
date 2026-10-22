@@ -1,0 +1,13 @@
+#!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-only
+# PostgreSQL's archive_command (infra/docker/compose.yml): pushes a WAL
+# segment to the backup repositories (pgBackRest checks that the command's
+# name contains "pgbackrest"). Without backups configured (BACKUP_ENABLED is
+# not "true") the segment is not kept, so pg_wal does not fill up; enabling
+# backups later starts with a full backup.
+set -eu
+
+if [ "${BACKUP_ENABLED:-false}" != "true" ]; then
+  exit 0
+fi
+exec /usr/local/bin/clubadmin-pgbackrest archive-push "$1"

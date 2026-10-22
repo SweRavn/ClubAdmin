@@ -24,6 +24,12 @@ services:
       API_UPSTREAM: ${API_UPSTREAM:-host.docker.internal:4000}
     extra_hosts:
       - host.docker.internal:host-gateway
+    networks:
+      backend:
+        # pgBackRest only speaks HTTPS to S3: the backup containers reach Garage
+        # through Caddy under this name (BACKUP_S3_ENDPOINT).
+        aliases:
+          - s3.${APP_DOMAIN:-clubadmin.localhost}
     volumes:
       - ./caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
       - ./caddy/placeholder.html:/srv/placeholder/index.html:ro
