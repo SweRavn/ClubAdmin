@@ -58,14 +58,18 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   });
   const newRequestId = options.requestId ?? (() => crypto.randomUUID());
 
+  // The hooks change headers in place and return nothing unless they replace
+  // the request or response: openapi-fetch checks a returned value with
+  // `instanceof Request/Response`, which fails in React Native, where fetch's
+  // responses are not instances of the global Response class.
   const middleware: Middleware = {
     onRequest({ request }) {
       if (!request.headers.has("x-request-id")) request.headers.set("x-request-id", newRequestId());
       if (options.acceptLanguage) request.headers.set("accept-language", options.acceptLanguage);
-      return request;
+      return undefined;
     },
     async onResponse({ response }) {
-      if (response.ok) return response;
+      if (response.ok) return undefined;
       const requestId = response.headers.get("x-request-id") ?? undefined;
       let problem: ProblemDetails | undefined;
       if (response.headers.get("content-type")?.includes("application/problem+json")) {
