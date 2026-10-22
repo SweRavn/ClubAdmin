@@ -19,7 +19,7 @@ Ordered so each package only depends on earlier ones. Prompts:
 | P0.7 | Authorization engine, `PersonVisibility`, first read endpoints | P0.6 |
 | P0.8 | Seed framework and demo scenario (`seed-data.md`) | P0.7 |
 | P0.9 | Web shell: layout, club switcher, i18n, persona login, group pages, "Source code" link | P0.8 |
-| P0.10 | Mobile shell: Expo app, PKCE login, club switcher, i18n, persisted cache | P0.8 |
+| P0.10 | Mobile shell: Expo app, PKCE login, club switcher, i18n, persisted cache; per-account rate limits | P0.9 |
 | P0.11 | Backup and restore: pgBackRest, object replication, `ops:verify-backup`, runbooks | P0.4 |
 | P0.12 | Entitlements service and optional billing module skeleton | P0.7 |
 

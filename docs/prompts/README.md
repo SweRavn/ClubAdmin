@@ -34,7 +34,7 @@ before starting the next one.
 | [P0.7 Authorization and person visibility](P0.7-authorization-and-visibility.md) | P0.6 |
 | [P0.8 Seed data](P0.8-seed-data.md) | P0.7 |
 | [P0.9 Web shell](P0.9-web-shell.md) | P0.8 |
-| [P0.10 Mobile shell](P0.10-mobile-shell.md) | P0.8 |
+| [P0.10 Mobile shell and per-account rate limits](P0.10-mobile-shell.md) | P0.9 |
 | [P0.11 Backup and restore](P0.11-backup-and-restore.md) | P0.4 (can run in parallel) |
 | [P0.12 Entitlements and billing skeleton](P0.12-entitlements-and-billing-skeleton.md) | P0.7 |
 
