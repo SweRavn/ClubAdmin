@@ -447,7 +447,9 @@ class CoreSeeder {
         this.as(g.by, g.club),
         {
           wardPersonId: this.id(g.ward),
-          guardian: { person: { givenName: p.givenName, familyName: p.familyName, phone: p.phone } },
+          guardian: {
+            person: { givenName: p.givenName, familyName: p.familyName, phone: p.phone },
+          },
           kind: g.kind,
           ...(g.rights ? { rights: g.rights } : {}),
           ...(g.consentNote ? { consentNote: g.consentNote } : {}),
