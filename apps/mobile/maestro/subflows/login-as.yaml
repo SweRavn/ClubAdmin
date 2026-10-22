@@ -7,11 +7,12 @@ appId: ${APP_ID}
     clearKeychain: true
 # The login screen, then scroll to the persona (it appears once the picker has
 # loaded the personas). Waiting for the picker itself is unreliable: it is
-# taller than the screen.
+# taller than the screen. After clearing the app's state the emulator
+# sometimes takes over 30 s to start it again (CI), hence the long wait.
 - extendedWaitUntil:
     visible:
       id: "login-screen"
-    timeout: 30000
+    timeout: 90000
 - scrollUntilVisible:
     element:
       id: "persona-${PERSONA}"

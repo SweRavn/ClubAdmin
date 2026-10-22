@@ -6,6 +6,11 @@ name: Log in with Zitadel
 - launchApp:
     clearState: true
     clearKeychain: true
+# Starting again after clearing the state can be slow on the CI emulator.
+- extendedWaitUntil:
+    visible:
+      id: "login-zitadel"
+    timeout: 90000
 - tapOn:
     id: "login-zitadel"
 # Chrome's first-run screens on a fresh emulator (Custom Tab).

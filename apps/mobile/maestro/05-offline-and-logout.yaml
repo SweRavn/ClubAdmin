@@ -17,7 +17,7 @@ name: Offline cold start and logout
 - extendedWaitUntil:
     visible:
       id: "home-screen"
-    timeout: 20000
+    timeout: 60000
 - assertVisible:
     id: "offline-banner"
 - assertVisible:
@@ -33,10 +33,10 @@ name: Offline cold start and logout
 - extendedWaitUntil:
     visible:
       id: "login-screen"
-    timeout: 20000
+    timeout: 60000
 - stopApp
 - launchApp
 - extendedWaitUntil:
     visible:
       id: "login-screen"
-    timeout: 20000
+    timeout: 60000
