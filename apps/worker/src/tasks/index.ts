@@ -6,6 +6,7 @@ import { type Database, outbox, type OutboxHandler, sql } from "@clubadmin/db";
 import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 
+import { generateInvoicesTask } from "../billing.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 
@@ -75,6 +76,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "history:maintain_partitions": maintainHistoryPartitions(deps),
     "guardianships:flag_adult_wards": flagAdultWardsTask(deps.db),
     "ops:backup_metrics": backupMetricsTask(deps.db),
+    "billing:generate_invoices": generateInvoicesTask,
   };
 }
 
@@ -90,3 +92,6 @@ export const crontab = [
   "23 4 * * * guardianships:flag_adult_wards ?fill=2d",
   "*/5 * * * * ops:backup_metrics ?max=1",
 ].join("\n");
+
+/** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */
+export const BILLING_CRONTAB = "41 4 1 * * billing:generate_invoices ?fill=2d";

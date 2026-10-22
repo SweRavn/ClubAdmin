@@ -16,7 +16,9 @@ export const OPENAPI_FILE = new URL(
 );
 
 export async function generateOpenApiDocument(): Promise<OpenApiDocument> {
-  const config = loadApiConfig({ NODE_ENV: "test", LOG_LEVEL: "silent" });
+  // With billing on, so the document (and the typed client) also describes the
+  // billing routes; installations without billing simply do not serve them.
+  const config = loadApiConfig({ NODE_ENV: "test", LOG_LEVEL: "silent", BILLING_ENABLED: "true" });
   const app = await createApp(config, {
     logger: createLogger({ service: "openapi", level: "silent" }),
   });

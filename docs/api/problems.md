@@ -39,6 +39,9 @@ with content type `application/problem+json`:
 | <a id="internal"></a>`internal` | 500 | Unexpected error on the server (logged with the request ID) |
 | <a id="not-implemented"></a>`not-implemented` | 501 | Not implemented yet |
 | <a id="unavailable"></a>`unavailable` | 503 | Temporarily unavailable, e.g. during shutdown, or a first login while the rate-limit store is unreachable |
+| <a id="entitlement-required"></a>`entitlement-required` | 402 | The club's plan does not include the feature (`detail`: the feature key); only with billing on. Apps show an upgrade hint or "not available". A feature switched off for the whole installation (`FEATURE_*=false`) answers `not-found` instead |
+| <a id="club-read-only"></a>`club-read-only` | 409 | The club is read-only (for example unpaid, or set by an operator): reads and exports work, changes do not. Data is never deleted |
+| <a id="club-suspended"></a>`club-suspended` | 409 | An operator suspended the club: only exports work |
 
 New types are added to `PROBLEM_TYPES` in `packages/shared/src/http/problem.ts`,
 to the message catalogues in `packages/i18n/messages/`, and to this table.

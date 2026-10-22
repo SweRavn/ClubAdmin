@@ -36,3 +36,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0028](0028-mobile-app.md) | Mobile app: login, development tokens, encrypted cache, updates and per-account rate limits | Accepted |
 | [0029](0029-api-compatibility.md) | API compatibility: `/api/v1` only grows | Accepted |
 | [0030](0030-backup-implementation.md) | Backups: one PostgreSQL image, ledger outside the backups, erasure core in SQL | Accepted |
+| [0031](0031-entitlements-and-billing-skeleton.md) | Entitlements service, club access state and the billing skeleton | Accepted |

@@ -10,6 +10,10 @@ const id = z.uuid();
 export const DOMAIN_EVENTS = {
   /** A person's relationships in a club changed (cache invalidation, P0.7). */
   "membership.changed": z.object({ clubId: id, personId: id }),
+  /** A club was created (billing: start the trial when hosted). */
+  "club.created": z.object({ clubId: id }),
+  /** A club's plan, subscription status or access state changed (entitlements cache). */
+  "club.entitlements.changed": z.object({ clubId: id }),
   "role.changed": z.object({ clubId: id, personId: id }),
   "group.owner.changed": z.object({ clubId: id, groupId: id, personId: id }),
   "group.parent.changed": z.object({ clubId: id, groupId: id }),

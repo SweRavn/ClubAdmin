@@ -8,10 +8,12 @@ import {
   audit,
   type Database,
   isUniqueViolation,
+  outbox,
   type TenantContext,
   type Tx,
 } from "@clubadmin/db";
 import {
+  type ClubAccessState,
   type CreateClubInput,
   CreateClubSchema,
   type UpdateClubSettingsInput,
@@ -54,6 +56,7 @@ export class ClubsService {
       throw error;
     }
     await audit.record(tx, { action: "club.created", resourceType: "club", resourceId: clubId });
+    await outbox.publish(tx, "club.created", { clubId });
     return this.getClubInTx(tx, clubId);
   }
 
@@ -107,6 +110,31 @@ export class ClubsService {
       }
       return this.getClubInTx(tx, context.clubId);
     });
+  }
+
+  /**
+   * Read-only or suspended clubs keep all their data (ADR 0013). Only operators
+   * (actor kind "operator") and jobs may change it; the database refuses
+   * anyone else. `tx` must be a tenant transaction for the club.
+   */
+  async setAccessStateInTx(tx: Tx, clubId: string, accessState: ClubAccessState): Promise<boolean> {
+    const current = await this.lockClubInTx(tx, clubId);
+    if (current.accessState === accessState) return false;
+    await repo.updateClub(tx, clubId, { accessState });
+    await audit.record(tx, {
+      action: "club.access_state.changed",
+      resourceType: "club",
+      resourceId: clubId,
+      changedFields: ["access_state"],
+    });
+    await outbox.publish(tx, "club.entitlements.changed", { clubId });
+    return true;
+  }
+
+  setAccessState(context: TenantContext, accessState: ClubAccessState): Promise<boolean> {
+    return this.db.withTenant(context, (tx) =>
+      this.setAccessStateInTx(tx, context.clubId, accessState),
+    );
   }
 
   setJoinPolicy(context: TenantContext, joinPolicy: Club["joinPolicy"]): Promise<Club> {

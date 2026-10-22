@@ -24,7 +24,11 @@ const id = (key: string) => {
   return found.id;
 };
 
-async function seeded(scenario: Scenario, size?: number): Promise<{ t: TestDatabase; ms: number }> {
+async function seeded(
+  scenario: Scenario,
+  size?: number,
+  billingEnabled = false,
+): Promise<{ t: TestDatabase; ms: number }> {
   const t = await createTestDatabase();
   await t.query("admin", "INSERT INTO app_meta.seed_mode DEFAULT VALUES");
   const started = performance.now();
@@ -41,6 +45,7 @@ async function seeded(scenario: Scenario, size?: number): Promise<{ t: TestDatab
       admin: async (sql) => {
         await t.query("admin", sql);
       },
+      billingEnabled,
     },
     { scenario, data, ...(size ? { size } : {}) },
   );
@@ -53,7 +58,8 @@ let demoMs: number;
 
 beforeAll(async () => {
   ({ t: first, ms: demoMs } = await seeded("demo"));
-  ({ t: second } = await seeded("demo"));
+  // The second run with billing on: the same people and clubs, plus billing data.
+  ({ t: second } = await seeded("demo", undefined, true));
 }, 120_000);
 afterAll(async () => {
   await first?.drop();
@@ -61,6 +67,35 @@ afterAll(async () => {
 });
 
 describe("demo scenario", () => {
+  it("has billing data only with billing on: SVK paid, IKN free, FIL in a trial ending in 10 days", async () => {
+    const subscriptions = (t: TestDatabase) =>
+      t
+        .query<{ club: string; plan: string; status: string; trial_days: number | null }>(
+          "admin",
+          `SELECT c.slug AS club, p.key AS plan, s.status,
+                  round(extract(epoch FROM s.trial_ends_at - now()) / 86400)::int AS trial_days
+           FROM billing.subscriptions s JOIN billing.plans p ON p.id = s.plan_id
+           JOIN clubs c ON c.id = s.club_id ORDER BY c.slug`,
+        )
+        .then((r) => r.rows);
+    expect(await subscriptions(first)).toEqual([]);
+    const withBilling = await subscriptions(second);
+    const byClub = Object.fromEntries(withBilling.map((r) => [r.club, r]));
+    expect(byClub[data.clubs.find((c) => c.key === "svk")!.slug]).toMatchObject({
+      plan: "standard",
+      status: "active",
+    });
+    expect(byClub[data.clubs.find((c) => c.key === "ikn")!.slug]).toMatchObject({
+      plan: "free",
+      status: "active",
+    });
+    expect(byClub[data.clubs.find((c) => c.key === "fil")!.slug]).toMatchObject({
+      plan: "standard",
+      status: "trial",
+      trial_days: 10,
+    });
+  });
+
   it("creates exactly the clubs, groups and personas of docs/seed-data.md", async () => {
     expect(await summariseSeed(first, data)).toMatchSnapshot();
   });

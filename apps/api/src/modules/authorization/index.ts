@@ -11,6 +11,7 @@ export { PersonProfilePresenter } from "./presenters/person-profile.presenter.ts
 export { Actor, type RelationshipSet } from "./relationship-set.ts";
 export {
   CurrentAuthorization,
+  operatorTenant,
   type RequestAuthorization,
   resourceOf,
   tenantContext,

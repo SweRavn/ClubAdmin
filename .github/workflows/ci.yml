@@ -110,6 +110,13 @@ jobs:
       - name: Integration tests (API and worker against the services)
         run: pnpm test:integration
 
+      # The whole API suite again with billing on (P0.12): self-hosted
+      # installations run with it off, the hosted service with it on.
+      - name: Integration tests with billing on (BILLING_ENABLED=true)
+        env:
+          BILLING_ENABLED: "true"
+        run: pnpm --filter @clubadmin/api test:integration
+
       - name: Seed scenarios (load with 10 clubs, then the demo the end-to-end tests run on)
         run: |
           pnpm db:reset --scenario load --size 10

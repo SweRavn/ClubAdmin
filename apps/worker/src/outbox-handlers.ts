@@ -7,6 +7,8 @@ import { authorizationCacheHandler, type CacheVersions, type OutboxHandler } fro
 import { AUTHZ_VERSION_TTL_SECONDS } from "@clubadmin/shared";
 import type { Redis } from "ioredis";
 
+import { billingTrialHandler, entitlementsCacheHandler } from "./billing.ts";
+
 /** Version counters in Valkey (INCR is safe to repeat: a newer version only forces a reload). */
 export function valkeyCacheVersions(valkey: Redis): CacheVersions {
   return {
@@ -20,7 +22,27 @@ export function valkeyCacheVersions(valkey: Redis): CacheVersions {
   };
 }
 
-export function createOutboxHandlers(deps: { valkey?: Redis | undefined }): OutboxHandler[] {
+export function createOutboxHandlers(deps: {
+  valkey?: Redis | undefined;
+  /** Billing on (P0.12): trials for new clubs on the hosted service. */
+  billing?: { hosted: boolean; defaultPlan: string; trialDays: number } | undefined;
+}): OutboxHandler[] {
+  const handlers: OutboxHandler[] = [];
   // Without Valkey the API caches nothing across requests, so there is nothing to invalidate.
-  return deps.valkey ? [authorizationCacheHandler(valkeyCacheVersions(deps.valkey))] : [];
+  if (deps.valkey) {
+    handlers.push(
+      authorizationCacheHandler(valkeyCacheVersions(deps.valkey)),
+      entitlementsCacheHandler(deps.valkey),
+    );
+  }
+  if (deps.billing?.hosted) {
+    handlers.push(
+      billingTrialHandler({
+        defaultPlan: deps.billing.defaultPlan,
+        trialDays: deps.billing.trialDays,
+        valkey: deps.valkey,
+      }),
+    );
+  }
+  return handlers;
 }

@@ -24,6 +24,13 @@ export const PROBLEM_TYPES = {
   internal: 500,
   "not-implemented": 501,
   unavailable: 503,
+  // Specific types after the generic ones (problemSlugForStatus takes the first match).
+  /** The club's plan does not include the feature (billing on). */
+  "entitlement-required": 402,
+  /** The club is read-only (for example unpaid): reads and exports still work. */
+  "club-read-only": 409,
+  /** An operator suspended the club: only exports work. */
+  "club-suspended": 409,
 } as const;
 
 export type ProblemSlug = keyof typeof PROBLEM_TYPES;

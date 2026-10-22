@@ -4,7 +4,11 @@
 // authorized by the authorization module (deny by default, ADR 0006).
 // Tokens and their contents are never logged.
 
-import { ACCOUNT_INVITATION_HEADER, ID_TOKEN_HEADER } from "@clubadmin/shared";
+import {
+  ACCOUNT_INVITATION_HEADER,
+  type EntitlementFeature,
+  ID_TOKEN_HEADER,
+} from "@clubadmin/shared";
 import { type CanActivate, type ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import type { FastifyRequest } from "fastify";
@@ -12,6 +16,7 @@ import type { FastifyRequest } from "fastify";
 import { ENDPOINT_METADATA, type EndpointOptions } from "../../platform/http/endpoint.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
 import type { AuthorizationService } from "../authorization/index.ts";
+import { type EntitlementsService, REQUIRES_ENTITLEMENT } from "../entitlements/index.ts";
 import type { IdentityService } from "./identity.service.ts";
 import { RECENT_AUTH, REQUIRE_MFA } from "./principal.ts";
 import type { RequestLimits } from "./request-limits.ts";
@@ -33,6 +38,7 @@ export class AuthGuard implements CanActivate {
   private readonly sessions: SessionsService;
   /** OIDC clients whose sessions are registered in /me/sessions by the API (the mobile app). */
   private readonly mobileClients: ReadonlySet<string>;
+  private readonly entitlements: EntitlementsService;
 
   constructor(
     reflector: Reflector,
@@ -42,6 +48,7 @@ export class AuthGuard implements CanActivate {
     limits: RequestLimits,
     sessions: SessionsService,
     mobileClients: ReadonlySet<string>,
+    entitlements: EntitlementsService,
   ) {
     this.reflector = reflector;
     this.verifier = verifier;
@@ -50,6 +57,7 @@ export class AuthGuard implements CanActivate {
     this.limits = limits;
     this.sessions = sessions;
     this.mobileClients = mobileClients;
+    this.entitlements = entitlements;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -119,6 +127,14 @@ export class AuthGuard implements CanActivate {
     }
     const handler = context.getHandler();
     const controller = context.getClass();
+    // The club's access state (read-only, suspended) and the endpoint's entitlement (P0.12).
+    const resource = request.authz.resource;
+    await this.entitlements.enforce({
+      clubId: resource && "clubId" in resource ? resource.clubId : null,
+      method: request.method,
+      feature: this.reflector.get<EntitlementFeature | undefined>(REQUIRES_ENTITLEMENT, handler),
+      clubAccess: endpoint.clubAccess ?? "default",
+    });
     const needsMfa = this.reflector.getAllAndOverride<boolean | undefined>(REQUIRE_MFA, [
       handler,
       controller,

@@ -14,7 +14,10 @@
     "rate-limited": "Too many requests, please try again later",
     "internal": "Something went wrong on our side",
     "not-implemented": "Not implemented yet",
-    "unavailable": "The service is temporarily unavailable"
+    "unavailable": "The service is temporarily unavailable",
+    "entitlement-required": "Your club's plan does not include this",
+    "club-read-only": "The club is read-only: you can view and export its data, but not change it",
+    "club-suspended": "The club is suspended: only exporting its data is possible"
   },
   "common": {
     "appName": "ClubAdmin",

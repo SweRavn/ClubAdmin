@@ -110,6 +110,7 @@ async function main(command: string | undefined, argv: string[]): Promise<number
             await query("COMMIT");
           }),
         admin: (sql) => asAdmin(async (query) => void (await query(sql))),
+        billingEnabled: ["true", "1"].includes((process.env.BILLING_ENABLED ?? "").toLowerCase()),
       },
       { ...args, log: (m) => console.log(m) },
     );

@@ -61,3 +61,14 @@ export const CurrentAuthorization = createParamDecorator(
     return authorization;
   },
 );
+
+/** The service context an operator acts in (row-level security: app.is_platform_operator()). */
+export const operatorTenant = (
+  context: { personId?: string | null; requestId?: string | null },
+  clubId: string,
+): TenantContext => ({
+  actorKind: "operator",
+  personId: context.personId ?? null,
+  requestId: context.requestId ?? null,
+  clubId,
+});

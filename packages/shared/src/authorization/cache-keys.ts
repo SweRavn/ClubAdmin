@@ -19,3 +19,9 @@ export const protectedVersionKey = (clubId: string): string => `authz:prot:v:${c
 export const PROTECTED_GLOBAL_VERSION_KEY = "authz:prot:v:global";
 /** A club's cached protected set ({ version, globalVersion, personIds }). */
 export const protectedSetKey = (clubId: string): string => `authz:prot:${clubId}`;
+
+/**
+ * Valkey pub/sub channel: a club ID published here drops that club's
+ * entitlements from every API instance's cache (P0.12).
+ */
+export const ENTITLEMENTS_INVALIDATE_CHANNEL = "entitlements:invalidate";

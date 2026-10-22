@@ -5,6 +5,7 @@
 
 import {
   bigint,
+  boolean,
   integer,
   jsonb,
   pgSchema,
@@ -117,4 +118,48 @@ export const restoreVerifications = opsSchema.table("restore_verifications", {
   checks: jsonb().$type<{ name: string; status: string; detail?: string }[]>().notNull(),
   initiatedBy: text("initiated_by").notNull(),
   durationMs: integer("duration_ms"),
+});
+
+// Billing (P0.12): created by migrations/0006 in every installation, used only
+// by the billing module (BILLING_ENABLED=true) and its entitlements provider.
+export const billingSchema = pgSchema("billing");
+export const billingPlans = billingSchema.table("plans", {
+  id: uuid().primaryKey(),
+  key: text().notNull(),
+  name: text().notNull(),
+  kind: text().$type<"base" | "add_on">().notNull(),
+  currency: text().notNull(),
+  priceMinor: bigint("price_minor", { mode: "number" }).notNull(),
+  period: text().$type<"month" | "year">().notNull(),
+  active: boolean().notNull(),
+});
+export const billingPlanEntitlements = billingSchema.table("plan_entitlements", {
+  id: uuid().primaryKey(),
+  planId: uuid("plan_id").notNull(),
+  key: text().notNull(),
+  kind: text().$type<"feature" | "limit">().notNull(),
+  enabled: boolean(),
+  limitValue: bigint("limit_value", { mode: "number" }),
+});
+export const billingSubscriptions = billingSchema.table("subscriptions", {
+  id: uuid().primaryKey(),
+  clubId: uuid("club_id").notNull(),
+  planId: uuid("plan_id").notNull(),
+  addOnPlanIds: uuid("add_on_plan_ids").array().notNull(),
+  status: text().$type<"trial" | "active" | "past_due" | "read_only" | "cancelled">().notNull(),
+  trialEndsAt: timestamp("trial_ends_at", tz),
+  currentPeriodStart: timestamp("current_period_start", tz),
+  currentPeriodEnd: timestamp("current_period_end", tz),
+  cancelledAt: timestamp("cancelled_at", tz),
+});
+export const billingInvoices = billingSchema.table("invoices", {
+  id: uuid().primaryKey(),
+  clubId: uuid("club_id").notNull(),
+  subscriptionId: uuid("subscription_id").notNull(),
+  number: text().notNull(),
+  currency: text().notNull(),
+  totalMinor: bigint("total_minor", { mode: "number" }).notNull(),
+  status: text().$type<"draft" | "open" | "paid" | "void">().notNull(),
+  periodStart: timestamp("period_start", tz).notNull(),
+  periodEnd: timestamp("period_end", tz).notNull(),
 });

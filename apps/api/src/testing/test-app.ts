@@ -100,7 +100,13 @@ export async function createTestApp(
       callback();
     },
   });
-  const config = loadApiConfig({ NODE_ENV: "test", LOG_LEVEL: "debug", ...env });
+  const config = loadApiConfig({
+    NODE_ENV: "test",
+    LOG_LEVEL: "debug",
+    // CI runs the integration suite with billing off and on (P0.12).
+    ...(process.env.BILLING_ENABLED ? { BILLING_ENABLED: process.env.BILLING_ENABLED } : {}),
+    ...env,
+  });
   const logger = createLogger({ service: "clubadmin-api", level: "debug", destination });
   const app = await createApp(config, { logger, modules });
   await app.getHttpAdapter().getInstance().ready();

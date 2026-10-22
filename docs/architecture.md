@@ -497,6 +497,12 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `history:maintain_partitions` | daily 03:17 UTC | Creates history partitions ahead, drops expired ones |
 | `guardianships:flag_adult_wards` | daily 04:23 UTC | Flags (never ends) guardianships whose ward reached the adult age (highest `adultAge` of all packs, as the job cannot see the ward's clubs), audits it and publishes `guardianship.ward.adult` |
 | `ops:backup_metrics` | every 5 minutes | Reads the latest backup runs and restore verification for the backup gauges (docs/operations/backup-restore.md, "Monitoring") |
+| `billing:generate_invoices` | 1st of the month, 04:41 UTC (billing on only) | Placeholder until P1.13 (InvoiceGenerator) |
+
+Outbox handlers besides the authorization cache: `entitlements-cache`
+(`club.entitlements.changed` → Valkey channel `entitlements:invalidate`) and,
+with billing on in the hosted service, `billing-trial` (`club.created` → a
+trial on the default plan). See docs/hosting-and-billing.md and ADR 0031.
 
 ## Country packs
 

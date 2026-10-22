@@ -319,6 +319,30 @@ const CASES: Record<Permission, Case[]> = {
       allowed: false,
     },
   ],
+  "club.access_state.update": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
+    { name: "club manager", actor: manager, resource: clubR, allowed: false },
+  ],
+  "billing.plans.read": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+  ],
+  "billing.subscription.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "treasurer",
+      actor: as({ roles: [{ clubId: club, role: "treasurer" }] }),
+      resource: clubR,
+      allowed: true,
+    },
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
+    { name: "plain member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "billing.subscription.manage": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
+    { name: "club manager", actor: manager, resource: clubR, allowed: false },
+  ],
   "ops.backup.read": [
     { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
     { name: "club manager", actor: manager, resource: platformR, allowed: false },

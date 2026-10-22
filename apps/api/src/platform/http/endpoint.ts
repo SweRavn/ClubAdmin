@@ -52,6 +52,13 @@ export interface EndpointOptions {
    * group resource.
    */
   bulkRead?: boolean;
+  /**
+   * Restricted clubs (P0.12, entitlements module): by default a read-only
+   * club refuses writes and a suspended club everything. "export": always
+   * works (data exports, ADR 0013). "exempt": operator endpoints that change
+   * the restriction itself.
+   */
+  clubAccess?: "export" | "exempt";
   /** Leave out of the OpenAPI document. */
   hidden?: boolean;
 }

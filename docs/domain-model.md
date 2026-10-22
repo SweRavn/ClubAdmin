@@ -354,6 +354,10 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `person.profile.update` | person | the person, guardians with `act_on_behalf` |
 | `person.protection.set` | person | global flag: the person, guardians with `act_on_behalf` (the service requires a parent or legal guardian); club flag (`?clubId`): club managers, with MFA |
 | `ops.backup.read` | platform (the installation, no IDs) | platform operators (in a self-hosted installation its administrators), with MFA: `GET /api/v1/ops/backup-status` |
+| `club.access_state.update` | club | platform operators, with MFA (read-only and suspended clubs, also with billing off) |
+| `billing.plans.read` | platform | platform operators, with MFA (billing on only) |
+| `billing.subscription.read` | club | club managers and treasurers; platform operators with MFA (billing on only) |
+| `billing.subscription.manage` | club | platform operators, with MFA (billing on only) |
 
 Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
 `/me/preferences`) need only a login. `GET /me/clubs` lists, per club, the

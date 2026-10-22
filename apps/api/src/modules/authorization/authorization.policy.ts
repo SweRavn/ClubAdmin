@@ -133,6 +133,23 @@ export const POLICIES: readonly Policy[] = [
   // Operator endpoints (backup status): platform operators, who are also the
   // administrators of a self-hosted installation; with a second factor.
   definePolicy("ops.backup.read", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
+  // Read-only and suspended clubs (P0.12): operators only, also with billing off.
+  definePolicy("club.access_state.update", "club", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
+  // Billing (routes only with BILLING_ENABLED=true): the catalogue and changes
+  // for operators; a club's subscription also for its managers and treasurers.
+  definePolicy("billing.plans.read", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
+  definePolicy(
+    "billing.subscription.read",
+    "club",
+    ({ actor, resource }) =>
+      actor.isOperator() || actor.hasClubRole(resource.clubId, "club_manager", "treasurer"),
+    { mfa: ({ actor }) => actor.isOperator() },
+  ),
+  definePolicy("billing.subscription.manage", "club", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

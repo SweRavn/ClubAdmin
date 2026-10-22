@@ -14,7 +14,10 @@
     "rate-limited": "För många förfrågningar, försök igen senare",
     "internal": "Något gick fel hos oss",
     "not-implemented": "Inte implementerat ännu",
-    "unavailable": "Tjänsten är tillfälligt otillgänglig"
+    "unavailable": "Tjänsten är tillfälligt otillgänglig",
+    "entitlement-required": "Föreningens abonnemang innehåller inte detta",
+    "club-read-only": "Föreningen är skrivskyddad: du kan se och exportera uppgifterna men inte ändra dem",
+    "club-suspended": "Föreningen är avstängd: endast export av uppgifterna är möjlig"
   },
   "common": {
     "appName": "ClubAdmin",

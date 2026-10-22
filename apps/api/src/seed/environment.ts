@@ -18,6 +18,8 @@ export interface SeedEnvironment {
   addPlatformOperator(personId: string): Promise<void>;
   /** Superuser SQL for the load scenario's fast path. */
   admin(sql: string): Promise<void>;
+  /** BILLING_ENABLED: the demo gets plans and subscriptions (P0.12). */
+  billingEnabled?: boolean;
 }
 
 /** A step of the demo scenario; modules add theirs after "core" (ADR 0026). */

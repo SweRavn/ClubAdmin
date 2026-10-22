@@ -14,7 +14,10 @@
     "rate-limited": "For mange forespørsler, prøv igjen senere",
     "internal": "Noe gikk galt hos oss",
     "not-implemented": "Ikke implementert ennå",
-    "unavailable": "Tjenesten er midlertidig utilgjengelig"
+    "unavailable": "Tjenesten er midlertidig utilgjengelig",
+    "entitlement-required": "Klubbens abonnement inkluderer ikke dette",
+    "club-read-only": "Klubben er skrivebeskyttet: du kan se og eksportere dataene, men ikke endre dem",
+    "club-suspended": "Klubben er suspendert: bare eksport av dataene er mulig"
   },
   "common": {
     "appName": "ClubAdmin",

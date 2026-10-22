@@ -156,8 +156,25 @@ describe("permission matrix", () => {
   const ROSTER = { ...INSIDERS, relative: 403 };
   const PROFILE = { ...INSIDERS, relative: 404 };
 
-  /** Every endpoint with a permission (and the own-data reads) must be listed here. */
-  const MATRIX: Record<string, { url: () => string; expected: Record<MatrixPersona, number> }> = {
+  // Operator-only endpoints with a second factor: these tokens have none, so
+  // the operator gets 403 (mfa-required), people of the club 403, others 404.
+  const OPERATOR_CLUB = {
+    ...Object.fromEntries(MATRIX_PERSONAS.map((p) => [p, 403])),
+    outsider: 404,
+  } as Record<MatrixPersona, number>;
+  const ALL_FORBIDDEN = Object.fromEntries(MATRIX_PERSONAS.map((p) => [p, 403])) as Record<
+    MatrixPersona,
+    number
+  >;
+
+  /**
+   * Every endpoint with a permission (and the own-data reads) must be listed
+   * here. Billing endpoints are tested when the app has them (BILLING_ENABLED).
+   */
+  const MATRIX: Record<
+    string,
+    { url: () => string; expected: Record<MatrixPersona, number>; body?: Record<string, unknown> }
+  > = {
     "GET /api/v1/me/clubs": { url: () => "/api/v1/me/clubs", expected: ALL_OK },
     "GET /api/v1/me/wards": { url: () => "/api/v1/me/wards", expected: ALL_OK },
     "GET /api/v1/me/groups": { url: () => "/api/v1/me/groups", expected: ALL_OK },
@@ -183,6 +200,31 @@ describe("permission matrix", () => {
         number
       >,
     },
+    "GET /api/v1/clubs/:clubId/entitlements": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/entitlements`,
+      expected: INSIDERS,
+    },
+    "PUT /api/v1/clubs/:clubId/access-state": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/access-state`,
+      expected: OPERATOR_CLUB,
+      body: { accessState: "active" },
+    },
+    "GET /api/v1/billing/plans": { url: () => "/api/v1/billing/plans", expected: ALL_FORBIDDEN },
+    "GET /api/v1/clubs/:clubId/subscription": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/subscription`,
+      // Club managers (and treasurers) read it; the operator needs a second factor.
+      expected: { ...OPERATOR_CLUB, manager: 200 },
+    },
+    "PUT /api/v1/clubs/:clubId/subscription": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/subscription`,
+      expected: OPERATOR_CLUB,
+      body: { planKey: "standard" },
+    },
+    "PUT /api/v1/clubs/:clubId/subscription/status": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/subscription/status`,
+      expected: OPERATOR_CLUB,
+      body: { status: "active" },
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -201,17 +243,24 @@ describe("permission matrix", () => {
     expect(endpoints.filter((e) => !(e in MATRIX))).toEqual([]);
   });
 
-  for (const [endpoint, { url, expected }] of Object.entries(MATRIX)) {
-    it(endpoint, async () => {
+  for (const [endpoint, { url, expected, body }] of Object.entries(MATRIX)) {
+    it(endpoint, async (test) => {
+      const registered = app.app
+        .get(EndpointRegistry)
+        .all()
+        .some((e) => `${e.method} ${e.fullPath}` === endpoint);
+      // Billing routes exist only with BILLING_ENABLED=true (CI runs both).
+      if (!registered && /\/(billing|subscription)/.test(endpoint)) test.skip();
       const actual: Record<string, number> = {};
       for (const persona of MATRIX_PERSONAS) {
         const token = await devToken(personaId(persona));
-        const method = endpoint.split(" ")[0] as "GET" | "POST";
+        const method = endpoint.split(" ")[0] as "GET" | "POST" | "PUT";
         const res = await inject({
           method,
           url: url(),
           headers: { authorization: `Bearer ${token}` },
-          ...(method === "POST" ? { payload: { phone: "+46 70 000 00 00" } } : {}),
+          ...(method === "POST" ? { payload: body ?? { phone: "+46 70 000 00 00" } } : {}),
+          ...(method === "PUT" ? { payload: body ?? {} } : {}),
         });
         actual[persona] = res.statusCode;
       }

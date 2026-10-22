@@ -3,8 +3,10 @@
 // club_id with tenant RLS; `clubs` is isolated on its id (migration 0001).
 
 import {
+  CLUB_ACCESS_STATES,
   CLUB_ROLES,
   CLUB_STATUSES,
+  type ClubAccessState,
   type ClubRole,
   type ClubStatus,
   CONSENT_PURPOSES,
@@ -63,6 +65,8 @@ export const clubs = pgTable(
     /** Object storage key of the logo. */
     logo: text(),
     status: text().$type<ClubStatus>().notNull().default("active"),
+    /** Whether the club can change its data (P0.12): read_only and suspended never delete anything. */
+    accessState: text().$type<ClubAccessState>().notNull().default("active"),
     joinPolicy: text().$type<JoinPolicy>().notNull().default("approval"),
     /** Next club_profiles.member_number; taken under a row lock. */
     nextMemberNumber: integer().notNull().default(1),
@@ -75,6 +79,7 @@ export const clubs = pgTable(
   (t) => [
     uniqueIndex("clubs_slug_unique").on(t.slug),
     check("clubs_status", oneOf(t.status, CLUB_STATUSES)),
+    check("clubs_access_state", oneOf(t.accessState, CLUB_ACCESS_STATES)),
     check("clubs_join_policy", oneOf(t.joinPolicy, JOIN_POLICIES)),
     check("clubs_country", sql`${t.country} ~ '^[A-Z]{2}$'`),
     check("clubs_currency", sql`${t.currency} ~ '^[A-Z]{3}$'`),

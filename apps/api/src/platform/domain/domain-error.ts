@@ -47,6 +47,10 @@ export const DOMAIN_ERRORS = {
   // guardianships
   guardianship_exists: "conflict",
   invitation_invalid: "conflict",
+  // Billing (P0.12)
+  plan_not_found: "not-found",
+  no_subscription: "not-found",
+  subscription_transition_invalid: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

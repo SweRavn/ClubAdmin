@@ -14,6 +14,7 @@ import {
   PersonPresenter,
 } from "../authorization/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
+import { EntitlementsService } from "../entitlements/index.ts";
 import { GroupsModule } from "../groups/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
@@ -110,6 +111,7 @@ export class IdentityModule {
             AuthorizationService,
             RequestLimits,
             SessionsService,
+            EntitlementsService,
           ],
           useFactory: (
             c: ApiConfig,
@@ -119,6 +121,7 @@ export class IdentityModule {
             authorization: AuthorizationService,
             limits: RequestLimits,
             sessions: SessionsService,
+            entitlements: EntitlementsService,
           ) =>
             new AuthGuard(
               reflector,
@@ -132,6 +135,7 @@ export class IdentityModule {
                   (id): id is string => Boolean(id),
                 ),
               ),
+              entitlements,
             ),
         },
       ],

@@ -14,6 +14,7 @@ import { run, runOnce } from "graphile-worker";
 import { Redis } from "ioredis";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { billingTrialHandler } from "./billing.ts";
 import { graphileLogger } from "./graphile-logger.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { readBackupMetrics } from "./tasks/backup-metrics.ts";
@@ -155,6 +156,60 @@ describe("ops:backup_metrics", () => {
     expect(metrics.lastRunFailed.get("monthly")).toBe(0);
     expect(metrics.verificationLastSuccess).toBe(Date.parse("2026-10-19T05:05:00Z") / 1000);
     expect(metrics.verificationLastRunFailed).toBe(0);
+  });
+});
+
+describe("billing trial (club.created, hosted with billing on)", () => {
+  it("puts a new club on a trial of the default plan, once", async () => {
+    const club = uuidv7();
+    const manager = uuidv7();
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        "INSERT INTO people (id, given_name, family_name) VALUES ($1, 'M', 'G')",
+        [manager],
+      );
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Trial IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+        [club, `trial-${club.slice(-8)}`],
+      );
+      await session.query(
+        "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')",
+        [club, manager],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    await t.query(
+      "admin",
+      "INSERT INTO billing.plans (key, name, currency) VALUES ('free', 'Free', 'SEK') ON CONFLICT DO NOTHING",
+    );
+    const eventId = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "club.created", { clubId: club }),
+    );
+    const handler = billingTrialHandler({ defaultPlan: "free", trialDays: 30 });
+    await outbox.dispatch(t.db, eventId, [handler]);
+    const { rows } = await t.query<{ status: string; days: number }>(
+      "admin",
+      `SELECT status, round(extract(epoch FROM trial_ends_at - now()) / 86400)::int AS days
+       FROM billing.subscriptions WHERE club_id = $1`,
+      [club],
+    );
+    expect(rows).toEqual([{ status: "trial", days: 30 }]);
+    // A second event for the same club changes nothing.
+    const again = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "club.created", { clubId: club }),
+    );
+    await outbox.dispatch(t.db, again, [handler]);
+    const count = await t.query(
+      "admin",
+      "SELECT count(*)::int AS n FROM billing.subscriptions WHERE club_id = $1",
+      [club],
+    );
+    expect(count.rows[0]).toEqual({ n: 1 });
   });
 });
 

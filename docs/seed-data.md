@@ -162,6 +162,10 @@ checks (clearances), billing plans, chat rooms, the anonymisation schedule
   meeting with agenda.
 - Team cash desk for SVK F2017 with a cup income and two expenses.
 - Two sponsor banners for SVK.
+- **Billing** (only with `BILLING_ENABLED=true`, P0.12): plans Free, Standard
+  and the Streaming add-on; SVK on Standard with Streaming (active), IKN on
+  Free (active), FIL in a Standard trial ending in ten days. With billing off
+  the demo has no billing data (`apps/api/src/seed/steps/billing.ts`).
 - Calendar feeds: Anna has a "my schedule" feed including Elsa and Oskar;
   Erik subscribes to the F2017 group feed; Ahmed has revoked an old feed token.
 - **Record history:** the seed writes through the same services as the app,

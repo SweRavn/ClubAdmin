@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Typed configuration from environment variables, validated once at startup.
 
-import { z } from "@clubadmin/shared";
+import { ENTITLEMENT_FEATURES, featureFlagName, z } from "@clubadmin/shared";
 
 export class ConfigError extends Error {
   readonly issues: { variable: string; message: string }[];
@@ -41,6 +41,20 @@ export const baseConfigShape = {
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   DEPLOYMENT_MODE: z.enum(["self_hosted", "hosted"]).default("self_hosted"),
   BILLING_ENABLED: envBoolean(false),
+  /** Plan key for new clubs and clubs without a subscription (billing on). */
+  BILLING_DEFAULT_PLAN: z
+    .string()
+    .regex(/^[a-z0-9]+(_[a-z0-9]+)*$/)
+    .default("free"),
+  /** Length of the trial a new club gets on the hosted service (billing on). */
+  BILLING_TRIAL_DAYS: z.coerce.number().int().min(0).max(365).default(30),
+  /** FEATURE_<KEY>=false turns a feature off for the whole installation (entitlements). */
+  ...(Object.fromEntries(
+    ENTITLEMENT_FEATURES.map((feature) => [featureFlagName(feature), envBoolean(true)]),
+  ) as Record<
+    `FEATURE_${Uppercase<(typeof ENTITLEMENT_FEATURES)[number]>}`,
+    ReturnType<typeof envBoolean>
+  >),
   USER_SIGNUP: z.enum(["open", "invite_only"]).default("open"),
   CLUB_CREATION: z.enum(["open", "approval", "operators_only"]).optional(),
   DEFAULT_COUNTRY: z

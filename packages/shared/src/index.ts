@@ -12,6 +12,7 @@ export * from "./domain/person-label.ts";
 export * from "./domain/responses.ts";
 export * from "./domain/schemas.ts";
 export * from "./domain-events.ts";
+export * from "./entitlements.ts";
 export * from "./http/client.ts";
 export * from "./http/meta.ts";
 export * from "./http/problem.ts";

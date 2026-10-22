@@ -7,7 +7,7 @@ import { Redis } from "ioredis";
 import { loadWorkerConfig } from "./config.ts";
 import { graphileLogger } from "./graphile-logger.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
-import { createTaskList, crontab } from "./tasks/index.ts";
+import { BILLING_CRONTAB, createTaskList, crontab } from "./tasks/index.ts";
 
 loadEnvFiles();
 const config = loadWorkerConfig();
@@ -32,11 +32,20 @@ const runner = await run({
   logger: graphileLogger(logger),
   taskList: createTaskList({
     db,
-    outboxHandlers: createOutboxHandlers({ valkey }),
+    outboxHandlers: createOutboxHandlers({
+      valkey,
+      billing: config.BILLING_ENABLED
+        ? {
+            hosted: config.DEPLOYMENT_MODE === "hosted",
+            defaultPlan: config.BILLING_DEFAULT_PLAN,
+            trialDays: config.BILLING_TRIAL_DAYS,
+          }
+        : undefined,
+    }),
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
   }),
-  crontab,
+  crontab: config.BILLING_ENABLED ? `${crontab}\n${BILLING_CRONTAB}` : crontab,
 });
 logger.info({ concurrency: config.WORKER_CONCURRENCY }, "worker started");
 

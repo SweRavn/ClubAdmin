@@ -43,6 +43,13 @@
       "when": 1792659485944,
       "tag": "0005_backup_ops",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792667415699,
+      "tag": "0006_billing_entitlements",
+      "breakpoints": true
     }
   ]
 }
