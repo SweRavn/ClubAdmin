@@ -47,3 +47,4 @@ test the foundation by hand.
 |---|---|
 | [P1.1 Sign-up, club creation, club managers, joining and invitations](P1.1-signup-clubs-and-joining.md) | P0.12 |
 | [P1.2 Member register: search, filter, export](P1.2-member-register.md) | P1.1 |
+| [P1.3 Guardians and children: add child, co-guardians, relatives, duplicates, own login, age transitions](P1.3-guardians-and-children.md) | P1.2 |
