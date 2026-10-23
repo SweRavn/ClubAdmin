@@ -140,16 +140,9 @@ export async function trustCa(printOnly: boolean): Promise<boolean> {
     const windowsPath = isWsl()
       ? capture("wslpath", ["-w", caddyRootCertFile]).stdout.trim()
       : caddyRootCertFile;
-    // Import-Certificate cannot read \\wsl.localhost\... paths ("could not be
-    // found"): copy the file to a Windows folder first.
-    const source = isWsl()
-      ? `  Copy-Item "${windowsPath}" "$env:TEMP\\clubadmin-caddy-root.crt"\n`
-      : "";
-    const file = isWsl() ? "$env:TEMP\\clubadmin-caddy-root.crt" : windowsPath;
     console.log(
       "\nOn Windows, import it into your user's trusted roots (PowerShell):\n" +
-        source +
-        `  Import-Certificate -FilePath "${file}" -CertStoreLocation Cert:\\CurrentUser\\Root\n`,
+        `  Import-Certificate -FilePath "${windowsPath}" -CertStoreLocation Cert:\\CurrentUser\\Root\n`,
     );
   }
   if (steps.length === 0) {
