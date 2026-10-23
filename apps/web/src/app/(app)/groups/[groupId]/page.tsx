@@ -16,6 +16,7 @@ import {
   getClub,
   getClubGroups,
   getGroup,
+  getGroupAttendanceIfAllowed,
   getGroupCalendarIfAllowed,
   getGroupMembers,
 } from "../../../../server/data.ts";
@@ -43,11 +44,13 @@ export default async function GroupPage({ params, searchParams }: Params) {
   const limit = pageSize(query.limit);
   const week = weekOffset(query.week);
   const range = weekRange(week, CALENDAR_WEEKS);
-  const [t, group, roster, calendar] = await Promise.all([
+  const [t, group, roster, calendar, attendance] = await Promise.all([
     getTranslations(),
     getGroup(groupId),
     getGroupMembers(groupId, limit),
     getGroupCalendarIfAllowed(groupId, range.from, range.to),
+    // Only to know whether to link the attendance summary.
+    getGroupAttendanceIfAllowed(groupId, range.from),
   ]);
   const [club, groups] = await Promise.all([getClub(group.clubId), getClubGroups(group.clubId)]);
   const parent = groups.find((g) => g.id === group.parentGroupId) ?? null;
@@ -122,22 +125,35 @@ export default async function GroupPage({ params, searchParams }: Params) {
             <h2 id="group-calendar" className="text-lg font-semibold">
               {t("activities.calendar")}
             </h2>
-            {calendar.canManage ? (
+            {calendar.canManage || attendance ? (
               <div className="flex flex-wrap gap-2">
-                <a
-                  href={`/groups/${group.id}/activities/new`}
-                  className={secondaryButtonClass}
-                  data-testid="new-activity"
-                >
-                  {t("activities.newTitle")}
-                </a>
-                <a
-                  href={`/groups/${group.id}/series/new`}
-                  className={secondaryButtonClass}
-                  data-testid="new-series"
-                >
-                  {t("series.newTitle")}
-                </a>
+                {attendance ? (
+                  <a
+                    href={`/groups/${group.id}/attendance`}
+                    className={secondaryButtonClass}
+                    data-testid="group-attendance"
+                  >
+                    {t("attendance.summary")}
+                  </a>
+                ) : null}
+                {calendar.canManage ? (
+                  <>
+                    <a
+                      href={`/groups/${group.id}/activities/new`}
+                      className={secondaryButtonClass}
+                      data-testid="new-activity"
+                    >
+                      {t("activities.newTitle")}
+                    </a>
+                    <a
+                      href={`/groups/${group.id}/series/new`}
+                      className={secondaryButtonClass}
+                      data-testid="new-series"
+                    >
+                      {t("series.newTitle")}
+                    </a>
+                  </>
+                ) : null}
               </div>
             ) : null}
           </div>

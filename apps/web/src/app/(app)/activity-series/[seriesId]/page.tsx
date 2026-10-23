@@ -66,6 +66,11 @@ export default async function SeriesPage({ params, searchParams }: Props) {
     locationText: series.locationText,
     notes: series.notes,
     leaderNotes: series.leaderNotes ?? null,
+    responseMode: series.responseMode ?? null,
+    respondByHours:
+      series.respondByMinutes === null || series.respondByMinutes === undefined
+        ? null
+        : series.respondByMinutes / 60,
   };
 
   return (

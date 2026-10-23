@@ -8,9 +8,10 @@ import { THEMES } from "@clubadmin/shared";
 import * as LocalAuthentication from "expo-local-authentication";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Switch, TextInput, View } from "react-native";
+import { Alert, Switch, TextInput, View } from "react-native";
 import { useTranslations } from "use-intl";
 
+import { usePendingWrites } from "../../../api/outbox.ts";
 import { useClientInfo, useMe, useUpdatePreferences } from "../../../api/queries.ts";
 import { appSettings } from "../../../cache/settings.ts";
 import { Body, Button, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
@@ -35,6 +36,7 @@ export default function Settings() {
   const me = useMe();
   const info = useClientInfo();
   const update = useUpdatePreferences();
+  const unsent = usePendingWrites().length;
   const preferences = me.data?.preferences;
   const [zone, setZone] = useState(preferences?.timeZone ?? "");
   const [zoneError, setZoneError] = useState(false);
@@ -165,11 +167,19 @@ export default function Settings() {
         kind="danger"
         busy={leaving}
         onPress={() => {
-          setLeaving(true);
-          void signOut().finally(() => {
-            setLeaving(false);
-            router.replace("/login");
-          });
+          const leave = () => {
+            setLeaving(true);
+            void signOut().finally(() => {
+              setLeaving(false);
+              router.replace("/login");
+            });
+          };
+          // Answers or attendance taken offline would be lost with the cache.
+          if (unsent === 0) return leave();
+          Alert.alert(t("mobile.signOutPendingTitle"), t("mobile.signOutPendingBody"), [
+            { text: t("mobile.cancel"), style: "cancel" },
+            { text: t("mobile.signOutAnyway"), style: "destructive", onPress: leave },
+          ]);
         }}
         testID="logout"
       />

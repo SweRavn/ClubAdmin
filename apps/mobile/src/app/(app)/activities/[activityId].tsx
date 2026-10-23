@@ -1,20 +1,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // An activity (P1.4): when and where (a map link opens the system's map),
-// meeting time, notes and the leaders of its groups; never participants.
-// Offline, before the details were ever loaded, the schedule's cached entry
-// is shown. Read-only: activities are planned on the web.
+// meeting time, notes and the leaders of its groups. Answers (P1.5): how many
+// are coming and my family's answers with the buttons (through the offline
+// outbox); leaders open the attendance screen. Offline, before the details
+// were ever loaded, the schedule's cached entry is shown. Activities are
+// planned on the web.
 
 import { enumKey } from "@clubadmin/i18n";
 import { useQueryClient } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { Linking, View } from "react-native";
 import { useFormatter, useTranslations } from "use-intl";
 
-import { type SchedulePage, useActivity } from "../../../api/queries.ts";
+import {
+  type SchedulePage,
+  useActivity,
+  useMyGroups,
+  useResponseSummary,
+} from "../../../api/queries.ts";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useProtectScreen } from "../../../components/protect-screen.ts";
+import { ResponseButtons } from "../../../components/response-buttons.tsx";
 import { RoleBadge } from "../../../components/role-badge.tsx";
 import { useIdParam } from "../../../components/route-id.ts";
 import { Body, Button, Loading, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
@@ -41,6 +49,8 @@ function Activity({ activityId }: { activityId: string }) {
   const theme = useTheme();
   const format = useFormatter();
   const activity = useActivity(activityId);
+  const answers = useResponseSummary(activityId);
+  const myGroups = useMyGroups();
   const cached = useCachedEntry(activityId);
   useProtectScreen(
     (activity.data?.leaders ?? []).some((p) => p.protected),
@@ -69,6 +79,14 @@ function Activity({ activityId }: { activityId: string }) {
   const place = a ? (a.location?.name ?? a.locationText) : cached!.place;
   const groups = a?.groups ?? cached!.groups;
   const cancelled = status === "cancelled";
+  // Leaders of one of its groups (or those who manage it) take attendance.
+  const leads =
+    a?.canManage === true ||
+    (myGroups.data?.groups ?? []).some(
+      (g) =>
+        groups.some((x) => x.id === g.group.id) &&
+        g.functions.some((f) => f !== "member" && f !== "physio"),
+    );
   const when =
     (a?.allDay ?? cached?.allDay)
       ? format.dateTime(startsAt, { dateStyle: "full", timeZone: zone })
@@ -106,6 +124,39 @@ function Activity({ activityId }: { activityId: string }) {
             ? t("activities.cancelledBecause", { reason })
             : t("activities.cancelledNoReason")}
         </Body>
+      ) : null}
+
+      {answers.data && answers.data.responseMode !== "none" ? (
+        <Section title={t("responses.title")}>
+          <Row last={answers.data.mine.length === 0}>
+            <Body>{t("responses.counts", answers.data.counts)}</Body>
+            {answers.data.open && answers.data.deadlinePassed ? (
+              <Muted>{t("responses.deadlinePassed")}</Muted>
+            ) : null}
+          </Row>
+          {answers.data.mine.map((r, index) => (
+            <Row key={r.person.id} last={index === answers.data.mine.length - 1}>
+              <PersonName person={r.person} />
+              {r.canRespond && !cancelled ? (
+                <ResponseButtons
+                  activityId={activityId}
+                  personId={r.person.id}
+                  status={r.status}
+                  deadlinePassed={answers.data.deadlinePassed}
+                />
+              ) : r.status ? (
+                <RoleBadge label={t(enumKey("responseStatus", r.status))} />
+              ) : null}
+            </Row>
+          ))}
+        </Section>
+      ) : null}
+      {leads ? (
+        <Button
+          label={t("mobile.takeAttendance")}
+          onPress={() => router.push(`/attendance/${activityId}`)}
+          testID="take-attendance"
+        />
       ) : null}
 
       <Section title={t("activities.when")}>

@@ -7,6 +7,7 @@ import { ACTIVITY_KINDS, HOME_AWAY, type Location } from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
 
 import { inputClass } from "./action-form.tsx";
+import { ResponseModeFields } from "./response-mode-fields.tsx";
 
 export interface ActivityFieldValues {
   kind?: string;
@@ -23,6 +24,8 @@ export interface ActivityFieldValues {
   competition?: string | null;
   notes?: string | null;
   leaderNotes?: string | null;
+  responseMode?: string | null;
+  respondByHours?: number | null;
 }
 
 export async function ActivityFields({
@@ -112,6 +115,7 @@ export async function ActivityFields({
         </select>
       </label>
       {input("competition", t("activities.competition"), { maxLength: 120 })}
+      <ResponseModeFields mode={values.responseMode} hours={values.respondByHours} />
       <label className="block space-y-1 sm:col-span-2">
         <span className="text-sm">{t("activities.notes")}</span>
         <textarea

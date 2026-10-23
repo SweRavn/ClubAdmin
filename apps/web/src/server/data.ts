@@ -9,11 +9,13 @@ import {
   type ActivityPage,
   ActivityPageSchema,
   AdultGuardiansSchema,
+  AttendanceSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
   ClubSearchResultSchema,
   FamilyDuplicatesSchema,
+  GroupAttendanceSchema,
   GroupCalendarSchema,
   GroupDetailSchema,
   type GroupList,
@@ -43,6 +45,8 @@ import {
   PersonProfileSchema,
   RegisterFacetsSchema,
   RegisterPageSchema,
+  ResponseListSchema,
+  ResponseSummarySchema,
   SchedulePageSchema,
   type SeriesPreviewInput,
   SeriesPreviewResultSchema,
@@ -292,6 +296,40 @@ export const getActivity = cache((activityId: string) =>
 export const getSeries = cache((seriesId: string) =>
   required(`/api/v1/activity-series/${requireId(seriesId)}`, SeriesSchema),
 );
+// Responses and attendance (P1.5).
+export const getResponseSummary = cache((activityId: string) =>
+  required(`/api/v1/activities/${requireId(activityId)}/responses/summary`, ResponseSummarySchema),
+);
+/** The leaders' list of answers, or null if the viewer may not see it. */
+export const getResponseList = cache((activityId: string) =>
+  apiGet(`/api/v1/activities/${requireId(activityId)}/responses?limit=200`, ResponseListSchema, {
+    nullOn: [403],
+  }),
+);
+export const getAttendance = cache((activityId: string) =>
+  required(`/api/v1/activities/${requireId(activityId)}/attendance`, AttendanceSchema),
+);
+export const getGroupAttendance = cache(
+  (groupId: string, from: string, to: string, cursor: string | null) =>
+    required(
+      `/api/v1/groups/${requireId(groupId)}/attendance?${rangeQuery(from, to)}&limit=200${
+        cursor ? `&cursor=${requireId(cursor)}` : ""
+      }`,
+      GroupAttendanceSchema,
+    ),
+);
+/** Whether the viewer may see the group's attendance (a summary of one minute; null if not). */
+export const getGroupAttendanceIfAllowed = cache((groupId: string, at: string) =>
+  apiGet(
+    `/api/v1/groups/${requireId(groupId)}/attendance?${rangeQuery(
+      at,
+      new Date(Date.parse(at) + 60_000).toISOString(),
+    )}&limit=1`,
+    GroupAttendanceSchema,
+    { nullOn: [403] },
+  ),
+);
+
 /** All of a club's locations (archived ones too with `archived`). */
 export const getLocations = cache(
   async (clubId: string, archived = false): Promise<LocationList["items"]> => {

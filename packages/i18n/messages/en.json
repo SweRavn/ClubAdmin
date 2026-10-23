@@ -341,7 +341,15 @@
     "clientWeb": "Browser",
     "update": "Update {id}",
     "licences": "Third-party licences",
-    "clubs": "Clubs"
+    "clubs": "Clubs",
+    "outboxWaiting": "{count, plural, one {# change} other {# changes}} waiting to send",
+    "outboxFailed": "{count, plural, one {A change was} other {# changes were}} not accepted:",
+    "outboxDismiss": "OK",
+    "signOutPendingTitle": "Unsent changes",
+    "signOutPendingBody": "Answers or attendance taken offline have not been sent yet. Signing out deletes them.",
+    "signOutAnyway": "Sign out anyway",
+    "takeAttendance": "Take attendance",
+    "attendanceOffline": "Offline: attendance is saved on the phone and sent when you are online."
   },
   "email": {
     "footer": "This email was sent by ClubAdmin on behalf of {club}.",
@@ -1132,7 +1140,9 @@
     "mode": "Answers",
     "respondBy": "Answer by (hours before the start)",
     "respondByHint": "Empty: until the start. After the deadline only “not coming” is accepted.",
-    "family": "My family"
+    "family": "My family",
+    "modeDefault": "Default for the type",
+    "answerByLabel": "Answer by"
   },
   "responseModes": {
     "none": "Not asked for",

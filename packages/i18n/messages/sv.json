@@ -341,7 +341,15 @@
     "clientWeb": "Webbläsare",
     "update": "Uppdatering {id}",
     "licences": "Licenser för tredjepartskod",
-    "clubs": "Föreningar"
+    "clubs": "Föreningar",
+    "outboxWaiting": "{count, plural, one {# ändring} other {# ändringar}} väntar på att skickas",
+    "outboxFailed": "{count, plural, one {En ändring} other {# ändringar}} godtogs inte:",
+    "outboxDismiss": "OK",
+    "signOutPendingTitle": "Ändringar som inte skickats",
+    "signOutPendingBody": "Svar eller närvaro som togs offline har inte skickats än. Om du loggar ut tas de bort.",
+    "signOutAnyway": "Logga ut ändå",
+    "takeAttendance": "Ta närvaro",
+    "attendanceOffline": "Offline: närvaron sparas i telefonen och skickas när du är online."
   },
   "email": {
     "footer": "Det här mejlet skickades av ClubAdmin för {club}.",
@@ -1132,7 +1140,9 @@
     "mode": "Svar",
     "respondBy": "Svara senast (timmar före start)",
     "respondByHint": "Tomt: fram till start. Efter svarstiden går bara ”kommer inte” att svara.",
-    "family": "Min familj"
+    "family": "Min familj",
+    "modeDefault": "Standard för typen",
+    "answerByLabel": "Svara senast"
   },
   "responseModes": {
     "none": "Inga svar",

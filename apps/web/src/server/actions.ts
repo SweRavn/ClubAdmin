@@ -8,6 +8,8 @@ import {
   ACTIVITY_KINDS,
   addChildInput,
   addMemberFormInput,
+  ATTENDANCE_ROLES,
+  ATTENDANCE_STATUSES,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
   type GuardianshipRight,
@@ -19,6 +21,8 @@ import {
   type MemberExportColumn,
   MEMBERSHIP_TYPES,
   RegisterFilterSchema,
+  RESPONSE_MODES,
+  RESPONSE_STATUSES,
   zonedTime,
 } from "@clubadmin/shared";
 
@@ -323,12 +327,28 @@ function slotsOf(form: FormData) {
   return slots;
 }
 const datesOf = (value: string) => value.split(/[\s,;]+/).filter(isDate);
+/** Hours before the start (0–336) from the deadline field, null if empty, undefined if invalid. */
+function deadlineHours(form: FormData): number | null | undefined {
+  const value = text(form, "respondByHours");
+  if (value === "") return null;
+  const hours = Number(value.replace(",", "."));
+  return Number.isFinite(hours) && hours >= 0 && hours <= 336 ? hours : undefined;
+}
 /** The series fields of the create, change and split forms. */
 function seriesFields(form: FormData, clear: boolean) {
   const slots = slotsOf(form);
   if (slots === null) return null;
   const title = text(form, "title");
+  const responseMode = oneOf(RESPONSE_MODES, text(form, "responseMode"));
+  const hours = deadlineHours(form);
+  if (hours === undefined) return null;
   return {
+    ...(responseMode ? { responseMode } : {}),
+    ...(hours !== null
+      ? { respondByMinutes: Math.round(hours * 60) }
+      : clear
+        ? { respondByMinutes: null }
+        : {}),
     ...(title ? { title } : {}),
     ...clearable(form, ["notes", "leaderNotes"], clear),
     ...placeOf(form, clear),
@@ -345,7 +365,14 @@ function activityFields(form: FormData, clear: boolean) {
   if (!startsAt || !endsAt) return null;
   const meetAt = text(form, "meetTime") ? instant(form, "date", "meetTime") : null;
   const homeAway = oneOf(HOME_AWAY, text(form, "homeAway"));
+  const responseMode = oneOf(RESPONSE_MODES, text(form, "responseMode"));
+  const hours = deadlineHours(form);
+  if (hours === undefined) return null;
+  const respondBy =
+    hours === null ? null : new Date(Date.parse(startsAt) - hours * 3_600_000).toISOString();
   return {
+    ...(responseMode ? { responseMode } : {}),
+    ...(respondBy ? { respondBy } : clear ? { respondBy: null } : {}),
     title: text(form, "title"),
     startsAt,
     endsAt,
@@ -476,6 +503,60 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
     done: (form, result) => {
       const created = seriesIdOf(result);
       return created ? `/activity-series/${created}?saved=1` : back(form);
+    },
+  },
+  // Responses and attendance (P1.5).
+  respond: {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const personId = id(form, "personId");
+      const status = oneOf(RESPONSE_STATUSES, text(form, "status"));
+      if (!activityId || !personId || !status) return null;
+      const note = text(form, "note");
+      return {
+        path: `/api/v1/activities/${activityId}/responses/${personId}`,
+        method: "PUT",
+        body: { status, ...(note ? { note } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form), "answered", "1"),
+  },
+  "withdraw-response": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const personId = id(form, "personId");
+      return activityId && personId
+        ? { path: `/api/v1/activities/${activityId}/responses/${personId}`, method: "DELETE" }
+        : null;
+    },
+    done: (form) => withParam(back(form), "answered", "1"),
+  },
+  "record-attendance": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      if (!activityId) return null;
+      const marks: { personId: string; status: string; role: string }[] = [];
+      for (const [key, value] of form.entries()) {
+        if (!key.startsWith("mark.") || typeof value !== "string") continue;
+        const personId = key.slice(5);
+        const status = oneOf(ATTENDANCE_STATUSES, value);
+        const role = oneOf(ATTENDANCE_ROLES, text(form, `role.${personId}`)) ?? "participant";
+        if (isUuid(personId) && status) marks.push({ personId, status, role });
+      }
+      const guestId = id(form, "guestId");
+      if (guestId) marks.push({ personId: guestId, status: "present", role: "participant" });
+      if (marks.length === 0) return null;
+      const correctedReason = text(form, "correctedReason");
+      return {
+        path: `/api/v1/activities/${activityId}/attendance`,
+        method: "PUT",
+        body: { marks, ...(correctedReason ? { correctedReason } : {}) },
+      };
+    },
+    done: (form, result) => {
+      const stale = (result as { stale?: unknown[] } | null)?.stale?.length ?? 0;
+      const path = withParam(back(form), "saved", "1");
+      return stale > 0 ? withParam(path, "stale", String(stale)) : path;
     },
   },
   "create-location": {

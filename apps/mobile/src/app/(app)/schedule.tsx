@@ -3,7 +3,8 @@
 // groups' and my wards' activities, across clubs, by day. Chips narrow it to
 // one person. Pull to refresh; offline it shows the persisted cache (with
 // its age) and leaves out what has already ended. Cancelled activities stay,
-// marked, with the reason. Planning is on the web.
+// marked, with the reason. Answers per person go through the offline outbox
+// (P1.5). Planning is on the web.
 
 import { enumKey } from "@clubadmin/i18n";
 import { personLabel } from "@clubadmin/shared";
@@ -15,6 +16,8 @@ import { useFormatter, useTranslations } from "use-intl";
 import { type ScheduleEntry, useSchedule } from "../../api/queries.ts";
 import { DataAge } from "../../components/data-age.tsx";
 import { ErrorView } from "../../components/error-view.tsx";
+import { OutboxBanner } from "../../components/outbox-banner.tsx";
+import { ResponseButtons } from "../../components/response-buttons.tsx";
 import { RoleBadge } from "../../components/role-badge.tsx";
 import { scheduleDays } from "../../components/schedule-days.ts";
 import {
@@ -98,6 +101,7 @@ export default function ScheduleScreen() {
     >
       <Stack.Screen options={{ headerRight: () => header }} />
       <DataAge updatedAt={schedule.dataUpdatedAt} />
+      <OutboxBanner />
       {several ? (
         <View
           style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.space(2) }}
@@ -177,6 +181,30 @@ export default function ScheduleScreen() {
                       : null}
                   </View>
                   {cancelled && entry.cancelledReason ? <Body>{entry.cancelledReason}</Body> : null}
+                  {!cancelled
+                    ? (entry.responses ?? [])
+                        .filter((r) => r.canRespond && (person === null || r.personId === person))
+                        .map((r) => {
+                          const who = entry.people.find((p) => p.id === r.personId);
+                          return (
+                            <ResponseButtons
+                              key={r.personId}
+                              activityId={entry.activityId}
+                              personId={r.personId}
+                              status={r.status}
+                              deadlinePassed={
+                                entry.respondBy ? Date.parse(entry.respondBy) < Date.now() : false
+                              }
+                              {...(several && who ? { label: personLabel(who) } : {})}
+                            />
+                          );
+                        })
+                    : null}
+                  {!cancelled &&
+                  entry.responseMode === "requested" &&
+                  (entry.responses ?? []).some((r) => r.canRespond && r.status === null) ? (
+                    <RoleBadge tone="accent" label={t("responses.answerNeeded")} />
+                  ) : null}
                 </Row>
               );
             })}

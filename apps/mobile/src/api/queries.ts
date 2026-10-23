@@ -276,3 +276,37 @@ export function useActivity(activityId: string) {
       ),
   });
 }
+
+// Responses and attendance (P1.5); writes go through the outbox (outbox.ts).
+export type ResponseSummary = Schemas["ResponseSummary"];
+export type Attendance = Schemas["Attendance"];
+
+export function useResponseSummary(activityId: string) {
+  const { api } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["responses", activityId, ...scope],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/activities/{activityId}/responses/summary", {
+          params: { path: { activityId } },
+        }),
+      ),
+  });
+}
+
+/** The attendance sheet (leaders); kept in the cache for taking attendance offline. */
+export function useAttendance(activityId: string, enabled = true) {
+  const { api } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["attendance", activityId, ...scope],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/activities/{activityId}/attendance", {
+          params: { path: { activityId } },
+        }),
+      ),
+    enabled,
+  });
+}

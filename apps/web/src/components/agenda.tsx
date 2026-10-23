@@ -2,11 +2,15 @@
 // An agenda: activities grouped by their local date (in each activity's club
 // time zone), with time, title, kind, place, groups and, for "My schedule",
 // whose schedule it is on. Cancelled activities stay, struck through, with
-// the reason. Never lists participants (ADR 0021, 0022).
+// the reason. Never lists participants (ADR 0021, 0022). "My schedule" has
+// the answer buttons per person (P1.5); calendars of those who manage an
+// activity show how many have answered.
 import { enumKey } from "@clubadmin/i18n";
 import { localDate, type PersonSummary } from "@clubadmin/shared";
 import { formatDateTime, personLabel, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
+
+import { ResponseButtons } from "./response-buttons.tsx";
 
 export interface AgendaItem {
   id: string;
@@ -26,6 +30,18 @@ export interface AgendaItem {
   changed?: boolean;
   /** Edited apart from its series (calendars of those who manage it). */
   detached?: boolean;
+  /** Answers (P1.5): asked for, and the deadline. */
+  responseMode?: string;
+  respondBy?: string | null;
+  /** My family's answers (My schedule); `label` when the viewer answers for several. */
+  responses?: {
+    personId: string;
+    label: string | null;
+    status: "attending" | "not_attending" | null;
+    canRespond: boolean;
+  }[];
+  /** For those who manage it (group calendar). */
+  counts?: { attending: number; notAttending: number; notAnswered: number };
 }
 
 export async function Agenda({
@@ -124,6 +140,45 @@ export async function Agenda({
                     {cancelled && item.cancelledReason ? (
                       <span className="block text-sm">{item.cancelledReason}</span>
                     ) : null}
+                    {item.counts ? (
+                      <span className="block text-sm text-muted" data-testid="agenda-counts">
+                        {t("responses.counts", item.counts)}
+                      </span>
+                    ) : null}
+                    {!cancelled && item.responses?.some((r) => r.canRespond) ? (
+                      <span className="mt-2 block space-y-2" data-testid="agenda-responses">
+                        {item.responseMode === "requested" &&
+                        item.responses.some((r) => r.canRespond && r.status === null) ? (
+                          <RoleBadge tone="accent" label={t("responses.answerNeeded")} />
+                        ) : null}
+                        {item.respondBy ? (
+                          <span className="block text-xs text-muted">
+                            {t("responses.answerBy", {
+                              time: formatDateTime(item.respondBy, {
+                                locale,
+                                timeZone: item.timeZone,
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              }),
+                            })}
+                          </span>
+                        ) : null}
+                        {item.responses
+                          .filter((r) => r.canRespond)
+                          .map((r) => (
+                            <ResponseButtons
+                              key={r.personId}
+                              activityId={item.id}
+                              personId={r.personId}
+                              status={r.status}
+                              deadlinePassed={
+                                item.respondBy ? Date.parse(item.respondBy) < Date.now() : false
+                              }
+                              {...(r.label ? { label: r.label } : {})}
+                            />
+                          ))}
+                      </span>
+                    ) : null}
                     {showPeople && item.people && item.people.length > 0 ? (
                       <span className="mt-1 flex flex-wrap gap-1" data-testid="agenda-people">
                         {item.people.map((p) => (
@@ -160,6 +215,8 @@ export function agendaItemOf(a: {
   groups: { id: string; name: string }[];
   detached: boolean;
   canManage: boolean;
+  responseMode?: string | undefined;
+  responseCounts?: { attending: number; notAttending: number; notAnswered: number } | undefined;
 }): AgendaItem {
   return {
     id: a.id,
@@ -175,6 +232,7 @@ export function agendaItemOf(a: {
     place: a.location?.name ?? a.locationText,
     groups: a.groups,
     detached: a.canManage && a.detached,
+    ...(a.responseCounts && a.status === "scheduled" ? { counts: a.responseCounts } : {}),
   };
 }
 

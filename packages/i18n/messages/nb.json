@@ -341,7 +341,15 @@
     "clientWeb": "Nettleser",
     "update": "Oppdatering {id}",
     "licences": "Lisenser for tredjepartskode",
-    "clubs": "Klubber"
+    "clubs": "Klubber",
+    "outboxWaiting": "{count, plural, one {# endring} other {# endringer}} venter på å bli sendt",
+    "outboxFailed": "{count, plural, one {En endring} other {# endringer}} ble ikke godtatt:",
+    "outboxDismiss": "OK",
+    "signOutPendingTitle": "Endringer som ikke er sendt",
+    "signOutPendingBody": "Svar eller oppmøte registrert uten nett er ikke sendt ennå. Logger du ut, slettes de.",
+    "signOutAnyway": "Logg ut likevel",
+    "takeAttendance": "Registrer oppmøte",
+    "attendanceOffline": "Uten nett: oppmøtet lagres på telefonen og sendes når du er på nett."
   },
   "email": {
     "footer": "Denne e-posten ble sendt av ClubAdmin på vegne av {club}.",
@@ -1132,7 +1140,9 @@
     "mode": "Svar",
     "respondBy": "Svar innen (timer før start)",
     "respondByHint": "Tomt: frem til start. Etter fristen godtas bare «kommer ikke».",
-    "family": "Min familie"
+    "family": "Min familie",
+    "modeDefault": "Standard for typen",
+    "answerByLabel": "Svar innen"
   },
   "responseModes": {
     "none": "Ingen svar",

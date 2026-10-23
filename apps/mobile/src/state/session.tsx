@@ -26,6 +26,7 @@ import {
 import { Platform } from "react-native";
 
 import { createAppApiClient } from "../api/client.ts";
+import { registerOutbox } from "../api/outbox.ts";
 import { createQueryClient } from "../api/query-client.ts";
 import { fetchDevTokens } from "../auth/dev-login.ts";
 import { refreshWithZitadel, signInWithZitadel, signOutOfZitadel } from "../auth/oidc.ts";
@@ -233,7 +234,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionContext.Provider value={session}>
-      <QueryLayer key={cache?.personId ?? "signed-out"} cache={cache}>
+      <QueryLayer key={cache?.personId ?? "signed-out"} cache={cache} api={api}>
         {children}
       </QueryLayer>
     </SessionContext.Provider>
@@ -243,12 +244,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 /** A fresh query client per account (keyed by person); persisted, encrypted, while signed in. */
 function QueryLayer({
   cache,
+  api,
   children,
 }: {
   cache: { personId: string; storage: KeyValueStorage } | null;
+  api: ApiClient;
   children: ReactNode;
 }) {
-  const [client] = useState<QueryClient>(createQueryClient);
+  const [client] = useState<QueryClient>(() => {
+    const created = createQueryClient();
+    // Before the cache is restored: paused outbox writes resume with these defaults.
+    registerOutbox(created, api);
+    return created;
+  });
   const [persister] = useState(() =>
     cache
       ? createSyncStoragePersister({ storage: cache.storage, key: "queries", throttleTime: 1000 })
@@ -264,6 +272,8 @@ function QueryLayer({
         // A cache written by another app version (or cache layout) is discarded, not misread.
         buster: `${APP_VERSION}:${CACHE_SCHEMA_VERSION}`,
       }}
+      // Writes made offline in an earlier run are sent now (in order).
+      onSuccess={() => void client.resumePausedMutations()}
     >
       {children}
     </PersistQueryClientProvider>

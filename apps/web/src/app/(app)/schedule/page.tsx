@@ -7,6 +7,7 @@ import { personLabel } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
 import { Agenda, weekOffset, weekRange } from "../../../components/agenda.tsx";
+import { FormError, Notice } from "../../../components/form-error.tsx";
 import { getSchedule } from "../../../server/data.ts";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -42,6 +43,8 @@ export default async function SchedulePage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">{t("schedule.title")}</h1>
+      {params.answered ? <Notice>{t("responses.saved")}</Notice> : null}
+      <FormError code={typeof params.error === "string" ? params.error : undefined} />
       {schedule.people.length > 1 ? (
         <nav
           aria-label={t("schedule.people")}
@@ -85,6 +88,17 @@ export default async function SchedulePage({ searchParams }: Props) {
           place: e.place,
           groups: e.groups,
           people: e.people,
+          ...(e.responseMode ? { responseMode: e.responseMode } : {}),
+          respondBy: e.respondBy ?? null,
+          responses: (e.responses ?? []).map((r) => {
+            const who = e.people.find((p) => p.id === r.personId);
+            return {
+              personId: r.personId,
+              label: e.people.length > 1 && who ? personLabel(who) : null,
+              status: r.status,
+              canRespond: r.canRespond,
+            };
+          }),
         }))}
       />
       {schedule.nextCursor ? <p className="text-sm text-muted">{t("schedule.more")}</p> : null}

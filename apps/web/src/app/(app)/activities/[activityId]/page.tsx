@@ -2,10 +2,13 @@
 // An activity (P1.4): when and where (with a map link), the leaders of its
 // groups, notes; for those who manage it, leader notes and the forms to
 // change, cancel, restore or delete it. A session of a series links to the
-// series ("this and following"). Never lists participants.
+// series ("this and following"). Answers (P1.5): how many are coming, my
+// family's answers with the buttons, who is coming where the viewer may see
+// the group, and for leaders every answer with its note and "Take
+// attendance". Calendar data never lists participants.
 import { enumKey } from "@clubadmin/i18n";
 import { localDate, localTime } from "@clubadmin/shared";
-import { PersonName, RoleBadge } from "@clubadmin/ui";
+import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
 import {
@@ -17,7 +20,13 @@ import {
 import { ActivityFields } from "../../../../components/activity-fields.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
-import { getActivity, getLocations } from "../../../../server/data.ts";
+import { ResponseButtons } from "../../../../components/response-buttons.tsx";
+import {
+  getActivity,
+  getLocations,
+  getResponseList,
+  getResponseSummary,
+} from "../../../../server/data.ts";
 
 type Props = {
   params: Promise<{ activityId: string }>;
@@ -30,8 +39,14 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ActivityPage({ params, searchParams }: Props) {
   const [{ activityId }, query] = await Promise.all([params, searchParams]);
-  const [t, activity] = await Promise.all([getTranslations(), getActivity(activityId)]);
+  const [t, activity, answers, list] = await Promise.all([
+    getTranslations(),
+    getActivity(activityId),
+    getResponseSummary(activityId),
+    getResponseList(activityId),
+  ]);
   const locations = activity.canManage ? await getLocations(activity.clubId, true) : [];
+  const asked = answers.responseMode !== "none";
   const zone = activity.timeZone;
   const start = new Date(activity.startsAt);
   const cancelled = activity.status === "cancelled";
@@ -64,6 +79,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
         {cancelled ? <RoleBadge tone="accent" label={t("activities.cancelled")} /> : null}
       </h1>
       {query.saved ? <Notice>{t("activities.saved")}</Notice> : null}
+      {query.answered ? <Notice>{t("responses.saved")}</Notice> : null}
       {query.updated ? <Notice>{t("activities.updated")}</Notice> : null}
       <FormError code={query.error} />
       {cancelled ? (
@@ -170,6 +186,116 @@ export default async function ActivityPage({ params, searchParams }: Props) {
         ) : null}
       </dl>
 
+      {asked ? (
+        <section aria-labelledby="activity-responses" className="space-y-3">
+          <h2 id="activity-responses" className="text-lg font-semibold">
+            {t("responses.title")}
+          </h2>
+          <p data-testid="response-counts">{t("responses.counts", answers.counts)}</p>
+          {answers.respondBy ? (
+            <p className="text-sm text-muted">
+              {t("responses.answerByLabel")}{" "}
+              <ClubTime
+                value={answers.respondBy}
+                timeZone={zone}
+                dateStyle="medium"
+                timeStyle="short"
+              />
+            </p>
+          ) : null}
+          {answers.open && answers.deadlinePassed ? (
+            <p className="text-sm">{t("responses.deadlinePassed")}</p>
+          ) : null}
+          {!answers.open && !cancelled ? <p className="text-sm">{t("responses.closed")}</p> : null}
+          {answers.mine.length > 0 ? (
+            <div className="space-y-3" data-testid="my-responses">
+              {answers.mine.map((r) => (
+                <div key={r.person.id} className="space-y-1 rounded-lg border border-border p-3">
+                  <p className="text-sm">
+                    <PersonName person={r.person} protectedLabel={protectedLabel} />
+                    {r.status ? (
+                      <>
+                        {" · "}
+                        <RoleBadge label={t(enumKey("responseStatus", r.status))} />
+                      </>
+                    ) : null}
+                    {r.respondedBy && r.respondedBy.id !== r.person.id ? (
+                      <span className="block text-xs text-muted">
+                        {t("responses.answeredBy", { name: personLabel(r.respondedBy) })}
+                      </span>
+                    ) : null}
+                  </p>
+                  {r.canRespond ? (
+                    <ResponseButtons
+                      activityId={activity.id}
+                      personId={r.person.id}
+                      status={r.status}
+                      deadlinePassed={answers.deadlinePassed}
+                    />
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {answers.attending && !list ? (
+            answers.attending.length === 0 ? (
+              <p className="text-muted">{t("responses.nobody")}</p>
+            ) : (
+              <div>
+                <h3 className="text-sm font-semibold">{t("responses.attendingList")}</h3>
+                <ul className="flex flex-wrap gap-2" data-testid="attending-list">
+                  {answers.attending.map((p) => (
+                    <li key={p.id} className="rounded-full bg-surface px-2 py-0.5 text-sm">
+                      <PersonName person={p} protectedLabel={protectedLabel} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          ) : null}
+          {list ? (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">{t("responses.leadersList")}</h3>
+              <ul
+                className="divide-y divide-border rounded-lg border border-border"
+                data-testid="response-list"
+              >
+                {list.items.map((r) => (
+                  <li key={r.person.id} className="flex flex-wrap items-baseline gap-2 px-3 py-2">
+                    <PersonName
+                      person={r.person}
+                      href={`/people/${r.person.id}?clubId=${activity.clubId}`}
+                      protectedLabel={protectedLabel}
+                    />
+                    <RoleBadge
+                      tone={r.status === "not_attending" ? "accent" : "neutral"}
+                      label={
+                        r.status
+                          ? t(enumKey("responseStatus", r.status))
+                          : t("responses.notAnswered")
+                      }
+                    />
+                    {r.note ? <span className="text-sm text-muted">{r.note}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {list || activity.canManage ? (
+        <p>
+          <a
+            href={`/activities/${activity.id}/attendance`}
+            className="text-accent underline"
+            data-testid="take-attendance"
+          >
+            {t("attendance.take")}
+          </a>
+        </p>
+      ) : null}
+
       <section aria-labelledby="activity-leaders">
         <h2 id="activity-leaders" className="mb-2 text-lg font-semibold">
           {t("activities.leaders")}
@@ -236,6 +362,10 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                   competition: activity.competition,
                   notes: activity.notes,
                   leaderNotes: activity.leaderNotes ?? null,
+                  responseMode: activity.responseMode ?? null,
+                  respondByHours: activity.respondBy
+                    ? Math.round((start.getTime() - Date.parse(activity.respondBy)) / 3_600_000)
+                    : null,
                 }}
               />
               <button type="submit" className={buttonClass} data-testid="activity-save">

@@ -6,6 +6,7 @@ import type { Location, SeriesSlot } from "@clubadmin/shared";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { inputClass } from "./action-form.tsx";
+import { ResponseModeFields } from "./response-mode-fields.tsx";
 
 export interface SeriesFieldValues {
   title?: string;
@@ -18,6 +19,8 @@ export interface SeriesFieldValues {
   locationText?: string | null;
   notes?: string | null;
   leaderNotes?: string | null;
+  responseMode?: string | null;
+  respondByHours?: number | null;
 }
 
 const SLOTS = 3;
@@ -202,6 +205,9 @@ export async function SeriesFields({
         />
         <span className="text-xs text-muted">{t("activities.leaderNotesHint")}</span>
       </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <ResponseModeFields mode={values.responseMode} hours={values.respondByHours} />
+      </div>
     </div>
   );
 }
