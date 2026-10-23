@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Tenant isolation for every club-owned table: a person of club B cannot read,
+// Tenant isolation for every club-owned table (club_id NOT NULL; a nullable
+// club_id is a reference from a global table): a person of club B cannot read,
 // change or create club A's rows. The table list comes from the database, so
 // a new club-owned table without a fixture row here fails the test.
 import { sql } from "@clubadmin/db";
@@ -60,12 +61,19 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO support_access_grants (club_id, operator_person_id, granted_by_person_id, reason, expires_at)
         VALUES (${a.id}, ${family.guardian.id}, ${a.manager.id}, 'Import help', now() + interval '1 day')`);
+      await tx.execute(sql`
+        INSERT INTO member_imports (club_id, created_by_person_id, status, options)
+        VALUES (${a.id}, ${a.manager.id}, 'review', '{}')`);
+      await tx.execute(sql`
+        INSERT INTO member_import_rows (club_id, import_id, row_number, cells)
+        SELECT ${a.id}, id, 1, 'sealed' FROM member_imports WHERE club_id = ${a.id}`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(
       "admin",
       `SELECT table_name FROM information_schema.columns
-       WHERE table_schema = 'public' AND column_name = 'club_id' ORDER BY table_name`,
+       WHERE table_schema = 'public' AND column_name = 'club_id' AND is_nullable = 'NO'
+       ORDER BY table_name`,
     );
     expect(tables.length).toBeGreaterThanOrEqual(14);
     const outsider = actor((await buildPerson(c.s)).id, b.id);
