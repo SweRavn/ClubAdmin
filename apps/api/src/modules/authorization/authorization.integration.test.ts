@@ -581,6 +581,17 @@ describe("permission matrix", () => {
       url: () => `/api/v1/activities/${m.activityId}/responses`,
       expected: TEAM_MANAGERS(200),
     },
+    // Call-ups (#19): leaders see them, those who manage the activity set them
+    // (the whole group again here, which changes nothing).
+    "GET /api/v1/activities/:activityId/invitees": {
+      url: () => `/api/v1/activities/${m.activityId}/invitees`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "PUT /api/v1/activities/:activityId/invitees": {
+      url: () => `/api/v1/activities/${m.activityId}/invitees`,
+      expected: TEAM_MANAGERS(200),
+      body: { inviteesOnly: false, personIds: [] },
+    },
     "GET /api/v1/activities/:activityId/attendance": {
       url: () => `/api/v1/activities/${m.activityId}/attendance`,
       expected: { ...TEAM_MANAGERS(200), registrar: 200 },
@@ -664,6 +675,7 @@ describe("tenant isolation", () => {
       `/api/v1/activities/${m.activityId}/responses/summary`,
       `/api/v1/activities/${m.activityId}/responses`,
       `/api/v1/activities/${m.activityId}/attendance`,
+      `/api/v1/activities/${m.activityId}/invitees`,
       `/api/v1/groups/${m.team.id}/attendance?from=2026-01-01T00:00:00Z&to=2026-12-31T00:00:00Z`,
     ];
     for (const url of urls) {

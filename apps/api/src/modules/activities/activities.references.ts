@@ -9,4 +9,6 @@ export const ACTIVITY_PERSON_REFERENCES: readonly PersonReference[] = [
   { table: "public.activity_responses", column: "responded_by_person_id", clubScoped: true },
   { table: "public.attendance_records", column: "person_id", clubScoped: true },
   { table: "public.attendance_records", column: "recorded_by_person_id", clubScoped: true },
+  { table: "public.activity_invitees", column: "person_id", clubScoped: true },
+  { table: "public.activity_invitees", column: "invited_by_person_id", clubScoped: true },
 ];

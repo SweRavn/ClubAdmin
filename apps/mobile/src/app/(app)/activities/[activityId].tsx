@@ -129,6 +129,7 @@ function Activity({ activityId }: { activityId: string }) {
       {answers.data && answers.data.responseMode !== "none" ? (
         <Section title={t("responses.title")}>
           <Row last={answers.data.mine.length === 0}>
+            {a?.inviteesOnly ? <Muted>{t("invitees.onlyInvited")}</Muted> : null}
             <Body>{t("responses.counts", answers.data.counts)}</Body>
             {answers.data.open && answers.data.deadlinePassed ? (
               <Muted>{t("responses.deadlinePassed")}</Muted>

@@ -3,7 +3,7 @@
 // (intent; given by the member or a guardian) and the leaders' attendance
 // mark (fact). One row per activity and person in each; record history on
 // both. The activity's groups and roster live in activities and
-// group_memberships.
+// group_memberships; call-ups (#19) in activity_invitees.
 
 import {
   ATTENDANCE_ROLES,
@@ -59,6 +59,34 @@ export const activityResponses = pgTable(
     index("activity_responses_activity_idx").on(t.clubId, t.activityId),
     index("activity_responses_person_idx").on(t.personId, t.activityId),
     index("activity_responses_responder_idx").on(t.respondedByPersonId),
+  ],
+);
+
+/**
+ * Who is called up to an activity whose `invitees_only` is set (#19, ADR
+ * 0036): the roster's participants are then these people. IDs only.
+ */
+export const activityInvitees = pgTable(
+  "activity_invitees",
+  {
+    id: id(),
+    clubId: clubRef(),
+    activityId: uuid().notNull(),
+    personId: personRef(),
+    invitedByPersonId: personRef(),
+    ...timestamps,
+  },
+  (t) => [
+    foreignKey({
+      name: "activity_invitees_activity_fk",
+      columns: [t.clubId, t.activityId],
+      foreignColumns: [activities.clubId, activities.id],
+    }).onDelete("cascade"),
+    unique("activity_invitees_unique").on(t.activityId, t.personId),
+    index("activity_invitees_activity_idx").on(t.clubId, t.activityId),
+    // "My schedule": is this person called up?
+    index("activity_invitees_person_idx").on(t.personId, t.activityId),
+    index("activity_invitees_inviter_idx").on(t.invitedByPersonId),
   ],
 );
 

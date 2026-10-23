@@ -79,6 +79,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/activities/{activityId}/invitees": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Who may be called up to the activity (its groups' members) and who is
+     * @description Requires permission `activity.responses.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Attendance_invitees"];
+    /**
+     * Call up some of the groups' members (only they answer and are counted), or all
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Attendance_setInvitees"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activities/{activityId}/responses": {
     parameters: {
       query?: never;
@@ -1986,6 +2010,7 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       /** Format: date-time */
       respondBy?: string | null;
+      inviteesOnly?: boolean;
       responseCounts?: components["schemas"]["ResponseCounts"];
     };
     UpdateActivityRequest: {
@@ -2064,6 +2089,20 @@ export interface components {
     };
     CancelActivityRequest: {
       reason?: string;
+    };
+    Invitees: {
+      /** Format: uuid */
+      activityId: string;
+      inviteesOnly: boolean;
+      candidates: {
+        person: components["schemas"]["PersonSummary"];
+        invited: boolean;
+      }[];
+      invitedCount: number;
+    };
+    SetInviteesRequest: {
+      inviteesOnly: boolean;
+      personIds: string[];
     };
     ResponseList: {
       items: components["schemas"]["ActivityResponse"][];
@@ -4299,6 +4338,162 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Activity"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_invitees: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Invitees"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_setInvitees: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetInviteesRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Invitees"];
         };
       };
       /** @description Invalid request */

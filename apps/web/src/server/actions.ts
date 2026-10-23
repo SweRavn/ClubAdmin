@@ -559,6 +559,22 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       return stale > 0 ? withParam(path, "stale", String(stale)) : path;
     },
   },
+  "set-invitees": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      if (!activityId) return null;
+      const inviteesOnly = text(form, "inviteesOnly") === "selected";
+      const personIds = inviteesOnly
+        ? form.getAll("invite").filter((v): v is string => typeof v === "string" && isUuid(v))
+        : [];
+      return {
+        path: `/api/v1/activities/${activityId}/invitees`,
+        method: "PUT",
+        body: { inviteesOnly, personIds },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
   "create-location": {
     call: (form) => {
       const clubId = id(form, "clubId");

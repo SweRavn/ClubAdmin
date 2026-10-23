@@ -123,6 +123,41 @@ export const ResponseListSchema = z
   .openapi("ResponseList");
 export type ResponseList = z.infer<typeof ResponseListSchema>;
 
+// --- Call-ups (#19, ADR 0036) --------------------------------------------------------
+
+/** At most this many people are called up to one activity. */
+export const INVITEES_MAX = 200;
+
+/**
+ * Who is called up. With inviteesOnly the roster's participants are the
+ * people in personIds (the groups' members on the start); without it the
+ * whole groups take part and personIds must be empty.
+ */
+export const SetInviteesSchema = z
+  .object({
+    inviteesOnly: z.boolean(),
+    personIds: z.array(z.uuid()).max(INVITEES_MAX),
+  })
+  .strict()
+  .refine((v) => v.inviteesOnly || v.personIds.length === 0, {
+    message: "personIds must be empty without inviteesOnly",
+    path: ["personIds"],
+  })
+  .openapi("SetInviteesRequest");
+export type SetInviteesInput = z.input<typeof SetInviteesSchema>;
+
+export const InviteesSchema = z
+  .object({
+    activityId: z.uuid(),
+    inviteesOnly: z.boolean(),
+    /** Everyone who may be called up (the groups' members on the start), and whether they are. */
+    candidates: z.array(z.object({ person: PersonSummarySchema, invited: z.boolean() })),
+    /** How many are called up (protected members the viewer may not see included). */
+    invitedCount: z.number().int(),
+  })
+  .openapi("Invitees");
+export type Invitees = z.infer<typeof InviteesSchema>;
+
 // --- Attendance -------------------------------------------------------------------
 
 /** A grant rule a session does not meet (country pack; codes, never values). */

@@ -18,6 +18,8 @@ import {
   GroupAttendanceQuerySchema,
   GroupAttendanceSchema,
   GroupParamsSchema,
+  type Invitees,
+  InviteesSchema,
   type MyResponse,
   type PersonSummary,
   type RecordAttendanceInput,
@@ -31,6 +33,8 @@ import {
   ResponseParamsSchema,
   type ResponseSummary,
   ResponseSummarySchema,
+  type SetInviteesInput,
+  SetInviteesSchema,
   type SetResponseInput,
   SetResponseSchema,
   z,
@@ -51,7 +55,12 @@ import {
 } from "../authorization/index.ts";
 type Actor = RequestAuthorization["actor"];
 import { PeopleService } from "../people/index.ts";
-import { AttendanceService, type AttendanceView, type ResponseRow } from "./attendance.service.ts";
+import {
+  AttendanceService,
+  type AttendanceView,
+  type InviteesView,
+  type ResponseRow,
+} from "./attendance.service.ts";
 
 const iso = (date: Date) => date.toISOString();
 
@@ -181,6 +190,52 @@ export class AttendanceController {
     };
   }
 
+  // --- Call-ups (#19) ------------------------------------------------------------------
+
+  @Endpoint({
+    method: "GET",
+    path: "activities/:activityId/invitees",
+    summary: "Who may be called up to the activity (its groups' members) and who is",
+    tags: ["activities"],
+    access: { permission: "activity.responses.read", resource: "activity" },
+    request: { params: ActivityParamsSchema },
+    response: InviteesSchema,
+  })
+  async invitees(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof ActivityParamsSchema>,
+  ): Promise<Invitees> {
+    const { clubId } = resourceOf(authz, "activity");
+    const view = await this.attendance.invitees(
+      tenantContext(authz, clubId, { viewerPrivileged: true }),
+      params.activityId,
+    );
+    return this.toInvitees(authz, view);
+  }
+
+  @Endpoint({
+    method: "PUT",
+    path: "activities/:activityId/invitees",
+    summary: "Call up some of the groups' members (only they answer and are counted), or all",
+    tags: ["activities"],
+    access: { permission: "activity.manage", resource: "activity" },
+    request: { params: ActivityParamsSchema, body: SetInviteesSchema },
+    response: InviteesSchema,
+  })
+  async setInvitees(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof ActivityParamsSchema>,
+    @Body() body: SetInviteesInput,
+  ): Promise<Invitees> {
+    const { clubId } = resourceOf(authz, "activity");
+    const view = await this.attendance.setInvitees(
+      tenantContext(authz, clubId, { viewerPrivileged: true }),
+      params.activityId,
+      body,
+    );
+    return this.toInvitees(authz, view);
+  }
+
   // --- Attendance ----------------------------------------------------------------------
 
   @Endpoint({
@@ -286,6 +341,23 @@ export class AttendanceController {
   }
 
   // --- Helpers -----------------------------------------------------------------------
+
+  private async toInvitees(authz: RequestAuthorization, view: InviteesView): Promise<Invitees> {
+    const shown = await this.presented(
+      authz,
+      view.activity.clubId,
+      view.candidates.map((c) => c.personId),
+    );
+    return {
+      activityId: view.activity.id,
+      inviteesOnly: view.activity.inviteesOnly,
+      candidates: view.candidates.flatMap((c) => {
+        const person = shown.get(c.personId);
+        return person ? [{ person, invited: c.invited }] : [];
+      }),
+      invitedCount: view.invitedCount,
+    };
+  }
 
   /** The activity's club, if the caller may answer for this person (else 404, as for a stranger). */
   private answerFor(authz: RequestAuthorization, personId: string): { clubId: string } {

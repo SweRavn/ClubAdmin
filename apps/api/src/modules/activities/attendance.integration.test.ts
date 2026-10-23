@@ -5,7 +5,7 @@
 // see (protected members only counted); attendance with offline ordering,
 // idempotent resends, the lock and corrections; the roster by date and
 // guests; deleting and series changes keep answered sessions; "My schedule"
-// with answers; a group's summary with the LOK-stöd hints.
+// with answers; a group's summary with the LOK-stöd hints; call-ups (#19).
 
 import { createTestDatabase, type TestDatabase } from "@clubadmin/db/testing";
 import { ON_BEHALF_OF_HEADER } from "@clubadmin/shared";
@@ -382,6 +382,133 @@ describe("responses", () => {
     expect(forCoach.items.find((e) => e.activityId === id)?.responses).toEqual([
       { personId: x.coach.id, status: null, canRespond: false },
     ]);
+  });
+});
+
+describe("call-ups", () => {
+  it("only those called up answer, are counted and have it in their schedule", async () => {
+    const x = await team();
+    const id = await activity(x, { startsAt: at(5 * DAY), endsAt: at(5 * DAY + HOUR) });
+    // The member answered before the call-up.
+    expect(
+      (
+        await api(x.member.id, "PUT", `/activities/${id}/responses/${x.member.id}`, {
+          body: { status: "attending" },
+        })
+      ).statusCode,
+    ).toBe(200);
+    type InviteesJson = {
+      inviteesOnly: boolean;
+      candidates: { person: { id: string }; invited: boolean }[];
+      invitedCount: number;
+    };
+    const before = await api(x.coach.id, "GET", `/activities/${id}/invitees`);
+    expect(before.statusCode, before.body).toBe(200);
+    expect(before.json<InviteesJson>()).toMatchObject({ inviteesOnly: false, invitedCount: 0 });
+    expect(
+      before
+        .json<InviteesJson>()
+        .candidates.map((c) => c.person.id)
+        .sort(),
+    ).toEqual([x.member.id, x.hidden.id, x.child.id].sort());
+
+    // Someone outside the group cannot be called up.
+    const stranger = await buildPerson(s);
+    const refused = await api(x.coach.id, "PUT", `/activities/${id}/invitees`, {
+      body: { inviteesOnly: true, personIds: [stranger.id] },
+    });
+    expect(refused.statusCode).toBe(409);
+    expect(detail(refused)).toBe("not_on_roster");
+
+    const set = await api(x.coach.id, "PUT", `/activities/${id}/invitees`, {
+      body: { inviteesOnly: true, personIds: [x.child.id, x.hidden.id] },
+    });
+    expect(set.statusCode, set.body).toBe(200);
+    expect(set.json<InviteesJson>()).toMatchObject({ inviteesOnly: true, invitedCount: 2 });
+    // The same again changes nothing.
+    await api(x.coach.id, "PUT", `/activities/${id}/invitees`, {
+      body: { inviteesOnly: true, personIds: [x.hidden.id, x.child.id] },
+    });
+    expect((await audit(x.club.id)).filter((a) => a === "activity.invitees.changed")).toHaveLength(
+      1,
+    );
+
+    // The member's answer stays but is not counted; they can no longer answer.
+    expect((await summary(x.coach.id, id)).counts).toEqual({
+      attending: 0,
+      notAttending: 0,
+      notAnswered: 2,
+      roster: 2,
+    });
+    const late = await api(x.member.id, "PUT", `/activities/${id}/responses/${x.member.id}`, {
+      body: { status: "not_attending" },
+    });
+    expect(late.statusCode).toBe(409);
+    expect(detail(late)).toBe("not_on_roster");
+    expect(
+      (
+        await api(x.parent.id, "PUT", `/activities/${id}/responses/${x.child.id}`, {
+          body: { status: "attending" },
+        })
+      ).statusCode,
+    ).toBe(200);
+
+    // "My schedule": the member no longer has it; the child's parent and the coach do.
+    const range = `from=${encodeURIComponent(at(0))}&to=${encodeURIComponent(at(10 * DAY))}`;
+    const has = async (personId: string) =>
+      (await api(personId, "GET", `/me/schedule?${range}`))
+        .json<{ items: { activityId: string }[] }>()
+        .items.some((e) => e.activityId === id);
+    expect(await has(x.member.id)).toBe(false);
+    expect(await has(x.parent.id)).toBe(true);
+    expect(await has(x.coach.id)).toBe(true);
+
+    // The activity says so; the group calendar counts only those called up.
+    const detailRes = await api(x.member.id, "GET", `/activities/${id}`);
+    expect(detailRes.json<{ inviteesOnly: boolean }>().inviteesOnly).toBe(true);
+
+    // The whole group again: the member's earlier answer counts again.
+    const all = await api(x.coach.id, "PUT", `/activities/${id}/invitees`, {
+      body: { inviteesOnly: false, personIds: [] },
+    });
+    expect(all.json<InviteesJson>()).toMatchObject({ inviteesOnly: false, invitedCount: 0 });
+    expect((await summary(x.coach.id, id)).counts).toEqual({
+      attending: 2,
+      notAttending: 0,
+      notAnswered: 1,
+      roster: 3,
+    });
+    expect(await has(x.member.id)).toBe(true);
+  });
+
+  it("the attendance roster is those called up; others come as guests; past activities are closed", async () => {
+    const x = await team();
+    await backdate(x.groupId);
+    const id = await activity(x, { startsAt: at(30 * 60_000), endsAt: at(2 * HOUR) });
+    await api(x.coach.id, "PUT", `/activities/${id}/invitees`, {
+      body: { inviteesOnly: true, personIds: [x.child.id] },
+    });
+    const sheet = (
+      await api(x.coach.id, "GET", `/activities/${id}/attendance`)
+    ).json<AttendanceJson>();
+    expect(sheet.participants.map((p) => p.person.id)).toEqual([x.child.id]);
+    expect(sheet.leaders.map((l) => l.person.id)).toEqual([x.coach.id]);
+    const recorded = await api(x.coach.id, "PUT", `/activities/${id}/attendance`, {
+      body: { marks: [{ personId: x.member.id, status: "present" }] },
+    });
+    expect(recorded.statusCode, recorded.body).toBe(200);
+    expect(
+      recorded
+        .json<{ attendance: AttendanceJson }>()
+        .attendance.participants.find((p) => p.person.id === x.member.id)?.guest,
+    ).toBe(true);
+
+    const past = await activity(x, { startsAt: at(-3 * HOUR), endsAt: at(-2 * HOUR) });
+    const closed = await api(x.coach.id, "PUT", `/activities/${past}/invitees`, {
+      body: { inviteesOnly: true, personIds: [x.child.id] },
+    });
+    expect(closed.statusCode).toBe(409);
+    expect(detail(closed)).toBe("activity_ended");
   });
 });
 

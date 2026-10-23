@@ -224,7 +224,7 @@ describe("demo scenario", () => {
     expect(seedJobs[0]!.n).toBe(0);
   });
 
-  it("has answers and attendance (P1.5): Elsa's changed answer, Sara's correction, a guest", async () => {
+  it("has answers and attendance (P1.5): Elsa's changed answer, Sara's correction, a guest, a call-up", async () => {
     const id = (key: string) => data.personas.find((p) => p.key === key)!.id;
     const { rows: elsa } = await first.query<{ status: string; responded_by_person_id: string }>(
       "admin",
@@ -250,6 +250,15 @@ describe("demo scenario", () => {
     expect(counts[0]?.guests).toBe(1);
     expect(counts[0]?.sessions).toBeGreaterThan(40);
     expect(counts[0]?.own).toBe(2);
+    // The P2012 match's call-up (#19): Oskar is called up, Liam is not.
+    const { rows: called } = await first.query<{ person_id: string }>(
+      "admin",
+      `SELECT i.person_id FROM activity_invitees i
+       JOIN activities a ON a.id = i.activity_id AND a.invitees_only
+       WHERE i.person_id IN ($1, $2)`,
+      [id("oskar"), id("liam")],
+    );
+    expect(called).toEqual([{ person_id: id("oskar") }]);
   });
 
   it("uses reserved test data only", async () => {

@@ -174,10 +174,10 @@ export async function syncScheduleEntries(
   await tx.execute(sql`
     INSERT INTO public.schedule_entries (club_id, activity_id, group_id, kind, title, status,
       cancelled_reason, starts_at, ends_at, all_day, meet_at, place, changed_at, response_mode,
-      respond_by)
+      respond_by, invitees_only)
     SELECT a.club_id, a.id, ag.group_id, a.kind, a.title, a.status, a.cancelled_reason,
       a.starts_at, a.ends_at, a.all_day, a.meet_at, coalesce(l.name, a.location_text), a.changed_at,
-      a.response_mode, a.respond_by
+      a.response_mode, a.respond_by, a.invitees_only
     FROM public.activities a
     JOIN public.activity_groups ag ON ag.activity_id = a.id
     LEFT JOIN public.locations l ON l.id = a.location_id
@@ -469,6 +469,10 @@ export function scheduleQuery(input: ScheduleInput): SQL {
       SELECT se.*, m.person_id, m.function FROM mine m
       JOIN public.schedule_entries se ON se.group_id = m.group_id
       WHERE se.starts_at >= ${input.from} AND se.starts_at < ${input.to}
+        -- A call-up (#19): members who are not called up do not have it in their schedule.
+        AND (m.function <> 'member' OR NOT se.invitees_only OR EXISTS (
+          SELECT 1 FROM public.activity_invitees i
+          WHERE i.activity_id = se.activity_id AND i.person_id = m.person_id))
     )
     SELECT h.activity_id, h.club_id, h.kind, h.title, h.status, h.cancelled_reason, h.starts_at,
       h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode, h.respond_by,

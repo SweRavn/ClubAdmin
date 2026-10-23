@@ -165,6 +165,8 @@ export const activities = pgTable(
     /** Answers (P1.5): none, optional or requested (by respondBy, if set). */
     responseMode: text().$type<ResponseMode>().notNull().default("optional"),
     respondBy: timestamp(tz),
+    /** Only the people called up (activity_invitees) take part and answer (#19). */
+    inviteesOnly: boolean().notNull().default(false),
     createdByPersonId: personRef(),
     ...timestamps,
   },
@@ -251,6 +253,7 @@ export const scheduleEntries = pgTable(
     changedAt: timestamp(tz).notNull(),
     responseMode: text().$type<ResponseMode>().notNull().default("optional"),
     respondBy: timestamp(tz),
+    inviteesOnly: boolean().notNull().default(false),
     ...timestamps,
   },
   (t) => [

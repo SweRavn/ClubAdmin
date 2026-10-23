@@ -609,7 +609,8 @@
     "activity_has_responses": "Någon har svarat eller närvaro har tagits: ställ in aktiviteten i stället.",
     "response_not_requested": "Aktiviteten efterfrågar inga svar.",
     "response_closed": "Det går inte längre att svara (efter svarstiden går bara ”kommer inte”).",
-    "not_on_roster": "Personen är inte med i aktivitetens grupp.",
+    "not_on_roster": "Personen är inte med i aktivitetens grupp eller inte kallad.",
+    "activity_ended": "Aktiviteten har redan varit.",
     "activity_not_started": "Närvaro kan tas från en timme före start.",
     "attendance_locked": "Närvaron är låst.",
     "correction_reason_required": "Ange en orsak till rättelsen.",
@@ -1186,6 +1187,22 @@
     "presentCount": "{present} närvarande, {leaders} ledare",
     "noSessions": "Inga genomförda tillfällen under perioden.",
     "protectedNotice": "Några här har skyddad identitet: fotografera eller dela inte listan."
+  },
+  "invitees": {
+    "title": "Kallelse",
+    "link": "Kallelse",
+    "whole": "Hela gruppen",
+    "wholeHint": "Alla i aktivitetens grupper deltar och kan svara.",
+    "selected": "Bara de jag kallar",
+    "selectedHint": "Bara de kallade har aktiviteten i sitt schema, kan svara och räknas. Ledarna är med som vanligt.",
+    "players": "Kalla",
+    "save": "Spara kallelsen",
+    "saved": "Kallelsen sparades.",
+    "count": "{count, plural, one {# kallad} other {# kallade}}",
+    "onlyInvited": "Bara kallade deltar.",
+    "readOnly": "Det är de som planerar aktiviteten som ändrar kallelsen.",
+    "noCandidates": "Det finns inga medlemmar i gruppen att kalla.",
+    "closed": "Aktiviteten har redan varit eller är inställd."
   },
   "attendanceStatus": {
     "present": "Närvarande",

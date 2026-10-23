@@ -2,7 +2,8 @@
 // Demo responses and attendance (P1.5, docs/seed-data.md "activity and
 // other data"), through the attendance service with the persona as actor:
 // answers for the coming two weeks in SVK F2017 and IKN, Oskar's and Liam's
-// own answers to the P2012 match (with a deadline the day before), Elsa's
+// own answers to the P2012 match (with a deadline the day before; a call-up
+// of Oskar and half the team, #19), Elsa's
 // answer changed by her father, attendance for the youth teams' past
 // sessions (taken by their leaders on the day; one short session and one
 // with two participants, below the LOK-stöd thresholds), a guest from
@@ -114,6 +115,13 @@ export const attendanceDemoStep: DemoStep = {
       await s.attendance.respond(as("liam", "ikn"), p2012Match.id, id("liam"), {
         status: "not_attending",
         note: "Bortrest med familjen.",
+      });
+      // Karin calls up a squad (#19): Oskar and every other generated player.
+      // Liam is not called up; his answer stays and is no longer counted.
+      const squad = (core.generated.get("ikn-p2012") ?? []).filter((_, i) => i % 2 === 0);
+      await s.attendance.setInvitees(as("karin", "ikn"), p2012Match.id, {
+        inviteesOnly: true,
+        personIds: [id("oskar"), ...squad],
       });
     }
 

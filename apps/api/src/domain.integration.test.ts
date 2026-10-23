@@ -92,6 +92,11 @@ describe("tenant isolation of club-owned tables", () => {
         INSERT INTO attendance_records (club_id, activity_id, person_id, status, recorded_by_person_id)
         SELECT ${a.id}, id, ${member.id}, 'present', ${a.manager.id} FROM activities
         WHERE club_id = ${a.id} AND kind = 'match'`);
+      // A call-up (#19) to the match.
+      await tx.execute(sql`
+        INSERT INTO activity_invitees (club_id, activity_id, person_id, invited_by_person_id)
+        SELECT ${a.id}, id, ${member.id}, ${a.manager.id} FROM activities
+        WHERE club_id = ${a.id} AND kind = 'match'`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(

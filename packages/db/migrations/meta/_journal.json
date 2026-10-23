@@ -99,6 +99,13 @@
       "when": 1792780016208,
       "tag": "0013_attendance_retention",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792781007822,
+      "tag": "0014_activity_invitees",
+      "breakpoints": true
     }
   ]
 }

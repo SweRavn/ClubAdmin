@@ -76,6 +76,7 @@ export const AUDIT_ACTIONS = [
   "activity.response.withdrawn",
   "attendance.recorded",
   "attendance.corrected",
+  "activity.invitees.changed",
   "group.membership.created",
   "group.membership.ended",
   "guardianship.created",

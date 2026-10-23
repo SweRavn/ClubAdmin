@@ -21,6 +21,8 @@ import {
   type RecordAttendanceInput,
   RecordAttendanceSchema,
   type ResponseStatus,
+  type SetInviteesInput,
+  SetInviteesSchema,
   type SetResponseInput,
   SetResponseSchema,
 } from "@clubadmin/shared";
@@ -109,6 +111,12 @@ export interface GroupAttendanceView {
   }[];
   members: records.MemberSummaryRow[];
   nextCursor: string | null;
+}
+
+export interface InviteesView {
+  activity: repo.ActivityRow;
+  candidates: { personId: string; invited: boolean }[];
+  invitedCount: number;
 }
 
 const SUGGESTION: Record<ResponseStatus, AttendanceStatus> = {
@@ -454,6 +462,93 @@ export class AttendanceService {
   // --- Internals ----------------------------------------------------------------------
 
   /** The activity locked for an answer from this person: scheduled, asking, not over, on the roster. */
+  // --- Call-ups (#19) --------------------------------------------------------------
+
+  /** Who may be called up (the groups' members on the start) and who is. */
+  invitees(context: TenantContext, activityId: string): Promise<InviteesView> {
+    return this.db.withTenant(context, async (tx) => {
+      const activity = await repo.findActivity(tx, activityId);
+      if (!activity) throw new DomainError("not_found");
+      return this.inviteesView(tx, activity);
+    });
+  }
+
+  /**
+   * Calls up some of the groups' members, or the whole groups again. Those no
+   * longer called up keep their answers, which are then not counted. Setting
+   * the same again changes nothing.
+   */
+  setInvitees(
+    context: TenantContext,
+    activityId: string,
+    input: SetInviteesInput,
+  ): Promise<InviteesView> {
+    return this.db.withTenant(context, async (tx) => {
+      const data = parseInput(SetInviteesSchema, input);
+      const activity = await repo.lockActivity(tx, activityId);
+      if (!activity) throw new DomainError("not_found");
+      if (activity.status === "cancelled") throw new DomainError("activity_cancelled");
+      if (activity.endsAt.getTime() <= this.now().getTime()) {
+        throw new DomainError("activity_ended");
+      }
+      const candidates = new Set(
+        (await records.roster(tx, activityId, { wholeGroups: true }))
+          .filter((r) => r.role === "participant")
+          .map((r) => r.personId),
+      );
+      const wanted = new Set(data.personIds);
+      if ([...wanted].some((id) => !candidates.has(id))) throw new DomainError("not_on_roster");
+      const current = new Set(await records.invitees(tx, activityId));
+      const added = [...wanted].filter((id) => !current.has(id));
+      const removed = [...current].filter((id) => !wanted.has(id));
+      const modeChanged = activity.inviteesOnly !== data.inviteesOnly;
+      if (!modeChanged && added.length === 0 && removed.length === 0) {
+        return this.inviteesView(tx, activity);
+      }
+      await records.removeInvitees(tx, activityId, removed);
+      await records.addInvitees(tx, {
+        clubId: context.clubId,
+        activityId,
+        personIds: added,
+        invitedBy: actorPersonId(context),
+      });
+      let updated = activity;
+      if (modeChanged) {
+        // Not a calendar change: neither sequence nor changed_at move (ADR 0036).
+        updated = await repo.updateActivity(tx, activityId, { inviteesOnly: data.inviteesOnly });
+        await repo.syncScheduleEntries(tx, { activityIds: [activityId] });
+      }
+      await audit.record(tx, {
+        action: "activity.invitees.changed",
+        resourceType: "activity",
+        resourceId: activityId,
+        changedFields: [
+          ...(modeChanged ? ["invitees_only"] : []),
+          ...(added.length > 0 || removed.length > 0 ? ["invitees"] : []),
+        ],
+      });
+      await outbox.publish(tx, "activity.invitees.changed", {
+        clubId: context.clubId,
+        activityId,
+        added,
+        removed,
+      });
+      return this.inviteesView(tx, updated);
+    });
+  }
+
+  private async inviteesView(tx: Tx, activity: repo.ActivityRow): Promise<InviteesView> {
+    const candidates = (await records.roster(tx, activity.id, { wholeGroups: true }))
+      .filter((r) => r.role === "participant")
+      .map((r) => r.personId);
+    const invited = new Set(await records.invitees(tx, activity.id));
+    return {
+      activity,
+      candidates: candidates.map((personId) => ({ personId, invited: invited.has(personId) })),
+      invitedCount: candidates.filter((id) => invited.has(id)).length,
+    };
+  }
+
   private async answerable(
     tx: Tx,
     activityId: string,

@@ -286,6 +286,8 @@ export const ActivitySchema = z
     /** Answers (P1.5). */
     responseMode: z.enum(RESPONSE_MODES).optional(),
     respondBy: z.iso.datetime({ offset: true }).nullable().optional(),
+    /** Only those called up take part and answer (#19). */
+    inviteesOnly: z.boolean().optional(),
     /** For those who manage it, in the group calendar. */
     responseCounts: ResponseCountsSchema.optional(),
   })

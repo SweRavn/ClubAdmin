@@ -136,7 +136,9 @@ budgets are requirements; CI measures them.
   first ten sessions and attendance for eight, 320,000 answers and 256,000
   marks): "My schedule" with each person's answer about 8 ms p95 (the
   answers are a subquery of the same statement on `activity_responses
-  (person_id, activity_id)`). The roster with its answers and a group's
+  (person_id, activity_id)`; call-ups, ADR 0036, add a check on
+  `activity_invitees (person_id, activity_id)` that runs only for entries
+  with `invitees_only`). The roster with its answers and a group's
   attendance summary have no sequential scan of `activity_responses`,
   `attendance_records` or `group_memberships` (rosters by date use
   `group_memberships (group_id, valid_from)`). The group calendar's counts

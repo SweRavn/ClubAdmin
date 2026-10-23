@@ -609,7 +609,8 @@
     "activity_has_responses": "Noen har svart eller oppmøte er registrert: avlys aktiviteten i stedet.",
     "response_not_requested": "Aktiviteten ber ikke om svar.",
     "response_closed": "Det er ikke lenger mulig å svare (etter fristen bare «kommer ikke»).",
-    "not_on_roster": "Personen er ikke med i aktivitetens gruppe.",
+    "not_on_roster": "Personen er ikke med i aktivitetens gruppe eller ikke innkalt.",
+    "activity_ended": "Aktiviteten har allerede vært.",
     "activity_not_started": "Oppmøte kan registreres fra en time før start.",
     "attendance_locked": "Oppmøtet er låst.",
     "correction_reason_required": "Oppgi en begrunnelse for rettelsen.",
@@ -1186,6 +1187,22 @@
     "presentCount": "{present} til stede, {leaders} ledere",
     "noSessions": "Ingen gjennomførte økter i perioden.",
     "protectedNotice": "Noen her har beskyttet identitet: ikke fotografer eller del listen."
+  },
+  "invitees": {
+    "title": "Innkalling",
+    "link": "Innkalling",
+    "whole": "Hele gruppen",
+    "wholeHint": "Alle i aktivitetens grupper deltar og kan svare.",
+    "selected": "Bare de jeg kaller inn",
+    "selectedHint": "Bare de innkalte har aktiviteten i timeplanen sin, kan svare og telles. Lederne er med som vanlig.",
+    "players": "Kall inn",
+    "save": "Lagre innkallingen",
+    "saved": "Innkallingen ble lagret.",
+    "count": "{count, plural, one {# innkalt} other {# innkalte}}",
+    "onlyInvited": "Bare innkalte deltar.",
+    "readOnly": "Det er de som planlegger aktiviteten som endrer innkallingen.",
+    "noCandidates": "Det finnes ingen medlemmer i gruppen å kalle inn.",
+    "closed": "Aktiviteten har allerede vært eller er avlyst."
   },
   "attendanceStatus": {
     "present": "Til stede",

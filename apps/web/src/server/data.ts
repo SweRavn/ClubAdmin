@@ -24,6 +24,7 @@ import {
   GuardianInvitationLookupSchema,
   InvitationListSchema,
   InvitationLookupSchema,
+  InviteesSchema,
   isUuid,
   JoinRequestListSchema,
   LocationConflictsSchema,
@@ -303,6 +304,12 @@ export const getResponseSummary = cache((activityId: string) =>
 /** The leaders' list of answers, or null if the viewer may not see it. */
 export const getResponseList = cache((activityId: string) =>
   apiGet(`/api/v1/activities/${requireId(activityId)}/responses?limit=200`, ResponseListSchema, {
+    nullOn: [403],
+  }),
+);
+/** Who may be called up and who is (#19), or null if the viewer does not lead the activity. */
+export const getInvitees = cache((activityId: string) =>
+  apiGet(`/api/v1/activities/${requireId(activityId)}/invitees`, InviteesSchema, {
     nullOn: [403],
   }),
 );

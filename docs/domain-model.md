@@ -513,7 +513,13 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
   cancelled or ended activities take no answers.
 - **The roster** of an activity is who was in its groups on its start
   (`group_memberships` valid at `starts_at`): members are participants,
-  the other functions leaders.
+  the other functions leaders. With a call-up (`activities.invitees_only`,
+  ADR 0036) the participants are only the members called up
+  (`activity_invitees`: club-owned, one per activity and person, IDs and
+  who called them up; readable across clubs by the person and their
+  guardians for "My schedule", which leaves the activity out for members
+  not called up). Those who manage the activity set it; answers of people
+  no longer called up are kept and not counted.
 - `activity_responses` (club-owned): one per activity and person on the
   roster: `status` (`attending`, `not_attending`), `note` (to the leaders,
   200 characters, may be about health: only the leaders and the person's

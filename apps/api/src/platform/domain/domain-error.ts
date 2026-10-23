@@ -108,6 +108,7 @@ export const DOMAIN_ERRORS = {
   response_not_requested: "conflict",
   response_closed: "conflict",
   not_on_roster: "conflict",
+  activity_ended: "conflict",
   activity_not_started: "conflict",
   attendance_locked: "forbidden",
   correction_reason_required: "validation",

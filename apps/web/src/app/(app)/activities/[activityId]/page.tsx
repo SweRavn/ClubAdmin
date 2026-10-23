@@ -5,7 +5,8 @@
 // series ("this and following"). Answers (P1.5): how many are coming, my
 // family's answers with the buttons, who is coming where the viewer may see
 // the group, and for leaders every answer with its note and "Take
-// attendance". Calendar data never lists participants.
+// attendance". A call-up (#19) is linked for leaders and noted for everyone.
+// Calendar data never lists participants.
 import { enumKey } from "@clubadmin/i18n";
 import { localDate, localTime } from "@clubadmin/shared";
 import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
@@ -191,6 +192,11 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           <h2 id="activity-responses" className="text-lg font-semibold">
             {t("responses.title")}
           </h2>
+          {activity.inviteesOnly ? (
+            <p className="text-sm" data-testid="invitees-only">
+              {t("invitees.onlyInvited")}
+            </p>
+          ) : null}
           <p data-testid="response-counts">{t("responses.counts", answers.counts)}</p>
           {answers.respondBy ? (
             <p className="text-sm text-muted">
@@ -285,7 +291,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
       ) : null}
 
       {list || activity.canManage ? (
-        <p>
+        <p className="flex flex-wrap gap-4">
           <a
             href={`/activities/${activity.id}/attendance`}
             className="text-accent underline"
@@ -293,6 +299,15 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           >
             {t("attendance.take")}
           </a>
+          {list ? (
+            <a
+              href={`/activities/${activity.id}/invitees`}
+              className="text-accent underline"
+              data-testid="invitees-link"
+            >
+              {t("invitees.link")}
+            </a>
+          ) : null}
         </p>
       ) : null}
 

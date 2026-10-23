@@ -42,10 +42,11 @@ export default async function AttendancePage({ params, searchParams }: Props) {
 
   // Guests: members of the viewer's other groups in the club (whose rosters they may read).
   const onSheet = new Set([...sheet.participants, ...sheet.leaders].map((m) => m.person.id));
+  // With a call-up (#19) the group's members who were not called up come as guests too.
   const otherGroups = myGroups.groups.filter(
     (g) =>
       g.club.id === activity.clubId &&
-      !activity.groups.some((a) => a.id === g.group.id) &&
+      (activity.inviteesOnly || !activity.groups.some((a) => a.id === g.group.id)) &&
       g.functions.some((f) => f !== "member"),
   );
   const rosters = editable

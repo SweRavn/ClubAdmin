@@ -609,7 +609,8 @@
     "activity_has_responses": "Someone has answered or attendance was taken: cancel the activity instead.",
     "response_not_requested": "This activity does not ask for answers.",
     "response_closed": "Answers are closed (after the deadline you can only say you are not coming).",
-    "not_on_roster": "The person is not in the activity's group.",
+    "not_on_roster": "The person is not in the activity's group or not called up.",
+    "activity_ended": "The activity has already taken place.",
     "activity_not_started": "Attendance can be taken from an hour before the start.",
     "attendance_locked": "Attendance is locked.",
     "correction_reason_required": "Give a reason for the correction.",
@@ -1186,6 +1187,22 @@
     "presentCount": "{present} present, {leaders} leaders",
     "noSessions": "No sessions held in this period.",
     "protectedNotice": "Some people here have protected identity: do not photograph or share this list."
+  },
+  "invitees": {
+    "title": "Call-up",
+    "link": "Call-up",
+    "whole": "The whole group",
+    "wholeHint": "Everyone in the activity's groups takes part and can answer.",
+    "selected": "Only those I call up",
+    "selectedHint": "Only those called up have the activity in their schedule, can answer and are counted. The leaders take part as usual.",
+    "players": "Call up",
+    "save": "Save the call-up",
+    "saved": "The call-up was saved.",
+    "count": "{count, plural, one {# called up} other {# called up}}",
+    "onlyInvited": "Only those called up take part.",
+    "readOnly": "Those who plan the activity change the call-up.",
+    "noCandidates": "There are no members in the group to call up.",
+    "closed": "The activity has already taken place or is cancelled."
   },
   "attendanceStatus": {
     "present": "Present",

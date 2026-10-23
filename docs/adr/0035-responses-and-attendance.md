@@ -110,5 +110,6 @@ are personal data about children and must never reveal a protected member
   sends them as soon as it is online). Signing out with unsent writes asks
   first.
 - Guests are added on the web; the app takes attendance for the roster.
-- Call-ups (inviting only some members to a match) are not modelled; the
-  roster is the whole group ([#19](https://github.com/SweRavn/ClubAdmin/issues/19)).
+- Call-ups (inviting only some members to a match) came afterwards: with
+  one, the roster's participants are those called up (ADR 0036,
+  [#19](https://github.com/SweRavn/ClubAdmin/issues/19)).

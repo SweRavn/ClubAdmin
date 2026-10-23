@@ -66,6 +66,13 @@ export const DOMAIN_EVENTS = {
     change: z.enum(["set", "withdrawn"]),
   }),
   "attendance.recorded": z.object({ clubId: id, activityId: id }),
+  /** Call-ups (#19): P1.7 tells those newly called up. */
+  "activity.invitees.changed": z.object({
+    clubId: id,
+    activityId: id,
+    added: z.array(id),
+    removed: z.array(id),
+  }),
 } as const;
 
 export type DomainEventType = keyof typeof DOMAIN_EVENTS;

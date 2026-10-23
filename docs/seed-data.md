@@ -199,7 +199,9 @@ schedule (Ola left two years ago).
   "not coming" with a note, Erik for Maja and Samira for Nadia in IKN F2015
   (Nadia counted, never named for other parents), and Oskar's and Liam's own
   answers to IKN P2012's match in five days (answers requested by the day
-  before). Gunilla and Nils see Alva's schedule without answer buttons (no
+  before). Karin has called up a squad for that match (ADR 0036): Oskar and
+  half the generated players; Liam is not called up, so his "not coming" is
+  kept but not counted and the match is not in his schedule. Gunilla and Nils see Alva's schedule without answer buttons (no
   `sign_up`). Attendance for every past session of the youth teams (SVK
   F2017, IKN P2012 and F2015, FIL J2014), taken by their leaders on the day:
   most present, some absent or excused, the leaders present, a Minivolley

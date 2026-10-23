@@ -130,6 +130,7 @@ export function toActivityResponse(view: ActivityView, canManage: boolean): Acti
     canManage,
     responseMode: a.responseMode,
     respondBy: a.respondBy ? iso(a.respondBy) : null,
+    inviteesOnly: a.inviteesOnly,
   };
 }
 

@@ -47,7 +47,17 @@ export interface ResponseCountRow {
 }
 
 /** The activity's roster: participants (members) and leaders of its groups on its start. */
-export function rosterQuery(activityIds: readonly string[]): SQL {
+export function rosterQuery(
+  activityIds: readonly string[],
+  options: { wholeGroups?: boolean } = {},
+): SQL {
+  // With a call-up (invitees_only, #19) only the people called up are
+  // participants; the leaders stay. wholeGroups: everyone who could be called up.
+  const calledUp = options.wholeGroups
+    ? sql``
+    : sql`AND (gm.function <> 'member' OR NOT a.invitees_only OR EXISTS (
+        SELECT 1 FROM public.activity_invitees i
+        WHERE i.club_id = a.club_id AND i.activity_id = a.id AND i.person_id = gm.person_id))`;
   return sql`
     SELECT ag.activity_id, gm.person_id,
       CASE WHEN bool_or(gm.function = 'member') THEN 'participant' ELSE 'leader' END AS role
@@ -55,13 +65,17 @@ export function rosterQuery(activityIds: readonly string[]): SQL {
     JOIN public.activity_groups ag ON ag.activity_id = a.id
     JOIN public.group_memberships gm ON gm.club_id = ag.club_id AND gm.group_id = ag.group_id
       AND gm.valid_from <= a.starts_at AND (gm.valid_to IS NULL OR gm.valid_to > a.starts_at)
-    WHERE a.id = ANY (${uuidArray(activityIds)}::uuid[])
+    WHERE a.id = ANY (${uuidArray(activityIds)}::uuid[]) ${calledUp}
     GROUP BY ag.activity_id, gm.person_id`;
 }
 
-export async function roster(tx: Tx, activityId: string): Promise<RosterRow[]> {
+export async function roster(
+  tx: Tx,
+  activityId: string,
+  options: { wholeGroups?: boolean } = {},
+): Promise<RosterRow[]> {
   const { rows } = await tx.execute<{ person_id: string; role: AttendanceRole }>(
-    rosterQuery([activityId]),
+    rosterQuery([activityId], options),
   );
   return rows.map((r) => ({ personId: r.person_id, role: r.role }));
 }
@@ -145,6 +159,39 @@ export async function deleteResponse(
     DELETE FROM public.activity_responses WHERE activity_id = ${activityId} AND person_id = ${personId}
     RETURNING id`);
   return rows.length > 0;
+}
+
+// --- Call-ups (#19) ---------------------------------------------------------------
+
+/** Who is called up to an activity. */
+export async function invitees(tx: Tx, activityId: string): Promise<string[]> {
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT person_id FROM public.activity_invitees WHERE activity_id = ${activityId}
+    ORDER BY person_id`);
+  return rows.map((r) => r.person_id);
+}
+
+export async function addInvitees(
+  tx: Tx,
+  input: { clubId: string; activityId: string; personIds: readonly string[]; invitedBy: string },
+): Promise<void> {
+  if (input.personIds.length === 0) return;
+  await tx.execute(sql`
+    INSERT INTO public.activity_invitees (club_id, activity_id, person_id, invited_by_person_id)
+    SELECT ${input.clubId}, ${input.activityId}, p, ${input.invitedBy}
+    FROM unnest(${uuidArray(input.personIds)}::uuid[]) AS p
+    ON CONFLICT (activity_id, person_id) DO NOTHING`);
+}
+
+export async function removeInvitees(
+  tx: Tx,
+  activityId: string,
+  personIds: readonly string[],
+): Promise<void> {
+  if (personIds.length === 0) return;
+  await tx.execute(sql`
+    DELETE FROM public.activity_invitees
+    WHERE activity_id = ${activityId} AND person_id = ANY (${uuidArray(personIds)}::uuid[])`);
 }
 
 /**
