@@ -57,7 +57,7 @@ export const importsDemoStep: DemoStep = {
     // IKN: the sample file, plus Oskar (already a member) and a row without a birth date.
     const karin = as(data.clubs.find((c) => c.key === "ikn")!.actor, "ikn");
     const oskar = data.personas.find((p) => p.key === "oskar")!;
-    const oskarBorn = env.clock.birthDate(oskar.age!, oskar.birthday!);
+    const oskarBorn = env.clock.birthDate(oskar.age!, oskar.birthday);
     const sample = new TextDecoder("windows-1252").decode(
       readFileSync(join(demoDataDir(), "imports", "medlemmar.csv")),
     );

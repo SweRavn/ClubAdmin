@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Structural checks that make the CLAUDE.md rules impossible to forget
 // (run by the integration tests on a freshly migrated database):
-// - every table with club_id has row-level security enabled and forced, and
-//   every other application table (schema public) has it at least enabled;
+// - every club-owned table (club_id NOT NULL) has row-level security enabled
+//   and forced, and every other application table (schema public, including
+//   global tables that only reference a club with a nullable club_id) has it
+//   at least enabled;
 // - every table has the record-history trigger unless excluded (history-exclusions.ts);
 // - every table with updated_at has the trigger that maintains it;
 // - clubadmin_app cannot bypass RLS, run DDL, own objects or rewrite history/audit.
@@ -42,7 +44,7 @@ export async function findGuardViolations(client: pg.ClientBase): Promise<GuardV
     has_updated_at_trigger: boolean;
   }>(`
     SELECT t.*,
-      EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = t.oid AND a.attname = 'club_id' AND NOT a.attisdropped) AS has_club_id,
+      EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = t.oid AND a.attname = 'club_id' AND a.attnotnull AND NOT a.attisdropped) AS has_club_id,
       EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = t.oid AND a.attname = 'updated_at' AND NOT a.attisdropped) AS has_updated_at,
       EXISTS (SELECT 1 FROM pg_trigger g WHERE g.tgrelid = t.oid AND g.tgfoid = 'history.capture'::regproc) AS has_history,
       EXISTS (SELECT 1 FROM pg_trigger g WHERE g.tgrelid = t.oid AND g.tgfoid = 'app.set_updated_at'::regproc) AS has_updated_at_trigger
@@ -56,7 +58,7 @@ export async function findGuardViolations(client: pg.ClientBase): Promise<GuardV
         rule: "rls",
         object: t.name,
         message:
-          "has club_id but row-level security is not enabled and forced: SELECT app.enable_tenant_rls(...)",
+          "has club_id NOT NULL (club-owned) but row-level security is not enabled and forced: SELECT app.enable_tenant_rls(...)",
       });
     }
     if (!t.has_club_id && t.name.startsWith("public.") && !t.relrowsecurity) {

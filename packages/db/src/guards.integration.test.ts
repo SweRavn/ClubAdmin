@@ -37,6 +37,9 @@ describe("CI guards", () => {
        CREATE TABLE public.half_done (id uuid PRIMARY KEY DEFAULT uuidv7(), club_id uuid NOT NULL);
        CREATE TABLE public.global_items (id uuid PRIMARY KEY DEFAULT uuidv7());
        SELECT history.enable_history('public.global_items');
+       CREATE TABLE public.club_refs (id uuid PRIMARY KEY DEFAULT uuidv7(), club_id uuid);
+       SELECT history.enable_history('public.club_refs');
+       ALTER TABLE public.club_refs ENABLE ROW LEVEL SECURITY;
        ALTER TABLE public.half_done ENABLE ROW LEVEL SECURITY;
        SELECT history.enable_history('public.half_done');`,
     );
@@ -46,9 +49,13 @@ describe("CI guards", () => {
       "rls:public.bad_items",
       "rls:public.global_items", // no club_id, but still needs RLS
       "rls:public.half_done", // enabled but not forced
+      // public.club_refs: a nullable club_id is a reference, not ownership; enabled is enough
       "updated_at:public.bad_items",
     ]);
-    await t.query("owner", "DROP TABLE public.bad_items, public.half_done, public.global_items");
+    await t.query(
+      "owner",
+      "DROP TABLE public.bad_items, public.half_done, public.global_items, public.club_refs",
+    );
   });
 
   it("report app-role privileges that would allow rewriting history", async () => {
