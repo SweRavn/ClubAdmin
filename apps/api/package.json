@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts && vitest run --config vitest.integration.config.ts --mode timed",
     "openapi": "pnpm run build && node --enable-source-maps ./dist/scripts/write-openapi.js",
     "bench": "node --enable-source-maps ./dist/scripts/bench.js",
     "seed": "pnpm run build && node --enable-source-maps ./dist/seed/cli.js seed",

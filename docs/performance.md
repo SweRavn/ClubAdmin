@@ -114,6 +114,11 @@ budgets are requirements; CI measures them.
   counts skip people. The query plans use indexes for every club table and,
   for searches and filters, for people. Exports of 10,000 members take about
   a second in the worker (batches of 1,000 into a multipart upload).
+- The tests that measure time against a budget (the register, the schedule
+  and the import's performance test) run after the other integration tests,
+  one file at a time (`vitest --mode timed` in `pnpm test:integration`):
+  run next to files that load data, the register's page measured up to
+  160 ms on CI.
 - Activities (P1.4, `schedule-plans.integration.test.ts`: 200 clubs, 1,600
   teams of 20 children, 64,000 activities): a guardian's "My schedule" over
   two clubs (four weeks, row-level security included) about 6 ms p95 (budget
