@@ -28,6 +28,7 @@ import { billingTrialHandler } from "./billing.ts";
 import { graphileLogger } from "./graphile-logger.ts";
 import { mailHandler, memoryMailProvider } from "./mail.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
+import { deleteExpiredAttendance } from "./tasks/attendance.ts";
 import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards, notifyOwnLoginAge } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
@@ -894,6 +895,86 @@ describe("joining:retention", () => {
       [club],
     );
     expect(rows).toEqual([{ token_hash: `live-${club}` }]);
+  });
+});
+
+describe("attendance:retention", () => {
+  it("deletes answers and attendance after the club's retention, nothing else", async () => {
+    const club = uuidv7();
+    const person = uuidv7();
+    const [old, recent, longKept] = [uuidv7(), uuidv7(), uuidv7()];
+    const otherClub = uuidv7();
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        "INSERT INTO people (id, given_name, family_name) VALUES ($1, 'R', 'T')",
+        [person],
+      );
+      // The second club keeps everything for 24 months.
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, attendance_retention_months)
+         VALUES ($1, 'Närvaro IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK', 12),
+                ($3, 'Långminne IF', $4, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK', 24)`,
+        [club, `attendance-${club.slice(-8)}`, otherClub, `attendance-${otherClub.slice(-8)}`],
+      );
+      await session.query(
+        `INSERT INTO club_role_assignments (club_id, person_id, role)
+         VALUES ($1, $3, 'club_manager'), ($2, $3, 'club_manager')`,
+        [club, otherClub, person],
+      );
+      const activity = (id: string, clubId: string, monthsAgo: number) =>
+        session.query(
+          `INSERT INTO activities (id, club_id, kind, title, starts_at, ends_at, created_by_person_id)
+           VALUES ($1, $2, 'training', 'Träning', now() - make_interval(months => $3),
+             now() - make_interval(months => $3) + interval '1 hour', $4)`,
+          [id, clubId, monthsAgo, person],
+        );
+      await activity(old, club, 13);
+      await activity(recent, club, 11);
+      await activity(longKept, otherClub, 13);
+      for (const [id, clubId] of [
+        [old, club],
+        [recent, club],
+        [longKept, otherClub],
+      ] as const) {
+        await session.query(
+          `INSERT INTO activity_responses (club_id, activity_id, person_id, status, responded_by_person_id)
+           VALUES ($1, $2, $3, 'attending', $3)`,
+          [clubId, id, person],
+        );
+        await session.query(
+          `INSERT INTO attendance_records (club_id, activity_id, person_id, status, recorded_by_person_id)
+           VALUES ($1, $2, $3, 'present', $3)`,
+          [clubId, id, person],
+        );
+      }
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    const deleted = await deleteExpiredAttendance(t.db);
+    expect(deleted).toMatchObject({ responses: 1, attendance: 1 });
+    for (const table of ["activity_responses", "attendance_records"]) {
+      const { rows } = await t.query<{ activity_id: string }>(
+        "admin",
+        `SELECT activity_id FROM ${table} WHERE club_id IN ($1, $2) ORDER BY activity_id`,
+        [club, otherClub],
+      );
+      expect(rows.map((r) => r.activity_id).sort()).toEqual([recent, longKept].sort());
+    }
+    // The activity itself stays.
+    const { rows } = await t.query("admin", "SELECT id FROM activities WHERE id = $1", [old]);
+    expect(rows).toHaveLength(1);
+  });
+
+  it("is refused outside a system job", async () => {
+    const [club = ""] = createTestClubs(1);
+    await expect(
+      t.db.withTenant(asPerson(uuidv7(), club), (tx) =>
+        tx.execute(sql`SELECT * FROM app.purge_expired_attendance()`),
+      ),
+    ).rejects.toThrow(/system job/);
   });
 });
 

@@ -18,7 +18,7 @@ const taskList = createTaskList({
 });
 
 describe("worker", () => {
-  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining retention, export expiry and import purging; every cron task exists", () => {
+  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining and attendance retention, export expiry and import purging; every cron task exists", () => {
     const items = parseCrontab(crontab);
     expect(items.map((i) => i.task)).toEqual([
       "heartbeat",
@@ -26,6 +26,7 @@ describe("worker", () => {
       "guardianships:flag_adult_wards",
       "ops:backup_metrics",
       "joining:retention",
+      "attendance:retention",
       "members:expire_exports",
       "members:purge_imports",
     ]);

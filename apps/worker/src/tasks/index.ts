@@ -8,6 +8,7 @@ import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 
 import { generateInvoicesTask } from "../billing.ts";
+import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
@@ -86,6 +87,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     }),
     "ops:backup_metrics": backupMetricsTask(deps.db),
     "joining:retention": joiningRetentionTask(deps.db),
+    "attendance:retention": attendanceRetentionTask(deps.db),
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
     "members:purge_imports": purgeMemberImportsTask(deps.db, deps.storage ?? null),
@@ -98,8 +100,9 @@ export function createTaskList(deps: TaskDependencies): TaskList {
  * history partition maintenance daily at 03:17 UTC and the wards' age checks
  * (adult age, own-login age) daily at 04:23 UTC (both catching up after
  * downtime), backup metrics every
- * five minutes, joining retention daily at 04:53 UTC, expired member exports
- * every ten minutes and member import staging data hourly (P1.3b).
+ * five minutes, joining retention daily at 04:53 UTC, answers and attendance
+ * past their club's retention daily at 05:07 UTC (#18), expired member
+ * exports every ten minutes and member import staging data hourly (P1.3b).
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -107,6 +110,7 @@ export const crontab = [
   "23 4 * * * guardianships:flag_adult_wards ?fill=2d",
   "*/5 * * * * ops:backup_metrics ?max=1",
   "53 4 * * * joining:retention ?fill=2d",
+  "7 5 * * * attendance:retention ?fill=2d",
   "*/10 * * * * members:expire_exports ?max=1",
   "17 * * * * members:purge_imports ?max=1",
 ].join("\n");

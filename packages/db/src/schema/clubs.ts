@@ -76,6 +76,8 @@ export const clubs = pgTable(
     groupOwnersAdmitToClub: boolean().notNull().default(true),
     /** Days after an activity during which its leaders record attendance (P1.5). */
     attendanceLockDays: integer().notNull().default(30),
+    /** Months after an activity that its answers and attendance are kept (at least 12; #18). */
+    attendanceRetentionMonths: integer().notNull().default(12),
     ...timestamps,
   },
   (t) => [
@@ -84,6 +86,10 @@ export const clubs = pgTable(
     check("clubs_access_state", oneOf(t.accessState, CLUB_ACCESS_STATES)),
     check("clubs_join_policy", oneOf(t.joinPolicy, JOIN_POLICIES)),
     check("clubs_attendance_lock_days", sql`${t.attendanceLockDays} BETWEEN 1 AND 365`),
+    check(
+      "clubs_attendance_retention_months",
+      sql`${t.attendanceRetentionMonths} BETWEEN 12 AND 120`,
+    ),
     check("clubs_country", sql`${t.country} ~ '^[A-Z]{2}$'`),
     check("clubs_currency", sql`${t.currency} ~ '^[A-Z]{3}$'`),
     check("clubs_slug_shape", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),

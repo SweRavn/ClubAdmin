@@ -104,6 +104,8 @@ export const UpdateClubSettingsSchema = z
     groupOwnersAdmitToClub: z.boolean(),
     /** Days after an activity during which its leaders record attendance (P1.5). */
     attendanceLockDays: z.number().int().min(1).max(365),
+    /** Months after an activity that its answers and attendance are kept (at least 12). */
+    attendanceRetentionMonths: z.number().int().min(12).max(120),
   })
   .partial()
   .strict();

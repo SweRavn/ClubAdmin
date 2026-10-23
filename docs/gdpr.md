@@ -59,7 +59,7 @@
 | Data | Default |
 |---|---|
 | Former member's profile | 2 years after leaving (allows re-joining, annual reports) |
-| Attendance/LOK records | As required by grant rules (currently several years; set in country pack) |
+| Answers and attendance (P1.5) | The club's `attendance_retention_months` after the activity ended: at least 12 (the default), at most 120, a club setting (no page sets it yet; the club settings page will); a club that reports grants from its attendance sets it as long as the grant rules require (worker `attendance:retention`, [#18](https://github.com/SweRavn/ClubAdmin/issues/18)). Record history keeps the deleted rows for its own period |
 | Accounting records | 7 years (Bokföringslagen) |
 | Chat messages | Until room deleted, or club rule (e.g. 2 years) |
 | Background-check verification metadata | While role is held + 1 year |

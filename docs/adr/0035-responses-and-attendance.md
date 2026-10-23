@@ -93,11 +93,18 @@ are personal data about children and must never reveal a protected member
 
 **Consequences.**
 
-- Retention is not decided here: attendance is kept for grant reporting
-  and responses lose their value once an activity has passed; P1.8 decides
-  the periods and the jobs ([#18](https://github.com/SweRavn/ClubAdmin/issues/18)).
-  Erasure (`privacy.erase_person`) already removes the notes on a
-  person's answers and scrubs them from the history.
+- **Retention** (decided after P1.5, [#18](https://github.com/SweRavn/ClubAdmin/issues/18)):
+  answers and attendance are kept at least 12 months after the activity
+  ended. The period is the club's `attendance_retention_months` (default
+  12, at most 120; a club setting that no page sets yet), so a club that reports grants
+  from its attendance can keep it as long as the grant rules require, and
+  the default can change later without a migration of the data. The
+  worker's `attendance:retention` job deletes both, club by club, through
+  `app.purge_expired_attendance()`, the only way attendance is deleted (the
+  app roles have no DELETE on it); the activities stay, and record history
+  keeps the deleted rows for its own period (ADR 0017). Erasure
+  (`privacy.erase_person`) already removes the notes on a person's answers
+  and scrubs them from the history.
 - Paused writes are persisted with the cache, whose buster includes the app
   version: writes left unsent across an app update are lost (rare; the app
   sends them as soon as it is online). Signing out with unsent writes asks

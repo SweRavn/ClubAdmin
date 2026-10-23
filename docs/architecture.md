@@ -522,6 +522,7 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `ops:backup_metrics` | every 5 minutes | Reads the latest backup runs and restore verification for the backup gauges (docs/operations/backup-restore.md, "Monitoring") |
 | `billing:generate_invoices` | 1st of the month, 04:41 UTC (billing on only) | Placeholder until P1.13 (InvoiceGenerator) |
 | `joining:retention` | daily 04:53 UTC | Deletes decided join requests and unusable invitations 12 months after their last change, club by club (`docs/gdpr.md`) |
+| `attendance:retention` | daily 05:07 UTC | Deletes answers and attendance of activities that ended more than the club's `attendance_retention_months` ago (at least 12), club by club, through `app.purge_expired_attendance()` (the app roles cannot delete attendance otherwise; #18) |
 | `members:export` | per export (insert trigger on `member_exports`) | Writes a member register export as CSV to object storage in batches (P1.2) |
 | `members:purge_imports` | hourly | Deletes member import staging rows and files seven days after the import ended (P1.3b) |
 | `members:import_parse`, `members:import_run` | per import (status trigger on `member_imports`) | **Run by the API process** (ADR 0033), not the worker: read and validate an import file; add the confirmed members in batches |

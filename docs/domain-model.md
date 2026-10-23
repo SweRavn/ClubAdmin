@@ -527,14 +527,16 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
   `recorded_by_person_id`, `recorded_at` (the device's time; the newer mark
   wins), `corrected_reason`. Leaders record from an hour before the start
   until `clubs.attendance_lock_days` (default 30) after it; then club
-  managers and registrars correct, with a reason. Never deleted.
+  managers and registrars correct, with a reason. Never deleted, except by
+  the retention job.
 - Counts include protected members; names of those attending are shown
   only to viewers who may read the group's roster, through the person
   presenter (protected members are counted, never named, for others).
 - Legal basis: the membership (running the activity) and, for attendance,
-  the club's grant reporting. Retention is decided in P1.8
-  ([#18](https://github.com/SweRavn/ClubAdmin/issues/18)); erasure removes
-  the notes on a person's answers.
+  the club's grant reporting. Both are kept for the club's
+  `attendance_retention_months` (at least 12, default 12, at most 120) after
+  the activity ended, then deleted by the worker (`attendance:retention`;
+  the activity stays); erasure removes the notes on a person's answers.
 - Grant rules per session come from the country pack (`se`: LOK-stöd, at
   least 45 minutes, three participants aged 7–25, a leader of 13 or more);
   the leaders see them as hints.
