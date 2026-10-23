@@ -50,3 +50,4 @@ test the foundation by hand.
 | [P1.3 Guardians and children: add child, co-guardians, relatives, duplicates, own login, age transitions](P1.3-guardians-and-children.md) | P1.2 |
 | [P1.3b Adding members by hand and importing them from a file](P1.3b-add-and-import-members.md) | P1.3 |
 | [P1.4 Activities: recurring trainings, matches, locations, in-app calendar](P1.4-activities-and-calendar.md) | P1.3b |
+| [P1.5 Responses (attending / not attending) and attendance taking](P1.5-responses-and-attendance.md) (draft) | P1.4 |
