@@ -58,13 +58,17 @@ Develop inside WSL2 (Ubuntu), not in Windows directly:
    server.
 3. Install Node 24 inside WSL as above.
 
-> **If Windows cannot reach the WSL files** (`\\wsl.localhost\Ubuntu` "is not
-> available" in Explorer, or `Import-Certificate` from `pnpm dev:trust-ca` says
-> "The certificate file could not be found") while WSL works in the terminal:
-> run `wsl --shutdown` in PowerShell, open the Ubuntu terminal again and retry.
-> Afterwards, if `pnpm dev:services` reports containers as exited or keeps
-> failing with `ECONNRESET`, start them over with `pnpm dev:down && pnpm
-> dev:services` (data is kept), or restart Docker Desktop.
+#### Troubleshooting on Windows
+
+Problems seen on a Windows machine and how they were solved:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Explorer says `\\wsl.localhost\Ubuntu` "is not available", and `Import-Certificate` (printed by `pnpm dev:trust-ca`) says "The certificate file could not be found", although WSL works in the terminal | Windows' access to the WSL files had stopped working | `wsl --shutdown` in PowerShell, open the Ubuntu terminal again, run the `Import-Certificate` command again |
+| After that, `pnpm dev:doctor` shows `garage` and `caddy` as **exited** (their logs look normal, the health status stays `starting`) | Docker Desktop did not start those containers again after the WSL restart | `pnpm dev:services` starts them |
+| `pnpm dev:services` then fails with `ECONNRESET` (`Database: ECONNRESET, trying again…`) | Docker Desktop's port forwarding to the containers that kept running (PostgreSQL) was stale after the WSL restart | `pnpm dev:down && pnpm dev:services` (stops and starts all containers; data is kept). If that does not help, restart Docker Desktop |
+| The login page opens on `http://localhost:3000`, but every persona answers **403 Forbidden** | Port 3000 is Next.js without Caddy; logging in only accepts forms from the app's own origin (`PUBLIC_WEB_URL`, `https://clubadmin.localhost`), and the session cookies are HTTPS-only | Open **https://clubadmin.localhost/login** instead (Chrome, Edge and Firefox resolve `*.localhost` themselves) |
+| `pnpm dev:doctor` warns that `*.localhost` names do not resolve | Programs inside WSL (the API, the tools) need the names; browsers on Windows do not | Add `127.0.0.1 clubadmin.localhost api.clubadmin.localhost auth.clubadmin.localhost mail.clubadmin.localhost` to `/etc/hosts` in WSL (if it is gone after a WSL restart, to `C:\Windows\System32\drivers\etc\hosts`) |
 
 ### First run
 
