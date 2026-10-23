@@ -58,6 +58,11 @@ Develop inside WSL2 (Ubuntu), not in Windows directly:
    server.
 3. Install Node 24 inside WSL as above.
 
+> **If Windows cannot reach the WSL files** (`\\wsl.localhost\Ubuntu` "is not
+> available" in Explorer, or `Import-Certificate` from `pnpm dev:trust-ca` says
+> "The certificate file could not be found") while WSL works in the terminal:
+> run `wsl --shutdown` in PowerShell, open the Ubuntu terminal again and retry.
+
 ### First run
 
 ```bash
