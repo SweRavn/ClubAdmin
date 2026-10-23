@@ -68,6 +68,10 @@ export async function bootstrap(options: BootstrapOptions): Promise<void> {
     connectionString: options.adminUrl,
     application_name: "clubadmin-bootstrap",
   });
+  // A connection reset (Docker Desktop's port proxy right after a restart) then
+  // fails the pending query instead of crashing the process as an unhandled
+  // "error" event.
+  client.on("error", () => undefined);
   await client.connect();
   try {
     await bootstrapRoles(client, options.passwords);

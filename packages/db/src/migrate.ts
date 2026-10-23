@@ -112,6 +112,10 @@ export async function migrate(options: MigrateOptions): Promise<MigrateResult> {
     connectionString: options.ownerUrl,
     application_name: "clubadmin-migrate",
   });
+  // A connection reset (Docker Desktop's port proxy right after a restart) then
+  // fails the pending query instead of crashing the process as an unhandled
+  // "error" event.
+  client.on("error", () => undefined);
   await client.connect();
   try {
     await client.query("SELECT pg_advisory_lock(hashtext($1))", [LOCK_KEY]);

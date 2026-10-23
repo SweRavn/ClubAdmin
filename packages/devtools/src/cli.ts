@@ -125,6 +125,34 @@ Otherwise start Caddy over with a new CA:
   }
 }
 
+const TRANSIENT = new Set(["ECONNRESET", "ECONNREFUSED", "EPIPE", "ETIMEDOUT"]);
+
+/** The error's code, also when it is the cause of a fetch failure. */
+function errorCode(error: unknown): string | undefined {
+  const own = (error as { code?: unknown } | null)?.code;
+  if (typeof own === "string") return own;
+  const cause = (error as { cause?: { code?: unknown } } | null)?.cause?.code;
+  return typeof cause === "string" ? cause : undefined;
+}
+
+/**
+ * Retries a step whose connection is reset or refused: right after the
+ * containers report healthy (above all after a WSL restart), Docker Desktop's
+ * port proxy can still drop the first connections.
+ */
+async function retryTransient<T>(label: string, step: () => Promise<T>): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await step();
+    } catch (error) {
+      const code = errorCode(error);
+      if (attempt >= 6 || !code || !TRANSIENT.has(code)) throw error;
+      console.log(`${label}: ${code}, trying again (${attempt}/5)…`);
+      await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+    }
+  }
+}
+
 async function startServices(full: boolean, enableBackup = false): Promise<boolean> {
   const added = ensureEnvLocal();
   if (added.length > 0) console.log(`.env.local: generated ${added.length} setting(s).`);
@@ -160,33 +188,39 @@ async function startServices(full: boolean, enableBackup = false): Promise<boole
   const env = loadEnv();
   // The application's key gets the files bucket; the backup key (separate
   // credentials) reads it and writes the backup and replica buckets.
-  const changes = await setupGarage({
-    adminUrl: `http://127.0.0.1:${env.get("GARAGE_ADMIN_PORT") ?? "3903"}`,
-    adminToken: requireEnv(env, "GARAGE_ADMIN_TOKEN"),
-    accessKeyId: requireEnv(env, "S3_ACCESS_KEY_ID"),
-    secretAccessKey: requireEnv(env, "S3_SECRET_ACCESS_KEY"),
-    buckets: [requireEnv(env, "S3_BUCKET_FILES")],
-    keys: [
-      {
-        accessKeyId: requireEnv(env, "BACKUP_S3_ACCESS_KEY_ID"),
-        secretAccessKey: requireEnv(env, "BACKUP_S3_SECRET_ACCESS_KEY"),
-        name: "clubadmin-dev-backup",
-        grants: [
-          { bucket: requireEnv(env, "S3_BUCKET_FILES"), write: false },
-          { bucket: requireEnv(env, "BACKUP_S3_BUCKET"), write: true },
-          { bucket: requireEnv(env, "FILES_REPLICA_S3_BUCKET"), write: true },
-        ],
-      },
-    ],
-  });
+  const changes = await retryTransient("Garage", () =>
+    setupGarage({
+      adminUrl: `http://127.0.0.1:${env.get("GARAGE_ADMIN_PORT") ?? "3903"}`,
+      adminToken: requireEnv(env, "GARAGE_ADMIN_TOKEN"),
+      accessKeyId: requireEnv(env, "S3_ACCESS_KEY_ID"),
+      secretAccessKey: requireEnv(env, "S3_SECRET_ACCESS_KEY"),
+      buckets: [requireEnv(env, "S3_BUCKET_FILES")],
+      keys: [
+        {
+          accessKeyId: requireEnv(env, "BACKUP_S3_ACCESS_KEY_ID"),
+          secretAccessKey: requireEnv(env, "BACKUP_S3_SECRET_ACCESS_KEY"),
+          name: "clubadmin-dev-backup",
+          grants: [
+            { bucket: requireEnv(env, "S3_BUCKET_FILES"), write: false },
+            { bucket: requireEnv(env, "BACKUP_S3_BUCKET"), write: true },
+            { bucket: requireEnv(env, "FILES_REPLICA_S3_BUCKET"), write: true },
+          ],
+        },
+      ],
+    }),
+  );
   for (const change of changes) console.log(`Garage: ${change}`);
 
   // Database roles, grants and migrations (idempotent).
-  await bootstrap({
-    adminUrl: requireEnv(env, "DATABASE_ADMIN_URL"),
-    passwords: passwordsFromEnv(Object.fromEntries(env)),
-  });
-  const migrated = await migrate({ ownerUrl: requireEnv(env, "DATABASE_OWNER_URL") });
+  await retryTransient("Database", () =>
+    bootstrap({
+      adminUrl: requireEnv(env, "DATABASE_ADMIN_URL"),
+      passwords: passwordsFromEnv(Object.fromEntries(env)),
+    }),
+  );
+  const migrated = await retryTransient("Database", () =>
+    migrate({ ownerUrl: requireEnv(env, "DATABASE_OWNER_URL") }),
+  );
   console.log(
     migrated.applied.length > 0
       ? `Database: applied ${migrated.applied.join(", ")}`
