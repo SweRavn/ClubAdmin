@@ -36,6 +36,10 @@ export default function SignedInLayout() {
           name="activities/[activityId]"
           options={{ title: t("activities.calendar") }}
         />
+        <Stack.Screen
+          name="attendance/[activityId]"
+          options={{ title: t("attendance.title") }}
+        />
         <Stack.Screen name="home" options={{ title: t("home.title") }} />
         <Stack.Screen name="clubs/[clubId]/index" options={{ title: t("club.overview") }} />
         <Stack.Screen name="clubs/[clubId]/groups" options={{ title: t("club.groups") }} />

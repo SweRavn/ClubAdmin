@@ -24,6 +24,8 @@ export const DEMO_ACTIVITY_IDS = {
   iknP2012Series: "0199a000-0000-7000-8014-000000000004",
   iknF2015Series: "0199a000-0000-7000-8014-000000000005",
   filJ2014Series: "0199a000-0000-7000-8014-000000000006",
+  /** An extra F2017 session that started half an hour before seeding (taking attendance, P1.5). */
+  svkF2017Extra: "0199a000-0000-7000-8015-000000000001",
 } as const;
 
 const DAY_MS = 86_400_000;
@@ -144,6 +146,20 @@ export const activitiesDemoStep: DemoStep = {
       ["Division 2: Hisingens VK", "home", null],
       ["Division 2: Lerums VBK", "home", null],
     ]);
+    // An extra session going on as the demo is seeded: attendance can be taken at once.
+    const started = env.clock.now.getTime() - 30 * 60_000;
+    await s.activities.createActivity(
+      anna,
+      id("svk-f2017"),
+      {
+        kind: "training",
+        title: "Extrapass inför matchen",
+        startsAt: new Date(started).toISOString(),
+        endsAt: new Date(started + 75 * 60_000).toISOString(),
+        locationId: DEMO_ACTIVITY_IDS.strandvikenHall,
+      },
+      { id: DEMO_ACTIVITY_IDS.svkF2017Extra },
+    );
     await s.activities.createActivity(anna, id("svk-f2017"), {
       kind: "meeting",
       title: "Föräldramöte inför vårsäsongen",

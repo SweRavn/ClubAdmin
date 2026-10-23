@@ -130,8 +130,24 @@ budgets are requirements; CI measures them.
   created with all its sessions in three statements (sessions, their groups,
   calendar entries); changing it is a comparison by date and one statement
   each for deletes, updates and inserts. The load scenario has 32 trainings
-  per team (256,000 activities); `pnpm db:reset --scenario load` takes about
-  210 s locally.
+  per team (256,000 activities); `pnpm db:reset --scenario load` took about
+  210 s locally at P1.4.
+- Responses and attendance (P1.5, the same test with answers to each team's
+  first ten sessions and attendance for eight, 320,000 answers and 256,000
+  marks): "My schedule" with each person's answer about 8 ms p95 (the
+  answers are a subquery of the same statement on `activity_responses
+  (person_id, activity_id)`). The roster with its answers and a group's
+  attendance summary have no sequential scan of `activity_responses`,
+  `attendance_records` or `group_memberships` (rosters by date use
+  `group_memberships (group_id, valid_from)`). The group calendar's counts
+  are one grouped statement per page; saving attendance is two statements
+  (the current marks, one upsert of the changes) however many marks are
+  sent. The load scenario has attendance for each team's six latest
+  sessions and answers to the next four (816,000 marks, 241,000 answers):
+  `pnpm db:reset --scenario load` takes about 410 s locally (budget 10
+  minutes; each row also writes record history, about 0.2 ms per row in
+  this bulk insert, so every past session, 2.4 million marks, took
+  700 s).
 - Member imports (P1.3b, `member-imports.performance.integration.test.ts`:
   10,000 rows, each a child with a guardian shared by two siblings, through
   the same code as the import jobs): reading, sealing and validating the file
@@ -149,7 +165,7 @@ budgets are requirements; CI measures them.
 - Seeding (P0.8): `pnpm db:reset` with the demo scenario about 7 s including
   the build (budget 15 s; the seed itself about 4 s); `pnpm db:reset --scenario
   load` (1,000 clubs, 200,000 people, plus one club of 10,000 members for the
-  register, and 256,000 activities since P1.4) about 210 s locally (budget 10 minutes,
+  register, 256,000 activities since P1.4, attendance and answers since P1.5) about 410 s locally (budget 10 minutes,
   nightly workflow). The nightly job only seeds so far; measuring the budgets
   against that data is [#10](https://github.com/SweRavn/ClubAdmin/issues/10).
 - Web (P0.9, ADR 0027), on the production build behind Caddy in CI:

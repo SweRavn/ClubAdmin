@@ -224,6 +224,34 @@ describe("demo scenario", () => {
     expect(seedJobs[0]!.n).toBe(0);
   });
 
+  it("has answers and attendance (P1.5): Elsa's changed answer, Sara's correction, a guest", async () => {
+    const id = (key: string) => data.personas.find((p) => p.key === key)!.id;
+    const { rows: elsa } = await first.query<{ status: string; responded_by_person_id: string }>(
+      "admin",
+      "SELECT status, responded_by_person_id FROM activity_responses WHERE person_id = $1",
+      [id("elsa")],
+    );
+    expect(elsa).toEqual([{ status: "not_attending", responded_by_person_id: id("mikael") }]);
+    const { rows: alva } = await first.query<{ status: string; recorded_by_person_id: string }>(
+      "admin",
+      `SELECT status, recorded_by_person_id FROM attendance_records
+       WHERE person_id = $1 AND corrected_reason = 'Fel markering'`,
+      [id("alva")],
+    );
+    expect(alva).toEqual([{ status: "present", recorded_by_person_id: id("sara") }]);
+    const { rows: counts } = await first.query<{ guests: number; sessions: number; own: number }>(
+      "admin",
+      `SELECT (SELECT count(*) FROM attendance_records WHERE guest)::int AS guests,
+              (SELECT count(DISTINCT activity_id) FROM attendance_records)::int AS sessions,
+              (SELECT count(*) FROM activity_responses WHERE person_id IN ($1, $2)
+                 AND responded_by_person_id = person_id)::int AS own`,
+      [id("oskar"), id("liam")],
+    );
+    expect(counts[0]?.guests).toBe(1);
+    expect(counts[0]?.sessions).toBeGreaterThan(40);
+    expect(counts[0]?.own).toBe(2);
+  });
+
   it("uses reserved test data only", async () => {
     const { rows } = await first.query<{ email: string }>(
       "admin",
@@ -393,6 +421,13 @@ describe("minimal and load scenarios", () => {
                 (SELECT count(*) FROM club_role_assignments WHERE role = 'club_manager')::int AS managers`,
       );
       expect(rows[0]).toEqual({ clubs: 3, people: 10_400, members: 10_320, managers: 3 });
+      const { rows: p15 } = await t.query<{ marks: number; answers: number }>(
+        "admin",
+        `SELECT (SELECT count(*) FROM attendance_records)::int AS marks,
+                (SELECT count(*) FROM activity_responses)::int AS answers`,
+      );
+      expect(p15[0]?.marks).toBeGreaterThan(0);
+      expect(p15[0]?.answers).toBeGreaterThan(0);
     } finally {
       await t.drop();
     }

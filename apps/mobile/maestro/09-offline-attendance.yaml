@@ -1,0 +1,55 @@
+# Taking attendance without coverage (P1.5): Erik opens the F2017 session
+# going on now (seeded half an hour before `pnpm db:reset`: run soon after),
+# goes offline, marks Alva absent and saves; the change waits
+# in the outbox and is sent when the phone is online again.
+appId: ${APP_ID}
+name: Offline attendance
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000005
+- back
+- extendedWaitUntil:
+    visible:
+      id: "schedule-screen"
+    timeout: 20000
+- tapOn:
+    id: "schedule-item-0199a000-0000-7000-8015-000000000001"
+- extendedWaitUntil:
+    visible:
+      id: "activity-screen"
+    timeout: 20000
+- tapOn:
+    id: "take-attendance"
+- extendedWaitUntil:
+    visible:
+      id: "attendance-screen"
+    timeout: 20000
+- setAirplaneMode: enabled
+- scrollUntilVisible:
+    element:
+      id: "mark-absent-0199a000-0000-7000-8000-000000000008"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "mark-absent-0199a000-0000-7000-8000-000000000008"
+- scrollUntilVisible:
+    element:
+      id: "attendance-save"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "attendance-save"
+- scrollUntilVisible:
+    element:
+      id: "outbox-pending"
+    direction: UP
+    timeout: 20000
+- setAirplaneMode: disabled
+- extendedWaitUntil:
+    notVisible:
+      id: "outbox-pending"
+    timeout: 60000
+- assertNotVisible:
+    id: "outbox-failed"

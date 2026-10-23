@@ -403,7 +403,8 @@ and ward).
   guardian, the adult ward or the club (with a warning in the UI); never for
   contact persons. Older clients show the new kinds as "Other" (ADR 0029).
   Each later feature enforces the right it needs (schedule P1.4, sign-up
-  P1.5/P1.6, messages P1.7, medical notes later).
+  P1.5/P1.6, messages P1.7, medical notes later). P1.5: answering for a
+  ward needs `sign_up`.
 - Who links them: a full guardian while the ward is under `adult_age`; the
   ward themselves from `consent_age` (with their own login; acting on
   behalf only from `adult_age`); a club's registrar or manager from a paper
@@ -498,9 +499,45 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
 - Changing a series applies from a date (never in the past); "this and
   following" ends the series the day before a session and starts a new one
   with the changes. Deleting a session skips its date in the series. Past
-  sessions are never rewritten (attendance, P1.5).
+  sessions are never rewritten (attendance, P1.5). A session with answers
+  or attendance is never deleted: deleting it is refused, and a series
+  change that drops it cancels it (ADR 0035).
 - Calendars never list participants (ADR 0021): the activity page shows the
   leaders of its groups through the person presenter.
+
+### Responses and attendance (P1.5, ADR 0035)
+- `activities.response_mode` (`none`, `optional`, `requested`; by kind:
+  trainings optional, matches and meetings requested, other none) and
+  `respond_by`; a series has the mode and `respond_by_minutes` before each
+  session. Until the deadline any answer, after it only "not attending";
+  cancelled or ended activities take no answers.
+- **The roster** of an activity is who was in its groups on its start
+  (`group_memberships` valid at `starts_at`): members are participants,
+  the other functions leaders.
+- `activity_responses` (club-owned): one per activity and person on the
+  roster: `status` (`attending`, `not_attending`), `note` (to the leaders,
+  200 characters, may be about health: only the leaders and the person's
+  family see it), `responded_by_person_id` (the person or a guardian with
+  `sign_up`; full guardians hold every right), `responded_at`. Readable
+  across clubs by the person and their guardians (`own_read`, for "My
+  schedule").
+- `attendance_records` (club-owned): one per activity and person:
+  `status` (`present`, `absent`, `excused`), `role` (`participant`,
+  `leader`), `guest` (a club member not on the roster),
+  `recorded_by_person_id`, `recorded_at` (the device's time; the newer mark
+  wins), `corrected_reason`. Leaders record from an hour before the start
+  until `clubs.attendance_lock_days` (default 30) after it; then club
+  managers and registrars correct, with a reason. Never deleted.
+- Counts include protected members; names of those attending are shown
+  only to viewers who may read the group's roster, through the person
+  presenter (protected members are counted, never named, for others).
+- Legal basis: the membership (running the activity) and, for attendance,
+  the club's grant reporting. Retention is decided in P1.8
+  ([#18](https://github.com/SweRavn/ClubAdmin/issues/18)); erasure removes
+  the notes on a person's answers.
+- Grant rules per session come from the country pack (`se`: LOK-stöd, at
+  least 45 minutes, three participants aged 7–25, a leader of 13 or more);
+  the leaders see them as hints.
 
 ### `calendar_feeds` (ADR 0021)
 Personal, secret, revocable iCalendar subscription URLs: `person_id`, `scope`
@@ -583,6 +620,10 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `activity.manage` | activity | those who manage every one of its groups (as `group.activities.manage`) |
 | `club.activities.read` | club | the club calendar and double bookings: club managers, registrars, the board roles |
 | `club.locations.manage` | club | club managers |
+| `activity.respond` | activity | members of one of its groups and guardians with `sign_up` of one (P1.5); the controller limits whom (the caller, those wards), the service the roster |
+| `activity.responses.read` | activity | the leaders' list of answers: those who manage one of its groups and `other_leader`; not physios, members or guardians |
+| `activity.attendance.manage` | activity | taking attendance: as `activity.responses.read`, club managers and registrars; after the lock only club managers and registrars (corrections) |
+| `group.attendance.read` | group | a group's attendance summary: its leaders and owners (also of parent groups), club managers, registrars |
 | `ops.backup.read` | platform (the installation, no IDs) | platform operators (in a self-hosted installation its administrators), with MFA: `GET /api/v1/ops/backup-status` |
 | `club.access_state.update` | club | platform operators, with MFA (read-only and suspended clubs, also with billing off) |
 | `billing.plans.read` | platform | platform operators, with MFA (billing on only) |

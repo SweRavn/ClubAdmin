@@ -105,7 +105,7 @@ names.
 Planned modules (see `roadmap.md` for order):
 
 `identity` · `people` · `clubs` · `groups` (incl. waiting lists) · `memberships` · `authorization` (incl. person visibility) ·
-`audit` (audit events + record history) · `privacy` (GDPR) · `notifications` · `activities` · `attendance` ·
+`audit` (audit events + record history) · `privacy` (GDPR) · `notifications` · `activities` (incl. responses and attendance, ADR 0035) ·
 `events` · `calendar` (iCal feeds, invitations) · `carpool` · `messaging` (email/board) · `chat` · `documents` ·
 `clearances` (background checks) · `grants` (LOK-stöd, country packs) ·
 `plans` (training plans/library) · `finance` (team cash desk, fees) ·
@@ -364,6 +364,12 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   change from a date, "this and following"), `/clubs/[id]/calendar` and
   `/clubs/[id]/locations` (with double bookings). Times are entered in the
   club's time zone and converted with `zonedTime` (`packages/shared`).
+  Responses and attendance (P1.5): "Coming" / "Not coming" per person in
+  "My schedule" and on `/activities/[id]` (counts, who is coming, the
+  leaders' list), `/activities/[id]/attendance` (prefilled marks, guests,
+  corrections after the lock, LOK-stöd hints) and
+  `/groups/[id]/attendance` (a group's summary); one form each, no client
+  JavaScript needed.
 - **Security:** CSP with a fresh nonce per request (`src/proxy.ts`),
   Trusted Types in production, no inline scripts, `frame-ancestors 'none'`,
   further headers in `next.config.ts` (ADR 0027). Production builds use
@@ -390,9 +396,9 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
 - **Screens:** login (Zitadel, persona picker in development builds), "My
   schedule" (the start screen since P1.4: the coming four weeks of my and my
   wards' activities across clubs by day, chips per person, cancelled ones
-  marked; offline from the persisted cache), activity (when, where with a
-  map link, notes, leaders; the cached schedule entry before the details
-  arrive), clubs and groups (my clubs with the club switcher, my groups, my
+  marked; offline from the persisted cache; answer buttons, P1.5), activity
+  (when, where with a map link, notes, leaders, answers; the cached schedule
+  entry before the details arrive), attendance (leaders, P1.5), clubs and groups (my clubs with the club switcher, my groups, my
   children's groups, "viewing as"), club overview, groups tree, group (owners, leaders,
   members, keyset-paginated), profile, settings (language, time zone, theme,
   biometric unlock, sessions, about, logout), about (version, "Source code",
@@ -401,7 +407,10 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
 - **Offline:** the query cache is persisted to MMKV, encrypted per account,
   and shown at once on start; requests pause while offline (NetInfo) and run
   when the app returns to the foreground. Data older than 15 minutes shows
-  its age. Read-only: writes come with the outbox (P1.5).
+  its age. Writes (answers, attendance) go through the offline outbox
+  (P1.5, ADR 0035): paused mutations persisted with the cache, sent in
+  order when online with an Idempotency-Key; refused ones are shown with
+  the reason.
 - **Locale:** the same chains as the web: language from the user's
   preference, the current club, the device, English; time zone from the
   user, the club, the device.

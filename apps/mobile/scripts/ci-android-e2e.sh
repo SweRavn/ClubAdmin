@@ -48,6 +48,9 @@ scripts/measure-cold-start.sh "$app_id" 5 2000 | tee "$out/cold-start.txt"
 
 flows offline maestro/05-offline-and-logout.yaml
 
+# Answers and attendance through the offline outbox (P1.5).
+flows responses maestro/08-answer.yaml maestro/09-offline-attendance.yaml
+
 # The Custom Tab is Chrome, which shows its first-run screens on a fresh
 # emulator. Skip them (Chrome reads this file on emulator images); the flow
 # also dismisses them in case it does not.

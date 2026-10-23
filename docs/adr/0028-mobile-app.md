@@ -70,7 +70,10 @@ had to be decided:
   buster of app version and cache schema version, so data written by another
   version is discarded. Cached data is shown immediately on start, refreshed
   in the background, and labelled with its age when older than 15 minutes.
-  Writes and an offline outbox come with P1.5.
+  Writes go through an offline outbox (P1.5, ADR 0035): mutations that
+  pause offline, are persisted with this cache and run in order when
+  online, each with an Idempotency-Key and the time it was made; signing
+  out with unsent writes asks first.
 - **Protected people on screen:** screens that show people with protected
   identity block screenshots and screen recordings on Android (`FLAG_SECURE`)
   and blur the app switcher snapshot on iOS, while they are shown.

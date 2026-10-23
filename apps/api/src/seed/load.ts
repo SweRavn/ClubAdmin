@@ -4,8 +4,10 @@
 // set-based transaction as superuser, recorded in history as a system job.
 // Per club: 200 people (120 children with a parent each, 40 adult members,
 // 40 parents who are not members), 8 teams with two leaders each, and a
-// club manager, and 32 trainings per team (P1.4). Default size 1,000 clubs,
-// about 200,000 people and 256,000 activities. Plus one
+// club manager, and 32 trainings per team (P1.4) with attendance for the
+// six latest past ones and answers from half of the children to the next
+// four (P1.5). Default size 1,000 clubs, about 200,000 people, 256,000
+// activities and 0.8 million attendance marks. Plus one
 // large club (P1.2, the member register's budgets): 10,000 members in 40
 // teams, half with photo consent, some paused, a few protected.
 
@@ -69,12 +71,14 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
       SELECT c.id AS club_id, g, uuidv7() AS id FROM lc AS c CROSS JOIN generate_series(1, 8) AS g;
     INSERT INTO groups (id, club_id, name, kind, admission_mode)
       SELECT id, club_id, 'Lag ' || g, 'team', 'direct' FROM lg;
-    INSERT INTO group_memberships (club_id, group_id, person_id, function)
-      SELECT p.club_id, g.id, p.id, 'member'
+    -- In their teams since last year (so past activities have them on the roster, P1.5).
+    INSERT INTO group_memberships (club_id, group_id, person_id, function, valid_from)
+      SELECT p.club_id, g.id, p.id, 'member', now() - interval '1 year'
       FROM lp AS p JOIN lg AS g ON g.club_id = p.club_id AND g.g = 1 + (p.n - 1) % 8
       WHERE p.child;
-    INSERT INTO group_memberships (club_id, group_id, person_id, function)
-      SELECT p.club_id, g.id, p.id, CASE WHEN p.n <= 128 THEN 'head_coach' ELSE 'assistant_coach' END
+    INSERT INTO group_memberships (club_id, group_id, person_id, function, valid_from)
+      SELECT p.club_id, g.id, p.id, CASE WHEN p.n <= 128 THEN 'head_coach' ELSE 'assistant_coach' END,
+             now() - interval '1 year'
       FROM lp AS p JOIN lg AS g ON g.club_id = p.club_id AND g.g = 1 + (p.n - 121) % 8
       WHERE p.n BETWEEN 121 AND 136;
     -- Activities (P1.4): two trainings a week per team, eight weeks back and
@@ -91,6 +95,39 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
     INSERT INTO schedule_entries (club_id, activity_id, group_id, kind, title, status, starts_at, ends_at, all_day, changed_at)
       SELECT club_id, id, group_id, 'training', 'Träning', 'scheduled', starts_at, starts_at + interval '90 minutes', false, now()
       FROM la;
+    -- Responses and attendance (P1.5): marks for the six latest past sessions
+    -- (members and leaders, recorded by the head coach), answers from half of
+    -- the children to the next four sessions. (Every past session would take
+    -- the scenario over its ten minutes: each row also writes history.)
+    CREATE TEMP TABLE lr ON COMMIT DROP AS
+      SELECT a.id AS activity_id, a.club_id, a.group_id, a.starts_at,
+             row_number() OVER (PARTITION BY a.group_id ORDER BY a.starts_at DESC) AS k
+      FROM la AS a WHERE a.starts_at < now() - interval '2 hours';
+    CREATE TEMP TABLE lu ON COMMIT DROP AS
+      SELECT a.id AS activity_id, a.club_id, a.group_id,
+             row_number() OVER (PARTITION BY a.group_id ORDER BY a.starts_at) AS ahead
+      FROM la AS a WHERE a.starts_at >= now();
+    ANALYZE lr;
+    ANALYZE lu;
+    INSERT INTO attendance_records (club_id, activity_id, person_id, status, role, recorded_by_person_id, recorded_at)
+      SELECT r.club_id, r.activity_id, gm.person_id,
+             CASE WHEN gm.function <> 'member' THEN 'present'
+                  WHEN (r.k + abs(hashtext(gm.person_id::text))) % 9 = 0 THEN 'absent'
+                  WHEN (r.k + abs(hashtext(gm.person_id::text))) % 13 = 0 THEN 'excused'
+                  ELSE 'present' END,
+             CASE WHEN gm.function = 'member' THEN 'participant' ELSE 'leader' END,
+             coach.person_id, r.starts_at + interval '100 minutes'
+      FROM lr AS r
+      JOIN group_memberships AS gm ON gm.group_id = r.group_id
+      JOIN group_memberships AS coach ON coach.group_id = r.group_id AND coach.function = 'head_coach'
+      WHERE r.k <= 6;
+    INSERT INTO activity_responses (club_id, activity_id, person_id, status, responded_by_person_id)
+      SELECT r.club_id, r.activity_id, gm.person_id,
+             CASE WHEN abs(hashtext(gm.person_id::text)) % 5 = 0 THEN 'not_attending' ELSE 'attending' END,
+             gm.person_id
+      FROM lu AS r
+      JOIN group_memberships AS gm ON gm.group_id = r.group_id AND gm.function = 'member'
+      WHERE r.ahead <= 4 AND abs(hashtext(gm.person_id::text)) % 2 = 0;
     -- The large club.
     CREATE TEMP TABLE bc ON COMMIT DROP AS SELECT uuidv7() AS id;
     INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number)

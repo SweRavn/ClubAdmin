@@ -11,6 +11,7 @@ import { Generator } from "./generator.ts";
 import { seedLoad } from "./load.ts";
 import { seedMinimal } from "./minimal.ts";
 import { activitiesDemoStep } from "./steps/activities.ts";
+import { attendanceDemoStep } from "./steps/attendance.ts";
 import { billingDemoStep } from "./steps/billing.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
 import { importsDemoStep } from "./steps/imports.ts";
@@ -23,6 +24,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   billingDemoStep,
   importsDemoStep,
   activitiesDemoStep,
+  attendanceDemoStep,
 ];
 
 export interface SeedOptions {

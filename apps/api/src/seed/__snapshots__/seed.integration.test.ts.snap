@@ -95,6 +95,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
           "Hallen är upptagen av kommunen",
         ],
         "detachedSessions": [
+          "Avbröts efter 40 minuter (brandlarm i hallen).",
           "Flyttad till gymnastiksalen i skolan denna vecka.",
         ],
         "locations": [
@@ -110,6 +111,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
           "match Division 2: Hisingens VK: svk-herr",
           "match Division 2: Kustens VK: svk-herr",
           "match Division 2: Lerums VBK: svk-herr",
+          "training Extrapass inför matchen: svk-f2017",
           "meeting Föräldramöte inför vårsäsongen: svk-f2017",
           "match Poolspel F10: svk-f2017",
           "match Seriematch mot Kustens VK: svk-f2017",

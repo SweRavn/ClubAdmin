@@ -1,0 +1,27 @@
+# Answering (P1.5): Anna answers for her children from My schedule; the
+# answer goes through the outbox and shows at once.
+appId: ${APP_ID}
+name: Answer coming / not coming
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- back
+- extendedWaitUntil:
+    visible:
+      id: "schedule-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element: "Kommer inte"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    text: "Kommer inte"
+    index: 0
+- assertNotVisible:
+    id: "outbox-failed"
+- extendedWaitUntil:
+    notVisible:
+      id: "outbox-pending"
+    timeout: 20000

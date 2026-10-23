@@ -523,7 +523,11 @@ class CoreSeeder {
         const age = this.env.generator.int(g.generated.ageFrom, g.generated.ageTo);
         await this.createGenerated(ctx, person, this.generatedBirthDate(g, age));
         await this.s.memberships.addMember(ctx, person.id);
-        await this.s.memberships.addToGroup(ctx, g.id, person.id);
+        const row = await this.s.memberships.addToGroup(ctx, g.id, person.id);
+        // In the group since last year, so past activities have them on the roster (P1.5).
+        await this.backdate("group_memberships", g.club, sql`id = ${row.id}`, {
+          from: this.env.clock.past("-1y"),
+        });
         ids.push(person.id);
       }
       this.generated.set(g.key, ids);

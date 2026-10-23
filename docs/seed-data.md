@@ -171,8 +171,8 @@ own login (half a year ago). The waiting list of F2017 has five waiting, one
 outstanding offer (expires in 3 days), one admitted out of order ("sibling
 already plays in the group") and one offer that a system job expired
 yesterday. Seeded now as data only, for modules that come later: background
-checks (clearances), billing plans, chat rooms, the anonymisation schedule
-(Ola left two years ago) and Sara's correction of an attendance mark.
+checks (clearances), billing plans, chat rooms and the anonymisation
+schedule (Ola left two years ago).
 
 ## Demo scenario: activity and other data (added as modules land)
 
@@ -192,9 +192,26 @@ checks (clearances), billing plans, chat rooms, the anonymisation schedule
   (coach in SVK and IKN, Maja's father) sees both clubs in "My schedule";
   Gunilla (Alva's grandmother, `view_schedule`) sees F2017; Bo (Emma's
   contact person) has only `receive_messages`, so no schedule.
-- Attendance for the past trainings (some sessions below LOK-stöd thresholds
-  to test validation) comes with P1.5; one cup weekend (event with sign-up,
-  deadline, and car pool: Mikael offers 3 seats, Anna requests 1) with events.
+- **Responses and attendance** (P1.5, `apps/api/src/seed/steps/attendance.ts`,
+  through the attendance service): answers for the coming two weeks in SVK
+  F2017 (Sara for Alva, Erik for Maja, about half of the generated players),
+  Elsa's answer to the first match given by Anna and changed by Mikael to
+  "not coming" with a note, Erik for Maja and Samira for Nadia in IKN F2015
+  (Nadia counted, never named for other parents), and Oskar's and Liam's own
+  answers to IKN P2012's match in five days (answers requested by the day
+  before). Gunilla and Nils see Alva's schedule without answer buttons (no
+  `sign_up`). Attendance for every past session of the youth teams (SVK
+  F2017, IKN P2012 and F2015, FIL J2014), taken by their leaders on the day:
+  most present, some absent or excused, the leaders present, a Minivolley
+  player as a guest in F2017, one F2017 session cut short at 40 minutes and
+  one with two participants (LOK-stöd hints), and Sara's correction of
+  Alva's mark about 40 days ago ("Fel markering", after the lock; in
+  history). An extra F2017 session ("Extrapass inför matchen") starts half
+  an hour before seeding, so attendance can be taken at once (Maestro flow
+  09). Generated players are in their groups since last year, so past
+  sessions have them on the roster.
+- One cup weekend (event with sign-up, deadline, and car pool: Mikael offers
+  3 seats, Anna requests 1) with events (P1.6).
 - Chat rooms per group: "Ledare", "Föräldrar", "Spelare" (players room only for
   groups where players have accounts); protected persons only where accepted.
 - SVK training plan "Volleyboll 9 år — hösttermin" shared publicly; IKN copies it.
@@ -215,8 +232,8 @@ checks (clearances), billing plans, chat rooms, the anonymisation schedule
   phone number (two months ago), Anna accepted Peter's hand-over (last year,
   which ended his manager role; his board role ended then too), Anna approved
   Johan's application (last year), Oskar and Liam got their own logins, and a
-  system job expired an offer on F2017's waiting list (yesterday). Sara's
-  attendance correction comes with the attendance module.
+  system job expired an offer on F2017's waiting list (yesterday). Sara
+  corrected an attendance mark (P1.5, above).
 - **Member register** (P1.2): Johan is SVK's registrar, Lars's SVK membership
   is paused and Ola's ended; Elsa and Maja gave photo consent, the others in
   F2017 (Alva among them) did not. Sara exported SVK's register three days
@@ -243,7 +260,10 @@ club manager), `--size` sets the number of clubs, plus **Storklubben**: one
 club of 10,000 members in 40 teams (half with photo consent, every 50th
 membership paused, a few protected) for the member register's budgets
 (P1.2). Activities (P1.4): 32 trainings per team, eight weeks back and
-eight ahead (256,000 activities with their calendar entries). Attendance and
-more years of activities, and chat messages (10 million), are added by
-their modules. Used by
+eight ahead (256,000 activities with their calendar entries). Responses and
+attendance (P1.5): marks for each team's six latest past sessions (members
+and leaders, about 0.8 million) and answers from half of the children to the
+next four. More
+years of activities, and chat messages (10 million), are added by their
+modules. Used by
 the performance tests (`performance.md`).

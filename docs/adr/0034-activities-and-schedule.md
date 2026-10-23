@@ -39,6 +39,8 @@ activity, maintained by the worker from domain events) and a rolling
   on their own) are left alone, and their dates are not filled again.
   Deleting a session of a series adds its date to the series' skipped dates
   so later changes do not bring it back. Past sessions are never rewritten.
+  A session with answers or attendance (P1.5) is never deleted: a change
+  that drops it cancels it, and deleting it is refused (ADR 0035).
 - **"This and following"** splits at a session on date D (not in the
   past): the series ends on D-1, a new series with the changes starts on D,
   and the sessions from D on move to it (same IDs; then the same comparison

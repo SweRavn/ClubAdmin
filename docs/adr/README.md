@@ -40,3 +40,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0032](0032-joining-and-transactional-email.md) | Joining: join requests, invitation secrets, cross-club lookups and transactional email | Accepted |
 | [0033](0033-member-imports.md) | Member imports: jobs in the API process, CSV only, staging rows | Accepted |
 | [0034](0034-activities-and-schedule.md) | Activities: materialised series and a per-group schedule read model | Accepted |
+| [0035](0035-responses-and-attendance.md) | Responses and attendance: separate records, a roster by date, an offline outbox | Accepted |
