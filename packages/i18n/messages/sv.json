@@ -1132,6 +1132,7 @@
     "answerNeeded": "Svar behövs",
     "closed": "Det går inte längre att svara.",
     "counts": "{attending} kommer · {notAttending} kommer inte · {notAnswered} har inte svarat",
+    "countsShort": "Svar: {attending} ja, {notAttending} nej, {notAnswered} saknas",
     "attendingList": "Kommer",
     "nobody": "Ingen har svarat än.",
     "leadersList": "Alla svar",

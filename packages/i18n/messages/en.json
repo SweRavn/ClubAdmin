@@ -1132,6 +1132,7 @@
     "answerNeeded": "Answer needed",
     "closed": "Answers are closed.",
     "counts": "{attending} coming · {notAttending} not coming · {notAnswered} not answered",
+    "countsShort": "Answers: {attending} yes, {notAttending} no, {notAnswered} missing",
     "attendingList": "Coming",
     "nobody": "Nobody has answered yet.",
     "leadersList": "All answers",

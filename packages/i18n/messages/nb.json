@@ -1132,6 +1132,7 @@
     "answerNeeded": "Svar trengs",
     "closed": "Det er ikke lenger mulig å svare.",
     "counts": "{attending} kommer · {notAttending} kommer ikke · {notAnswered} har ikke svart",
+    "countsShort": "Svar: {attending} ja, {notAttending} nei, {notAnswered} mangler",
     "attendingList": "Kommer",
     "nobody": "Ingen har svart ennå.",
     "leadersList": "Alle svar",

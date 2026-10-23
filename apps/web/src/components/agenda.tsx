@@ -141,8 +141,8 @@ export async function Agenda({
                       <span className="block text-sm">{item.cancelledReason}</span>
                     ) : null}
                     {item.counts ? (
-                      <span className="block text-sm text-muted" data-testid="agenda-counts">
-                        {t("responses.counts", item.counts)}
+                      <span className="block text-xs text-muted" data-testid="agenda-counts">
+                        {t("responses.countsShort", item.counts)}
                       </span>
                     ) : null}
                     {!cancelled && item.responses?.some((r) => r.canRespond) ? (
