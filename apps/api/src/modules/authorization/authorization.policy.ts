@@ -11,7 +11,14 @@ import {
   type RegisterAccess,
 } from "@clubadmin/shared";
 
-import { type ClubResource, definePolicy, type PersonResource, type Policy } from "./policy.ts";
+import {
+  type ClubResource,
+  definePolicy,
+  type PersonResource,
+  type Policy,
+  type ResourceKind,
+  type Resources,
+} from "./policy.ts";
 import type { Actor, GroupRef } from "./relationship-set.ts";
 
 /**
@@ -424,6 +431,20 @@ const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permissi
 
 export function policyFor(permission: Permission): Policy | undefined {
   return byPermission.get(permission);
+}
+
+/**
+ * Whether the actor holds a permission on a resource (its one policy), for
+ * hints in a response such as which links to show. MFA requirements are not
+ * applied here; the endpoints still enforce them.
+ */
+export function permits<K extends ResourceKind>(
+  actor: Actor,
+  permission: Permission,
+  resource: Resources[K],
+): boolean {
+  const policy = policyFor(permission);
+  return policy?.resource === resource.kind && (policy as Policy<K>).allows({ actor, resource });
 }
 
 /**

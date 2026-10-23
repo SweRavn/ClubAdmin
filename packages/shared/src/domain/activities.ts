@@ -306,6 +306,8 @@ export type ActivityPage = z.infer<typeof ActivityPageSchema>;
 export const GroupCalendarSchema = ActivityPageSchema.extend({
   /** Whether the viewer may add activities and series to the group. */
   canManage: z.boolean(),
+  /** Whether the viewer may read the group's attendance summary (P1.5). */
+  canReadAttendance: z.boolean(),
 }).openapi("GroupCalendar");
 export type GroupCalendar = z.infer<typeof GroupCalendarSchema>;
 

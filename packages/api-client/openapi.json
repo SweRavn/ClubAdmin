@@ -4592,10 +4592,14 @@
             "properties": {
               "canManage": {
                 "type": "boolean"
+              },
+              "canReadAttendance": {
+                "type": "boolean"
               }
             },
             "required": [
-              "canManage"
+              "canManage",
+              "canReadAttendance"
             ]
           }
         ]

@@ -8,6 +8,7 @@ export {
   canReadGroupMembers,
   canRespondInGroup,
   clubPermissions,
+  permits,
   type ProfileAccess,
   profileAccess,
   registerAccess,

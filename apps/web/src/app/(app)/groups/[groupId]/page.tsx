@@ -16,7 +16,6 @@ import {
   getClub,
   getClubGroups,
   getGroup,
-  getGroupAttendanceIfAllowed,
   getGroupCalendarIfAllowed,
   getGroupMembers,
 } from "../../../../server/data.ts";
@@ -44,13 +43,11 @@ export default async function GroupPage({ params, searchParams }: Params) {
   const limit = pageSize(query.limit);
   const week = weekOffset(query.week);
   const range = weekRange(week, CALENDAR_WEEKS);
-  const [t, group, roster, calendar, attendance] = await Promise.all([
+  const [t, group, roster, calendar] = await Promise.all([
     getTranslations(),
     getGroup(groupId),
     getGroupMembers(groupId, limit),
     getGroupCalendarIfAllowed(groupId, range.from, range.to),
-    // Only to know whether to link the attendance summary.
-    getGroupAttendanceIfAllowed(groupId, range.from),
   ]);
   const [club, groups] = await Promise.all([getClub(group.clubId), getClubGroups(group.clubId)]);
   const parent = groups.find((g) => g.id === group.parentGroupId) ?? null;
@@ -125,9 +122,9 @@ export default async function GroupPage({ params, searchParams }: Params) {
             <h2 id="group-calendar" className="text-lg font-semibold">
               {t("activities.calendar")}
             </h2>
-            {calendar.canManage || attendance ? (
+            {calendar.canManage || calendar.canReadAttendance ? (
               <div className="flex flex-wrap gap-2">
-                {attendance ? (
+                {calendar.canReadAttendance ? (
                   <a
                     href={`/groups/${group.id}/attendance`}
                     className={secondaryButtonClass}

@@ -3121,6 +3121,7 @@ export interface components {
     };
     GroupCalendar: components["schemas"]["ActivityPage"] & {
       canManage: boolean;
+      canReadAttendance: boolean;
     };
     CreateActivityRequest: {
       /** @enum {string} */

@@ -66,6 +66,7 @@ import {
   CurrentAuthorization,
   type GroupRef,
   LEADER_FUNCTIONS,
+  permits,
   PersonPresenter,
   type RequestAuthorization,
   resourceOf,
@@ -315,6 +316,7 @@ export class ActivitiesController {
       }),
       nextCursor: page.nextCursor,
       canManage: !group.archived && canManageGroupActivities(authz.actor, group),
+      canReadAttendance: permits(authz.actor, "group.attendance.read", group),
     };
   }
 

@@ -318,18 +318,6 @@ export const getGroupAttendance = cache(
       GroupAttendanceSchema,
     ),
 );
-/** Whether the viewer may see the group's attendance (a summary of one minute; null if not). */
-export const getGroupAttendanceIfAllowed = cache((groupId: string, at: string) =>
-  apiGet(
-    `/api/v1/groups/${requireId(groupId)}/attendance?${rangeQuery(
-      at,
-      new Date(Date.parse(at) + 60_000).toISOString(),
-    )}&limit=1`,
-    GroupAttendanceSchema,
-    { nullOn: [403] },
-  ),
-);
-
 /** All of a club's locations (archived ones too with `archived`). */
 export const getLocations = cache(
   async (clubId: string, archived = false): Promise<LocationList["items"]> => {

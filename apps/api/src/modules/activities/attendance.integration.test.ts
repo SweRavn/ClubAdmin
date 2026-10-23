@@ -341,6 +341,7 @@ describe("responses", () => {
         responseCounts: { attending: 2, notAttending: 1, notAnswered: 0, roster: 3 },
       }),
     ]);
+    expect(calendar.json<{ canReadAttendance: boolean }>().canReadAttendance).toBe(true);
     const forMemberCalendar = await api(
       x.member.id,
       "GET",
@@ -349,6 +350,7 @@ describe("responses", () => {
     expect(
       forMemberCalendar.json<{ items: { responseCounts?: unknown }[] }>().items[0]?.responseCounts,
     ).toBeUndefined();
+    expect(forMemberCalendar.json<{ canReadAttendance: boolean }>().canReadAttendance).toBe(false);
   });
 
   it("'My schedule' has each person's answer and whether the viewer may give it", async () => {
