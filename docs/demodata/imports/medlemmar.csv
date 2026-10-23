@@ -1,0 +1,7 @@
+Förnamn;Efternamn;Födelsedatum;Kön;Mobil;E-post;Gatuadress;Postnummer;Ort;Medlemstyp;Medlem sedan;Grupp;Vårdnadshavare 1 förnamn;Vårdnadshavare 1 efternamn;Vårdnadshavare 1 mobil;Vårdnadshavare 1 e-post;Vårdnadshavare 1 relation;Vårdnadshavare 2 förnamn;Vårdnadshavare 2 efternamn;Vårdnadshavare 2 mobil;Vårdnadshavare 2 e-post;Vårdnadshavare 2 relation;Vårdnadshavare 3 förnamn;Vårdnadshavare 3 efternamn;Vårdnadshavare 3 mobil;Vårdnadshavare 3 e-post;Vårdnadshavare 3 relation;Vårdnadshavare 4 förnamn;Vårdnadshavare 4 efternamn;Vårdnadshavare 4 mobil;Vårdnadshavare 4 e-post;Vårdnadshavare 4 relation
+Saga;Öberg;2015-03-14;Flicka;;;Björkvägen 4;123 46;Strandviken;Aktiv;2021-08-15;Fotboll;Åsa;Öberg;070-111 22 33;asa.oberg@example.test;Förälder;Mikael;Lund;070-222 33 44;;Förälder;Jonas;Ekström;070-333 44 55;;Bonuspappa;Gunnel;Öberg;070-444 55 66;;Mormor
+Elis;Öberg Lund;2017-08-01;Pojke;;;Björkvägen 4;123 46;Strandviken;Aktiv;2023-01-10;Innebandy;Åsa;Öberg;070-111 22 33;asa.oberg@example.test;Förälder;Mikael;Lund;070-222 33 44;;Förälder;;;;;;;;;;
+Ines;Haddad;2014-11-20;Flicka;;ines.haddad@example.test;;;;Aktiv;2020-09-01;Fotboll;Samir;Haddad;070-555 66 77;;Förälder;;;;;;;;;;;;;;;
+Melvin;Berglund;2016-06-06;Pojke;;;;;;Aktiv;;Innebandy;Karin;Dahlström;070-666 77 88;;Familjehem;;;;;;;;;;;;;;;
+Bertil;Ström;1961-05-05;Man;070-777 88 99;bertil.strom@example.test;Kyrkogatan 2;123 47;Strandviken;Stödmedlem;2010-01-15;;;;;;;;;;;;;;;;;;;;;
+Linnéa;Sjögren;1990-02-02;Kvinna;070-888 99 00;;;;;Aktiv;2019-03-01;Fotboll;;;;;;;;;;;;;;;;;;;;

@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { createDatabase } from "@clubadmin/db";
 import { createLogger, loadEnvFiles, onShutdown } from "@clubadmin/server-kit";
-import { ObjectStorage, objectStorageConfig } from "@clubadmin/server-kit/object-storage";
+import {
+  FILE_EXPIRY_RULES,
+  ObjectStorage,
+  objectStorageConfig,
+} from "@clubadmin/server-kit/object-storage";
 import { run } from "graphile-worker";
 import { Redis } from "ioredis";
 
@@ -69,15 +73,15 @@ logger.info(
   "worker started",
 );
 
-// Backstop for member exports (P1.2): the bucket deletes them after two days
-// even if the expiry job does not run.
+// Backstop for member exports (P1.2) and import files (P1.3b): the bucket
+// deletes them after two days even if the jobs that delete them do not run.
 if (storage) {
   storage
-    .ensureExpiryRule({ id: "member-exports", prefix: "exports/", days: 2 })
+    .ensureExpiryRules(FILE_EXPIRY_RULES)
     .then((result) => {
       if (result === "conflict") {
         logger.warn(
-          "the files bucket has other lifecycle rules: add one for exports/ (docs/gdpr.md)",
+          "the files bucket has other lifecycle rules: add ones for exports/ and imports/ (docs/gdpr.md)",
         );
       }
     })

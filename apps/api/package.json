@@ -46,6 +46,7 @@
     "@nestjs/core": "catalog:",
     "@nestjs/platform-fastify": "catalog:",
     "fastify": "catalog:",
+    "graphile-worker": "catalog:",
     "ioredis": "catalog:",
     "jose": "catalog:",
     "reflect-metadata": "catalog:",

@@ -64,6 +64,23 @@ export class FieldEncryption {
     );
   }
 
+  /** Encrypts many values with the club's active key, read once (imports, P1.3b). */
+  async encryptMany(
+    tx: Tx,
+    clubId: string | null,
+    items: readonly { plaintext: string; aad: string }[],
+  ): Promise<string[]> {
+    if (items.length === 0) return [];
+    const keyring = this.requireKeyring();
+    const stored = await dataKeyStore.getOrCreateActive(tx, clubId, (id) => {
+      const generated = keyring.generateDataKey(id);
+      this.keys.set(id, generated.key);
+      return generated.wrapped;
+    });
+    const key = this.unwrap(keyring, stored.id, stored.wrappedKey);
+    return items.map((item) => encryptField(key, stored.id, item.plaintext, item.aad));
+  }
+
   async decrypt(tx: Tx, ciphertext: string, aad: string): Promise<string> {
     const keyring = this.requireKeyring();
     const keyId = sealedKeyId(ciphertext);

@@ -109,26 +109,32 @@ export function presignGetUrl(input: {
   /** Extra query parameters to sign, e.g. response-content-disposition. */
   query?: Record<string, string>;
   now?: Date;
+  /** GET (default) or PUT (uploads). */
+  method?: "GET" | "PUT";
+  /** Extra headers the client must send unchanged (lower-case names), e.g. content-length. */
+  headers?: Record<string, string>;
 }): string {
   const amzDate = amzDateOf(input.now ?? new Date());
   const dateStamp = amzDate.slice(0, 8);
   const scope = `${dateStamp}/${input.region}/s3/aws4_request`;
   const url = new URL(input.url);
+  const headers: Record<string, string> = { ...input.headers, host: url.host };
+  const headerNames = Object.keys(headers).sort();
   const params: Record<string, string> = {
     ...input.query,
     "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
     "X-Amz-Credential": `${input.accessKeyId}/${scope}`,
     "X-Amz-Date": amzDate,
     "X-Amz-Expires": String(input.expiresSeconds),
-    "X-Amz-SignedHeaders": "host",
+    "X-Amz-SignedHeaders": headerNames.join(";"),
   };
   const query = canonicalQuery(Object.entries(params));
   const canonicalRequest = [
-    "GET",
+    input.method ?? "GET",
     canonicalUri(url),
     query,
-    `host:${url.host}\n`,
-    "host",
+    headerNames.map((h) => `${h}:${headers[h]?.trim()}\n`).join(""),
+    headerNames.join(";"),
     "UNSIGNED-PAYLOAD",
   ].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256Hex(canonicalRequest)].join("\n");
@@ -140,6 +146,16 @@ export function presignGetUrl(input: {
     .digest("hex");
   return `${url.origin}${canonicalUri(url)}?${query}&X-Amz-Signature=${signature}`;
 }
+
+/**
+ * Lifecycle rules of the files bucket (docs/gdpr.md): member exports (P1.2)
+ * and uploaded import files (P1.3b) are deleted after two days even if the
+ * jobs that delete them do not run.
+ */
+export const FILE_EXPIRY_RULES = [
+  { id: "member-exports", prefix: "exports/", days: 2 },
+  { id: "member-imports", prefix: "imports/", days: 2 },
+] as const;
 
 /** S3_* settings (api and worker); without S3_ENDPOINT there is no object storage. */
 export const objectStorageConfigShape = {
@@ -306,6 +322,37 @@ export class ObjectStorage {
     await response.body?.cancel();
   }
 
+  /**
+   * The object's bytes, or null if it does not exist. Fails (413) when it is
+   * larger than `maxBytes`, without reading more.
+   */
+  async getObject(key: string, options: { maxBytes: number }): Promise<Buffer | null> {
+    const url = this.objectUrl(key);
+    const headers = signedHeaders(this.config, "GET", url, undefined, undefined);
+    const response = await fetch(url, { headers });
+    if (response.status === 404) {
+      await response.body?.cancel();
+      return null;
+    }
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new ObjectStorageError("get", response.status);
+    }
+    const length = Number(response.headers.get("content-length") ?? "0");
+    if (length > options.maxBytes) {
+      await response.body?.cancel();
+      throw new ObjectStorageError("get", 413);
+    }
+    const chunks: Buffer[] = [];
+    let total = 0;
+    for await (const chunk of response.body ?? []) {
+      total += (chunk as Uint8Array).byteLength;
+      if (total > options.maxBytes) throw new ObjectStorageError("get", 413);
+      chunks.push(Buffer.from(chunk as Uint8Array));
+    }
+    return Buffer.concat(chunks);
+  }
+
   /** Deletes the object; deleting a missing object succeeds. */
   async deleteObject(key: string): Promise<void> {
     const response = await this.send("delete", "DELETE", this.objectUrl(key));
@@ -323,6 +370,17 @@ export class ObjectStorage {
     prefix: string;
     days: number;
   }): Promise<"present" | "added" | "conflict"> {
+    return this.ensureExpiryRules([rule]);
+  }
+
+  /**
+   * ensureExpiryRule for several prefixes (member exports and imports): the
+   * configuration is written with all of them when the bucket has none of
+   * its own rules besides these IDs.
+   */
+  async ensureExpiryRules(
+    rules: readonly { id: string; prefix: string; days: number }[],
+  ): Promise<"present" | "added" | "conflict"> {
     const url = new URL(this.config.endpoint);
     url.pathname = `${url.pathname.replace(/\/$/, "")}/${this.config.bucket}`;
     url.searchParams.set("lifecycle", "");
@@ -330,16 +388,22 @@ export class ObjectStorage {
     const current = await fetch(url, { headers });
     const text = await current.text();
     if (current.ok) {
-      if (text.includes(`<ID>${rule.id}</ID>`)) return "present";
-      if (text.includes("<Rule>")) return "conflict";
+      const ids = [...text.matchAll(/<ID>([^<]*)<\/ID>/g)].map((m) => m[1]);
+      if (ids.some((id) => !rules.some((r) => r.id === id))) return "conflict";
+      if (rules.every((r) => ids.includes(r.id))) return "present";
     } else if (current.status !== 404) {
       throw new ObjectStorageError("get lifecycle", current.status);
     }
     const body = Buffer.from(
-      `<LifecycleConfiguration><Rule><ID>${rule.id}</ID><Status>Enabled</Status>` +
-        `<Filter><Prefix>${rule.prefix}</Prefix></Filter><Expiration><Days>${rule.days}</Days></Expiration>` +
-        `<AbortIncompleteMultipartUpload><DaysAfterInitiation>1</DaysAfterInitiation></AbortIncompleteMultipartUpload>` +
-        `</Rule></LifecycleConfiguration>`,
+      `<LifecycleConfiguration>${rules
+        .map(
+          (rule) =>
+            `<Rule><ID>${rule.id}</ID><Status>Enabled</Status>` +
+            `<Filter><Prefix>${rule.prefix}</Prefix></Filter><Expiration><Days>${rule.days}</Days></Expiration>` +
+            `<AbortIncompleteMultipartUpload><DaysAfterInitiation>1</DaysAfterInitiation></AbortIncompleteMultipartUpload>` +
+            `</Rule>`,
+        )
+        .join("")}</LifecycleConfiguration>`,
     );
     const response = await this.send("put lifecycle", "PUT", url, {
       body,
@@ -350,6 +414,26 @@ export class ObjectStorage {
     });
     await response.body?.cancel();
     return "added";
+  }
+
+  /**
+   * A short-lived upload link on the public endpoint (ADR 0011, P1.3b): PUT
+   * with exactly `size` bytes (content-length is signed, so a larger file is
+   * refused by the storage) and the signed content type.
+   */
+  presignUpload(
+    key: string,
+    options: { expiresSeconds: number; size: number; contentType: string },
+  ): string {
+    return presignGetUrl({
+      url: this.objectUrl(key, this.config.publicEndpoint),
+      region: this.config.region,
+      accessKeyId: this.config.accessKeyId,
+      secretAccessKey: this.config.secretAccessKey,
+      expiresSeconds: options.expiresSeconds,
+      method: "PUT",
+      headers: { "content-length": String(options.size), "content-type": options.contentType },
+    });
   }
 
   /** A short-lived download link on the public endpoint, saved under `filename`. */

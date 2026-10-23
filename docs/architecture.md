@@ -79,7 +79,7 @@ Built so far (P0.5, `apps/api/src/modules/`, no HTTP endpoints yet; wired in
 | `guardianships` | `guardianships`, `guardian_invitations` | Add child, invite and accept co-guardian, rights, ending rules |
 | `authorization` | `platform_operators`, `support_access_grants` (reads all relationship tables) | Relationship sets, policies, resource loaders, `PersonVisibility`, `PersonPresenter`, profile field filtering (P0.7, ADR 0025) |
 | `person-profiles` | — | `GET /people/:personId`: person, club profile and guardians, filtered per relationship |
-| `members` | `member_exports` (reads the register view `app.register_entries`) | The member register: search, filters, facets, field sets per register access (`RegisterPresenter`), membership changes through `memberships`, exports (P1.2) |
+| `members` | `member_exports`, `member_imports`, `member_import_rows` (reads the register view `app.register_entries`) | The member register: search, filters, facets, field sets per register access (`RegisterPresenter`), membership changes through `memberships`, exports (P1.2); adding members by hand and importing them from CSV through `people`, `memberships`, `groups`, `guardianships` and `accounts` (P1.3b, ADR 0033) |
 
 Read endpoints (P0.7, extended for the web shell in P0.9): `GET /api/v1/me`
 (with the account's `preferences`: language, time zone, theme),
@@ -502,6 +502,8 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `billing:generate_invoices` | 1st of the month, 04:41 UTC (billing on only) | Placeholder until P1.13 (InvoiceGenerator) |
 | `joining:retention` | daily 04:53 UTC | Deletes decided join requests and unusable invitations 12 months after their last change, club by club (`docs/gdpr.md`) |
 | `members:export` | per export (insert trigger on `member_exports`) | Writes a member register export as CSV to object storage in batches (P1.2) |
+| `members:purge_imports` | hourly | Deletes member import staging rows and files seven days after the import ended (P1.3b) |
+| `members:import_parse`, `members:import_run` | per import (status trigger on `member_imports`) | **Run by the API process** (ADR 0033), not the worker: read and validate an import file; add the confirmed members in batches |
 | `members:expire_exports` | every 10 minutes | Deletes export files 24 hours after they are ready, fails exports still queued after two hours |
 
 Outbox handlers besides the authorization cache: `entitlements-cache`

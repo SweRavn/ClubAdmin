@@ -6,6 +6,7 @@
 // and "Add child".
 
 import { enumKey } from "@clubadmin/i18n";
+import { isFullGuardianshipKind, isLinkedGuardianshipKind } from "@clubadmin/shared";
 import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
@@ -53,10 +54,8 @@ export default async function FamilyPage({ searchParams }: Props) {
     getFamilyDuplicates(),
     searchParams,
   ]);
-  const children = mine.wards.filter((w) => w.kind === "parent" || w.kind === "legal_guardian");
-  const sharedWithMe = mine.wards.filter(
-    (w) => w.kind === "relative" || w.kind === "contact_person",
-  );
+  const children = mine.wards.filter((w) => isFullGuardianshipKind(w.kind));
+  const sharedWithMe = mine.wards.filter((w) => isLinkedGuardianshipKind(w.kind));
   // One read per child (a family has a handful).
   const [guardians, shared] = await Promise.all([
     Promise.all(children.map((w) => getWardGuardians(w.person.id))),

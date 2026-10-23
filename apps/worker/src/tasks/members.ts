@@ -211,3 +211,49 @@ export function expireMemberExportsTask(db: Database, storage: ObjectStorage | n
     if (result.expired + result.failed > 0) helpers.logger.info("member exports expired", result);
   };
 }
+
+/**
+ * Member imports (P1.3b, docs/gdpr.md): seven days after an import ends
+ * (done, failed or cancelled) its staging rows and any uploaded file are
+ * deleted; the import stays as a record with its counts. An import left in
+ * review (or never uploaded) for seven days is cancelled first.
+ */
+export async function purgeMemberImports(
+  db: Database,
+  storage: ObjectStorage | null,
+): Promise<{ purged: number; abandoned: number }> {
+  const { rows } = await db.withSystem("members:purge_imports", {}, (tx) =>
+    tx.execute<{ id: string; club_id: string; status: string; object_key: string | null }>(sql`
+      SELECT id, club_id, status, object_key FROM public.member_imports
+      WHERE purged_at IS NULL AND (
+        (status IN ('done', 'failed', 'cancelled') AND finished_at < now() - interval '7 days')
+        OR (status IN ('uploaded', 'review') AND updated_at < now() - interval '7 days'))`),
+  );
+  const result = { purged: 0, abandoned: 0 };
+  for (const row of rows) {
+    // Without storage the file cannot be deleted: try again next time.
+    if (row.object_key) {
+      if (!storage) continue;
+      await storage.deleteObject(row.object_key);
+    }
+    const abandoned = row.status === "uploaded" || row.status === "review";
+    await db.withSystem("members:purge_imports", { clubId: row.club_id }, async (tx) => {
+      await tx.execute(sql`DELETE FROM public.member_import_rows WHERE import_id = ${row.id}`);
+      await tx.execute(sql`
+        UPDATE public.member_imports SET purged_at = now(), object_key = NULL, columns = '[]'::jsonb,
+          status = CASE WHEN status IN ('uploaded', 'review') THEN 'cancelled' ELSE status END,
+          finished_at = coalesce(finished_at, now())
+        WHERE id = ${row.id}`);
+    });
+    result.purged++;
+    if (abandoned) result.abandoned++;
+  }
+  return result;
+}
+
+export function purgeMemberImportsTask(db: Database, storage: ObjectStorage | null): Task {
+  return async (_payload, helpers) => {
+    const result = await purgeMemberImports(db, storage);
+    if (result.purged > 0) helpers.logger.info("member imports purged", result);
+  };
+}

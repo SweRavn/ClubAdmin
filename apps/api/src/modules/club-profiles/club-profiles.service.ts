@@ -3,7 +3,14 @@
 // fields, emergency contacts, restricted notes and the club-level protected
 // identity flag (ADR 0022). Created with the first membership.
 
-import { audit, type Database, outbox, type TenantContext, type Tx } from "@clubadmin/db";
+import {
+  audit,
+  type Database,
+  isUniqueViolation,
+  outbox,
+  type TenantContext,
+  type Tx,
+} from "@clubadmin/db";
 import { type UpdateClubProfileInput, UpdateClubProfileSchema } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
@@ -19,11 +26,44 @@ export class ClubProfilesService {
     this.db = db;
   }
 
-  /** The person's profile in the transaction's club, created (with a new member number) if missing. */
-  async ensureProfileInTx(tx: Tx, context: TenantContext, personId: string): Promise<ClubProfile> {
-    const existing = await repo.findProfile(tx, context.clubId, personId);
+  /**
+   * The person's profile in the transaction's club, created (with a new
+   * member number, or the kept one in `init`) if missing.
+   */
+  async ensureProfileInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+    init: repo.ProfileInit = {},
+    /** `isNew`: the person was created in this transaction (no profile yet). */
+    options: { isNew?: boolean } = {},
+  ): Promise<ClubProfile> {
+    const existing = options.isNew ? null : await repo.findProfile(tx, context.clubId, personId);
     if (existing) return existing;
-    return repo.insertProfile(tx, context.clubId, personId);
+    try {
+      return await repo.insertProfile(tx, context.clubId, personId, init);
+    } catch (error) {
+      if (isUniqueViolation(error, "club_profiles_member_number_unique"))
+        throw new DomainError("member_number_taken");
+      throw error;
+    }
+  }
+
+  /**
+   * Reserves `count` running member numbers in their own short transaction
+   * (imports, P1.3b): the first one is returned. Profiles inserted with them
+   * do not lock the club's counter, so concurrent import batches do not wait
+   * for each other. Numbers of a batch that is rolled back stay unused.
+   */
+  reserveMemberNumbers(context: TenantContext, count: number): Promise<number> {
+    return this.db.withTenant(context, (tx) =>
+      repo.reserveMemberNumbers(tx, context.clubId, count),
+    );
+  }
+
+  /** Which of these member numbers are taken in the transaction's club. */
+  takenMemberNumbersInTx(tx: Tx, clubId: string, numbers: readonly number[]): Promise<Set<number>> {
+    return repo.takenMemberNumbers(tx, clubId, numbers);
   }
 
   async hasProfileInTx(tx: Tx, clubId: string, personId: string): Promise<boolean> {

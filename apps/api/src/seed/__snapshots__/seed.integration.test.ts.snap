@@ -18,7 +18,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "lars",
       ],
       "memberships": {
-        "active": 11,
+        "active": 15,
       },
       "slug": "fjordvik-il",
       "supportGrants": [],
@@ -92,7 +92,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
     "fil-j2014": {
       "admission": "direct",
       "capacity": null,
-      "generated": 5,
+      "generated": 8,
       "kind": "team",
       "named": [
         "ingrid",
@@ -108,7 +108,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
     "fil-veteran": {
       "admission": "direct",
       "capacity": null,
-      "generated": 4,
+      "generated": 5,
       "kind": "team",
       "named": [
         "lars",

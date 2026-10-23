@@ -97,6 +97,13 @@ later phase. Backup and disaster recovery are in
   lifecycle rule for `exports/` after two days as a backstop). A requester
   who lost the role before the file is written gets nothing. Cells a
   spreadsheet would run as formulas get a leading apostrophe.
+- Adding and importing members (P1.3b): `club.members.add` for registrars
+  (club managers with a second factor); `club.members.import` for registrars
+  and club managers, always with a second factor, confirming with a login in
+  the last 15 minutes. Duplicates are looked for only among the club's own
+  people; nobody outside the club is matched or revealed. Every finished
+  import emails every club manager (who, counts). Import jobs act as the
+  registrar who confirmed; one who lost the role fails the import.
 - Invitation secrets (P1.1, ADR 0032): only a SHA-256 hash is stored; links
   carry 32 random bytes, codes 8 characters (about 40 bits, so the lookup is
   rate-limited per IP), both shown once to their creator and passed to the
@@ -187,6 +194,14 @@ later phase. Backup and disaster recovery are in
 - User content (rich text) sanitised server-side with an allow list.
 - Uploads go directly to object storage via short-lived pre-signed URLs, are
   scanned before becoming visible, and are served from a separate origin.
+  **Member import files (P1.3b, ADR 0033)** are the exception to scanning:
+  they are never shown or served, only read once as text by the API and
+  deleted. The web server puts the file to a pre-signed PUT link (15 minutes,
+  `content-length` signed: at most 10 MB, the size declared when the import
+  started) under the club's prefix `imports/<club_id>/`; the parser refuses
+  more than 20,000 rows, NUL bytes and broken quoting with a code, never
+  evaluates a cell (formulas stay text), and logs IDs and counts only. The
+  file's rows are kept sealed (field encryption) until the import is purged.
 - Request body limits and timeouts.
 - **Rate limits** (fixed one-minute windows in Valkey, shared by all API
   instances; in memory without Valkey; `429` problem details with
@@ -203,6 +218,8 @@ later phase. Backup and disaster recovery are in
   | Account, per hour | Joining (`accountLimit: "joining"`): club search, join requests, invitation acceptance, club creation (anti-abuse, ADR 0018) | 120 |
   | Client IP | Public invitation lookup (`GET /invitations/lookup`): guessing codes | 20 |
   | Person and club, per 24 hours | Member register exports (`MEMBER_EXPORTS_PER_PERSON_DAY`; per club `MEMBER_EXPORTS_PER_CLUB_DAY`, 30) | 10 |
+  | Club, per 24 hours | Member imports started (`MEMBER_IMPORTS_PER_CLUB_DAY`) | 20 |
+  | Club, per 24 hours | Invitations sent by imports (`MEMBER_IMPORT_INVITATIONS_PER_CLUB_DAY`; the rest are left out and counted) | 2,000 |
 
   Sizing: a web page view makes about five API calls (`/me`, `/me/clubs`,
   `/me/wards`, the page's own data), a mobile cold start about six (`/me`,

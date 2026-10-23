@@ -33,3 +33,14 @@ for that host), `S3_REGION`, `S3_BUCKET_FILES`, `S3_ACCESS_KEY_ID`,
 Exports live under `exports/<club_id>/` in the files bucket; the worker adds a
 lifecycle rule for that prefix (two days) when the bucket has none, and leaves
 a bucket with other rules alone (an operator adds the rule, docs/gdpr.md).
+
+**Update (P1.3b, member imports).** Uploads use pre-signed PUT links
+(`ObjectStorage.presignUpload`): 15 minutes, on `S3_PUBLIC_ENDPOINT`, with
+`content-length` and `content-type` among the signed headers, so the storage
+refuses a file of another size than the one the registrar declared (at most
+10 MB). Import files live under `imports/<club_id>/<import id>`; the API reads
+them once (`getObject`, refusing more than the limit) and deletes them after
+parsing. The worker writes the lifecycle rules for `exports/` and `imports/`
+together (`FILE_EXPIRY_RULES`, two days each) when the bucket has no other
+rules. Uploaded files are not scanned with ClamAV: they are never shown or
+served to anyone, only parsed as text and deleted (ADR 0033).

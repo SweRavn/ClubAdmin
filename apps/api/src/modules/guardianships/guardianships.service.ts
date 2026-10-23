@@ -10,7 +10,14 @@
 import { createHash } from "node:crypto";
 
 import { ageOn } from "@clubadmin/country-packs";
-import { audit, type Database, isUniqueViolation, outbox, type Tx } from "@clubadmin/db";
+import {
+  audit,
+  type Database,
+  isUniqueViolation,
+  outbox,
+  type TenantContext,
+  type Tx,
+} from "@clubadmin/db";
 import { guardianInvitationToken } from "@clubadmin/server-kit/invitations";
 import {
   type CreatePersonInput,
@@ -21,6 +28,7 @@ import {
   type GuardianshipRight,
   GuardianshipRightsSchema,
   isFullGuardianshipKind,
+  mayActOnBehalfKind,
   NewLinkedPersonSchema,
   SignUpPersonSchema,
   uuidv7,
@@ -66,7 +74,7 @@ function linkedRights(
   const rights = chosen
     ? [...new Set(parseInput(GuardianshipRightsSchema, chosen))]
     : [...DEFAULT_GUARDIANSHIP_RIGHTS[kind]];
-  if (rights.includes("act_on_behalf") && (kind !== "relative" || granter === "young_ward")) {
+  if (rights.includes("act_on_behalf") && (!mayActOnBehalfKind(kind) || granter === "young_ward")) {
     throw new DomainError("rights_not_allowed");
   }
   return rights;
@@ -508,47 +516,133 @@ export class GuardianshipsService {
   ): Promise<{ guardianship: Guardianship; personId: string }> {
     return runAs(this.db, context, async (tx) => {
       if (!hasClub(context)) throw new DomainError("not_allowed");
-      const actor = actorPersonId(context);
-      const kind = parseInput(GuardianshipKindSchema, input.kind);
-      if (!(await repo.actorHasClubRole(tx, ["club_manager", "registrar"])))
-        throw new DomainError("not_allowed");
-      if (!(await this.memberships.hasOpenMembershipInTx(tx, context.clubId, input.wardPersonId)))
-        throw new DomainError("not_found");
-      const linked = !isFullGuardianshipKind(kind);
-      const consentNote = input.consentNote?.trim() || null;
-      if (linked && !consentNote) throw new DomainError("invalid_input");
-      if (!linked && (consentNote || input.rights)) throw new DomainError("invalid_input");
-      let personId: string;
-      if ("personId" in input.guardian) {
-        // From the register: only the club's own members.
-        if (
-          !(await this.memberships.hasOpenMembershipInTx(
-            tx,
-            context.clubId,
-            input.guardian.personId,
-          ))
-        )
-          throw new DomainError("not_found");
-        personId = input.guardian.personId;
-      } else {
-        personId = (
-          await this.createLinkedPersonInTx(tx, context, input.guardian.person, options.id)
-        ).id;
-      }
-      const guardianship = await this.insertInTx(tx, {
-        guardianPersonId: personId,
-        wardPersonId: input.wardPersonId,
-        kind,
-        rights: linked
-          ? linkedRights(kind, input.rights, "club")
-          : DEFAULT_GUARDIANSHIP_RIGHTS[kind],
-        createdBy: actor,
-        grantedBy: linked ? actor : null,
-        recordedByClubId: context.clubId,
-        consentNote,
-      });
-      return { guardianship, personId };
+      return this.recordGuardianInTx(tx, context, input, options);
     });
+  }
+
+  /** recordGuardian in the caller's transaction (adding and importing members, P1.3b). */
+  async recordGuardianInTx(
+    tx: Tx,
+    context: TenantContext,
+    input: {
+      wardPersonId: string;
+      guardian: { personId: string } | { person: NewLinkedPerson };
+      kind: GuardianshipKind;
+      rights?: readonly GuardianshipRight[] | undefined;
+      consentNote?: string | null | undefined;
+    },
+    options: {
+      id?: string;
+      /** The caller checked the actor's club role (once per import batch). */
+      actorChecked?: boolean;
+      /** The guardian is a person this club just created (another child's guardian in the same import). */
+      createdByClub?: boolean;
+      /** The caller just added the ward to the club. */
+      wardChecked?: boolean;
+    } = {},
+  ): Promise<{ guardianship: Guardianship; personId: string }> {
+    const actor = actorPersonId(context);
+    const kind = parseInput(GuardianshipKindSchema, input.kind);
+    if (!options.actorChecked && !(await repo.actorHasClubRole(tx, ["club_manager", "registrar"])))
+      throw new DomainError("not_allowed");
+    if (
+      !options.wardChecked &&
+      !(await this.memberships.hasOpenMembershipInTx(tx, context.clubId, input.wardPersonId))
+    )
+      throw new DomainError("not_found");
+    const linked = !isFullGuardianshipKind(kind);
+    const consentNote = input.consentNote?.trim() || null;
+    if (linked && !consentNote) throw new DomainError("invalid_input");
+    if (!linked && (consentNote || input.rights)) throw new DomainError("invalid_input");
+    let personId: string;
+    if ("personId" in input.guardian) {
+      // From the register: only the club's own members.
+      if (
+        !options.createdByClub &&
+        !(await this.memberships.hasOpenMembershipInTx(tx, context.clubId, input.guardian.personId))
+      )
+        throw new DomainError("not_found");
+      personId = input.guardian.personId;
+    } else {
+      personId = (await this.createLinkedPersonInTx(tx, context, input.guardian.person, options.id))
+        .id;
+    }
+    const guardianship = await this.insertInTx(tx, {
+      guardianPersonId: personId,
+      wardPersonId: input.wardPersonId,
+      kind,
+      rights: linked ? linkedRights(kind, input.rights, "club") : DEFAULT_GUARDIANSHIP_RIGHTS[kind],
+      createdBy: actor,
+      grantedBy: linked ? actor : null,
+      recordedByClubId: context.clubId,
+      consentNote,
+    });
+    return { guardianship, personId };
+  }
+
+  /**
+   * A club invites a member's guardian by email (adding or importing members,
+   * P1.3b): the guardianship starts when they accept with that email, as
+   * whoever they are (an existing login or a new one; never linked
+   * automatically). The email names the club; the guardianship is recorded
+   * by it. Linked kinds need the club's consent note, like recordGuardian.
+   */
+  async inviteGuardianForClubInTx(
+    tx: Tx,
+    context: TenantContext,
+    input: {
+      wardPersonId: string;
+      email: string;
+      kind: GuardianshipKind;
+      rights?: readonly GuardianshipRight[] | undefined;
+      consentNote?: string | null | undefined;
+    },
+    options: { actorChecked?: boolean; wardChecked?: boolean } = {},
+  ): Promise<{ invitationId: string; expiresAt: Date }> {
+    const key = this.tokenKey;
+    if (!key) throw new DomainError("invitation_email_unavailable");
+    const actor = actorPersonId(context);
+    const kind = parseInput(GuardianshipKindSchema, input.kind);
+    const email = parseInput(EmailSchema, input.email);
+    if (!options.actorChecked && !(await repo.actorHasClubRole(tx, ["club_manager", "registrar"])))
+      throw new DomainError("not_allowed");
+    if (
+      !options.wardChecked &&
+      !(await this.memberships.hasOpenMembershipInTx(tx, context.clubId, input.wardPersonId))
+    )
+      throw new DomainError("not_found");
+    const linked = !isFullGuardianshipKind(kind);
+    const consentNote = input.consentNote?.trim() || null;
+    if (linked && !consentNote) throw new DomainError("invalid_input");
+    if (!linked && (consentNote || input.rights)) throw new DomainError("invalid_input");
+    const rights = linked
+      ? linkedRights(kind, input.rights, "club")
+      : [...DEFAULT_GUARDIANSHIP_RIGHTS[kind]];
+    const id = uuidv7();
+    const expiresAt = new Date(Date.now() + GUARDIAN_INVITATION_VALID_DAYS * 86_400_000);
+    await repo.insertInvitation(tx, {
+      id,
+      wardPersonId: input.wardPersonId,
+      invitedByPersonId: actor,
+      email,
+      tokenHash: hashToken(guardianInvitationToken(key, id, null)),
+      kind,
+      rights,
+      expiresAt,
+      clubId: context.clubId,
+      consentNote: linked ? consentNote : null,
+    });
+    await audit.record(tx, {
+      action: "guardianship.invited",
+      resourceType: "guardian_invitation",
+      resourceId: id,
+      changedFields: ["kind", "rights", "club_id", ...(linked ? ["consent_note"] : [])],
+    });
+    await outbox.publish(tx, "guardianship.invited", {
+      invitationId: id,
+      wardPersonId: input.wardPersonId,
+    });
+    return { invitationId: id, expiresAt };
   }
 
   /** A member's open guardianships as the club sees them (club administrators). */

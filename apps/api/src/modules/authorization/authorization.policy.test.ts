@@ -193,6 +193,20 @@ const CASES: Record<Permission, Case[]> = {
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
+  "club.members.add": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.members.import": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
   "group.read": [
     { name: "member of the club", actor: plainMember, resource: teamR, allowed: true },
     { name: "guardian of a member", actor: parent, resource: teamR, allowed: true },
@@ -626,6 +640,15 @@ describe("registerAccess", () => {
     const manage = policyFor("club.members.manage")!;
     expect(manage.requiresMfa({ actor: managerWithoutMfa, resource: clubR })).toBe(true);
     expect(manage.requiresMfa({ actor: registrar, resource: clubR })).toBe(false);
+  });
+
+  it("requires a second factor for imports, and for managers adding members", () => {
+    expect(
+      policyFor("club.members.import")!.requiresMfa({ actor: registrar, resource: clubR }),
+    ).toBe(true);
+    const add = policyFor("club.members.add")!;
+    expect(add.requiresMfa({ actor: managerWithoutMfa, resource: clubR })).toBe(true);
+    expect(add.requiresMfa({ actor: registrar, resource: clubR })).toBe(false);
   });
 });
 

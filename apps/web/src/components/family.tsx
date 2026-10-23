@@ -11,6 +11,9 @@ import {
   type GuardianEntry,
   GUARDIANSHIP_RIGHTS,
   type GuardianshipRight,
+  isLinkedGuardianshipKind,
+  LINKED_GUARDIANSHIP_KINDS,
+  mayActOnBehalfKind,
   type z,
 } from "@clubadmin/shared";
 import { PersonName, RoleBadge } from "@clubadmin/ui";
@@ -18,7 +21,7 @@ import { getTranslations } from "next-intl/server";
 
 import { ActionForm, buttonClass, inputClass, secondaryButtonClass } from "./action-form.tsx";
 
-const LINK_KINDS = ["relative", "contact_person"] as const;
+const LINK_KINDS = LINKED_GUARDIANSHIP_KINDS;
 
 /** Rights of a relative or contact person; act_on_behalf only for relatives and when allowed. */
 export async function RightsFields({
@@ -74,7 +77,7 @@ export async function GuardianRow({
   clubId?: string;
 }) {
   const t = await getTranslations();
-  const linked = entry.kind === "relative" || entry.kind === "contact_person";
+  const linked = isLinkedGuardianshipKind(entry.kind);
   return (
     <li className="space-y-2 py-2" data-testid="guardian" data-person={entry.person.id}>
       <div className="flex flex-wrap items-center gap-2">
@@ -101,7 +104,7 @@ export async function GuardianRow({
             <input type="hidden" name="guardianshipId" value={entry.guardianshipId} />
             <RightsFields
               selected={entry.rights}
-              allowActOnBehalf={allowActOnBehalf && entry.kind === "relative"}
+              allowActOnBehalf={allowActOnBehalf && mayActOnBehalfKind(entry.kind)}
               idPrefix={`rights-${entry.guardianshipId}`}
             />
             <button type="submit" className={secondaryButtonClass} data-testid="save-rights">

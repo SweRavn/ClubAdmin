@@ -114,6 +114,20 @@ budgets are requirements; CI measures them.
   counts skip people. The query plans use indexes for every club table and,
   for searches and filters, for people. Exports of 10,000 members take about
   a second in the worker (batches of 1,000 into a multipart upload).
+- Member imports (P1.3b, `member-imports.performance.integration.test.ts`:
+  10,000 rows, each a child with a guardian shared by two siblings, through
+  the same code as the import jobs): reading, sealing and validating the file
+  about 3 s (budget 30 s); adding the members about 60 s locally (budget
+  3 minutes). A row costs about 14 statements (person, profile, membership,
+  group, guardian, their audit and outbox events); the checks the import has
+  already done are not repeated per row, the row updates are one statement
+  per batch, and a batch runs without savepoints unless one of its rows
+  fails. Batches of 100 run four at a time (`MEMBER_IMPORT_BATCH_CONCURRENCY`):
+  rows that share a new guardian stay in one batch, and member numbers are
+  reserved per batch so the batches never wait on the club's counter. The
+  duplicate checks are three hash joins over the club's people (one
+  statement for the whole file); the preview pages by row number on
+  `member_import_rows (import_id, status, row_number)`.
 - Seeding (P0.8): `pnpm db:reset` with the demo scenario about 7 s including
   the build (budget 15 s; the seed itself about 4 s); `pnpm db:reset --scenario
   load` (1,000 clubs, 200,000 people, plus one club of 10,000 members for the

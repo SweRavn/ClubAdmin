@@ -46,6 +46,7 @@ export const DOMAIN_EVENTS = {
   "club_creation_request.decided": z.object({ requestId: id }),
   /** Member register (P1.2): every club manager hears about an export. */
   "members.exported": z.object({ exportId: id, clubId: id }),
+  "members.import.finished": z.object({ importId: id, clubId: id }),
 } as const;
 
 export type DomainEventType = keyof typeof DOMAIN_EVENTS;

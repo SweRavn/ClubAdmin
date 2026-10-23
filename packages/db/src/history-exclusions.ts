@@ -12,6 +12,8 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
   "graphile_worker.*": "job queue managed by Graphile Worker",
   "crypto.*": "wrapped encryption keys; no personal data, rotated by operators",
   "ops.*": "backup and restore bookkeeping written by the backup tooling; no personal data",
+  "public.member_import_rows":
+    "staging rows of a member import (the file's values), deleted seven days after the import ends; the people created from them have history",
 };
 
 export function isHistoryExcluded(qualifiedName: string): boolean {

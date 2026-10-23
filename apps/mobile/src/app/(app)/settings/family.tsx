@@ -4,7 +4,7 @@
 // rights. Adding, inviting and changing happen on the web.
 
 import { enumKey } from "@clubadmin/i18n";
-import { personLabel } from "@clubadmin/shared";
+import { isLinkedGuardianshipKind, personLabel } from "@clubadmin/shared";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
@@ -45,7 +45,7 @@ function WardSection({ ward }: { ward: MyWards["wards"][number] }) {
             <RoleBadge label={t(enumKey("guardianKinds", g.kind))} />
             {g.isYou ? <RoleBadge label={t("family.you")} /> : null}
           </View>
-          {g.kind === "relative" || g.kind === "contact_person" ? (
+          {isLinkedGuardianshipKind(g.kind) ? (
             <Muted>
               {g.rights.length
                 ? g.rights.map((r) => t(enumKey("guardianRights", r))).join(", ")

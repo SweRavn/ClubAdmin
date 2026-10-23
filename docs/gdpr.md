@@ -68,6 +68,9 @@
 | Join requests (decided) and invitations that can no longer be used, with their acceptances | 12 months after the last change (worker `joining:retention`, P1.1); pending requests and usable invitations stay |
 | Member register export files (P1.2) | 24 hours (worker `members:expire_exports`; the bucket's lifecycle rule deletes `exports/` after two days as a backstop); only the requester can download them, through a pre-signed link valid five minutes |
 | Member register export records (who, when, which columns and filter, row count; no values) | Kept as part of the audit trail, like the audit log |
+| Member import files (P1.3b) | Deleted as soon as they are read (the bucket's lifecycle rule deletes `imports/` after two days as a backstop) |
+| Member import staging rows (the file's values, personal identity numbers sealed) | Seven days after the import ends or is cancelled; an import left in review for seven days is cancelled (worker `members:purge_imports`). The import record (who, when, counts) is kept like the audit log |
+| Emails from an import file | Never stored on people (ADR 0020): only in the invitations sent (guardian and own-login invitations, deleted with them) |
 | Guardian and own-login invitations that were never accepted (P1.3) | 12 months after they expired or were revoked (worker `joining:retention`); accepted ones stay as the record of the guardianship or login |
 | Merges (`people_merges`) | The record and what was moved stay for the 30-day undo period, then as the record of the merge (audit trail) |
 | Invitation email addresses | With the invitation (above); never logged, never in outbox or job payloads |

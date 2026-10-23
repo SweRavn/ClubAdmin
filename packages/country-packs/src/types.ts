@@ -37,12 +37,31 @@ export interface LocaleDefaults {
   currency: string;
 }
 
+/**
+ * Member imports (P1.3b): how dates are written in the country's files and
+ * the column names of the country's member systems (normalised: lower case,
+ * single spaces). Field names are the import's (`givenName`,
+ * `guardian.1.email`, …); generic sv/en/nb headers are the API's.
+ */
+export interface MemberImportRules {
+  /** Day-month-year (02.04.2017) or month-day-year; ISO dates always work. */
+  dateOrder: "dmy" | "mdy";
+  sources: readonly {
+    /** Recognised format, e.g. "idrottonline". */
+    name: string;
+    /** A header only this format has. */
+    marker: string;
+    headers: Readonly<Record<string, string>>;
+  }[];
+}
+
 export interface CountryPack {
   /** ISO 3166-1 alpha-2. */
   code: string;
   ageRules: AgeRules;
   personalIdFormat: PersonalIdFormat;
   localeDefaults: LocaleDefaults;
+  memberImport: MemberImportRules;
 }
 
 /** Shared helper: builds isValid/normalize from parse. */

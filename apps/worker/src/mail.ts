@@ -159,6 +159,7 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
       "club.manager.changed",
       "club_creation_request.decided",
       "members.exported",
+      "members.import.finished",
       "guardianship.invited",
       "guardianship.invitation.accepted",
       "account.invited",
@@ -353,6 +354,57 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
           }
           return;
         }
+        case "members.import.finished": {
+          const { importId, clubId } = DOMAIN_EVENTS["members.import.finished"].parse(
+            event.payload,
+          );
+          await inClub(tx, clubId);
+          const { rows } = await tx.execute<{
+            created_by_person_id: string;
+            confirmed_by_person_id: string | null;
+            status: string;
+            counts: { imported: number; skipped: number; error: number; invitations: number };
+          }>(sql`
+            SELECT created_by_person_id, confirmed_by_person_id, status, counts
+            FROM public.member_imports WHERE id = ${importId}`);
+          const imported = rows[0];
+          const c = await club(tx, clubId);
+          if (!imported || !c) return;
+          const { rows: managers } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM public.club_role_assignments
+            WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL`);
+          // Managers see protected people of their club (ADR 0022). Counts only, never rows.
+          const importer = await nameFor(
+            tx,
+            imported.confirmed_by_person_id ?? imported.created_by_person_id,
+          );
+          for (const to of await recipients(
+            tx,
+            managers.map((m) => m.person_id),
+          )) {
+            const locale = pickLocale(to.locale, c.default_locale);
+            const values = {
+              club: c.name,
+              importer,
+              status: imported.status === "done" ? "done" : "failed",
+              imported: String(imported.counts.imported),
+              skipped: String(imported.counts.skipped),
+              errors: String(imported.counts.error),
+              invitations: String(imported.counts.invitations),
+              hasInvitations: imported.counts.invitations > 0 ? "yes" : "no",
+              url: link(`/clubs/${clubId}/members/import?import=${importId}`),
+            };
+            await send(
+              event,
+              to,
+              locale,
+              render(locale, "membersImportFinished.subject", values),
+              render(locale, "membersImportFinished.body", values),
+              c.name,
+            );
+          }
+          return;
+        }
         case "guardianship.invited":
         case "guardianship.invitation.accepted":
         case "account.invited":
@@ -412,12 +464,48 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
           expires_at: string;
           resent_at: Date | null;
           pending: boolean;
+          club_id: string | null;
         }>(sql`
           SELECT email, kind, ward_person_id, invited_by_person_id, expires_at, resent_at,
-            accepted_at IS NULL AND revoked_at IS NULL AND expires_at > now() AS pending
+            accepted_at IS NULL AND revoked_at IS NULL AND expires_at > now() AS pending, club_id
           FROM public.guardian_invitations WHERE id = ${invitationId}`);
         const invitation = rows[0];
         if (!invitation?.pending) return;
+        if (invitation.club_id) {
+          // Sent by a club (P1.3b): the email names the club and why; the
+          // child's name only if protected neither globally nor in the club.
+          await inClub(tx, invitation.club_id);
+          const c = await club(tx, invitation.club_id);
+          if (!c) return;
+          const { rows: profiles } = await tx.execute<{ protected: boolean }>(sql`
+            SELECT protected_identity_club AS protected FROM public.club_profiles
+            WHERE club_id = ${invitation.club_id} AND person_id = ${invitation.ward_person_id}`);
+          const ward = profiles[0]?.protected
+            ? null
+            : await unprotectedNames(tx, invitation.ward_person_id);
+          const locale = pickLocale(c.default_locale);
+          const token = guardianInvitationToken(
+            options.invitationTokenKey,
+            invitationId,
+            invitation.resent_at ? new Date(invitation.resent_at) : null,
+          );
+          await send(
+            event,
+            { personId: invitationId, email: invitation.email, locale: null },
+            locale,
+            render(locale, "family.clubInvitationSubject", { club: c.name }),
+            render(locale, "family.clubInvitationBody", {
+              club: c.name,
+              kind: invitation.kind,
+              hasWard: ward ? "yes" : "no",
+              ward: ward?.first ?? "",
+              url: guardianInvitationUrl(options.webUrl, token),
+              expires: date(locale, invitation.expires_at),
+            }),
+            c.name,
+          );
+          return;
+        }
         const locale = await localeOfPerson(invitation.invited_by_person_id);
         // The invitee is not family yet: no names of protected people.
         const [ward, inviter] = await Promise.all([

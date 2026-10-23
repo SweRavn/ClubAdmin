@@ -31,6 +31,7 @@ export {
   asc,
   desc,
   eq,
+  gt,
   inArray,
   isNotNull,
   isNull,

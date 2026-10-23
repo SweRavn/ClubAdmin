@@ -4,6 +4,7 @@
 
 import type { Database } from "@clubadmin/db";
 import { createKeyring, generateKeyBase64, parseMasterKeys } from "@clubadmin/server-kit/crypto";
+import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 
 import { type CoreServices, createCoreServices as createServices } from "../domain-services.ts";
 import { FieldEncryption } from "../platform/crypto/field-encryption.ts";
@@ -28,9 +29,11 @@ export function createCoreServices(
     encryption?: FieldEncryption;
     defaultCountry?: string;
     invitationTokenKey?: string;
+    storage?: ObjectStorage | null;
   } = {},
 ): CoreServices {
   return createServices(db, {
+    ...(options.storage ? { storage: options.storage } : {}),
     encryption: options.encryption ?? testEncryption(),
     ...(options.defaultCountry ? { defaultCountry: options.defaultCountry } : {}),
     invitationTokenKey: options.invitationTokenKey ?? TEST_INVITATION_TOKEN_KEY,

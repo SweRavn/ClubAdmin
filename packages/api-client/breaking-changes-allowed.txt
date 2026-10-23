@@ -2,3 +2,4 @@
 # oasdiff error as `pnpm api:breaking` prints it ("GET /api/v1/... <message>"),
 # followed by the ADR or issue that allows it, e.g. "(ADR 0031)" or "(#42)".
 # Remove lines once the change has reached origin/main.
+POST /api/v1/me/trusted-people removed `subschema #1, subschema #2` from the request body `anyOf` list (ADR 0029: oasdiff reads the request enum widened with step_parent and foster_parent, P1.3b, as removed subschemas)

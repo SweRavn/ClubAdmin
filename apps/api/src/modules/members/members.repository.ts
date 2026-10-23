@@ -60,6 +60,8 @@ export interface RegisterPageInput {
   limit: number;
   /** Count hidden protected members too (not with a name search: it would reveal them). */
   countHidden: boolean;
+  /** Only this person's row (the answer to adding a member, P1.3b). */
+  personId?: string;
 }
 
 /** Filters on the person's own columns: the count then needs people too. */
@@ -68,7 +70,9 @@ const PERSON_FILTERS = ["q", "bornFrom", "bornTo", "gender"] as const;
 /** The statement of registerPage (query-plans test). */
 export function registerPageQuery(clubId: string, page: RegisterPageInput) {
   const key = registerSortKey(page.sort);
-  const where = registerConditions(clubId, page.filter);
+  const where = page.personId
+    ? sql`${registerConditions(clubId, page.filter)} AND e.person_id = ${page.personId}`
+    : registerConditions(clubId, page.filter);
   const direction = sql.raw(page.order === "desc" ? "DESC" : "ASC");
   const after = sql.raw(page.order === "desc" ? "<" : ">");
   // Rows the viewer may not see never reach the page (e.visible, the
@@ -238,4 +242,12 @@ export async function listExports(
     )
     .orderBy(desc(memberExports.id))
     .limit(page.limit);
+}
+
+/** The actor holds one of these roles in the transaction's club (database helper). */
+export async function actorHasClubRole(tx: Tx, roles: readonly string[]): Promise<boolean> {
+  const { rows } = await tx.execute<{ ok: boolean }>(
+    sql`SELECT app.has_club_role(string_to_array(${roles.join(",")}, ',')) AS ok`,
+  );
+  return rows[0]?.ok === true;
 }

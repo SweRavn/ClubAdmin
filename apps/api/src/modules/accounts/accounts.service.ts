@@ -292,43 +292,55 @@ export class AccountsService {
   ): Promise<{ invitationId: string; token: string; expiresAt: Date }> {
     const key = this.tokenKey;
     if (!key) throw new DomainError("invitation_email_unavailable");
-    return runAs(this.db, context, async (tx) => {
-      const actor = actorPersonId(context);
-      const allowed =
-        (await repo.actorIsFullGuardianOf(tx, personId)) ||
-        (hasClub(context) &&
-          (await repo.actorHasClubRole(tx, ["club_manager", "registrar"])) &&
-          (await this.memberships.isMemberInTx(tx, context.clubId, personId)));
-      if (!allowed) throw new DomainError("not_allowed");
-      const person = await this.people.getPersonInTx(tx, personId);
-      // Accounts are visible only to their own person: ask the database.
-      if ((await repo.peopleWithAccount(tx, [personId])).has(personId))
-        throw new DomainError("account_exists");
-      if (
-        !person.birthDate ||
-        ageOn(person.birthDate) < (await this.ownAccountMinAge(tx, personId))
-      ) {
-        throw new DomainError("too_young_for_account");
-      }
-      const id = uuidv7();
-      const token = accountInvitationToken(key, id);
-      const expiresAt = new Date(Date.now() + ACCOUNT_INVITATION_VALID_DAYS * 86_400_000);
-      const invitation = await repo.insertInvitation(tx, {
-        id,
-        personId,
-        email: parseInput(EmailSchema, email),
-        tokenHash: hashToken(token),
-        createdByPersonId: actor,
-        expiresAt,
-      });
-      await audit.record(tx, {
-        action: "account.invitation.created",
-        resourceType: "account_invitation",
-        resourceId: invitation.id,
-      });
-      await outbox.publish(tx, "account.invited", { invitationId: invitation.id, personId });
-      return { invitationId: invitation.id, token, expiresAt };
+    return runAs(this.db, context, (tx) =>
+      this.createOwnLoginInvitationInTx(tx, context, personId, email),
+    );
+  }
+
+  /** createOwnLoginInvitation in the caller's transaction (adding and importing members, P1.3b). */
+  async createOwnLoginInvitationInTx(
+    tx: Tx,
+    context: Context,
+    personId: string,
+    email: string,
+  ): Promise<{ invitationId: string; token: string; expiresAt: Date }> {
+    const key = this.tokenKey;
+    if (!key) throw new DomainError("invitation_email_unavailable");
+    const actor = actorPersonId(context);
+    const allowed =
+      (await repo.actorIsFullGuardianOf(tx, personId)) ||
+      (hasClub(context) &&
+        (await repo.actorHasClubRole(tx, ["club_manager", "registrar"])) &&
+        (await this.memberships.isMemberInTx(tx, context.clubId, personId)));
+    if (!allowed) throw new DomainError("not_allowed");
+    const person = await this.people.getPersonInTx(tx, personId);
+    // Accounts are visible only to their own person: ask the database.
+    if ((await repo.peopleWithAccount(tx, [personId])).has(personId))
+      throw new DomainError("account_exists");
+    if (
+      !person.birthDate ||
+      ageOn(person.birthDate) < (await this.ownAccountMinAge(tx, personId))
+    ) {
+      throw new DomainError("too_young_for_account");
+    }
+    const id = uuidv7();
+    const token = accountInvitationToken(key, id);
+    const expiresAt = new Date(Date.now() + ACCOUNT_INVITATION_VALID_DAYS * 86_400_000);
+    const invitation = await repo.insertInvitation(tx, {
+      id,
+      personId,
+      email: parseInput(EmailSchema, email),
+      tokenHash: hashToken(token),
+      createdByPersonId: actor,
+      expiresAt,
     });
+    await audit.record(tx, {
+      action: "account.invitation.created",
+      resourceType: "account_invitation",
+      resourceId: invitation.id,
+    });
+    await outbox.publish(tx, "account.invited", { invitationId: invitation.id, personId });
+    return { invitationId: invitation.id, token, expiresAt };
   }
 
   /**

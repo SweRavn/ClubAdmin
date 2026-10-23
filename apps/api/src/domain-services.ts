@@ -4,6 +4,7 @@
 // (src/seed) and integration tests (testing/services.ts).
 
 import type { Database } from "@clubadmin/db";
+import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 
 import { AccountsService } from "./modules/accounts/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
@@ -11,6 +12,7 @@ import { ClubsService } from "./modules/clubs/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
 import { InvitationsService, JoinRequestsService } from "./modules/joining/index.ts";
+import { MemberImportsService, MemberIntakeService } from "./modules/members/index.ts";
 import { MembershipsService } from "./modules/memberships/index.ts";
 import { OnboardingService } from "./modules/onboarding/index.ts";
 import { PeopleService } from "./modules/people/index.ts";
@@ -32,6 +34,8 @@ export interface CoreServices {
   guardianships: GuardianshipsService;
   joinRequests: JoinRequestsService;
   invitations: InvitationsService;
+  intake: MemberIntakeService;
+  imports: MemberImportsService;
 }
 
 export function createCoreServices(
@@ -41,6 +45,7 @@ export function createCoreServices(
     defaultCountry?: string;
     invitationTokenKey?: string;
     webUrl?: string;
+    storage?: ObjectStorage | null;
   },
 ): CoreServices {
   const { encryption } = options;
@@ -59,6 +64,20 @@ export function createCoreServices(
     invitationTokenKey: options.invitationTokenKey,
   });
   const joinRequests = new JoinRequestsService(db, { clubs, groups, memberships, accounts });
+  const guardianships = new GuardianshipsService(db, {
+    people,
+    accounts,
+    memberships,
+    tokenKey: options.invitationTokenKey,
+  });
+  const intake = new MemberIntakeService(db, {
+    people,
+    memberships,
+    groups,
+    guardianships,
+    accounts,
+    clubs,
+  });
   return {
     encryption,
     people,
@@ -88,11 +107,20 @@ export function createCoreServices(
     profiles,
     groups,
     memberships,
-    guardianships: new GuardianshipsService(db, {
-      people,
-      accounts,
-      memberships,
-      tokenKey: options.invitationTokenKey,
-    }),
+    guardianships,
+    intake,
+    imports: new MemberImportsService(
+      db,
+      {
+        storage: options.storage ?? null,
+        encryption,
+        intake,
+        people,
+        clubs,
+        groups,
+        profiles,
+      },
+      { importsPerClubPerDay: 1000, invitationsPerClubPerDay: 10_000, batchConcurrency: 4 },
+    ),
   };
 }

@@ -11,7 +11,7 @@ import { generateInvoicesTask } from "../billing.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
-import { expireMemberExportsTask, memberExportTask } from "./members.ts";
+import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
 
 export interface TaskDependencies {
   db: Database;
@@ -88,6 +88,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "joining:retention": joiningRetentionTask(deps.db),
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
+    "members:purge_imports": purgeMemberImportsTask(deps.db, deps.storage ?? null),
     "billing:generate_invoices": generateInvoicesTask,
   };
 }
@@ -98,7 +99,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
  * (adult age, own-login age) daily at 04:23 UTC (both catching up after
  * downtime), backup metrics every
  * five minutes, joining retention daily at 04:53 UTC, expired member exports
- * every ten minutes.
+ * every ten minutes and member import staging data hourly (P1.3b).
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -107,6 +108,7 @@ export const crontab = [
   "*/5 * * * * ops:backup_metrics ?max=1",
   "53 4 * * * joining:retention ?fill=2d",
   "*/10 * * * * members:expire_exports ?max=1",
+  "17 * * * * members:purge_imports ?max=1",
 ].join("\n");
 
 /** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */

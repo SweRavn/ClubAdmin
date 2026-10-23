@@ -1718,6 +1718,541 @@
           "expiresAt"
         ]
       },
+      "MemberImportList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberImport"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "MemberImport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "uploaded",
+              "parsing",
+              "review",
+              "importing",
+              "done",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx"
+            ]
+          },
+          "createdBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "mine": {
+            "type": "boolean"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer"
+                },
+                "header": {
+                  "type": "string"
+                },
+                "sample": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "suggested": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "index",
+                "header",
+                "sample",
+                "suggested"
+              ]
+            }
+          },
+          "columnMap": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "membershipType": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "supporting",
+                  "honorary",
+                  "family"
+                ],
+                "default": "active"
+              },
+              "startDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date",
+                "default": null
+              },
+              "memberNumbers": {
+                "type": "string",
+                "enum": [
+                  "keep",
+                  "assign"
+                ],
+                "default": "assign"
+              },
+              "sendInvitations": {
+                "type": "boolean",
+                "default": false
+              },
+              "consentNote": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 500,
+                "default": null
+              }
+            },
+            "additionalProperties": false
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "integer"
+              },
+              "new": {
+                "type": "integer"
+              },
+              "duplicate": {
+                "type": "integer"
+              },
+              "error": {
+                "type": "integer"
+              },
+              "skipped": {
+                "type": "integer"
+              },
+              "imported": {
+                "type": "integer"
+              },
+              "guardians": {
+                "type": "integer"
+              },
+              "invitations": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "rows",
+              "new",
+              "duplicate",
+              "error",
+              "skipped",
+              "imported",
+              "guardians",
+              "invitations"
+            ]
+          },
+          "detectedSource": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "confirmedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "format",
+          "createdBy",
+          "mine",
+          "columns",
+          "columnMap",
+          "options",
+          "counts",
+          "detectedSource",
+          "errorCode",
+          "createdAt",
+          "confirmedAt",
+          "finishedAt"
+        ]
+      },
+      "MemberImportCreated": {
+        "type": "object",
+        "properties": {
+          "import": {
+            "$ref": "#/components/schemas/MemberImport"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "uploadExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "import",
+          "uploadUrl",
+          "uploadExpiresAt"
+        ]
+      },
+      "CreateMemberImportRequest": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "xlsx"
+            ],
+            "default": "csv"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          }
+        },
+        "required": [
+          "size"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateMemberImportMappingRequest": {
+        "type": "object",
+        "properties": {
+          "columnMap": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 40
+            }
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "membershipType": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "supporting",
+                  "honorary",
+                  "family"
+                ],
+                "default": "active"
+              },
+              "startDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date",
+                "default": null
+              },
+              "memberNumbers": {
+                "type": "string",
+                "enum": [
+                  "keep",
+                  "assign"
+                ],
+                "default": "assign"
+              },
+              "sendInvitations": {
+                "type": "boolean",
+                "default": false
+              },
+              "consentNote": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 500,
+                "default": null
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "columnMap",
+          "options"
+        ],
+        "additionalProperties": false
+      },
+      "MemberImportRowPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberImportRow"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "MemberImportRow": {
+        "type": "object",
+        "properties": {
+          "rowNumber": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "duplicate",
+              "error",
+              "skipped",
+              "imported"
+            ]
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "name_missing",
+                "birth_date_missing",
+                "birth_date_invalid",
+                "birth_date_in_future",
+                "personal_identity_number_invalid",
+                "personal_identity_number_mismatch",
+                "gender_invalid",
+                "phone_invalid",
+                "email_invalid",
+                "address_incomplete",
+                "membership_type_invalid",
+                "start_date_invalid",
+                "member_number_invalid",
+                "member_number_taken",
+                "member_number_repeated",
+                "group_not_found",
+                "guardian_name_missing",
+                "guardian_kind_invalid",
+                "guardian_phone_invalid",
+                "guardian_email_invalid",
+                "guardian_consent_note_missing",
+                "relation_invalid",
+                "family_without_member",
+                "repeated_in_file",
+                "import_failed",
+                "minor_email_moved",
+                "minor_email_dropped",
+                "protected_address_dropped",
+                "already_in_club",
+                "possible_duplicate",
+                "guardian_is_member",
+                "unknown_columns"
+              ]
+            }
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "birthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "protected": {
+            "type": "boolean"
+          },
+          "guardianRow": {
+            "type": "boolean"
+          },
+          "guardians": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kind": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "parent",
+                    "legal_guardian",
+                    "relative",
+                    "contact_person",
+                    "step_parent",
+                    "foster_parent",
+                    null
+                  ]
+                },
+                "invited": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "kind",
+                "invited"
+              ]
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "match": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "resolution": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "same_person",
+              "different_person",
+              null
+            ]
+          }
+        },
+        "required": [
+          "rowNumber",
+          "status",
+          "issues",
+          "name",
+          "birthDate",
+          "protected",
+          "guardianRow",
+          "guardians",
+          "groups",
+          "match",
+          "resolution"
+        ]
+      },
+      "UpdateMemberImportRowRequest": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "skip",
+              "unskip",
+              "same_person",
+              "different_person"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "additionalProperties": false
+      },
       "RegisterPage": {
         "type": "object",
         "properties": {
@@ -1926,7 +2461,9 @@
                     "parent",
                     "legal_guardian",
                     "relative",
-                    "contact_person"
+                    "contact_person",
+                    "step_parent",
+                    "foster_parent"
                   ]
                 },
                 "phone": {
@@ -1964,6 +2501,247 @@
           "groups"
         ]
       },
+      "AddMemberResult": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/RegisterMember"
+          },
+          "invitationsSent": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "member",
+          "invitationsSent"
+        ]
+      },
+      "AddMemberRequest": {
+        "type": "object",
+        "properties": {
+          "givenName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "familyName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "personalIdentityNumber": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$"
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "country",
+              "value"
+            ]
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "female",
+              "male",
+              "other"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "pattern": "^\\+?[0-9 ()-]{5,20}$"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "postalCode": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "city": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$"
+              }
+            },
+            "required": [
+              "street",
+              "postalCode",
+              "city",
+              "country"
+            ]
+          },
+          "protectedIdentity": {
+            "type": "boolean",
+            "default": false
+          },
+          "membershipType": {
+            "type": "string",
+            "enum": [
+              "active",
+              "supporting",
+              "honorary",
+              "family"
+            ],
+            "default": "active"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 50,
+            "default": []
+          },
+          "guardians": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "guardian": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "personId": {
+                          "type": "string",
+                          "format": "uuid"
+                        }
+                      },
+                      "required": [
+                        "personId"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "person": {
+                          "type": "object",
+                          "properties": {
+                            "givenName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "familyName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "phone": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "pattern": "^\\+?[0-9 ()-]{5,20}$"
+                            }
+                          },
+                          "required": [
+                            "givenName",
+                            "familyName"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "person"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "email": {
+                          "type": "string",
+                          "maxLength": 254
+                        }
+                      },
+                      "required": [
+                        "email"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "parent",
+                    "legal_guardian",
+                    "relative",
+                    "contact_person",
+                    "step_parent",
+                    "foster_parent"
+                  ]
+                },
+                "rights": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "act_on_behalf",
+                      "receive_messages",
+                      "view_schedule",
+                      "sign_up",
+                      "see_medical"
+                    ]
+                  },
+                  "maxItems": 5
+                },
+                "consentNote": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "required": [
+                "guardian",
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 50,
+            "default": []
+          },
+          "invitationEmail": {
+            "type": "string",
+            "maxLength": 254
+          }
+        },
+        "required": [
+          "givenName",
+          "familyName"
+        ],
+        "additionalProperties": false
+      },
       "ClubGuardians": {
         "type": "object",
         "properties": {
@@ -1998,7 +2776,9 @@
               "parent",
               "legal_guardian",
               "relative",
-              "contact_person"
+              "contact_person",
+              "step_parent",
+              "foster_parent"
             ]
           },
           "rights": {
@@ -2461,7 +3241,9 @@
               "parent",
               "legal_guardian",
               "relative",
-              "contact_person"
+              "contact_person",
+              "step_parent",
+              "foster_parent"
             ]
           },
           "suggestProtection": {
@@ -2484,7 +3266,9 @@
               "parent",
               "legal_guardian",
               "relative",
-              "contact_person"
+              "contact_person",
+              "step_parent",
+              "foster_parent"
             ]
           },
           "rights": {
@@ -2538,7 +3322,9 @@
               "parent",
               "legal_guardian",
               "relative",
-              "contact_person"
+              "contact_person",
+              "step_parent",
+              "foster_parent"
             ]
           },
           "rights": {
@@ -2731,7 +3517,9 @@
                     "parent",
                     "legal_guardian",
                     "relative",
-                    "contact_person"
+                    "contact_person",
+                    "step_parent",
+                    "foster_parent"
                   ]
                 },
                 "flaggedAt": {
@@ -2870,6 +3658,8 @@
                       "club.members.read",
                       "club.members.manage",
                       "club.members.export",
+                      "club.members.add",
+                      "club.members.import",
                       "group.read",
                       "group.update",
                       "group.owners.manage",
@@ -3514,7 +4304,9 @@
               "parent",
               "legal_guardian",
               "relative",
-              "contact_person"
+              "contact_person",
+              "step_parent",
+              "foster_parent"
             ]
           },
           "rights": {
@@ -3609,7 +4401,9 @@
                     "parent",
                     "legal_guardian",
                     "relative",
-                    "contact_person"
+                    "contact_person",
+                    "step_parent",
+                    "foster_parent"
                   ]
                 },
                 "rights": {
@@ -4352,7 +5146,9 @@
                     "parent",
                     "legal_guardian",
                     "relative",
-                    "contact_person"
+                    "contact_person",
+                    "step_parent",
+                    "foster_parent"
                   ]
                 },
                 "phone": {
@@ -6937,6 +7733,1047 @@
         }
       }
     },
+    "/api/v1/clubs/{clubId}/member-imports": {
+      "get": {
+        "operationId": "MemberImports_list",
+        "summary": "The club's imports (who, when, counts), newest first",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImportList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "MemberImports_start",
+        "summary": "Start an import: a pre-signed upload link for the CSV file (PUT, 15 minutes)",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemberImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImportCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/member-imports/{importId}": {
+      "get": {
+        "operationId": "MemberImports_get",
+        "summary": "An import: status, detected columns, suggested mapping, counts",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "importId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/member-imports/{importId}/cancel": {
+      "post": {
+        "operationId": "MemberImports_cancel",
+        "summary": "Cancel an import before confirmation; the uploaded file is deleted",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "importId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/member-imports/{importId}/confirm": {
+      "post": {
+        "operationId": "MemberImports_confirm",
+        "summary": "Confirm the import (recent login): the members are added in the background",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "importId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/member-imports/{importId}/mapping": {
+      "put": {
+        "operationId": "MemberImports_mapping",
+        "summary": "Column mapping and options; the rows are validated again",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "importId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberImportMappingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/member-imports/{importId}/rows": {
+      "get": {
+        "operationId": "MemberImports_rows",
+        "summary": "Preview rows with their status and issues, by row number",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "importId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "new",
+                "duplicate",
+                "error",
+                "skipped",
+                "imported"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImportRowPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/member-imports/{importId}/rows/{rowNumber}": {
+      "patch": {
+        "operationId": "MemberImports_updateRow",
+        "summary": "Skip or un-skip a row; a matched row is the same or a different person",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "importId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20001
+            },
+            "required": true,
+            "name": "rowNumber",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberImportRowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImportRow"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/member-imports/{importId}/uploaded": {
+      "post": {
+        "operationId": "MemberImports_uploaded",
+        "summary": "The file is uploaded: it is parsed and validated in the background",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.import` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "importId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberImport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clubs/{clubId}/members": {
       "get": {
         "operationId": "Members_list",
@@ -7123,6 +8960,112 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RegisterPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "Members_add",
+        "summary": "Add a member by hand, with groups, guardians and invitations",
+        "tags": [
+          "members"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.members.add` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMemberRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddMemberResult"
                 }
               }
             }
@@ -7394,7 +9337,9 @@
                       "parent",
                       "legal_guardian",
                       "relative",
-                      "contact_person"
+                      "contact_person",
+                      "step_parent",
+                      "foster_parent"
                     ]
                   },
                   "rights": {
@@ -10538,7 +12483,9 @@
                         "type": "string",
                         "enum": [
                           "relative",
-                          "contact_person"
+                          "contact_person",
+                          "step_parent",
+                          "foster_parent"
                         ]
                       },
                       "rights": {
@@ -10596,7 +12543,9 @@
                         "type": "string",
                         "enum": [
                           "relative",
-                          "contact_person"
+                          "contact_person",
+                          "step_parent",
+                          "foster_parent"
                         ]
                       },
                       "rights": {
@@ -10943,7 +12892,9 @@
                       "parent",
                       "legal_guardian",
                       "relative",
-                      "contact_person"
+                      "contact_person",
+                      "step_parent",
+                      "foster_parent"
                     ]
                   },
                   "rights": {
@@ -11202,7 +13153,9 @@
                     "type": "string",
                     "enum": [
                       "relative",
-                      "contact_person"
+                      "contact_person",
+                      "step_parent",
+                      "foster_parent"
                     ]
                   },
                   "rights": {

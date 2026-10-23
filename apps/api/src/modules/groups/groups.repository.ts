@@ -166,3 +166,13 @@ export async function listGroupsPage(
     .limit(page.limit);
   return { rows, cursorFound: true };
 }
+
+export async function activeGroupNames(
+  tx: Tx,
+  clubId: string,
+): Promise<{ id: string; name: string }[]> {
+  return tx
+    .select({ id: groups.id, name: groups.name })
+    .from(groups)
+    .where(and(eq(groups.clubId, clubId), isNull(groups.archivedAt)));
+}

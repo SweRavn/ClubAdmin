@@ -14,7 +14,11 @@ import {
   emailInvitationToken,
   guardianInvitationToken,
 } from "@clubadmin/server-kit/invitations";
-import { ObjectStorage, objectStorageConfig } from "@clubadmin/server-kit/object-storage";
+import {
+  FILE_EXPIRY_RULES,
+  ObjectStorage,
+  objectStorageConfig,
+} from "@clubadmin/server-kit/object-storage";
 import { relationshipVersionKey, uuidv7 } from "@clubadmin/shared";
 import { run, runOnce } from "graphile-worker";
 import { Redis } from "ioredis";
@@ -28,7 +32,7 @@ import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards, notifyOwnLoginAge } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 import { deleteExpiredJoiningData } from "./tasks/joining.ts";
-import { expireMemberExports, runMemberExport } from "./tasks/members.ts";
+import { expireMemberExports, purgeMemberImports, runMemberExport } from "./tasks/members.ts";
 
 let t: TestDatabase;
 const logger = graphileLogger(
@@ -487,6 +491,51 @@ describe("family emails (P1.3)", () => {
     }
   });
 
+  it("sends a club's invitation naming the club, never a ward protected in the club (P1.3b)", async () => {
+    for (const protectedInClub of [false, true]) {
+      const { anna, child } = await family();
+      const club = uuidv7();
+      const invitationId = uuidv7();
+      const session = await t.connect("admin");
+      try {
+        await session.query("BEGIN");
+        await session.query(
+          `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+           VALUES ($1, 'Bonus IK', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+          [club, `bonus-${club.slice(-8)}`],
+        );
+        await session.query(
+          "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')",
+          [club, anna],
+        );
+        await session.query(
+          `INSERT INTO club_profiles (club_id, person_id, protected_identity_club) VALUES ($1, $2, $3)`,
+          [club, child, protectedInClub],
+        );
+        await session.query(
+          `INSERT INTO guardian_invitations (id, ward_person_id, invited_by_person_id, email, token_hash, kind,
+             rights, expires_at, club_id, consent_note)
+           VALUES ($1::uuid, $2, $3, 'jonas@example.test', $1::text, 'step_parent', '{view_schedule}',
+             now() + interval '14 days', $4, 'Blankett')`,
+          [invitationId, child, anna, club],
+        );
+        await session.query("COMMIT");
+      } finally {
+        await session.end();
+      }
+      const provider = memoryMailProvider();
+      const event = await t.db.withSystem("test", {}, (tx) =>
+        outbox.publish(tx, "guardianship.invited", { invitationId, wardPersonId: child }),
+      );
+      await outbox.dispatch(t.db, event, [handler(provider)]);
+      const [mail] = provider.sent;
+      expect(mail!.subject).toBe("Bonus IK bjuder in dig till ClubAdmin");
+      expect(mail!.text).toContain("som bonusförälder");
+      expect(mail!.text).toContain(guardianInvitationToken(key, invitationId, null));
+      expect(mail!.text.includes("Elsa")).toBe(!protectedInClub);
+    }
+  });
+
   it("tells the inviter about the acceptance, the young person about the own login and the guardians about the ages", async () => {
     const { anna, mikael, child } = await family();
     const invitationId = uuidv7();
@@ -686,10 +735,9 @@ describe("member exports (P1.2)", () => {
     expect((await fetchFile(`exports/${club}/${exportId}.csv`)).status).toBe(404);
   });
 
-  it("sets the bucket's lifecycle rule for exports once", async () => {
-    const rule = { id: "member-exports", prefix: "exports/", days: 2 };
-    expect(["added", "present"]).toContain(await storage.ensureExpiryRule(rule));
-    expect(await storage.ensureExpiryRule(rule)).toBe("present");
+  it("sets the bucket's lifecycle rules for exports and imports once", async () => {
+    expect(["added", "present"]).toContain(await storage.ensureExpiryRules(FILE_EXPIRY_RULES));
+    expect(await storage.ensureExpiryRules(FILE_EXPIRY_RULES)).toBe("present");
   });
 
   it("emails every club manager about an export", async () => {
@@ -709,6 +757,66 @@ describe("member exports (P1.2)", () => {
     expect(mail!.text).toContain("Namn, Medlemsnummer, Telefon och Inträde");
     expect(mail!.text).toContain("skyddade personuppgifter");
     expect(mail!.text).toContain(`https://clubadmin.test/clubs/${club}/members/exports`);
+  });
+
+  const insertImport = (club: string, manager: string, status: string, ago: string) =>
+    t.db.withSystem("test", { clubId: club }, async (tx) => {
+      const { rows } = await tx.execute<{ id: string }>(sql`
+        INSERT INTO member_imports (club_id, created_by_person_id, confirmed_by_person_id, status, options,
+          counts, columns, finished_at)
+        VALUES (${club}, ${manager}, ${manager}, ${status}, '{}'::jsonb,
+          '{"rows":3,"new":0,"duplicate":0,"error":1,"skipped":0,"imported":2,"guardians":1,"invitations":1}'::jsonb,
+          '[{"index":0,"header":"Förnamn","sample":"Anna","suggested":"givenName"}]'::jsonb,
+          now() - ${ago}::interval)
+        RETURNING id`);
+      const id = rows[0]!.id;
+      await tx.execute(sql`
+        INSERT INTO member_import_rows (import_id, club_id, row_number, cells)
+        VALUES (${id}, ${club}, 1, 'sealed'), (${id}, ${club}, 2, 'sealed')`);
+      return id;
+    });
+
+  it("emails every club manager when an import finishes (counts, never rows)", async () => {
+    const { club, manager } = await clubWithMembers();
+    const importId = await insertImport(club, manager, "done", "1 minute");
+    const eventId = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "members.import.finished", { importId, clubId: club }),
+    );
+    const provider = memoryMailProvider();
+    await outbox.dispatch(t.db, eventId, [
+      mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: undefined }),
+    ]);
+    expect(provider.sent).toHaveLength(1);
+    const [mail] = provider.sent;
+    expect(mail!.subject).toBe("Export IF: en medlemsimport är klar");
+    expect(mail!.text).toContain("Maja Chef har importerat medlemmar till Export IF: 2 tillagda");
+    expect(mail!.text).toContain("1 inbjudningar skickade");
+    expect(mail!.text).not.toContain("Anna");
+  });
+
+  it("deletes an import's staging rows seven days after it ended and keeps its counts", async () => {
+    const { club, manager } = await clubWithMembers();
+    const old = await insertImport(club, manager, "done", "8 days");
+    const recent = await insertImport(club, manager, "done", "1 day");
+    const result = await purgeMemberImports(t.db, storage);
+    expect(result.purged).toBeGreaterThanOrEqual(1);
+    const { rows } = await t.query<{
+      id: string;
+      rows: number;
+      purged: boolean;
+      columns: unknown[];
+      imported: number;
+    }>(
+      "admin",
+      `SELECT i.id, (SELECT count(*)::int FROM member_import_rows r WHERE r.import_id = i.id) AS rows,
+         i.purged_at IS NOT NULL AS purged, i.columns, (i.counts->>'imported')::int AS imported
+       FROM member_imports i WHERE i.id = ANY($1::uuid[]) ORDER BY i.id`,
+      [[old, recent]],
+    );
+    expect(rows).toEqual([
+      { id: old, rows: 0, purged: true, columns: [], imported: 2 },
+      { id: recent, rows: 2, purged: false, columns: expect.any(Array) as unknown, imported: 2 },
+    ]);
   });
 });
 

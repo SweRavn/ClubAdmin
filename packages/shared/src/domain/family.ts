@@ -338,6 +338,11 @@ export function linkedPersonInput(field: (name: PersonFormField) => string) {
   };
 }
 
+/** A person without login from plain name parts (adding and importing members, P1.3b). */
+export function newLinkedPerson(given: string, family: string, phone: string | null) {
+  return { givenName: given, familyName: family, ...(phone ? { phone } : {}) };
+}
+
 /** "Add child" from form fields (validated by AddChildSchema in the API). */
 export function addChildInput(
   field: (name: PersonFormField) => string,

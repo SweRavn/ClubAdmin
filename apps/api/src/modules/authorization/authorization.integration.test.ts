@@ -349,6 +349,39 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/member-exports/${uuidv7()}/download`,
       expected: CLUB_FORBIDDEN,
     },
+    // Adding members by hand (P1.3b): registrars without a second factor,
+    // club managers with one (403 here). The flows: member-intake.integration.test.ts.
+    "POST /api/v1/clubs/:clubId/members": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/members`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 201 },
+      body: { givenName: "Matrix", familyName: "Member", birthDate: "1990-01-01" },
+    },
+    // Imports always need a second factor: 403 for everyone in the club here.
+    ...Object.fromEntries(
+      (
+        [
+          ["POST", "", { size: 100 }],
+          ["GET", "", undefined],
+          ["POST", "/:importId/uploaded", undefined],
+          ["GET", "/:importId", undefined],
+          ["PUT", "/:importId/mapping", { columnMap: {}, options: {} }],
+          ["GET", "/:importId/rows", undefined],
+          ["PATCH", "/:importId/rows/:rowNumber", { action: "skip" }],
+          ["POST", "/:importId/confirm", undefined],
+          ["POST", "/:importId/cancel", undefined],
+        ] as const
+      ).map(([method, path, body]) => [
+        `${method} /api/v1/clubs/:clubId/member-imports${path}`,
+        {
+          url: () =>
+            `/api/v1/clubs/${m.clubA.id}/member-imports${path
+              .replace(":importId", uuidv7())
+              .replace(":rowNumber", "1")}`,
+          expected: CLUB_FORBIDDEN,
+          ...(body ? { body } : {}),
+        },
+      ]),
+    ),
     // Families (P1.3): the flows are in families.integration.test.ts. People
     // and family resources the caller cannot reach are 404 (their existence
     // is information).
@@ -474,6 +507,8 @@ describe("tenant isolation", () => {
       `/api/v1/clubs/${m.clubA.id}/members`,
       `/api/v1/clubs/${m.clubA.id}/members/facets`,
       `/api/v1/clubs/${m.clubA.id}/member-exports`,
+      `/api/v1/clubs/${m.clubA.id}/member-imports`,
+      `/api/v1/clubs/${m.clubA.id}/member-imports/${uuidv7()}`,
       `/api/v1/clubs/${m.clubA.id}/members/${m.child.id}/guardians`,
       `/api/v1/clubs/${m.clubA.id}/duplicates`,
       `/api/v1/me/wards/${m.child.id}/guardians`,
@@ -523,6 +558,8 @@ describe("reads", () => {
       "club.members.read",
       "club.members.manage",
       "club.members.export",
+      "club.members.add",
+      "club.members.import",
       "club.guardians.manage",
       "club.join_requests.manage",
       "club.invitations.manage",

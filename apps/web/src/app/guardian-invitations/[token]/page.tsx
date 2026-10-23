@@ -4,6 +4,7 @@
 // without revealing whom they were for. The token stays in the path; the API
 // stores only its hash.
 import { enumKey } from "@clubadmin/i18n";
+import { isLinkedGuardianshipKind } from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
 
 import { ActionForm, buttonClass } from "../../../components/action-form.tsx";
@@ -49,7 +50,7 @@ export default async function GuardianInvitationPage({ params, searchParams }: P
               kind: t(enumKey("guardianKinds", invitation.kind)),
             })}
           </p>
-          {invitation.kind === "relative" || invitation.kind === "contact_person" ? (
+          {isLinkedGuardianshipKind(invitation.kind) ? (
             <p className="text-sm">
               {t("family.landing.rights", {
                 rights: invitation.rights.map((r) => t(enumKey("guardianRights", r))).join(", "),

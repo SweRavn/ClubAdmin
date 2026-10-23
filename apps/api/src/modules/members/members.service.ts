@@ -69,6 +69,22 @@ export class MembersService {
     });
   }
 
+  /** One member's register row (full access), or null if they are not (visibly) in it. */
+  registerRow(context: TenantContext, personId: string): Promise<RegisterRow | null> {
+    return this.db.withTenant(context, async (tx) => {
+      const result = await repo.registerPage(tx, context.clubId, {
+        filter: {},
+        sort: "name",
+        order: "asc",
+        cursor: null,
+        limit: 1,
+        countHidden: false,
+        personId,
+      });
+      return result.items[0] ?? null;
+    });
+  }
+
   facets(context: TenantContext): Promise<repo.FacetRows> {
     return this.db.withTenant(context, (tx) => repo.registerFacets(tx, context.clubId));
   }

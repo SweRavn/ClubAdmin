@@ -72,6 +72,10 @@ export const GUARDIANSHIP_KINDS = [
   "legal_guardian",
   "relative",
   "contact_person",
+  /** Bonus parent (P1.3b): rights chosen per link, like a relative. */
+  "step_parent",
+  /** Family home (P1.3b): rights chosen per link, like a relative. */
+  "foster_parent",
 ] as const;
 export type GuardianshipKind = (typeof GUARDIANSHIP_KINDS)[number];
 
@@ -84,15 +88,21 @@ export const GUARDIANSHIP_RIGHTS = [
 ] as const;
 export type GuardianshipRight = (typeof GUARDIANSHIP_RIGHTS)[number];
 
-/** Defaults per kind: parents and legal guardians get full rights; relatives the schedule; contact persons the schedule and messages. */
+/**
+ * Defaults per kind: parents and legal guardians get full rights; relatives,
+ * step and foster parents the schedule; contact persons the schedule and
+ * messages.
+ */
 export const DEFAULT_GUARDIANSHIP_RIGHTS: Record<GuardianshipKind, readonly GuardianshipRight[]> = {
   parent: GUARDIANSHIP_RIGHTS,
   legal_guardian: GUARDIANSHIP_RIGHTS,
   relative: ["view_schedule"],
   contact_person: ["view_schedule", "receive_messages"],
+  step_parent: ["view_schedule"],
+  foster_parent: ["view_schedule"],
 };
 
-/** Parents and legal guardians: full rights; relatives and contact persons hold only the rights chosen for them. */
+/** Parents and legal guardians: full rights; the linked kinds hold only the rights chosen for them. */
 export const FULL_GUARDIANSHIP_KINDS = [
   "parent",
   "legal_guardian",
@@ -100,9 +110,22 @@ export const FULL_GUARDIANSHIP_KINDS = [
 export const LINKED_GUARDIANSHIP_KINDS = [
   "relative",
   "contact_person",
+  "step_parent",
+  "foster_parent",
 ] as const satisfies readonly GuardianshipKind[];
 export const isFullGuardianshipKind = (kind: GuardianshipKind): boolean =>
   (FULL_GUARDIANSHIP_KINDS as readonly string[]).includes(kind);
+/** Kinds whose rights are chosen per link (everything except parents and legal guardians). */
+export const isLinkedGuardianshipKind = (kind: string): boolean =>
+  (LINKED_GUARDIANSHIP_KINDS as readonly string[]).includes(kind);
+/** Linked kinds that may be given act_on_behalf (explicitly, by a full guardian or the adult ward); never contact persons. */
+export const ACT_ON_BEHALF_KINDS = [
+  "relative",
+  "step_parent",
+  "foster_parent",
+] as const satisfies readonly GuardianshipKind[];
+export const mayActOnBehalfKind = (kind: string): boolean =>
+  (ACT_ON_BEHALF_KINDS as readonly string[]).includes(kind);
 
 /** The young person's decision per guardian at the adult age (P1.3). */
 export const ADULT_DECISIONS = ["kept", "ended"] as const;

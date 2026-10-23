@@ -208,6 +208,17 @@ checks (clearances), billing plans, chat rooms, the anonymisation schedule
   ago (name, member number, membership type, groups); the record is in the
   exports list, its file expired. Peter (IKN treasurer) sees IKN's limited
   board list, never Nadia.
+- **Member imports** (P1.3b, `apps/api/src/seed/steps/imports.ts`): Lars
+  imported four members into FIL (Sindre and Mia Bakke, siblings with one
+  parent, Tobias Strand, and Per Nygård in Veteran); the import is done and
+  its report shows the counts. Karin's import of the sample file
+  `docs/demodata/imports/medlemmar.csv` (Swedish headers, `;`, Windows-1252:
+  six members, Saga Öberg with four guardians, two parents, a step-parent
+  and a grandmother; Ines' email goes to her father) is in review in IKN,
+  with two extra rows: Oskar Lindkvist, a possible duplicate of Oskar
+  Lindqvist, and Tove Ek without a birth date (an error). Open
+  `/clubs/<ikn>/members/import` as Karin with a second factor to try the
+  preview. Both start from a file through the import service.
 
 ## Load scenario
 

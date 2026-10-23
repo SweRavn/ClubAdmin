@@ -8,4 +8,5 @@ export const NO: CountryPack = {
   ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18 },
   personalIdFormat: personalIdFormat(parseFodselsnummer),
   localeDefaults: { locale: "nb-NO", timeZone: "Europe/Oslo", currency: "NOK" },
+  memberImport: { dateOrder: "dmy", sources: [] },
 };

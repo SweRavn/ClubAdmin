@@ -7,3 +7,6 @@
 *.jpg binary
 *.ico binary
 *.woff2 binary
+
+# Sample import files keep their bytes (Windows-1252, CRLF), like real exports.
+docs/demodata/imports/*.csv -text

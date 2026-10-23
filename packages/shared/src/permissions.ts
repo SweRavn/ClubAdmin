@@ -11,6 +11,8 @@ export const PERMISSIONS = [
   "club.members.read",
   "club.members.manage",
   "club.members.export",
+  "club.members.add",
+  "club.members.import",
   "group.read",
   "group.update",
   "group.owners.manage",

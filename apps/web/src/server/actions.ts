@@ -6,9 +6,11 @@
 
 import {
   addChildInput,
+  addMemberFormInput,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
   type GuardianshipRight,
+  isLinkedGuardianshipKind,
   isUuid,
   linkedPersonInput,
   MEMBER_EXPORT_COLUMNS,
@@ -71,7 +73,7 @@ const kindOf = (form: FormData) => {
   const kind = text(form, "kind");
   return (GUARDIANSHIP_KINDS as readonly string[]).includes(kind) ? kind : null;
 };
-const isLinked = (kind: string) => kind === "relative" || kind === "contact_person";
+const isLinked = isLinkedGuardianshipKind;
 /** A person without login (name, phone) from the form's person fields. */
 const newPerson = (form: FormData) => linkedPersonInput((name) => text(form, name));
 
@@ -397,6 +399,89 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
         : null;
     },
     done: (form) => back(form),
+  },
+  // Adding and importing members (P1.3b).
+  "add-member": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/members`,
+        method: "POST",
+        body: addMemberFormInput(
+          (name) => text(form, name),
+          (name) => form.getAll(name).filter((v): v is string => typeof v === "string" && v !== ""),
+        ),
+      };
+    },
+    done: (form) => `/clubs/${text(form, "clubId")}/members?added=1`,
+  },
+  "update-import-mapping": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const importId = id(form, "importId");
+      if (!clubId || !importId) return null;
+      const columnMap: Record<string, string> = {};
+      for (const [key, value] of form.entries()) {
+        const column = /^column\.([0-9]{1,3})$/.exec(key);
+        if (column && typeof value === "string" && value !== "") columnMap[column[1]!] = value;
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/member-imports/${importId}/mapping`,
+        method: "PUT",
+        body: {
+          columnMap,
+          options: {
+            membershipType: text(form, "membershipType") || "active",
+            startDate: text(form, "startDate") || null,
+            memberNumbers: text(form, "memberNumbers") === "keep" ? "keep" : "assign",
+            sendInvitations: text(form, "sendInvitations") === "on",
+            consentNote: text(form, "consentNote") || null,
+          },
+        },
+      };
+    },
+    done: (form) => back(form),
+  },
+  "update-import-row": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const importId = id(form, "importId");
+      const rowNumber = text(form, "rowNumber");
+      const action = text(form, "rowAction");
+      if (!clubId || !importId || !/^[0-9]{1,6}$/.test(rowNumber)) return null;
+      if (!["skip", "unskip", "same_person", "different_person"].includes(action)) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/member-imports/${importId}/rows/${rowNumber}`,
+        method: "PATCH",
+        body: { action },
+      };
+    },
+    done: (form) => back(form),
+  },
+  "confirm-import": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const importId = id(form, "importId");
+      if (!clubId || !importId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/member-imports/${importId}/confirm`,
+        method: "POST",
+      };
+    },
+    done: (form) => back(form),
+  },
+  "cancel-import": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const importId = id(form, "importId");
+      if (!clubId || !importId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/member-imports/${importId}/cancel`,
+        method: "POST",
+      };
+    },
+    done: (form) => `/clubs/${text(form, "clubId")}/members/import`,
   },
   // Member register (P1.2).
   "create-member-export": {

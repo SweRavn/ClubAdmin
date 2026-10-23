@@ -116,7 +116,7 @@ export class PeopleService {
           data.birthDate ?? null,
         )
       : { personalIdentityNumber: null, personalIdentityNumberHash: null };
-    await repo.insertPerson(tx, {
+    const row = await repo.insertPerson(tx, {
       id,
       givenName: data.givenName,
       familyName: data.familyName,
@@ -135,8 +135,6 @@ export class PeopleService {
       resourceId: id,
       changedFields: Object.keys(data).filter((k) => data[k as keyof typeof data] != null),
     });
-    const row = await repo.findPerson(tx, id);
-    if (!row) throw new DomainError("not_found");
     return toPerson(row);
   }
 
@@ -255,6 +253,68 @@ export class PeopleService {
       const separator = plain.indexOf(":");
       return { country: plain.slice(0, separator), value: plain.slice(separator + 1) };
     });
+  }
+
+  /**
+   * The club's people (also former members) matching people of a file
+   * (adding and importing members, P1.3b): never anyone outside the club.
+   */
+  clubMatchesInTx(
+    tx: Tx,
+    clubId: string,
+    candidates: readonly repo.ClubMatchCandidate[],
+  ): Promise<repo.ClubMatch[]> {
+    return repo.clubMatches(tx, clubId, candidates);
+  }
+
+  /** The club's people with exactly these names and phone (guardians already in the club). */
+  clubPeopleByNameAndPhoneInTx(
+    tx: Tx,
+    clubId: string,
+    candidates: readonly { key: number; given: string; family: string; phone: string }[],
+  ): Promise<{ key: number; personId: string }[]> {
+    return repo.clubPeopleByNameAndPhone(tx, clubId, candidates);
+  }
+
+  /**
+   * Parses a personal identity number for a file row (P1.3b): the
+   * normalised value with its birth date and blind index, or null if it is
+   * invalid for the country.
+   */
+  parsePersonalIdentityNumber(
+    country: string,
+    value: string,
+  ): { normalized: string; birthDate: string; hash: string } | null {
+    if (!isSupportedCountry(country)) return null;
+    const parsed = getCountryPack(country).personalIdFormat.parse(value);
+    if (!parsed) return null;
+    const sealed = `${country}:${parsed.normalized}`;
+    return {
+      normalized: parsed.normalized,
+      birthDate: parsed.birthDate,
+      hash: this.encryption.blindIndex(PIN_PURPOSE, sealed),
+    };
+  }
+
+  /**
+   * Creates a person from a file row or the "Add member" form (P1.3b):
+   * plain name parts, so callers outside this module never build name
+   * fields (ADR 0022).
+   */
+  createFromIntakeInTx(
+    tx: Tx,
+    context: Context,
+    input: Omit<CreatePersonInput, "givenName" | "familyName">,
+    names: { given: string; family: string },
+    /** A fixed ID (the demo seed). */
+    id?: string,
+  ): Promise<Person> {
+    return this.createPersonInTx(
+      tx,
+      context,
+      { ...input, givenName: names.given, familyName: names.family },
+      id ? { id } : {},
+    );
   }
 
   /** The blind index used to find people with the same personal identity number. */

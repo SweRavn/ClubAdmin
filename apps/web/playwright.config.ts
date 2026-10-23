@@ -40,5 +40,10 @@ export default defineConfig({
         { name: "joining", testMatch: /joining\.spec\.ts/, dependencies: ["dev-auth"] },
         { name: "members", testMatch: /members\.spec\.ts/, dependencies: ["joining"] },
         { name: "families", testMatch: /families\.spec\.ts/, dependencies: ["members"] },
+        {
+          name: "member-imports",
+          testMatch: /member-imports\.spec\.ts/,
+          dependencies: ["families"],
+        },
       ],
 });

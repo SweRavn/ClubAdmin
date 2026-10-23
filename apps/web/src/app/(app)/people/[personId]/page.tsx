@@ -2,7 +2,7 @@
 // A person's profile as the viewer may see it: the API leaves out fields the
 // relationship does not include (docs/domain-model.md, "Field visibility").
 import { enumKey } from "@clubadmin/i18n";
-import { MEMBERSHIP_TYPES } from "@clubadmin/shared";
+import { GUARDIANSHIP_KINDS, MEMBERSHIP_TYPES } from "@clubadmin/shared";
 import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
 
@@ -375,13 +375,11 @@ export default async function PersonPage({ params, searchParams }: Props) {
                 <label className="block space-y-1">
                   <span className="text-sm">{t("family.kind")}</span>
                   <select name="kind" className={inputClass} defaultValue="contact_person">
-                    {(["parent", "legal_guardian", "relative", "contact_person"] as const).map(
-                      (k) => (
-                        <option key={k} value={k}>
-                          {t(enumKey("guardianKinds", k))}
-                        </option>
-                      ),
-                    )}
+                    {GUARDIANSHIP_KINDS.map((k) => (
+                      <option key={k} value={k}>
+                        {t(enumKey("guardianKinds", k))}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <RightsFields

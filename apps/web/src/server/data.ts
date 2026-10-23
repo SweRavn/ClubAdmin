@@ -22,6 +22,9 @@ import {
   JoinRequestListSchema,
   ManagerListSchema,
   MemberExportListSchema,
+  MemberImportListSchema,
+  MemberImportRowPageSchema,
+  MemberImportSchema,
   MeResponseSchema,
   MyClubCreationRequestsSchema,
   MyClubsSchema,
@@ -184,6 +187,34 @@ export const getMemberExports = cache((clubId: string) =>
   apiGet(`/api/v1/clubs/${requireId(clubId)}/member-exports?limit=50`, MemberExportListSchema, {
     nullOn: [403],
   }),
+);
+
+// Adding and importing members (P1.3b). Imports need a second factor: null
+// without one (the API answers 403).
+export const getMemberImports = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/member-imports?limit=20`, MemberImportListSchema, {
+    nullOn: [403],
+  }),
+);
+export const getMemberImport = cache((clubId: string, importId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/member-imports/${requireId(importId)}`,
+    MemberImportSchema,
+    { nullOn: [403] },
+  ),
+);
+export const getMemberImportRows = cache((clubId: string, importId: string, query: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/member-imports/${requireId(importId)}/rows?${query}`,
+    MemberImportRowPageSchema,
+  ),
+);
+/** Adult members for the guardian picker of "Add member" (the first 200 by name). */
+export const getAdultMembers = cache((clubId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/members?limit=200&bornTo=${new Date().getUTCFullYear() - 18}`,
+    RegisterPageSchema,
+  ),
 );
 
 // Families (P1.3).

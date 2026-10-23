@@ -3,6 +3,8 @@ import { createLogger, loadEnvFiles, onShutdown } from "@clubadmin/server-kit";
 
 import { createApp } from "./app.ts";
 import { loadApiConfig } from "./config.ts";
+import { MemberImportsService } from "./modules/members/index.ts";
+import { startMemberImportJobs } from "./platform/jobs/member-import-jobs.ts";
 
 loadEnvFiles();
 const config = loadApiConfig();
@@ -15,4 +17,18 @@ logger.info(
   "api listening",
 );
 
-onShutdown(logger, () => app.close());
+// Member imports (P1.3b, ADR 0033): parsing and importing run here, next to the services.
+const importJobs =
+  config.MEMBER_IMPORT_JOBS && config.DATABASE_URL
+    ? await startMemberImportJobs({
+        databaseUrl: config.DATABASE_URL,
+        concurrency: config.MEMBER_IMPORT_CONCURRENCY,
+        imports: app.get(MemberImportsService),
+        logger,
+      })
+    : null;
+
+onShutdown(logger, async () => {
+  await importJobs?.stop();
+  await app.close();
+});

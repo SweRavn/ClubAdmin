@@ -205,10 +205,19 @@ export const guardianInvitations = pgTable(
     revokedAt: timestamp(tz),
     /** Last resend: the link changes (the token is derived from the ID and this time). */
     resentAt: timestamp(tz),
+    /**
+     * Sent by a club (adding or importing members, P1.3b): the email names the
+     * club, and the guardianship is recorded by it. The foreign key is in the
+     * migration (clubs are defined after people).
+     */
+    clubId: uuid(),
+    /** The club's consent note for a linked kind, copied to the guardianship. */
+    consentNote: text(),
     ...timestamps,
   },
   (t) => [
     uniqueIndex("guardian_invitations_token_unique").on(t.tokenHash),
+    index("guardian_invitations_club_idx").on(t.clubId),
     index("guardian_invitations_ward_idx").on(t.wardPersonId),
     check("guardian_invitations_kind", oneOf(t.kind, GUARDIANSHIP_KINDS)),
     check("guardian_invitations_rights", subsetOf(t.rights, GUARDIANSHIP_RIGHTS)),

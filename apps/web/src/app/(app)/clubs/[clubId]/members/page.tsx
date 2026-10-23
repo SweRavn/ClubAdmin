@@ -18,6 +18,7 @@ import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { inputClass, secondaryButtonClass } from "../../../../../components/action-form.tsx";
+import { Notice } from "../../../../../components/form-error.tsx";
 import { LazyRegisterList } from "../../../../../components/lazy-register-list.tsx";
 import { RegisterEntry, type RegisterTexts } from "../../../../../components/register-entry.tsx";
 import { RegisterSearch } from "../../../../../components/register-search.tsx";
@@ -100,6 +101,24 @@ export default async function MembersPage({ params, searchParams }: Props) {
             {t("family.clubDuplicates.title")}
           </a>
         ) : null}
+        {permissions.includes("club.members.add") ? (
+          <a
+            href={`/clubs/${club.id}/members/new`}
+            className="text-accent underline"
+            data-testid="register-add"
+          >
+            {t("members.add")}
+          </a>
+        ) : null}
+        {permissions.includes("club.members.import") ? (
+          <a
+            href={`/clubs/${club.id}/members/import`}
+            className="text-accent underline"
+            data-testid="register-import"
+          >
+            {t("members.import")}
+          </a>
+        ) : null}
         {permissions.includes("club.members.export") ? (
           <a
             href={`/clubs/${club.id}/members/exports${query ? `?${query}` : ""}`}
@@ -111,6 +130,7 @@ export default async function MembersPage({ params, searchParams }: Props) {
         ) : null}
       </div>
       {!full ? <p className="text-muted">{t("members.limited")}</p> : null}
+      {search.added ? <Notice>{t("members.added")}</Notice> : null}
 
       <form method="get" role="search" className="space-y-4" data-testid="register-filters">
         <RegisterSearch name="q" defaultValue={filter.q ?? ""} label={t("members.searchLabel")} />

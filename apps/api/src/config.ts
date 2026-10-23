@@ -62,6 +62,16 @@ export const apiConfigSchema = z
     /** Member register exports (P1.2) per person and club, and per club, in 24 hours. */
     MEMBER_EXPORTS_PER_PERSON_DAY: z.coerce.number().int().positive().default(10),
     MEMBER_EXPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(30),
+    /** Member imports (P1.3b) started per club in 24 hours. */
+    MEMBER_IMPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(20),
+    /** Invitations imports send per club in 24 hours (the rest are left out and counted). */
+    MEMBER_IMPORT_INVITATIONS_PER_CLUB_DAY: z.coerce.number().int().positive().default(2000),
+    /** Run the import jobs (members:import_parse, members:import_run) in this process (ADR 0033). */
+    MEMBER_IMPORT_JOBS: envBoolean(true),
+    /** Import jobs at a time in this process. */
+    MEMBER_IMPORT_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(1),
+    /** Batches of one import written at the same time (database connections it uses). */
+    MEMBER_IMPORT_BATCH_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(4),
     /** First logins (account creation) per client IP and minute. */
     RATE_LIMIT_PROVISIONING_MAX: z.coerce.number().int().positive().default(10),
     /** App versions below this must update (GET /meta/client, ADR 0029); per platform with _IOS / _ANDROID. */

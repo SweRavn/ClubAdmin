@@ -9,6 +9,7 @@ export * from "./authorization/cache-keys.ts";
 export * from "./demodata.ts";
 export * from "./domain/core.ts";
 export * from "./domain/family.ts";
+export * from "./domain/imports.ts";
 export * from "./domain/joining.ts";
 export * from "./domain/members.ts";
 export * from "./domain/person-label.ts";

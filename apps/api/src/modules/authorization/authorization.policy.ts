@@ -118,6 +118,25 @@ export const POLICIES: readonly Policy[] = [
       mfa: true,
     },
   ),
+  // Adding a member by hand (P1.3b): registrars; club managers with a second factor.
+  definePolicy(
+    "club.members.add",
+    "club",
+    ({ actor, resource }) => isAdmin(actor, resource.clubId),
+    {
+      mfa: ({ actor, resource }) => !actor.hasClubRole(resource.clubId, "registrar"),
+    },
+  ),
+  // Imports from a file (P1.3b): registrars and club managers, always with a
+  // second factor (the controller adds @RecentAuth(15) to confirming).
+  definePolicy(
+    "club.members.import",
+    "club",
+    ({ actor, resource }) => isAdmin(actor, resource.clubId),
+    {
+      mfa: true,
+    },
+  ),
   // Group structure is not personal data: anyone related to the club sees its
   // groups; archived ones only those who administer them.
   definePolicy(

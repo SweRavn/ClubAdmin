@@ -24,7 +24,7 @@ import {
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { parseInput } from "../../platform/domain/run.ts";
-import type { ClubProfilesService } from "../club-profiles/index.ts";
+import type { ClubProfilesService, ProfileInit } from "../club-profiles/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import type { GroupsService } from "../groups/index.ts";
 import type { RolesService } from "../roles/index.ts";
@@ -113,13 +113,24 @@ export class MembershipsService {
     );
   }
 
+  /**
+   * `validFrom`: a start in the past (adding and importing members, P1.3b);
+   * `profile`: values of the club profile if it is created now.
+   */
   addMemberInTx(
     tx: Tx,
     context: TenantContext,
     personId: string,
     membershipType?: MembershipType,
+    options: { validFrom?: Date; profile?: ProfileInit; newPerson?: boolean } = {},
   ): Promise<ClubMembership> {
-    return this.createMembershipInTx(tx, context, personId, "active", membershipType);
+    return this.createMembershipInTx(tx, context, personId, "active", membershipType, options);
+  }
+
+  /** The start of a calendar day in the club's time zone; null for a day in the future. */
+  async startOfDayInTx(tx: Tx, clubId: string, date: string): Promise<Date | null> {
+    const club = await this.clubs.getClubInTx(tx, clubId);
+    return repo.startOfDay(tx, date, club.timeZone);
   }
 
   /**
@@ -230,14 +241,18 @@ export class MembershipsService {
     groupId: string,
     personId: string,
     fn: GroupFunction = "member",
+    /** The caller just added the person to the club and checked the group (imports, P1.3b). */
+    options: { checked?: boolean } = {},
   ): Promise<GroupMembership> {
     {
       parseInput(GroupFunctionSchema, fn);
-      const group = await this.groups.getGroupInTx(tx, groupId);
-      if (group.archivedAt) throw new DomainError("group_archived");
-      const membership = await repo.findOpenMembership(tx, context.clubId, personId);
-      if (!membership || (membership.status !== "active" && membership.status !== "paused")) {
-        throw new DomainError("not_a_member");
+      if (!options.checked) {
+        const group = await this.groups.getGroupInTx(tx, groupId);
+        if (group.archivedAt) throw new DomainError("group_archived");
+        const membership = await repo.findOpenMembership(tx, context.clubId, personId);
+        if (!membership || (membership.status !== "active" && membership.status !== "paused")) {
+          throw new DomainError("not_a_member");
+        }
       }
       let row: GroupMembership;
       try {
@@ -374,11 +389,15 @@ export class MembershipsService {
     personId: string,
     status: "active",
     membershipType: MembershipType = "active",
+    /** `newPerson`: created in this transaction (no membership or profile to look for). */
+    options: { validFrom?: Date; profile?: ProfileInit; newPerson?: boolean } = {},
   ): Promise<ClubMembership> {
     parseInput(MembershipTypeSchema, membershipType);
-    if (await repo.findOpenMembership(tx, context.clubId, personId))
+    if (!options.newPerson && (await repo.findOpenMembership(tx, context.clubId, personId)))
       throw new DomainError("already_member");
-    await this.profiles.ensureProfileInTx(tx, context, personId);
+    await this.profiles.ensureProfileInTx(tx, context, personId, options.profile, {
+      isNew: options.newPerson === true,
+    });
     let membership: ClubMembership;
     try {
       membership = await repo.insertMembership(tx, {
@@ -386,6 +405,7 @@ export class MembershipsService {
         personId,
         status,
         membershipType,
+        ...(options.validFrom ? { validFrom: options.validFrom } : {}),
       });
     } catch (error) {
       if (isUniqueViolation(error, "club_memberships_open_unique"))

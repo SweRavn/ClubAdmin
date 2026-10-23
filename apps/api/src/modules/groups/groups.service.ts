@@ -142,6 +142,12 @@ export class GroupsService {
     });
   }
 
+  /** The club's groups that are not archived, by lower-cased name (imports match groups by name, P1.3b). */
+  async groupIdsByNameInTx(tx: Tx, clubId: string): Promise<Map<string, string>> {
+    const rows = await repo.activeGroupNames(tx, clubId);
+    return new Map(rows.map((g) => [g.name.trim().toLowerCase(), g.id]));
+  }
+
   /** Groups visible to the transaction, by ID. */
   findGroupsInTx(tx: Tx, groupIds: readonly string[]): Promise<Group[]> {
     return repo.findGroups(tx, groupIds);

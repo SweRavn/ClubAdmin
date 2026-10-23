@@ -10,6 +10,7 @@ export type {
   AgeRules,
   CountryPack,
   LocaleDefaults,
+  MemberImportRules,
   ParsedPersonalId,
   PersonalIdFormat,
 } from "./types.ts";

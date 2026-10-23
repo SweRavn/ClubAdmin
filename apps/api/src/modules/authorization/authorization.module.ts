@@ -8,6 +8,7 @@ import { AuthorizationService } from "./authorization.service.ts";
 import { AuthorizationCache } from "./authorization-cache.ts";
 import { PersonVisibility } from "./person-visibility.service.ts";
 import { FamilyPresenter } from "./presenters/family.presenter.ts";
+import { MemberImportPresenter } from "./presenters/member-import.presenter.ts";
 import { PersonPresenter } from "./presenters/person.presenter.ts";
 import { PersonProfilePresenter } from "./presenters/person-profile.presenter.ts";
 import { RegisterPresenter } from "./presenters/register.presenter.ts";
@@ -49,6 +50,11 @@ import { RegisterPresenter } from "./presenters/register.presenter.ts";
       useFactory: (people: PersonPresenter) => new FamilyPresenter(people),
     },
     {
+      provide: MemberImportPresenter,
+      inject: [PersonPresenter],
+      useFactory: (people: PersonPresenter) => new MemberImportPresenter(people),
+    },
+    {
       provide: RegisterPresenter,
       inject: [PersonPresenter],
       useFactory: (people: PersonPresenter) => new RegisterPresenter(people),
@@ -61,6 +67,7 @@ import { RegisterPresenter } from "./presenters/register.presenter.ts";
     PersonProfilePresenter,
     RegisterPresenter,
     FamilyPresenter,
+    MemberImportPresenter,
   ],
 })
 export class AuthorizationModule {}

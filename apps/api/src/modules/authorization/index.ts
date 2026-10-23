@@ -16,6 +16,7 @@ export {
   type FamilyViewer,
   type GuardianPerson,
 } from "./presenters/family.presenter.ts";
+export { MemberImportPresenter } from "./presenters/member-import.presenter.ts";
 export { PersonPresenter, type PresentablePerson } from "./presenters/person.presenter.ts";
 export { PersonProfilePresenter } from "./presenters/person-profile.presenter.ts";
 export {

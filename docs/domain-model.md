@@ -90,6 +90,12 @@ No password data (that lives in Zitadel).
   (`ward_person_id`, `invited_by_person_id`, `email`, `token_hash`, `kind`,
   `rights`, `expires_at`, `accepted_at`, `accepted_by_person_id`,
   `guardianship_id`, `revoked_at`); accepting creates the guardianship.
+  An invitation sent by a club when it adds or imports a member (P1.3b)
+  also has `club_id` (the email names the club and why; the club's managers
+  and registrars see it) and, for linked kinds, the club's `consent_note`;
+  the guardianship it creates is recorded by that club. Whoever accepts
+  with the invited email becomes the guardian, with an existing login or a
+  new one: a child is never linked to an existing account automatically.
 - Duplicates (both parents created the same child) are merged by a guardian
   of both, or by a club manager for two members of their club; matching on
   birth date + name or personal identity number. Merges are audited and
@@ -193,6 +199,65 @@ protected members only when included, then marked "do not share") and fails
 the export if the requester has lost the role. Only the requester downloads
 it (a pre-signed link valid five minutes); `members:expire_exports` deletes
 the file after 24 hours and keeps the row as a record.
+
+### Adding and importing members (P1.3b)
+Registrars (and club managers with a second factor, `club.members.add`) add
+a member by hand: the person (no email, ADR 0020), the profile (the fields
+given are shared with the club; protected identity is the club-level flag
+and no address is stored), the membership (type, a start date in the past),
+groups, any number of guardians (a member of the club, a new person without
+login, or an email invitation from the club), and an adult's own-login
+invitation; a minor's email is refused. One transaction through the
+services.
+
+Imports (`club.members.import`: registrars and club managers, always with a
+second factor; confirming needs a login within 15 minutes; ADR 0033):
+
+- `member_imports` (club-owned, record history with the headers redacted):
+  `created_by_person_id`, `status` (`uploaded`, `parsing`, `review`,
+  `importing`, `done`, `failed`, `cancelled`), `source_format` (`csv`;
+  `xlsx` is refused), `detected_source` (e.g. `idrottonline`), `columns`
+  (headers, a sample and the suggested field per column), `column_map`,
+  `options` (default membership type and start date, member numbers kept or
+  assigned, invitations, the consent note for linked guardians), `counts`
+  (rows, new, duplicate, error, skipped, imported, guardians, invitations),
+  `object_key` (`imports/<club_id>/<id>` until parsed), `error_code`,
+  `confirmed_by_person_id`, `confirmed_at`, `finished_at`, `purged_at`.
+  Person references in `members.references.ts`.
+- `member_import_rows` (club-owned, no record history): `row_number`, `cells`
+  (the file's row, sealed with the club's key), `data` (the mapped values;
+  the personal identity number sealed separately with a blind index),
+  `status` (`new`, `duplicate`, `error`, `skipped`, `imported`), `issues`
+  (codes, never values), `family_key`, `match_person_id`, `resolution`
+  (`same_person`, `different_person`), `skipped_by_user`, `person_id`.
+  Index `(import_id, row_number)`.
+- Columns are recognised from Swedish, English and Norwegian headers and from
+  the member systems of the club's country pack (IdrottOnline in `se`);
+  guardians as numbered column groups (`Vårdnadshavare 3 e-post`, any number)
+  or one row per guardian with a family key and a relation. Dates in ISO or
+  the country's order (`02.04.2017`); `2/4/2017` only when unambiguous.
+- Duplicates are looked for **in the club only**: the same identity number,
+  or the same birth date and names (`already_in_club`: skipped, so a re-run
+  of the same file skips every row), or the same birth date and family or
+  given name (`possible_duplicate`: the registrar decides "same person",
+  which adds the row's groups and guardians to the member, or "different
+  person"). People outside the club are never compared or shown.
+- A guardian with an email (and invitations chosen) gets a club invitation;
+  the others become people without login, one person per name and phone in
+  the file (siblings share their parents). A guardian with the same name and
+  phone as a member of the club is linked to that member. A minor's email
+  goes to a guardian without one, else it is dropped (`minor_email_moved`,
+  `minor_email_dropped`).
+- The run adds the confirmed rows in batches of 100 (each batch one
+  transaction, each row all or nothing; a failed row is marked
+  `import_failed`), as the confirming registrar, so every person, profile,
+  membership, group membership and guardianship has its usual audit event.
+  Audit events of the import itself: `members.import.started`,
+  `.confirmed`, `.cancelled`, `.finished`; every club manager is emailed the
+  counts when it finishes.
+- Staging rows and any file are deleted seven days after the import ends
+  (worker `members:purge_imports`); an import left in review for seven days
+  is cancelled. The import record keeps its counts.
 
 ### `groups` (ADR 0019)
 `id`, `club_id`, `parent_group_id` (optional hierarchy: section → team), `kind`
@@ -307,7 +372,7 @@ successor manager and ends the proposer's role in one transaction.
 
 ### `guardianships` (global, confirmed per club)
 `guardian_person_id`, `ward_person_id`, `kind` (`parent`, `legal_guardian`,
-`relative`, `contact_person`), `rights` (flags: `act_on_behalf`,
+`relative`, `contact_person`, `step_parent`, `foster_parent`), `rights` (flags: `act_on_behalf`,
 `receive_messages`, `view_schedule`, `sign_up`, `see_medical`), `status`
 (`pending`, `active`, `ended`; invitations are separate rows, see above),
 `valid_from`, `valid_to`, `created_by_person_id`, `ward_adult_flagged_at`
@@ -325,8 +390,13 @@ and ward).
   trustee of an adult) hold only the rights chosen per link: any of
   `view_schedule`, `receive_messages`, `sign_up`, `see_medical`; defaults:
   relative `view_schedule`, contact person `view_schedule` and
-  `receive_messages`. `act_on_behalf` only for relatives, explicitly chosen
-  by a full guardian, the adult ward or the club (with a warning in the UI).
+  `receive_messages`. **Step parents** (bonus parents) and **foster
+  parents** (family homes, P1.3b) are linked kinds like relatives: rights
+  per link, default `view_schedule`, never full guardians (a foster home's
+  legal custody, if any, is recorded as `legal_guardian`). `act_on_behalf`
+  only for relatives, step and foster parents, explicitly chosen by a full
+  guardian, the adult ward or the club (with a warning in the UI); never for
+  contact persons. Older clients show the new kinds as "Other" (ADR 0029).
   Each later feature enforces the right it needs (schedule P1.4, sign-up
   P1.5/P1.6, messages P1.7, medical notes later).
 - Who links them: a full guardian while the ward is under `adult_age`; the
