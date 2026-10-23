@@ -74,6 +74,8 @@ export const clubs = pgTable(
     ownersCanAppointCoOwners: boolean().notNull().default(false),
     /** Admitting from a waiting list also creates the club membership. */
     groupOwnersAdmitToClub: boolean().notNull().default(true),
+    /** Days after an activity during which its leaders record attendance (P1.5). */
+    attendanceLockDays: integer().notNull().default(30),
     ...timestamps,
   },
   (t) => [
@@ -81,6 +83,7 @@ export const clubs = pgTable(
     check("clubs_status", oneOf(t.status, CLUB_STATUSES)),
     check("clubs_access_state", oneOf(t.accessState, CLUB_ACCESS_STATES)),
     check("clubs_join_policy", oneOf(t.joinPolicy, JOIN_POLICIES)),
+    check("clubs_attendance_lock_days", sql`${t.attendanceLockDays} BETWEEN 1 AND 365`),
     check("clubs_country", sql`${t.country} ~ '^[A-Z]{2}$'`),
     check("clubs_currency", sql`${t.currency} ~ '^[A-Z]{3}$'`),
     check("clubs_slug_shape", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),

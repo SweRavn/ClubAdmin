@@ -597,7 +597,16 @@
     "range_too_long": "Velg en kortere periode.",
     "group_not_managed": "Du kan ikke legge til aktiviteter i alle valgte grupper.",
     "activity_cancelled": "Aktiviteten er allerede avlyst.",
-    "activity_not_cancelled": "Aktiviteten er ikke avlyst."
+    "activity_not_cancelled": "Aktiviteten er ikke avlyst.",
+    "activity_has_responses": "Noen har svart eller oppmøte er registrert: avlys aktiviteten i stedet.",
+    "response_not_requested": "Aktiviteten ber ikke om svar.",
+    "response_closed": "Det er ikke lenger mulig å svare (etter fristen bare «kommer ikke»).",
+    "not_on_roster": "Personen er ikke med i aktivitetens gruppe.",
+    "activity_not_started": "Oppmøte kan registreres fra en time før start.",
+    "attendance_locked": "Oppmøtet er låst.",
+    "correction_reason_required": "Oppgi en begrunnelse for rettelsen.",
+    "not_a_club_member": "Gjester må være medlemmer i klubben.",
+    "recorded_at_out_of_range": "Enhetens klokke går feil, eller markeringen er mer enn en uke gammel."
   },
   "memberExport": {
     "columns": {
@@ -1099,5 +1108,84 @@
     "restore": "Gjenopprett",
     "archived": "arkivert",
     "conflicts": "Dobbeltbookinger de neste åtte ukene"
+  },
+  "responses": {
+    "title": "Svar",
+    "coming": "Kommer",
+    "notComing": "Kommer ikke",
+    "withdraw": "Trekk tilbake svaret",
+    "noteLabel": "Melding til lederne (valgfritt)",
+    "noteHint": "Bare lederne ser den. Ikke skriv mer enn de trenger («syk» holder).",
+    "addNote": "Legg til en melding til lederne",
+    "answeredBy": "Svar fra {name}",
+    "aGuardian": "en foresatt",
+    "answerBy": "Svar innen {time}",
+    "deadlinePassed": "Svarfristen er ute: du kan fortsatt melde at du ikke kommer.",
+    "answerNeeded": "Svar trengs",
+    "closed": "Det er ikke lenger mulig å svare.",
+    "counts": "{attending} kommer · {notAttending} kommer ikke · {notAnswered} har ikke svart",
+    "attendingList": "Kommer",
+    "nobody": "Ingen har svart ennå.",
+    "leadersList": "Alle svar",
+    "notAnswered": "Har ikke svart",
+    "saved": "Svaret ditt ble lagret.",
+    "mode": "Svar",
+    "respondBy": "Svar innen (timer før start)",
+    "respondByHint": "Tomt: frem til start. Etter fristen godtas bare «kommer ikke».",
+    "family": "Min familie"
+  },
+  "responseModes": {
+    "none": "Ingen svar",
+    "optional": "Valgfritt",
+    "requested": "Svar etterspørres"
+  },
+  "responseStatus": {
+    "attending": "Kommer",
+    "not_attending": "Kommer ikke"
+  },
+  "attendance": {
+    "title": "Oppmøte",
+    "take": "Registrer oppmøte",
+    "participants": "Deltakere",
+    "leaders": "Ledere",
+    "guests": "Gjester",
+    "addGuest": "Legg til en gjest (medlem i klubben)",
+    "guestPlaceholder": "Velg et medlem",
+    "suggested": "Etter svaret: {status}",
+    "save": "Lagre oppmøte",
+    "saved": "Oppmøtet ble lagret.",
+    "stale": "{count, plural, one {# markering} other {# markeringer}} ble ikke lagret: noen har registrert en nyere.",
+    "notOpen": "Oppmøte kan registreres fra en time før start.",
+    "locked": "Oppmøtet er låst. Klubbadministratorer og medlemsansvarlige kan rette det, med en begrunnelse.",
+    "correctionReason": "Begrunnelse for rettelsen (ikke om personen)",
+    "correct": "Lagre rettelse",
+    "corrected": "Rettet: {reason}",
+    "summary": "Oppmøte",
+    "period": "Periode",
+    "from": "Fra",
+    "to": "Til",
+    "show": "Vis",
+    "sessions": "Økter",
+    "present": "Til stede",
+    "absent": "Fraværende",
+    "excused": "Meldt forfall",
+    "rate": "Andel",
+    "member": "Medlem",
+    "notRecorded": "Ikke registrert",
+    "presentCount": "{present} til stede, {leaders} ledere",
+    "noSessions": "Ingen gjennomførte økter i perioden.",
+    "protectedNotice": "Noen her har beskyttet identitet: ikke fotografer eller del listen."
+  },
+  "attendanceStatus": {
+    "present": "Til stede",
+    "absent": "Fraværende",
+    "excused": "Meldt forfall"
+  },
+  "grantHints": {
+    "lok": {
+      "too_short": "Gir ikke LOK-stöd: kortere enn 45 minutter.",
+      "too_few_participants": "Gir ikke LOK-stöd: færre enn tre deltakere i alderen 7–25 år.",
+      "no_leader": "Gir ikke LOK-stöd: ingen leder på minst 13 år til stede."
+    }
   }
 }

@@ -79,6 +79,43 @@ export function canManageGroupActivities(actor: Actor, group: GroupRef): boolean
   );
 }
 
+/**
+ * Who leads a group's activities (P1.5: sees every answer, takes
+ * attendance): those who manage them and the group's other leaders; not
+ * physios.
+ */
+export function canLeadGroupActivities(actor: Actor, group: GroupRef): boolean {
+  return (
+    canManageGroupActivities(actor, group) || actor.hasGroupFunction(group.groupId, "other_leader")
+  );
+}
+
+/**
+ * Who answers for someone in a group (P1.5): its members themselves, and
+ * guardians with the sign_up right (full guardians hold every right).
+ */
+export function canRespondInGroup(actor: Actor, group: GroupRef): boolean {
+  return (
+    actor.hasGroupFunction(group.groupId, "member") ||
+    actor.isGuardianOfGroupMember(group.groupId, "sign_up")
+  );
+}
+
+/**
+ * Who reads a group's roster: administrators, owners; for active groups also
+ * everyone in the group, guardians (with act_on_behalf) of its members, and
+ * support access. Protected members are filtered per viewer.
+ */
+export function canReadGroupMembers(actor: Actor, group: GroupRef, archived = false): boolean {
+  if (isAdmin(actor, group.clubId) || actor.ownsGroup(group)) return true;
+  if (archived) return false;
+  return (
+    actor.isGroupMember(group.groupId) ||
+    actor.isGuardianOfGroupMember(group.groupId, "act_on_behalf") ||
+    actor.hasSupportAccess(group.clubId)
+  );
+}
+
 /** Board roles: the limited member register (P1.2). */
 export const BOARD_ROLES: readonly ClubRole[] = [
   "chair",
@@ -185,15 +222,9 @@ export const POLICIES: readonly Policy[] = [
   // The roster: administrators, owners, everyone in the group, guardians of
   // its members, and support access. Protected members are filtered per
   // viewer (PersonVisibility).
-  definePolicy("group.members.read", "group", ({ actor, resource }) => {
-    if (isAdmin(actor, resource.clubId) || actor.ownsGroup(resource)) return true;
-    if (resource.archived) return false;
-    return (
-      actor.isGroupMember(resource.groupId) ||
-      actor.isGuardianOfGroupMember(resource.groupId, "act_on_behalf") ||
-      actor.hasSupportAccess(resource.clubId)
-    );
-  }),
+  definePolicy("group.members.read", "group", ({ actor, resource }) =>
+    canReadGroupMembers(actor, resource, resource.archived),
+  ),
   // Activities (P1.4). A joint activity is readable through any of its
   // groups and managed only by someone who manages all of them.
   definePolicy("group.activities.read", "group", ({ actor, resource }) =>
@@ -223,6 +254,29 @@ export const POLICIES: readonly Policy[] = [
   ),
   definePolicy("club.locations.manage", "club", ({ actor, resource }) =>
     actor.isClubManager(resource.clubId),
+  ),
+  // Responses and attendance (P1.5). The service checks whose answer it is
+  // (the caller or a ward with sign_up, on the roster) and the lock.
+  definePolicy("activity.respond", "activity", ({ actor, resource }) =>
+    resource.groups.some((g) => canRespondInGroup(actor, g)),
+  ),
+  definePolicy("activity.responses.read", "activity", ({ actor, resource }) =>
+    resource.groups.some((g) => canLeadGroupActivities(actor, g)),
+  ),
+  // Registrars too: they correct marks after the lock (the service lets
+  // only club managers and registrars change locked attendance).
+  definePolicy(
+    "activity.attendance.manage",
+    "activity",
+    ({ actor, resource }) =>
+      isAdmin(actor, resource.clubId) ||
+      resource.groups.some((g) => canLeadGroupActivities(actor, g)),
+  ),
+  definePolicy(
+    "group.attendance.read",
+    "group",
+    ({ actor, resource }) =>
+      isAdmin(actor, resource.clubId) || canLeadGroupActivities(actor, resource),
   ),
   definePolicy(
     "group.members.manage",

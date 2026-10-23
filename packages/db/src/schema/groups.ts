@@ -151,6 +151,8 @@ export const groupMemberships = pgTable(
     index("group_memberships_group_idx")
       .on(t.clubId, t.groupId)
       .where(sql`${t.validTo} IS NULL`),
+    // Who was in a group at a time (an activity's roster, P1.5).
+    index("group_memberships_group_period_idx").on(t.groupId, t.validFrom),
     index("group_memberships_person_idx")
       .on(t.personId)
       .where(sql`${t.validTo} IS NULL`),

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import {
   addDays,
+  ageInYear,
   type CountryPack,
   easterSunday,
   firstWeekdayFrom,
@@ -38,6 +39,29 @@ export const SE: CountryPack = {
       isoDate(year, 12, 26),
       isoDate(year, 12, 31),
     ].sort();
+  },
+  // Statligt lokalt aktivitetsstöd (LOK-stöd), RF:s föreskrifter (version of
+  // 15 January 2023): a group activity counts with a leader appointed by the
+  // club who is at least 13, at least three participants aged 7–25 in the
+  // calendar year, and at least 45 minutes. Participants with a disability
+  // have no upper age limit; the register does not hold that, so they may be
+  // counted short here (the hint is advice, reporting is Phase 2).
+  grantRules: {
+    scheme: "lok",
+    check(session) {
+      const codes: string[] = [];
+      if (session.durationMinutes < 45) codes.push("too_short");
+      const eligible = session.participantBirthDates.filter((b) => {
+        if (!b) return false;
+        const age = ageInYear(b, session.date);
+        return age >= 7 && age <= 25;
+      });
+      if (eligible.length < 3) codes.push("too_few_participants");
+      if (!session.leaderBirthDates.some((b) => b !== null && ageInYear(b, session.date) >= 13)) {
+        codes.push("no_leader");
+      }
+      return codes;
+    },
   },
   memberImport: {
     dateOrder: "dmy",

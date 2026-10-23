@@ -155,6 +155,12 @@ export class PeopleService {
     );
   }
 
+  /** Birth dates by person (grant rules count ages; P1.5). Never serialised. */
+  async birthDatesInTx(tx: Tx, personIds: readonly string[]): Promise<Map<string, string | null>> {
+    const rows = await repo.findPeople(tx, [...new Set(personIds)]);
+    return new Map(rows.map((r) => [r.id, r.birthDate]));
+  }
+
   /**
    * Names and global protected flags for the person presenter, in the order
    * asked (missing rows left out). Never serialise these yourself: pass them

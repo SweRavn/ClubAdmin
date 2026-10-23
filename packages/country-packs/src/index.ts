@@ -9,6 +9,8 @@ import type { CountryPack } from "./types.ts";
 export type {
   AgeRules,
   CountryPack,
+  GrantRules,
+  GrantSession,
   LocaleDefaults,
   MemberImportRules,
   ParsedPersonalId,

@@ -102,6 +102,8 @@ export const UpdateClubSettingsSchema = z
     joinPolicy: z.enum(JOIN_POLICIES),
     ownersCanAppointCoOwners: z.boolean(),
     groupOwnersAdmitToClub: z.boolean(),
+    /** Days after an activity during which its leaders record attendance (P1.5). */
+    attendanceLockDays: z.number().int().min(1).max(365),
   })
   .partial()
   .strict();

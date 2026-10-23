@@ -560,6 +560,40 @@ describe("permission matrix", () => {
       body: () => ({ activityId: m.laterSessionId, title: "Matrix training (spring)" }),
     },
     "GET /api/v1/me/schedule": { url: () => `/api/v1/me/schedule?${RANGE}`, expected: ALL_OK },
+    // Responses and attendance (P1.5): the flows are in attendance.integration.test.ts.
+    // Only the parent answers for the child (the member may answer only for
+    // themselves: 404); leaders see the answers and take attendance (the
+    // match is ahead: 409 activity_not_started), registrars too.
+    "PUT /api/v1/activities/:activityId/responses/:personId": {
+      url: () => `/api/v1/activities/${m.activityId}/responses/${m.child.id}`,
+      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 200 },
+      body: { status: "attending" },
+    },
+    "DELETE /api/v1/activities/:activityId/responses/:personId": {
+      url: () => `/api/v1/activities/${m.activityId}/responses/${m.child.id}`,
+      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 200 },
+    },
+    "GET /api/v1/activities/:activityId/responses/summary": {
+      url: () => `/api/v1/activities/${m.activityId}/responses/summary`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/activities/:activityId/responses": {
+      url: () => `/api/v1/activities/${m.activityId}/responses`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "GET /api/v1/activities/:activityId/attendance": {
+      url: () => `/api/v1/activities/${m.activityId}/attendance`,
+      expected: { ...TEAM_MANAGERS(200), registrar: 200 },
+    },
+    "PUT /api/v1/activities/:activityId/attendance": {
+      url: () => `/api/v1/activities/${m.activityId}/attendance`,
+      expected: { ...TEAM_MANAGERS(409), registrar: 409 },
+      body: () => ({ marks: [{ personId: m.member.id, status: "present" }] }),
+    },
+    "GET /api/v1/groups/:groupId/attendance": {
+      url: () => `/api/v1/groups/${m.team.id}/attendance?${RANGE}`,
+      expected: { ...TEAM_MANAGERS(200), registrar: 200 },
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -627,6 +661,10 @@ describe("tenant isolation", () => {
       `/api/v1/groups/${m.team.id}/activities?from=2026-01-01T00:00:00Z&to=2026-12-31T00:00:00Z`,
       `/api/v1/activities/${m.activityId}`,
       `/api/v1/activity-series/${m.seriesId}`,
+      `/api/v1/activities/${m.activityId}/responses/summary`,
+      `/api/v1/activities/${m.activityId}/responses`,
+      `/api/v1/activities/${m.activityId}/attendance`,
+      `/api/v1/groups/${m.team.id}/attendance?from=2026-01-01T00:00:00Z&to=2026-12-31T00:00:00Z`,
     ];
     for (const url of urls) {
       const res = await get(m.outsider.id, url, { mfa: true });

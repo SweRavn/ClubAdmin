@@ -35,6 +35,30 @@ export interface paths {
     patch: operations["Activities_updateActivity"];
     trace?: never;
   };
+  "/api/v1/activities/{activityId}/attendance": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The roster and leaders with their marks, suggestions from the answers and grant hints
+     * @description Requires permission `activity.attendance.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Attendance_getAttendance"];
+    /**
+     * Record attendance marks (offline marks keep the device's time; the newer wins)
+     * @description Requires permission `activity.attendance.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Attendance_recordAttendance"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activities/{activityId}/cancel": {
     parameters: {
       query?: never;
@@ -49,6 +73,70 @@ export interface paths {
      * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["Activities_cancelActivity"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/responses": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The leaders' list: everyone on the roster with their answer and note
+     * @description Requires permission `activity.responses.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Attendance_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/responses/{personId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Answer attending or not attending, for myself or a ward (until the deadline)
+     * @description Requires permission `activity.respond` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Attendance_respond"];
+    post?: never;
+    /**
+     * Withdraw an answer (until the deadline)
+     * @description Requires permission `activity.respond` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Attendance_withdraw"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/responses/summary": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * How many are coming; my family's answers; who is coming where I may see the group
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Attendance_summary"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -957,6 +1045,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/groups/{groupId}/attendance": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A group's attendance over a period: sessions held and each member's marks
+     * @description Requires permission `group.attendance.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Attendance_groupAttendance"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/groups/{groupId}/members": {
     parameters: {
       query?: never;
@@ -1820,6 +1928,12 @@ export interface components {
       mapUrl: string | null;
       archived: boolean;
     } | null;
+    ResponseCounts: {
+      attending: number;
+      notAttending: number;
+      notAnswered: number;
+      roster: number;
+    };
     PersonSummary: {
       /** Format: uuid */
       id: string;
@@ -1868,6 +1982,11 @@ export interface components {
         name: string;
       }[];
       canManage: boolean;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      /** Format: date-time */
+      respondBy?: string | null;
+      responseCounts?: components["schemas"]["ResponseCounts"];
     };
     UpdateActivityRequest: {
       /** @enum {string} */
@@ -1889,9 +2008,98 @@ export interface components {
       endsAt?: string;
       /** Format: date-time */
       meetAt?: string | null;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      /** Format: date-time */
+      respondBy?: string | null;
+    };
+    Attendance: {
+      /** Format: uuid */
+      activityId: string;
+      locked: boolean;
+      open: boolean;
+      canRecord: boolean;
+      canCorrect: boolean;
+      participants: components["schemas"]["AttendanceMark"][];
+      leaders: components["schemas"]["AttendanceMark"][];
+      hasProtected: boolean;
+      hints: components["schemas"]["GrantHint"][];
+    };
+    AttendanceMark: {
+      person: components["schemas"]["PersonSummary"];
+      /** @enum {string} */
+      role: "participant" | "leader";
+      /** @enum {string|null} */
+      status: "present" | "absent" | "excused" | null;
+      /** @enum {string|null} */
+      suggested: "present" | "absent" | "excused" | null;
+      guest: boolean;
+      /** Format: date-time */
+      recordedAt: string | null;
+      correctedReason: string | null;
+    };
+    GrantHint: {
+      scheme: string;
+      code: string;
+    };
+    RecordAttendanceResult: {
+      attendance: components["schemas"]["Attendance"];
+      stale: string[];
+    };
+    RecordAttendanceRequest: {
+      marks: {
+        /** Format: uuid */
+        personId: string;
+        /** @enum {string} */
+        status: "present" | "absent" | "excused";
+        /**
+         * @default participant
+         * @enum {string}
+         */
+        role: "participant" | "leader";
+        /** Format: date-time */
+        recordedAt?: string;
+      }[];
+      correctedReason?: string;
     };
     CancelActivityRequest: {
       reason?: string;
+    };
+    ResponseList: {
+      items: components["schemas"]["ActivityResponse"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+      counts: components["schemas"]["ResponseCounts"];
+    };
+    ActivityResponse: {
+      person: components["schemas"]["PersonSummary"];
+      /** @enum {string|null} */
+      status: "attending" | "not_attending" | null;
+      note?: string | null;
+      respondedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** Format: date-time */
+      respondedAt: string | null;
+    };
+    ResponseSummary: {
+      /** Format: uuid */
+      activityId: string;
+      /** @enum {string} */
+      responseMode: "none" | "optional" | "requested";
+      /** Format: date-time */
+      respondBy: string | null;
+      open: boolean;
+      deadlinePassed: boolean;
+      counts: components["schemas"]["ResponseCounts"];
+      attending: components["schemas"]["PersonSummary"][] | null;
+      mine: components["schemas"]["MyActivityResponse"][];
+    };
+    MyActivityResponse: components["schemas"]["ActivityResponse"] & {
+      canRespond: boolean;
+    };
+    SetResponseRequest: {
+      /** @enum {string} */
+      status: "attending" | "not_attending";
+      note?: string | null;
     };
     ActivitySeries: {
       /** Format: uuid */
@@ -1917,6 +2125,9 @@ export interface components {
       endsOn: string;
       skipDates: string[];
       skipPublicHolidays: boolean;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      respondByMinutes?: number | null;
       groups: {
         /** Format: uuid */
         id: string;
@@ -1951,6 +2162,9 @@ export interface components {
       endsOn?: string;
       skipDates?: string[];
       skipPublicHolidays?: boolean;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      respondByMinutes?: number | null;
     };
     SplitSeriesRequest: {
       /** @enum {string} */
@@ -1970,6 +2184,9 @@ export interface components {
       endsOn?: string;
       skipDates?: string[];
       skipPublicHolidays?: boolean;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      respondByMinutes?: number | null;
       /** Format: uuid */
       activityId: string;
     };
@@ -2927,6 +3144,10 @@ export interface components {
       allDay: boolean;
       /** Format: date-time */
       meetAt?: string | null;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      /** Format: date-time */
+      respondBy?: string | null;
       /** @default [] */
       groupIds: string[];
     };
@@ -2955,6 +3176,9 @@ export interface components {
       skipDates: string[];
       /** @default false */
       skipPublicHolidays: boolean;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      respondByMinutes?: number | null;
       /** @default [] */
       groupIds: string[];
     };
@@ -2988,6 +3212,33 @@ export interface components {
       skipDates: string[];
       /** @default false */
       skipPublicHolidays: boolean;
+    };
+    GroupAttendance: {
+      timeZone: string;
+      sessions: {
+        /** Format: uuid */
+        activityId: string;
+        title: string;
+        kind: string;
+        /** Format: date-time */
+        startsAt: string;
+        /** Format: date-time */
+        endsAt: string;
+        recorded: boolean;
+        present: number;
+        leadersPresent: number;
+        hints: components["schemas"]["GrantHint"][];
+      }[];
+      members: {
+        person: components["schemas"]["PersonSummary"];
+        sessions: number;
+        present: number;
+        absent: number;
+        excused: number;
+        rate: number | null;
+      }[];
+      /** Format: uuid */
+      nextCursor: string | null;
     };
     GroupMemberList: {
       items: {
@@ -3158,6 +3409,10 @@ export interface components {
           | "activity.manage"
           | "club.activities.read"
           | "club.locations.manage"
+          | "activity.respond"
+          | "activity.responses.read"
+          | "activity.attendance.manage"
+          | "group.attendance.read"
           | "person.profile.read"
           | "person.profile.update"
           | "person.protection.set"
@@ -3329,6 +3584,17 @@ export interface components {
       changed: boolean;
       /** Format: date-time */
       changedAt: string;
+      /** @enum {string} */
+      responseMode?: "none" | "optional" | "requested";
+      /** Format: date-time */
+      respondBy?: string | null;
+      responses?: {
+        /** Format: uuid */
+        personId: string;
+        /** @enum {string|null} */
+        status: "attending" | "not_attending" | null;
+        canRespond: boolean;
+      }[];
     };
     Security: {
       /** @enum {boolean} */
@@ -3854,6 +4120,162 @@ export interface operations {
       };
     };
   };
+  Attendance_getAttendance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Attendance"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_recordAttendance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RecordAttendanceRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RecordAttendanceResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Activities_cancelActivity: {
     parameters: {
       query?: never;
@@ -3876,6 +4298,320 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Activity"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_list: {
+    parameters: {
+      query?: {
+        status?: "attending" | "not_attending" | "none";
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ResponseList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_respond: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetResponseRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ResponseSummary"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_withdraw: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ResponseSummary"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_summary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ResponseSummary"];
         };
       };
       /** @description Invalid request */
@@ -8243,6 +8979,87 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["SeriesPreview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_groupAttendance: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupAttendance"];
         };
       };
       /** @description Invalid request */

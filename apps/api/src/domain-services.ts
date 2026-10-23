@@ -7,7 +7,7 @@ import type { Database } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 
 import { AccountsService } from "./modules/accounts/index.ts";
-import { ActivitiesService } from "./modules/activities/index.ts";
+import { ActivitiesService, AttendanceService } from "./modules/activities/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
@@ -38,6 +38,7 @@ export interface CoreServices {
   intake: MemberIntakeService;
   imports: MemberImportsService;
   activities: ActivitiesService;
+  attendance: AttendanceService;
 }
 
 export function createCoreServices(
@@ -83,6 +84,7 @@ export function createCoreServices(
   return {
     encryption,
     activities: new ActivitiesService(db, clubs),
+    attendance: new AttendanceService(db, { clubs, people, memberships }),
     people,
     merge: new PersonMergeService(db, { people, profiles }),
     accounts,

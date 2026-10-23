@@ -3,7 +3,9 @@
 // on 200 clubs with 1,600 teams of 20 children and 64,000 activities: the
 // statements use indexes (no sequential scan of the large tables), and a
 // guardian's schedule over two clubs answers within the 50 ms budget
-// (row-level security included).
+// (row-level security included). With answers to the first ten sessions and
+// attendance for eight (P1.5): the answers come with the schedule in the
+// same statement, and the response and attendance lists use indexes.
 
 import { type SQL, sql, type Tx } from "@clubadmin/db";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -11,6 +13,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { actor } from "../../testing/builders.ts";
 import { useCoreDatabase } from "../../testing/core.ts";
 import { clubCalendarQuery, groupCalendarQuery, scheduleQuery } from "./activities.repository.ts";
+import { memberSummaryQuery, rosterQuery } from "./attendance.repository.ts";
 
 const c = useCoreDatabase();
 const CLUBS = 200;
@@ -46,6 +49,18 @@ const LOAD_SQL = `
   INSERT INTO activity_groups (club_id, activity_id, group_id) SELECT club_id, id, group_id FROM sa;
   INSERT INTO schedule_entries (club_id, activity_id, group_id, kind, title, status, starts_at, ends_at, all_day, changed_at)
     SELECT club_id, id, group_id, 'training', 'Träning', 'scheduled', starts_at, starts_at + interval '90 minutes', false, now() FROM sa;
+  -- Answers to each team's first ten sessions, attendance for the first eight (P1.5).
+  CREATE TEMP TABLE sk AS
+    SELECT sa.id AS activity_id, sa.club_id, sa.group_id,
+      row_number() OVER (PARTITION BY sa.group_id ORDER BY sa.starts_at) AS k FROM sa;
+  INSERT INTO activity_responses (club_id, activity_id, person_id, status, responded_by_person_id)
+    SELECT sk.club_id, sk.activity_id, sp.id,
+      CASE WHEN sp.i % 5 = 0 THEN 'not_attending' ELSE 'attending' END, sp.id
+    FROM sk JOIN sg ON sg.id = sk.group_id JOIN sp ON sp.group_i = sg.i WHERE sk.k <= 10;
+  INSERT INTO attendance_records (club_id, activity_id, person_id, status, recorded_by_person_id)
+    SELECT sk.club_id, sk.activity_id, sp.id,
+      CASE WHEN sp.i % 5 = 0 THEN 'excused' ELSE 'present' END, sp.id
+    FROM sk JOIN sg ON sg.id = sk.group_id JOIN sp ON sp.group_i = sg.i WHERE sk.k <= 8;
   -- A guardian of two children in two clubs.
   CREATE TEMP TABLE sx AS SELECT uuidv7() AS id;
   INSERT INTO people (id, given_name, family_name, birth_date) SELECT id, 'Förälder', 'Två klubbar', date '1984-03-01' FROM sx;
@@ -55,7 +70,8 @@ const LOAD_SQL = `
   CREATE TABLE public.schedule_ids AS
     SELECT (SELECT id FROM sx) AS guardian, (SELECT id FROM sp WHERE i = 1) AS first_child,
       (SELECT id FROM sp WHERE i = ${CHILDREN}) AS last_child,
-      (SELECT id FROM sc WHERE i = 1) AS club, (SELECT id FROM sg WHERE i = 1) AS "group";
+      (SELECT id FROM sc WHERE i = 1) AS club, (SELECT id FROM sg WHERE i = 1) AS "group",
+      (SELECT activity_id FROM sk WHERE group_id = (SELECT id FROM sg WHERE i = 1) AND k = 1) AS activity;
 `;
 
 interface PlanNode {
@@ -77,11 +93,25 @@ async function plan(tx: Tx, query: SQL): Promise<string[]> {
   return summarise(rows[0]!["QUERY PLAN"][0].Plan);
 }
 
-const LARGE = ["activities", "activity_groups", "schedule_entries", "group_memberships"];
+const LARGE = [
+  "activities",
+  "activity_groups",
+  "schedule_entries",
+  "group_memberships",
+  "activity_responses",
+  "attendance_records",
+];
 const noSeqScan = (nodes: string[]) =>
   expect(nodes.filter((n) => LARGE.some((t) => n === `Seq Scan ${t}`))).toEqual([]);
 
-let ids: { guardian: string; first_child: string; last_child: string; club: string; group: string };
+let ids: {
+  guardian: string;
+  first_child: string;
+  last_child: string;
+  club: string;
+  group: string;
+  activity: string;
+};
 const window = { from: new Date("2026-10-01T00:00:00Z"), to: new Date("2026-11-01T00:00:00Z") };
 
 beforeAll(async () => {
@@ -139,6 +169,22 @@ describe(`schedule and calendar plans (${GROUPS} teams, ${GROUPS * SESSIONS} act
       ),
     );
     noSeqScan(club);
+  });
+
+  it("the roster with answers and a group's attendance summary use indexes", async () => {
+    const manager = actor(ids.guardian, ids.club);
+    const counts = await c.t.db.withTenant(manager, (tx) =>
+      plan(
+        tx,
+        sql`SELECT r.person_id, ar.status FROM (${rosterQuery([ids.activity])}) r
+          LEFT JOIN public.activity_responses ar ON ar.activity_id = r.activity_id AND ar.person_id = r.person_id`,
+      ),
+    );
+    noSeqScan(counts);
+    const summary = await c.t.db.withTenant(manager, (tx) =>
+      plan(tx, memberSummaryQuery(ids.club, ids.group, window, { cursor: null, limit: 101 })),
+    );
+    noSeqScan(summary);
   });
 
   // The budget is 50 ms (docs/performance.md); shared CI runners get a margin.

@@ -173,9 +173,11 @@ export async function syncScheduleEntries(
     WHERE se.activity_id = a.id AND ${where}`);
   await tx.execute(sql`
     INSERT INTO public.schedule_entries (club_id, activity_id, group_id, kind, title, status,
-      cancelled_reason, starts_at, ends_at, all_day, meet_at, place, changed_at)
+      cancelled_reason, starts_at, ends_at, all_day, meet_at, place, changed_at, response_mode,
+      respond_by)
     SELECT a.club_id, a.id, ag.group_id, a.kind, a.title, a.status, a.cancelled_reason,
-      a.starts_at, a.ends_at, a.all_day, a.meet_at, coalesce(l.name, a.location_text), a.changed_at
+      a.starts_at, a.ends_at, a.all_day, a.meet_at, coalesce(l.name, a.location_text), a.changed_at,
+      a.response_mode, a.respond_by
     FROM public.activities a
     JOIN public.activity_groups ag ON ag.activity_id = a.id
     LEFT JOIN public.locations l ON l.id = a.location_id
@@ -369,6 +371,8 @@ export async function updateSessions(
     leaderNotes: string | null;
     locationId: string | null;
     locationText: string | null;
+    responseMode: string;
+    respondBy: Date | null;
     bump: boolean;
   }[],
 ): Promise<void> {
@@ -377,7 +381,7 @@ export async function updateSessions(
     UPDATE public.activities a SET
       starts_at = v.starts_at, ends_at = v.ends_at, kind = v.kind, title = v.title,
       notes = v.notes, leader_notes = v.leader_notes, location_id = v.location_id,
-      location_text = v.location_text,
+      location_text = v.location_text, response_mode = v.response_mode, respond_by = v.respond_by,
       sequence = a.sequence + CASE WHEN v.bump THEN 1 ELSE 0 END,
       changed_at = CASE WHEN v.bump THEN now() ELSE a.changed_at END
     FROM jsonb_to_recordset(${JSON.stringify(
@@ -391,10 +395,13 @@ export async function updateSessions(
         leader_notes: r.leaderNotes,
         location_id: r.locationId,
         location_text: r.locationText,
+        response_mode: r.responseMode,
+        respond_by: r.respondBy?.toISOString() ?? null,
         bump: r.bump,
       })),
     )}::jsonb) AS v(id uuid, starts_at timestamptz, ends_at timestamptz, kind text, title text,
-      notes text, leader_notes text, location_id uuid, location_text text, bump boolean)
+      notes text, leader_notes text, location_id uuid, location_text text, response_mode text,
+      respond_by timestamptz, bump boolean)
     WHERE a.id = v.id`);
 }
 
@@ -425,8 +432,14 @@ export interface ScheduleRow {
   meetAt: Date | null;
   place: string | null;
   changedAt: Date;
+  responseMode: string;
+  respondBy: Date | null;
   groupIds: string[];
   personIds: string[];
+  /** Those of personIds who are members (not leaders) of one of its groups: they answer. */
+  memberIds: string[];
+  /** Answers of the people in personIds, by person (P1.5). */
+  answers: Record<string, string>;
 }
 
 /**
@@ -448,18 +461,21 @@ export interface ScheduleInput {
 export function scheduleQuery(input: ScheduleInput): SQL {
   return sql`
     WITH mine AS (
-      SELECT gm.person_id, gm.group_id FROM public.group_memberships gm
+      SELECT gm.person_id, gm.group_id, gm.function FROM public.group_memberships gm
       WHERE gm.person_id = ANY (${uuidArray(input.personIds)}::uuid[])
         AND gm.valid_to IS NULL
         ${input.clubId ? sql`AND gm.club_id = ${input.clubId}` : sql``}
     ), hits AS (
-      SELECT se.*, m.person_id FROM mine m
+      SELECT se.*, m.person_id, m.function FROM mine m
       JOIN public.schedule_entries se ON se.group_id = m.group_id
       WHERE se.starts_at >= ${input.from} AND se.starts_at < ${input.to}
     )
     SELECT h.activity_id, h.club_id, h.kind, h.title, h.status, h.cancelled_reason, h.starts_at,
-      h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at,
-      array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids
+      h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode, h.respond_by,
+      array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids,
+      coalesce(array_agg(DISTINCT h.person_id) FILTER (WHERE h.function = 'member'), '{}') AS member_ids,
+      (SELECT coalesce(jsonb_object_agg(r.person_id, r.status), '{}') FROM public.activity_responses r
+       WHERE r.person_id = ANY (array_agg(DISTINCT h.person_id)) AND r.activity_id = h.activity_id) AS answers
     FROM hits h
     WHERE true ${
       input.cursor
@@ -467,7 +483,8 @@ export function scheduleQuery(input: ScheduleInput): SQL {
         : sql``
     }
     GROUP BY h.activity_id, h.club_id, h.kind, h.title, h.status, h.cancelled_reason,
-      h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at
+      h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode,
+      h.respond_by
     ORDER BY h.starts_at, h.activity_id
     LIMIT ${input.limit}`;
 }
@@ -487,8 +504,12 @@ export async function schedule(tx: Tx, input: ScheduleInput): Promise<ScheduleRo
     meet_at: string | null;
     place: string | null;
     changed_at: string;
+    response_mode: string;
+    respond_by: string | null;
     group_ids: string[];
     person_ids: string[];
+    member_ids: string[];
+    answers: Record<string, string>;
   }>(scheduleQuery(input));
   return rows.map((r) => ({
     activityId: r.activity_id,
@@ -503,8 +524,12 @@ export async function schedule(tx: Tx, input: ScheduleInput): Promise<ScheduleRo
     meetAt: r.meet_at ? new Date(r.meet_at) : null,
     place: r.place,
     changedAt: new Date(r.changed_at),
+    responseMode: r.response_mode,
+    respondBy: r.respond_by ? new Date(r.respond_by) : null,
     groupIds: r.group_ids,
     personIds: r.person_ids,
+    memberIds: r.member_ids,
+    answers: r.answers,
   }));
 }
 

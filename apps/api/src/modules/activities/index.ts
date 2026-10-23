@@ -8,3 +8,4 @@ export {
   type Location,
   type SeriesView,
 } from "./activities.service.ts";
+export { AttendanceService } from "./attendance.service.ts";

@@ -80,6 +80,7 @@ import {
   type SeriesChange,
   type SeriesView,
 } from "./activities.service.ts";
+import { AttendanceService } from "./attendance.service.ts";
 
 const iso = (date: Date) => date.toISOString();
 
@@ -126,6 +127,8 @@ export function toActivityResponse(view: ActivityView, canManage: boolean): Acti
     changedAt: iso(a.changedAt),
     groups: view.groups,
     canManage,
+    responseMode: a.responseMode,
+    respondBy: a.respondBy ? iso(a.respondBy) : null,
   };
 }
 
@@ -146,6 +149,8 @@ function toSeriesResponse(view: SeriesView, canManage: boolean): Series {
     endsOn: s.endsOn,
     skipDates: s.skipDates,
     skipPublicHolidays: s.skipPublicHolidays,
+    responseMode: s.responseMode,
+    respondByMinutes: s.respondByMinutes,
     groups: view.groups,
     sessions: view.sessions,
     canManage,
@@ -162,6 +167,7 @@ const toChangeResponse = (change: SeriesChange): SeriesChangeResult => ({
 @Controller()
 export class ActivitiesController {
   private readonly activities: ActivitiesService;
+  private readonly attendance: AttendanceService;
   private readonly authorization: AuthorizationService;
   private readonly memberships: MembershipsService;
   private readonly people: PeopleService;
@@ -169,12 +175,14 @@ export class ActivitiesController {
 
   constructor(
     activities: ActivitiesService,
+    attendance: AttendanceService,
     authorization: AuthorizationService,
     memberships: MembershipsService,
     people: PeopleService,
     presenter: PersonPresenter,
   ) {
     this.activities = activities;
+    this.attendance = attendance;
     this.authorization = authorization;
     this.memberships = memberships;
     this.people = people;
@@ -291,8 +299,20 @@ export class ActivitiesController {
       query,
     );
     const manage = await this.manageCheck(authz, group.clubId, page.items);
+    // Answers so far, for those who manage an activity (one grouped statement).
+    const managed = page.items.filter((v) => manage(v) && v.activity.responseMode !== "none");
+    const counts = await this.attendance.countsFor(
+      tenantContext(authz, group.clubId),
+      managed.map((v) => v.activity.id),
+    );
     return {
-      items: page.items.map((v) => toActivityResponse(v, manage(v))),
+      items: page.items.map((v) => {
+        const responseCounts = counts.get(v.activity.id);
+        return {
+          ...toActivityResponse(v, manage(v)),
+          ...(responseCounts ? { responseCounts } : {}),
+        };
+      }),
       nextCursor: page.nextCursor,
       canManage: !group.archived && canManageGroupActivities(authz.actor, group),
     };

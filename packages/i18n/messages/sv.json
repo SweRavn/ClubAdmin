@@ -597,7 +597,16 @@
     "range_too_long": "Välj en kortare period.",
     "group_not_managed": "Du kan inte lägga till aktiviteter i alla valda grupper.",
     "activity_cancelled": "Aktiviteten är redan inställd.",
-    "activity_not_cancelled": "Aktiviteten är inte inställd."
+    "activity_not_cancelled": "Aktiviteten är inte inställd.",
+    "activity_has_responses": "Någon har svarat eller närvaro har tagits: ställ in aktiviteten i stället.",
+    "response_not_requested": "Aktiviteten efterfrågar inga svar.",
+    "response_closed": "Det går inte längre att svara (efter svarstiden går bara ”kommer inte”).",
+    "not_on_roster": "Personen är inte med i aktivitetens grupp.",
+    "activity_not_started": "Närvaro kan tas från en timme före start.",
+    "attendance_locked": "Närvaron är låst.",
+    "correction_reason_required": "Ange en orsak till rättelsen.",
+    "not_a_club_member": "Gäster måste vara medlemmar i föreningen.",
+    "recorded_at_out_of_range": "Enhetens klocka går fel, eller markeringen är mer än en vecka gammal."
   },
   "memberExport": {
     "columns": {
@@ -1099,5 +1108,84 @@
     "restore": "Återställ",
     "archived": "arkiverad",
     "conflicts": "Dubbelbokningar de kommande åtta veckorna"
+  },
+  "responses": {
+    "title": "Svar",
+    "coming": "Kommer",
+    "notComing": "Kommer inte",
+    "withdraw": "Ta tillbaka svaret",
+    "noteLabel": "Meddelande till ledarna (valfritt)",
+    "noteHint": "Bara ledarna ser det. Skriv inte mer än de behöver (”sjuk” räcker).",
+    "addNote": "Lägg till ett meddelande till ledarna",
+    "answeredBy": "Svar från {name}",
+    "aGuardian": "en vårdnadshavare",
+    "answerBy": "Svara senast {time}",
+    "deadlinePassed": "Svarstiden har gått ut: du kan fortfarande meddela att du inte kommer.",
+    "answerNeeded": "Svar behövs",
+    "closed": "Det går inte längre att svara.",
+    "counts": "{attending} kommer · {notAttending} kommer inte · {notAnswered} har inte svarat",
+    "attendingList": "Kommer",
+    "nobody": "Ingen har svarat än.",
+    "leadersList": "Alla svar",
+    "notAnswered": "Har inte svarat",
+    "saved": "Ditt svar sparades.",
+    "mode": "Svar",
+    "respondBy": "Svara senast (timmar före start)",
+    "respondByHint": "Tomt: fram till start. Efter svarstiden går bara ”kommer inte” att svara.",
+    "family": "Min familj"
+  },
+  "responseModes": {
+    "none": "Inga svar",
+    "optional": "Frivilligt",
+    "requested": "Svar efterfrågas"
+  },
+  "responseStatus": {
+    "attending": "Kommer",
+    "not_attending": "Kommer inte"
+  },
+  "attendance": {
+    "title": "Närvaro",
+    "take": "Ta närvaro",
+    "participants": "Deltagare",
+    "leaders": "Ledare",
+    "guests": "Gäster",
+    "addGuest": "Lägg till en gäst (medlem i föreningen)",
+    "guestPlaceholder": "Välj en medlem",
+    "suggested": "Enligt svaret: {status}",
+    "save": "Spara närvaro",
+    "saved": "Närvaron sparades.",
+    "stale": "{count, plural, one {# markering} other {# markeringar}} sparades inte: någon har registrerat en nyare.",
+    "notOpen": "Närvaro kan tas från en timme före start.",
+    "locked": "Närvaron är låst. Föreningsadministratörer och registeransvariga kan rätta den, med en orsak.",
+    "correctionReason": "Orsak till rättelsen (inte om personen)",
+    "correct": "Spara rättelse",
+    "corrected": "Rättad: {reason}",
+    "summary": "Närvaro",
+    "period": "Period",
+    "from": "Från",
+    "to": "Till",
+    "show": "Visa",
+    "sessions": "Tillfällen",
+    "present": "Närvarande",
+    "absent": "Frånvarande",
+    "excused": "Anmält frånvaro",
+    "rate": "Andel",
+    "member": "Medlem",
+    "notRecorded": "Inte tagen",
+    "presentCount": "{present} närvarande, {leaders} ledare",
+    "noSessions": "Inga genomförda tillfällen under perioden.",
+    "protectedNotice": "Några här har skyddad identitet: fotografera eller dela inte listan."
+  },
+  "attendanceStatus": {
+    "present": "Närvarande",
+    "absent": "Frånvarande",
+    "excused": "Anmält frånvaro"
+  },
+  "grantHints": {
+    "lok": {
+      "too_short": "Ger inte LOK-stöd: kortare än 45 minuter.",
+      "too_few_participants": "Ger inte LOK-stöd: färre än tre deltagare i åldern 7–25 år.",
+      "no_leader": "Ger inte LOK-stöd: ingen närvarande ledare som är minst 13 år."
+    }
   }
 }

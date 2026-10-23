@@ -2,8 +2,11 @@
 // Public interface of the authorization module (ADR 0006, ADR 0022).
 export { AuthorizationModule } from "./authorization.module.ts";
 export {
+  canLeadGroupActivities,
   canManageGroupActivities,
   canReadGroupActivities,
+  canReadGroupMembers,
+  canRespondInGroup,
   clubPermissions,
   type ProfileAccess,
   profileAccess,

@@ -133,3 +133,37 @@ describe("public holidays (P1.4)", () => {
     ]);
   });
 });
+
+describe("grant rules (P1.5)", () => {
+  const session = {
+    date: "2026-09-15",
+    durationMinutes: 90,
+    participantBirthDates: ["2017-03-01", "2016-12-31", "2001-01-01"],
+    leaderBirthDates: ["2013-11-30"],
+  };
+
+  it("SE: a session of 45 minutes with three participants aged 7–25 and a leader of 13 counts", () => {
+    expect(SE.grantRules?.scheme).toBe("lok");
+    expect(SE.grantRules?.check(session)).toEqual([]);
+    expect(SE.grantRules?.check({ ...session, durationMinutes: 45 })).toEqual([]);
+  });
+
+  it("SE: names each rule a session does not meet", () => {
+    expect(SE.grantRules?.check({ ...session, durationMinutes: 44 })).toEqual(["too_short"]);
+    // Ages by calendar year: 2020 turns 6 in 2026, 2000 turns 26; unknown birth dates never count.
+    expect(
+      SE.grantRules?.check({
+        ...session,
+        participantBirthDates: ["2017-03-01", "2020-01-01", "2000-12-31", null],
+      }),
+    ).toEqual(["too_few_participants"]);
+    expect(SE.grantRules?.check({ ...session, leaderBirthDates: ["2014-01-01", null] })).toEqual([
+      "no_leader",
+    ]);
+    expect(SE.grantRules?.check({ ...session, leaderBirthDates: [] })).toEqual(["no_leader"]);
+  });
+
+  it("NO has no per-session rules", () => {
+    expect(NO.grantRules).toBeNull();
+  });
+});

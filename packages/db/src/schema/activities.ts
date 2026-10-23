@@ -12,6 +12,8 @@ import {
   type ActivityStatus,
   HOME_AWAY,
   type HomeAway,
+  RESPONSE_MODES,
+  type ResponseMode,
   type SeriesSlot,
 } from "@clubadmin/shared";
 import { sql } from "drizzle-orm";
@@ -81,11 +83,19 @@ export const activitySeries = pgTable(
       .notNull()
       .default(sql`'{}'::date[]`),
     skipPublicHolidays: boolean().notNull().default(false),
+    /** Answers (P1.5): copied to each session, the deadline relative to its start. */
+    responseMode: text().$type<ResponseMode>().notNull().default("optional"),
+    respondByMinutes: integer(),
     createdByPersonId: personRef(),
     ...timestamps,
   },
   (t) => [
     unique("activity_series_club_id_unique").on(t.clubId, t.id),
+    check("activity_series_response_mode", oneOf(t.responseMode, RESPONSE_MODES)),
+    check(
+      "activity_series_respond_by_minutes",
+      sql`${t.respondByMinutes} IS NULL OR ${t.respondByMinutes} BETWEEN 0 AND 20160`,
+    ),
     foreignKey({
       name: "activity_series_location_fk",
       columns: [t.clubId, t.locationId],
@@ -152,11 +162,15 @@ export const activities = pgTable(
     detached: boolean().notNull().default(false),
     sequence: integer().notNull().default(0),
     changedAt: timestamp(tz).notNull().defaultNow(),
+    /** Answers (P1.5): none, optional or requested (by respondBy, if set). */
+    responseMode: text().$type<ResponseMode>().notNull().default("optional"),
+    respondBy: timestamp(tz),
     createdByPersonId: personRef(),
     ...timestamps,
   },
   (t) => [
     unique("activities_club_id_unique").on(t.clubId, t.id),
+    check("activities_response_mode", oneOf(t.responseMode, RESPONSE_MODES)),
     foreignKey({
       name: "activities_series_fk",
       columns: [t.clubId, t.seriesId],
@@ -235,6 +249,8 @@ export const scheduleEntries = pgTable(
     /** The location's name (or the free-text place). */
     place: text(),
     changedAt: timestamp(tz).notNull(),
+    responseMode: text().$type<ResponseMode>().notNull().default("optional"),
+    respondBy: timestamp(tz),
     ...timestamps,
   },
   (t) => [

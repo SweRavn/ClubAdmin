@@ -85,6 +85,13 @@
       "when": 1792731604822,
       "tag": "0011_activities",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792760383629,
+      "tag": "0012_responses_and_attendance",
+      "breakpoints": true
     }
   ]
 }

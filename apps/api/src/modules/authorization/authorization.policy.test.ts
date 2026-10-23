@@ -102,6 +102,15 @@ const otherTeamCoach = as({
   ...member(),
   groups: [{ clubId: club, groupId: otherTeam, function: "head_coach" }],
 });
+const relativeWithSignUp = as({
+  wards: [{ personId: ward, kind: "relative", rights: ["view_schedule", "sign_up"] }],
+  wardMemberships: [{ personId: ward, clubId: club, status: "active", membershipType: "active" }],
+  wardGroups: [{ personId: ward, clubId: club, groupId: team, function: "member" }],
+});
+const otherLeader = as({
+  ...member(),
+  groups: [{ clubId: club, groupId: team, function: "other_leader" }],
+});
 const activityR: Resource = {
   kind: "activity",
   clubId: club,
@@ -287,6 +296,59 @@ const CASES: Record<Permission, Case[]> = {
       allowed: false,
     },
     { name: "player", actor: teammate, resource: activityR, allowed: false },
+  ],
+  "activity.respond": [
+    { name: "player in its group", actor: teammate, resource: activityR, allowed: true },
+    {
+      name: "relative with sign_up",
+      actor: relativeWithSignUp,
+      resource: activityR,
+      allowed: true,
+    },
+    { name: "parent acting on behalf", actor: onBehalf, resource: activityR, allowed: true },
+    {
+      name: "relative with view_schedule only",
+      actor: relative,
+      resource: activityR,
+      allowed: false,
+    },
+    { name: "coach (not a member)", actor: coach, resource: activityR, allowed: false },
+    { name: "outsider", actor: outsider, resource: activityR, allowed: false },
+  ],
+  "activity.responses.read": [
+    { name: "head coach", actor: coach, resource: activityR, allowed: true },
+    { name: "other leader", actor: otherLeader, resource: activityR, allowed: true },
+    { name: "club manager", actor: manager, resource: activityR, allowed: true },
+    {
+      name: "coach of the other group of a joint activity",
+      actor: otherTeamCoach,
+      resource: jointActivityR,
+      allowed: true,
+    },
+    { name: "physio", actor: physio, resource: activityR, allowed: false },
+    { name: "player", actor: teammate, resource: activityR, allowed: false },
+    { name: "parent", actor: parent, resource: activityR, allowed: false },
+  ],
+  "activity.attendance.manage": [
+    { name: "head coach", actor: coach, resource: activityR, allowed: true },
+    { name: "registrar", actor: registrar, resource: activityR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: activityR, allowed: true },
+    { name: "physio", actor: physio, resource: activityR, allowed: false },
+    { name: "player", actor: teammate, resource: activityR, allowed: false },
+    {
+      name: "manager of another club",
+      actor: otherClubManager,
+      resource: activityR,
+      allowed: false,
+    },
+  ],
+  "group.attendance.read": [
+    { name: "head coach", actor: coach, resource: teamR, allowed: true },
+    { name: "registrar", actor: registrar, resource: teamR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: true },
+    { name: "player", actor: teammate, resource: teamR, allowed: false },
+    { name: "parent", actor: parent, resource: teamR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: teamR, allowed: false },
   ],
   "club.activities.read": [
     { name: "manager", actor: manager, resource: clubR, allowed: true },

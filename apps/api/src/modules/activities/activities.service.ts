@@ -24,6 +24,7 @@ import {
   CreateActivitySchema,
   type CreateSeriesInput,
   CreateSeriesSchema,
+  defaultResponseMode,
   type LocationInput,
   LocationInputSchema,
   type SeriesPreviewInput,
@@ -44,6 +45,7 @@ import { DomainError } from "../../platform/domain/domain-error.ts";
 import { actorPersonId, definedOnly, parseInput } from "../../platform/domain/run.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import * as repo from "./activities.repository.ts";
+import * as records from "./attendance.repository.ts";
 import { expandSeries, type Expansion, localDate, RecurrenceError } from "./recurrence.ts";
 
 export type Location = repo.LocationRow;
@@ -236,6 +238,8 @@ export class ActivitiesService {
           endsAt: new Date(data.endsAt),
           allDay: data.allDay,
           meetAt: data.meetAt ? new Date(data.meetAt) : null,
+          responseMode: data.responseMode ?? defaultResponseMode(data.kind),
+          respondBy: data.respondBy ? new Date(data.respondBy) : null,
           createdByPersonId: actorPersonId(context),
         },
       ]);
@@ -281,6 +285,10 @@ export class ActivitiesService {
         ...(data.startsAt === undefined ? {} : { startsAt: new Date(data.startsAt) }),
         ...(data.endsAt === undefined ? {} : { endsAt: new Date(data.endsAt) }),
         ...("meetAt" in data ? { meetAt: data.meetAt ? new Date(data.meetAt) : null } : {}),
+        ...(data.responseMode === undefined ? {} : { responseMode: data.responseMode }),
+        ...("respondBy" in data
+          ? { respondBy: data.respondBy ? new Date(data.respondBy) : null }
+          : {}),
       };
       if ("locationId" in data || "locationText" in data) {
         const locationId = data.locationId ?? null;
@@ -365,11 +373,18 @@ export class ActivitiesService {
     });
   }
 
-  /** Deleting a session of a series skips its date, so series changes do not bring it back. */
+  /**
+   * Deleting a session of a series skips its date, so series changes do not
+   * bring it back. An activity with answers or attendance is cancelled
+   * instead (activity_has_responses).
+   */
   deleteActivity(context: TenantContext, activityId: string): Promise<void> {
     return this.db.withTenant(context, async (tx) => {
       const current = await repo.lockActivity(tx, activityId);
       if (!current) throw new DomainError("not_found");
+      if ((await records.withRecords(tx, [activityId])).size > 0) {
+        throw new DomainError("activity_has_responses");
+      }
       if (current.seriesId && current.occurrenceOn) {
         const series = await repo.lockSeries(tx, current.seriesId);
         if (series && !series.skipDates.includes(current.occurrenceOn)) {
@@ -432,6 +447,8 @@ export class ActivitiesService {
           endsOn: data.endsOn,
           skipDates: [...new Set(data.skipDates)].sort(),
           skipPublicHolidays: data.skipPublicHolidays,
+          responseMode: data.responseMode ?? defaultResponseMode(data.kind),
+          respondByMinutes: data.respondByMinutes ?? null,
           createdByPersonId: actorPersonId(context),
         },
         groupIds,
@@ -734,6 +751,10 @@ export class ActivitiesService {
       ...(data.skipPublicHolidays === undefined
         ? {}
         : { skipPublicHolidays: data.skipPublicHolidays }),
+      ...(data.responseMode === undefined ? {} : { responseMode: data.responseMode }),
+      ...(data.respondByMinutes === undefined
+        ? {}
+        : { respondByMinutes: data.respondByMinutes ?? null }),
     };
     if (data.locationId !== undefined || data.locationText !== undefined) {
       const locationId = data.locationId ?? null;
@@ -782,6 +803,8 @@ export class ActivitiesService {
         leaderNotes: series.leaderNotes,
         locationId: series.locationId,
         locationText: series.locationText,
+        responseMode: series.responseMode,
+        respondBy: respondByOf(series, session.startsAt),
       };
       const shown =
         row.startsAt.getTime() !== next.startsAt.getTime() ||
@@ -791,16 +814,41 @@ export class ActivitiesService {
         row.notes !== next.notes ||
         row.locationId !== next.locationId ||
         row.locationText !== next.locationText;
-      if (shown || row.leaderNotes !== next.leaderNotes) updates.push({ ...next, bump: shown });
+      const answers =
+        row.responseMode !== next.responseMode ||
+        row.respondBy?.getTime() !== next.respondBy?.getTime();
+      if (shown || answers || row.leaderNotes !== next.leaderNotes) {
+        updates.push({ ...next, bump: shown });
+      }
     }
-    const removed = [...byDate.values()].map((a) => a.id);
+    // Sessions no longer in the pattern: deleted, unless someone answered (or
+    // attendance was taken); those are cancelled so the answers stay (ADR 0035).
+    const dropped = [...byDate.values()];
+    const kept = await records.withRecords(
+      tx,
+      dropped.map((a) => a.id),
+    );
+    const removed = dropped.filter((a) => !kept.has(a.id)).map((a) => a.id);
+    const cancelled = dropped.filter((a) => kept.has(a.id) && a.status !== "cancelled");
     await repo.deleteActivities(tx, removed);
     await repo.updateSessions(tx, updates);
+    for (const a of cancelled) {
+      await repo.updateActivity(tx, a.id, {
+        status: "cancelled",
+        sequence: a.sequence + 1,
+        changedAt: this.now(),
+      });
+    }
     const created = await this.insertSessions(tx, series, groupIds, inserts);
     await repo.syncScheduleEntries(tx, {
-      activityIds: [...updates.map((u) => u.id), ...created],
+      activityIds: [...updates.map((u) => u.id), ...cancelled.map((a) => a.id), ...created],
     });
-    return { created: created.length, updated: updates.length, removed: removed.length };
+    for (const a of cancelled) await this.publish(tx, series.clubId, a.id, "cancelled");
+    return {
+      created: created.length,
+      updated: updates.length,
+      removed: removed.length + cancelled.length,
+    };
   }
 
   /** Inserts sessions of a series with its groups and calendar entries; returns their IDs. */
@@ -826,6 +874,8 @@ export class ActivitiesService {
         locationText: series.locationText,
         startsAt: s.startsAt,
         endsAt: s.endsAt,
+        responseMode: series.responseMode,
+        respondBy: respondByOf(series, s.startsAt),
         createdByPersonId: series.createdByPersonId,
       })),
     );
@@ -929,6 +979,13 @@ export class ActivitiesService {
       sessions: await repo.countSeriesSessions(tx, series.id),
     };
   }
+}
+
+/** A session's deadline from its series' minutes before the start. */
+function respondByOf(series: { respondByMinutes: number | null }, startsAt: Date): Date | null {
+  return series.respondByMinutes === null
+    ? null
+    : new Date(startsAt.getTime() - series.respondByMinutes * 60_000);
 }
 
 /** A query range as dates: `to` after `from`, at most CALENDAR_MAX_DAYS. */

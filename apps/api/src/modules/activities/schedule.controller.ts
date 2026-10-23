@@ -4,6 +4,7 @@
 // across clubs. When acting on behalf of a ward, only the ward's schedule.
 
 import {
+  type ResponseMode,
   type SchedulePage,
   SchedulePageSchema,
   type ScheduleQuery,
@@ -20,6 +21,8 @@ import {
 } from "../authorization/index.ts";
 import { PeopleService } from "../people/index.ts";
 import { ActivitiesService } from "./activities.service.ts";
+import { respondablePeople } from "./attendance.controller.ts";
+import { answerState } from "./attendance.service.ts";
 
 /** Me, and the wards whose schedule I may see (none when acting on behalf). */
 export function schedulePeople(authz: RequestAuthorization): string[] {
@@ -76,6 +79,8 @@ export class ScheduleController {
       limit: query.limit,
     });
     const changedSince = query.changedSince ? Date.parse(query.changedSince) : null;
+    const respondable = new Set(respondablePeople(authz));
+    const now = new Date();
     return {
       items: page.items.flatMap((row) => {
         const club = page.clubs.get(row.clubId);
@@ -105,6 +110,28 @@ export class ScheduleController {
             }),
             changed: changedSince !== null && row.changedAt.getTime() > changedSince,
             changedAt: row.changedAt.toISOString(),
+            responseMode: row.responseMode as ResponseMode,
+            respondBy: row.respondBy?.toISOString() ?? null,
+            responses: row.personIds.flatMap((id) => {
+              if (!shown.has(id)) return [];
+              const open = answerState(
+                {
+                  status: row.status,
+                  responseMode: row.responseMode,
+                  endsAt: row.endsAt,
+                  respondBy: row.respondBy,
+                },
+                now,
+              ).open;
+              const status = row.answers[id];
+              return [
+                {
+                  personId: id,
+                  status: status === "attending" || status === "not_attending" ? status : null,
+                  canRespond: open && respondable.has(id) && row.memberIds.includes(id),
+                },
+              ];
+            }),
           },
         ];
       }),

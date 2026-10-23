@@ -9,6 +9,9 @@ export const NO: CountryPack = {
   personalIdFormat: personalIdFormat(parseFodselsnummer),
   localeDefaults: { locale: "nb-NO", timeZone: "Europe/Oslo", currency: "NOK" },
   // Offentlige høytidsdager (helligdagsloven) and 1 and 17 May.
+  // Norway's activity grants (lokale aktivitetsmidler) are shared out by
+  // the municipality's sports council, not per session: no per-session rules.
+  grantRules: null,
   publicHolidays(year) {
     const easter = easterSunday(year);
     return [

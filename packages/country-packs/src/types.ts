@@ -55,6 +55,28 @@ export interface MemberImportRules {
   }[];
 }
 
+/** One session as the grant rules see it (P1.5): its length and who was present. */
+export interface GrantSession {
+  /** The session's local date (ISO), for ages counted by calendar year. */
+  date: string;
+  durationMinutes: number;
+  /** Birth dates of the participants present (null: unknown, never counted). */
+  participantBirthDates: readonly (string | null)[];
+  /** Birth dates of the leaders present. */
+  leaderBirthDates: readonly (string | null)[];
+}
+
+/**
+ * A national activity grant whose rules a session must meet to count
+ * (Sweden's LOK-stöd). `check` returns the codes of the rules not met
+ * (empty: it counts); reporting is a later step.
+ */
+export interface GrantRules {
+  /** Short name for messages, e.g. "lok". */
+  scheme: string;
+  check(session: GrantSession): string[];
+}
+
 export interface CountryPack {
   /** ISO 3166-1 alpha-2. */
   code: string;
@@ -67,6 +89,13 @@ export interface CountryPack {
    * eves that are de facto days off. ISO dates of the year, sorted.
    */
   publicHolidays(year: number): string[];
+  /** The per-session grant rules of the country, or null if it has none (P1.5). */
+  grantRules: GrantRules | null;
+}
+
+/** Age reached during the calendar year of `date` (how grant rules count ages). */
+export function ageInYear(birthDate: string, date: string): number {
+  return Number(date.slice(0, 4)) - Number(birthDate.slice(0, 4));
 }
 
 /** Shared helper: builds isValid/normalize from parse. */

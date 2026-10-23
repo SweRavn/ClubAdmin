@@ -597,7 +597,16 @@
     "range_too_long": "Choose a shorter period.",
     "group_not_managed": "You cannot add activities to every chosen group.",
     "activity_cancelled": "The activity is already cancelled.",
-    "activity_not_cancelled": "The activity is not cancelled."
+    "activity_not_cancelled": "The activity is not cancelled.",
+    "activity_has_responses": "Someone has answered or attendance was taken: cancel the activity instead.",
+    "response_not_requested": "This activity does not ask for answers.",
+    "response_closed": "Answers are closed (after the deadline you can only say you are not coming).",
+    "not_on_roster": "The person is not in the activity's group.",
+    "activity_not_started": "Attendance can be taken from an hour before the start.",
+    "attendance_locked": "Attendance is locked.",
+    "correction_reason_required": "Give a reason for the correction.",
+    "not_a_club_member": "Guests must be members of the club.",
+    "recorded_at_out_of_range": "The device's clock is wrong, or the mark is more than a week old."
   },
   "memberExport": {
     "columns": {
@@ -1099,5 +1108,84 @@
     "restore": "Restore",
     "archived": "archived",
     "conflicts": "Double bookings in the coming eight weeks"
+  },
+  "responses": {
+    "title": "Answers",
+    "coming": "Coming",
+    "notComing": "Not coming",
+    "withdraw": "Withdraw answer",
+    "noteLabel": "Note to the leaders (optional)",
+    "noteHint": "Only the leaders see it. Write no more than they need (“ill” is enough).",
+    "addNote": "Add a note to the leaders",
+    "answeredBy": "Answered by {name}",
+    "aGuardian": "a guardian",
+    "answerBy": "Answer by {time}",
+    "deadlinePassed": "The deadline has passed: you can still say you are not coming.",
+    "answerNeeded": "Answer needed",
+    "closed": "Answers are closed.",
+    "counts": "{attending} coming · {notAttending} not coming · {notAnswered} not answered",
+    "attendingList": "Coming",
+    "nobody": "Nobody has answered yet.",
+    "leadersList": "All answers",
+    "notAnswered": "Not answered",
+    "saved": "Your answer was saved.",
+    "mode": "Answers",
+    "respondBy": "Answer by (hours before the start)",
+    "respondByHint": "Empty: until the start. After the deadline only “not coming” is accepted.",
+    "family": "My family"
+  },
+  "responseModes": {
+    "none": "Not asked for",
+    "optional": "Optional",
+    "requested": "Requested"
+  },
+  "responseStatus": {
+    "attending": "Coming",
+    "not_attending": "Not coming"
+  },
+  "attendance": {
+    "title": "Attendance",
+    "take": "Take attendance",
+    "participants": "Participants",
+    "leaders": "Leaders",
+    "guests": "Guests",
+    "addGuest": "Add a guest (a member of the club)",
+    "guestPlaceholder": "Choose a member",
+    "suggested": "From the answer: {status}",
+    "save": "Save attendance",
+    "saved": "Attendance was saved.",
+    "stale": "{count, plural, one {# mark was} other {# marks were}} not saved: someone recorded a newer one.",
+    "notOpen": "Attendance can be taken from an hour before the start.",
+    "locked": "Attendance is locked. Club managers and registrars can correct it, with a reason.",
+    "correctionReason": "Reason for the correction (not about the person)",
+    "correct": "Save correction",
+    "corrected": "Corrected: {reason}",
+    "summary": "Attendance",
+    "period": "Period",
+    "from": "From",
+    "to": "To",
+    "show": "Show",
+    "sessions": "Sessions",
+    "present": "Present",
+    "absent": "Absent",
+    "excused": "Excused",
+    "rate": "Rate",
+    "member": "Member",
+    "notRecorded": "Not taken",
+    "presentCount": "{present} present, {leaders} leaders",
+    "noSessions": "No sessions held in this period.",
+    "protectedNotice": "Some people here have protected identity: do not photograph or share this list."
+  },
+  "attendanceStatus": {
+    "present": "Present",
+    "absent": "Absent",
+    "excused": "Excused"
+  },
+  "grantHints": {
+    "lok": {
+      "too_short": "Does not qualify for LOK-stöd: shorter than 45 minutes.",
+      "too_few_participants": "Does not qualify for LOK-stöd: fewer than three participants aged 7–25.",
+      "no_leader": "Does not qualify for LOK-stöd: no leader aged 13 or older present."
+    }
   }
 }

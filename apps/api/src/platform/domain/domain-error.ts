@@ -103,6 +103,16 @@ export const DOMAIN_ERRORS = {
   group_not_managed: "forbidden",
   activity_cancelled: "conflict",
   activity_not_cancelled: "conflict",
+  // Responses and attendance (P1.5)
+  activity_has_responses: "conflict",
+  response_not_requested: "conflict",
+  response_closed: "conflict",
+  not_on_roster: "conflict",
+  activity_not_started: "conflict",
+  attendance_locked: "forbidden",
+  correction_reason_required: "validation",
+  not_a_club_member: "validation",
+  recorded_at_out_of_range: "validation",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

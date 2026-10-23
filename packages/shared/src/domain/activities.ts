@@ -7,6 +7,7 @@
 
 import { PersonSummarySchema } from "../auth/schemas.ts";
 import { z } from "../zod.ts";
+import { RESPONSE_MODES, RESPONSE_STATUSES, ResponseCountsSchema } from "./attendance.ts";
 
 export const ACTIVITY_KINDS = ["training", "match", "meeting", "other"] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
@@ -91,6 +92,12 @@ const place = {
   locationText: text(200).nullish(),
 };
 
+/** Answers (P1.5): the mode (default by kind) and a deadline. */
+const answers = {
+  responseMode: z.enum(RESPONSE_MODES).optional(),
+  respondBy: z.iso.datetime({ offset: true }).nullish(),
+};
+
 const details = {
   title: text(120),
   notes: text(2000).nullish(),
@@ -111,6 +118,7 @@ export const CreateActivitySchema = z
     /** All-day (the dates of startsAt and endsAt in the club's time zone count). */
     allDay: z.boolean().default(false),
     meetAt: z.iso.datetime({ offset: true }).nullish(),
+    ...answers,
     /** More groups for a joint activity (the caller must manage each). */
     groupIds: z.array(z.uuid()).max(20).default([]),
   })
@@ -136,6 +144,7 @@ export const UpdateActivitySchema = z
     startsAt: z.iso.datetime({ offset: true }).optional(),
     endsAt: z.iso.datetime({ offset: true }).optional(),
     meetAt: z.iso.datetime({ offset: true }).nullish(),
+    ...answers,
   })
   .strict()
   .openapi("UpdateActivityRequest");
@@ -158,6 +167,12 @@ export const SeriesSlotSchema = z
   .strict();
 export type SeriesSlot = z.infer<typeof SeriesSlotSchema>;
 
+/** A series' answers: the mode and a deadline before each session (minutes, up to two weeks). */
+const seriesAnswers = {
+  responseMode: z.enum(RESPONSE_MODES).optional(),
+  respondByMinutes: z.number().int().min(0).max(20_160).nullish(),
+};
+
 const recurrence = {
   slots: z.array(SeriesSlotSchema).min(1).max(14),
   startsOn: z.iso.date(),
@@ -174,6 +189,7 @@ export const CreateSeriesSchema = z
     leaderNotes: details.leaderNotes,
     ...place,
     ...recurrence,
+    ...seriesAnswers,
     groupIds: z.array(z.uuid()).max(20).default([]),
   })
   .strict()
@@ -194,6 +210,7 @@ export const UpdateSeriesSchema = z
     endsOn: z.iso.date().optional(),
     skipDates: z.array(z.iso.date()).max(200).optional(),
     skipPublicHolidays: z.boolean().optional(),
+    ...seriesAnswers,
   })
   .strict()
   .openapi("UpdateSeriesRequest");
@@ -266,6 +283,11 @@ export const ActivitySchema = z
     changedAt: z.iso.datetime({ offset: true }),
     groups: z.array(ActivityGroupRefSchema),
     canManage: z.boolean(),
+    /** Answers (P1.5). */
+    responseMode: z.enum(RESPONSE_MODES).optional(),
+    respondBy: z.iso.datetime({ offset: true }).nullable().optional(),
+    /** For those who manage it, in the group calendar. */
+    responseCounts: ResponseCountsSchema.optional(),
   })
   .openapi("Activity");
 export type Activity = z.infer<typeof ActivitySchema>;
@@ -303,6 +325,8 @@ export const SeriesSchema = z
     endsOn: z.iso.date(),
     skipDates: z.array(z.iso.date()),
     skipPublicHolidays: z.boolean(),
+    responseMode: z.enum(RESPONSE_MODES).optional(),
+    respondByMinutes: z.number().int().nullable().optional(),
     groups: z.array(ActivityGroupRefSchema),
     /** Sessions it has now (scheduled and cancelled). */
     sessions: z.number().int(),
@@ -373,6 +397,19 @@ export const ScheduleEntrySchema = z
     people: z.array(PersonSummarySchema),
     changed: z.boolean(),
     changedAt: z.iso.datetime({ offset: true }),
+    /** Answers (P1.5). */
+    responseMode: z.enum(RESPONSE_MODES).optional(),
+    respondBy: z.iso.datetime({ offset: true }).nullable().optional(),
+    /** Per person in `people`: their answer and whether the viewer may give it. */
+    responses: z
+      .array(
+        z.object({
+          personId: z.uuid(),
+          status: z.enum(RESPONSE_STATUSES).nullable(),
+          canRespond: z.boolean(),
+        }),
+      )
+      .optional(),
   })
   .openapi("ScheduleEntry");
 export type ScheduleEntry = z.infer<typeof ScheduleEntrySchema>;
