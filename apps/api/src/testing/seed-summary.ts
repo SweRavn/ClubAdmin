@@ -85,8 +85,8 @@ export async function summariseSeed(t: TestDatabase, data: DemoData): Promise<Se
       [c.id],
     );
     const sessions = await q<{ cancelled: string[]; detached: string[] }>(
-      `SELECT coalesce(array_agg(cancelled_reason) FILTER (WHERE status = 'cancelled'), '{}') AS cancelled,
-         coalesce(array_agg(notes) FILTER (WHERE detached), '{}') AS detached
+      `SELECT coalesce(array_agg(cancelled_reason ORDER BY cancelled_reason) FILTER (WHERE status = 'cancelled'), '{}') AS cancelled,
+         coalesce(array_agg(notes ORDER BY notes) FILTER (WHERE detached), '{}') AS detached
        FROM activities WHERE club_id = $1 AND series_id IS NOT NULL`,
       [c.id],
     );
