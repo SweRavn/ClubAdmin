@@ -22,8 +22,12 @@ sent to external services.
 - Docker Desktop must have *Settings → Resources → WSL integration* enabled for
   your distro; then `docker version` in WSL shows a server. Without it the doctor
   reports `spawnSync docker ENOENT`.
-- `pnpm dev:trust-ca` exports the certificate and prints the PowerShell command
-  that makes Windows browsers trust it; run that command in Windows.
+- `pnpm dev:trust-ca` exports the certificate and prints the PowerShell
+  commands that make Windows browsers trust it; run them in Windows. They copy
+  the file to `%TEMP%` first: `Import-Certificate` cannot read
+  `\\wsl.localhost\...` paths and answers "The certificate file could not be
+  found". If the copy fails too, check the distro's name with `wsl -l -v` (it
+  is part of the path).
 - Windows browsers reach `https://clubadmin.localhost` because Docker Desktop
   publishes the ports on Windows as well.
 
