@@ -7,9 +7,10 @@ import { personLabel, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
+import { Agenda, weekRange } from "../../components/agenda.tsx";
 import { FormError, Notice } from "../../components/form-error.tsx";
 import { InProgress, Onboarding } from "../../components/joining-panels.tsx";
-import { getMe, getMyClubs, getMyGroups, getMyWards } from "../../server/data.ts";
+import { getMe, getMyClubs, getMyGroups, getMyWards, getSchedule } from "../../server/data.ts";
 
 export async function generateMetadata() {
   const t = await getTranslations();
@@ -66,6 +67,10 @@ export default async function HomePage({ searchParams }: Props) {
         <InProgress />
       </Suspense>
 
+      <Suspense fallback={null}>
+        <Upcoming />
+      </Suspense>
+
       {clubs.clubs.length > 0 ? (
         <section aria-labelledby="my-clubs">
           <h2 id="my-clubs" className="mb-3 text-xl font-semibold">
@@ -112,6 +117,43 @@ export default async function HomePage({ searchParams }: Props) {
         ) : null,
       )}
     </div>
+  );
+}
+
+/** The next activities of my schedule (streamed: it must not hold back the page). */
+async function Upcoming() {
+  const { from, to } = weekRange(0, 2);
+  const [t, schedule] = await Promise.all([getTranslations(), getSchedule(from, to)]);
+  const several = schedule.people.length > 1;
+  return (
+    <section aria-labelledby="upcoming">
+      <h2 id="upcoming" className="mb-3 flex items-baseline justify-between text-xl font-semibold">
+        {t("home.upcoming")}
+        <a href="/schedule" className="text-sm font-normal text-accent underline">
+          {t("home.wholeSchedule")}
+        </a>
+      </h2>
+      <Agenda
+        showPeople={several}
+        emptyText={t("schedule.empty")}
+        testId="upcoming"
+        items={schedule.items.slice(0, 5).map((e) => ({
+          id: e.activityId,
+          href: `/activities/${e.activityId}`,
+          title: e.title,
+          kind: e.kind,
+          status: e.status,
+          cancelledReason: e.cancelledReason,
+          startsAt: e.startsAt,
+          endsAt: e.endsAt,
+          allDay: e.allDay,
+          timeZone: e.club.timeZone,
+          place: e.place,
+          groups: e.groups,
+          people: e.people,
+        }))}
+      />
+    </section>
   );
 }
 

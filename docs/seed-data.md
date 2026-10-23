@@ -176,10 +176,25 @@ checks (clearances), billing plans, chat rooms, the anonymisation schedule
 
 ## Demo scenario: activity and other data (added as modules land)
 
-- Past 10 weeks of recurring trainings for every youth team with attendance
-  (some sessions below LOK-stöd thresholds to test validation).
-- Upcoming 6 weeks of trainings, 3 matches per team, one cup weekend (event with
-  sign-up, deadline, and car pool: Mikael offers 3 seats, Anna requests 1).
+- **Activities** (P1.4, `apps/api/src/seed/steps/activities.ts`, through the
+  activities service): locations Strandvikens sporthall and the school's gym
+  (SVK), Norrbacka IP and Norrbackahallen (IKN), Fjordvik kunstgress (FIL).
+  Weekly training series from ten weeks ago to six weeks ahead, public
+  holidays skipped: SVK F2017 on Tuesdays 17:30 and Thursdays 18:00 (the
+  autumn-break week four weeks ago skipped; next week's Tuesday cancelled,
+  "Hallen är upptagen av kommunen"; that Thursday moved to the school's gym,
+  a detached session), SVK Herr senior on Mondays and Wednesdays at 20:00,
+  split two weeks ahead into a winter schedule at 20:30, IKN P2012 (Mondays
+  and Wednesdays), IKN F2015 (Tuesdays), FIL J2014 (Tuesdays and Thursdays,
+  Norwegian holidays). Three matches per team (two weeks ago, in five days,
+  in three weeks; away matches with a meeting place), a parents' meeting in
+  F2017 and a joint training of IKN P2012 and F2015 next Saturday. Erik
+  (coach in SVK and IKN, Maja's father) sees both clubs in "My schedule";
+  Gunilla (Alva's grandmother, `view_schedule`) sees F2017; Bo (Emma's
+  contact person) has only `receive_messages`, so no schedule.
+- Attendance for the past trainings (some sessions below LOK-stöd thresholds
+  to test validation) comes with P1.5; one cup weekend (event with sign-up,
+  deadline, and car pool: Mikael offers 3 seats, Anna requests 1) with events.
 - Chat rooms per group: "Ledare", "Föräldrar", "Spelare" (players room only for
   groups where players have accounts); protected persons only where accepted.
 - SVK training plan "Volleyboll 9 år — hösttermin" shared publicly; IKN copies it.
@@ -227,6 +242,8 @@ adult members, 40 parents who are not members, 8 teams with two leaders, a
 club manager), `--size` sets the number of clubs, plus **Storklubben**: one
 club of 10,000 members in 40 teams (half with photo consent, every 50th
 membership paused, a few protected) for the member register's budgets
-(P1.2). Activities and attendance
-(5 years) and chat messages (10 million) are added by their modules. Used by
+(P1.2). Activities (P1.4): 32 trainings per team, eight weeks back and
+eight ahead (256,000 activities with their calendar entries). Attendance and
+more years of activities, and chat messages (10 million), are added by
+their modules. Used by
 the performance tests (`performance.md`).

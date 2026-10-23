@@ -10,6 +10,7 @@ import type { DemoStep, SeedEnvironment } from "./environment.ts";
 import { Generator } from "./generator.ts";
 import { seedLoad } from "./load.ts";
 import { seedMinimal } from "./minimal.ts";
+import { activitiesDemoStep } from "./steps/activities.ts";
 import { billingDemoStep } from "./steps/billing.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
 import { importsDemoStep } from "./steps/imports.ts";
@@ -18,7 +19,11 @@ import { SeedClock } from "./time.ts";
 export const SCENARIOS = ["demo", "minimal", "load"] as const;
 export type Scenario = (typeof SCENARIOS)[number];
 
-export const DEMO_STEPS: readonly DemoStep[] = [billingDemoStep, importsDemoStep];
+export const DEMO_STEPS: readonly DemoStep[] = [
+  billingDemoStep,
+  importsDemoStep,
+  activitiesDemoStep,
+];
 
 export interface SeedOptions {
   scenario: Scenario;

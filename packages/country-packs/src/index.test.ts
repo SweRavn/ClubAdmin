@@ -88,3 +88,48 @@ describe("packs", () => {
     expect(ageOn("2008-02-29", new Date("2026-02-28T00:00:00Z"))).toBe(17);
   });
 });
+
+describe("public holidays (P1.4)", () => {
+  it("computes Easter-based and floating Swedish holidays", () => {
+    const se = getCountryPack("SE").publicHolidays(2025);
+    expect(se).toEqual(
+      expect.arrayContaining([
+        "2025-04-18", // Långfredagen
+        "2025-04-20", // Påskdagen
+        "2025-04-21", // Annandag påsk
+        "2025-05-29", // Kristi himmelsfärdsdag
+        "2025-06-08", // Pingstdagen
+        "2025-06-20", // Midsommarafton
+        "2025-06-21", // Midsommardagen
+        "2025-11-01", // Alla helgons dag
+        "2025-12-24",
+      ]),
+    );
+    expect(getCountryPack("SE").publicHolidays(2026)).toEqual(
+      expect.arrayContaining([
+        "2026-04-03",
+        "2026-04-05",
+        "2026-06-19",
+        "2026-06-20",
+        "2026-10-31",
+      ]),
+    );
+  });
+
+  it("computes the Norwegian ones", () => {
+    expect(getCountryPack("NO").publicHolidays(2025)).toEqual([
+      "2025-01-01",
+      "2025-04-17",
+      "2025-04-18",
+      "2025-04-20",
+      "2025-04-21",
+      "2025-05-01",
+      "2025-05-17",
+      "2025-05-29",
+      "2025-06-08",
+      "2025-06-09",
+      "2025-12-25",
+      "2025-12-26",
+    ]);
+  });
+});

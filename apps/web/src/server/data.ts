@@ -5,12 +5,16 @@
 // not-found page, 403 → the forbidden page.
 
 import {
+  ActivityDetailSchema,
+  type ActivityPage,
+  ActivityPageSchema,
   AdultGuardiansSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
   ClubSearchResultSchema,
   FamilyDuplicatesSchema,
+  GroupCalendarSchema,
   GroupDetailSchema,
   type GroupList,
   GroupListSchema,
@@ -20,6 +24,9 @@ import {
   InvitationLookupSchema,
   isUuid,
   JoinRequestListSchema,
+  LocationConflictsSchema,
+  type LocationList,
+  LocationListSchema,
   ManagerListSchema,
   MemberExportListSchema,
   MemberImportListSchema,
@@ -36,6 +43,10 @@ import {
   PersonProfileSchema,
   RegisterFacetsSchema,
   RegisterPageSchema,
+  SchedulePageSchema,
+  type SeriesPreviewInput,
+  SeriesPreviewResultSchema,
+  SeriesSchema,
   SessionListSchema,
   SourceResponseSchema,
   TrustedPeopleSchema,
@@ -246,6 +257,88 @@ export const getClubDuplicates = cache((clubId: string, cursor: string | null) =
     ClubDuplicatesSchema,
   ),
 );
+
+// Activities (P1.4). Calendar ranges are ISO instants; the pages pick them.
+const rangeQuery = (from: string, to: string) =>
+  `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+/** My schedule (and my wards'), across clubs; `query` adds personId/clubId/cursor. */
+export const getSchedule = cache((from: string, to: string, query = "") =>
+  required(`/api/v1/me/schedule?${rangeQuery(from, to)}&limit=200${query}`, SchedulePageSchema),
+);
+export const getGroupCalendar = cache((groupId: string, from: string, to: string) =>
+  required(
+    `/api/v1/groups/${requireId(groupId)}/activities?${rangeQuery(from, to)}&limit=200`,
+    GroupCalendarSchema,
+  ),
+);
+/** The group's calendar, or null if the viewer may see the group but not its activities. */
+export const getGroupCalendarIfAllowed = cache((groupId: string, from: string, to: string) =>
+  apiGet(
+    `/api/v1/groups/${requireId(groupId)}/activities?${rangeQuery(from, to)}&limit=200`,
+    GroupCalendarSchema,
+    { nullOn: [403] },
+  ),
+);
+export const getClubCalendar = cache(
+  (clubId: string, from: string, to: string, filter: string): Promise<ActivityPage> =>
+    required(
+      `/api/v1/clubs/${requireId(clubId)}/activities?${rangeQuery(from, to)}&limit=500${filter}`,
+      ActivityPageSchema,
+    ),
+);
+export const getActivity = cache((activityId: string) =>
+  required(`/api/v1/activities/${requireId(activityId)}`, ActivityDetailSchema),
+);
+export const getSeries = cache((seriesId: string) =>
+  required(`/api/v1/activity-series/${requireId(seriesId)}`, SeriesSchema),
+);
+/** All of a club's locations (archived ones too with `archived`). */
+export const getLocations = cache(
+  async (clubId: string, archived = false): Promise<LocationList["items"]> => {
+    const items: LocationList["items"] = [];
+    let cursor: string | null = null;
+    do {
+      const page: LocationList = await required(
+        `/api/v1/clubs/${requireId(clubId)}/locations?limit=200&archived=${archived}${
+          cursor ? `&cursor=${cursor}` : ""
+        }`,
+        LocationListSchema,
+      );
+      items.push(...page.items);
+      cursor = page.nextCursor;
+    } while (cursor);
+    return items;
+  },
+);
+export const getLocationConflicts = cache(
+  (clubId: string, locationId: string, from: string, to: string) =>
+    required(
+      `/api/v1/clubs/${requireId(clubId)}/locations/${requireId(locationId)}/conflicts?${rangeQuery(from, to)}`,
+      LocationConflictsSchema,
+    ),
+);
+/** The sessions a series would have (the form's preview), or the problem's detail code. */
+export async function previewSeries(
+  groupId: string,
+  body: SeriesPreviewInput,
+): Promise<z.infer<typeof SeriesPreviewResultSchema> | { error: string }> {
+  const session = await requireSession();
+  const res = await apiFetch(
+    `/api/v1/groups/${requireId(groupId)}/activity-series/preview`,
+    session.record,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      onBehalfOf: session.record.viewingAs ?? null,
+    },
+  );
+  if (res.ok) return SeriesPreviewResultSchema.parse(await res.json());
+  if (res.status === 401) redirect(`/login?returnTo=${encodeURIComponent(await currentPath())}`);
+  if (res.status === 403) forbidden();
+  const problem = (await res.json().catch(() => null)) as { detail?: string } | null;
+  return { error: problem?.detail ?? "invalid_input" };
+}
 
 /** What a guardian invitation link is for, without a session; null if it is not usable. */
 export const lookupGuardianInvitation = cache(async (token: string) => {

@@ -2,6 +2,8 @@
 // Public interface of the authorization module (ADR 0006, ADR 0022).
 export { AuthorizationModule } from "./authorization.module.ts";
 export {
+  canManageGroupActivities,
+  canReadGroupActivities,
   clubPermissions,
   type ProfileAccess,
   profileAccess,
@@ -10,7 +12,13 @@ export {
 export { AuthorizationService } from "./authorization.service.ts";
 export { EndpointPolicyCheck, endpointPolicyProblems } from "./endpoint-policies.ts";
 export { PersonVisibility, type Visibility } from "./person-visibility.service.ts";
-export type { ClubResource, GroupResource, PersonResource, ResourceKind } from "./policy.ts";
+export type {
+  ActivityResource,
+  ClubResource,
+  GroupResource,
+  PersonResource,
+  ResourceKind,
+} from "./policy.ts";
 export {
   FamilyPresenter,
   type FamilyViewer,
@@ -24,7 +32,12 @@ export {
   type RegisterPerson,
   RegisterPresenter,
 } from "./presenters/register.presenter.ts";
-export { Actor, type RelationshipSet } from "./relationship-set.ts";
+export {
+  Actor,
+  type GroupRef,
+  LEADER_FUNCTIONS,
+  type RelationshipSet,
+} from "./relationship-set.ts";
 export {
   CurrentAuthorization,
   operatorActor,

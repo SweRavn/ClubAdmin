@@ -174,6 +174,16 @@ describe("permission matrix", () => {
   const CLUB_FORBIDDEN = { ...ALL_FORBIDDEN, outsider: 404, operator: 404 };
   /** Managers and registrars get `status`, other insiders 403. */
   const ADMINS = (status: number) => ({ ...CLUB_FORBIDDEN, manager: status, registrar: status });
+  /** Those who manage team T's activities get `status`, other insiders 403. */
+  const TEAM_MANAGERS = (status: number) => ({
+    ...CLUB_FORBIDDEN,
+    manager: status,
+    owner: status,
+    coach: status,
+  });
+  const RANGE = `from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(
+    new Date(Date.now() + 120 * 86_400_000).toISOString(),
+  )}`;
 
   /**
    * Every endpoint with a permission (and the own-data reads) must be listed
@@ -450,6 +460,106 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/duplicates`,
       expected: ADMINS(200),
     },
+    // Activities (P1.4): the flows are in activities.integration.test.ts.
+    // Readers of team T's activities: everyone in club A related to the team
+    // (the relative through view_schedule); managers: the club manager, the
+    // owner of its section and its head coach. Requests run in persona order,
+    // so after the manager's write the others see its result (409, 404).
+    "GET /api/v1/clubs/:clubId/locations": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/locations`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/locations": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/locations`,
+      expected: { ...CLUB_FORBIDDEN, manager: 201 },
+      body: { name: "Matrix pitch" },
+    },
+    "PATCH /api/v1/clubs/:clubId/locations/:locationId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/locations/${m.locationId}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+      body: { directions: "Entrance B" },
+    },
+    "GET /api/v1/clubs/:clubId/locations/:locationId/conflicts": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/locations/${m.locationId}/conflicts?${RANGE}`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/clubs/:clubId/activities": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/activities?${RANGE}`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/groups/:groupId/activities": {
+      url: () => `/api/v1/groups/${m.team.id}/activities?${RANGE}`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/groups/:groupId/activities": {
+      url: () => `/api/v1/groups/${m.team.id}/activities`,
+      expected: TEAM_MANAGERS(201),
+      body: {
+        kind: "match",
+        title: "Matrix cup",
+        startsAt: "2027-01-10T10:00:00Z",
+        endsAt: "2027-01-10T12:00:00Z",
+      },
+    },
+    "POST /api/v1/groups/:groupId/activity-series/preview": {
+      url: () => `/api/v1/groups/${m.team.id}/activity-series/preview`,
+      expected: TEAM_MANAGERS(200),
+      body: {
+        slots: [{ weekday: 1, startTime: "17:30", durationMinutes: 60 }],
+        startsOn: "2027-01-01",
+        endsOn: "2027-02-28",
+      },
+    },
+    "POST /api/v1/groups/:groupId/activity-series": {
+      url: () => `/api/v1/groups/${m.team.id}/activity-series`,
+      expected: TEAM_MANAGERS(201),
+      body: {
+        title: "Matrix futsal",
+        slots: [{ weekday: 5, startTime: "19:00", durationMinutes: 60 }],
+        startsOn: "2027-01-01",
+        endsOn: "2027-01-31",
+      },
+    },
+    "GET /api/v1/activities/:activityId": {
+      url: () => `/api/v1/activities/${m.activityId}`,
+      expected: INSIDERS,
+    },
+    "PATCH /api/v1/activities/:activityId": {
+      url: () => `/api/v1/activities/${m.activityId}`,
+      expected: TEAM_MANAGERS(200),
+      body: { opponent: "Matrix BK" },
+    },
+    "POST /api/v1/activities/:activityId/cancel": {
+      url: () => `/api/v1/activities/${m.activityId}/cancel`,
+      expected: { ...TEAM_MANAGERS(409), manager: 200 },
+      body: { reason: "Pitch frozen" },
+    },
+    "POST /api/v1/activities/:activityId/restore": {
+      url: () => `/api/v1/activities/${m.activityId}/restore`,
+      expected: { ...TEAM_MANAGERS(409), manager: 200 },
+      body: {},
+    },
+    "DELETE /api/v1/activities/:activityId": {
+      url: () => `/api/v1/activities/${m.disposableActivityId}`,
+      // The manager deletes it; for everyone after that it no longer exists.
+      expected: { ...ALL_NOT_FOUND, manager: 204 },
+    },
+    "GET /api/v1/activity-series/:seriesId": {
+      url: () => `/api/v1/activity-series/${m.seriesId}`,
+      expected: INSIDERS,
+    },
+    "PATCH /api/v1/activity-series/:seriesId": {
+      url: () => `/api/v1/activity-series/${m.seriesId}`,
+      expected: TEAM_MANAGERS(200),
+      body: { notes: "Bring water" },
+    },
+    "POST /api/v1/activity-series/:seriesId/split": {
+      url: () => `/api/v1/activity-series/${m.seriesId}/split`,
+      // After the manager's split the session belongs to the new series.
+      expected: { ...TEAM_MANAGERS(409), manager: 201 },
+      body: () => ({ activityId: m.laterSessionId, title: "Matrix training (spring)" }),
+    },
+    "GET /api/v1/me/schedule": { url: () => `/api/v1/me/schedule?${RANGE}`, expected: ALL_OK },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -512,6 +622,11 @@ describe("tenant isolation", () => {
       `/api/v1/clubs/${m.clubA.id}/members/${m.child.id}/guardians`,
       `/api/v1/clubs/${m.clubA.id}/duplicates`,
       `/api/v1/me/wards/${m.child.id}/guardians`,
+      `/api/v1/clubs/${m.clubA.id}/locations`,
+      `/api/v1/clubs/${m.clubA.id}/activities?from=2026-01-01T00:00:00Z&to=2026-12-31T00:00:00Z`,
+      `/api/v1/groups/${m.team.id}/activities?from=2026-01-01T00:00:00Z&to=2026-12-31T00:00:00Z`,
+      `/api/v1/activities/${m.activityId}`,
+      `/api/v1/activity-series/${m.seriesId}`,
     ];
     for (const url of urls) {
       const res = await get(m.outsider.id, url, { mfa: true });
@@ -560,6 +675,7 @@ describe("reads", () => {
       "club.members.export",
       "club.members.add",
       "club.members.import",
+      "club.activities.read",
       "club.guardians.manage",
       "club.join_requests.manage",
       "club.invitations.manage",

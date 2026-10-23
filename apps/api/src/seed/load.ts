@@ -4,7 +4,8 @@
 // set-based transaction as superuser, recorded in history as a system job.
 // Per club: 200 people (120 children with a parent each, 40 adult members,
 // 40 parents who are not members), 8 teams with two leaders each, and a
-// club manager. Default size 1,000 clubs, about 200,000 people. Plus one
+// club manager, and 32 trainings per team (P1.4). Default size 1,000 clubs,
+// about 200,000 people and 256,000 activities. Plus one
 // large club (P1.2, the member register's budgets): 10,000 members in 40
 // teams, half with photo consent, some paused, a few protected.
 
@@ -76,6 +77,20 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
       SELECT p.club_id, g.id, p.id, CASE WHEN p.n <= 128 THEN 'head_coach' ELSE 'assistant_coach' END
       FROM lp AS p JOIN lg AS g ON g.club_id = p.club_id AND g.g = 1 + (p.n - 121) % 8
       WHERE p.n BETWEEN 121 AND 136;
+    -- Activities (P1.4): two trainings a week per team, eight weeks back and
+    -- eight ahead, with their groups and calendar entries.
+    CREATE TEMP TABLE la ON COMMIT DROP AS
+      SELECT uuidv7() AS id, g.club_id, g.id AS group_id,
+             (date_trunc('week', now()) - interval '8 weeks' + make_interval(days => (k / 2) * 7 + (k % 2) * 2)
+               + make_interval(hours => 15 + g.g % 4)) AS starts_at
+      FROM lg AS g CROSS JOIN generate_series(0, 31) AS k;
+    INSERT INTO activities (id, club_id, kind, title, starts_at, ends_at, created_by_person_id)
+      SELECT a.id, a.club_id, 'training', 'Träning', a.starts_at, a.starts_at + interval '90 minutes', m.person_id
+      FROM la AS a JOIN club_role_assignments AS m ON m.club_id = a.club_id AND m.role = 'club_manager';
+    INSERT INTO activity_groups (club_id, activity_id, group_id) SELECT club_id, id, group_id FROM la;
+    INSERT INTO schedule_entries (club_id, activity_id, group_id, kind, title, status, starts_at, ends_at, all_day, changed_at)
+      SELECT club_id, id, group_id, 'training', 'Träning', 'scheduled', starts_at, starts_at + interval '90 minutes', false, now()
+      FROM la;
     -- The large club.
     CREATE TEMP TABLE bc ON COMMIT DROP AS SELECT uuidv7() AS id;
     INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number)

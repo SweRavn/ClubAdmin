@@ -15,6 +15,7 @@ import { audit, type Database, inClub, outbox, type TenantContext, type Tx } fro
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import type { PersonReference } from "../../platform/domain/person-references.ts";
 import { actorPersonId, type Context, hasClub, runAs } from "../../platform/domain/run.ts";
+import { ACTIVITY_PERSON_REFERENCES } from "../activities/index.ts";
 import {
   CLUB_PROFILE_PERSON_REFERENCES,
   type ClubProfilesService,
@@ -37,6 +38,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...GROUP_PERSON_REFERENCES,
   ...JOINING_PERSON_REFERENCES,
   ...MEMBERS_PERSON_REFERENCES,
+  ...ACTIVITY_PERSON_REFERENCES,
 ];
 
 export type PersonMerge = repo.MergeRow;

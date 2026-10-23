@@ -48,12 +48,21 @@ export interface HandoverResource {
   toPersonId: string;
 }
 
+/** An activity or activity series (:activityId, :seriesId) with its groups (P1.4). */
+export interface ActivityResource {
+  kind: "activity";
+  clubId: string;
+  /** Its groups, each with its ancestors (nearest first). */
+  groups: readonly GroupRef[];
+}
+
 export interface Resources {
   platform: PlatformResource;
   club: ClubResource;
   group: GroupResource;
   person: PersonResource;
   handover: HandoverResource;
+  activity: ActivityResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

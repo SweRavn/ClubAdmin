@@ -1,4 +1,5 @@
-# Offline: after a session, the app opens with cached data in airplane mode.
+# Offline: after a session, the app opens with cached data in airplane mode
+# (My schedule first, then clubs and groups).
 # Logout wipes tokens and cache: the next start shows the login screen.
 appId: ${APP_ID}
 name: Offline cold start and logout
@@ -16,10 +17,17 @@ name: Offline cold start and logout
 - launchApp
 - extendedWaitUntil:
     visible:
-      id: "home-screen"
+      id: "schedule-screen"
     timeout: 60000
 - assertVisible:
     id: "offline-banner"
+- assertVisible: ".*Träning.*"
+- tapOn:
+    id: "open-home"
+- extendedWaitUntil:
+    visible:
+      id: "home-screen"
+    timeout: 20000
 - assertVisible:
     id: "club-0199a000-0000-7000-8001-000000000001"
 - setAirplaneMode: disabled

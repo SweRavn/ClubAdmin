@@ -91,6 +91,18 @@ export const DOMAIN_ERRORS = {
   import_not_cancellable: "conflict",
   import_mapping_incomplete: "validation",
   import_limit_reached: "rate-limited",
+  // Activities (P1.4)
+  location_name_taken: "conflict",
+  location_archived: "conflict",
+  invalid_recurrence: "validation",
+  nonexistent_local_time: "validation",
+  series_too_long: "validation",
+  series_change_in_past: "conflict",
+  not_a_series_session: "conflict",
+  range_too_long: "validation",
+  group_not_managed: "forbidden",
+  activity_cancelled: "conflict",
+  activity_not_cancelled: "conflict",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

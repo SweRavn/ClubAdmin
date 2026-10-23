@@ -25,9 +25,9 @@ budgets are requirements; CI measures them.
 - Every query on a club table filters on `club_id` first; composite indexes
   start with `club_id`.
 - Keyset pagination only (no `OFFSET` on large tables).
-- Precomputed read models for hot screens (e.g. `person_schedule` view of upcoming
-  activities per person, maintained by the worker on events) instead of
-  multi-join queries on every app open.
+- Precomputed read models for hot screens (e.g. `schedule_entries`, one row
+  per activity and group, written in the same transaction as the activity;
+  ADR 0034) instead of multi-join queries on every app open.
 - `pg_stat_statements` + slow-query log; CI integration tests fail on queries
   without index usage on seeded large-volume data (`pnpm db:seed --scenario load`).
 - PgBouncer in transaction mode in front of Postgres for the hosted service.
@@ -114,6 +114,19 @@ budgets are requirements; CI measures them.
   counts skip people. The query plans use indexes for every club table and,
   for searches and filters, for people. Exports of 10,000 members take about
   a second in the worker (batches of 1,000 into a multipart upload).
+- Activities (P1.4, `schedule-plans.integration.test.ts`: 200 clubs, 1,600
+  teams of 20 children, 64,000 activities): a guardian's "My schedule" over
+  two clubs (four weeks, row-level security included) about 6 ms p95 (budget
+  50 ms; the test allows 75 ms); it is one statement over the reader's open
+  group memberships and `schedule_entries (group_id, starts_at)`. The group
+  calendar reads the same index, the club calendar `activities (club_id,
+  starts_at)`; the query plans have no sequential scan of `activities`,
+  `activity_groups`, `schedule_entries` or `group_memberships`. A series is
+  created with all its sessions in three statements (sessions, their groups,
+  calendar entries); changing it is a comparison by date and one statement
+  each for deletes, updates and inserts. The load scenario has 32 trainings
+  per team (256,000 activities); `pnpm db:reset --scenario load` takes about
+  210 s locally.
 - Member imports (P1.3b, `member-imports.performance.integration.test.ts`:
   10,000 rows, each a child with a guardian shared by two siblings, through
   the same code as the import jobs): reading, sealing and validating the file
@@ -131,7 +144,7 @@ budgets are requirements; CI measures them.
 - Seeding (P0.8): `pnpm db:reset` with the demo scenario about 7 s including
   the build (budget 15 s; the seed itself about 4 s); `pnpm db:reset --scenario
   load` (1,000 clubs, 200,000 people, plus one club of 10,000 members for the
-  register) about 100 s locally (budget 10 minutes,
+  register, and 256,000 activities since P1.4) about 210 s locally (budget 10 minutes,
   nightly workflow). The nightly job only seeds so far; measuring the budgets
   against that data is [#10](https://github.com/SweRavn/ClubAdmin/issues/10).
 - Web (P0.9, ADR 0027), on the production build behind Caddy in CI:

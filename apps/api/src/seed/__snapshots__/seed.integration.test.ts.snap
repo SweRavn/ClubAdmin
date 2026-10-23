@@ -4,6 +4,21 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
 {
   "clubs": {
     "fil": {
+      "activities": {
+        "cancelledSessions": [],
+        "detachedSessions": [],
+        "locations": [
+          "Fjordvik kunstgress",
+        ],
+        "series": [
+          "Fotballtrening: fil-j2014",
+        ],
+        "single": [
+          "match Seriekamp mot Førde IL: fil-j2014",
+          "match Seriekamp mot Sogndal J: fil-j2014",
+          "match Turnering: Fjordcupen: fil-j2014",
+        ],
+      },
       "consents": [],
       "country": "NO",
       "employments": [],
@@ -25,6 +40,27 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "timeZone": "Europe/Oslo",
     },
     "ikn": {
+      "activities": {
+        "cancelledSessions": [],
+        "detachedSessions": [],
+        "locations": [
+          "Norrbacka IP",
+          "Norrbackahallen",
+        ],
+        "series": [
+          "Fotbollsträning: ikn-p2012",
+          "Innebandyträning: ikn-f2015",
+        ],
+        "single": [
+          "match Cup: Jämtlandscupen: ikn-p2012",
+          "training Gemensam träning P/F: ikn-p2012 + ikn-f2015",
+          "match Match mot Krokoms IBK: ikn-f2015",
+          "match Match mot Lits IBK: ikn-f2015",
+          "match Poolspel innebandy: ikn-f2015",
+          "match Seriematch mot Frösö IF: ikn-p2012",
+          "match Seriematch mot Östersunds FK P: ikn-p2012",
+        ],
+      },
       "consents": [
         "maja: photo_publication by erik",
       ],
@@ -54,6 +90,32 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "timeZone": "Europe/Stockholm",
     },
     "svk": {
+      "activities": {
+        "cancelledSessions": [
+          "Hallen är upptagen av kommunen",
+        ],
+        "detachedSessions": [
+          "Flyttad till gymnastiksalen i skolan denna vecka.",
+        ],
+        "locations": [
+          "Strandvikens skola, gymnastiksalen",
+          "Strandvikens sporthall",
+        ],
+        "series": [
+          "Träning: svk-f2017",
+          "Träning herr: svk-herr",
+          "Träning herr (vinterschema): svk-herr",
+        ],
+        "single": [
+          "match Division 2: Hisingens VK: svk-herr",
+          "match Division 2: Kustens VK: svk-herr",
+          "match Division 2: Lerums VBK: svk-herr",
+          "meeting Föräldramöte inför vårsäsongen: svk-f2017",
+          "match Poolspel F10: svk-f2017",
+          "match Seriematch mot Kustens VK: svk-f2017",
+          "match Seriematch mot Älvdalens VBK: svk-f2017",
+        ],
+      },
       "consents": [
         "elsa: photo_publication by anna",
         "maja: photo_publication by erik",
@@ -381,7 +443,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "clubProtected": [],
       "groups": [],
       "guardians": [
-        "bo: contact_person active [view_schedule, receive_messages]",
+        "bo: contact_person active [receive_messages]",
       ],
       "hasBirthDate": true,
       "memberships": [],

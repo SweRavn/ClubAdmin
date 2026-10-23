@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Home: my clubs (with the club switcher), my groups, my children's groups,
+// Clubs and groups (from My schedule, the start screen, P1.4): my clubs
+// (with the club switcher), my groups, my children's groups,
 // and the "viewing as" switcher for guardians. People without a club see the
 // onboarding placeholder. Requests run in parallel; cached data shows first.
 
 import { enumKey } from "@clubadmin/i18n";
 import { personLabel } from "@clubadmin/shared";
 import { Link, router, Stack } from "expo-router";
-import { useEffect, useRef } from "react";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
@@ -24,29 +24,9 @@ import {
   Screen,
   Section,
 } from "../../components/ui.tsx";
-import { BUILD_VARIANT } from "../../config.ts";
 import { useCurrentClub } from "../../state/club.tsx";
 import { useSession } from "../../state/session.tsx";
 import { useTheme } from "../../theme.ts";
-
-/**
- * Logs when Home first shows data, and whether it came from the persisted
- * cache, for the cold-start measurement (scripts/measure-cold-start.sh reads
- * it from logcat). Not in production builds; no personal data. Data from the
- * cache was fetched before Home mounted (restoring the cache also restores
- * the query's update count, so isFetchedAfterMount cannot tell).
- */
-function useColdStartMarker(dataUpdatedAt: number | undefined) {
-  const logged = useRef(false);
-  const mountedAt = useRef(Date.now());
-  useEffect(() => {
-    if (dataUpdatedAt === undefined || logged.current) return;
-    if (BUILD_VARIANT !== "development" && BUILD_VARIANT !== "preview") return;
-    logged.current = true;
-    const source = dataUpdatedAt < mountedAt.current ? "cache" : "network";
-    console.info(`ClubAdmin: home ready (${source})`);
-  }, [dataUpdatedAt]);
-}
 
 export default function Home() {
   const t = useTranslations();
@@ -58,7 +38,6 @@ export default function Home() {
   const groups = useMyGroups();
   const wards = useMyWards();
   const { club: current, setClub } = useCurrentClub();
-  useColdStartMarker(clubs.data === undefined ? undefined : clubs.dataUpdatedAt);
 
   const refreshing = me.isRefetching || clubs.isRefetching || groups.isRefetching;
   const refresh = () => {

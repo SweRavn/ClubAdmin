@@ -25,7 +25,7 @@ export default function Login() {
     setError(null);
     try {
       const result = await action();
-      if (result !== "cancelled") router.replace("/home");
+      if (result !== "cancelled") router.replace("/schedule");
     } catch (cause) {
       // Development and preview builds: the reason in logcat / the console
       // (error codes and HTTP statuses, never tokens or personal data).

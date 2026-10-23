@@ -20,6 +20,13 @@ appId: ${APP_ID}
     timeout: 30000
 - tapOn:
     id: "persona-${PERSONA}"
+# The start screen is My schedule (P1.4); the flows go on from clubs and groups.
+- extendedWaitUntil:
+    visible:
+      id: "schedule-screen"
+    timeout: 30000
+- tapOn:
+    id: "open-home"
 - extendedWaitUntil:
     visible:
       id: "home-screen"

@@ -124,6 +124,9 @@
       "guardian": "bo",
       "ward": "emma",
       "kind": "contact_person",
+      "rights": [
+        "receive_messages"
+      ],
       "via": "linked",
       "by": "emma"
     },

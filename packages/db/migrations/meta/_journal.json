@@ -78,6 +78,13 @@
       "when": 1792726883427,
       "tag": "0010_member_imports",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792731604822,
+      "tag": "0011_activities",
+      "breakpoints": true
     }
   ]
 }

@@ -12,7 +12,7 @@ import {
 } from "@clubadmin/shared";
 
 import { type ClubResource, definePolicy, type PersonResource, type Policy } from "./policy.ts";
-import type { Actor } from "./relationship-set.ts";
+import type { Actor, GroupRef } from "./relationship-set.ts";
 
 /**
  * How much of a person's profile the actor sees (field filtering in the
@@ -54,6 +54,30 @@ export function profileAccess(actor: Actor, resource: PersonResource): ProfileAc
 
 const isAdmin = (actor: Actor, clubId: string) =>
   actor.hasClubRole(clubId, "club_manager", "registrar");
+
+/**
+ * Who sees a group's activities (P1.4): its members and leaders (any
+ * function), their guardians with view_schedule (full guardians hold every
+ * right), the group's owners (also of parent groups), club managers and
+ * registrars.
+ */
+export function canReadGroupActivities(actor: Actor, group: GroupRef): boolean {
+  return (
+    isAdmin(actor, group.clubId) ||
+    actor.ownsGroup(group) ||
+    actor.isGroupMember(group.groupId) ||
+    actor.isGuardianOfGroupMember(group.groupId, "view_schedule")
+  );
+}
+
+/** Who plans a group's activities: owners, coaches and team managers, club managers. */
+export function canManageGroupActivities(actor: Actor, group: GroupRef): boolean {
+  return (
+    actor.isClubManager(group.clubId) ||
+    actor.ownsGroup(group) ||
+    actor.hasGroupFunction(group.groupId, "head_coach", "assistant_coach", "team_manager")
+  );
+}
 
 /** Board roles: the limited member register (P1.2). */
 export const BOARD_ROLES: readonly ClubRole[] = [
@@ -170,6 +194,36 @@ export const POLICIES: readonly Policy[] = [
       actor.hasSupportAccess(resource.clubId)
     );
   }),
+  // Activities (P1.4). A joint activity is readable through any of its
+  // groups and managed only by someone who manages all of them.
+  definePolicy("group.activities.read", "group", ({ actor, resource }) =>
+    canReadGroupActivities(actor, resource),
+  ),
+  definePolicy(
+    "group.activities.manage",
+    "group",
+    ({ actor, resource }) => !resource.archived && canManageGroupActivities(actor, resource),
+  ),
+  definePolicy("activity.read", "activity", ({ actor, resource }) =>
+    resource.groups.some((g) => canReadGroupActivities(actor, g)),
+  ),
+  definePolicy(
+    "activity.manage",
+    "activity",
+    ({ actor, resource }) =>
+      resource.groups.length > 0 &&
+      resource.groups.every((g) => canManageGroupActivities(actor, g)),
+  ),
+  // The club calendar (groups and places, no names): administrators and the board.
+  definePolicy(
+    "club.activities.read",
+    "club",
+    ({ actor, resource }) =>
+      isAdmin(actor, resource.clubId) || actor.hasClubRole(resource.clubId, ...BOARD_ROLES),
+  ),
+  definePolicy("club.locations.manage", "club", ({ actor, resource }) =>
+    actor.isClubManager(resource.clubId),
+  ),
   definePolicy(
     "group.members.manage",
     "group",

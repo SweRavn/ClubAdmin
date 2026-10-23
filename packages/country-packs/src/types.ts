@@ -62,6 +62,11 @@ export interface CountryPack {
   personalIdFormat: PersonalIdFormat;
   localeDefaults: LocaleDefaults;
   memberImport: MemberImportRules;
+  /**
+   * Days the club's activities usually pause (P1.4): public holidays and the
+   * eves that are de facto days off. ISO dates of the year, sorted.
+   */
+  publicHolidays(year: number): string[];
 }
 
 /** Shared helper: builds isValid/normalize from parse. */
@@ -86,3 +91,39 @@ export function isCalendarDate(year: number, month: number, day: number): boolea
 
 export const isoDate = (year: number, month: number, day: number): string =>
   `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+/** Easter Sunday (Gregorian, anonymous algorithm) as UTC midnight. */
+export function easterSunday(year: number): Date {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+/** The ISO date `days` after (or before) a UTC date. */
+export function addDays(date: Date, days: number): string {
+  return new Date(date.getTime() + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** The first date from `from` (month, day) that falls on an ISO weekday (1 Monday … 7 Sunday). */
+export function firstWeekdayFrom(
+  year: number,
+  month: number,
+  day: number,
+  weekday: number,
+): string {
+  const start = new Date(Date.UTC(year, month - 1, day));
+  const current = start.getUTCDay() === 0 ? 7 : start.getUTCDay();
+  return addDays(start, (weekday - current + 7) % 7);
+}

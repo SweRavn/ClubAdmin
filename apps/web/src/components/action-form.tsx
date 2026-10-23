@@ -46,6 +46,8 @@ const NOTICE_PARAMS = [
   "ownLogin",
   "merged",
   "undone",
+  "saved",
+  "deleted",
 ];
 
 export const buttonClass = "rounded-md bg-accent px-4 py-2 text-sm text-accent-fg";

@@ -261,3 +261,14 @@ export async function loadFamilyResourcePerson(
   const { rows } = await tx.execute<{ person_id: string }>(query);
   return rows[0]?.person_id ?? null;
 }
+
+/** The club and groups of an activity or series (app.activity_scope; insider_read outside a club). */
+export async function loadActivityScope(
+  tx: Tx,
+  ids: { activityId?: string; seriesId?: string },
+): Promise<{ clubId: string; groupIds: string[] } | null> {
+  const { rows } = await tx.execute<{ club_id: string; group_ids: string[] }>(sql`
+    SELECT club_id, group_ids FROM app.activity_scope(${ids.activityId ?? null}::uuid, ${ids.seriesId ?? null}::uuid)`);
+  const row = rows[0];
+  return row ? { clubId: row.club_id, groupIds: row.group_ids } : null;
+}

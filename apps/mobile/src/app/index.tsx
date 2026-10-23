@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Start: the cached home when logged in, else the login screen.
+// Start: My schedule (from the cache) when logged in, else the login screen.
 
 import { Redirect } from "expo-router";
 import { useTranslations } from "use-intl";
@@ -11,5 +11,5 @@ export default function Index() {
   const { status } = useSession();
   const t = useTranslations("common");
   if (status === "starting") return <Loading label={t("loading")} />;
-  return <Redirect href={status === "signedIn" ? "/home" : "/login"} />;
+  return <Redirect href={status === "signedIn" ? "/schedule" : "/login"} />;
 }

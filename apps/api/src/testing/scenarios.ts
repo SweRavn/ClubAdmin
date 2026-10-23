@@ -7,7 +7,8 @@
 // Club A: section S > team T. manager (club manager), registrar, owner (of S,
 // so of T too), coach (head coach of T), member (adult in T), child (in T,
 // no login) with parent (full guardian) and relative (view_schedule only),
-// protectedMember (adult in T, global protected flag). Club B: outsider
+// protectedMember (adult in T, global protected flag); activities of T
+// (a location, a match, a meeting, a weekly series). Club B: outsider
 // (its manager). operator: platform operator without support access.
 
 import { sql } from "@clubadmin/db";
@@ -37,6 +38,12 @@ export interface MatrixScenario {
   sibling: Person;
   /** The relative's guardianship of the child (view_schedule only). */
   relativeGuardianshipId: string;
+  /** Activities of team T (P1.4): a location, a match, one to delete, a weekly series and a later session of it. */
+  locationId: string;
+  activityId: string;
+  disposableActivityId: string;
+  seriesId: string;
+  laterSessionId: string;
   outsider: BuiltPerson;
   operator: BuiltPerson;
 }
@@ -106,6 +113,37 @@ export async function buildMatrixScenario(
   });
   await s.memberships.addMember(a, sibling.id);
 
+  // Activities of team T from next week on (dates relative to today, so the series is never in the past).
+  const day = (offset: number) =>
+    new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+  const location = await s.activities.createLocation(a, { name: "Matrixhallen" });
+  const match = await s.activities.createActivity(a, team.id, {
+    kind: "match",
+    title: "Matrix match",
+    startsAt: `${day(10)}T10:00:00Z`,
+    endsAt: `${day(10)}T11:30:00Z`,
+    locationId: location.id,
+  });
+  const disposable = await s.activities.createActivity(a, team.id, {
+    kind: "meeting",
+    title: "Matrix meeting",
+    startsAt: `${day(12)}T17:00:00Z`,
+    endsAt: `${day(12)}T18:00:00Z`,
+  });
+  const { series } = await s.activities.createSeries(a, team.id, {
+    title: "Matrix training",
+    slots: [{ weekday: 3, startTime: "18:00", durationMinutes: 90 }],
+    startsOn: day(7),
+    endsOn: day(60),
+    locationId: location.id,
+  });
+  const sessions = await s.activities.groupCalendar(a, team.id, {
+    from: `${day(30)}T00:00:00Z`,
+    to: `${day(61)}T00:00:00Z`,
+    limit: 50,
+  });
+  const laterSession = sessions.items.find((v) => v.activity.seriesId === series.series.id)!;
+
   const operator = await buildPerson(s);
   await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
 
@@ -126,6 +164,11 @@ export async function buildMatrixScenario(
     child,
     sibling,
     relativeGuardianshipId: relativeGuardianship.id,
+    locationId: location.id,
+    activityId: match.activity.id,
+    disposableActivityId: disposable.activity.id,
+    seriesId: series.series.id,
+    laterSessionId: laterSession.activity.id,
     outsider: clubB.manager,
     operator,
   };

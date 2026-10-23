@@ -57,5 +57,5 @@ name: Log in with Zitadel
       - tapOn: "(?i).*(använd inte 2-faktor|hoppa över|skip).*"
 - extendedWaitUntil:
     visible:
-      id: "home-screen"
+      id: "schedule-screen"
     timeout: 60000

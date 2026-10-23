@@ -67,7 +67,38 @@ export async function summariseSeed(t: TestDatabase, data: DemoData): Promise<Se
       "SELECT person_id, purpose, given_by_person_id FROM consents WHERE club_id = $1 AND revoked_at IS NULL ORDER BY person_id, purpose",
       [c.id],
     );
+    // Activities (P1.4): no dates or session counts (they depend on the day of seeding).
+    const locations = await q<{ name: string }>(
+      "SELECT name FROM locations WHERE club_id = $1 ORDER BY name",
+      [c.id],
+    );
+    const series = await q<{ title: string; group_ids: string[] }>(
+      `SELECT s.title, array_agg(sg.group_id ORDER BY sg.group_id) AS group_ids
+       FROM activity_series s JOIN activity_series_groups sg ON sg.series_id = s.id
+       WHERE s.club_id = $1 GROUP BY s.id, s.title ORDER BY s.title`,
+      [c.id],
+    );
+    const single = await q<{ kind: string; title: string; group_ids: string[] }>(
+      `SELECT a.kind, a.title, array_agg(ag.group_id ORDER BY ag.group_id) AS group_ids
+       FROM activities a JOIN activity_groups ag ON ag.activity_id = a.id
+       WHERE a.club_id = $1 AND a.series_id IS NULL GROUP BY a.id ORDER BY a.title`,
+      [c.id],
+    );
+    const sessions = await q<{ cancelled: string[]; detached: string[] }>(
+      `SELECT coalesce(array_agg(cancelled_reason) FILTER (WHERE status = 'cancelled'), '{}') AS cancelled,
+         coalesce(array_agg(notes) FILTER (WHERE detached), '{}') AS detached
+       FROM activities WHERE club_id = $1 AND series_id IS NOT NULL`,
+      [c.id],
+    );
+    const groupKeys = (ids: string[]) => ids.map((g) => key(g)).join(" + ");
     clubs[key(c.id)!] = {
+      activities: {
+        locations: locations.map((l) => l.name),
+        series: series.map((x) => `${x.title}: ${groupKeys(x.group_ids)}`),
+        single: single.map((x) => `${x.kind} ${x.title}: ${groupKeys(x.group_ids)}`),
+        cancelledSessions: sessions[0]?.cancelled ?? [],
+        detachedSessions: sessions[0]?.detached ?? [],
+      },
       joinRequests: joinRequests.map(
         (j) => `${key(j.person_id)} by ${key(j.requested_by_person_id)}: ${j.status}`,
       ),

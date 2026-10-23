@@ -32,6 +32,12 @@ export async function AppFrame({ children }: { children: ReactNode }) {
 
   const nav: { key: string; href: string; label: string; current: boolean }[] = [
     { key: "home", href: "/", label: t("nav.home"), current: pathname === "/" },
+    {
+      key: "schedule",
+      href: "/schedule",
+      label: t("nav.schedule"),
+      current: pathname.startsWith("/schedule") || pathname.startsWith("/activit"),
+    },
   ];
   if (club) {
     nav.push({
@@ -54,6 +60,22 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         href: `/clubs/${club.id}/invitations`,
         label: t("nav.invitations"),
         current: pathname.startsWith(`/clubs/${club.id}/invitations`),
+      });
+    }
+    if (club.mine?.permissions.includes("club.activities.read")) {
+      nav.push({
+        key: "calendar",
+        href: `/clubs/${club.id}/calendar`,
+        label: t("nav.calendar"),
+        current: pathname.startsWith(`/clubs/${club.id}/calendar`),
+      });
+    }
+    if (club.mine?.permissions.includes("club.locations.manage")) {
+      nav.push({
+        key: "locations",
+        href: `/clubs/${club.id}/locations`,
+        label: t("nav.locations"),
+        current: pathname.startsWith(`/clubs/${club.id}/locations`),
       });
     }
     if (club.mine?.permissions.includes("club.members.read")) {

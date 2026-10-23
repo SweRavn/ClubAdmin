@@ -33,6 +33,22 @@ describe("tenant isolation of club-owned tables", () => {
     });
     await c.s.groups.setGroupSeason(a.ctx, group.id, season.id, { capacity: 10 });
     const family = await buildFamily(c.s);
+    // Activities (P1.4): a location, a match there, and a series (sessions, groups, calendar entries).
+    const hall = await c.s.activities.createLocation(a.ctx, { name: "Sporthallen" });
+    await c.s.activities.createActivity(a.ctx, group.id, {
+      kind: "match",
+      title: "Match",
+      startsAt: "2026-11-07T10:00:00Z",
+      endsAt: "2026-11-07T11:30:00Z",
+      locationId: hall.id,
+    });
+    await c.s.activities.createSeries(a.ctx, group.id, {
+      title: "Träning",
+      slots: [{ weekday: 2, startTime: "18:00", durationMinutes: 90 }],
+      startsOn: "2026-11-01",
+      endsOn: "2026-11-30",
+      locationId: hall.id,
+    });
     await c.t.db.withTenant(a.ctx, async (tx) => {
       await tx.execute(sql`
         INSERT INTO employments (club_id, person_id, title, employment_type, starts_on)

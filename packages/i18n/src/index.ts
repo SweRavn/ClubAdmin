@@ -114,7 +114,9 @@ export type EnumNamespace =
   | "memberImport.guardianFields"
   | "memberImport.rowStatus"
   | "memberImport.issues"
-  | "memberImport.resolution";
+  | "memberImport.resolution"
+  | "activityKinds"
+  | "homeAway";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

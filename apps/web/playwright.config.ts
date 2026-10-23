@@ -45,5 +45,10 @@ export default defineConfig({
           testMatch: /member-imports\.spec\.ts/,
           dependencies: ["families"],
         },
+        {
+          name: "activities",
+          testMatch: /activities\.spec\.ts/,
+          dependencies: ["member-imports"],
+        },
       ],
 });

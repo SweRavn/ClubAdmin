@@ -39,3 +39,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0031](0031-entitlements-and-billing-skeleton.md) | Entitlements service, club access state and the billing skeleton | Accepted |
 | [0032](0032-joining-and-transactional-email.md) | Joining: join requests, invitation secrets, cross-club lookups and transactional email | Accepted |
 | [0033](0033-member-imports.md) | Member imports: jobs in the API process, CSV only, staging rows | Accepted |
+| [0034](0034-activities-and-schedule.md) | Activities: materialised series and a per-group schedule read model | Accepted |

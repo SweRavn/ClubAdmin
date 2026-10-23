@@ -50,6 +50,11 @@ erDiagram
   PERSON ||--o{ EMPLOYMENT : "employed as"
   PERSON ||--o{ CONSENT : gives
   PERSON ||--o{ CALENDAR_FEED : owns
+  CLUB ||--o{ LOCATION : has
+  CLUB ||--o{ ACTIVITY_SERIES : plans
+  ACTIVITY_SERIES ||--o{ ACTIVITY : "has sessions"
+  ACTIVITY }o--o{ GROUP : "for (activity_groups)"
+  LOCATION |o--o{ ACTIVITY : "takes place at"
   CLUB ||--o| SUBSCRIPTION : "billed by (optional)"
 ```
 
@@ -461,6 +466,42 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
 (`purpose`, `text_version`, `given_by_person_id`, `given_at`, `revoked_at`,
 `revoked_by_person_id`; one open consent per purpose).
 
+### Activities and "My schedule" (P1.4, ADR 0034)
+- `locations` (club-owned): name (unique among the club's unarchived
+  locations, case-insensitive), address, optional coordinates (both or
+  neither; the map link is OpenStreetMap), directions. Archived, never
+  deleted; archived locations are not offered for new activities.
+- `activity_series`: a weekly series of a club's groups
+  (`activity_series_groups`): kind, title, notes, leader notes, location or
+  free-text place, slots (ISO weekday, local start time, length; one per
+  weekday), first and last date (at most 400 days), skipped dates and
+  whether the country pack's public holidays are skipped. Every session is
+  created with the series.
+- `activities`: a single activity or a session of a series (`series_id`,
+  `occurrence_on` = its local date, unique per series). Kind (`training`,
+  `match`, `meeting`, `other`), title, start and end (UTC; `all_day`),
+  meeting time and place, location or free-text place, `status`
+  (`scheduled`, `cancelled` with a reason shown to everyone), notes (the
+  groups), leader notes (only those who manage it), match fields
+  (`opponent`, `home_away`, `competition`), `detached` (edited apart from its
+  series: series changes leave it alone), `sequence` and `changed_at`
+  (every change a calendar must show). Its groups are `activity_groups`
+  (one or more, same club; a joint training names each group, there is no
+  inheritance down the group tree).
+- `schedule_entries`: the read model of calendars and "My schedule", one
+  row per activity and group with what they show (no people), written in
+  the same transaction as the activity. "My schedule" is the entries of the
+  reader's open group memberships and those of their wards with
+  `view_schedule` (only the ward when acting on behalf), across clubs:
+  joining or leaving a group, or a revoked right, takes effect at once. No
+  record history (derived data).
+- Changing a series applies from a date (never in the past); "this and
+  following" ends the series the day before a session and starts a new one
+  with the changes. Deleting a session skips its date in the series. Past
+  sessions are never rewritten (attendance, P1.5).
+- Calendars never list participants (ADR 0021): the activity page shows the
+  leaders of its groups through the person presenter.
+
 ### `calendar_feeds` (ADR 0021)
 Personal, secret, revocable iCalendar subscription URLs: `person_id`, `scope`
 (`my_schedule` incl. children, `group`, `club_public`), `scope_id`,
@@ -536,6 +577,12 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `person.merge` | person (`:personId`, the kept person of `:mergeId`; `?clubId`) | a full guardian (the service requires one of both people); a club manager with MFA for two members of the club |
 | `person.own_login.invite` | person (`?clubId`) | full guardians; club managers and registrars of a club the person is a member of |
 | `club.guardians.manage` | club | club managers, registrars; ending a full guardian's guardianship only a club manager with MFA and a reason |
+| `group.activities.read` | group | the group calendar (P1.4): club managers and registrars, owners, everyone in the group (any function), guardians of its members with `view_schedule` |
+| `group.activities.manage` | group (not archived) | adding activities and series: club managers, owners, head and assistant coaches, team managers |
+| `activity.read` | activity (`:activityId`, `:seriesId`) | readers of any of its groups (as `group.activities.read`); others in the club 403, outside it 404 |
+| `activity.manage` | activity | those who manage every one of its groups (as `group.activities.manage`) |
+| `club.activities.read` | club | the club calendar and double bookings: club managers, registrars, the board roles |
+| `club.locations.manage` | club | club managers |
 | `ops.backup.read` | platform (the installation, no IDs) | platform operators (in a self-hosted installation its administrators), with MFA: `GET /api/v1/ops/backup-status` |
 | `club.access_state.update` | club | platform operators, with MFA (read-only and suspended clubs, also with billing off) |
 | `billing.plans.read` | platform | platform operators, with MFA (billing on only) |
@@ -551,7 +598,7 @@ includes owners of parent groups; "leader" is any function except `member`.
 
 Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
 `/me/preferences`, `/me/profile`, `/me/join-requests`,
-`/me/club-creation-requests`, `/me/manager-handovers`, and for families
+`/me/club-creation-requests`, `/me/manager-handovers`, `/me/schedule`, and for families
 `POST /me/wards`, `/me/trusted-people`, `/me/duplicates`,
 `/me/adult-guardians`, accepting a guardian invitation and ending a
 guardianship, where the service checks who may) need only a login; looking

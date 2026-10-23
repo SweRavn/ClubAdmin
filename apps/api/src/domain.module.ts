@@ -3,6 +3,7 @@
 import { Module } from "@nestjs/common";
 
 import { AccountsModule } from "./modules/accounts/index.ts";
+import { ActivitiesModule } from "./modules/activities/index.ts";
 import { BackupsModule } from "./modules/backups/index.ts";
 import { ClubProfilesModule } from "./modules/club-profiles/index.ts";
 // Not in the clubs module's index: it depends on the roles module, which depends on clubs.
@@ -35,6 +36,7 @@ const MODULES = [
   FamiliesModule,
   JoiningModule,
   MembersModule,
+  ActivitiesModule,
   PersonProfilesModule,
   BackupsModule,
 ];

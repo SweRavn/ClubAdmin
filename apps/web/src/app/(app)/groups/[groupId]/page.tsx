@@ -7,15 +7,25 @@ import { GROUP_FUNCTIONS, type GroupFunction } from "@clubadmin/shared";
 import { EmptyState, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
+import { secondaryButtonClass } from "../../../../components/action-form.tsx";
+import { Agenda, agendaItemOf, weekOffset, weekRange } from "../../../../components/agenda.tsx";
+import { Notice } from "../../../../components/form-error.tsx";
 import { LazyGroupRoster } from "../../../../components/lazy-group-roster.tsx";
 import { RosterEntry } from "../../../../components/roster-entry.tsx";
-import { getClub, getClubGroups, getGroup, getGroupMembers } from "../../../../server/data.ts";
+import {
+  getClub,
+  getClubGroups,
+  getGroup,
+  getGroupCalendarIfAllowed,
+  getGroupMembers,
+} from "../../../../server/data.ts";
 
 type Params = {
   params: Promise<{ groupId: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 const PAGE_SIZE = 100;
+const CALENDAR_WEEKS = 4;
 
 /** Roster page size: `?limit=` between 10 and 200, else 100. */
 function pageSize(value: string | string[] | undefined): number {
@@ -29,11 +39,15 @@ export async function generateMetadata({ params }: Params) {
 
 export default async function GroupPage({ params, searchParams }: Params) {
   const { groupId } = await params;
-  const limit = pageSize((await searchParams)?.limit);
-  const [t, group, roster] = await Promise.all([
+  const query = (await searchParams) ?? {};
+  const limit = pageSize(query.limit);
+  const week = weekOffset(query.week);
+  const range = weekRange(week, CALENDAR_WEEKS);
+  const [t, group, roster, calendar] = await Promise.all([
     getTranslations(),
     getGroup(groupId),
     getGroupMembers(groupId, limit),
+    getGroupCalendarIfAllowed(groupId, range.from, range.to),
   ]);
   const [club, groups] = await Promise.all([getClub(group.clubId), getClubGroups(group.clubId)]);
   const parent = groups.find((g) => g.id === group.parentGroupId) ?? null;
@@ -100,6 +114,48 @@ export default async function GroupPage({ params, searchParams }: Params) {
           ) : null}
         </dl>
       </div>
+
+      {query.deleted ? <Notice>{t("activities.deleted")}</Notice> : null}
+      {calendar ? (
+        <section aria-labelledby="group-calendar" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="group-calendar" className="text-lg font-semibold">
+              {t("activities.calendar")}
+            </h2>
+            {calendar.canManage ? (
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`/groups/${group.id}/activities/new`}
+                  className={secondaryButtonClass}
+                  data-testid="new-activity"
+                >
+                  {t("activities.newTitle")}
+                </a>
+                <a
+                  href={`/groups/${group.id}/series/new`}
+                  className={secondaryButtonClass}
+                  data-testid="new-series"
+                >
+                  {t("series.newTitle")}
+                </a>
+              </div>
+            ) : null}
+          </div>
+          <Agenda
+            items={calendar.items.map(agendaItemOf)}
+            emptyText={t("activities.noneInRange")}
+            testId="group-calendar"
+          />
+          <nav className="flex justify-between text-sm" aria-label={t("schedule.weeks")}>
+            <a href={`/groups/${group.id}?week=${week - CALENDAR_WEEKS}`} className="underline">
+              {t("schedule.earlier")}
+            </a>
+            <a href={`/groups/${group.id}?week=${week + CALENDAR_WEEKS}`} className="underline">
+              {t("schedule.later")}
+            </a>
+          </nav>
+        </section>
+      ) : null}
 
       <section aria-labelledby="group-owners">
         <h2 id="group-owners" className="mb-2 text-lg font-semibold">

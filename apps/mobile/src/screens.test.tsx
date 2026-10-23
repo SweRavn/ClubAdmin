@@ -18,6 +18,7 @@ import type {
   MyGroups,
   MyWards,
   RosterEntry,
+  SchedulePage,
 } from "./api/queries.ts";
 import { ClubProvider } from "./state/club.tsx";
 
@@ -159,6 +160,47 @@ function seededClient() {
     pages: [{ items: roster, nextCursor: null, totalCount: 3 }],
     pageParams: [null],
   });
+  const inDays = (days: number, hour: number) =>
+    new Date(Date.UTC(2099, 0, 1 + days, hour)).toISOString();
+  const entry = (id: string, title: string, days: number, people: string[], extra = {}) => ({
+    activityId: id,
+    club: { id: SVK, name: "Strandvikens Volleybollklubb", timeZone: "Europe/Stockholm" },
+    kind: "training",
+    title,
+    status: "scheduled",
+    cancelledReason: null,
+    startsAt: inDays(days, 16),
+    endsAt: inDays(days, 17),
+    allDay: false,
+    meetAt: null,
+    place: "Strandvikens sporthall",
+    groups: [{ id: F2017, name: "F2017" }],
+    people: people.map((p) =>
+      p === ELSA ? summary(ELSA, "Elsa Lindqvist") : summary(ANNA, "Anna Lindqvist"),
+    ),
+    changed: false,
+    changedAt: inDays(0, 0),
+    ...extra,
+  });
+  const schedule = {
+    items: [
+      entry("a1", "Träning", 0, [ELSA]),
+      entry("a2", "Styrelsemöte", 1, [ANNA], { kind: "board_retreat" }),
+      entry("0199a000-0000-7000-8099-000000000003", "Match", 2, [ELSA], {
+        status: "cancelled",
+        cancelledReason: "Hallen är upptagen av kommunen",
+      }),
+      // Already over: left out.
+      {
+        ...entry("a0", "Gammal", 0, [ELSA]),
+        startsAt: "2000-01-01T10:00:00Z",
+        endsAt: "2000-01-01T11:00:00Z",
+      },
+    ],
+    nextCursor: null,
+    people: [summary(ANNA, "Anna Lindqvist"), summary(ELSA, "Elsa Lindqvist")],
+  } as unknown as SchedulePage;
+  client.setQueryData(["schedule", ANNA, "self"], schedule);
   const info: ClientInfo = {
     apiVersion: 1,
     serverVersion: "1.0.0",
@@ -217,6 +259,31 @@ describe("screens", () => {
     expect(screen.getByText("3 members")).toBeTruthy();
     // Unknown kind and function from a newer server.
     expect(screen.getAllByText("Other").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("My schedule groups the coming activities by day, with whose they are and cancellations", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const Schedule = (require("./app/(app)/schedule.tsx") as { default: () => ReactNode }).default;
+    renderScreen(<Schedule />);
+    expect(screen.getByTestId("schedule-item-a1")).toBeTruthy();
+    expect(screen.getByTestId("schedule-item-0199a000-0000-7000-8099-000000000003")).toBeTruthy();
+    expect(screen.queryByTestId("schedule-item-a0")).toBeNull();
+    expect(screen.getByText("Hallen är upptagen av kommunen")).toBeTruthy();
+    expect(screen.getByTestId(`schedule-person-${ELSA}`)).toBeTruthy();
+    // An activity kind this app version does not know.
+    expect(screen.getAllByText("Other").length).toBeGreaterThan(0);
+  });
+
+  it("an activity shows the schedule's cached entry before its details arrive", () => {
+    mockParams = { activityId: "0199a000-0000-7000-8099-000000000003" };
+    type Module = { default: () => ReactNode };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const Activity = (require("./app/(app)/activities/[activityId].tsx") as Module).default;
+    renderScreen(<Activity />);
+    expect(screen.getByTestId("activity-screen")).toBeTruthy();
+    expect(screen.getAllByText("Match").length).toBeGreaterThan(0);
+    expect(screen.getByText("Cancelled: Hallen är upptagen av kommunen")).toBeTruthy();
+    expect(screen.getByText("Strandvikens sporthall")).toBeTruthy();
   });
 
   it("an invalid ID in a deep link shows not found", () => {

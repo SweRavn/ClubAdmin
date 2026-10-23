@@ -4,6 +4,7 @@
 // tenant/history/updated_at helpers to the generated migration (see
 // docs/architecture.md, "Database").
 
+export * from "./activities.ts";
 export * from "./clubs.ts";
 export * from "./groups.ts";
 export * from "./joining.ts";

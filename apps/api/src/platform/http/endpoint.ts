@@ -16,7 +16,7 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
  * Which resource the authorization module loads for the policy (from
  * :clubId, :groupId, :personId, :handoverId; "platform": the installation).
  */
-export type EndpointResource = "platform" | "club" | "group" | "person" | "handover";
+export type EndpointResource = "platform" | "club" | "group" | "person" | "handover" | "activity";
 
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any

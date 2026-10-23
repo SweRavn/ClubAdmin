@@ -1,0 +1,30 @@
+# My schedule (P1.4), the start screen: Erik coaches in SVK and IKN and is
+# Maja's father; one schedule across both clubs, narrowed to Maja, and an
+# activity's details (place, leaders; never participants).
+appId: ${APP_ID}
+name: My schedule
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000005
+- back
+- extendedWaitUntil:
+    visible:
+      id: "schedule-screen"
+    timeout: 20000
+- assertVisible: ".*Träning.*"
+- tapOn:
+    id: "schedule-person-0199a000-0000-7000-8000-000000000006"
+- scrollUntilVisible:
+    element: ".*Innebandyträning.*"
+    direction: DOWN
+    timeout: 20000
+- tapOn: ".*Innebandyträning.*"
+- extendedWaitUntil:
+    visible:
+      id: "activity-screen"
+    timeout: 20000
+- assertVisible:
+    id: "activity-place"
+- assertVisible: "Norrbackahallen"

@@ -47,6 +47,17 @@ export const DOMAIN_EVENTS = {
   /** Member register (P1.2): every club manager hears about an export. */
   "members.exported": z.object({ exportId: id, clubId: id }),
   "members.import.finished": z.object({ importId: id, clubId: id }),
+  /** Activities (P1.4): P1.7 notifies, P1.11 refreshes feeds. */
+  "activity.changed": z.object({
+    clubId: id,
+    activityId: id,
+    change: z.enum(["created", "updated", "cancelled", "restored", "deleted"]),
+  }),
+  "activity_series.changed": z.object({
+    clubId: id,
+    seriesId: id,
+    change: z.enum(["created", "updated", "split"]),
+  }),
 } as const;
 
 export type DomainEventType = keyof typeof DOMAIN_EVENTS;

@@ -355,7 +355,15 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   children's groups; onboarding placeholder without a club), `/clubs/[id]`,
   `/clubs/[id]/groups` (tree), `/clubs/[id]/members` (placeholder until
   P1.2), `/groups/[id]`, `/people/[id]?clubId=`, `/me`, `/me/sessions`,
-  `/me/preferences`.
+  `/me/preferences`. Activities (P1.4): `/schedule` ("My schedule", four
+  weeks at a time, chips per person; the home page shows what is coming),
+  the calendar on `/groups/[id]` with "New activity" and "New series" for
+  those who manage it (`/groups/[id]/activities/new`,
+  `/groups/[id]/series/new` with a preview), `/activities/[id]` (details,
+  leaders; edit, cancel, restore, delete), `/activity-series/[id]` (rules,
+  change from a date, "this and following"), `/clubs/[id]/calendar` and
+  `/clubs/[id]/locations` (with double bookings). Times are entered in the
+  club's time zone and converted with `zonedTime` (`packages/shared`).
 - **Security:** CSP with a fresh nonce per request (`src/proxy.ts`),
   Trusted Types in production, no inline scripts, `frame-ancestors 'none'`,
   further headers in `next.config.ts` (ADR 0027). Production builds use
@@ -379,9 +387,13 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   `X-Client-Platform/Version/Device` (session list). A 401 triggers one
   refresh and one retry; a second 401 ends the login. 429 answers are
   retried after `Retry-After`.
-- **Screens:** login (Zitadel, persona picker in development builds), home
-  (my clubs with the club switcher, my groups, my children's groups,
-  "viewing as"), club overview, groups tree, group (owners, leaders,
+- **Screens:** login (Zitadel, persona picker in development builds), "My
+  schedule" (the start screen since P1.4: the coming four weeks of my and my
+  wards' activities across clubs by day, chips per person, cancelled ones
+  marked; offline from the persisted cache), activity (when, where with a
+  map link, notes, leaders; the cached schedule entry before the details
+  arrive), clubs and groups (my clubs with the club switcher, my groups, my
+  children's groups, "viewing as"), club overview, groups tree, group (owners, leaders,
   members, keyset-paginated), profile, settings (language, time zone, theme,
   biometric unlock, sessions, about, logout), about (version, "Source code",
   licences). Deep links (`clubadmin://groups/<id>` and so on) accept UUIDs
@@ -530,7 +542,10 @@ Implemented so far (P0.5): `CountryPack` with `ageRules` (`consentAge`,
 `ownAccountMinAge`, `adultAge`), `personalIdFormat` (SE personnummer and
 samordningsnummer, NO fødselsnummer, D-nummer and synthetic test numbers)
 and `localeDefaults`, for `SE` and `NO`. New clubs take locale, time zone and
-currency from their pack.
+currency from their pack. P1.4 added `publicHolidays(year)` (SE: the
+statutory holidays plus Midsummer Eve, Christmas Eve and New Year's Eve, the
+days clubs do not train; NO: the statutory holidays), which activity series
+can skip.
 
 ## Locale
 

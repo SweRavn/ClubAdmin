@@ -41,7 +41,7 @@ flows() {
 }
 
 flows personas maestro/01-login-and-switch-club.yaml maestro/02-protected-identity.yaml \
-  maestro/03-language.yaml maestro/04-viewing-as.yaml
+  maestro/03-language.yaml maestro/07-my-schedule.yaml maestro/04-viewing-as.yaml
 
 # The app is logged in (Anna) with a filled cache: measure cold starts.
 scripts/measure-cold-start.sh "$app_id" 5 2000 | tee "$out/cold-start.txt"

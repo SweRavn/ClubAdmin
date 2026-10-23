@@ -5,11 +5,13 @@
 // (app/actions/[action]/route.ts) checks the session and the CSRF token.
 
 import {
+  ACTIVITY_KINDS,
   addChildInput,
   addMemberFormInput,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
   type GuardianshipRight,
+  HOME_AWAY,
   isLinkedGuardianshipKind,
   isUuid,
   linkedPersonInput,
@@ -17,6 +19,7 @@ import {
   type MemberExportColumn,
   MEMBERSHIP_TYPES,
   RegisterFilterSchema,
+  zonedTime,
 } from "@clubadmin/shared";
 
 import { safeReturnTo } from "./return-to.ts";
@@ -270,8 +273,261 @@ const FAMILY_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+// Activities (P1.4). Times are entered in the club's time zone (hidden field
+// timeZone) and sent as UTC instants.
+const oneOf = <T extends string>(values: readonly T[], value: string): T | null =>
+  (values as readonly string[]).includes(value) ? (value as T) : null;
+const isDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+const isTime = (value: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+/** The instant of the form's local date and time, null if missing or not a real local time. */
+function instant(form: FormData, date: string, time: string): string | null {
+  const day = text(form, date);
+  const clock = text(form, time);
+  const zone = text(form, "timeZone");
+  if (!isDate(day) || !isTime(clock) || !zone) return null;
+  return zonedTime(day, clock, zone)?.toISOString() ?? null;
+}
+/** Text fields that are cleared when empty (PATCH) or left out (POST). */
+function clearable(
+  form: FormData,
+  names: readonly string[],
+  clear: boolean,
+): Record<string, string | null> {
+  const out: Record<string, string | null> = {};
+  for (const name of names) {
+    const value = text(form, name);
+    if (value) out[name] = value;
+    else if (clear) out[name] = null;
+  }
+  return out;
+}
+/** A club location, or a free-text place, or neither. */
+const placeOf = (form: FormData, clear: boolean) => {
+  const locationId = id(form, "locationId");
+  const locationText = text(form, "locationText");
+  if (locationId) return { locationId, ...(clear ? { locationText: null } : {}) };
+  if (locationText) return { locationText, ...(clear ? { locationId: null } : {}) };
+  return clear ? { locationId: null, locationText: null } : {};
+};
+/** Weekly slots from the rows weekday.N, startTime.N, duration.N (empty rows are skipped). */
+function slotsOf(form: FormData) {
+  const slots: { weekday: number; startTime: string; durationMinutes: number }[] = [];
+  for (let n = 0; n < 7; n++) {
+    const weekday = Number(text(form, `weekday.${n}`));
+    const startTime = text(form, `startTime.${n}`);
+    const duration = Number(text(form, `duration.${n}`));
+    if (!weekday || !startTime) continue;
+    if (!isTime(startTime) || !Number.isInteger(duration)) return null;
+    slots.push({ weekday, startTime, durationMinutes: duration });
+  }
+  return slots;
+}
+const datesOf = (value: string) => value.split(/[\s,;]+/).filter(isDate);
+/** The series fields of the create, change and split forms. */
+function seriesFields(form: FormData, clear: boolean) {
+  const slots = slotsOf(form);
+  if (slots === null) return null;
+  const title = text(form, "title");
+  return {
+    ...(title ? { title } : {}),
+    ...clearable(form, ["notes", "leaderNotes"], clear),
+    ...placeOf(form, clear),
+    ...(slots.length > 0 ? { slots } : {}),
+    ...(isDate(text(form, "endsOn")) ? { endsOn: text(form, "endsOn") } : {}),
+    skipDates: datesOf(text(form, "skipDates")),
+    skipPublicHolidays: text(form, "skipPublicHolidays") === "on",
+  };
+}
+/** The activity fields of the create and edit forms. */
+function activityFields(form: FormData, clear: boolean) {
+  const startsAt = instant(form, "date", "startTime");
+  const endsAt = instant(form, "date", "endTime");
+  if (!startsAt || !endsAt) return null;
+  const meetAt = text(form, "meetTime") ? instant(form, "date", "meetTime") : null;
+  const homeAway = oneOf(HOME_AWAY, text(form, "homeAway"));
+  return {
+    title: text(form, "title"),
+    startsAt,
+    endsAt,
+    ...(meetAt ? { meetAt } : clear ? { meetAt: null } : {}),
+    ...(homeAway ? { homeAway } : clear ? { homeAway: null } : {}),
+    ...clearable(form, ["notes", "leaderNotes", "meetPlace", "opponent", "competition"], clear),
+    ...placeOf(form, clear),
+  };
+}
+const resultId = (result: unknown): string | null => {
+  const value = (result as { id?: unknown } | null)?.id;
+  return typeof value === "string" && isUuid(value) ? value : null;
+};
+const seriesIdOf = (result: unknown): string | null =>
+  resultId((result as { series?: unknown } | null)?.series ?? null);
+
+const ACTIVITY_ACTIONS: Record<string, FormAction> = {
+  "create-activity": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const kind = oneOf(ACTIVITY_KINDS, text(form, "kind"));
+      const fields = activityFields(form, false);
+      if (!groupId || !kind || !fields) return null;
+      const groupIds = form
+        .getAll("otherGroupId")
+        .filter((g): g is string => typeof g === "string" && isUuid(g) && g !== groupId);
+      return {
+        path: `/api/v1/groups/${groupId}/activities`,
+        method: "POST",
+        body: { kind, ...fields, groupIds },
+      };
+    },
+    done: (form, result) => {
+      const created = resultId(result);
+      return created ? `/activities/${created}?saved=1` : back(form);
+    },
+  },
+  "update-activity": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const kind = oneOf(ACTIVITY_KINDS, text(form, "kind"));
+      const fields = activityFields(form, true);
+      if (!activityId || !kind || !fields) return null;
+      return {
+        path: `/api/v1/activities/${activityId}`,
+        method: "PATCH",
+        body: { kind, ...fields },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "cancel-activity": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      if (!activityId) return null;
+      const reason = optional(text(form, "reason"));
+      return {
+        path: `/api/v1/activities/${activityId}/cancel`,
+        method: "POST",
+        body: reason ? { reason } : {},
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "restore-activity": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      return activityId
+        ? { path: `/api/v1/activities/${activityId}/restore`, method: "POST" }
+        : null;
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "delete-activity": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      return activityId ? { path: `/api/v1/activities/${activityId}`, method: "DELETE" } : null;
+    },
+    done: (form) => {
+      const groupId = id(form, "groupId");
+      return groupId ? `/groups/${groupId}?deleted=1` : "/schedule";
+    },
+  },
+  "create-series": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const kind = oneOf(ACTIVITY_KINDS, text(form, "kind")) ?? "training";
+      const fields = seriesFields(form, false);
+      const startsOn = text(form, "startsOn");
+      if (!groupId || !fields || !isDate(startsOn) || !fields.slots) return null;
+      return {
+        path: `/api/v1/groups/${groupId}/activity-series`,
+        method: "POST",
+        body: { kind, ...fields, startsOn },
+      };
+    },
+    done: (form, result) => {
+      const created = seriesIdOf(result);
+      return created ? `/activity-series/${created}?saved=1` : back(form);
+    },
+  },
+  "update-series": {
+    call: (form) => {
+      const seriesId = id(form, "seriesId");
+      const fields = seriesFields(form, true);
+      if (!seriesId || !fields) return null;
+      const from = text(form, "from");
+      return {
+        path: `/api/v1/activity-series/${seriesId}`,
+        method: "PATCH",
+        body: { ...fields, ...(isDate(from) ? { from } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "split-series": {
+    call: (form) => {
+      const seriesId = id(form, "seriesId");
+      const activityId = id(form, "activityId");
+      const fields = seriesFields(form, true);
+      if (!seriesId || !activityId || !fields) return null;
+      return {
+        path: `/api/v1/activity-series/${seriesId}/split`,
+        method: "POST",
+        body: { ...fields, activityId },
+      };
+    },
+    done: (form, result) => {
+      const created = seriesIdOf(result);
+      return created ? `/activity-series/${created}?saved=1` : back(form);
+    },
+  },
+  "create-location": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const body = locationFields(form, false);
+      return clubId && body
+        ? { path: `/api/v1/clubs/${clubId}/locations`, method: "POST", body }
+        : null;
+    },
+    done: (form) => withParam(back(form), "added", "1"),
+  },
+  "update-location": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const locationId = id(form, "locationId");
+      const archive = text(form, "archive");
+      if (!clubId || !locationId) return null;
+      const path = `/api/v1/clubs/${clubId}/locations/${locationId}`;
+      if (archive === "archive" || archive === "restore") {
+        return { path, method: "PATCH", body: { archived: archive === "archive" } };
+      }
+      const body = locationFields(form, true);
+      return body ? { path, method: "PATCH", body } : null;
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+};
+
+/** A location's fields; coordinates as decimal degrees (both or neither). */
+function locationFields(form: FormData, clear: boolean) {
+  const name = text(form, "name");
+  if (!name) return null;
+  const lat = text(form, "latitude").replace(",", ".");
+  const lon = text(form, "longitude").replace(",", ".");
+  const coordinates =
+    lat && lon
+      ? { latitude: Number(lat), longitude: Number(lon) }
+      : clear
+        ? { latitude: null, longitude: null }
+        : {};
+  if (Number.isNaN(coordinates.latitude) || Number.isNaN(coordinates.longitude)) return null;
+  return {
+    name,
+    ...clearable(form, ["street", "postalCode", "city", "directions"], clear),
+    ...coordinates,
+  };
+}
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
+  ...ACTIVITY_ACTIONS,
   "complete-profile": {
     call: (form) => ({
       path: "/api/v1/me/profile",

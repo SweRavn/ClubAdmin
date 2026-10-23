@@ -226,3 +226,53 @@ export function useSource() {
     staleTime: 24 * 60 * 60 * 1000,
   });
 }
+
+// Activities (P1.4).
+export type ScheduleEntry = Schemas["ScheduleEntry"];
+export type SchedulePage = Schemas["SchedulePage"];
+export type ActivityDetail = Schemas["ActivityDetail"];
+
+/** How far ahead "My schedule" reads (one request; the API pages at 500). */
+export const SCHEDULE_DAYS = 28;
+
+/**
+ * My schedule (and my wards'), across clubs. One key per viewer, not per
+ * day, so the persisted cache still opens the screen offline tomorrow (the
+ * screen leaves out what has ended).
+ */
+export function useSchedule() {
+  const { api, personId } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["schedule", ...scope],
+    queryFn: async () => {
+      const now = Date.now();
+      return data(
+        await api.GET("/api/v1/me/schedule", {
+          params: {
+            query: {
+              from: new Date(now - 2 * 3_600_000).toISOString(),
+              to: new Date(now + SCHEDULE_DAYS * 86_400_000).toISOString(),
+              limit: 500,
+            },
+          },
+        }),
+      );
+    },
+    enabled: personId !== null,
+  });
+}
+
+export function useActivity(activityId: string) {
+  const { api } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["activity", activityId, ...scope],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/activities/{activityId}", {
+          params: { path: { activityId } },
+        }),
+      ),
+  });
+}

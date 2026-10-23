@@ -14,8 +14,9 @@ import type { FastifyRequest } from "fastify";
 
 import type { Principal } from "../../platform/http/principal.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
-import { policyFor } from "./authorization.policy.ts";
+import { canReadGroupActivities, policyFor } from "./authorization.policy.ts";
 import {
+  loadActivityScope,
   loadFamilyResourcePerson,
   loadGroupScope,
   loadGroupsOfPeople,
@@ -25,6 +26,7 @@ import {
 } from "./authorization.repository.ts";
 import type { AuthorizationCache } from "./authorization-cache.ts";
 import type {
+  ActivityResource,
   ClubCreationMode,
   ClubResource,
   GroupResource,
@@ -33,7 +35,7 @@ import type {
   Resource,
   ResourceKind,
 } from "./policy.ts";
-import { Actor, type RelationshipSet } from "./relationship-set.ts";
+import { Actor, type GroupRef, type RelationshipSet } from "./relationship-set.ts";
 import { type RequestAuthorization, tenantContext } from "./request-authorization.ts";
 
 const header = (request: FastifyRequest, name: string): string | undefined => {
@@ -100,6 +102,30 @@ export class AuthorizationService {
     };
   }
 
+  /**
+   * Groups of a club as policy references (with ancestors and whether they
+   * are archived), for decisions about more groups than the route's resource
+   * (a joint activity names several). Groups outside the club, or that the
+   * actor cannot see, are left out.
+   */
+  groupRefs(
+    authorization: RequestAuthorization,
+    clubId: string,
+    groupIds: readonly string[],
+  ): Promise<(GroupRef & { archived: boolean })[]> {
+    return this.db.withActor(authorization.context, async (tx) => {
+      const refs = await Promise.all(
+        [...new Set(groupIds)].map(async (groupId) => {
+          const scope = await loadGroupScope(tx, groupId);
+          return scope?.clubId === clubId
+            ? [{ clubId, groupId, ancestorIds: scope.ancestorIds, archived: scope.archived }]
+            : [];
+        }),
+      );
+      return refs.flat();
+    });
+  }
+
   /** Checks the permission on the request's resource; on success stores the resource. */
   async authorize(
     authorization: RequestAuthorization,
@@ -123,6 +149,11 @@ export class AuthorizationService {
   private denial(actor: Actor, resource: Resource): "not-found" | "forbidden" {
     if (resource.kind === "platform") return "forbidden";
     if (resource.kind === "person" || resource.kind === "handover") return "not-found";
+    if (resource.kind === "activity") {
+      return resource.groups.some((g) => canReadGroupActivities(actor, g))
+        ? "forbidden"
+        : "not-found";
+    }
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
 
@@ -142,7 +173,40 @@ export class AuthorizationService {
         return this.personResource(authorization, request);
       case "handover":
         return this.handoverResource(authorization, request);
+      case "activity":
+        return this.activityResource(authorization, request);
     }
+  }
+
+  /**
+   * An activity or series with its groups and their ancestors. The scope is
+   * read without the club's context (insider_read: people related to the
+   * club; IDs only); groups the actor cannot see keep no ancestors, so only
+   * direct relations count.
+   */
+  private async activityResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+  ): Promise<ActivityResource> {
+    const activityId = param(request, "activityId");
+    const seriesId = param(request, "seriesId");
+    const id = activityId ?? seriesId;
+    if (!id || !isUuid(id)) throw new ProblemError("not-found");
+    return this.db.withActor(authorization.context, async (tx) => {
+      const scope = await loadActivityScope(
+        tx,
+        activityId ? { activityId } : { seriesId: seriesId! },
+      );
+      if (!scope) throw new ProblemError("not-found");
+      const groups = await Promise.all(
+        scope.groupIds.map(async (groupId) => ({
+          clubId: scope.clubId,
+          groupId,
+          ancestorIds: (await loadGroupScope(tx, groupId))?.ancestorIds ?? [],
+        })),
+      );
+      return { kind: "activity" as const, clubId: scope.clubId, groups };
+    });
   }
 
   /** Hand-overs are readable only by their two parties (RLS, own_relationships). */
