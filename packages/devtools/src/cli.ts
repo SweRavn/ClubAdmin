@@ -154,6 +154,22 @@ async function retryTransient<T>(label: string, step: () => Promise<T>): Promise
 }
 
 async function startServices(full: boolean, enableBackup = false): Promise<boolean> {
+  try {
+    return await startServicesOnce(full, enableBackup);
+  } catch (error) {
+    const code = errorCode(error);
+    if (!code || !TRANSIENT.has(code)) throw error;
+    console.error(`
+The services are up, but connections to them from here keep failing (${code}).
+Docker Desktop's port forwarding is probably stale (often after \`wsl --shutdown\`).
+Start the containers over (data is kept):
+  pnpm dev:down && pnpm dev:services
+If that does not help, restart Docker Desktop, then run \`pnpm dev:services\` again.`);
+    return false;
+  }
+}
+
+async function startServicesOnce(full: boolean, enableBackup: boolean): Promise<boolean> {
   const added = ensureEnvLocal();
   if (added.length > 0) console.log(`.env.local: generated ${added.length} setting(s).`);
   if (enableBackup && setEnvValues({ BACKUP_ENABLED: "true" }).length > 0) {

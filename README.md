@@ -62,6 +62,9 @@ Develop inside WSL2 (Ubuntu), not in Windows directly:
 > available" in Explorer, or `Import-Certificate` from `pnpm dev:trust-ca` says
 > "The certificate file could not be found") while WSL works in the terminal:
 > run `wsl --shutdown` in PowerShell, open the Ubuntu terminal again and retry.
+> Afterwards, if `pnpm dev:services` reports containers as exited or keeps
+> failing with `ECONNRESET`, start them over with `pnpm dev:down && pnpm
+> dev:services` (data is kept), or restart Docker Desktop.
 
 ### First run
 
