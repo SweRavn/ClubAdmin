@@ -57,7 +57,7 @@ test the foundation by hand.
 | [P1.9 Audit log and record-history UI](P1.9-audit-and-history-ui.md) (draft) | P1.8 |
 | [P1.10 Groups admin, owners, hierarchy and waiting lists](P1.10-groups-admin-and-waiting-lists.md) (draft) | P1.7 |
 | [P1.11 Calendar subscriptions with answer links](P1.11-calendar-subscriptions.md) (draft) | P1.5 |
-| [P1.12 Protected identity UI: flags, access log](P1.12-protected-identity-ui.md) (draft) | P1.9 |
+| [P1.12 Protected identity UI and profile view log](P1.12-protected-identity-ui.md) (draft) | P1.9 |
 | [P1.13 Billing: plans, subscriptions, invoices](P1.13-billing.md) (draft) | P0.12 |
 
 The P1.7–P1.13 prompts are drafts written before P1.6 was implemented:
