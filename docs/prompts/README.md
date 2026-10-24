@@ -53,3 +53,5 @@ test the foundation by hand.
 | [P1.5 Responses (attending / not attending) and attendance taking](P1.5-responses-and-attendance.md) | P1.4 |
 | [P1.6 Events with sign-up forms, deadlines, capacity and waiting lists](P1.6-events-and-sign-up.md) | P1.5 |
 | [P1.7 Notifications: email, push, in-app; preferences](P1.7-notifications.md) (draft) | P1.6 |
+| [P1.10 Groups admin, owners, hierarchy and waiting lists](P1.10-groups-admin-and-waiting-lists.md) (draft) | P1.7 |
+| [P1.11 Calendar subscriptions with answer links](P1.11-calendar-subscriptions.md) (draft) | P1.5 |
