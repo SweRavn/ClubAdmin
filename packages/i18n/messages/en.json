@@ -615,7 +615,25 @@
     "attendance_locked": "Attendance is locked.",
     "correction_reason_required": "Give a reason for the correction.",
     "not_a_club_member": "Guests must be members of the club.",
-    "recorded_at_out_of_range": "The device's clock is wrong, or the mark is more than a week old."
+    "recorded_at_out_of_range": "The device's clock is wrong, or the mark is more than a week old.",
+    "registration_closed": "Sign-up is closed.",
+    "registration_not_open": "Sign-up has not opened yet.",
+    "event_full": "The event is full.",
+    "already_registered": "Already signed up.",
+    "not_registered": "Not signed up.",
+    "not_in_audience": "The event is not for this person.",
+    "cancellation_closed": "It is too late to cancel. Contact the organisers.",
+    "no_offer": "There is no offered place to answer.",
+    "offer_expired": "The offer has expired.",
+    "event_cancelled": "The event is cancelled.",
+    "event_not_draft": "Only drafts can be deleted.",
+    "event_not_published": "The event is not published.",
+    "answer_required": "Answer the required questions.",
+    "answer_invalid": "Check the answers.",
+    "activity_has_call_up": "The activity already has its own call-up.",
+    "activity_in_other_event": "The activity belongs to another event.",
+    "capacity_below_confirmed": "The number of places cannot be lower than the confirmed participants.",
+    "questions_locked": "Questions that have been answered cannot be removed or changed in type."
   },
   "memberExport": {
     "columns": {

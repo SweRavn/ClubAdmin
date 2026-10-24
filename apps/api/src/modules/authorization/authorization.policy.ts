@@ -14,6 +14,7 @@ import {
 import {
   type ClubResource,
   definePolicy,
+  type EventResource,
   type PersonResource,
   type Policy,
   type ResourceKind,
@@ -121,6 +122,30 @@ export function canReadGroupMembers(actor: Actor, group: GroupRef, archived = fa
     actor.isGuardianOfGroupMember(group.groupId, "act_on_behalf") ||
     actor.hasSupportAccess(group.clubId)
   );
+}
+
+/**
+ * Who organises an event (P1.6): club managers; for a group event those who
+ * manage every audience group; for a club event also the board.
+ */
+export function canManageEvent(actor: Actor, event: EventResource): boolean {
+  if (actor.isClubManager(event.clubId)) return true;
+  if (event.audience === "club") return actor.hasClubRole(event.clubId, ...BOARD_ROLES);
+  return event.groups.length > 0 && event.groups.every((g) => canManageGroupActivities(actor, g));
+}
+
+/**
+ * Who sees an event (P1.6): organisers and registrars always; once it is
+ * published, its audience: for a group event those who see an audience
+ * group's activities, for a club event everyone with a relationship to the
+ * club.
+ */
+export function canReadEvent(actor: Actor, event: EventResource): boolean {
+  if (canManageEvent(actor, event) || isAdmin(actor, event.clubId)) return true;
+  if (event.status === "draft") return false;
+  return event.audience === "club"
+    ? actor.hasClubRelationship(event.clubId)
+    : event.groups.some((g) => canReadGroupActivities(actor, g));
 }
 
 /** Board roles: the limited member register (P1.2). */
@@ -261,6 +286,44 @@ export const POLICIES: readonly Policy[] = [
   ),
   definePolicy("club.locations.manage", "club", ({ actor, resource }) =>
     actor.isClubManager(resource.clubId),
+  ),
+  // Events with sign-up (P1.6).
+  definePolicy("club.events.read", "club", ({ actor, resource }) =>
+    actor.hasClubRelationship(resource.clubId),
+  ),
+  // Group events: the service checks that the caller manages each audience
+  // group; club events: club managers and the board.
+  definePolicy(
+    "club.events.create",
+    "club",
+    ({ actor, resource }) =>
+      actor.isClubManager(resource.clubId) ||
+      actor.hasClubRole(resource.clubId, ...BOARD_ROLES) ||
+      actor.managesAnyGroupActivities(resource.clubId),
+  ),
+  definePolicy("event.read", "event", ({ actor, resource }) => canReadEvent(actor, resource)),
+  definePolicy("event.manage", "event", ({ actor, resource }) => canManageEvent(actor, resource)),
+  // The service checks that personId is the caller or a ward with sign_up in the audience.
+  definePolicy(
+    "event.register",
+    "event",
+    ({ actor, resource }) =>
+      resource.status !== "draft" &&
+      (resource.audience === "club"
+        ? actor.isClubMember(resource.clubId) ||
+          actor.isGuardianOfClubMember(resource.clubId, "sign_up")
+        : resource.groups.some((g) => canRespondInGroup(actor, g))),
+  ),
+  definePolicy(
+    "event.registrations.read",
+    "event",
+    ({ actor, resource }) =>
+      canManageEvent(actor, resource) ||
+      isAdmin(actor, resource.clubId) ||
+      resource.groups.some((g) => canLeadGroupActivities(actor, g)),
+  ),
+  definePolicy("event.registrations.manage", "event", ({ actor, resource }) =>
+    canManageEvent(actor, resource),
   ),
   // Responses and attendance (P1.5). The service checks whose answer it is
   // (the caller or a ward with sign_up, on the roster) and the lock.

@@ -605,6 +605,96 @@ describe("permission matrix", () => {
       url: () => `/api/v1/groups/${m.team.id}/attendance?${RANGE}`,
       expected: { ...TEAM_MANAGERS(200), registrar: 200 },
     },
+    // Events with sign-up (P1.6): the flows are in events.integration.test.ts.
+    "GET /api/v1/clubs/:clubId/events": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/events`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/groups/:groupId/events": {
+      url: () => `/api/v1/groups/${m.team.id}/events`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/events": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/events`,
+      expected: TEAM_MANAGERS(201),
+      body: () => ({
+        title: "Matrix tournament",
+        audience: "groups",
+        groupIds: [m.team.id],
+        startsAt: "2027-05-01T08:00:00Z",
+        endsAt: "2027-05-01T16:00:00Z",
+        registrationClosesAt: "2027-04-25T20:00:00Z",
+      }),
+    },
+    "GET /api/v1/events/:eventId": {
+      url: () => `/api/v1/events/${m.eventId}`,
+      expected: INSIDERS,
+    },
+    "PATCH /api/v1/events/:eventId": {
+      url: () => `/api/v1/events/${m.eventId}`,
+      expected: TEAM_MANAGERS(200),
+      body: { priceText: "100 kr" },
+    },
+    "POST /api/v1/events/:eventId/publish": {
+      url: () => `/api/v1/events/${m.eventId}/publish`,
+      expected: TEAM_MANAGERS(409),
+      body: {},
+    },
+    "POST /api/v1/events/:eventId/cancel": {
+      url: () => `/api/v1/events/${m.cancelEventId}/cancel`,
+      expected: { ...TEAM_MANAGERS(409), manager: 200 },
+      body: { reason: "Too few teams" },
+    },
+    "DELETE /api/v1/events/:eventId": {
+      url: () => `/api/v1/events/${m.draftEventId}`,
+      // The manager deletes the draft; for everyone after that it no longer exists.
+      expected: { ...ALL_NOT_FOUND, manager: 204 },
+    },
+    "PUT /api/v1/events/:eventId/activities": {
+      url: () => `/api/v1/events/${m.eventId}/activities`,
+      expected: TEAM_MANAGERS(200),
+      body: { activityIds: [] },
+    },
+    // Only the parent signs up the child (the member only themselves: 404).
+    "PUT /api/v1/events/:eventId/registrations/:personId": {
+      url: () => `/api/v1/events/${m.eventId}/registrations/${m.child.id}`,
+      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 200 },
+      body: { answers: {} },
+    },
+    "GET /api/v1/events/:eventId/registrations": {
+      url: () => `/api/v1/events/${m.eventId}/registrations`,
+      expected: { ...TEAM_MANAGERS(200), registrar: 200 },
+    },
+    "GET /api/v1/events/:eventId/registrations.csv": {
+      url: () => `/api/v1/events/${m.eventId}/registrations.csv`,
+      expected: { ...TEAM_MANAGERS(200), registrar: 200 },
+    },
+    "DELETE /api/v1/events/:eventId/registrations/:personId": {
+      url: () => `/api/v1/events/${m.eventId}/registrations/${m.child.id}`,
+      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 200 },
+    },
+    // No offer and no open registration any more: 409 for those allowed.
+    "POST /api/v1/events/:eventId/registrations/:personId/accept": {
+      url: () => `/api/v1/events/${m.eventId}/registrations/${m.child.id}/accept`,
+      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 409 },
+      body: {},
+    },
+    "POST /api/v1/events/:eventId/registrations/:personId/decline": {
+      url: () => `/api/v1/events/${m.eventId}/registrations/${m.child.id}/decline`,
+      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 409 },
+      body: {},
+    },
+    "POST /api/v1/events/:eventId/registrations/:personId/confirm": {
+      url: () => `/api/v1/events/${m.eventId}/registrations/${m.child.id}/confirm`,
+      expected: TEAM_MANAGERS(409),
+      body: { reason: "Goalkeeper needed" },
+    },
+    "POST /api/v1/events/:eventId/registrations/:personId/remove": {
+      url: () => `/api/v1/events/${m.eventId}/registrations/${m.child.id}/remove`,
+      expected: TEAM_MANAGERS(409),
+      body: { reason: "Duplicate" },
+    },
+    "GET /api/v1/me/events": { url: () => "/api/v1/me/events", expected: ALL_OK },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -677,6 +767,9 @@ describe("tenant isolation", () => {
       `/api/v1/activities/${m.activityId}/attendance`,
       `/api/v1/activities/${m.activityId}/invitees`,
       `/api/v1/groups/${m.team.id}/attendance?from=2026-01-01T00:00:00Z&to=2026-12-31T00:00:00Z`,
+      `/api/v1/events/${m.eventId}`,
+      `/api/v1/events/${m.eventId}/registrations`,
+      `/api/v1/groups/${m.team.id}/events`,
     ];
     for (const url of urls) {
       const res = await get(m.outsider.id, url, { mfa: true });
@@ -726,6 +819,7 @@ describe("reads", () => {
       "club.members.add",
       "club.members.import",
       "club.activities.read",
+      "club.events.read",
       "club.guardians.manage",
       "club.join_requests.manage",
       "club.invitations.manage",
@@ -735,7 +829,7 @@ describe("reads", () => {
       expect.arrayContaining(["club.settings.update", "club.roles.manage", "club.members.read"]),
     );
     const member = await permissions(m.member.id);
-    expect(member?.permissions).toEqual(["club.read"]);
+    expect(member?.permissions).toEqual(["club.read", "club.events.read"]);
     expect(member?.club).toMatchObject({ defaultLocale: "sv-SE", timeZone: "Europe/Stockholm" });
   });
 

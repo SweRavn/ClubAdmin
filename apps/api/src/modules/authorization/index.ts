@@ -3,7 +3,9 @@
 export { AuthorizationModule } from "./authorization.module.ts";
 export {
   canLeadGroupActivities,
+  canManageEvent,
   canManageGroupActivities,
+  canReadEvent,
   canReadGroupActivities,
   canReadGroupMembers,
   canRespondInGroup,
@@ -19,6 +21,7 @@ export { PersonVisibility, type Visibility } from "./person-visibility.service.t
 export type {
   ActivityResource,
   ClubResource,
+  EventResource,
   GroupResource,
   PersonResource,
   ResourceKind,

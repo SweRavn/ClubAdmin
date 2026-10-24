@@ -110,6 +110,7 @@ export class ScheduleController {
             }),
             changed: changedSince !== null && row.changedAt.getTime() > changedSince,
             changedAt: row.changedAt.toISOString(),
+            eventId: row.eventId,
             responseMode: row.responseMode as ResponseMode,
             respondBy: row.respondBy?.toISOString() ?? null,
             responses: row.personIds.flatMap((id) => {

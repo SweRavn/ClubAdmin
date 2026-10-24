@@ -498,43 +498,111 @@ export class AttendanceService {
       );
       const wanted = new Set(data.personIds);
       if ([...wanted].some((id) => !candidates.has(id))) throw new DomainError("not_on_roster");
-      const current = new Set(await records.invitees(tx, activityId));
-      const added = [...wanted].filter((id) => !current.has(id));
-      const removed = [...current].filter((id) => !wanted.has(id));
-      const modeChanged = activity.inviteesOnly !== data.inviteesOnly;
-      if (!modeChanged && added.length === 0 && removed.length === 0) {
-        return this.inviteesView(tx, activity);
-      }
-      await records.removeInvitees(tx, activityId, removed);
-      await records.addInvitees(tx, {
-        clubId: context.clubId,
-        activityId,
-        personIds: added,
-        invitedBy: actorPersonId(context),
-      });
-      let updated = activity;
-      if (modeChanged) {
-        // Not a calendar change: neither sequence nor changed_at move (ADR 0036).
-        updated = await repo.updateActivity(tx, activityId, { inviteesOnly: data.inviteesOnly });
-        await repo.syncScheduleEntries(tx, { activityIds: [activityId] });
-      }
-      await audit.record(tx, {
-        action: "activity.invitees.changed",
-        resourceType: "activity",
-        resourceId: activityId,
-        changedFields: [
-          ...(modeChanged ? ["invitees_only"] : []),
-          ...(added.length > 0 || removed.length > 0 ? ["invitees"] : []),
-        ],
-      });
-      await outbox.publish(tx, "activity.invitees.changed", {
-        clubId: context.clubId,
-        activityId,
-        added,
-        removed,
-      });
+      const updated = await this.applyCallUp(tx, context, activity, data.inviteesOnly, wanted);
       return this.inviteesView(tx, updated);
     });
+  }
+
+  // --- Events (P1.6, ADR 0038) --------------------------------------------------------
+
+  /** These activities with what linking them to an event needs. */
+  async callUpTargetsInTx(
+    tx: Tx,
+    activityIds: readonly string[],
+  ): Promise<
+    {
+      id: string;
+      status: string;
+      endsAt: Date;
+      inviteesOnly: boolean;
+      invitedCount: number;
+      groupIds: string[];
+    }[]
+  > {
+    const [rows, groups, invited] = await Promise.all([
+      repo.findActivities(tx, activityIds),
+      repo.groupsOfActivities(tx, activityIds),
+      records.inviteeCounts(tx, activityIds),
+    ]);
+    return rows.map((a) => ({
+      id: a.id,
+      status: a.status,
+      endsAt: a.endsAt,
+      inviteesOnly: a.inviteesOnly,
+      invitedCount: invited.get(a.id) ?? 0,
+      groupIds: (groups.get(a.id) ?? []).map((g) => g.id),
+    }));
+  }
+
+  /**
+   * An event's activity: those called up are the event's confirmed
+   * participants (no roster check; they may come from the whole club), or,
+   * with null, the call-up is lifted. Ended or cancelled activities are left
+   * as they are.
+   */
+  async setCallUpInTx(
+    tx: Tx,
+    context: TenantContext,
+    activityId: string,
+    personIds: readonly string[] | null,
+    options: { invitedBy?: string } = {},
+  ): Promise<void> {
+    const activity = await repo.lockActivity(tx, activityId);
+    if (!activity || activity.status === "cancelled") return;
+    if (activity.endsAt.getTime() <= this.now().getTime()) return;
+    await this.applyCallUp(
+      tx,
+      context,
+      activity,
+      personIds !== null,
+      new Set(personIds ?? []),
+      options.invitedBy,
+    );
+  }
+
+  private async applyCallUp(
+    tx: Tx,
+    context: TenantContext,
+    activity: repo.ActivityRow,
+    inviteesOnly: boolean,
+    wanted: ReadonlySet<string>,
+    invitedBy: string = actorPersonId(context),
+  ): Promise<repo.ActivityRow> {
+    const activityId = activity.id;
+    const current = new Set(await records.invitees(tx, activityId));
+    const added = [...wanted].filter((id) => !current.has(id));
+    const removed = [...current].filter((id) => !wanted.has(id));
+    const modeChanged = activity.inviteesOnly !== inviteesOnly;
+    if (!modeChanged && added.length === 0 && removed.length === 0) return activity;
+    await records.removeInvitees(tx, activityId, removed);
+    await records.addInvitees(tx, {
+      clubId: context.clubId,
+      activityId,
+      personIds: added,
+      invitedBy,
+    });
+    let updated = activity;
+    if (modeChanged) {
+      // Not a calendar change: neither sequence nor changed_at move (ADR 0036).
+      updated = await repo.updateActivity(tx, activityId, { inviteesOnly });
+      await repo.syncScheduleEntries(tx, { activityIds: [activityId] });
+    }
+    await audit.record(tx, {
+      action: "activity.invitees.changed",
+      resourceType: "activity",
+      resourceId: activityId,
+      changedFields: [
+        ...(modeChanged ? ["invitees_only"] : []),
+        ...(added.length > 0 || removed.length > 0 ? ["invitees"] : []),
+      ],
+    });
+    await outbox.publish(tx, "activity.invitees.changed", {
+      clubId: context.clubId,
+      activityId,
+      added,
+      removed,
+    });
+    return updated;
   }
 
   private async inviteesView(tx: Tx, activity: repo.ActivityRow): Promise<InviteesView> {

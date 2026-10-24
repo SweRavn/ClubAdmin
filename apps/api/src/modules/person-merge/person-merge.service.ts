@@ -20,6 +20,7 @@ import {
   CLUB_PROFILE_PERSON_REFERENCES,
   type ClubProfilesService,
 } from "../club-profiles/index.ts";
+import { EVENT_PERSON_REFERENCES } from "../events/index.ts";
 import { GROUP_PERSON_REFERENCES } from "../groups/index.ts";
 import { GUARDIANSHIP_PERSON_REFERENCES } from "../guardianships/index.ts";
 import { MEMBERS_PERSON_REFERENCES } from "../members/index.ts";
@@ -39,6 +40,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...JOINING_PERSON_REFERENCES,
   ...MEMBERS_PERSON_REFERENCES,
   ...ACTIVITY_PERSON_REFERENCES,
+  ...EVENT_PERSON_REFERENCES,
 ];
 
 export type PersonMerge = repo.MergeRow;

@@ -251,6 +251,20 @@ export class Actor {
     return this.functions.has(groupId);
   }
 
+  /** Owns a group of the club or plans one's activities (may create group events, P1.6). */
+  managesAnyGroupActivities(clubId: string): boolean {
+    return (
+      this.relationships.ownedGroups.some((o) => o.clubId === clubId) ||
+      this.relationships.groups.some(
+        (g) =>
+          g.clubId === clubId &&
+          (g.function === "head_coach" ||
+            g.function === "assistant_coach" ||
+            g.function === "team_manager"),
+      )
+    );
+  }
+
   /** Coach, team manager or another leader function in the group. */
   leadsGroup(groupId: string): boolean {
     return this.hasGroupFunction(groupId, ...LEADER_FUNCTIONS);

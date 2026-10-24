@@ -7,6 +7,7 @@
 export * from "./activities.ts";
 export * from "./attendance.ts";
 export * from "./clubs.ts";
+export * from "./events.ts";
 export * from "./groups.ts";
 export * from "./joining.ts";
 export * from "./members.ts";

@@ -44,6 +44,10 @@ export interface MatrixScenario {
   disposableActivityId: string;
   seriesId: string;
   laterSessionId: string;
+  /** Events of team T (P1.6): published, another to cancel, and a draft to delete. */
+  eventId: string;
+  cancelEventId: string;
+  draftEventId: string;
   outsider: BuiltPerson;
   operator: BuiltPerson;
 }
@@ -144,6 +148,21 @@ export async function buildMatrixScenario(
   });
   const laterSession = sessions.items.find((v) => v.activity.seriesId === series.series.id)!;
 
+  // Events of team T (P1.6): sign-up open until the day before.
+  const event = (title: string, publish: boolean) =>
+    s.events.createEvent(a, {
+      title,
+      audience: "groups",
+      groupIds: [team.id],
+      startsAt: `${day(20)}T09:00:00Z`,
+      endsAt: `${day(20)}T16:00:00Z`,
+      registrationClosesAt: `${day(19)}T20:00:00Z`,
+      publish,
+    });
+  const matrixEvent = await event("Matrix cup", true);
+  const cancelEvent = await event("Matrix camp", true);
+  const draftEvent = await event("Matrix party", false);
+
   const operator = await buildPerson(s);
   await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
 
@@ -169,6 +188,9 @@ export async function buildMatrixScenario(
     disposableActivityId: disposable.activity.id,
     seriesId: series.series.id,
     laterSessionId: laterSession.activity.id,
+    eventId: matrixEvent.event.id,
+    cancelEventId: cancelEvent.event.id,
+    draftEventId: draftEvent.event.id,
     outsider: clubB.manager,
     operator,
   };

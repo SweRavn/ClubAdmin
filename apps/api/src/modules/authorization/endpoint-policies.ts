@@ -23,6 +23,7 @@ const RESOURCE_PARAMS: Record<string, readonly string[] | null> = {
   person: [":personId", ":guardianshipId", ":invitationId", ":mergeId"],
   handover: [":handoverId"],
   activity: [":activityId", ":seriesId"],
+  event: [":eventId"],
 };
 
 export class EndpointPolicyError extends Error {

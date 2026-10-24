@@ -14,9 +14,10 @@ import type { FastifyRequest } from "fastify";
 
 import type { Principal } from "../../platform/http/principal.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
-import { canReadGroupActivities, policyFor } from "./authorization.policy.ts";
+import { canReadEvent, canReadGroupActivities, policyFor } from "./authorization.policy.ts";
 import {
   loadActivityScope,
+  loadEventScope,
   loadFamilyResourcePerson,
   loadGroupScope,
   loadGroupsOfPeople,
@@ -29,6 +30,7 @@ import type {
   ActivityResource,
   ClubCreationMode,
   ClubResource,
+  EventResource,
   GroupResource,
   HandoverResource,
   PersonResource,
@@ -154,6 +156,9 @@ export class AuthorizationService {
         ? "forbidden"
         : "not-found";
     }
+    if (resource.kind === "event") {
+      return canReadEvent(actor, resource) ? "forbidden" : "not-found";
+    }
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
 
@@ -175,6 +180,8 @@ export class AuthorizationService {
         return this.handoverResource(authorization, request);
       case "activity":
         return this.activityResource(authorization, request);
+      case "event":
+        return this.eventResource(authorization, request);
     }
   }
 
@@ -206,6 +213,33 @@ export class AuthorizationService {
         })),
       );
       return { kind: "activity" as const, clubId: scope.clubId, groups };
+    });
+  }
+
+  /** An event with its audience groups and their ancestors (insider_read, IDs only). */
+  private async eventResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+  ): Promise<EventResource> {
+    const eventId = param(request, "eventId");
+    if (!eventId || !isUuid(eventId)) throw new ProblemError("not-found");
+    return this.db.withActor(authorization.context, async (tx) => {
+      const scope = await loadEventScope(tx, eventId);
+      if (!scope) throw new ProblemError("not-found");
+      const groups = await Promise.all(
+        scope.groupIds.map(async (groupId) => ({
+          clubId: scope.clubId,
+          groupId,
+          ancestorIds: (await loadGroupScope(tx, groupId))?.ancestorIds ?? [],
+        })),
+      );
+      return {
+        kind: "event" as const,
+        clubId: scope.clubId,
+        audience: scope.audience,
+        status: scope.status,
+        groups,
+      };
     });
   }
 

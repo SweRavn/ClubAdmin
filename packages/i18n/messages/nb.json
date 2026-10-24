@@ -615,7 +615,25 @@
     "attendance_locked": "Oppmøtet er låst.",
     "correction_reason_required": "Oppgi en begrunnelse for rettelsen.",
     "not_a_club_member": "Gjester må være medlemmer i klubben.",
-    "recorded_at_out_of_range": "Enhetens klokke går feil, eller markeringen er mer enn en uke gammel."
+    "recorded_at_out_of_range": "Enhetens klokke går feil, eller markeringen er mer enn en uke gammel.",
+    "registration_closed": "Påmeldingen er stengt.",
+    "registration_not_open": "Påmeldingen har ikke åpnet ennå.",
+    "event_full": "Arrangementet er fullt.",
+    "already_registered": "Allerede påmeldt.",
+    "not_registered": "Ikke påmeldt.",
+    "not_in_audience": "Arrangementet er ikke for denne personen.",
+    "cancellation_closed": "Det er for sent å melde seg av. Kontakt arrangørene.",
+    "no_offer": "Det finnes ingen tilbudt plass å svare på.",
+    "offer_expired": "Tilbudet har gått ut.",
+    "event_cancelled": "Arrangementet er avlyst.",
+    "event_not_draft": "Bare utkast kan slettes.",
+    "event_not_published": "Arrangementet er ikke publisert.",
+    "answer_required": "Svar på de obligatoriske spørsmålene.",
+    "answer_invalid": "Sjekk svarene.",
+    "activity_has_call_up": "Aktiviteten har allerede sin egen innkalling.",
+    "activity_in_other_event": "Aktiviteten hører til et annet arrangement.",
+    "capacity_below_confirmed": "Antall plasser kan ikke være lavere enn antall bekreftede deltakere.",
+    "questions_locked": "Spørsmål som er besvart kan ikke fjernes eller bytte type."
   },
   "memberExport": {
     "columns": {

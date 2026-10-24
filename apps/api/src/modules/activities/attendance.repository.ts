@@ -171,6 +171,19 @@ export async function invitees(tx: Tx, activityId: string): Promise<string[]> {
   return rows.map((r) => r.person_id);
 }
 
+/** How many are called up to each of these activities. */
+export async function inviteeCounts(
+  tx: Tx,
+  activityIds: readonly string[],
+): Promise<Map<string, number>> {
+  if (activityIds.length === 0) return new Map();
+  const { rows } = await tx.execute<{ activity_id: string; n: number }>(sql`
+    SELECT activity_id, count(*)::int AS n FROM public.activity_invitees
+    WHERE activity_id = ANY (${uuidArray(activityIds)}::uuid[])
+    GROUP BY activity_id`);
+  return new Map(rows.map((r) => [r.activity_id, r.n]));
+}
+
 export async function addInvitees(
   tx: Tx,
   input: { clubId: string; activityId: string; personIds: readonly string[]; invitedBy: string },

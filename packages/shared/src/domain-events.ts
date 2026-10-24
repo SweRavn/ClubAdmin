@@ -66,6 +66,27 @@ export const DOMAIN_EVENTS = {
     change: z.enum(["set", "withdrawn"]),
   }),
   "attendance.recorded": z.object({ clubId: id, activityId: id }),
+  /** Events with sign-up (P1.6): created, updated, published, cancelled, deleted. */
+  "event.changed": z.object({
+    clubId: id,
+    eventId: id,
+    change: z.enum(["created", "updated", "published", "cancelled", "deleted"]),
+  }),
+  /** A registration's status changed (P1.7 notifies). */
+  "event.registration.changed": z.object({
+    clubId: id,
+    eventId: id,
+    registrationId: id,
+    personId: id,
+  }),
+  /** A place was confirmed from the waiting list or offered (mail now). */
+  "event.offer.made": z.object({
+    clubId: id,
+    eventId: id,
+    registrationId: id,
+    personId: id,
+    kind: z.enum(["confirmed", "offered"]),
+  }),
   /** Call-ups (#19): P1.7 tells those newly called up. */
   "activity.invitees.changed": z.object({
     clubId: id,

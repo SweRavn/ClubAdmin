@@ -114,6 +114,14 @@ export async function findActivity(tx: Tx, id: string): Promise<ActivityRow | nu
   return row ?? null;
 }
 
+export async function findActivities(tx: Tx, ids: readonly string[]): Promise<ActivityRow[]> {
+  if (ids.length === 0) return [];
+  return tx
+    .select()
+    .from(activities)
+    .where(inArray(activities.id, [...ids]));
+}
+
 export async function lockActivity(tx: Tx, id: string): Promise<ActivityRow | null> {
   const [row] = await tx.select().from(activities).where(eq(activities.id, id)).for("update");
   return row ?? null;
@@ -440,6 +448,8 @@ export interface ScheduleRow {
   memberIds: string[];
   /** Answers of the people in personIds, by person (P1.5). */
   answers: Record<string, string>;
+  /** The event the activity belongs to (P1.6), if any. */
+  eventId: string | null;
 }
 
 /**
@@ -479,7 +489,9 @@ export function scheduleQuery(input: ScheduleInput): SQL {
       array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids,
       coalesce(array_agg(DISTINCT h.person_id) FILTER (WHERE h.function = 'member'), '{}') AS member_ids,
       (SELECT coalesce(jsonb_object_agg(r.person_id, r.status), '{}') FROM public.activity_responses r
-       WHERE r.person_id = ANY (array_agg(DISTINCT h.person_id)) AND r.activity_id = h.activity_id) AS answers
+       WHERE r.person_id = ANY (array_agg(DISTINCT h.person_id)) AND r.activity_id = h.activity_id) AS answers,
+      -- The event link (P1.6): read-only, the events module owns event_activities.
+      (SELECT ea.event_id FROM public.event_activities ea WHERE ea.activity_id = h.activity_id) AS event_id
     FROM hits h
     WHERE true ${
       input.cursor
@@ -514,6 +526,7 @@ export async function schedule(tx: Tx, input: ScheduleInput): Promise<ScheduleRo
     person_ids: string[];
     member_ids: string[];
     answers: Record<string, string>;
+    event_id: string | null;
   }>(scheduleQuery(input));
   return rows.map((r) => ({
     activityId: r.activity_id,
@@ -534,6 +547,7 @@ export async function schedule(tx: Tx, input: ScheduleInput): Promise<ScheduleRo
     personIds: r.person_ids,
     memberIds: r.member_ids,
     answers: r.answers,
+    eventId: r.event_id,
   }));
 }
 

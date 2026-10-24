@@ -56,6 +56,16 @@ export interface ActivityResource {
   groups: readonly GroupRef[];
 }
 
+/** An event with sign-up (:eventId, P1.6) with its audience groups. */
+export interface EventResource {
+  kind: "event";
+  clubId: string;
+  audience: "groups" | "club";
+  status: string;
+  /** The audience groups, each with its ancestors (empty for a club event). */
+  groups: readonly GroupRef[];
+}
+
 export interface Resources {
   platform: PlatformResource;
   club: ClubResource;
@@ -63,6 +73,7 @@ export interface Resources {
   person: PersonResource;
   handover: HandoverResource;
   activity: ActivityResource;
+  event: EventResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

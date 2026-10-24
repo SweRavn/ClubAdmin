@@ -400,6 +400,8 @@ export const ScheduleEntrySchema = z
     /** Whose schedule it is on (me and/or my wards). */
     people: z.array(PersonSummarySchema),
     changed: z.boolean(),
+    /** The event the activity belongs to (P1.6); its sign-up is on the event. */
+    eventId: z.uuid().nullable().optional(),
     changedAt: z.iso.datetime({ offset: true }),
     /** Answers (P1.5). */
     responseMode: z.enum(RESPONSE_MODES).optional(),

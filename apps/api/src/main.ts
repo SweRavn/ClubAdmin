@@ -3,8 +3,9 @@ import { createLogger, loadEnvFiles, onShutdown } from "@clubadmin/server-kit";
 
 import { createApp } from "./app.ts";
 import { loadApiConfig } from "./config.ts";
+import { EventsService } from "./modules/events/index.ts";
 import { MemberImportsService } from "./modules/members/index.ts";
-import { startMemberImportJobs } from "./platform/jobs/member-import-jobs.ts";
+import { startApiJobs } from "./platform/jobs/api-jobs.ts";
 
 loadEnvFiles();
 const config = loadApiConfig();
@@ -17,13 +18,15 @@ logger.info(
   "api listening",
 );
 
-// Member imports (P1.3b, ADR 0033): parsing and importing run here, next to the services.
+// Jobs that use the domain services run here (ADR 0033): member imports
+// (P1.3b) and expiring event offers (P1.6).
 const importJobs =
   config.MEMBER_IMPORT_JOBS && config.DATABASE_URL
-    ? await startMemberImportJobs({
+    ? await startApiJobs({
         databaseUrl: config.DATABASE_URL,
         concurrency: config.MEMBER_IMPORT_CONCURRENCY,
         imports: app.get(MemberImportsService),
+        events: app.get(EventsService),
         logger,
       })
     : null;

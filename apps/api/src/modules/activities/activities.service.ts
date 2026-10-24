@@ -214,45 +214,56 @@ export class ActivitiesService {
     input: CreateActivityInput,
     options: { id?: string } = {},
   ): Promise<ActivityView> {
-    return this.db.withTenant(context, async (tx) => {
-      const data = parseInput(CreateActivitySchema, input);
-      const groupIds = [...new Set([groupId, ...data.groupIds])];
-      await this.requireGroups(tx, context.clubId, groupIds);
-      const locationId = data.locationId ?? null;
-      if (locationId) await this.requireLocation(tx, context.clubId, locationId);
-      const [activity] = await repo.insertActivities(tx, [
-        {
-          id: options.id ?? uuidv7(),
-          clubId: context.clubId,
-          kind: data.kind,
-          title: data.title,
-          notes: data.notes ?? null,
-          leaderNotes: data.leaderNotes ?? null,
-          meetPlace: data.meetPlace ?? null,
-          opponent: data.opponent ?? null,
-          homeAway: data.homeAway ?? null,
-          competition: data.competition ?? null,
-          locationId,
-          locationText: locationId ? null : (data.locationText ?? null),
-          startsAt: new Date(data.startsAt),
-          endsAt: new Date(data.endsAt),
-          allDay: data.allDay,
-          meetAt: data.meetAt ? new Date(data.meetAt) : null,
-          responseMode: data.responseMode ?? defaultResponseMode(data.kind),
-          respondBy: data.respondBy ? new Date(data.respondBy) : null,
-          createdByPersonId: actorPersonId(context),
-        },
-      ]);
-      await repo.insertActivityGroups(tx, context.clubId, [activity!.id], groupIds);
-      await repo.syncScheduleEntries(tx, { activityIds: [activity!.id] });
-      await audit.record(tx, {
-        action: "activity.created",
-        resourceType: "activity",
-        resourceId: activity!.id,
-      });
-      await this.publish(tx, context.clubId, activity!.id, "created");
-      return (await this.views(tx, context.clubId, [activity!]))[0]!;
+    return this.db.withTenant(context, (tx) =>
+      this.createActivityInTx(tx, context, groupId, input, options),
+    );
+  }
+
+  /** As createActivity, in the caller's transaction (events, P1.6). */
+  async createActivityInTx(
+    tx: Tx,
+    context: TenantContext,
+    groupId: string,
+    input: CreateActivityInput,
+    options: { id?: string } = {},
+  ): Promise<ActivityView> {
+    const data = parseInput(CreateActivitySchema, input);
+    const groupIds = [...new Set([groupId, ...data.groupIds])];
+    await this.requireGroups(tx, context.clubId, groupIds);
+    const locationId = data.locationId ?? null;
+    if (locationId) await this.requireLocation(tx, context.clubId, locationId);
+    const [activity] = await repo.insertActivities(tx, [
+      {
+        id: options.id ?? uuidv7(),
+        clubId: context.clubId,
+        kind: data.kind,
+        title: data.title,
+        notes: data.notes ?? null,
+        leaderNotes: data.leaderNotes ?? null,
+        meetPlace: data.meetPlace ?? null,
+        opponent: data.opponent ?? null,
+        homeAway: data.homeAway ?? null,
+        competition: data.competition ?? null,
+        locationId,
+        locationText: locationId ? null : (data.locationText ?? null),
+        startsAt: new Date(data.startsAt),
+        endsAt: new Date(data.endsAt),
+        allDay: data.allDay,
+        meetAt: data.meetAt ? new Date(data.meetAt) : null,
+        responseMode: data.responseMode ?? defaultResponseMode(data.kind),
+        respondBy: data.respondBy ? new Date(data.respondBy) : null,
+        createdByPersonId: actorPersonId(context),
+      },
+    ]);
+    await repo.insertActivityGroups(tx, context.clubId, [activity!.id], groupIds);
+    await repo.syncScheduleEntries(tx, { activityIds: [activity!.id] });
+    await audit.record(tx, {
+      action: "activity.created",
+      resourceType: "activity",
+      resourceId: activity!.id,
     });
+    await this.publish(tx, context.clubId, activity!.id, "created");
+    return (await this.views(tx, context.clubId, [activity!]))[0]!;
   }
 
   getActivity(context: TenantContext, activityId: string): Promise<ActivityView> {
@@ -334,21 +345,70 @@ export class ActivitiesService {
       const current = await repo.lockActivity(tx, activityId);
       if (!current) throw new DomainError("not_found");
       if (current.status === "cancelled") throw new DomainError("activity_cancelled");
-      const activity = await repo.updateActivity(tx, activityId, {
-        status: "cancelled",
-        cancelledReason: data.reason ?? null,
-        sequence: current.sequence + 1,
-        changedAt: this.now(),
-      });
-      await repo.syncScheduleEntries(tx, { activityIds: [activityId] });
-      await audit.record(tx, {
-        action: "activity.cancelled",
-        resourceType: "activity",
-        resourceId: activityId,
-      });
-      await this.publish(tx, context.clubId, activityId, "cancelled");
+      const activity = await this.cancelLocked(tx, context, current, data.reason ?? null);
       return (await this.views(tx, context.clubId, [activity]))[0]!;
     });
+  }
+
+  /** Cancels these activities if still scheduled (a cancelled event, P1.6). */
+  async cancelActivitiesInTx(
+    tx: Tx,
+    context: TenantContext,
+    activityIds: readonly string[],
+    reason: string | null,
+  ): Promise<void> {
+    for (const id of activityIds) {
+      const current = await repo.lockActivity(tx, id);
+      if (current?.status === "scheduled") await this.cancelLocked(tx, context, current, reason);
+    }
+  }
+
+  /** These activities' rows (events, P1.6; the club's only, by row-level security). */
+  activitiesInTx(tx: Tx, ids: readonly string[]): Promise<repo.ActivityRow[]> {
+    return repo.findActivities(tx, ids);
+  }
+
+  /** The club's locations among these IDs (archived ones included). */
+  locationsInTx(tx: Tx, ids: readonly string[]): Promise<Location[]> {
+    return ids.length === 0 ? Promise.resolve([]) : repo.findLocations(tx, ids);
+  }
+
+  /** Groups of the club that are not archived (else not_found / group_archived). */
+  requireGroupsInTx(tx: Tx, clubId: string, groupIds: readonly string[]): Promise<void> {
+    return this.requireGroups(tx, clubId, groupIds);
+  }
+
+  /** The club's groups among these IDs, by ID, with their names. */
+  async groupNamesInTx(
+    tx: Tx,
+    clubId: string,
+    groupIds: readonly string[],
+  ): Promise<Map<string, string>> {
+    if (groupIds.length === 0) return new Map();
+    return new Map((await repo.clubGroups(tx, clubId, groupIds)).map((g) => [g.id, g.name]));
+  }
+
+  private async cancelLocked(
+    tx: Tx,
+    context: TenantContext,
+    current: repo.ActivityRow,
+    reason: string | null,
+  ): Promise<repo.ActivityRow> {
+    const activityId = current.id;
+    const activity = await repo.updateActivity(tx, activityId, {
+      status: "cancelled",
+      cancelledReason: reason,
+      sequence: current.sequence + 1,
+      changedAt: this.now(),
+    });
+    await repo.syncScheduleEntries(tx, { activityIds: [activityId] });
+    await audit.record(tx, {
+      action: "activity.cancelled",
+      resourceType: "activity",
+      resourceId: activityId,
+    });
+    await this.publish(tx, context.clubId, activityId, "cancelled");
+    return activity;
   }
 
   restoreActivity(context: TenantContext, activityId: string): Promise<ActivityView> {

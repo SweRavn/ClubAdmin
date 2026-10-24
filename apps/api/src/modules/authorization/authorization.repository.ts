@@ -263,6 +263,27 @@ export async function loadFamilyResourcePerson(
 }
 
 /** The club and groups of an activity or series (app.activity_scope; insider_read outside a club). */
+export async function loadEventScope(
+  tx: Tx,
+  eventId: string,
+): Promise<{
+  clubId: string;
+  audience: "groups" | "club";
+  status: string;
+  groupIds: string[];
+} | null> {
+  const { rows } = await tx.execute<{
+    club_id: string;
+    audience: "groups" | "club";
+    status: string;
+    group_ids: string[];
+  }>(sql`SELECT club_id, audience, status, group_ids FROM app.event_scope(${eventId}::uuid)`);
+  const row = rows[0];
+  return row
+    ? { clubId: row.club_id, audience: row.audience, status: row.status, groupIds: row.group_ids }
+    : null;
+}
+
 export async function loadActivityScope(
   tx: Tx,
   ids: { activityId?: string; seriesId?: string },

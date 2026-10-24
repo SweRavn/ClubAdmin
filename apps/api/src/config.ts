@@ -66,7 +66,7 @@ export const apiConfigSchema = z
     MEMBER_IMPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(20),
     /** Invitations imports send per club in 24 hours (the rest are left out and counted). */
     MEMBER_IMPORT_INVITATIONS_PER_CLUB_DAY: z.coerce.number().int().positive().default(2000),
-    /** Run the import jobs (members:import_parse, members:import_run) in this process (ADR 0033). */
+    /** Run the API jobs in this process (ADR 0033): member imports, expiring event offers (P1.6). */
     MEMBER_IMPORT_JOBS: envBoolean(true),
     /** Import jobs at a time in this process. */
     MEMBER_IMPORT_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(1),

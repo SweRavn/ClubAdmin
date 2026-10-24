@@ -16,7 +16,8 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
  * Which resource the authorization module loads for the policy (from
  * :clubId, :groupId, :personId, :handoverId; "platform": the installation).
  */
-export type EndpointResource = "platform" | "club" | "group" | "person" | "handover" | "activity";
+export type EndpointResource =
+  "platform" | "club" | "group" | "person" | "handover" | "activity" | "event";
 
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any
@@ -43,6 +44,8 @@ export interface EndpointOptions {
   };
   /** Successful response body. Output is validated and unknown fields are stripped. */
   response: z.ZodType;
+  /** The response's media type when it is not JSON (a CSV export: the handler sets the header). */
+  responseType?: "text/csv";
   status?: number;
   /** Override the global per-IP rate limit for this route. */
   rateLimit?: { max: number; timeWindowMs: number };
@@ -54,8 +57,8 @@ export interface EndpointOptions {
   accountLimit?: "joining";
   /**
    * Pages through a club's people (rosters, later exports): also counts
-   * against the per-club and per-account bulk-read budgets. Needs a club or
-   * group resource.
+   * against the per-club and per-account bulk-read budgets. Needs a club,
+   * group or event resource.
    */
   bulkRead?: boolean;
   /**

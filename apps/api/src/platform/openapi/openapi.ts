@@ -62,7 +62,9 @@ export function buildOpenApiDocument(
             ? { description: "Done" }
             : {
                 description: "Success",
-                content: { "application/json": { schema: endpoint.response } },
+                content: {
+                  [endpoint.responseType ?? "application/json"]: { schema: endpoint.response },
+                },
               },
         ...(isPublic
           ? {}

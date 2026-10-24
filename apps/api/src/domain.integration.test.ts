@@ -98,6 +98,25 @@ describe("tenant isolation of club-owned tables", () => {
         SELECT ${a.id}, id, ${member.id}, ${a.manager.id} FROM activities
         WHERE club_id = ${a.id} AND kind = 'match'`);
     });
+    // An event (P1.6) with its group, the match, and a registration.
+    const event = await c.s.events.createEvent(a.ctx, {
+      title: "Cup",
+      audience: "groups",
+      groupIds: [group.id],
+      startsAt: "2026-11-07T09:00:00Z",
+      endsAt: "2026-11-07T16:00:00Z",
+      registrationClosesAt: "2026-11-01T20:00:00Z",
+      publish: true,
+    });
+    await c.t.db.withTenant(a.ctx, async (tx) => {
+      await tx.execute(sql`
+        INSERT INTO event_activities (club_id, event_id, activity_id)
+        SELECT ${a.id}, ${event.event.id}, id FROM activities
+        WHERE club_id = ${a.id} AND kind = 'match'`);
+      await tx.execute(sql`
+        INSERT INTO event_registrations (club_id, event_id, person_id, registered_by_person_id, status)
+        VALUES (${a.id}, ${event.event.id}, ${member.id}, ${member.id}, 'confirmed')`);
+    });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(
       "admin",

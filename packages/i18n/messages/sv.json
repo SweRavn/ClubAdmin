@@ -615,7 +615,25 @@
     "attendance_locked": "Närvaron är låst.",
     "correction_reason_required": "Ange en orsak till rättelsen.",
     "not_a_club_member": "Gäster måste vara medlemmar i föreningen.",
-    "recorded_at_out_of_range": "Enhetens klocka går fel, eller markeringen är mer än en vecka gammal."
+    "recorded_at_out_of_range": "Enhetens klocka går fel, eller markeringen är mer än en vecka gammal.",
+    "registration_closed": "Anmälan är stängd.",
+    "registration_not_open": "Anmälan har inte öppnat än.",
+    "event_full": "Evenemanget är fullt.",
+    "already_registered": "Redan anmäld.",
+    "not_registered": "Inte anmäld.",
+    "not_in_audience": "Evenemanget är inte för den här personen.",
+    "cancellation_closed": "Det är för sent att avanmäla. Kontakta arrangörerna.",
+    "no_offer": "Det finns ingen erbjuden plats att svara på.",
+    "offer_expired": "Erbjudandet har gått ut.",
+    "event_cancelled": "Evenemanget är inställt.",
+    "event_not_draft": "Bara utkast kan tas bort.",
+    "event_not_published": "Evenemanget är inte publicerat.",
+    "answer_required": "Svara på de obligatoriska frågorna.",
+    "answer_invalid": "Kontrollera svaren.",
+    "activity_has_call_up": "Aktiviteten har redan en egen kallelse.",
+    "activity_in_other_event": "Aktiviteten hör till ett annat evenemang.",
+    "capacity_below_confirmed": "Antalet platser kan inte vara lägre än antalet bekräftade deltagare.",
+    "questions_locked": "Frågor som har besvarats kan inte tas bort eller byta typ."
   },
   "memberExport": {
     "columns": {

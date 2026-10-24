@@ -121,8 +121,8 @@ export class AuthGuard implements CanActivate {
     }
     if (endpoint.bulkRead) {
       const resource = request.authz.resource;
-      if (resource?.kind !== "club" && resource?.kind !== "group") {
-        throw new Error("bulkRead endpoints need a club or group resource");
+      if (resource?.kind !== "club" && resource?.kind !== "group" && resource?.kind !== "event") {
+        throw new Error("bulkRead endpoints need a club, group or event resource");
       }
       await this.limits.bulkRead(request.principal, resource.clubId);
     }

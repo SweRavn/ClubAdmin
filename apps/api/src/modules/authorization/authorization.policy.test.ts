@@ -124,6 +124,20 @@ const jointActivityR: Resource = {
     { clubId: club, groupId: otherTeam, ancestorIds: [] },
   ],
 };
+const eventR = (status: "draft" | "published" = "published"): Resource => ({
+  kind: "event",
+  clubId: club,
+  audience: "groups",
+  status,
+  groups: [{ clubId: club, groupId: team, ancestorIds: [section] }],
+});
+const clubEventR: Resource = {
+  kind: "event",
+  clubId: club,
+  audience: "club",
+  status: "published",
+  groups: [],
+};
 const playerInTeam = (options: { protected?: boolean } = {}) =>
   personResource(player, club, {
     ...options,
@@ -339,6 +353,64 @@ const CASES: Record<Permission, Case[]> = {
       name: "manager of another club",
       actor: otherClubManager,
       resource: activityR,
+      allowed: false,
+    },
+  ],
+  "club.events.read": [
+    { name: "member", actor: plainMember, resource: clubR, allowed: true },
+    { name: "parent of a member", actor: parent, resource: clubR, allowed: true },
+    { name: "outsider", actor: outsider, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.events.create": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "chair", actor: chair, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: true },
+    { name: "player", actor: teammate, resource: clubR, allowed: false },
+    { name: "physio", actor: physio, resource: clubR, allowed: false },
+  ],
+  "event.read": [
+    { name: "player in an audience group", actor: teammate, resource: eventR(), allowed: true },
+    { name: "parent of a player", actor: parent, resource: eventR(), allowed: true },
+    { name: "member, club event", actor: plainMember, resource: clubEventR, allowed: true },
+    { name: "head coach, draft", actor: coach, resource: eventR("draft"), allowed: true },
+    { name: "player, draft", actor: teammate, resource: eventR("draft"), allowed: false },
+    { name: "member of another group", actor: plainMember, resource: eventR(), allowed: false },
+    { name: "outsider, club event", actor: outsider, resource: clubEventR, allowed: false },
+  ],
+  "event.manage": [
+    { name: "head coach of the audience group", actor: coach, resource: eventR(), allowed: true },
+    { name: "chair, club event", actor: chair, resource: clubEventR, allowed: true },
+    { name: "manager", actor: manager, resource: eventR(), allowed: true },
+    { name: "chair, group event", actor: chair, resource: eventR(), allowed: false },
+    { name: "head coach, club event", actor: coach, resource: clubEventR, allowed: false },
+    { name: "player", actor: teammate, resource: eventR(), allowed: false },
+  ],
+  "event.register": [
+    { name: "player in an audience group", actor: teammate, resource: eventR(), allowed: true },
+    { name: "relative with sign_up", actor: relativeWithSignUp, resource: eventR(), allowed: true },
+    { name: "member, club event", actor: plainMember, resource: clubEventR, allowed: true },
+    { name: "player, draft", actor: teammate, resource: eventR("draft"), allowed: false },
+    { name: "relative without sign_up", actor: relative, resource: eventR(), allowed: false },
+    { name: "member of another group", actor: plainMember, resource: eventR(), allowed: false },
+    { name: "outsider, club event", actor: outsider, resource: clubEventR, allowed: false },
+  ],
+  "event.registrations.read": [
+    { name: "head coach", actor: coach, resource: eventR(), allowed: true },
+    { name: "other leader", actor: otherLeader, resource: eventR(), allowed: true },
+    { name: "registrar", actor: registrar, resource: eventR(), allowed: true },
+    { name: "player", actor: teammate, resource: eventR(), allowed: false },
+    { name: "parent", actor: parent, resource: eventR(), allowed: false },
+  ],
+  "event.registrations.manage": [
+    { name: "head coach", actor: coach, resource: eventR(), allowed: true },
+    { name: "chair, club event", actor: chair, resource: clubEventR, allowed: true },
+    { name: "other leader", actor: otherLeader, resource: eventR(), allowed: false },
+    { name: "player", actor: teammate, resource: eventR(), allowed: false },
+    {
+      name: "manager of another club",
+      actor: otherClubManager,
+      resource: eventR(),
       allowed: false,
     },
   ],
