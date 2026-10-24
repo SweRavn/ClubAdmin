@@ -110,6 +110,7 @@ pnpm auth:configure   # apply infra/zitadel/ to Zitadel (pnpm dev:services runs 
 pnpm --filter @clubadmin/web test:e2e   # Playwright: real Zitadel login and DEV_AUTH (docs/development.md)
 pnpm --filter @clubadmin/web bundle:check / lighthouse   # web budgets on the production build (ADR 0027)
 pnpm --filter @clubadmin/mobile android / ios / start    # mobile development build (docs/development.md, "Mobile app")
+                                         # emulator on Windows/WSL and the CI build (artifact): docs/android-emulator.md
 pnpm --filter @clubadmin/mobile bundle:check             # production bundle: no development code, size budget (ADR 0028)
 pnpm --filter @clubadmin/mobile licenses:generate        # after changing mobile dependencies (About screen; CI checks)
 pnpm dev:trust-ca --android | --ios                      # prepare the emulator / simulator for the local HTTPS services

@@ -164,54 +164,18 @@ Metro in WSL and the emulator on Windows (`adb` over TCP); iOS needs a Mac.
   systemd-resolved this works out of the box; otherwise start the emulator
   with `-dns-server` pointing at a resolver that answers them (CI uses
   dnsmasq with `--address=/clubadmin.localhost/127.0.0.1`).
-- **Windows (WSL2):** the emulator runs in Windows (Android Studio), the
-  repository and the services in WSL.
-  1. In Windows, turn on *Windows Hypervisor Platform* ("Turn Windows
-     features on or off") and restart; without it the emulator does not
-     start ("failed to connect within 5 minutes"). Android Studio is only
-     needed for the SDK and the emulator: do not open the repository in it.
-  2. Create the emulator in Android Studio's Device Manager with a **Google
-     APIs** image (not "Google Play": it does not allow `adb root`), x86_64,
-     API 34 or 35, and start it. `adb devices` in PowerShell
-     (`& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices`)
-     lists it.
-  3. In WSL, use Windows' `adb.exe` through `packages/devtools/wsl/adb`
-     (it passes local files as Windows paths): `mkdir -p ~/bin && ln -sf
-     "$PWD/packages/devtools/wsl/adb" ~/bin/adb`, with `~/bin` first on
-     `PATH`. `adb devices` in WSL then lists the emulator, and `pnpm
-     dev:trust-ca --android` works as above; port 443 is forwarded to
-     Windows, where Docker Desktop publishes Caddy.
-  4. The emulator must resolve `*.clubadmin.localhost` to its loopback:
-     start it from PowerShell with a writable system
-     (`& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd <name>
-     -writable-system -no-snapshot-load`; names from `-list-avds`), then in
-     WSL `adb root` and `adb remount` (the first time it asks for `adb
-     reboot`, then `adb root` and `adb remount` again), and `adb shell "echo
-     '127.0.0.1 clubadmin.localhost api.clubadmin.localhost
-     auth.clubadmin.localhost' >> /system/etc/hosts"`. `adb shell ping -c 1
-     api.clubadmin.localhost` answers from 127.0.0.1. Always start the
-     emulator this way, and run `pnpm dev:trust-ca --android` after each
-     start.
-  5. Build in WSL as CI does (JavaScript bundled, no Metro): JDK 17
-     (`openjdk-17-jdk-headless`) and the Android command-line tools in
-     `~/android-sdk` (`ANDROID_HOME`; `sdkmanager --licenses`, Gradle
-     downloads the rest; leave `platform-tools` out so `adb` stays the
-     wrapper). Export `AUTH_ISSUER`, `AUTH_MOBILE_CLIENT_ID` and
-     `AUTH_PROJECT_ID` from `.env.local` and `APP_VARIANT=development`, run
-     `pnpm exec expo prebuild --platform android --no-install` in
-     `apps/mobile` (`--clean` only after changing native dependencies or
-     `app.config.ts`: it throws away Gradle's compiled native code), then
-     in `android/` `./gradlew assembleRelease
-     -PreactNativeArchitectures=x86_64` and `adb install -r
-     app/build/outputs/apk/release/app-release.apk`. The first build
-     compiles every native library: give WSL memory and cores
-     (`%UserProfile%\.wslconfig`, `[wsl2]` `memory=` and `processors=`),
-     or it can take hours.
-  - Airplane mode in the emulator does not cut `adb reverse`: the app
-    believes it is offline (writes wait in the outbox), but requests such
-    as a persona login still reach the API. To test a real network loss,
-    also run `adb reverse --remove-all` (`pnpm dev:trust-ca --android`
-    restores it).
+- **Windows (WSL2), step by step:** `android-emulator.md` (the emulator in
+  Windows, `adb` through `packages/devtools/wsl/adb`, the names in the
+  emulator's hosts file, building in WSL). It also covers installing the
+  build CI keeps on every push (artifact `clubadmin-android-development`),
+  which needs no Android build tools.
+- **Rebuilding:** leave out `--clean` on `expo prebuild` unless native
+  dependencies or `app.config.ts` changed; it deletes `android/` and with it
+  everything Gradle has compiled.
+- **Airplane mode in the emulator does not cut `adb reverse`:** the app
+  believes it is offline, but a persona login still reaches the API. For a
+  real loss of the connection, also `adb reverse --remove-all`
+  (`android-emulator.md`, "Test").
 - **Logging in:** development builds show the persona picker (`DEV_AUTH`,
   tokens from `POST /api/v1/dev/tokens`); "Log in with email" uses Zitadel
   in the system browser.

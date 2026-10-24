@@ -57,6 +57,9 @@ Develop inside WSL2 (Ubuntu), not in Windows directly:
    new WSL terminal. `docker version` inside WSL should show both client and
    server.
 3. Install Node 24 inside WSL as above.
+4. **Android app:** the emulator runs in Windows; `docs/android-emulator.md`
+   has every step (Android Studio, `adb` from WSL, the emulator's hosts file,
+   and the ready-made build from CI).
 
 #### Troubleshooting on Windows
 
