@@ -47,7 +47,8 @@ Ordered so each package only depends on earlier ones. Prompts:
 Chat rooms (group rooms, moderation, child-safety rules, protected-identity acceptance) ·
 calendar invitations by email with Accept/Decline from the native calendar (iMIP, ADR 0021) · message board ·
 bulk email with bounce handling · car pooling · documents (statutes, minutes,
-versions) · board meetings (agenda, minutes, decisions) · background-check
+versions; club settings taken from adopted governing documents, opt-in per
+club, ADR 0037) · board meetings (agenda, minutes, decisions) · background-check
 tracking (clearances, country packs SE/NO) · LOK-stöd reporting and
 IdrottOnline export · volunteer duty schedules.
 
