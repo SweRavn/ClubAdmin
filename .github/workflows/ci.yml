@@ -310,6 +310,17 @@ jobs:
             -x lintVitalRelease -x lintVitalAnalyzeRelease -x lintVitalReportRelease
           echo "APK=$PWD/app/build/outputs/apk/release/app-release.apk" >> "$GITHUB_ENV"
 
+      # The development build for testers with the demo data: install it on an
+      # emulator prepared as in docs/android-emulator.md (persona login; email
+      # login needs a build made against your own Zitadel).
+      - name: Keep the development build (APK)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: clubadmin-android-development
+          path: ${{ env.APK }}
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Install Maestro
         run: |
           curl -fsSL "https://get.maestro.mobile.dev" | MAESTRO_VERSION=2.11.0 bash
