@@ -181,6 +181,37 @@ Metro in WSL and the emulator on Windows (`adb` over TCP); iOS needs a Mac.
      `PATH`. `adb devices` in WSL then lists the emulator, and `pnpm
      dev:trust-ca --android` works as above; port 443 is forwarded to
      Windows, where Docker Desktop publishes Caddy.
+  4. The emulator must resolve `*.clubadmin.localhost` to its loopback:
+     start it from PowerShell with a writable system
+     (`& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd <name>
+     -writable-system -no-snapshot-load`; names from `-list-avds`), then in
+     WSL `adb root` and `adb remount` (the first time it asks for `adb
+     reboot`, then `adb root` and `adb remount` again), and `adb shell "echo
+     '127.0.0.1 clubadmin.localhost api.clubadmin.localhost
+     auth.clubadmin.localhost' >> /system/etc/hosts"`. `adb shell ping -c 1
+     api.clubadmin.localhost` answers from 127.0.0.1. Always start the
+     emulator this way, and run `pnpm dev:trust-ca --android` after each
+     start.
+  5. Build in WSL as CI does (JavaScript bundled, no Metro): JDK 17
+     (`openjdk-17-jdk-headless`) and the Android command-line tools in
+     `~/android-sdk` (`ANDROID_HOME`; `sdkmanager --licenses`, Gradle
+     downloads the rest; leave `platform-tools` out so `adb` stays the
+     wrapper). Export `AUTH_ISSUER`, `AUTH_MOBILE_CLIENT_ID` and
+     `AUTH_PROJECT_ID` from `.env.local` and `APP_VARIANT=development`, run
+     `pnpm exec expo prebuild --platform android --no-install` in
+     `apps/mobile` (`--clean` only after changing native dependencies or
+     `app.config.ts`: it throws away Gradle's compiled native code), then
+     in `android/` `./gradlew assembleRelease
+     -PreactNativeArchitectures=x86_64` and `adb install -r
+     app/build/outputs/apk/release/app-release.apk`. The first build
+     compiles every native library: give WSL memory and cores
+     (`%UserProfile%\.wslconfig`, `[wsl2]` `memory=` and `processors=`),
+     or it can take hours.
+  - Airplane mode in the emulator does not cut `adb reverse`: the app
+    believes it is offline (writes wait in the outbox), but requests such
+    as a persona login still reach the API. To test a real network loss,
+    also run `adb reverse --remove-all` (`pnpm dev:trust-ca --android`
+    restores it).
 - **Logging in:** development builds show the persona picker (`DEV_AUTH`,
   tokens from `POST /api/v1/dev/tokens`); "Log in with email" uses Zitadel
   in the system browser.
