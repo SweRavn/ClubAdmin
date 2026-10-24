@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-only
+# adb for WSL2 with the Android emulator running in Windows: runs the Windows
+# SDK's adb.exe (which sees the emulator) and passes files on the Linux side
+# as Windows paths, so `pnpm dev:trust-ca --android`, `adb install` and
+# Maestro work from WSL. Link it once (docs/development.md, "Mobile app"):
+#
+#   mkdir -p ~/bin && ln -sf "$PWD/packages/devtools/wsl/adb" ~/bin/adb
+#
+# WINDOWS_ADB overrides where adb.exe is.
+set -euo pipefail
+
+adb_exe="${WINDOWS_ADB:-}"
+if [[ -z "$adb_exe" ]]; then
+  # cmd.exe warns about the WSL working directory on stderr; the value is on stdout.
+  local_app_data="$(cd /mnt/c 2>/dev/null && cmd.exe /c "echo %LOCALAPPDATA%" 2>/dev/null | tr -d '\r')"
+  adb_exe="$(wslpath -u "$local_app_data")/Android/Sdk/platform-tools/adb.exe"
+fi
+if [[ ! -x "$adb_exe" ]]; then
+  echo "adb.exe not found at $adb_exe (install Android Studio in Windows, or set WINDOWS_ADB)." >&2
+  exit 1
+fi
+
+args=()
+for arg in "$@"; do
+  # Existing local files (adb push/install); device paths such as /data/... stay.
+  if [[ "$arg" == /* && -e "$arg" ]]; then args+=("$(wslpath -w "$arg")"); else args+=("$arg"); fi
+done
+exec "$adb_exe" "${args[@]}"

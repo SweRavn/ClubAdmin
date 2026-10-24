@@ -164,6 +164,23 @@ Metro in WSL and the emulator on Windows (`adb` over TCP); iOS needs a Mac.
   systemd-resolved this works out of the box; otherwise start the emulator
   with `-dns-server` pointing at a resolver that answers them (CI uses
   dnsmasq with `--address=/clubadmin.localhost/127.0.0.1`).
+- **Windows (WSL2):** the emulator runs in Windows (Android Studio), the
+  repository and the services in WSL.
+  1. In Windows, turn on *Windows Hypervisor Platform* ("Turn Windows
+     features on or off") and restart; without it the emulator does not
+     start ("failed to connect within 5 minutes"). Android Studio is only
+     needed for the SDK and the emulator: do not open the repository in it.
+  2. Create the emulator in Android Studio's Device Manager with a **Google
+     APIs** image (not "Google Play": it does not allow `adb root`), x86_64,
+     API 34 or 35, and start it. `adb devices` in PowerShell
+     (`& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices`)
+     lists it.
+  3. In WSL, use Windows' `adb.exe` through `packages/devtools/wsl/adb`
+     (it passes local files as Windows paths): `mkdir -p ~/bin && ln -sf
+     "$PWD/packages/devtools/wsl/adb" ~/bin/adb`, with `~/bin` first on
+     `PATH`. `adb devices` in WSL then lists the emulator, and `pnpm
+     dev:trust-ca --android` works as above; port 443 is forwarded to
+     Windows, where Docker Desktop publishes Caddy.
 - **Logging in:** development builds show the persona picker (`DEV_AUTH`,
   tokens from `POST /api/v1/dev/tokens`); "Log in with email" uses Zitadel
   in the system browser.
