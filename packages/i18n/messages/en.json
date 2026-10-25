@@ -399,6 +399,12 @@
     "membersImportFinished": {
       "subject": "{club}: a member import {status, select, done {is finished} other {failed}}",
       "body": "{importer} imported members into {club}: {imported} added, {skipped} skipped, {errors} with errors{hasInvitations, select, yes {, {invitations} invitations sent} other {}}.\n\nEvery club manager gets this email for each import. See the report:\n{url}"
+    },
+    "eventOffer": {
+      "offeredSubject": "{club}: a place at {event} is offered to {person}",
+      "offeredBody": "A place at {event} ({date}) has become free and is offered to {person}.\n\nAnswer by {deadline}, or the place goes to the next one on the waiting list:\n{url}",
+      "confirmedSubject": "{club}: {person} has a place at {event}",
+      "confirmedBody": "{person} has a confirmed place at {event} ({date}).\n\nSee the event:\n{url}"
     }
   },
   "profileForm": {

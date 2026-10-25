@@ -399,6 +399,12 @@
     "membersImportFinished": {
       "subject": "{club}: en medlemsimport {status, select, done {är klar} other {misslyckades}}",
       "body": "{importer} har importerat medlemmar till {club}: {imported} tillagda, {skipped} hoppades över, {errors} med fel{hasInvitations, select, yes {, {invitations} inbjudningar skickade} other {}}.\n\nAlla föreningsadministratörer får det här mejlet vid varje import. Se rapporten:\n{url}"
+    },
+    "eventOffer": {
+      "offeredSubject": "{club}: en plats på {event} erbjuds {person}",
+      "offeredBody": "En plats på {event} ({date}) har blivit ledig och erbjuds {person}.\n\nSvara senast {deadline}, annars går platsen till nästa på väntelistan:\n{url}",
+      "confirmedSubject": "{club}: {person} har fått en plats på {event}",
+      "confirmedBody": "{person} har en bekräftad plats på {event} ({date}).\n\nSe evenemanget:\n{url}"
     }
   },
   "profileForm": {

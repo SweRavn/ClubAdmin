@@ -2,7 +2,8 @@
 // Transactional email (P1.1, ADR 0032): invitations, decisions on join
 // requests and club creation requests, and changes of a club's managers;
 // families (P1.3): guardian invitations and their acceptance, own logins,
-// the own-login age and the adult age.
+// the own-login age and the adult age; events (P1.6): a place offered or
+// given from the waiting list.
 // The API publishes domain events with IDs only; this handler reads what the
 // email needs, renders it from the ICU catalogues in the recipient's
 // language and sends it through a MailProvider. Names of protected people
@@ -166,6 +167,7 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
       "guardianship.ward.own_login_age",
       "guardianship.ward.adult",
       "guardianship.adult.ended",
+      "event.offer.made",
     ],
     async handle(event, tx) {
       switch (event.type) {
@@ -400,6 +402,63 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
               locale,
               render(locale, "membersImportFinished.subject", values),
               render(locale, "membersImportFinished.body", values),
+              c.name,
+            );
+          }
+          return;
+        }
+        case "event.offer.made": {
+          const { clubId, eventId, registrationId, personId, kind } = DOMAIN_EVENTS[
+            "event.offer.made"
+          ].parse(event.payload);
+          await inClub(tx, clubId);
+          const { rows } = await tx.execute<{
+            title: string;
+            starts_at: string;
+            status: string;
+            offer_expires_at: string | null;
+            time_zone: string;
+          }>(sql`
+            SELECT e.title, e.starts_at, r.status, r.offer_expires_at, c.time_zone
+            FROM public.event_registrations r
+            JOIN public.events e ON e.id = r.event_id
+            JOIN public.clubs c ON c.id = e.club_id
+            WHERE r.id = ${registrationId} AND e.id = ${eventId}`);
+          const reg = rows[0];
+          const c = await club(tx, clubId);
+          // Answered, expired or removed meanwhile: nothing to tell.
+          if (!reg || !c || reg.status !== kind) return;
+          // The participant and guardians with receive_messages; never other participants.
+          const { rows: guardians } = await tx.execute<{ guardian_person_id: string }>(sql`
+            SELECT guardian_person_id FROM public.guardianships
+            WHERE ward_person_id = ${personId} AND valid_to IS NULL
+              AND 'receive_messages' = ANY (rights)`);
+          const person = await nameFor(tx, personId);
+          for (const to of await recipients(tx, [
+            personId,
+            ...guardians.map((g) => g.guardian_person_id),
+          ])) {
+            const locale = pickLocale(to.locale, c.default_locale);
+            const at = (value: string, style: "date" | "time") =>
+              new Intl.DateTimeFormat(locale, {
+                dateStyle: "long",
+                ...(style === "time" ? { timeStyle: "short" } : {}),
+                timeZone: reg.time_zone,
+              }).format(new Date(value));
+            const values = {
+              club: c.name,
+              event: reg.title,
+              person,
+              date: at(reg.starts_at, "date"),
+              deadline: reg.offer_expires_at ? at(reg.offer_expires_at, "time") : "",
+              url: link(`/events/${eventId}`),
+            };
+            await send(
+              event,
+              to,
+              locale,
+              render(locale, `eventOffer.${kind}Subject`, values),
+              render(locale, `eventOffer.${kind}Body`, values),
               c.name,
             );
           }

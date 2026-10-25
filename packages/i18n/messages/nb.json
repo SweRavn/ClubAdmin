@@ -399,6 +399,12 @@
     "membersImportFinished": {
       "subject": "{club}: en medlemsimport {status, select, done {er ferdig} other {mislyktes}}",
       "body": "{importer} har importert medlemmer til {club}: {imported} lagt til, {skipped} hoppet over, {errors} med feil{hasInvitations, select, yes {, {invitations} invitasjoner sendt} other {}}.\n\nAlle klubbadministratorer får denne e-posten ved hver import. Se rapporten:\n{url}"
+    },
+    "eventOffer": {
+      "offeredSubject": "{club}: en plass på {event} tilbys {person}",
+      "offeredBody": "En plass på {event} ({date}) har blitt ledig og tilbys {person}.\n\nSvar innen {deadline}, ellers går plassen til neste på ventelisten:\n{url}",
+      "confirmedSubject": "{club}: {person} har fått plass på {event}",
+      "confirmedBody": "{person} har en bekreftet plass på {event} ({date}).\n\nSe arrangementet:\n{url}"
     }
   },
   "profileForm": {

@@ -978,6 +978,146 @@ describe("attendance:retention", () => {
   });
 });
 
+describe("events (P1.6)", () => {
+  /** A club with an event in 10 days, a child (no login) with a parent and a relative. */
+  async function eventWithFamily(options: { endedDaysAgo?: number } = {}) {
+    const [club, event, child, parent, relative] = [
+      uuidv7(),
+      uuidv7(),
+      uuidv7(),
+      uuidv7(),
+      uuidv7(),
+    ];
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        `INSERT INTO people (id, given_name, family_name) VALUES
+           ($1, 'Ebbe', 'Lind'), ($2, 'Karin', 'Lind'), ($3, 'Mormor', 'Lind')`,
+        [child, parent, relative],
+      );
+      await session.query(
+        `INSERT INTO accounts (person_id, email, email_verified_at, locale) VALUES
+           ($1, $3, now(), 'sv'), ($2, $4, now(), 'sv')`,
+        [
+          parent,
+          relative,
+          `karin-${parent.slice(-8)}@example.test`,
+          `mormor-${relative.slice(-8)}@example.test`,
+        ],
+      );
+      await session.query(
+        `INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights) VALUES
+           ($1, $3, 'parent', '{act_on_behalf,receive_messages,view_schedule,sign_up,see_medical}'),
+           ($2, $3, 'relative', '{view_schedule}')`,
+        [parent, relative, child],
+      );
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Cup IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+        [club, `cup-${club.slice(-8)}`],
+      );
+      await session.query(
+        `INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')`,
+        [club, parent],
+      );
+      const ended = options.endedDaysAgo;
+      await session.query(
+        `INSERT INTO events (id, club_id, title, audience, status, starts_at, ends_at,
+           registration_closes_at, created_by_person_id)
+         VALUES ($1, $2, 'Höstcupen', 'club', 'published', $3, $4, $3, $5)`,
+        [
+          event,
+          club,
+          new Date(Date.now() + (ended === undefined ? 10 : -ended - 1) * 86_400_000).toISOString(),
+          new Date(Date.now() + (ended === undefined ? 10.5 : -ended) * 86_400_000).toISOString(),
+          parent,
+        ],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    return { club, event, child, parent, relative };
+  }
+
+  it("tells the participant's guardians with receive_messages about an offered place", async () => {
+    const { club, event, child, parent } = await eventWithFamily();
+    const registration = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO event_registrations (id, club_id, event_id, person_id, registered_by_person_id, status, offer_expires_at)
+       VALUES ($1, $2, $3, $4, $5, 'offered', now() + interval '24 hours')`,
+      [registration, club, event, child, parent],
+    );
+    const offered = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "event.offer.made", {
+        clubId: club,
+        eventId: event,
+        registrationId: registration,
+        personId: child,
+        kind: "offered",
+      }),
+    );
+    const provider = memoryMailProvider();
+    const handler = mailHandler({
+      provider,
+      webUrl: "https://clubadmin.test",
+      invitationTokenKey: undefined,
+    });
+    await outbox.dispatch(t.db, offered, [handler]);
+    expect(provider.sent.map((m) => [m.to.startsWith("karin-"), m.subject])).toEqual([
+      [true, "Cup IF: en plats på Höstcupen erbjuds Ebbe Lind"],
+    ]);
+    expect(provider.sent[0]!.text).toContain(`https://clubadmin.test/events/${event}`);
+
+    // Answered meanwhile: an offer that is no longer open is not sent.
+    await t.query(
+      "admin",
+      "UPDATE event_registrations SET status = 'confirmed', offer_expires_at = NULL WHERE id = $1",
+      [registration],
+    );
+    const late = await t.db.withSystem("test", { clubId: club }, (tx) =>
+      outbox.publish(tx, "event.offer.made", {
+        clubId: club,
+        eventId: event,
+        registrationId: registration,
+        personId: child,
+        kind: "offered",
+      }),
+    );
+    await outbox.dispatch(t.db, late, [handler]);
+    expect(provider.sent).toHaveLength(1);
+  });
+
+  it("deletes sensitive answers 30 days after the event, registrations after the retention", async () => {
+    const recent = await eventWithFamily({ endedDaysAgo: 10 });
+    const old = await eventWithFamily({ endedDaysAgo: 40 });
+    const ancient = await eventWithFamily({ endedDaysAgo: 400 });
+    for (const x of [recent, old, ancient]) {
+      await t.query(
+        "admin",
+        `INSERT INTO event_registrations (club_id, event_id, person_id, registered_by_person_id, status, sensitive_answers)
+         VALUES ($1, $2, $3, $4, 'confirmed', 'sealed')`,
+        [x.club, x.event, x.child, x.parent],
+      );
+    }
+    const deleted = await deleteExpiredAttendance(t.db);
+    expect(deleted).toMatchObject({ registrations: 1 });
+    expect(deleted.sensitiveAnswers).toBeGreaterThanOrEqual(1);
+    const { rows } = await t.query<{ event_id: string; sealed: boolean }>(
+      "admin",
+      `SELECT event_id, sensitive_answers IS NOT NULL AS sealed FROM event_registrations
+       WHERE event_id = ANY ($1::uuid[]) ORDER BY event_id`,
+      [[recent.event, old.event, ancient.event]],
+    );
+    expect(rows).toEqual([
+      { event_id: recent.event, sealed: true },
+      { event_id: old.event, sealed: false },
+    ]);
+  });
+});
+
 describe("authorization cache invalidation", () => {
   it("bumps the relationship version within a second of a committed role change", async () => {
     const valkey = new Redis(process.env.VALKEY_URL ?? "redis://127.0.0.1:6379");
