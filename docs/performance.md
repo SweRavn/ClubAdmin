@@ -150,6 +150,16 @@ budgets are requirements; CI measures them.
   minutes; each row also writes record history, about 0.2 ms per row in
   this bulk insert, so every past session, 2.4 million marks, took
   700 s).
+- Events with sign-up (P1.6, ADR 0038): every change of places locks the
+  event row, so 100 parallel sign-ups for 20 places give exactly 20 places
+  and 80 in the queue (`events.integration.test.ts`). Lists and "My events"
+  are keyset pages by `(starts_at, id)` on `events (club_id, starts_at)`;
+  counts per page are one grouped statement on `event_registrations
+  (club_id, event_id, status, queued_at)`, a person's registrations use
+  `(person_id, event_id)`, offers to expire the partial index on
+  `offer_expires_at`. The load scenario has a cup per club with the first
+  team signed up. Timing and query-plan tests for the event endpoints are
+  still to come ([#20](https://github.com/SweRavn/ClubAdmin/issues/20)).
 - Member imports (P1.3b, `member-imports.performance.integration.test.ts`:
   10,000 rows, each a child with a guardian shared by two siblings, through
   the same code as the import jobs): reading, sealing and validating the file

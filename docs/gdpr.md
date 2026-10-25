@@ -60,6 +60,8 @@
 |---|---|
 | Former member's profile | 2 years after leaving (allows re-joining, annual reports) |
 | Answers and attendance (P1.5) | The club's `attendance_retention_months` after the activity ended: at least 12 (the default), at most 120, a club setting (no page sets it yet; the club settings page will); a club that reports grants from its attendance sets it as long as the grant rules require (worker `attendance:retention`, [#18](https://github.com/SweRavn/ClubAdmin/issues/18)). Record history keeps the deleted rows for its own period |
+| Event registrations (P1.6) | As answers and attendance: the club's `attendance_retention_months` after the event ended (`attendance:retention`) |
+| Answers to sensitive sign-up questions (health, allergies, medication; P1.6) | 30 days after the event ended, then deleted (`app.purge_expired_event_data`); sealed with field-level encryption until then, shown only to organisers, the participant and guardians with `see_medical`, never in emails, logs or calendars |
 | Accounting records | 7 years (Bokföringslagen) |
 | Chat messages | Until room deleted, or club rule (e.g. 2 years) |
 | Background-check verification metadata | While role is held + 1 year |

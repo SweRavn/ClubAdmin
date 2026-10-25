@@ -547,6 +547,47 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
   least 45 minutes, three participants aged 7–25, a leader of 13 or more);
   the leaders see them as hints.
 
+### Events with sign-up (P1.6, ADR 0038)
+- `events` (club-owned): a sign-up container for some groups
+  (`event_groups`) or the whole club (`audience`), `status` (`draft`,
+  `published`, `cancelled` with `cancelled_reason`), the period, a place,
+  `price_text` (no payments before Phase 3), `registration_opens_at`
+  (null: when published), `registration_closes_at`,
+  `cancellation_closes_at` (null: the same), `capacity` (null: unlimited),
+  `waitlist_mode` (`none`, `auto`, `offer`; default `offer` for group
+  events, `auto` for club events), `offer_reply_hours` (default 24) and
+  `questions` (JSONB, at most 20: `{ id, type, label, required,
+  sensitive, options? }`, types short and long text, one or several
+  choices, number, yes/no).
+- `event_activities` (club-owned): the event's activities (an activity
+  belongs to at most one event). Each is called up (ADR 0036) to exactly
+  the confirmed participants; unlinking lifts the call-up. Cancelling the
+  event cancels them.
+- `event_registrations` (club-owned): one open registration (`confirmed`,
+  `waitlisted`, `offered`) per event and person; ended ones (`cancelled`,
+  `declined`, `expired`, `removed`) stay. `registered_by_person_id` (the
+  person or a guardian with `sign_up`), `queued_at` (the queue's order),
+  `offer_expires_at`, `answers` (JSONB, non-sensitive questions),
+  `sensitive_answers` (sealed with field-level encryption: shown only to
+  organisers, the participant and guardians with `see_medical`),
+  `decision_reason`, `decided_by_person_id`, `decided_at` (organisers'
+  out-of-order moves and removals). Readable across clubs by the person
+  and their guardians (`own_read`, for "My events").
+- Places: every change locks the event row and counts confirmed and
+  offered registrations; a freed place goes to the next in the queue in
+  the same transaction (confirmed with `auto`, offered with `offer`).
+  Offers past their time expire in the API's job runner
+  (`events:expire_offers`), which offers the place to the next.
+- Organisers: club managers; for group events those who manage every
+  audience group; for club events also the board. The leaders of the
+  audience groups and registrars read the registrations. Participants'
+  names only for viewers who may read an audience group's roster; counts
+  for everyone who sees the event.
+- Retention: sealed answers are deleted 30 days after the event ends,
+  registrations after the club's `attendance_retention_months`
+  (`app.purge_expired_event_data`, run by `attendance:retention`); erasure
+  clears a person's answers and scrubs them from history.
+
 ### `calendar_feeds` (ADR 0021)
 Personal, secret, revocable iCalendar subscription URLs: `person_id`, `scope`
 (`my_schedule` incl. children, `group`, `club_public`), `scope_id`,

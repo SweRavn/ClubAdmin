@@ -49,3 +49,8 @@ counted and see the match in their schedule.
   people, or adds a member who came as a guest when taking attendance.
 - Notifications to those called up come with P1.7 (the event is there).
 - Calendar feeds (P1.11) must apply the same rule as "My schedule".
+- Events with sign-up (P1.6, ADR 0038) set the call-up of their activities:
+  those called up are the event's confirmed participants, kept in the same
+  transaction as every change of a place. A leader's own call-up on such an
+  activity is replaced at the event's next change, and an activity with a
+  call-up of its own cannot be linked to an event.
