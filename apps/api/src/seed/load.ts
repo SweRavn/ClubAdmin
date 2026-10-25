@@ -6,7 +6,8 @@
 // 40 parents who are not members), 8 teams with two leaders each, and a
 // club manager, and 32 trainings per team (P1.4) with attendance for the
 // six latest past ones and answers from half of the children to the next
-// four (P1.5). Default size 1,000 clubs, about 200,000 people, 256,000
+// four (P1.5), and a cup for the first team with twelve places and the
+// rest of the team waiting (P1.6). Default size 1,000 clubs, about 200,000 people, 256,000
 // activities and 0.8 million attendance marks. Plus one
 // large club (P1.2, the member register's budgets): 10,000 members in 40
 // teams, half with photo consent, some paused, a few protected.
@@ -128,6 +129,25 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
       FROM lu AS r
       JOIN group_memberships AS gm ON gm.group_id = r.group_id AND gm.function = 'member'
       WHERE r.ahead <= 4 AND abs(hashtext(gm.person_id::text)) % 2 = 0;
+    -- Events (P1.6): a cup for each club's first team in three weeks, twelve
+    -- places taken, the rest of the team on the waiting list, signed up by
+    -- their parents.
+    CREATE TEMP TABLE le ON COMMIT DROP AS
+      SELECT uuidv7() AS id, g.club_id, g.id AS group_id FROM lg AS g WHERE g.g = 1;
+    INSERT INTO events (id, club_id, title, audience, status, starts_at, ends_at,
+                        registration_closes_at, capacity, waitlist_mode, created_by_person_id)
+      SELECT e.id, e.club_id, 'Cup', 'groups', 'published', now() + interval '21 days',
+             now() + interval '21 days 6 hours', now() + interval '14 days', 12, 'offer', m.person_id
+      FROM le AS e JOIN club_role_assignments AS m ON m.club_id = e.club_id AND m.role = 'club_manager';
+    INSERT INTO event_groups (club_id, event_id, group_id) SELECT club_id, id, group_id FROM le;
+    INSERT INTO event_registrations (club_id, event_id, person_id, registered_by_person_id, status, queued_at)
+      SELECT e.club_id, e.id, gm.person_id, gu.guardian_person_id,
+             CASE WHEN row_number() OVER (PARTITION BY e.id ORDER BY gm.person_id) <= 12
+                  THEN 'confirmed' ELSE 'waitlisted' END,
+             now() - make_interval(mins => (row_number() OVER (PARTITION BY e.id ORDER BY gm.person_id))::int)
+      FROM le AS e
+      JOIN group_memberships AS gm ON gm.group_id = e.group_id AND gm.function = 'member'
+      JOIN guardianships AS gu ON gu.ward_person_id = gm.person_id;
     -- The large club.
     CREATE TEMP TABLE bc ON COMMIT DROP AS SELECT uuidv7() AS id;
     INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number)
