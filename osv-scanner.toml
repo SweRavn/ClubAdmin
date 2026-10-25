@@ -4,21 +4,36 @@
 # https://github.com/SweRavn/ClubAdmin/issues/13.
 
 [[IgnoredVulns]]
-id = "GHSA-vfj7-8cjw-p6xm"
-ignoreUntil = 2027-01-31
-reason = "braces 3.0.3 (no fixed version): through micromatch in Jest and Metro, build and test tools only; never in the API, the web app or the app bundle, and fed only our own file globs."
-
-[[IgnoredVulns]]
 id = "GHSA-86w9-cpqp-85rv"
 ignoreUntil = 2027-01-31
 reason = "node-forge 1.4.0 (no fixed version): used by @expo/cli for the development server's certificates only; not in the app bundle or any server."
 
 [[IgnoredVulns]]
-id = "GHSA-hp3w-g68c-fv3c"
-ignoreUntil = 2027-01-31
-reason = "sprintf-js 1.0.3 (no fixed version): through argparse/js-yaml 3 in Jest's coverage instrumentation (babel-plugin-istanbul), test tooling only."
-
-[[IgnoredVulns]]
 id = "GHSA-vcc3-ghjq-m6fr"
 ignoreUntil = 2027-01-31
 reason = "decode-uri-component 0.2.2: the fixed 0.5.0 is ESM-only and breaks query-string 7, which expo-router requires; it only decodes the app's own deep links (clubadmin://...). Revisit with the next Expo SDK."
+
+[[IgnoredVulns]]
+id = "GHSA-mrhx-c7xc-m3w5"
+ignoreUntil = 2027-01-31
+reason = "zod 3.25.76 (fixed only in zod 4): a dependency of @expo/cli, the developer command line, alone; not in the app bundle, the API or the web app, which use zod 4.6.7. Revisit with the next Expo SDK."
+
+[[IgnoredVulns]]
+id = "GHSA-333x-w4r6-6crp"
+ignoreUntil = 2026-10-29
+reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
+
+[[IgnoredVulns]]
+id = "GHSA-w74x-v6f9-j3xg"
+ignoreUntil = 2026-10-29
+reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
+
+[[IgnoredVulns]]
+id = "GHSA-wjr9-j795-jxcr"
+ignoreUntil = 2026-10-29
+reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
+
+[[IgnoredVulns]]
+id = "GHSA-xhq7-xmqj-769h"
+ignoreUntil = 2026-10-29
+reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
