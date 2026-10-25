@@ -99,6 +99,15 @@ catalogs:
 
 engineStrict: true
 minimumReleaseAge: 10080
+# Fixes for critical vulnerabilities (CVSS 9.0 or higher) are installed at
+# once, without waiting the seven days (docs/security.md, "Dependencies"):
+# one exact `name@version` per entry, each under a comment with the advisory
+# ID, "critical" and the date the version turns seven days old
+# ("until YYYY-MM-DD"); remove the entry then (a test fails after that date).
+# Example:
+#   # GHSA-xxxx-xxxx-xxxx (critical), until 2026-11-02
+#   - some-package@1.2.4
+minimumReleaseAgeExclude: []
 
 # Security overrides of transitive dependencies (keep this list short; remove
 # when the parent package updates).

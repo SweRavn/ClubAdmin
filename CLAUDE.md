@@ -150,7 +150,10 @@ bash infra/backup/ci-drill.sh             # the CI backup drill against the loca
 
 Dependency versions shared across packages are defined once in the `catalog:`
 section of `pnpm-workspace.yaml`. New dependency versions are only installed
-once they are 7 days old (`minimumReleaseAge`), and dependency install scripts
+once they are 7 days old (`minimumReleaseAge`), except fixes for critical
+vulnerabilities, which are installed at once through
+`minimumReleaseAgeExclude` (exact versions, rules in `docs/security.md`,
+"Development process"), and dependency install scripts
 only run if listed in `onlyBuiltDependencies`.
 
 ## Coding conventions

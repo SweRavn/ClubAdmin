@@ -254,6 +254,21 @@ later phase. Backup and disaster recovery are in
   static analysis (CodeQL), secret scanning. Vulnerabilities without a usable
   fix are listed in `osv-scanner.toml` with the reason they do not affect us
   and a review date ([#13](https://github.com/SweRavn/ClubAdmin/issues/13)).
+- New dependency versions are installed only once they are seven days old
+  (`minimumReleaseAge` in `pnpm-workspace.yaml`, Renovate's delay): most
+  malicious releases are found and pulled within days. **Exception: fixes
+  for critical vulnerabilities** (an advisory rated critical, CVSS 9.0 or
+  higher, affecting a package in the lockfile) are installed as soon as the
+  fixed version is out, through `minimumReleaseAgeExclude`: one exact
+  `name@version` per entry, never a package name or range, under a comment
+  with the advisory ID, "critical" and the date the version turns seven
+  days old ("until YYYY-MM-DD"). The entry is removed after that date; a
+  test in `packages/config` (`release-age.test.ts`) fails on entries that
+  break these rules or have expired. Before adding one: check that the
+  release comes from the package's usual maintainers and repository, and
+  read the diff of the fix. Fixes for lower severities wait the seven days;
+  meanwhile the advisory goes into `osv-scanner.toml` with an
+  `ignoreUntil` just after that date.
 - Security-relevant PRs (auth, policies, RLS, crypto, uploads) need an extra
   reviewer and a checklist.
 - Yearly external penetration test once the hosted service has real users;
