@@ -52,7 +52,8 @@ test the foundation by hand.
 | [P1.4 Activities: recurring trainings, matches, locations, in-app calendar](P1.4-activities-and-calendar.md) | P1.3b |
 | [P1.5 Responses (attending / not attending) and attendance taking](P1.5-responses-and-attendance.md) | P1.4 |
 | [P1.6 Events with sign-up forms, deadlines, capacity and waiting lists](P1.6-events-and-sign-up.md) | P1.5 |
-| [P1.7 Notifications: email, push, in-app; preferences](P1.7-notifications.md) (draft) | P1.6 |
+| [P1.6b Clean-up after hands-on testing: forms, groups, places, club settings, answers](P1.6b-cleanup-after-testing.md) | P1.6 |
+| [P1.7 Notifications: email, push, in-app; preferences](P1.7-notifications.md) (draft) | P1.6b |
 | [P1.8 Privacy: consents, download my data, leaving, erasure, retention](P1.8-privacy.md) (draft) | P1.7 |
 | [P1.9 Audit log and record-history UI](P1.9-audit-and-history-ui.md) (draft) | P1.8 |
 | [P1.10 Groups admin, owners, hierarchy and waiting lists](P1.10-groups-admin-and-waiting-lists.md) (draft) | P1.7 |
