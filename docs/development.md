@@ -244,13 +244,15 @@ Settings, schedules and restores: `infra/backup/README.md` and
 ## Troubleshooting
 
 - **Certificate warnings in the browser:** run `pnpm dev:trust-ca`. On Linux,
-  Chrome and Firefox use their own store: import `.local/caddy-root.crt` under
-  Settings → Certificates → Authorities. Restart the browser.
+  Chrome and Firefox use their own store: import `.local/caddy-root.crt` as a
+  certificate authority in the browser's certificate manager (search its
+  settings for "certificates"). Restart the browser.
   `SEC_ERROR_BAD_SIGNATURE` (Firefox) or `NET::ERR_CERT_INVALID` after the
   CA was created anew: the browser still holds the old "Caddy Local
-  Authority" certificates. Delete them (Firefox: Authorities; Windows:
-  `Cert:\CurrentUser\Root`), trust the new one and restart the browser
-  (README.md, "Troubleshooting on Windows").
+  Authority" certificates. Delete them (in the system's trust store, and in
+  the browser's own list of certificate authorities if it keeps one), trust
+  the new one and restart the browser (README.md, "Troubleshooting on
+  Windows").
 - **`clubadmin.localhost` does not resolve:** most systems resolve `*.localhost`
   to 127.0.0.1 automatically. If not, `pnpm dev:doctor` prints the line to add
   to `/etc/hosts`.

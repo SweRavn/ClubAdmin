@@ -144,12 +144,11 @@ export async function trustCa(printOnly: boolean): Promise<boolean> {
       "\nOn Windows, import it into your user's trusted roots (PowerShell):\n" +
         `  Import-Certificate -FilePath "${windowsPath}" -CertStoreLocation Cert:\\CurrentUser\\Root\n` +
         "Earlier Caddy roots (from before the CA was recreated) can be listed with\n" +
-        '  Get-ChildItem Cert:\\CurrentUser\\Root | Where-Object Subject -like "*Caddy Local Authority*"\n' +
-        "and removed with Remove-Item on the old ones (other thumbprint).\n" +
-        "Firefox: it trusts the Windows roots (about:config: security.enterprise_roots.enabled = true),\n" +
-        "or import the file under Settings → Certificates → Authorities. SEC_ERROR_BAD_SIGNATURE means\n" +
-        'Firefox still holds an old Caddy certificate: delete every "Caddy Local Authority" entry\n' +
-        "there and restart Firefox (README.md, Troubleshooting on Windows).\n",
+        '  Get-ChildItem Cert:\\CurrentUser\\Root, Cert:\\LocalMachine\\Root | Where-Object Subject -like "*Caddy*"\n' +
+        "and removed with Remove-Item on the old ones (another thumbprint than this file's SHA-1).\n" +
+        "Firefox uses the Windows roots (about:config: security.enterprise_roots.enabled = true);\n" +
+        "SEC_ERROR_BAD_SIGNATURE means an old Caddy certificate is still trusted somewhere\n" +
+        "(README.md, Troubleshooting on Windows).\n",
     );
   }
   if (steps.length === 0) {
