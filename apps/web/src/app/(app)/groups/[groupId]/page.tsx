@@ -9,6 +9,7 @@ import { getTranslations } from "next-intl/server";
 
 import { secondaryButtonClass } from "../../../../components/action-form.tsx";
 import { Agenda, agendaItemOf, weekOffset, weekRange } from "../../../../components/agenda.tsx";
+import { EventList } from "../../../../components/event-list.tsx";
 import { Notice } from "../../../../components/form-error.tsx";
 import { LazyGroupRoster } from "../../../../components/lazy-group-roster.tsx";
 import { RosterEntry } from "../../../../components/roster-entry.tsx";
@@ -17,6 +18,7 @@ import {
   getClubGroups,
   getGroup,
   getGroupCalendarIfAllowed,
+  getGroupEvents,
   getGroupMembers,
 } from "../../../../server/data.ts";
 
@@ -49,7 +51,12 @@ export default async function GroupPage({ params, searchParams }: Params) {
     getGroupMembers(groupId, limit),
     getGroupCalendarIfAllowed(groupId, range.from, range.to),
   ]);
-  const [club, groups] = await Promise.all([getClub(group.clubId), getClubGroups(group.clubId)]);
+  const [club, groups, events] = await Promise.all([
+    getClub(group.clubId),
+    getClubGroups(group.clubId),
+    // Events (P1.6): for those who see the group's activities.
+    calendar ? getGroupEvents(group.id, new Date().toISOString()) : null,
+  ]);
   const parent = groups.find((g) => g.id === group.parentGroupId) ?? null;
   const subgroups = groups.filter((g) => g.parentGroupId === group.id && !g.archived);
   const leaders =
@@ -114,6 +121,26 @@ export default async function GroupPage({ params, searchParams }: Params) {
           ) : null}
         </dl>
       </div>
+
+      {events && (events.items.length > 0 || calendar?.canManage) ? (
+        <section aria-labelledby="group-events" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="group-events" className="text-lg font-semibold">
+              {t("events.title")}
+            </h2>
+            {calendar?.canManage ? (
+              <a
+                href={`/clubs/${club.id}/events/new?groupId=${group.id}`}
+                className={secondaryButtonClass}
+                data-testid="group-new-event"
+              >
+                {t("events.newTitle")}
+              </a>
+            ) : null}
+          </div>
+          <EventList events={events.items} testId="group-events" />
+        </section>
+      ) : null}
 
       {query.deleted ? <Notice>{t("activities.deleted")}</Notice> : null}
       {calendar ? (

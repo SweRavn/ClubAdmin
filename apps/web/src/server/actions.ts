@@ -10,6 +10,8 @@ import {
   addMemberFormInput,
   ATTENDANCE_ROLES,
   ATTENDANCE_STATUSES,
+  EVENT_QUESTIONS_MAX,
+  type EventQuestion,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
   type GuardianshipRight,
@@ -20,9 +22,11 @@ import {
   MEMBER_EXPORT_COLUMNS,
   type MemberExportColumn,
   MEMBERSHIP_TYPES,
+  QUESTION_TYPES,
   RegisterFilterSchema,
   RESPONSE_MODES,
   RESPONSE_STATUSES,
+  WAITLIST_MODES,
   zonedTime,
 } from "@clubadmin/shared";
 
@@ -622,9 +626,235 @@ function locationFields(form: FormData, clear: boolean) {
   };
 }
 
+// Events with sign-up (P1.6). Local times in the club's time zone, as for
+// activities; the questions come as numbered rows (q.0.label, q.0.type, ...),
+// empty rows are left out, so "add a question" is a save that returns with
+// one more empty row.
+const EVENT_ROWS = EVENT_QUESTIONS_MAX;
+const SESSION_ROWS = 3;
+
+/** An instant from a date field and a time field; undefined when both are empty, null when invalid. */
+function optionalInstant(form: FormData, date: string, time: string): string | null | undefined {
+  if (!text(form, date) && !text(form, time)) return undefined;
+  return instant(form, date, time);
+}
+
+function questionsOf(form: FormData): EventQuestion[] | null {
+  const rows: { order: number; question: EventQuestion }[] = [];
+  const used = new Set<string>();
+  for (let i = 0; i < EVENT_ROWS; i++) {
+    const label = text(form, `q.${i}.label`);
+    if (!label || text(form, `q.${i}.remove`) === "on") continue;
+    const type = oneOf(QUESTION_TYPES, text(form, `q.${i}.type`));
+    if (!type) return null;
+    let questionId = text(form, `q.${i}.id`);
+    if (!/^[a-z0-9_-]{1,20}$/.test(questionId) || used.has(questionId)) {
+      let n = i + 1;
+      while (used.has(`q${n}`)) n++;
+      questionId = `q${n}`;
+    }
+    used.add(questionId);
+    const choice = type === "choice" || type === "choices";
+    const options = text(form, `q.${i}.options`)
+      .split(/\r?\n/)
+      .map((o) => o.trim())
+      .filter((o) => o !== "");
+    const order = Number(text(form, `q.${i}.order`) || i + 1);
+    rows.push({
+      order: Number.isFinite(order) ? order : i + 1,
+      question: {
+        id: questionId,
+        type,
+        label,
+        required: text(form, `q.${i}.required`) === "on",
+        sensitive: text(form, `q.${i}.sensitive`) === "on",
+        ...(choice ? { options } : {}),
+      },
+    });
+  }
+  return rows.sort((a, b) => a.order - b.order).map((r) => r.question);
+}
+
+function eventFields(form: FormData, clear: boolean) {
+  const startsAt = instant(form, "startDate", "startTime");
+  const endsAt = instant(form, "endDate", "endTime");
+  const registrationClosesAt = instant(form, "closesDate", "closesTime");
+  const registrationOpensAt = optionalInstant(form, "opensDate", "opensTime");
+  const cancellationClosesAt = optionalInstant(form, "cancelDate", "cancelTime");
+  const questions = questionsOf(form);
+  if (!startsAt || !endsAt || !registrationClosesAt || questions === null) return null;
+  if (registrationOpensAt === null || cancellationClosesAt === null) return null;
+  const capacityText = text(form, "capacity");
+  const capacity = capacityText === "" ? null : Number(capacityText);
+  if (capacity !== null && !(Number.isInteger(capacity) && capacity > 0)) return null;
+  const waitlistMode = oneOf(WAITLIST_MODES, text(form, "waitlistMode"));
+  const hours = Number(text(form, "offerReplyHours") || "24");
+  return {
+    title: text(form, "title"),
+    ...clearable(form, ["description", "priceText"], clear),
+    startsAt,
+    endsAt,
+    ...placeOf(form, clear),
+    registrationClosesAt,
+    ...(registrationOpensAt ? { registrationOpensAt } : clear ? { registrationOpensAt: null } : {}),
+    ...(cancellationClosesAt
+      ? { cancellationClosesAt }
+      : clear
+        ? { cancellationClosesAt: null }
+        : {}),
+    ...(capacity !== null ? { capacity } : clear ? { capacity: null } : {}),
+    ...(waitlistMode ? { waitlistMode } : {}),
+    ...(Number.isInteger(hours) && hours >= 1 && hours <= 168 ? { offerReplyHours: hours } : {}),
+    questions,
+  };
+}
+
+/** Sessions created with a group event (rows a.0..a.2; empty rows are left out). */
+function sessionsOf(form: FormData) {
+  const sessions = [];
+  for (let i = 0; i < SESSION_ROWS; i++) {
+    const title = text(form, `a.${i}.title`);
+    if (!title) continue;
+    const kind = oneOf(ACTIVITY_KINDS, text(form, `a.${i}.kind`));
+    const startsAt = instant(form, `a.${i}.date`, `a.${i}.startTime`);
+    const endsAt = instant(form, `a.${i}.date`, `a.${i}.endTime`);
+    if (!kind || !startsAt || !endsAt) return null;
+    sessions.push({ kind, title, startsAt, endsAt });
+  }
+  return sessions;
+}
+
+/** Answers from the sign-up form: fields named answer.<questionId>. */
+function answersOf(form: FormData): Record<string, unknown> {
+  const answers: Record<string, unknown> = {};
+  for (const key of new Set(form.keys())) {
+    if (!key.startsWith("answer.")) continue;
+    const questionId = key.slice("answer.".length);
+    const type = text(form, `type.${questionId}`);
+    const values = form.getAll(key).filter((v): v is string => typeof v === "string");
+    const value = (values[0] ?? "").trim();
+    if (type === "choices") answers[questionId] = values.filter((v) => v !== "");
+    else if (type === "number") answers[questionId] = value === "" ? "" : Number(value);
+    else if (type === "yes_no") answers[questionId] = value === "" ? "" : value === "yes";
+    else answers[questionId] = value;
+  }
+  return answers;
+}
+
+const registration = (form: FormData, suffix = "") => {
+  const eventId = id(form, "eventId");
+  const personId = id(form, "personId");
+  return eventId && personId
+    ? `/api/v1/events/${eventId}/registrations/${personId}${suffix}`
+    : null;
+};
+
+const EVENT_ACTIONS: Record<string, FormAction> = {
+  "create-event": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const fields = eventFields(form, false);
+      const activities = sessionsOf(form);
+      if (!clubId || !fields || !activities) return null;
+      const audience = text(form, "audience") === "club" ? "club" : "groups";
+      const groupIds = form
+        .getAll("groupId")
+        .filter((g): g is string => typeof g === "string" && isUuid(g));
+      return {
+        path: `/api/v1/clubs/${clubId}/events`,
+        method: "POST",
+        body: {
+          ...fields,
+          audience,
+          groupIds: audience === "club" ? [] : groupIds,
+          activities: audience === "club" ? [] : activities,
+          publish: text(form, "publish") === "on",
+        },
+      };
+    },
+    done: (form, result) => {
+      const created = resultId(result);
+      return created ? `/events/${created}?saved=1` : back(form);
+    },
+  },
+  "update-event": {
+    call: (form) => {
+      const eventId = id(form, "eventId");
+      const fields = eventFields(form, true);
+      if (!eventId || !fields) return null;
+      return { path: `/api/v1/events/${eventId}`, method: "PATCH", body: fields };
+    },
+    // "Add a question" saves and comes back to the form with one more empty row.
+    done: (form) =>
+      text(form, "more") === "1"
+        ? withParam(back(form), "rows", String(Number(text(form, "rows") || "1") + 1))
+        : `/events/${text(form, "eventId")}?updated=1`,
+  },
+  "publish-event": {
+    call: (form) => {
+      const eventId = id(form, "eventId");
+      return eventId ? { path: `/api/v1/events/${eventId}/publish`, method: "POST" } : null;
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "cancel-event": {
+    call: (form) => {
+      const eventId = id(form, "eventId");
+      if (!eventId) return null;
+      return {
+        path: `/api/v1/events/${eventId}/cancel`,
+        method: "POST",
+        body: { reason: optional(text(form, "reason")) },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "delete-event": {
+    call: (form) => {
+      const eventId = id(form, "eventId");
+      return eventId ? { path: `/api/v1/events/${eventId}`, method: "DELETE" } : null;
+    },
+    done: (form) => `/clubs/${text(form, "clubId")}/events?deleted=1`,
+  },
+  register: {
+    call: (form) => {
+      const path = registration(form);
+      return path ? { path, method: "PUT", body: { answers: answersOf(form) } } : null;
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "cancel-registration": {
+    call: (form) => {
+      const path = registration(form);
+      return path ? { path, method: "DELETE" } : null;
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "answer-offer": {
+    call: (form) => {
+      const answer = text(form, "answer");
+      if (answer !== "accept" && answer !== "decline") return null;
+      const path = registration(form, `/${answer}`);
+      return path ? { path, method: "POST" } : null;
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "decide-registration": {
+    call: (form) => {
+      const decision = text(form, "decision");
+      const reason = text(form, "reason");
+      if ((decision !== "confirm" && decision !== "remove") || !reason) return null;
+      const path = registration(form, `/${decision}`);
+      return path ? { path, method: "POST", body: { reason } } : null;
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
   ...ACTIVITY_ACTIONS,
+  ...EVENT_ACTIONS,
   "complete-profile": {
     call: (form) => ({
       path: "/api/v1/me/profile",

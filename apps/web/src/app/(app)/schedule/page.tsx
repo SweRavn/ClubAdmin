@@ -7,8 +7,9 @@ import { personLabel } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
 import { Agenda, weekOffset, weekRange } from "../../../components/agenda.tsx";
+import { ClubTime } from "../../../components/club-time.tsx";
 import { FormError, Notice } from "../../../components/form-error.tsx";
-import { getSchedule } from "../../../server/data.ts";
+import { getMyEvents, getSchedule } from "../../../server/data.ts";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 const WEEKS = 4;
@@ -22,10 +23,15 @@ export default async function SchedulePage({ searchParams }: Props) {
   const offset = weekOffset(params.week);
   const person = typeof params.person === "string" && isUuid(params.person) ? params.person : null;
   const { from, to } = weekRange(offset, WEEKS);
-  const [t, schedule] = await Promise.all([
+  const [t, schedule, events] = await Promise.all([
     getTranslations(),
     getSchedule(from, to, person ? `&personId=${person}` : ""),
+    getMyEvents(),
   ]);
+  // Events open for sign-up for me or my wards (P1.6): "Sign up by …".
+  const signUp = events.items.filter(
+    (i) => i.event.open && i.people.some((p) => p.canRegister && p.status === null),
+  );
   const link = (changes: { week?: number; person?: string | null }) => {
     const query = new URLSearchParams();
     const week = changes.week ?? offset;
@@ -69,6 +75,35 @@ export default async function SchedulePage({ searchParams }: Props) {
             </a>
           ))}
         </nav>
+      ) : null}
+      {signUp.length > 0 ? (
+        <section
+          aria-labelledby="schedule-sign-up"
+          className="space-y-2"
+          data-testid="schedule-events"
+        >
+          <h2 id="schedule-sign-up" className="text-lg font-semibold">
+            {t("events.openForSignUp")}
+          </h2>
+          <ul className="space-y-1">
+            {signUp.map(({ event }) => (
+              <li key={event.id}>
+                <a href={`/events/${event.id}`} className="underline">
+                  {event.title}
+                </a>{" "}
+                <span className="text-sm text-muted">
+                  {t("events.signUpBy")}{" "}
+                  <ClubTime
+                    value={event.registrationClosesAt}
+                    timeZone={event.timeZone}
+                    dateStyle="medium"
+                    timeStyle="short"
+                  />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
       <Agenda
         showPeople={schedule.people.length > 1 && person === null}

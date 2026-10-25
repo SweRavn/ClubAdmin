@@ -27,6 +27,8 @@ const FORWARDED_RESPONSE_HEADERS = [
   "retry-after",
   "etag",
   "cache-control",
+  // CSV exports (P1.6) download with their file name.
+  "content-disposition",
 ];
 
 async function proxy(

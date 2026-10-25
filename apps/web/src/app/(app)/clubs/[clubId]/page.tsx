@@ -103,6 +103,13 @@ export default async function ClubPage({ params, searchParams }: Params) {
           <a href={`/clubs/${club.id}/groups`} className="text-sm text-accent underline">
             {t("club.allGroups")}
           </a>
+          <a
+            href={`/clubs/${club.id}/events`}
+            className="text-sm text-accent underline"
+            data-testid="club-events-link"
+          >
+            {t("events.title")}
+          </a>
         </div>
         {topLevel.length === 0 ? (
           <EmptyState title={t("groups.empty")} headingLevel={3} />

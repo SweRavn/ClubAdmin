@@ -120,7 +120,10 @@ export type EnumNamespace =
   | "responseModes"
   | "responseStatus"
   | "attendanceStatus"
-  | "grantHints.lok";
+  | "grantHints.lok"
+  | "events.waitlistModes"
+  | "events.questionTypes"
+  | "events.registrationStatus";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

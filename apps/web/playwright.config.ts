@@ -50,5 +50,6 @@ export default defineConfig({
           testMatch: /activities\.spec\.ts/,
           dependencies: ["member-imports"],
         },
+        { name: "events", testMatch: /events\.spec\.ts/, dependencies: ["activities"] },
       ],
 });

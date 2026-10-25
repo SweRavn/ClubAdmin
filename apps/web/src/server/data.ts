@@ -14,6 +14,8 @@ import {
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
   ClubSearchResultSchema,
+  EventDetailSchema,
+  EventPageSchema,
   FamilyDuplicatesSchema,
   GroupAttendanceSchema,
   GroupCalendarSchema,
@@ -38,6 +40,7 @@ import {
   MeResponseSchema,
   MyClubCreationRequestsSchema,
   MyClubsSchema,
+  MyEventsSchema,
   MyGroupsSchema,
   MyHandoversSchema,
   MyJoinRequestsSchema,
@@ -46,6 +49,7 @@ import {
   PersonProfileSchema,
   RegisterFacetsSchema,
   RegisterPageSchema,
+  RegistrationListSchema,
   ResponseListSchema,
   ResponseSummarySchema,
   SchedulePageSchema,
@@ -313,6 +317,29 @@ export const getInvitees = cache((activityId: string) =>
     nullOn: [403],
   }),
 );
+// Events with sign-up (P1.6).
+export const getClubEvents = cache((clubId: string, from: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/events?from=${encodeURIComponent(from)}&limit=50`,
+    EventPageSchema,
+  ),
+);
+export const getGroupEvents = cache((groupId: string, from: string) =>
+  required(
+    `/api/v1/groups/${requireId(groupId)}/events?from=${encodeURIComponent(from)}&limit=50`,
+    EventPageSchema,
+  ),
+);
+export const getEvent = cache((eventId: string) =>
+  required(`/api/v1/events/${requireId(eventId)}`, EventDetailSchema),
+);
+/** The organisers' list, or null if the viewer may not see it. */
+export const getEventRegistrations = cache((eventId: string) =>
+  apiGet(`/api/v1/events/${requireId(eventId)}/registrations?limit=500`, RegistrationListSchema, {
+    nullOn: [403],
+  }),
+);
+export const getMyEvents = cache(() => required("/api/v1/me/events?limit=50", MyEventsSchema));
 export const getAttendance = cache((activityId: string) =>
   required(`/api/v1/activities/${requireId(activityId)}/attendance`, AttendanceSchema),
 );

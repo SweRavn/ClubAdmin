@@ -50,6 +50,7 @@ const NOTICE_PARAMS = [
   "deleted",
   "answered",
   "stale",
+  "rows",
 ];
 
 export const buttonClass = "rounded-md bg-accent px-4 py-2 text-sm text-accent-fg";
