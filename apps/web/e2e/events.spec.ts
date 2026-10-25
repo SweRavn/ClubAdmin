@@ -2,8 +2,8 @@
 // Events with sign-up (P1.6) on the demo data: Sara sees Höstcupen with
 // Alva's place and her sealed answer; Erik, the organiser, sees the list
 // with the waiting list and creates an event with a question; Erik signs
-// up Maja for IKN's party from "My schedule" and Samira sees Nadia's place; Gunilla (view_schedule only)
-// sees the cup but cannot sign up.
+// up Maja for IKN's party from "My schedule" and Samira sees Nadia's place; Johan,
+// an assistant coach, sees the list but has nobody to sign up.
 
 import { expect, test } from "@playwright/test";
 
@@ -35,13 +35,16 @@ test("a guardian sees the child's place and the sealed answer; the organiser the
   await expect(page.getByTestId("event-export")).toBeVisible();
 });
 
-test("a relative with view_schedule only sees the event but no sign-up", async ({ page }) => {
-  await loginAs(page, PERSONAS.gunilla, { returnTo: `/groups/${GROUPS.svkF2017}` });
+// Gunilla's link to Alva is ended by families.spec.ts, which runs first; the
+// relative without sign_up is covered in events.integration.test.ts (403).
+test("an assistant coach sees the event and the registrations but no sign-up", async ({ page }) => {
+  await loginAs(page, PERSONAS.johan, { returnTo: `/groups/${GROUPS.svkF2017}` });
   await page
     .getByTestId("group-events")
     .getByRole("link", { name: "Höstcupen i Strandviken" })
     .click();
   await expect(page.getByTestId("event-title")).toBeVisible();
+  await expect(page.getByTestId("registrations-table")).toBeVisible();
   await expect(page.getByTestId("register-form")).toHaveCount(0);
 });
 
