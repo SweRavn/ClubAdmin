@@ -212,8 +212,20 @@ schedule (Ola left two years ago).
   an hour before seeding, so attendance can be taken at once (Maestro flow
   09). Generated players are in their groups since last year, so past
   sessions have them on the roster.
-- One cup weekend (event with sign-up, deadline, and car pool: Mikael offers
-  3 seats, Anna requests 1) with events (P1.6).
+- **Events** (P1.6, ADR 0038, `apps/api/src/seed/steps/events.ts`, through
+  the events service): Erik's "Höstcupen i Strandviken" for SVK F2017 in 12
+  days (six places, offers on the waiting list with 24 hours to answer, sign
+  up by day 8, 150 kr as a price text), with a form (T-shirt size, required;
+  allergies or medication, sensitive; "can an adult drive") and two matches
+  created with it, called up to the confirmed players. Sara signed up Alva
+  (her allergy is sealed: only Sara and the organisers see it), Erik Maja,
+  generated players themselves, and Anna Elsa last (on the waiting list).
+  A player cancelled 30 hours ago, so the first in the queue got an offer
+  that ran out six hours ago: the API's `events:expire_offers` job expires
+  it on its first run and offers the place to the next. Karin's
+  "Avslutningsfest" for all of IKN in 20 days (80 places, moving up
+  automatically; food preferences and number of adults), with Samira's
+  sign-up of Nadia. A car pool for the cup comes with a later prompt.
 - Chat rooms per group: "Ledare", "Föräldrar", "Spelare" (players room only for
   groups where players have accounts); protected persons only where accepted.
 - SVK training plan "Volleyboll 9 år — hösttermin" shared publicly; IKN copies it.

@@ -1040,11 +1040,10 @@ export class EventsService {
     if (events.length === 0) return [];
     const ids = events.map((e) => e.id);
     const club = await this.deps.clubs.getClubInTx(tx, clubId);
-    const [groupIds, activityIds, counts] = await Promise.all([
-      repo.groupsOfEvents(tx, ids),
-      repo.activitiesOfEvents(tx, ids),
-      this.countsFor(tx, events),
-    ]);
+    // One connection: the statements run one after the other.
+    const groupIds = await repo.groupsOfEvents(tx, ids);
+    const activityIds = await repo.activitiesOfEvents(tx, ids);
+    const counts = await this.countsFor(tx, events);
     const groupNames = await this.deps.activities.groupNamesInTx(tx, clubId, [
       ...new Set([...groupIds.values()].flat()),
     ]);

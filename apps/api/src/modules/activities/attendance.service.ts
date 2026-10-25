@@ -519,11 +519,9 @@ export class AttendanceService {
       groupIds: string[];
     }[]
   > {
-    const [rows, groups, invited] = await Promise.all([
-      repo.findActivities(tx, activityIds),
-      repo.groupsOfActivities(tx, activityIds),
-      records.inviteeCounts(tx, activityIds),
-    ]);
+    const rows = await repo.findActivities(tx, activityIds);
+    const groups = await repo.groupsOfActivities(tx, activityIds);
+    const invited = await records.inviteeCounts(tx, activityIds);
     return rows.map((a) => ({
       id: a.id,
       status: a.status,

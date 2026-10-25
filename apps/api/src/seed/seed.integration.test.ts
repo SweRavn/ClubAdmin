@@ -261,6 +261,34 @@ describe("demo scenario", () => {
     expect(called).toEqual([{ person_id: id("oskar") }]);
   });
 
+  it("has events (P1.6): Höstcupen full with an offer run out, the party with Nadia", async () => {
+    const { rows } = await first.query<{ title: string; status: string; n: number }>(
+      "admin",
+      `SELECT e.title, r.status, count(*)::int AS n FROM event_registrations r
+       JOIN events e ON e.id = r.event_id GROUP BY e.title, r.status ORDER BY e.title, r.status`,
+    );
+    expect(rows).toEqual([
+      { title: "Avslutningsfest", status: "confirmed", n: 1 },
+      { title: "Höstcupen i Strandviken", status: "cancelled", n: 1 },
+      { title: "Höstcupen i Strandviken", status: "confirmed", n: 5 },
+      { title: "Höstcupen i Strandviken", status: "offered", n: 1 },
+      { title: "Höstcupen i Strandviken", status: "waitlisted", n: 3 },
+    ]);
+    const { rows: offer } = await first.query<{ due: boolean }>(
+      "admin",
+      "SELECT offer_expires_at < now() AS due FROM event_registrations WHERE status = 'offered'",
+    );
+    expect(offer).toEqual([{ due: true }]);
+    // Alva's allergy is sealed, also in record history.
+    const { rows: plain } = await first.query<{ n: number }>(
+      "admin",
+      `SELECT (SELECT count(*) FROM event_registrations WHERE sensitive_answers LIKE '%Nötter%'
+                 OR answers::text LIKE '%Nötter%')::int
+            + (SELECT count(*) FROM history.record_changes WHERE concat(old_values, new_values) LIKE '%Nötter%')::int AS n`,
+    );
+    expect(plain[0]!.n).toBe(0);
+  });
+
   it("uses reserved test data only", async () => {
     const { rows } = await first.query<{ email: string }>(
       "admin",
