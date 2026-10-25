@@ -310,3 +310,78 @@ export function useAttendance(activityId: string, enabled = true) {
     enabled,
   });
 }
+
+// Events with sign-up (P1.6). Sign-up needs a connection (the server decides
+// places): these are plain mutations, never queued in the outbox.
+export type EventDetail = Schemas["EventDetail"];
+export type MyEvents = Schemas["MyEvents"];
+export type EventQuestion = Schemas["EventQuestion"];
+
+export function useMyEvents() {
+  const { api, personId } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["events", ...scope],
+    queryFn: async () =>
+      data(await api.GET("/api/v1/me/events", { params: { query: { limit: 50 } } })),
+    enabled: personId !== null,
+  });
+}
+
+export function useEvent(eventId: string) {
+  const { api } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["event", eventId, ...scope],
+    queryFn: async () =>
+      data(await api.GET("/api/v1/events/{eventId}", { params: { path: { eventId } } })),
+  });
+}
+
+type RegistrationChange =
+  | { action: "register"; personId: string; answers: Record<string, unknown> }
+  | { action: "cancel" | "accept" | "decline"; personId: string };
+
+/** Sign up, cancel, or answer an offer; the answer is the updated event. */
+export function useRegistration(eventId: string) {
+  const { api } = useSession();
+  const queryClient = useQueryClient();
+  const scope = useScope();
+  return useMutation({
+    mutationFn: async (change: RegistrationChange) => {
+      const path = { eventId, personId: change.personId };
+      switch (change.action) {
+        case "register":
+          return data(
+            await api.PUT("/api/v1/events/{eventId}/registrations/{personId}", {
+              params: { path },
+              body: { answers: change.answers },
+            }),
+          );
+        case "cancel":
+          return data(
+            await api.DELETE("/api/v1/events/{eventId}/registrations/{personId}", {
+              params: { path },
+            }),
+          );
+        case "accept":
+          return data(
+            await api.POST("/api/v1/events/{eventId}/registrations/{personId}/accept", {
+              params: { path },
+            }),
+          );
+        case "decline":
+          return data(
+            await api.POST("/api/v1/events/{eventId}/registrations/{personId}/decline", {
+              params: { path },
+            }),
+          );
+      }
+    },
+    onSuccess: (event) => {
+      queryClient.setQueryData(["event", eventId, ...scope], event);
+      void queryClient.invalidateQueries({ queryKey: ["events"] });
+      void queryClient.invalidateQueries({ queryKey: ["schedule"] });
+    },
+  });
+}

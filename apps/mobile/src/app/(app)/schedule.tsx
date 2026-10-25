@@ -66,6 +66,11 @@ export default function ScheduleScreen() {
   const header = (
     <View style={{ flexDirection: "row", gap: theme.space(2) }}>
       <LinkButton
+        label={t("events.title")}
+        onPress={() => router.push("/events")}
+        testID="open-events"
+      />
+      <LinkButton
         label={t("mobile.clubs")}
         onPress={() => router.push("/home")}
         testID="open-home"
