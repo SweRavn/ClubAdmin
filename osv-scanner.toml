@@ -17,23 +17,3 @@ reason = "decode-uri-component 0.2.2: the fixed 0.5.0 is ESM-only and breaks que
 id = "GHSA-mrhx-c7xc-m3w5"
 ignoreUntil = 2027-01-31
 reason = "zod 3.25.76 (fixed only in zod 4): a dependency of @expo/cli, the developer command line, alone; not in the app bundle, the API or the web app, which use zod 4.6.7. Revisit with the next Expo SDK."
-
-[[IgnoredVulns]]
-id = "GHSA-333x-w4r6-6crp"
-ignoreUntil = 2026-10-29
-reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
-
-[[IgnoredVulns]]
-id = "GHSA-w74x-v6f9-j3xg"
-ignoreUntil = 2026-10-29
-reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
-
-[[IgnoredVulns]]
-id = "GHSA-wjr9-j795-jxcr"
-ignoreUntil = 2026-10-29
-reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
-
-[[IgnoredVulns]]
-id = "GHSA-xhq7-xmqj-769h"
-ignoreUntil = 2026-10-29
-reason = "fast-uri 3.1.8 and 4.2.2 (through ajv and fastify): the fixes 3.1.9 and 4.2.3 were published on 2026-10-19 and can be installed from 2026-10-27 (minimumReleaseAge, 7 days); updated then. Expires on its own so the scan fails again if the update is forgotten."
