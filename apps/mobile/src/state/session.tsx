@@ -40,6 +40,7 @@ import {
 } from "../cache/account-cache.ts";
 import { appSettings } from "../cache/settings.ts";
 import { APP_VERSION, appConfig } from "../config.ts";
+import { unregisterPush } from "./push.ts";
 
 export type SessionStatus = "starting" | "signedOut" | "signedIn";
 
@@ -202,10 +203,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const kind = tokens.kind;
     const refreshToken = tokens.refreshToken;
     const idTokenHint = tokens.idTokenHint;
+    // While still logged in: this phone stops getting the person's push notifications.
+    if (id) await unregisterPush(api, id);
     await tokens.end();
     await leave(id);
     if (kind === "oidc") await signOutOfZitadel(refreshToken, idTokenHint);
-  }, [tokens, leave]);
+  }, [tokens, leave, api]);
 
   const setViewingAs = useCallback(
     (wardId: string | null) => {

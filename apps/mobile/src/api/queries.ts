@@ -401,3 +401,70 @@ export function useRegistration(eventId: string) {
     },
   });
 }
+
+// Notifications (P1.7): always the logged-in person's, never a ward's.
+export type NotificationItem = Schemas["Notification"];
+export type NotificationSettings = Schemas["NotificationSettingsResponse"];
+export type NotificationSettingsUpdate = Schemas["UpdateNotificationSettings"];
+
+export function useNotifications() {
+  const { api, personId } = useSession();
+  return useInfiniteQuery({
+    queryKey: ["me", personId, "notifications"],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) =>
+      data(
+        await api.GET("/api/v1/me/notifications", {
+          params: { query: pageParam ? { cursor: pageParam } : {} },
+        }),
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? null,
+    enabled: personId !== null,
+  });
+}
+
+export function useUnreadCount(enabled: boolean) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["me", personId, "notifications", "unread"],
+    queryFn: async () => data(await api.GET("/api/v1/me/notifications/unread-count")).count,
+    enabled: enabled && personId !== null,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useMarkNotificationsRead() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: { ids: string[] } | { before: string }) =>
+      data(await api.POST("/api/v1/me/notifications/read", { body })),
+    onSuccess: (unread) => {
+      queryClient.setQueryData(["me", personId, "notifications", "unread"], unread.count);
+      void queryClient.invalidateQueries({
+        queryKey: ["me", personId, "notifications"],
+        exact: true,
+      });
+    },
+  });
+}
+
+export function useNotificationSettings() {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["me", personId, "notification-settings"],
+    queryFn: async () => data(await api.GET("/api/v1/me/notification-settings")),
+    enabled: personId !== null,
+  });
+}
+
+export function useUpdateNotificationSettings() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: NotificationSettingsUpdate) =>
+      data(await api.PUT("/api/v1/me/notification-settings", { body })),
+    onSuccess: (settings) =>
+      queryClient.setQueryData(["me", personId, "notification-settings"], settings),
+  });
+}

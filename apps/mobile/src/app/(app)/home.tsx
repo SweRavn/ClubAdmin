@@ -10,7 +10,14 @@ import { Link, router, Stack } from "expo-router";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
-import { useMe, useMyClubs, useMyGroups, useMyWards } from "../../api/queries.ts";
+import {
+  useClientInfo,
+  useMe,
+  useMyClubs,
+  useMyGroups,
+  useMyWards,
+  useUnreadCount,
+} from "../../api/queries.ts";
 import { DataAge } from "../../components/data-age.tsx";
 import { ErrorView } from "../../components/error-view.tsx";
 import { RoleBadge } from "../../components/role-badge.tsx";
@@ -24,6 +31,7 @@ import {
   Screen,
   Section,
 } from "../../components/ui.tsx";
+import { hasFeature } from "../../state/client-info.ts";
 import { useCurrentClub } from "../../state/club.tsx";
 import { useSession } from "../../state/session.tsx";
 import { useTheme } from "../../theme.ts";
@@ -38,6 +46,9 @@ export default function Home() {
   const groups = useMyGroups();
   const wards = useMyWards();
   const { club: current, setClub } = useCurrentClub();
+  const info = useClientInfo();
+  const inbox = hasFeature(info.data, "notifications.inbox");
+  const unread = useUnreadCount(inbox);
 
   const refreshing = me.isRefetching || clubs.isRefetching || groups.isRefetching;
   const refresh = () => {
@@ -45,14 +56,28 @@ export default function Home() {
     void clubs.refetch();
     void groups.refetch();
     void wards.refetch();
+    void unread.refetch();
   };
 
   const settingsLink = (
-    <LinkButton
-      label={t("mobile.settings")}
-      onPress={() => router.push("/settings")}
-      testID="open-settings"
-    />
+    <View style={{ flexDirection: "row", gap: theme.space(2) }}>
+      {inbox ? (
+        <LinkButton
+          label={
+            unread.data
+              ? `${t("notifications.title")} (${unread.data >= 100 ? "99+" : unread.data})`
+              : t("notifications.title")
+          }
+          onPress={() => router.push("/notifications")}
+          testID="open-notifications"
+        />
+      ) : null}
+      <LinkButton
+        label={t("mobile.settings")}
+        onPress={() => router.push("/settings")}
+        testID="open-settings"
+      />
+    </View>
   );
 
   if (!clubs.data && !groups.data) {

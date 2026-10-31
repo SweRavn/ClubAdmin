@@ -6,14 +6,24 @@ import { Redirect, Stack } from "expo-router";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
+import { useClientInfo } from "../../api/queries.ts";
 import { Banners } from "../../components/banners.tsx";
+import { hasFeature } from "../../state/client-info.ts";
+import { usePush } from "../../state/push.ts";
 import { useSession } from "../../state/session.tsx";
 import { useTheme } from "../../theme.ts";
 
 export default function SignedInLayout() {
-  const { status } = useSession();
+  const { status, api, personId } = useSession();
   const theme = useTheme();
   const t = useTranslations();
+  const info = useClientInfo();
+  // Push only when the server has a push provider (P1.7, ADR 0029).
+  usePush(
+    api,
+    status === "signedIn" ? personId : null,
+    hasFeature(info.data, "notifications.push"),
+  );
   if (status === "signedOut") return <Redirect href="/login" />;
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
@@ -48,6 +58,11 @@ export default function SignedInLayout() {
         <Stack.Screen name="settings/sessions" options={{ title: t("sessions.title") }} />
         <Stack.Screen name="settings/family" options={{ title: t("family.title") }} />
         <Stack.Screen name="settings/about" options={{ title: t("mobile.about") }} />
+        <Stack.Screen name="notifications/index" options={{ title: t("notifications.title") }} />
+        <Stack.Screen
+          name="notifications/settings"
+          options={{ title: t("notifications.settings.title") }}
+        />
       </Stack>
     </View>
   );

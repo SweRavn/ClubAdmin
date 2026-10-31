@@ -86,6 +86,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "expo-router",
       "expo-localization",
       "expo-secure-store",
+      // Push notifications (P1.7): Expo Push; the token is registered after login.
+      ["expo-notifications", { defaultChannel: "default" }],
       ["expo-local-authentication", { faceIDPermission: "Unlock ClubAdmin with Face ID." }],
       // Development builds trust Caddy's local CA (never preview or production).
       ["./plugins/with-development-ca.ts", { enabled: variant === "development" }],

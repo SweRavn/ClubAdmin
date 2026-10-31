@@ -181,6 +181,14 @@ export default function Settings() {
             />
           </View>
         </Row>
+        {hasFeature(info.data, "notifications.inbox") ? (
+          <Row
+            onPress={() => router.push("/notifications/settings")}
+            testID="open-notification-settings"
+          >
+            <Body>{t("notifications.settings.title")}</Body>
+          </Row>
+        ) : null}
         <Row onPress={() => router.push("/settings/family")} testID="open-family">
           <Body>{t("family.title")}</Body>
         </Row>

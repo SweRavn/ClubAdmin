@@ -18,9 +18,16 @@ export const appSettings = {
   setBiometricUnlock: (on: boolean) => settings.set("biometric-unlock", on),
   dismissedUpdate: () => settings.getString("dismissed-update") ?? null,
   setDismissedUpdate: (version: string) => settings.set("dismissed-update", version),
+  /** This phone's push registration for a person (P1.7), removed on logout. */
+  pushDevice: (personId: string) => settings.getString(`push-device.${personId}`) ?? null,
+  setPushDevice: (personId: string, deviceId: string | null) => {
+    if (deviceId) settings.set(`push-device.${personId}`, deviceId);
+    else settings.remove(`push-device.${personId}`);
+  },
   /** Forgets everything about a person (logout). */
   forget: (personId: string) => {
     settings.remove(`last-club.${personId}`);
     settings.remove(`viewing-as.${personId}`);
+    settings.remove(`push-device.${personId}`);
   },
 };
