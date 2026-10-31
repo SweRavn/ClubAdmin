@@ -154,7 +154,6 @@ function Activity({ activityId }: { activityId: string }) {
           ))}
         </Section>
       ) : null}
-      {leads && !cancelled ? <LeaderAnswers activityId={activityId} /> : null}
       {leads ? (
         <Button
           label={t("mobile.takeAttendance")}
@@ -162,6 +161,8 @@ function Activity({ activityId }: { activityId: string }) {
           testID="take-attendance"
         />
       ) : null}
+      {/* After "Take attendance", which leaders reach without scrolling. */}
+      {leads && !cancelled ? <LeaderAnswers activityId={activityId} /> : null}
 
       <Section title={t("activities.when")}>
         <Row last>
