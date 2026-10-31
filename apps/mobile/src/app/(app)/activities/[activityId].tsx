@@ -161,8 +161,6 @@ function Activity({ activityId }: { activityId: string }) {
           testID="take-attendance"
         />
       ) : null}
-      {/* After "Take attendance", which leaders reach without scrolling. */}
-      {leads && !cancelled ? <LeaderAnswers activityId={activityId} /> : null}
 
       <Section title={t("activities.when")}>
         <Row last>
@@ -250,6 +248,8 @@ function Activity({ activityId }: { activityId: string }) {
         )}
       </Section>
       <Muted>{groups.map((g) => g.name).join(", ")}</Muted>
+      {/* Last: the details above stay on the first screen for leaders. */}
+      {leads && !cancelled ? <LeaderAnswers activityId={activityId} /> : null}
     </Screen>
   );
 }
