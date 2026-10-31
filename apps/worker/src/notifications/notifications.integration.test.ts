@@ -20,7 +20,7 @@ import {
 import { emailAtOnce, nextDigest, quietUntil } from "./fanout.ts";
 import { notificationsHandler } from "./handler.ts";
 import { memoryPushProvider } from "./push.ts";
-import { fanoutTask, responseRemindersTask } from "./tasks.ts";
+import { eventRemindersTask, fanoutTask, responseRemindersTask } from "./tasks.ts";
 
 let t: TestDatabase;
 const KEY = "worker-test-notification-key-0123456789";
@@ -478,5 +478,351 @@ describe("email changes", () => {
     const sent = mail.sent.filter((m) => m.subject === "Your email address changed");
     expect(sent.map((m) => m.to)).toEqual([account.email]);
     expect(sent[0]!.headers).toEqual({});
+  });
+});
+
+// --- Every type: who gets it, and who does not (P1.7 acceptance) -------------------
+
+async function event(
+  x: Awaited<ReturnType<typeof team>>,
+  options: { status?: string; closesInMs?: number; audience?: string } = {},
+) {
+  const id = uuidv7();
+  await t.query(
+    "admin",
+    `INSERT INTO events (id, club_id, title, audience, status, starts_at, ends_at, registration_closes_at,
+                         capacity, created_by_person_id)
+     VALUES ($1, $2, 'Cupen', $3, $4, now() + interval '20 days', now() + interval '20 days 6 hours',
+             now() + make_interval(secs => $5::double precision / 1000), 10, $6)`,
+    [
+      id,
+      x.club,
+      options.audience ?? "groups",
+      options.status ?? "published",
+      options.closesInMs ?? 10 * DAY,
+      x.coach,
+    ],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO event_groups (club_id, event_id, group_id) VALUES ($1, $2, $3)`,
+    [x.club, id, x.group],
+  );
+  return id;
+}
+
+async function registration(
+  x: Awaited<ReturnType<typeof team>>,
+  eventId: string,
+  status: string,
+  by: string,
+  decided = false,
+) {
+  const id = uuidv7();
+  await t.query(
+    "admin",
+    `INSERT INTO event_registrations (id, club_id, event_id, person_id, registered_by_person_id, status,
+                                      decided_by_person_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [id, x.club, eventId, x.elsa, by, status, decided ? x.coach : null],
+  );
+  return id;
+}
+
+const types = async (personId: string) => (await noticesOf(personId)).map((n) => n.type);
+
+describe("every type reaches the right people", () => {
+  it("activity.restored and activity.added: the roster's guardians and contact person, not the relative", async () => {
+    const x = await team();
+    const restored = await activity(x, 3 * DAY);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "activity.changed", {
+        clubId: x.club,
+        activityId: restored,
+        change: "restored",
+      }),
+      [handler()],
+    );
+    const added = await activity(x, 4 * DAY);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "activity.changed", {
+        clubId: x.club,
+        activityId: added,
+        change: "created",
+      }),
+      [handler()],
+    );
+    for (const p of [x.anna, x.mikael, x.nils]) {
+      expect(await types(p)).toEqual(["activity.restored", "activity.added"]);
+    }
+    expect(await types(x.gunilla)).toEqual([]);
+    expect(await types(x.coach)).toEqual([]);
+  });
+
+  it("activity.added: not for a session of a series, nor far ahead unless answers are asked for", async () => {
+    const x = await team();
+    const series = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO activity_series (id, club_id, kind, title, slots, starts_on, ends_on, created_by_person_id)
+       VALUES ($1, $2, 'training', 'Träning', '[]', current_date, current_date + 60, $3)`,
+      [series, x.club, x.coach],
+    );
+    const inSeries = await activity(x, 2 * DAY);
+    await t.query("admin", "UPDATE activities SET series_id = $1 WHERE id = $2", [
+      series,
+      inSeries,
+    ]);
+    const far = await activity(x, 30 * DAY);
+    const farRequested = await activity(x, 30 * DAY, { responseMode: "requested" });
+    for (const id of [inSeries, far, farRequested]) {
+      await outbox.dispatch(
+        t.db,
+        await publish(x.club, "activity.changed", {
+          clubId: x.club,
+          activityId: id,
+          change: "created",
+        }),
+        [handler()],
+      );
+    }
+    const notices = await noticesOf(x.anna);
+    expect(notices.map((n) => n.type)).toEqual(["activity.added"]);
+  });
+
+  it("activity.moved: once per version to the roster's guardians; not after it started, nor three weeks ahead", async () => {
+    const x = await team();
+    const run = fanoutTask({ db: t.db, channels: { email: true, push: true } });
+    const soon = await activity(x, 3 * DAY);
+    await run({ kind: "activity", clubId: x.club, activityId: soon }, helpers);
+    await run({ kind: "activity", clubId: x.club, activityId: soon }, helpers);
+    await t.query("admin", "UPDATE activities SET sequence = sequence + 1 WHERE id = $1", [soon]);
+    await run({ kind: "activity", clubId: x.club, activityId: soon }, helpers);
+    const far = await activity(x, 21 * DAY);
+    await run({ kind: "activity", clubId: x.club, activityId: far }, helpers);
+    const past = await activity(x, -HOUR);
+    await run({ kind: "activity", clubId: x.club, activityId: past }, helpers);
+    expect(await types(x.anna)).toEqual(["activity.moved", "activity.moved"]);
+    expect(await types(x.nils)).toEqual(["activity.moved", "activity.moved"]);
+    expect(await types(x.gunilla)).toEqual([]);
+  });
+
+  it("series.changed: the members' guardians when a session is within two weeks", async () => {
+    const x = await team();
+    const series = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO activity_series (id, club_id, kind, title, slots, starts_on, ends_on, created_by_person_id)
+       VALUES ($1, $2, 'training', 'Träning', '[]', current_date, current_date + 60, $3)`,
+      [series, x.club, x.coach],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO activity_series_groups (club_id, series_id, group_id) VALUES ($1, $2, $3)`,
+      [x.club, series, x.group],
+    );
+    const run = fanoutTask({ db: t.db, channels: { email: true, push: true } });
+    // No session yet: nothing.
+    await run({ kind: "series", clubId: x.club, seriesId: series }, helpers);
+    expect(await types(x.anna)).toEqual([]);
+    const session = await activity(x, 5 * DAY);
+    await t.query("admin", "UPDATE activities SET series_id = $1 WHERE id = $2", [series, session]);
+    await run({ kind: "series", clubId: x.club, seriesId: series }, helpers);
+    expect(await types(x.anna)).toEqual(["series.changed"]);
+    expect(await types(x.nils)).toEqual(["series.changed"]);
+    expect(await types(x.gunilla)).toEqual([]);
+    expect(await types(x.coach)).toEqual([]);
+  });
+
+  it("callup.removed: those no longer called up, not the relative", async () => {
+    const x = await team();
+    const id = await activity(x, 10 * DAY);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "activity.invitees.changed", {
+        clubId: x.club,
+        activityId: id,
+        added: [],
+        removed: [x.elsa],
+      }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual(["callup.removed"]);
+    expect(await types(x.gunilla)).toEqual([]);
+    expect(await types(x.coach)).toEqual([]);
+  });
+
+  it("event.published: the audience's guardians who may sign up; event.cancelled: only those registered", async () => {
+    const x = await team();
+    const published = await event(x);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.changed", {
+        clubId: x.club,
+        eventId: published,
+        change: "published",
+      }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual(["event.published"]);
+    expect(await types(x.mikael)).toEqual(["event.published"]);
+    // Nils (receive_messages, no sign_up) and Gunilla do not sign up anyone.
+    expect(await types(x.nils)).toEqual([]);
+    expect(await types(x.gunilla)).toEqual([]);
+
+    const unregistered = await event(x, { status: "cancelled" });
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.changed", {
+        clubId: x.club,
+        eventId: unregistered,
+        change: "cancelled",
+      }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual(["event.published"]);
+    const registered = await event(x, { status: "cancelled" });
+    await registration(x, registered, "confirmed", x.anna);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.changed", {
+        clubId: x.club,
+        eventId: registered,
+        change: "cancelled",
+      }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual(["event.published", "event.cancelled"]);
+    expect(await types(x.nils)).toEqual([]);
+  });
+
+  it("registrations: a new place or queue tells the other guardian, a removal everyone who may sign up", async () => {
+    const x = await team();
+    const e = await event(x);
+    const confirmed = await registration(x, e, "confirmed", x.anna);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.registration.changed", {
+        clubId: x.club,
+        eventId: e,
+        registrationId: confirmed,
+        personId: x.elsa,
+      }),
+      [handler()],
+    );
+    expect(await types(x.mikael)).toEqual(["event.registration.confirmed"]);
+    // Anna signed up herself.
+    expect(await types(x.anna)).toEqual([]);
+
+    const other = await event(x);
+    const waiting = await registration(x, other, "waitlisted", x.mikael);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.registration.changed", {
+        clubId: x.club,
+        eventId: other,
+        registrationId: waiting,
+        personId: x.elsa,
+      }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual(["event.registration.waitlisted"]);
+
+    const third = await event(x);
+    const removed = await registration(x, third, "removed", x.anna, true);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.registration.changed", {
+        clubId: x.club,
+        eventId: third,
+        registrationId: removed,
+        personId: x.elsa,
+      }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual([
+      "event.registration.waitlisted",
+      "event.registration.removed",
+    ]);
+    expect(await types(x.nils)).toEqual([]);
+    expect(await types(x.gunilla)).toEqual([]);
+  });
+
+  it("event.offer.confirmed: a place given from the queue, to the guardians with receive_messages", async () => {
+    const x = await team();
+    const e = await event(x);
+    const reg = await registration(x, e, "confirmed", x.anna);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.offer.made", {
+        clubId: x.club,
+        eventId: e,
+        registrationId: reg,
+        personId: x.elsa,
+        kind: "confirmed",
+      }),
+      [handler()],
+    );
+    for (const p of [x.anna, x.mikael, x.nils]) {
+      expect(await types(p)).toEqual(["event.offer.confirmed"]);
+    }
+    expect(await types(x.gunilla)).toEqual([]);
+  });
+
+  it("event.signup.reminder: a day before sign-up closes, those who have not signed up", async () => {
+    const x = await team();
+    await event(x, { closesInMs: 12 * HOUR });
+    const signedUp = await event(x, { closesInMs: 12 * HOUR });
+    await registration(x, signedUp, "confirmed", x.anna);
+    await event(x, { closesInMs: 5 * DAY });
+    const remind = eventRemindersTask({ db: t.db, channels: { email: true, push: true } });
+    await remind({}, helpers);
+    await remind({}, helpers);
+    expect(await types(x.anna)).toEqual(["event.signup.reminder"]);
+    expect(await types(x.mikael)).toEqual(["event.signup.reminder"]);
+    expect(await types(x.nils)).toEqual([]);
+    expect(await types(x.gunilla)).toEqual([]);
+  });
+
+  it("club_creation.decided: the person who asked, nobody else", async () => {
+    const x = await team();
+    const id = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO club_creation_requests (id, requested_by_person_id, status, name, slug, country)
+       VALUES ($1, $2, 'rejected', 'Ny klubb', $3, 'SE')`,
+      [id, x.anna, `ny-${id.slice(-8)}`],
+    );
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "club_creation_request.decided", { requestId: id }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual(["club_creation.decided"]);
+    expect(await types(x.mikael)).toEqual([]);
+    expect(await types(x.coach)).toEqual([]);
+  });
+
+  it("family.adult_ended: the former guardian, without naming the young person", async () => {
+    const x = await team();
+    const { rows } = await t.query<{ id: string }>(
+      "admin",
+      `UPDATE guardianships SET status = 'ended', valid_to = now() WHERE guardian_person_id = $1 AND ward_person_id = $2
+       RETURNING id`,
+      [x.mikael, x.elsa],
+    );
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "guardianship.adult.ended", {
+        guardianshipId: rows[0]!.id,
+        wardPersonId: x.elsa,
+      }),
+      [handler()],
+    );
+    const notices = await noticesOf(x.mikael);
+    expect(notices.map((n) => [n.type, n.about_person_ids])).toEqual([["family.adult_ended", []]]);
+    expect(await types(x.anna)).toEqual([]);
   });
 });
