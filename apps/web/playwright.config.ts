@@ -36,8 +36,14 @@ export default defineConfig({
           testMatch: /(dev-auth|app-shell)\.spec\.ts/,
           dependencies: ["zitadel"],
         },
+        // Reads the seeded inboxes before other specs create notices (P1.7).
+        {
+          name: "notifications",
+          testMatch: /notifications\.spec\.ts/,
+          dependencies: ["dev-auth"],
+        },
         // Changes the demo data: after the specs that read it.
-        { name: "joining", testMatch: /joining\.spec\.ts/, dependencies: ["dev-auth"] },
+        { name: "joining", testMatch: /joining\.spec\.ts/, dependencies: ["notifications"] },
         { name: "members", testMatch: /members\.spec\.ts/, dependencies: ["joining"] },
         { name: "families", testMatch: /families\.spec\.ts/, dependencies: ["members"] },
         {

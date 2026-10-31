@@ -51,6 +51,9 @@ flows offline maestro/05-offline-and-logout.yaml
 # Answers and attendance through the offline outbox (P1.5).
 flows responses maestro/08-answer.yaml maestro/09-offline-attendance.yaml
 
+# The inbox and notification settings (P1.7).
+flows notifications maestro/10-notifications.yaml
+
 # The Custom Tab is Chrome, which shows its first-run screens on a fresh
 # emulator. Skip them (Chrome reads this file on emulator images); the flow
 # also dismisses them in case it does not.

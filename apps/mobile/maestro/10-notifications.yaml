@@ -1,0 +1,39 @@
+# Notifications (P1.7): Anna opens her inbox from the start screen (the
+# demo's cancelled F2017 training and Oskar's call-up), opens the
+# cancellation (it goes to the activity), and turns push off for events in
+# the notification settings. On the emulator no push token is registered
+# (not a physical device); the server has the fake push provider.
+appId: ${APP_ID}
+name: Notifications inbox and settings
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- tapOn:
+    id: "open-notifications"
+- extendedWaitUntil:
+    visible:
+      id: "notifications-screen"
+    timeout: 20000
+- assertVisible: ".*Inställt: Träning.*"
+- assertVisible: ".*Kallad: .*"
+- tapOn: ".*Inställt: Träning.*"
+- extendedWaitUntil:
+    visible:
+      id: "activity-screen"
+    timeout: 20000
+- back
+- tapOn:
+    id: "open-notification-settings"
+- extendedWaitUntil:
+    visible:
+      id: "notification-settings-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "push-events"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "push-events"
