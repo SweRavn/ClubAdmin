@@ -151,7 +151,13 @@ No password data (that lives in Zitadel).
 `address`, `logo`, `status` (active, suspended, archived), `join_policy`,
 `next_member_number` (for the per-club running member number),
 `owners_can_appoint_co_owners` (default off), `group_owners_admit_to_club`
-(default on).
+(default on), `email` (the club's contact address, P1.6b). The organisation
+number is checked and formatted by the country pack (`se`: 10 digits, Luhn,
+`NNNNNN-NNNN`; `no`: 9 digits, mod 11). `club_phone_numbers` (club-owned,
+P1.6b): `label` ("Kansli"), `number`, `sort_order`; at most ten per club,
+replaced as a whole (`PUT /clubs/:clubId/phone-numbers`). Contact details
+are shown to people related to the club; club managers change them on the
+settings page (with a second factor).
 
 ### `club_profiles`
 What a club sees about a person: **member number** (running number per club,
@@ -191,6 +197,11 @@ roles and missing consents; protected members marked), **limited** for the
 board roles `chair`, `vice_chair`, `treasurer`, `secretary`, `board_member`,
 `deputy_board_member` (name, member number, membership type, groups; only
 the name, type and group filters; never protected members).
+Lists of people are in given-name order (P1.6b): the register by default
+(`sort_given_name`; "family name" stays a sort option), rosters, answers,
+attendance summaries, an event's confirmed participants and family lists.
+The sort key is computed in the database from rows the viewer may read;
+names never leave it except through the person presenter.
 
 ### `member_exports`
 A CSV export of the register (club-owned): `requested_by_person_id`, `status`
@@ -273,7 +284,12 @@ second factor; confirming needs a login within 15 minutes; ADR 0033):
 `offer_reply_days` (default 7), `archived_at`.
 Groups persist across seasons; `seasons` (`name`, `starts_on`, `ends_on`)
 and `group_seasons` (`capacity`, `notes`) hold per-season settings. Groups are
-archived, never deleted.
+archived (not while they have active subgroups, `group_has_children`) and
+restored by club managers. A group that was never used (no memberships,
+owners, seasons, subgroups, waiting-list entries, invitations, activities,
+series or events: the foreign keys to `groups`, none of which cascades) can
+be deleted (P1.6b, `group_in_use` otherwise); history keeps the row. Club
+managers create groups anywhere, owners under the groups they own.
 Multi-sport sections are groups of kind `section`; the earlier
 `section_admin` role is simply an owner of a section group.
 
@@ -319,6 +335,12 @@ and functions, run its waiting list, manage its chat rooms and calendar.
   audited and visible to club managers.
 - A person can be on several waiting lists at once.
 - Closed entries are deleted after 12 months (retention).
+- **My waiting lists** (P1.6b, `GET /me/waitlists`): the caller's and their
+  wards' open entries with the place in the queue (1 = next, none while an
+  offer is out) and the number waiting, and their pending join requests
+  with the preferred groups. The applicant reads only their own entries
+  (`own_relationships`); the queue and the group's name are read in a
+  tenant transaction of each club they wait in.
 
 ### `club_role_assignments`
 Club-level roles: `chair`, `vice_chair`, `treasurer`, `secretary`,
@@ -470,8 +492,10 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
 ### Activities and "My schedule" (P1.4, ADR 0034)
 - `locations` (club-owned): name (unique among the club's unarchived
   locations, case-insensitive), address, optional coordinates (both or
-  neither; the map link is OpenStreetMap), directions. Archived, never
-  deleted; archived locations are not offered for new activities.
+  neither; the map link is OpenStreetMap), directions,
+  `created_by_person_id` (P1.6b: leaders add places and change only their
+  own; club managers change any). Archived, never deleted; archived
+  locations are not offered for new activities.
 - `activity_series`: a weekly series of a club's groups
   (`activity_series_groups`): kind, title, notes, leader notes, location or
   free-text place, slots (ISO weekday, local start time, length; one per
@@ -558,7 +582,12 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
   events, `auto` for club events), `offer_reply_hours` (default 24) and
   `questions` (JSONB, at most 20: `{ id, type, label, required,
   sensitive, options? }`, types short and long text, one or several
-  choices, number, yes/no).
+  choices, number, yes/no). Only the title and the start are required
+  (P1.6b): without an end the event ends at the end of the start day in the
+  club's time zone (23:59), sign-up closes at the start; an end before the
+  start, or a deadline after the end, is `event_period_invalid`. Up to 20
+  sessions are created with a group event; an `other` session carries
+  `kind_label`.
 - `event_activities` (club-owned): the event's activities (an activity
   belongs to at most one event). Each is called up (ADR 0036) to exactly
   the confirmed participants; unlinking lifts the call-up. Cancelling the

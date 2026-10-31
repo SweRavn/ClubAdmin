@@ -73,6 +73,14 @@ placeholder page served by Caddy.
   same page. Sign-up sends a verification code to Mailpit
   (http://127.0.0.1:8025). https://clubadmin.localhost/me shows who you are,
   `/me/sessions` where you are logged in.
+- **As a demo persona, for real:** `pnpm dev:idp-sync` creates every demo
+  persona with a login as a Zitadel user with a verified email and the
+  password `demo-password-123` (e.g. `anna.lindqvist@example.test`), and
+  links their accounts. Run it again after `pnpm db:reset`; it refuses to run
+  outside development or against another issuer.
+- **MFA-gated pages:** with DEV_AUTH, a "needs a second factor" message links
+  to the login page with the two-factor box ticked; tick it and pick the same
+  persona.
 - `pnpm dev:services` runs `pnpm auth:configure`, which applies
   `infra/zitadel/` to Zitadel and writes the client IDs to `.env.local`. Run it
   again after changing `infra/zitadel/`. The Zitadel console is at
@@ -198,6 +206,27 @@ migrations, run `pnpm db:migrate` (or `pnpm dev:services` again).
 
 `pnpm test:integration` clones a migrated template database per test file;
 the template is rebuilt automatically when migrations change.
+
+### Looking at the database
+
+Any PostgreSQL client works (DBeaver, pgAdmin, `psql`):
+
+| Setting | Value |
+|---|---|
+| Host | `127.0.0.1` |
+| Port | `POSTGRES_PORT` (5432) |
+| Database | `clubadmin` |
+| User | `postgres` |
+| Password | the one in `DATABASE_ADMIN_URL` in `.env.local` |
+
+`psql "$DATABASE_ADMIN_URL"` (after `set -a; . ./.env.local; set +a`)
+does the same from a terminal. Connect as `postgres`: the app role
+`clubadmin_app` sees nothing without a club context (row-level security,
+`app.club_id`), so an empty table there usually means "no club set", not
+"no data". Sealed fields (personal identity numbers, sensitive answers) show
+as ciphertext. The data lives in the Docker volume
+`clubadmin_postgres-data`, not in a file in the repository; `pnpm dev:clean`
+deletes it and `pnpm db:reset` reloads the demo.
 
 PostgreSQL runs from the image in `infra/backup/` (PostgreSQL 18 with
 pgBackRest); `pnpm dev:services` builds it the first time and whenever

@@ -109,3 +109,14 @@ activity, maintained by the worker from domain events) and a rolling
 - Recurrence is weekly only. Other rules (every other week, monthly) are a
   later addition to the slot format; the API ignores nothing silently (a
   slot it does not know is a validation error).
+
+**Amendment (P1.6b): places added by leaders.** Leaders found no place for
+their own trainings and had to ask a club manager. Now those who manage a
+group's activities add places (`club.locations.create`); the place records
+its creator (`locations.created_by_person_id`), and only the creator or a
+club manager changes or archives it (`club.locations.manage` covers any
+place; the service checks the creator for the others, `not_allowed`).
+Everyone in the club picks any active place. Responses carry `canEdit`, so
+the web shows "Edit" only where it works. An activity of kind `other` says
+what it is (`activities.kind_label`, at most 60 characters, "Lunch",
+"Cup"), shown instead of "Other" in calendars and on the activity.

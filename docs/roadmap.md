@@ -34,6 +34,7 @@ Ordered so each package only depends on earlier ones. Prompts:
 | P1.4 | Activities: recurring trainings, matches, locations, in-app calendar |
 | P1.5 | Responses (attending / not attending) and attendance taking |
 | P1.6 | Events with sign-up forms, deadlines, capacity, waiting lists |
+| P1.6b | Clean-up after hands-on testing: events with only name and start, any number of sessions and questions, given-name order, creating/editing/deleting groups, leaders' places and answers, club settings and contact details, queue status, joining with a code, `pnpm dev:idp-sync` |
 | P1.7 | Notifications: email (templates, i18n), push, in-app; user preferences |
 | P1.8 | Privacy: consents, "download my data", leave club, anonymisation and retention jobs |
 | P1.9 | Audit log and record-history UI ("History" panel on detail pages) |

@@ -113,3 +113,14 @@ are personal data about children and must never reveal a protected member
 - Call-ups (inviting only some members to a match) came afterwards: with
   one, the roster's participants are those called up (ADR 0036,
   [#19](https://github.com/SweRavn/ClubAdmin/issues/19)).
+
+**Amendment (P1.6b): leaders answer for participants.** Leaders of an
+activity's groups (those who lead its activities, `canLeadGroupActivities`)
+may set a participant's answer (`activity.respond`), from the answers table
+on the web and the leader's list in the app: a parent calls to say the child
+is ill. The deadline binds members and guardians only; leaders answer also
+after it. The answer records the leader as `responded_by_person_id` (shown
+as "answered by …") and is audited as `activity.response.set_by_leader`,
+not on behalf of anyone. Leaders do not withdraw answers (the person or a
+guardian does). Leaving out the note when answering keeps the current note;
+`null` clears it, so answering again never loses a note.

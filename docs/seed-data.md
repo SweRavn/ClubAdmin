@@ -99,7 +99,11 @@ banner shows "Development login — logged in as Anna Lindqvist". The API logs a
 warning on startup and refuses to start with `DEV_AUTH=true` in production.
 
 Optionally `pnpm dev:idp-sync` creates the same personas as users in the local
-Zitadel (password `demo-password-123`, documented) to test the real login flow.
+Zitadel (verified email, password `demo-password-123`) and links their
+accounts (`accounts.idp_subject`), to test the real login flow: "Log in with
+email" as `anna.lindqvist@example.test`. Idempotent; run it again after
+`pnpm db:reset`. Development only (`NODE_ENV=development`, issuer
+`*.localhost`).
 
 ## Demo scenario: clubs
 
@@ -108,6 +112,12 @@ Zitadel (password `demo-password-123`, documented) to test the real login flow.
 | **Strandvikens Volleybollklubb** (SVK) | SE / sv-SE / Europe/Stockholm | Volleyball | `approval` | Anna, Sara (two managers); Peter was manager until last year | Paid plan, active |
 | **IK Norrbacka** (IKN) | SE / sv-SE / Europe/Stockholm | Multi-sport: football + floorball sections | `open` | Karin; hand-over to Peter **pending** his acceptance | Free plan |
 | **Fjordvik Idrettslag** (FIL) | NO / nb-NO / Europe/Oslo | Handball | `invite_only` | Lars (sole manager → "last manager cannot leave" rule) | Trial, ends in 10 days |
+
+SVK has contact details (P1.6b, `contact` in `docs/demodata/clubs.json`):
+`kansli@strandvikens-vk.test`, Idrottsvägen 4, 451 50 Strandviken, the
+synthetic organisation number 802000-0009 and two phone numbers ("Kansli",
+"Kiosken i sporthallen"). Henrik sees Viktor's place in F2017's queue
+(number 2) on his start page.
 
 ### Groups
 
@@ -178,7 +188,10 @@ schedule (Ola left two years ago).
 
 - **Activities** (P1.4, `apps/api/src/seed/steps/activities.ts`, through the
   activities service): locations Strandvikens sporthall and the school's gym
-  (SVK), Norrbacka IP and Norrbackahallen (IKN), Fjordvik kunstgress (FIL).
+  (SVK), Norrbacka IP and Norrbackahallen (IKN), Fjordvik kunstgress (FIL);
+  "Strandviksskolans gymnastiksal" added by Erik, a leader (P1.6b): Erik may
+  change it, Johan may use but not change it, Anna (club manager) changes
+  any place.
   Weekly training series from ten weeks ago to six weeks ahead, public
   holidays skipped: SVK F2017 on Tuesdays 17:30 and Thursdays 18:00 (the
   autumn-break week four weeks ago skipped; next week's Tuesday cancelled,
@@ -217,7 +230,7 @@ schedule (Ola left two years ago).
   days (six places, offers on the waiting list with 24 hours to answer, sign
   up by day 8, 150 kr as a price text), with a form (T-shirt size, required;
   allergies or medication, sensitive; "can an adult drive") and two matches
-  created with it, called up to the confirmed players. Sara signed up Alva
+  and a lunch (an "other" session labelled "Lunch", P1.6b) created with it, called up to the confirmed players. Sara signed up Alva
   (her allergy is sealed: only Sara and the organisers see it), Erik Maja,
   generated players themselves, and Anna Elsa last (on the waiting list).
   A player cancelled 30 hours ago, so the first in the queue got an offer
