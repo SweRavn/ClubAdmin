@@ -258,9 +258,10 @@ schedule (Ola left two years ago).
   "never" for the schedule and quiet hours 22:00–06:30. Erik: a late "not
   coming" for Elsa. Liam: no longer called up (English). Lars: a moved FIL
   session (Norwegian). Gunilla: her join request decided. Nils and Bo get
-  nothing (no account). The load scenario has ten notices per child to its
-  parent over the last 90 days (about 1.2 million at full size), the
-  latest unread, with push and daily-email deliveries for the last 30 days.
+  nothing (no account). The load scenario has five notices per child to its
+  parent over the last 90 days (about 600,000 at full size, adding about
+  a minute), the latest unread, with push and daily-email deliveries for
+  the last 30 days.
 - **Billing** (only with `BILLING_ENABLED=true`, P0.12): plans Free, Standard
   and the Streaming add-on; SVK on Standard with Streaming (active), IKN on
   Free (active), FIL in a Standard trial ending in ten days. With billing off
