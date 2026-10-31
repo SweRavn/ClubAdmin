@@ -4,7 +4,7 @@
 // are used as the generated types describe them, never parsed strictly:
 // unknown fields and enum values from a newer server are tolerated (ADR 0029).
 
-import type { components } from "@clubadmin/api-client";
+import type { ApiClient, components } from "@clubadmin/api-client";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useSession } from "../state/session.tsx";
@@ -67,7 +67,7 @@ export function useWardGuardians(wardId: string) {
 }
 
 /** Keys for data that follows "viewing as". */
-function useScope() {
+export function useScope() {
   const { personId, viewingAs } = useSession();
   return [personId, viewingAs ?? "self"] as const;
 }
@@ -263,18 +263,38 @@ export function useSchedule() {
   });
 }
 
+type Scope = readonly [string | null, string];
+
+/** Query options shared by the screens and the prefetch (state/prefetch.ts): one cache entry each. */
+export const activityQuery = (api: ApiClient, scope: Scope, activityId: string) => ({
+  queryKey: ["activity", activityId, ...scope] as const,
+  queryFn: async () =>
+    data(
+      await api.GET("/api/v1/activities/{activityId}", {
+        params: { path: { activityId } },
+      }),
+    ),
+});
+
+export const responseSummaryQuery = (api: ApiClient, scope: Scope, activityId: string) => ({
+  queryKey: ["responses", activityId, ...scope] as const,
+  queryFn: async () =>
+    data(
+      await api.GET("/api/v1/activities/{activityId}/responses/summary", {
+        params: { path: { activityId } },
+      }),
+    ),
+});
+
+export const eventQuery = (api: ApiClient, scope: Scope, eventId: string) => ({
+  queryKey: ["event", eventId, ...scope] as const,
+  queryFn: async () =>
+    data(await api.GET("/api/v1/events/{eventId}", { params: { path: { eventId } } })),
+});
+
 export function useActivity(activityId: string) {
   const { api } = useSession();
-  const scope = useScope();
-  return useQuery({
-    queryKey: ["activity", activityId, ...scope],
-    queryFn: async () =>
-      data(
-        await api.GET("/api/v1/activities/{activityId}", {
-          params: { path: { activityId } },
-        }),
-      ),
-  });
+  return useQuery(activityQuery(api, useScope(), activityId));
 }
 
 // Responses and attendance (P1.5); writes go through the outbox (outbox.ts).
@@ -283,16 +303,7 @@ export type Attendance = Schemas["Attendance"];
 
 export function useResponseSummary(activityId: string) {
   const { api } = useSession();
-  const scope = useScope();
-  return useQuery({
-    queryKey: ["responses", activityId, ...scope],
-    queryFn: async () =>
-      data(
-        await api.GET("/api/v1/activities/{activityId}/responses/summary", {
-          params: { path: { activityId } },
-        }),
-      ),
-  });
+  return useQuery(responseSummaryQuery(api, useScope(), activityId));
 }
 
 /** The leaders' list of answers (P1.6b: leaders answer for participants); first 200. */
@@ -346,12 +357,7 @@ export function useMyEvents() {
 
 export function useEvent(eventId: string) {
   const { api } = useSession();
-  const scope = useScope();
-  return useQuery({
-    queryKey: ["event", eventId, ...scope],
-    queryFn: async () =>
-      data(await api.GET("/api/v1/events/{eventId}", { params: { path: { eventId } } })),
-  });
+  return useQuery(eventQuery(api, useScope(), eventId));
 }
 
 type RegistrationChange =

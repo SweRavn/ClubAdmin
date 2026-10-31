@@ -31,6 +31,7 @@ import {
   Section,
 } from "../../components/ui.tsx";
 import { BUILD_VARIANT } from "../../config.ts";
+import { usePrefetch } from "../../state/prefetch.ts";
 import { useTheme } from "../../theme.ts";
 
 /**
@@ -55,6 +56,8 @@ export default function ScheduleScreen() {
   const theme = useTheme();
   const format = useFormatter();
   const schedule = useSchedule();
+  // The coming week's activities and events, fetched before they are opened (ADR 0040).
+  usePrefetch(schedule.data?.items);
   const [person, setPerson] = useState<string | null>(null);
   useColdStartMarker(schedule.data === undefined ? undefined : schedule.dataUpdatedAt);
   const people = schedule.data?.people ?? [];

@@ -6,6 +6,7 @@
 // IDs and a path; the text is the lock-screen text the person chose.
 
 import type { ApiClient } from "@clubadmin/api-client";
+import { useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
@@ -92,6 +93,18 @@ export function usePush(api: ApiClient, personId: string | null, enabled: boolea
     if (!personId || !enabled) return;
     void registerForPush(api, personId).catch(() => undefined);
   }, [api, personId, enabled]);
+
+  // A notice arriving while the app is open: the inbox and the schedule are
+  // refreshed now, so what it is about is current when it is opened.
+  const client = useQueryClient();
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(() => {
+      void client.invalidateQueries({ queryKey: ["me", personId, "notifications"] });
+      void client.invalidateQueries({ queryKey: ["schedule"] });
+      void client.invalidateQueries({ queryKey: ["events"] });
+    });
+    return () => subscription.remove();
+  }, [client, personId]);
 
   useEffect(() => {
     const open = (response: Notifications.NotificationResponse | null) => {
