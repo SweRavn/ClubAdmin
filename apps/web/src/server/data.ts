@@ -47,7 +47,10 @@ import {
   MyProfileSchema,
   MyWaitlistsSchema,
   MyWardsSchema,
+  NotificationListSchema,
+  NotificationSettingsResponseSchema,
   PersonProfileSchema,
+  PushDeviceListSchema,
   RegisterFacetsSchema,
   RegisterPageSchema,
   RegistrationListSchema,
@@ -60,6 +63,7 @@ import {
   SessionListSchema,
   SourceResponseSchema,
   TrustedPeopleSchema,
+  UnreadCountSchema,
   VersionResponseSchema,
   WardGuardiansSchema,
   type z,
@@ -149,6 +153,30 @@ export const getMyClubs = cache(() => required("/api/v1/me/clubs", MyClubsSchema
 export const getMyWards = cache(() => required("/api/v1/me/wards", MyWardsSchema));
 export const getMyGroups = cache(() => required("/api/v1/me/groups", MyGroupsSchema));
 export const getSessions = cache(() => required("/api/v1/me/sessions", SessionListSchema));
+
+// Notifications (P1.7): always the logged-in person's, also when viewing as a ward.
+/** The badge on the bell; null when the API cannot say (the frame still renders). */
+export const getUnreadCount = cache(async (): Promise<number | null> => {
+  const session = await requireSession();
+  try {
+    const res = await apiFetch("/api/v1/me/notifications/unread-count", session.record);
+    return res.ok ? UnreadCountSchema.parse(await res.json()).count : null;
+  } catch {
+    return null;
+  }
+});
+export const getNotifications = cache((cursor: string | null, unread: boolean) => {
+  const query = new URLSearchParams();
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  if (unread) query.set("unread", "true");
+  return required(`/api/v1/me/notifications?${query}`, NotificationListSchema);
+});
+export const getNotificationSettings = cache(() =>
+  required("/api/v1/me/notification-settings", NotificationSettingsResponseSchema),
+);
+export const getPushDevices = cache(() =>
+  required("/api/v1/me/push-devices", PushDeviceListSchema),
+);
 export const getClub = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}`, ClubDetailSchema),
 );

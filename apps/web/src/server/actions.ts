@@ -12,6 +12,7 @@ import {
   ATTENDANCE_ROLES,
   ATTENDANCE_STATUSES,
   CLUB_PHONE_NUMBERS_MAX,
+  EMAIL_MODES,
   EVENT_ACTIVITIES_MAX,
   EVENT_QUESTIONS_MAX,
   type EventQuestion,
@@ -27,6 +28,7 @@ import {
   MEMBER_EXPORT_COLUMNS,
   type MemberExportColumn,
   MEMBERSHIP_TYPES,
+  NOTIFICATION_CATEGORIES,
   QUESTION_TYPES,
   RegisterFilterSchema,
   RESPONSE_MODES,
@@ -1008,8 +1010,63 @@ const CLUB_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+const clock = (value: string) => (/^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : null);
+
+/** Notifications (P1.7): the inbox, settings and phones of the logged-in person. */
+const NOTIFICATION_ACTIONS: Record<string, FormAction> = {
+  /** Opens a notice (marks it read, then goes where it leads) or marks all read up to one. */
+  "read-notifications": {
+    call: (form) => {
+      const notice = id(form, "id");
+      const before = id(form, "before");
+      if (notice)
+        return { path: "/api/v1/me/notifications/read", method: "POST", body: { ids: [notice] } };
+      if (before)
+        return { path: "/api/v1/me/notifications/read", method: "POST", body: { before } };
+      return null;
+    },
+    done: (form) => safeReturnTo(text(form, "to"), back(form, "/me/notifications")),
+  },
+  "save-notification-settings": {
+    call: (form) => {
+      const categories = text(form, "categories")
+        .split(",")
+        .filter((c) => (NOTIFICATION_CATEGORIES as readonly string[]).includes(c))
+        .map((category) => {
+          const email = text(form, `email.${category}`);
+          return {
+            category,
+            email: (EMAIL_MODES as readonly string[]).includes(email) ? email : "always",
+            push: form.get(`push.${category}`) === "on",
+          };
+        });
+      let quietHours: { from: string; to: string } | null = null;
+      if (form.get("quiet") === "on") {
+        const from = clock(text(form, "quietFrom"));
+        const to = clock(text(form, "quietTo"));
+        if (!from || !to) return null;
+        quietHours = { from, to };
+      }
+      return {
+        path: "/api/v1/me/notification-settings",
+        method: "PUT",
+        body: { categories, quietHours, pushPreview: form.get("pushPreview") === "on" },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/notifications/settings"), "saved", "1"),
+  },
+  "remove-push-device": {
+    call: (form) => {
+      const deviceId = id(form, "deviceId");
+      return deviceId ? { path: `/api/v1/me/push-devices/${deviceId}`, method: "DELETE" } : null;
+    },
+    done: (form) => withParam(back(form, "/me/notifications/settings"), "deleted", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
+  ...NOTIFICATION_ACTIONS,
   ...CLUB_ACTIONS,
   ...GROUP_ACTIONS,
   ...ACTIVITY_ACTIONS,

@@ -9,20 +9,28 @@ import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { getCurrentClub } from "../server/context.ts";
-import { currentPath, getMe, getMyClubs, getMyWards, requireSession } from "../server/data.ts";
+import {
+  currentPath,
+  getMe,
+  getMyClubs,
+  getMyWards,
+  getUnreadCount,
+  requireSession,
+} from "../server/data.ts";
 
 export const LOGOUT_FORM = "logout-form";
 export const VIEWING_AS_FORM = "viewing-as-form";
 
 export async function AppFrame({ children }: { children: ReactNode }) {
   const session = await requireSession();
-  const [t, me, clubs, wards, club, path] = await Promise.all([
+  const [t, me, clubs, wards, club, path, unread] = await Promise.all([
     getTranslations(),
     getMe(),
     getMyClubs(),
     getMyWards(),
     getCurrentClub(),
     currentPath(),
+    getUnreadCount(),
   ]);
   const csrf = session.record.csrf;
   const pathname = new URL(path, "https://internal.invalid").pathname;
@@ -104,6 +112,12 @@ export async function AppFrame({ children }: { children: ReactNode }) {
     { kind: "link", key: "profile", label: t("userMenu.profile"), href: `/people/${me.personId}` },
     { kind: "link", key: "account", label: t("userMenu.account"), href: "/me" },
     { kind: "link", key: "language", label: t("userMenu.language"), href: "/me/preferences" },
+    {
+      kind: "link",
+      key: "notifications",
+      label: t("userMenu.notifications"),
+      href: "/me/notifications/settings",
+    },
     { kind: "link", key: "sessions", label: t("userMenu.sessions"), href: "/me/sessions" },
     { kind: "separator", key: "sep" },
     { kind: "submit", key: "logout", label: t("userMenu.logout"), form: LOGOUT_FORM },
@@ -145,6 +159,33 @@ export async function AppFrame({ children }: { children: ReactNode }) {
             </ul>
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <a
+              href="/me/notifications"
+              aria-label={t("notifications.bell", { count: unread ?? 0 })}
+              aria-current={pathname.startsWith("/me/notifications") ? "page" : undefined}
+              data-testid="notifications-bell"
+              className="relative rounded-md px-2 py-1.5 hover:bg-accent-soft aria-[current=page]:bg-accent-soft"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              </svg>
+              {unread ? (
+                <span
+                  aria-hidden="true"
+                  data-testid="notifications-badge"
+                  className="absolute -top-0.5 -right-0.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 text-accent-fg"
+                >
+                  {unread >= 100 ? "99+" : unread}
+                </span>
+              ) : null}
+            </a>
             {actingFor.length > 0 ? (
               <Menu
                 label={t("viewingAs.label")}
