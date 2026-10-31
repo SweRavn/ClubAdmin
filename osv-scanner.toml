@@ -17,3 +17,84 @@ reason = "decode-uri-component 0.2.2: the fixed 0.5.0 is ESM-only and breaks que
 id = "GHSA-mrhx-c7xc-m3w5"
 ignoreUntil = 2027-01-31
 reason = "zod 3.25.76 (fixed only in zod 4): a dependency of @expo/cli, the developer command line, alone; not in the app bundle, the API or the web app, which use zod 4.6.7. Revisit with the next Expo SDK."
+
+# Advisories of 2026-10-23 to 2026-10-28. None is critical (highest CVSS 8.2),
+# so their fixes wait the seven days of minimumReleaseAge (docs/security.md).
+
+[[IgnoredVulns]]
+id = "GHSA-qr28-fpjm-wq7f"
+ignoreUntil = 2027-01-31
+reason = "decode-uri-component 0.2.2: the fixed 0.5.1 is ESM-only like 0.5.0 and breaks query-string 7, which expo-router requires; it only decodes the app's own deep links (clubadmin://...). Revisit with the next Expo SDK."
+
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-01-31
+reason = "deepmerge 4.3.1 (no fixed version): used by @expo/config and jest-config at build and test time on our own configuration; not in the app bundle or any server."
+
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2027-01-31
+reason = "glob 13.0.6 (fixed only in glob 14, a new major): used by @expo/cli and build tooling on the repository's own files; not in the app bundle or any server. Revisit with the next Expo SDK."
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-01-31
+reason = "minimatch 3.1.5, 5.1.9, 9.0.9 and 10.2.6 (fixed only in minimatch 11, a new major): used by ESLint, typescript-eslint, Jest, glob and Expo tooling with the repository's own patterns; not in the app bundle or any server."
+
+# node-forge 1.4.0 (@expo/cli, the development server's certificates only):
+# 1.4.1 fixes these and turns seven days old on 2026-11-03; then pin it
+# through pnpm overrides.
+[[IgnoredVulns]]
+id = "GHSA-4487-j8r4-4g2f"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-4642-5mcj-2rqw"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-525v-9gp9-w22h"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-5cwg-6vw7-rj6p"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-5x38-2vff-x55p"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-6wvx-3r32-xmcg"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-7wch-p9px-956x"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-8hrf-8g6f-7xwp"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-h6cr-wjv9-3cpp"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-hqq3-7jhf-c5jx"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
+
+[[IgnoredVulns]]
+id = "GHSA-jc66-7q78-782g"
+ignoreUntil = 2026-11-04
+reason = "node-forge 1.4.0: fixed in 1.4.1 (released 2026-10-27, seven days on 2026-11-03); @expo/cli's development server only."
