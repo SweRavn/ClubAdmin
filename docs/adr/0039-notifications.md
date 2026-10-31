@@ -91,9 +91,16 @@ must hold at the moment something is shown, not at the moment it was sent.
   with an account are never merged, so recipients are unaffected); an
   about list may name the removed duplicate until the notice expires, and
   the presenter leaves out people the reader may not see.
-- Deferred: ending a session in the sessions list does not yet remove its
-  push device (the app removes it on logout; Expo's "not registered"
-  disables it); `GET /me` has no unread count (the bell reads
+- A push device remembers the app session it was registered in
+  (`push_devices.session_handle`, the handle of the sessions list): ending
+  that session from the list removes the device, as logging out of the app
+  does.
+- Planner statistics: `notifications.recipient_person_id` has a fixed
+  `n_distinct` (one recipient per 40 notices), as ANALYZE's sample
+  underestimates the recipients and the planner would walk the primary key
+  past other people's notices.
+- Deferred: `GET /me` has no unread count (the bell reads
   `/me/notifications/unread-count`); the consistency test between leader
   recipients and the `activity.responses.read` policy is replaced by
-  recipient-resolution tests in the worker.
+  recipient tests per type in the worker (the worker cannot import the
+  API's policies).

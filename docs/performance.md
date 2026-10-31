@@ -51,6 +51,19 @@ budgets are requirements; CI measures them.
   index on `activities (coalesce(respond_by, starts_at))` for requested,
   scheduled activities.
 
+  Measured (P1.7, `notifications-plans.integration.test.ts` in the API and
+  the worker, as the app role with row-level security): on 503,000 notices
+  a typical inbox page, its next page and the unread filter use
+  `notifications_inbox_idx` or `notifications_unread_idx`; a recipient with
+  3,000 recent notices reads under 25,000 rows per page; the first page
+  and the unread count answer within the 50 ms budget (CI margin 75 ms). In
+  the worker, on 1.5 million deliveries: due push and email come from
+  `notification_deliveries_due_idx`, one person's daily email from their
+  inbox index, the hourly push budget from
+  `notification_deliveries_push_sent_idx`, the answer-reminder scan from
+  `activities_reminder_idx`, and daily retention from the creation
+  indexes.
+
 ### Web
 - React Server Components and streaming for first load; client components only
   where interactive.

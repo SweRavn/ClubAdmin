@@ -632,8 +632,9 @@ club; only the worker writes):
   `held` (quiet hours or the daily email), `sent`, `failed` or `skipped`
   with a reason; system only, no record history (delivery log).
 - `push_devices`: the account's phones (sealed Expo push token and its
-  hash, platform, app variant, last seen, disabled when Expo reports the
-  token unregistered).
+  hash, platform, app variant, the app session it was registered in, last
+  seen, disabled when Expo reports the token unregistered). Logging out of
+  the app or ending its session in the sessions list removes the device.
 - `accounts.notification_settings`: per category email `always` (in the
   daily email at 17:00 local time), `no_app` (only without an app with
   push) or `never`, and push on or off; quiet hours for push (default
