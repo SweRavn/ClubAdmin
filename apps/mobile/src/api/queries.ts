@@ -295,6 +295,22 @@ export function useResponseSummary(activityId: string) {
   });
 }
 
+/** The leaders' list of answers (P1.6b: leaders answer for participants); first 200. */
+export function useResponseList(activityId: string, enabled: boolean) {
+  const { api } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["responses", activityId, "list", ...scope],
+    enabled,
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/activities/{activityId}/responses", {
+          params: { path: { activityId }, query: { limit: 200 } },
+        }),
+      ),
+  });
+}
+
 /** The attendance sheet (leaders); kept in the cache for taking attendance offline. */
 export function useAttendance(activityId: string, enabled = true) {
   const { api } = useSession();

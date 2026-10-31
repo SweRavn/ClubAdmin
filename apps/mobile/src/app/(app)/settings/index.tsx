@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Settings: language, time zone and theme (saved to the account, so the web
-// app follows), biometric unlock, sessions, about, log out. Language and
+// Settings: language, time zone (a searchable list with "The club's time
+// zone" first, P1.6b) and theme (saved to the account, so the web app follows), biometric unlock, sessions, about, log out. Language and
 // time zone are only offered by servers that have preferences (ADR 0029).
 
 import { SUPPORTED_LOCALES } from "@clubadmin/i18n";
@@ -29,6 +29,35 @@ export function isTimeZone(value: string): boolean {
   }
 }
 
+/** Zones offered when the engine cannot list them (Hermes without Intl.supportedValuesOf). */
+const COMMON_ZONES = [
+  "Europe/Stockholm",
+  "Europe/Oslo",
+  "Europe/Copenhagen",
+  "Europe/Helsinki",
+  "Europe/Berlin",
+  "Europe/London",
+  "Europe/Madrid",
+  "Atlantic/Reykjavik",
+  "UTC",
+];
+
+/** The IANA zones, or the common ones (P1.6b). */
+export function timeZones(): readonly string[] {
+  const intl = Intl as { supportedValuesOf?: (key: "timeZone") => string[] };
+  return typeof intl.supportedValuesOf === "function"
+    ? intl.supportedValuesOf("timeZone")
+    : COMMON_ZONES;
+}
+
+/** Zones matching what was typed ("stock" → Europe/Stockholm), at most `limit`. */
+export function matchingZones(query: string, limit = 20): string[] {
+  const q = query.trim().toLowerCase().replaceAll(" ", "_");
+  return timeZones()
+    .filter((zone) => q === "" || zone.toLowerCase().includes(q))
+    .slice(0, limit);
+}
+
 export default function Settings() {
   const t = useTranslations();
   const theme = useTheme();
@@ -38,8 +67,7 @@ export default function Settings() {
   const update = useUpdatePreferences();
   const unsent = usePendingWrites().length;
   const preferences = me.data?.preferences;
-  const [zone, setZone] = useState(preferences?.timeZone ?? "");
-  const [zoneError, setZoneError] = useState(false);
+  const [zoneQuery, setZoneQuery] = useState("");
   const [biometric, setBiometric] = useState(appSettings.biometricUnlock());
   const [leaving, setLeaving] = useState(false);
 
@@ -81,21 +109,20 @@ export default function Settings() {
             (locale) => update.mutate({ locale }),
             "locale",
           )}
+          {/* The time zone (P1.6b): "The club's time zone" first, then the zones matching a search. */}
           <Section title={t("preferences.timeZone")}>
             <View style={{ paddingVertical: theme.space(2), gap: theme.space(2) }}>
               <Muted>{t("preferences.timeZoneHint")}</Muted>
               <TextInput
-                value={zone}
-                onChangeText={(text) => {
-                  setZone(text);
-                  setZoneError(false);
-                }}
+                value={zoneQuery}
+                onChangeText={setZoneQuery}
+                placeholder={t("mobile.searchTimeZone")}
                 autoCapitalize="none"
                 autoCorrect={false}
-                accessibilityLabel={t("preferences.timeZone")}
+                accessibilityLabel={t("mobile.searchTimeZone")}
                 style={{
                   color: theme.colors.fg,
-                  borderColor: zoneError ? theme.colors.danger : theme.colors.border,
+                  borderColor: theme.colors.border,
                   borderWidth: 1,
                   borderRadius: 6,
                   minHeight: theme.touch,
@@ -103,25 +130,28 @@ export default function Settings() {
                 }}
                 testID="timezone-input"
               />
-              {zoneError ? (
-                <Body style={{ color: theme.colors.danger }}>
-                  {t("preferences.invalidTimeZone")}
-                </Body>
+              {update.isError ? (
+                <Body style={{ color: theme.colors.danger }}>{t("preferences.errors.failed")}</Body>
               ) : null}
-              <Button
-                label={t("common.save")}
-                kind="secondary"
-                busy={update.isPending}
-                onPress={() => {
-                  const value = zone.trim();
-                  if (value && !isTimeZone(value)) {
-                    setZoneError(true);
-                    return;
-                  }
-                  update.mutate({ timeZone: value || null });
-                }}
-              />
             </View>
+            {[null, ...matchingZones(zoneQuery)].map((value, index, all) => {
+              const current = (preferences.timeZone ?? null) === value;
+              const label = value ?? t("preferences.clubTimeZone");
+              return (
+                <Row
+                  key={value ?? "club"}
+                  onPress={() => update.mutate({ timeZone: value })}
+                  accessibilityLabel={label}
+                  last={index === all.length - 1}
+                  testID={`timezone-${value ?? "club"}`}
+                >
+                  <Body style={{ fontWeight: current ? "700" : "400" }}>
+                    {label}
+                    {current ? ` · ${t("mobile.selected")}` : ""}
+                  </Body>
+                </Row>
+              );
+            })}
           </Section>
           {choose(
             t("mobile.theme"),

@@ -9,6 +9,7 @@
 import { enumKey } from "@clubadmin/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
+import { useState } from "react";
 import { Linking, View } from "react-native";
 import { useFormatter, useTranslations } from "use-intl";
 
@@ -16,6 +17,7 @@ import {
   type SchedulePage,
   useActivity,
   useMyGroups,
+  useResponseList,
   useResponseSummary,
 } from "../../../api/queries.ts";
 import { DataAge } from "../../../components/data-age.tsx";
@@ -115,7 +117,7 @@ function Activity({ activityId }: { activityId: string }) {
         {title}
       </Body>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.space(1) }}>
-        <RoleBadge label={t(enumKey("activityKinds", kind))} />
+        <RoleBadge label={a?.kindLabel ?? t(enumKey("activityKinds", kind))} />
         {cancelled ? <RoleBadge tone="accent" label={t("activities.cancelled")} /> : null}
       </View>
       {cancelled ? (
@@ -152,6 +154,7 @@ function Activity({ activityId }: { activityId: string }) {
           ))}
         </Section>
       ) : null}
+      {leads && !cancelled ? <LeaderAnswers activityId={activityId} /> : null}
       {leads ? (
         <Button
           label={t("mobile.takeAttendance")}
@@ -247,5 +250,31 @@ function Activity({ activityId }: { activityId: string }) {
       </Section>
       <Muted>{groups.map((g) => g.name).join(", ")}</Muted>
     </Screen>
+  );
+}
+
+/** The leaders' list (P1.6b): each participant with their answer, which leaders may set. */
+function LeaderAnswers({ activityId }: { activityId: string }) {
+  const t = useTranslations();
+  const list = useResponseList(activityId, true);
+  const [answered, setAnswered] = useState<Record<string, "attending" | "not_attending">>({});
+  const items = list.data?.items ?? [];
+  if (items.length === 0) return null;
+  return (
+    <Section title={t("responses.leadersList")}>
+      {items.map((r, index) => (
+        <Row key={r.person.id} last={index === items.length - 1}>
+          <PersonName person={r.person} />
+          {r.note ? <Muted>{r.note}</Muted> : null}
+          <ResponseButtons
+            activityId={activityId}
+            personId={r.person.id}
+            status={answered[r.person.id] ?? r.status}
+            deadlinePassed={false}
+            onAnswer={(status) => setAnswered({ ...answered, [r.person.id]: status })}
+          />
+        </Row>
+      ))}
+    </Section>
   );
 }

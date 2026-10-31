@@ -2,6 +2,8 @@
 // "Coming" / "Not coming" for one person (P1.5). The answer goes through the
 // outbox (sent at once when online, later when not) and shows at once in
 // the cached schedule; after the deadline only "Not coming" is offered.
+// Leaders answer for participants with the same control (P1.6b, `onAnswer`
+// updates their list).
 import { useQueryClient } from "@tanstack/react-query";
 import { Pressable, Text, View } from "react-native";
 import { useTranslations } from "use-intl";
@@ -43,12 +45,14 @@ export function ResponseButtons({
   status,
   deadlinePassed,
   label,
+  onAnswer,
 }: {
   activityId: string;
   personId: string;
   status: Status | null;
   deadlinePassed: boolean;
   label?: string;
+  onAnswer?: (status: Status) => void;
 }) {
   const t = useTranslations();
   const theme = useTheme();
@@ -57,6 +61,7 @@ export function ResponseButtons({
   const answer = (next: Status) => {
     if (next === status) return;
     optimistic(activityId, personId, next);
+    onAnswer?.(next);
     send({ kind: "response", activityId, personId, status: next });
   };
   const button = (value: Status, text: string) => {
