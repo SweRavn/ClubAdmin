@@ -4,9 +4,9 @@
 // its hash.
 import { getTranslations } from "next-intl/server";
 
-import { ActionForm, buttonClass } from "../../../components/action-form.tsx";
 import { FormError } from "../../../components/form-error.tsx";
-import { getSession, lookupInvitation } from "../../../server/data.ts";
+import { JoinActions } from "../../../components/join-actions.tsx";
+import { lookupInvitation } from "../../../server/data.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +20,7 @@ export async function generateMetadata() {
 }
 
 export default async function JoinPage({ params, searchParams }: Props) {
-  const [{ token }, query, t, session] = await Promise.all([
-    params,
-    searchParams,
-    getTranslations(),
-    getSession(),
-  ]);
+  const [{ token }, query, t] = await Promise.all([params, searchParams, getTranslations()]);
   const invitation = token.length <= 100 ? await lookupInvitation(token) : null;
   const here = `/join/${encodeURIComponent(token)}`;
   return (
@@ -44,22 +39,7 @@ export default async function JoinPage({ params, searchParams }: Props) {
           </h1>
           <p>{t("joinLanding.intro", { club: invitation.clubName })}</p>
           <FormError code={query.error} />
-          {session ? (
-            <ActionForm action="accept-invitation" back={here}>
-              <input type="hidden" name="token" value={token} />
-              <button type="submit" className={buttonClass} data-testid="accept-invitation">
-                {t("joinLanding.accept", { club: invitation.clubName })}
-              </button>
-            </ActionForm>
-          ) : (
-            <a
-              href={`/login?returnTo=${encodeURIComponent(here)}`}
-              className={buttonClass}
-              data-testid="login-to-accept"
-            >
-              {t("joinLanding.login")}
-            </a>
-          )}
+          <JoinActions clubName={invitation.clubName} here={here} secret={{ token }} />
         </>
       )}
     </main>

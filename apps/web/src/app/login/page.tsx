@@ -81,14 +81,27 @@ export default async function LoginPage({
             {t("login.dev.title")}
           </h2>
           <p className="text-muted">{t("login.dev.hint")}</p>
-          <DevPicker personas={await personas()} returnTo={returnTo} />
+          <DevPicker
+            personas={await personas()}
+            returnTo={returnTo}
+            mfa={one(params.mfa) === "1"}
+          />
         </section>
       ) : null}
     </main>
   );
 }
 
-async function DevPicker({ personas, returnTo }: { personas: Persona[]; returnTo: string }) {
+async function DevPicker({
+  personas,
+  returnTo,
+  mfa,
+}: {
+  personas: Persona[];
+  returnTo: string;
+  /** ?mfa=1: the second factor box ticked (from the mfa_required hint, P1.6b). */
+  mfa: boolean;
+}) {
   const t = await getTranslations();
   if (personas.length === 0) return <p>{t("login.dev.empty")}</p>;
   // Grouped by club; someone in several clubs is listed under each.
@@ -116,7 +129,15 @@ async function DevPicker({ personas, returnTo }: { personas: Persona[]; returnTo
       <input type="hidden" name="returnTo" value={returnTo} />
       <p>
         <label className="inline-flex items-center gap-2">
-          <input type="checkbox" name="mfa" value="1" className="size-4" /> {t("login.dev.mfa")}
+          <input
+            type="checkbox"
+            name="mfa"
+            value="1"
+            defaultChecked={mfa}
+            className="size-4"
+            data-testid="dev-mfa"
+          />{" "}
+          {t("login.dev.mfa")}
         </label>
       </p>
       {ordered.map(([key, group]) => (

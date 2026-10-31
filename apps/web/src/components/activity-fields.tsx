@@ -11,6 +11,7 @@ import { ResponseModeFields } from "./response-mode-fields.tsx";
 
 export interface ActivityFieldValues {
   kind?: string;
+  kindLabel?: string | null;
   title?: string;
   date?: string;
   startTime?: string;
@@ -32,10 +33,13 @@ export async function ActivityFields({
   timeZone,
   locations,
   values = {},
+  addPlaceHref,
 }: {
   timeZone: string;
   locations: readonly Location[];
   values?: ActivityFieldValues;
+  /** The places page, for those who may add a place (P1.6b). */
+  addPlaceHref?: string | null;
 }) {
   const t = await getTranslations();
   const input = (
@@ -57,21 +61,34 @@ export async function ActivityFields({
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <input type="hidden" name="timeZone" value={timeZone} />
-      <label className="block space-y-1">
-        <span className="text-sm">{t("activities.kind")}</span>
-        <select
-          name="kind"
-          className={inputClass}
-          defaultValue={values.kind ?? "match"}
-          data-testid="activity-kind"
-        >
-          {ACTIVITY_KINDS.map((k) => (
-            <option key={k} value={k}>
-              {t(enumKey("activityKinds", k))}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="group space-y-2">
+        <label className="block space-y-1">
+          <span className="text-sm">{t("activities.kind")}</span>
+          <select
+            name="kind"
+            className={inputClass}
+            defaultValue={values.kind ?? "match"}
+            data-testid="activity-kind"
+          >
+            {ACTIVITY_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {t(enumKey("activityKinds", k))}
+              </option>
+            ))}
+          </select>
+        </label>
+        {/* "Other": what it is (P1.6b); shown when "Other" is chosen. */}
+        <label className="hidden space-y-1 group-has-[option[value=other]:checked]:block">
+          <span className="text-sm">{t("activities.kindLabel")}</span>
+          <input
+            name="kindLabel"
+            className={inputClass}
+            defaultValue={values.kindLabel ?? ""}
+            maxLength={60}
+            data-testid="activity-kindLabel"
+          />
+        </label>
+      </div>
       {input("title", t("activities.titleField"), { required: true, maxLength: 120 })}
       {input("date", t("activities.date"), { type: "date", required: true })}
       <div className="grid grid-cols-2 gap-3">
@@ -100,6 +117,13 @@ export async function ActivityFields({
         </select>
       </label>
       {input("locationText", t("activities.locationText"), { maxLength: 200 })}
+      {addPlaceHref ? (
+        <p className="text-sm sm:col-span-2">
+          <a href={addPlaceHref} className="underline" data-testid="add-place-link">
+            {t("locations.addLink")}
+          </a>
+        </p>
+      ) : null}
       {input("meetTime", t("activities.meetTime"), { type: "time" })}
       {input("meetPlace", t("activities.meetPlace"), { maxLength: 200 })}
       {input("opponent", t("activities.opponent"), { maxLength: 120 })}

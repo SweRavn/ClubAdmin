@@ -25,9 +25,9 @@ export default async function ClubPage({ params, searchParams }: Params) {
     getClubGroups(clubId),
     getMyClubs(),
   ]);
-  const canManage =
-    mine.clubs.find((c) => c.club.id === club.id)?.permissions.includes("club.roles.manage") ??
-    false;
+  const permissions = mine.clubs.find((c) => c.club.id === club.id)?.permissions ?? [];
+  const canManage = permissions.includes("club.roles.manage");
+  const canSettings = permissions.includes("club.settings.update");
   const topLevel = groups.filter((g) => g.parentGroupId === null && !g.archived);
 
   return (
@@ -54,9 +54,20 @@ export default async function ClubPage({ params, searchParams }: Params) {
         aria-labelledby="club-details"
         className="rounded-lg border border-border bg-raised p-4"
       >
-        <h2 id="club-details" className="mb-2 text-lg font-semibold">
-          {t("club.details")}
-        </h2>
+        <div className="mb-2 flex items-baseline gap-3">
+          <h2 id="club-details" className="text-lg font-semibold">
+            {t("club.details")}
+          </h2>
+          {canSettings ? (
+            <a
+              href={`/clubs/${club.id}/settings`}
+              className="text-sm text-accent underline"
+              data-testid="club-settings-link"
+            >
+              {t("clubSettings.title")}
+            </a>
+          ) : null}
+        </div>
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="text-muted">{t("club.timeZone")}</dt>
           <dd>{club.timeZone}</dd>
@@ -64,6 +75,40 @@ export default async function ClubPage({ params, searchParams }: Params) {
           <dd data-testid="club-time">
             <ClubTime value={new Date()} timeZone={club.timeZone} timeStyle="short" />
           </dd>
+          {club.email ? (
+            <>
+              <dt className="text-muted">{t("clubSettings.email")}</dt>
+              <dd>
+                <a href={`mailto:${club.email}`} className="underline">
+                  {club.email}
+                </a>
+              </dd>
+            </>
+          ) : null}
+          {(club.phoneNumbers ?? []).map((p) => (
+            <div key={p.id} className="contents" data-testid="club-phone">
+              <dt className="text-muted">{p.label}</dt>
+              <dd>
+                <a href={`tel:${p.number.replace(/[^+0-9]/g, "")}`} className="underline">
+                  {p.number}
+                </a>
+              </dd>
+            </div>
+          ))}
+          {club.address ? (
+            <>
+              <dt className="text-muted">{t("clubSettings.address")}</dt>
+              <dd>
+                {club.address.street}, {club.address.postalCode} {club.address.city}
+              </dd>
+            </>
+          ) : null}
+          {club.organizationNumber ? (
+            <>
+              <dt className="text-muted">{t("clubSettings.organizationNumber")}</dt>
+              <dd>{club.organizationNumber}</dd>
+            </>
+          ) : null}
         </dl>
       </section>
 

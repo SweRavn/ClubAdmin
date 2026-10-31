@@ -42,7 +42,8 @@
     "invitations": "Invitations",
     "schedule": "My schedule",
     "calendar": "Calendar",
-    "locations": "Locations"
+    "locations": "Locations",
+    "events": "Events"
   },
   "clubSwitcher": {
     "label": "Club: {club}",
@@ -101,7 +102,14 @@
     "automatic": "Automatic (club or browser)",
     "saved": "Saved.",
     "invalidTimeZone": "Unknown time zone. Use a name such as Europe/Stockholm.",
-    "timeZoneHint": "For example Europe/Stockholm. Leave empty to use the club's or the browser's."
+    "timeZoneHint": "For example Europe/Stockholm. Leave empty to use the club's or the browser's.",
+    "clubTimeZone": "The club's time zone",
+    "errors": {
+      "timeZone": "Unknown time zone. Choose one from the list.",
+      "locale": "The language is not supported.",
+      "rate_limited": "Too many changes in a short time. Wait a moment and try again.",
+      "failed": "The preferences could not be saved. Try again."
+    }
   },
   "locales": {
     "sv": "Svenska",
@@ -213,7 +221,7 @@
     "apply": "Show",
     "clear": "Clear filters",
     "sort": "Sort by",
-    "sortName": "Name",
+    "sortName": "Given name",
     "sortMemberNumber": "Member number",
     "sortJoined": "Join date",
     "order": "Order",
@@ -238,7 +246,8 @@
     "updated": "The membership was updated.",
     "add": "Add member",
     "import": "Import members",
-    "added": "The member was added."
+    "added": "The member was added.",
+    "sortFamilyName": "Family name"
   },
   "time": {
     "viewerZone": "{time} for you ({zone})"
@@ -349,7 +358,8 @@
     "signOutPendingBody": "Answers or attendance taken offline have not been sent yet. Signing out deletes them.",
     "signOutAnyway": "Sign out anyway",
     "takeAttendance": "Take attendance",
-    "attendanceOffline": "Offline: attendance is saved on the phone and sent when you are online."
+    "attendanceOffline": "Offline: attendance is saved on the phone and sent when you are online.",
+    "searchTimeZone": "Search time zones (e.g. Stockholm)"
   },
   "email": {
     "footer": "This email was sent by ClubAdmin on behalf of {club}.",
@@ -425,7 +435,10 @@
     "creationRequested": "Your request to create a club has been sent to the administrators.",
     "handover": "{from} wants to hand over the manager role of {club} to you.",
     "accept": "Accept",
-    "decline": "Decline"
+    "decline": "Decline",
+    "preferredGroups": "Wishes: {groups}",
+    "waitlist": "{person} is on the waiting list for {group} ({club}): number {position} of {waiting}",
+    "waitlistOffered": "{person} has been offered a place in {group} ({club})"
   },
   "findClub": {
     "title": "Find a club",
@@ -520,7 +533,8 @@
     "invalid": "This invitation is no longer valid. Ask the club for a new one.",
     "login": "Log in or create an account to accept",
     "accept": "Join {club}",
-    "intro": "You have been invited to join {club} in ClubAdmin."
+    "intro": "You have been invited to join {club} in ClubAdmin.",
+    "completeProfile": "Complete your profile first; you then come back here."
   },
   "managers": {
     "title": "Club managers",
@@ -643,7 +657,12 @@
     "group_has_children": "The group has active subgroups. Archive or move them first.",
     "group_in_use": "The group has been used (members, activities or history) and can only be archived.",
     "event_period_invalid": "The end must be after the start, and sign-up must close before the end.",
-    "invalid_organization_number": "The organisation number is not valid."
+    "invalid_organization_number": "The organisation number is not valid.",
+    "group_cycle": "A group cannot be placed under itself or its subgroups.",
+    "group_parent_invalid": "The chosen parent group does not exist.",
+    "group_archived": "The group is archived.",
+    "devMfaHint": "Development: log in again with the second factor (MFA) box ticked.",
+    "devMfaLink": "To the login"
   },
   "memberExport": {
     "columns": {
@@ -1086,7 +1105,8 @@
     "homeAway": "Home or away",
     "notGiven": "Not given",
     "jointGroups": "Joint with",
-    "jointHint": "You must manage the activities of every group you choose."
+    "jointHint": "You must manage the activities of every group you choose.",
+    "kindLabel": "What is it? (e.g. Lunch)"
   },
   "series": {
     "newTitle": "New training series",
@@ -1144,7 +1164,8 @@
     "archive": "Archive",
     "restore": "Restore",
     "archived": "archived",
-    "conflicts": "Double bookings in the coming eight weeks"
+    "conflicts": "Double bookings in the coming eight weeks",
+    "addLink": "Place missing? Add a place"
   },
   "responses": {
     "title": "Answers",
@@ -1172,7 +1193,9 @@
     "respondByHint": "Empty: until the start. After the deadline only “not coming” is accepted.",
     "family": "My family",
     "modeDefault": "Default for the type",
-    "answerByLabel": "Answer by"
+    "answerByLabel": "Answer by",
+    "save": "Save the answer",
+    "yourAnswer": "Your answer"
   },
   "responseModes": {
     "none": "Not asked for",
@@ -1350,6 +1373,84 @@
       "expired": "Offer expired",
       "removed": "Removed"
     },
-    "needsConnection": "Needs a connection"
+    "needsConnection": "Needs a connection",
+    "startHint": "The date is required; without a time it starts at midnight.",
+    "endHint": "Empty: ends at the end of the day (23:59).",
+    "opensHint": "Empty: sign-up opens as soon as the event is published.",
+    "closesHint": "Empty: sign-up closes when the event starts.",
+    "cancelHint": "Empty: the same as the sign-up deadline.",
+    "capacityHint": "Unlimited",
+    "endBeforeStart": "The end must be after the start.",
+    "closesAfterEnd": "Sign-up cannot close after the event ends.",
+    "removeRow": "Remove",
+    "addSession": "Add a session",
+    "drafted": "The draft was saved. You find it under Events in the club menu and on the group page under Drafts.",
+    "drafts": "Drafts"
+  },
+  "groupForm": {
+    "newTitle": "New group",
+    "newSubgroup": "New subgroup",
+    "editTitle": "Edit group",
+    "name": "Name",
+    "noParent": "None (top level)",
+    "birthYearFrom": "Born from year",
+    "birthYearTo": "Born to year",
+    "genderCategory": "Category",
+    "notSet": "Not set",
+    "genderCategories": {
+      "female": "Girls/women",
+      "male": "Boys/men",
+      "mixed": "Mixed",
+      "open": "Open"
+    },
+    "level": "Level",
+    "admissionMode": "Admission",
+    "admissionModes": {
+      "direct": "Direct",
+      "waitlist": "Waiting list",
+      "closed": "Closed"
+    },
+    "offerReplyDays": "Days to answer an offered place",
+    "create": "Create group",
+    "save": "Save",
+    "saved": "The group was created.",
+    "updated": "The group was saved.",
+    "deleted": "The group was deleted.",
+    "archivedHint": "The group is archived. Restore it to change it.",
+    "archiveTitle": "Archive",
+    "archiveHint": "A group that has ended is archived: its history stays, but members no longer see it.",
+    "archive": "Archive the group",
+    "restoreTitle": "Restore",
+    "restoreHint": "The club's managers can restore an archived group.",
+    "restore": "Restore the group",
+    "deleteTitle": "Delete",
+    "deleteHint": "The group was never used (no members, activities or events) and can be deleted.",
+    "deleteConfirm": "Yes, delete {group} for good",
+    "delete": "Delete the group"
+  },
+  "timeZones": {
+    "other": "Other"
+  },
+  "clubSettings": {
+    "title": "Club settings",
+    "saved": "The settings were saved.",
+    "mfaHint": "Saving needs a login with a second factor (MFA).",
+    "timeZone": "Time zone",
+    "defaultLocale": "Default language",
+    "email": "Email",
+    "organizationNumber": "Organisation number",
+    "address": "Postal address",
+    "save": "Save the settings",
+    "phoneNumbers": "Phone numbers",
+    "phoneLabel": "What (e.g. Office)",
+    "phoneNumber": "Number",
+    "phoneOrder": "Order",
+    "addPhone": "Add a number",
+    "savePhones": "Save the phone numbers"
+  },
+  "joinCode": {
+    "title": "Join with a code",
+    "intro": "Did a club give you a code? Enter it here to see which club it is for.",
+    "lookUp": "Continue"
   }
 }

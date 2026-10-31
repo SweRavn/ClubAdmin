@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Language and time zone of the account (null: the club's, then the browser's).
+// The time zone is a list with "The club's time zone" first (P1.6b).
 import { enumKey } from "@clubadmin/i18n";
 import { UI_LOCALES } from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
 
+import { TimeZoneSelect } from "../../../../components/time-zone-select.tsx";
 import { getMe, requireSession } from "../../../../server/data.ts";
+
+/** Errors of the save (each its own message, P1.6b). */
+const ERRORS = ["timeZone", "locale", "rate_limited", "failed"] as const;
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -29,8 +34,8 @@ export default async function PreferencesPage({ searchParams }: Props) {
         </p>
       ) : null}
       {params.error ? (
-        <p role="alert" className="rounded-md bg-protected-soft px-3 py-2">
-          {t("preferences.invalidTimeZone")}
+        <p role="alert" className="rounded-md bg-protected-soft px-3 py-2" data-testid="form-error">
+          {t(`preferences.errors.${ERRORS.find((e) => e === params.error) ?? "failed"}`)}
         </p>
       ) : null}
       <form method="post" action="/me/preferences/save" className="space-y-4">
@@ -57,13 +62,12 @@ export default async function PreferencesPage({ searchParams }: Props) {
           <label htmlFor="timeZone" className="block font-medium">
             {t("preferences.timeZone")}
           </label>
-          <input
+          <TimeZoneSelect
             id="timeZone"
             name="timeZone"
-            defaultValue={timeZone ?? ""}
-            aria-describedby="timeZone-hint"
-            autoComplete="off"
-            className="w-full rounded-md border border-border bg-bg px-3 py-2"
+            value={timeZone}
+            clubOption={t("preferences.clubTimeZone")}
+            testId="preferences-timeZone"
           />
           <p id="timeZone-hint" className="text-sm text-muted">
             {t("preferences.timeZoneHint")}

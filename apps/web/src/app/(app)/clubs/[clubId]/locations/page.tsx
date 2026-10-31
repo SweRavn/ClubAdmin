@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// The club's locations (P1.4, club managers): add, change, archive and
-// restore; double bookings in the coming eight weeks for each.
+// The club's locations (P1.4): club managers add, change, archive and
+// restore any; those who manage a group's activities add places and change
+// their own (P1.6b). Double bookings in the coming eight weeks for managers.
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
@@ -77,17 +78,20 @@ export default async function LocationsPage({ params, searchParams }: Props) {
   const [{ clubId }, query] = await Promise.all([params, searchParams]);
   const [t, club, mine] = await Promise.all([getTranslations(), getClub(clubId), getMyClubs()]);
   const permissions = mine.clubs.find((c) => c.club.id === club.id)?.permissions ?? [];
-  if (!permissions.includes("club.locations.manage")) forbidden();
+  const manages = permissions.includes("club.locations.manage");
+  if (!manages && !permissions.includes("club.locations.create")) forbidden();
   const locations = await getLocations(club.id, true);
   const { from, to } = weekRange(0, 8);
-  const conflicts = await Promise.all(
-    locations
-      .filter((l) => !l.archived)
-      .map(async (l) => ({
-        location: l,
-        ...(await getLocationConflicts(club.id, l.id, from, to)),
-      })),
-  );
+  const conflicts = manages
+    ? await Promise.all(
+        locations
+          .filter((l) => !l.archived)
+          .map(async (l) => ({
+            location: l,
+            ...(await getLocationConflicts(club.id, l.id, from, to)),
+          })),
+      )
+    : [];
   const doubleBooked = conflicts.filter((c) => c.conflicts.length > 0);
 
   return (
@@ -160,25 +164,31 @@ export default async function LocationsPage({ params, searchParams }: Props) {
                 {t("activities.map")}
               </a>
             ) : null}
-            <details className="mt-2">
-              <summary className="cursor-pointer text-sm">{t("locations.edit")}</summary>
-              <ActionForm action="update-location" className="mt-2 space-y-3">
-                <input type="hidden" name="clubId" value={club.id} />
-                <input type="hidden" name="locationId" value={l.id} />
-                <LocationFields values={l} />
-                <button type="submit" className={buttonClass}>
-                  {t("locations.save")}
-                </button>
-              </ActionForm>
-            </details>
-            <ActionForm action="update-location" className="mt-2">
-              <input type="hidden" name="clubId" value={club.id} />
-              <input type="hidden" name="locationId" value={l.id} />
-              <input type="hidden" name="archive" value={l.archived ? "restore" : "archive"} />
-              <button type="submit" className={secondaryButtonClass}>
-                {l.archived ? t("locations.restore") : t("locations.archive")}
-              </button>
-            </ActionForm>
+            {manages || l.canEdit ? (
+              <>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-sm" data-testid="location-edit">
+                    {t("locations.edit")}
+                  </summary>
+                  <ActionForm action="update-location" className="mt-2 space-y-3">
+                    <input type="hidden" name="clubId" value={club.id} />
+                    <input type="hidden" name="locationId" value={l.id} />
+                    <LocationFields values={l} />
+                    <button type="submit" className={buttonClass}>
+                      {t("locations.save")}
+                    </button>
+                  </ActionForm>
+                </details>
+                <ActionForm action="update-location" className="mt-2">
+                  <input type="hidden" name="clubId" value={club.id} />
+                  <input type="hidden" name="locationId" value={l.id} />
+                  <input type="hidden" name="archive" value={l.archived ? "restore" : "archive"} />
+                  <button type="submit" className={secondaryButtonClass}>
+                    {l.archived ? t("locations.restore") : t("locations.archive")}
+                  </button>
+                </ActionForm>
+              </>
+            ) : null}
           </li>
         ))}
       </ul>

@@ -22,6 +22,7 @@ export const PERSONAS = {
   liam: { id: person(15), name: "Liam Yilmaz" },
   peter: { id: person(16), name: "Peter Sund" },
   emma: { id: person(21), name: "Emma Svensson" },
+  henrik: { id: person(22), name: "Henrik Malm" },
   samira: { id: person(23), name: "Samira Karimi" },
   nadia: { id: person(24), name: "Nadia Karimi" },
   vera: { id: person(28), name: "Vera Ahmed" },

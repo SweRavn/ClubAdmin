@@ -11,13 +11,23 @@ import {
   CONSENT_PURPOSES,
   GENDERS,
   MEMBERSHIP_TYPES,
+  REGISTER_SORTS,
   REGISTER_STATUSES,
+  type RegisterSort,
 } from "@clubadmin/shared";
 import { EmptyState } from "@clubadmin/ui";
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { inputClass, secondaryButtonClass } from "../../../../../components/action-form.tsx";
+
+/** The register's sort options: given name first by default (P1.6b). */
+const SORT_LABELS = {
+  name: "members.sortName",
+  family_name: "members.sortFamilyName",
+  member_number: "members.sortMemberNumber",
+  joined: "members.sortJoined",
+} as const satisfies Record<RegisterSort, string>;
 import { Notice } from "../../../../../components/form-error.tsx";
 import { LazyRegisterList } from "../../../../../components/lazy-register-list.tsx";
 import { RegisterEntry, type RegisterTexts } from "../../../../../components/register-entry.tsx";
@@ -219,11 +229,14 @@ export default async function MembersPage({ params, searchParams }: Props) {
                 )}
               </>
             ) : null}
-            {select("sort", t("members.sort"), [
-              { value: "name", label: t("members.sortName") },
-              { value: "member_number", label: t("members.sortMemberNumber") },
-              ...(full ? [{ value: "joined", label: t("members.sortJoined") }] : []),
-            ])}
+            {select(
+              "sort",
+              t("members.sort"),
+              REGISTER_SORTS.filter((s) => full || s !== "joined").map((s) => ({
+                value: s,
+                label: t(SORT_LABELS[s]),
+              })),
+            )}
             {select("order", t("members.order"), [
               { value: "asc", label: t("members.orderAsc") },
               { value: "desc", label: t("members.orderDesc") },

@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Edit an event (P1.6): the organisers' form. "Add a question" saves and
-// returns with one more empty question row.
+// Edit an event (P1.6): the organisers' form. Questions are added in the
+// browser; without JavaScript "Add a question" returns with what was typed
+// and one more row (P1.6b).
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
-import {
-  ActionForm,
-  buttonClass,
-  secondaryButtonClass,
-} from "../../../../../components/action-form.tsx";
+import { ActionForm, buttonClass } from "../../../../../components/action-form.tsx";
 import { EventFields } from "../../../../../components/event-fields.tsx";
 import { FormError } from "../../../../../components/form-error.tsx";
-import { getEvent, getLocations } from "../../../../../server/data.ts";
+import { formDraft, getEvent, getLocations } from "../../../../../server/data.ts";
 
 type Props = {
   params: Promise<{ eventId: string }>;
@@ -26,8 +23,10 @@ export default async function EditEventPage({ params, searchParams }: Props) {
   const [{ eventId }, query] = await Promise.all([params, searchParams]);
   const [t, event] = await Promise.all([getTranslations(), getEvent(eventId)]);
   if (!event.canManage) forbidden();
-  const locations = await getLocations(event.clubId);
-  const rows = Math.min(Math.max(Number(query.rows) || 1, 1), 5);
+  const [locations, draft] = await Promise.all([
+    getLocations(event.clubId),
+    formDraft("update-event", query),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -40,27 +39,17 @@ export default async function EditEventPage({ params, searchParams }: Props) {
       <FormError code={query.error} />
       <ActionForm action="update-event" className="space-y-6" testId="edit-event-form">
         <input type="hidden" name="eventId" value={event.id} />
-        <input type="hidden" name="rows" value={rows} />
         <EventFields
           timeZone={event.timeZone}
           locations={locations}
           values={{ ...event, locationId: event.location?.id ?? null }}
-          emptyRows={rows}
+          draft={draft}
+          questionRows={query.qrows}
+          error={query.error}
         />
-        <div className="flex flex-wrap gap-2">
-          <button type="submit" className={buttonClass} data-testid="event-save">
-            {t("events.save")}
-          </button>
-          <button
-            type="submit"
-            name="more"
-            value="1"
-            className={secondaryButtonClass}
-            data-testid="event-add-question"
-          >
-            {t("events.addQuestion")}
-          </button>
-        </div>
+        <button type="submit" className={buttonClass} data-testid="event-save">
+          {t("events.save")}
+        </button>
       </ActionForm>
     </div>
   );

@@ -42,7 +42,8 @@
     "invitations": "Inbjudningar",
     "schedule": "Mitt schema",
     "calendar": "Kalender",
-    "locations": "Platser"
+    "locations": "Platser",
+    "events": "Evenemang"
   },
   "clubSwitcher": {
     "label": "Förening: {club}",
@@ -101,7 +102,14 @@
     "automatic": "Automatiskt (förening eller webbläsare)",
     "saved": "Sparat.",
     "invalidTimeZone": "Okänd tidszon. Ange ett namn som Europe/Stockholm.",
-    "timeZoneHint": "Till exempel Europe/Stockholm. Lämna tomt för att använda föreningens eller webbläsarens."
+    "timeZoneHint": "Till exempel Europe/Stockholm. Lämna tomt för att använda föreningens eller webbläsarens.",
+    "clubTimeZone": "Föreningens tidszon",
+    "errors": {
+      "timeZone": "Tidszonen finns inte. Välj en i listan.",
+      "locale": "Språket stöds inte.",
+      "rate_limited": "För många ändringar på kort tid. Vänta en stund och försök igen.",
+      "failed": "Inställningarna kunde inte sparas. Försök igen."
+    }
   },
   "locales": {
     "sv": "Svenska",
@@ -213,7 +221,7 @@
     "apply": "Visa",
     "clear": "Rensa filter",
     "sort": "Sortera efter",
-    "sortName": "Namn",
+    "sortName": "Förnamn",
     "sortMemberNumber": "Medlemsnummer",
     "sortJoined": "Inträdesdatum",
     "order": "Ordning",
@@ -238,7 +246,8 @@
     "updated": "Medlemskapet har ändrats.",
     "add": "Lägg till medlem",
     "import": "Importera medlemmar",
-    "added": "Medlemmen lades till."
+    "added": "Medlemmen lades till.",
+    "sortFamilyName": "Efternamn"
   },
   "time": {
     "viewerZone": "{time} hos dig ({zone})"
@@ -349,7 +358,8 @@
     "signOutPendingBody": "Svar eller närvaro som togs offline har inte skickats än. Om du loggar ut tas de bort.",
     "signOutAnyway": "Logga ut ändå",
     "takeAttendance": "Ta närvaro",
-    "attendanceOffline": "Offline: närvaron sparas i telefonen och skickas när du är online."
+    "attendanceOffline": "Offline: närvaron sparas i telefonen och skickas när du är online.",
+    "searchTimeZone": "Sök tidszon (t.ex. Stockholm)"
   },
   "email": {
     "footer": "Det här mejlet skickades av ClubAdmin för {club}.",
@@ -425,7 +435,10 @@
     "creationRequested": "Din ansökan om att skapa en förening har skickats till administratörerna.",
     "handover": "{from} vill lämna över rollen som föreningsansvarig i {club} till dig.",
     "accept": "Tacka ja",
-    "decline": "Tacka nej"
+    "decline": "Tacka nej",
+    "preferredGroups": "Önskar: {groups}",
+    "waitlist": "{person} står i kö till {group} ({club}): plats {position} av {waiting}",
+    "waitlistOffered": "{person} har erbjudits en plats i {group} ({club})"
   },
   "findClub": {
     "title": "Hitta en förening",
@@ -520,7 +533,8 @@
     "invalid": "Inbjudan gäller inte längre. Be föreningen om en ny.",
     "login": "Logga in eller skapa ett konto för att tacka ja",
     "accept": "Gå med i {club}",
-    "intro": "Du har bjudits in att gå med i {club} i ClubAdmin."
+    "intro": "Du har bjudits in att gå med i {club} i ClubAdmin.",
+    "completeProfile": "Fyll i din profil först, sedan kommer du tillbaka hit."
   },
   "managers": {
     "title": "Föreningsansvariga",
@@ -643,7 +657,12 @@
     "group_has_children": "Gruppen har aktiva undergrupper. Arkivera eller flytta dem först.",
     "group_in_use": "Gruppen har använts (medlemmar, aktiviteter eller historik) och kan bara arkiveras.",
     "event_period_invalid": "Slutet måste vara efter starten, och anmälan måste stänga före slutet.",
-    "invalid_organization_number": "Organisationsnumret är inte giltigt."
+    "invalid_organization_number": "Organisationsnumret är inte giltigt.",
+    "group_cycle": "En grupp kan inte ligga under sig själv eller sina undergrupper.",
+    "group_parent_invalid": "Den valda överordnade gruppen finns inte.",
+    "group_archived": "Gruppen är arkiverad.",
+    "devMfaHint": "Utveckling: logga in igen med rutan för andra faktor (MFA) ikryssad.",
+    "devMfaLink": "Till inloggningen"
   },
   "memberExport": {
     "columns": {
@@ -1086,7 +1105,8 @@
     "homeAway": "Hemma eller borta",
     "notGiven": "Inte angivet",
     "jointGroups": "Gemensam med",
-    "jointHint": "Du måste kunna hantera aktiviteterna i varje grupp du väljer."
+    "jointHint": "Du måste kunna hantera aktiviteterna i varje grupp du väljer.",
+    "kindLabel": "Vad är det? (t.ex. Lunch)"
   },
   "series": {
     "newTitle": "Ny träningsserie",
@@ -1144,7 +1164,8 @@
     "archive": "Arkivera",
     "restore": "Återställ",
     "archived": "arkiverad",
-    "conflicts": "Dubbelbokningar de kommande åtta veckorna"
+    "conflicts": "Dubbelbokningar de kommande åtta veckorna",
+    "addLink": "Saknas platsen? Lägg till en plats"
   },
   "responses": {
     "title": "Svar",
@@ -1172,7 +1193,9 @@
     "respondByHint": "Tomt: fram till start. Efter svarstiden går bara ”kommer inte” att svara.",
     "family": "Min familj",
     "modeDefault": "Standard för typen",
-    "answerByLabel": "Svara senast"
+    "answerByLabel": "Svara senast",
+    "save": "Spara svaret",
+    "yourAnswer": "Ditt svar"
   },
   "responseModes": {
     "none": "Inga svar",
@@ -1350,6 +1373,84 @@
       "expired": "Erbjudandet gick ut",
       "removed": "Borttagen"
     },
-    "needsConnection": "Kräver uppkoppling"
+    "needsConnection": "Kräver uppkoppling",
+    "startHint": "Datum krävs; utan tid börjar det vid midnatt.",
+    "endHint": "Tomt: slutar vid dagens slut (23:59).",
+    "opensHint": "Tomt: anmälan är öppen direkt när evenemanget publiceras.",
+    "closesHint": "Tomt: anmälan stänger när evenemanget börjar.",
+    "cancelHint": "Tomt: samma som anmälans sista dag.",
+    "capacityHint": "Obegränsat",
+    "endBeforeStart": "Slutet måste vara efter starten.",
+    "closesAfterEnd": "Anmälan kan inte stänga efter att evenemanget slutat.",
+    "removeRow": "Ta bort",
+    "addSession": "Lägg till tillfälle",
+    "drafted": "Utkastet sparades. Du hittar det under Evenemang i föreningens meny och på gruppens sida under Utkast.",
+    "drafts": "Utkast"
+  },
+  "groupForm": {
+    "newTitle": "Ny grupp",
+    "newSubgroup": "Ny undergrupp",
+    "editTitle": "Ändra grupp",
+    "name": "Namn",
+    "noParent": "Ingen (överst)",
+    "birthYearFrom": "Född från år",
+    "birthYearTo": "Född till år",
+    "genderCategory": "Klass",
+    "notSet": "Inte angiven",
+    "genderCategories": {
+      "female": "Flickor/damer",
+      "male": "Pojkar/herrar",
+      "mixed": "Mixad",
+      "open": "Öppen"
+    },
+    "level": "Nivå",
+    "admissionMode": "Antagning",
+    "admissionModes": {
+      "direct": "Direkt",
+      "waitlist": "Kö",
+      "closed": "Stängd"
+    },
+    "offerReplyDays": "Dagar att svara på en erbjuden plats",
+    "create": "Skapa grupp",
+    "save": "Spara",
+    "saved": "Gruppen skapades.",
+    "updated": "Gruppen sparades.",
+    "deleted": "Gruppen togs bort.",
+    "archivedHint": "Gruppen är arkiverad. Återställ den för att ändra den.",
+    "archiveTitle": "Arkivera",
+    "archiveHint": "En grupp som har avslutats arkiveras: historiken finns kvar, men den visas inte längre för medlemmarna.",
+    "archive": "Arkivera gruppen",
+    "restoreTitle": "Återställ",
+    "restoreHint": "Föreningens administratörer kan återställa en arkiverad grupp.",
+    "restore": "Återställ gruppen",
+    "deleteTitle": "Ta bort",
+    "deleteHint": "Gruppen har aldrig använts (inga medlemmar, aktiviteter eller evenemang) och kan tas bort helt.",
+    "deleteConfirm": "Ja, ta bort {group} för gott",
+    "delete": "Ta bort gruppen"
+  },
+  "timeZones": {
+    "other": "Övriga"
+  },
+  "clubSettings": {
+    "title": "Föreningens inställningar",
+    "saved": "Inställningarna sparades.",
+    "mfaHint": "Att spara kräver inloggning med en andra faktor (MFA).",
+    "timeZone": "Tidszon",
+    "defaultLocale": "Standardspråk",
+    "email": "E-post",
+    "organizationNumber": "Organisationsnummer",
+    "address": "Postadress",
+    "save": "Spara inställningarna",
+    "phoneNumbers": "Telefonnummer",
+    "phoneLabel": "Vad (t.ex. Kansli)",
+    "phoneNumber": "Nummer",
+    "phoneOrder": "Ordning",
+    "addPhone": "Lägg till nummer",
+    "savePhones": "Spara telefonnumren"
+  },
+  "joinCode": {
+    "title": "Gå med med en kod",
+    "intro": "Har du fått en kod från en förening? Skriv den här så ser du vilken förening den gäller.",
+    "lookUp": "Fortsätt"
   }
 }

@@ -46,6 +46,14 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       label: t("nav.groups"),
       current: pathname.startsWith(`/clubs/${club.id}/groups`) || pathname.startsWith("/groups/"),
     });
+    if (club.mine?.permissions.includes("club.events.read")) {
+      nav.push({
+        key: "events",
+        href: `/clubs/${club.id}/events`,
+        label: t("nav.events"),
+        current: pathname.startsWith(`/clubs/${club.id}/events`) || pathname.startsWith("/events/"),
+      });
+    }
     if (club.mine?.permissions.includes("club.join_requests.manage")) {
       nav.push({
         key: "join-requests",
@@ -70,7 +78,11 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         current: pathname.startsWith(`/clubs/${club.id}/calendar`),
       });
     }
-    if (club.mine?.permissions.includes("club.locations.manage")) {
+    // Leaders add places too (P1.6b).
+    if (
+      club.mine?.permissions.includes("club.locations.manage") ||
+      club.mine?.permissions.includes("club.locations.create")
+    ) {
       nav.push({
         key: "locations",
         href: `/clubs/${club.id}/locations`,

@@ -8,10 +8,15 @@ import {
   ACTIVITY_KINDS,
   addChildInput,
   addMemberFormInput,
+  ADMISSION_MODES,
   ATTENDANCE_ROLES,
   ATTENDANCE_STATUSES,
+  CLUB_PHONE_NUMBERS_MAX,
+  EVENT_ACTIVITIES_MAX,
   EVENT_QUESTIONS_MAX,
   type EventQuestion,
+  GENDER_CATEGORIES,
+  GROUP_KINDS,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
   type GuardianshipRight,
@@ -386,6 +391,11 @@ function activityFields(form: FormData, clear: boolean) {
     ...placeOf(form, clear),
   };
 }
+/** What an "other" activity is (P1.6b); cleared on edit when empty or another kind. */
+function kindLabelOf(form: FormData, kind: string, clear: boolean) {
+  const label = kind === "other" ? text(form, "kindLabel") : "";
+  return label ? { kindLabel: label } : clear ? { kindLabel: null } : {};
+}
 const resultId = (result: unknown): string | null => {
   const value = (result as { id?: unknown } | null)?.id;
   return typeof value === "string" && isUuid(value) ? value : null;
@@ -406,7 +416,7 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       return {
         path: `/api/v1/groups/${groupId}/activities`,
         method: "POST",
-        body: { kind, ...fields, groupIds },
+        body: { kind, ...kindLabelOf(form, kind, false), ...fields, groupIds },
       };
     },
     done: (form, result) => {
@@ -423,7 +433,7 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       return {
         path: `/api/v1/activities/${activityId}`,
         method: "PATCH",
-        body: { kind, ...fields },
+        body: { kind, ...kindLabelOf(form, kind, true), ...fields },
       };
     },
     done: (form) => withParam(back(form), "updated", "1"),
@@ -516,11 +526,14 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       const personId = id(form, "personId");
       const status = oneOf(RESPONSE_STATUSES, text(form, "status"));
       if (!activityId || !personId || !status) return null;
+      // With the note field (the activity page) the note is set, or cleared
+      // when emptied; without it (buttons) it stays as it is (P1.6b).
       const note = text(form, "note");
+      const withNote = text(form, "noteField") === "1";
       return {
         path: `/api/v1/activities/${activityId}/responses/${personId}`,
         method: "PUT",
-        body: { status, ...(note ? { note } : {}) },
+        body: { status, ...(withNote ? { note: note || null } : {}) },
       };
     },
     done: (form) => withParam(back(form), "answered", "1"),
@@ -627,16 +640,30 @@ function locationFields(form: FormData, clear: boolean) {
 }
 
 // Events with sign-up (P1.6). Local times in the club's time zone, as for
-// activities; the questions come as numbered rows (q.0.label, q.0.type, ...),
-// empty rows are left out, so "add a question" is a save that returns with
-// one more empty row.
+// activities; the questions and sessions come as numbered rows (q.0.label,
+// q.0.type, ...; a.0.title, ...), empty rows are left out. Only the title
+// and the start date are required (P1.6b): a date without a time is the
+// start of the day (start) or its end (deadlines); the API fills the end
+// and the sign-up deadline.
 const EVENT_ROWS = EVENT_QUESTIONS_MAX;
-const SESSION_ROWS = 3;
+const SESSION_ROWS = EVENT_ACTIVITIES_MAX;
 
-/** An instant from a date field and a time field; undefined when both are empty, null when invalid. */
-function optionalInstant(form: FormData, date: string, time: string): string | null | undefined {
-  if (!text(form, date) && !text(form, time)) return undefined;
-  return instant(form, date, time);
+/**
+ * An instant from a date field and an optional time field (`missingTime`
+ * when empty); undefined when both are empty, null when invalid.
+ */
+function optionalInstant(
+  form: FormData,
+  date: string,
+  time: string,
+  missingTime = "23:59",
+): string | null | undefined {
+  const day = text(form, date);
+  const clock = text(form, time);
+  const zone = text(form, "timeZone");
+  if (!day && !clock) return undefined;
+  if (!isDate(day) || (clock && !isTime(clock)) || !zone) return null;
+  return zonedTime(day, clock || missingTime, zone)?.toISOString() ?? null;
 }
 
 function questionsOf(form: FormData): EventQuestion[] | null {
@@ -676,13 +703,15 @@ function questionsOf(form: FormData): EventQuestion[] | null {
 }
 
 function eventFields(form: FormData, clear: boolean) {
-  const startsAt = instant(form, "startDate", "startTime");
-  const endsAt = instant(form, "endDate", "endTime");
-  const registrationClosesAt = instant(form, "closesDate", "closesTime");
-  const registrationOpensAt = optionalInstant(form, "opensDate", "opensTime");
+  const startsAt = optionalInstant(form, "startDate", "startTime", "00:00");
+  const endsAt = optionalInstant(form, "endDate", "endTime");
+  const registrationClosesAt = optionalInstant(form, "closesDate", "closesTime");
+  const registrationOpensAt = optionalInstant(form, "opensDate", "opensTime", "00:00");
   const cancellationClosesAt = optionalInstant(form, "cancelDate", "cancelTime");
   const questions = questionsOf(form);
-  if (!startsAt || !endsAt || !registrationClosesAt || questions === null) return null;
+  if (!startsAt || endsAt === null || registrationClosesAt === null || questions === null) {
+    return null;
+  }
   if (registrationOpensAt === null || cancellationClosesAt === null) return null;
   const capacityText = text(form, "capacity");
   const capacity = capacityText === "" ? null : Number(capacityText);
@@ -693,9 +722,10 @@ function eventFields(form: FormData, clear: boolean) {
     title: text(form, "title"),
     ...clearable(form, ["description", "priceText"], clear),
     startsAt,
-    endsAt,
+    // Left empty: the API's default on create; unchanged on edit.
+    ...(endsAt ? { endsAt } : {}),
     ...placeOf(form, clear),
-    registrationClosesAt,
+    ...(registrationClosesAt ? { registrationClosesAt } : {}),
     ...(registrationOpensAt ? { registrationOpensAt } : clear ? { registrationOpensAt: null } : {}),
     ...(cancellationClosesAt
       ? { cancellationClosesAt }
@@ -709,7 +739,7 @@ function eventFields(form: FormData, clear: boolean) {
   };
 }
 
-/** Sessions created with a group event (rows a.0..a.2; empty rows are left out). */
+/** Sessions created with a group event (rows a.N; empty rows are left out). */
 function sessionsOf(form: FormData) {
   const sessions = [];
   for (let i = 0; i < SESSION_ROWS; i++) {
@@ -719,7 +749,8 @@ function sessionsOf(form: FormData) {
     const startsAt = instant(form, `a.${i}.date`, `a.${i}.startTime`);
     const endsAt = instant(form, `a.${i}.date`, `a.${i}.endTime`);
     if (!kind || !startsAt || !endsAt) return null;
-    sessions.push({ kind, title, startsAt, endsAt });
+    const kindLabel = kind === "other" ? text(form, `a.${i}.kindLabel`) : "";
+    sessions.push({ kind, title, startsAt, endsAt, ...(kindLabel ? { kindLabel } : {}) });
   }
   return sessions;
 }
@@ -774,7 +805,9 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
     },
     done: (form, result) => {
       const created = resultId(result);
-      return created ? `/events/${created}?saved=1` : back(form);
+      if (!created) return back(form);
+      // A draft: the notice says where drafts are found.
+      return `/events/${created}?${text(form, "publish") === "on" ? "saved=1" : "drafted=1"}`;
     },
   },
   "update-event": {
@@ -784,11 +817,7 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
       if (!eventId || !fields) return null;
       return { path: `/api/v1/events/${eventId}`, method: "PATCH", body: fields };
     },
-    // "Add a question" saves and comes back to the form with one more empty row.
-    done: (form) =>
-      text(form, "more") === "1"
-        ? withParam(back(form), "rows", String(Number(text(form, "rows") || "1") + 1))
-        : `/events/${text(form, "eventId")}?updated=1`,
+    done: (form) => `/events/${text(form, "eventId")}?updated=1`,
   },
   "publish-event": {
     call: (form) => {
@@ -851,8 +880,138 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+// Groups (P1.6b): created by club managers and owners (under their groups),
+// changed, archived, restored and, while unused, deleted.
+const intOrNull = (form: FormData, name: string): number | null | undefined => {
+  const value = text(form, name);
+  if (value === "") return null;
+  const n = Number(value);
+  return Number.isInteger(n) ? n : undefined;
+};
+
+function groupFields(form: FormData) {
+  const name = text(form, "name");
+  const kind = oneOf(GROUP_KINDS, text(form, "kind"));
+  if (!name || !kind) return null;
+  const numbers = {
+    birthYearFrom: intOrNull(form, "birthYearFrom"),
+    birthYearTo: intOrNull(form, "birthYearTo"),
+    capacity: intOrNull(form, "capacity"),
+  };
+  if (Object.values(numbers).some((n) => n === undefined)) return null;
+  const days = Number(text(form, "offerReplyDays") || "7");
+  const admissionMode = oneOf(ADMISSION_MODES, text(form, "admissionMode"));
+  return {
+    name,
+    kind,
+    parentGroupId: id(form, "parentGroupId"),
+    sport: text(form, "sport") || null,
+    level: text(form, "level") || null,
+    genderCategory: oneOf(GENDER_CATEGORIES, text(form, "genderCategory")),
+    ...numbers,
+    ...(admissionMode ? { admissionMode } : {}),
+    ...(Number.isInteger(days) && days >= 1 && days <= 60 ? { offerReplyDays: days } : {}),
+  };
+}
+
+const GROUP_ACTIONS: Record<string, FormAction> = {
+  "create-group": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const fields = groupFields(form);
+      return clubId && fields
+        ? { path: `/api/v1/clubs/${clubId}/groups`, method: "POST", body: fields }
+        : null;
+    },
+    done: (form, result) => {
+      const created = resultId(result);
+      return created ? `/groups/${created}?saved=1` : back(form);
+    },
+  },
+  "update-group": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const fields = groupFields(form);
+      return groupId && fields
+        ? { path: `/api/v1/groups/${groupId}`, method: "PATCH", body: fields }
+        : null;
+    },
+    done: (form) => `/groups/${text(form, "groupId")}?updated=1`,
+  },
+  "archive-group": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const what = text(form, "what");
+      if (!groupId || (what !== "archive" && what !== "restore")) return null;
+      return { path: `/api/v1/groups/${groupId}/${what}`, method: "POST" };
+    },
+    done: (form) => `/groups/${text(form, "groupId")}?updated=1`,
+  },
+  "delete-group": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      if (!groupId || text(form, "confirm") !== "on") return null;
+      return { path: `/api/v1/groups/${groupId}`, method: "DELETE" };
+    },
+    done: (form) => `/clubs/${text(form, "clubId")}/groups?deleted=1`,
+  },
+};
+
+// Club settings (P1.6b, club managers with a second factor): time zone,
+// language, contact details; the phone numbers as rows (phone.N.label,
+// phone.N.number, phone.N.order; empty rows are left out).
+const CLUB_ACTIONS: Record<string, FormAction> = {
+  "update-club-settings": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const timeZone = text(form, "timeZone");
+      const defaultLocale = text(form, "defaultLocale");
+      const address = {
+        street: text(form, "street"),
+        postalCode: text(form, "postalCode"),
+        city: text(form, "city"),
+      };
+      const anyAddress = Object.values(address).some((v) => v !== "");
+      if (!clubId || !timeZone || !defaultLocale) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/settings`,
+        method: "PATCH",
+        body: {
+          timeZone,
+          defaultLocale,
+          email: text(form, "email") || null,
+          organizationNumber: text(form, "organizationNumber") || null,
+          address: anyAddress ? { ...address, country: text(form, "country") } : null,
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "set-club-phone-numbers": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      const rows = [];
+      for (let i = 0; i < CLUB_PHONE_NUMBERS_MAX; i++) {
+        const label = text(form, `phone.${i}.label`);
+        const number = text(form, `phone.${i}.number`);
+        if (!label && !number) continue;
+        const order = Number(text(form, `phone.${i}.order`) || i + 1);
+        rows.push({ order: Number.isFinite(order) ? order : i + 1, label, number });
+      }
+      const numbers = rows
+        .sort((a, b) => a.order - b.order)
+        .map(({ label, number }) => ({ label, number }));
+      return { path: `/api/v1/clubs/${clubId}/phone-numbers`, method: "PUT", body: { numbers } };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
+  ...CLUB_ACTIONS,
+  ...GROUP_ACTIONS,
   ...ACTIVITY_ACTIONS,
   ...EVENT_ACTIONS,
   "complete-profile": {

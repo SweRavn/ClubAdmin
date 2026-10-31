@@ -142,6 +142,7 @@ async function Upcoming() {
           href: `/activities/${e.activityId}`,
           title: e.title,
           kind: e.kind,
+          kindLabel: e.kindLabel ?? null,
           status: e.status,
           cancelledReason: e.cancelledReason,
           startsAt: e.startsAt,

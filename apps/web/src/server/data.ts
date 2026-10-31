@@ -45,6 +45,7 @@ import {
   MyHandoversSchema,
   MyJoinRequestsSchema,
   MyProfileSchema,
+  MyWaitlistsSchema,
   MyWardsSchema,
   PersonProfileSchema,
   RegisterFacetsSchema,
@@ -69,6 +70,7 @@ import { cache } from "react";
 
 import { apiFetch } from "./api.ts";
 import { SESSION_COOKIE } from "./cookies.ts";
+import { type FormDraft, loadFormDraft } from "./form-drafts.ts";
 import { freshSession, loadSession, type Session } from "./sessions.ts";
 
 /** Set by the proxy (src/proxy.ts): the requested path and query, for returnTo and the current club. */
@@ -82,6 +84,19 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const loaded = await loadSession((await cookies()).get(SESSION_COOKIE)?.value);
   return loaded ? freshSession(loaded) : null;
 });
+
+/**
+ * What the form held when its save failed or a row was added without
+ * JavaScript (?error or ?draft, P1.6b); null otherwise.
+ */
+export async function formDraft(
+  action: string,
+  query: Record<string, string | string[] | undefined>,
+): Promise<FormDraft | null> {
+  if (query.error === undefined && query.draft === undefined) return null;
+  const session = await getSession();
+  return session ? loadFormDraft(session.id, action) : null;
+}
 
 export async function requireSession(): Promise<Session> {
   const session = await getSession();
@@ -173,6 +188,8 @@ export const getMyProfile = cache(() => required("/api/v1/me/profile", MyProfile
 export const getMyJoinRequests = cache(() =>
   required("/api/v1/me/join-requests", MyJoinRequestsSchema),
 );
+/** My and my wards' places on waiting lists and pending join requests (P1.6b). */
+export const getMyWaitlists = cache(() => required("/api/v1/me/waitlists", MyWaitlistsSchema));
 export const getMyCreationRequests = cache(() =>
   required("/api/v1/me/club-creation-requests", MyClubCreationRequestsSchema),
 );
@@ -413,9 +430,10 @@ export const lookupGuardianInvitation = cache(async (token: string) => {
 });
 
 /** Which club an invitation link is for, without a session; null if it is not usable. */
-export const lookupInvitation = cache(async (token: string) => {
+/** A usable invitation by its link token, or by its code with `kind: "code"` (P1.6b). */
+export const lookupInvitation = cache(async (secret: string, kind: "token" | "code" = "token") => {
   const res = await apiFetch(
-    `/api/v1/invitations/lookup?token=${encodeURIComponent(token)}`,
+    `/api/v1/invitations/lookup?${kind}=${encodeURIComponent(secret)}`,
     null,
     {
       forwardedFor: (await headers()).get("x-forwarded-for"),

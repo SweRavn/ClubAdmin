@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // The home page's joining parts (P1.1): onboarding for people without a
-// club, and what is in progress (join requests, club creation requests,
-// manager hand-overs proposed to me).
+// club, and what is in progress (join requests with their preferred groups,
+// places on waiting lists (P1.6b), club creation requests, manager
+// hand-overs proposed to me). Also on /me.
 import { enumKey } from "@clubadmin/i18n";
 import { EmptyState, personLabel } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
@@ -11,6 +12,7 @@ import {
   getMyHandovers,
   getMyJoinRequests,
   getMyProfile,
+  getMyWaitlists,
 } from "../server/data.ts";
 import { ActionForm, buttonClass, inputClass, secondaryButtonClass } from "./action-form.tsx";
 
@@ -83,15 +85,27 @@ export async function Onboarding() {
 }
 
 export async function InProgress() {
-  const [t, requests, creations, handovers] = await Promise.all([
+  const [t, requests, creations, handovers, waitlists] = await Promise.all([
     getTranslations(),
     getMyJoinRequests(),
     getMyCreationRequests(),
     getMyHandovers(),
+    getMyWaitlists(),
   ]);
   const pending = requests.items.filter((r) => r.status === "pending");
   const pendingCreations = creations.items.filter((r) => r.status === "pending");
-  if (pending.length + pendingCreations.length + handovers.incoming.length === 0) return null;
+  const preferred = new Map(
+    waitlists.joinRequests.map((r) => [r.id, r.preferredGroups.map((g) => g.name)]),
+  );
+  if (
+    pending.length +
+      pendingCreations.length +
+      handovers.incoming.length +
+      waitlists.entries.length ===
+    0
+  ) {
+    return null;
+  }
   return (
     <section aria-labelledby="in-progress" data-testid="in-progress" className="space-y-2">
       <h2 id="in-progress" className="text-xl font-semibold">
@@ -136,12 +150,40 @@ export async function InProgress() {
               {t("pending.joinRequest", { club: r.club.name, person: personLabel(r.person) })}
             </span>
             <span className="text-sm text-muted">{t(enumKey("joinRequestStatus", r.status))}</span>
+            {preferred.get(r.id)?.length ? (
+              <span className="text-sm text-muted" data-testid="join-request-groups">
+                {t("pending.preferredGroups", { groups: preferred.get(r.id)!.join(", ") })}
+              </span>
+            ) : null}
             <ActionForm action="withdraw-join-request" className="ml-auto">
               <input type="hidden" name="joinRequestId" value={r.id} />
               <button type="submit" className={secondaryButtonClass}>
                 {t("pending.withdraw")}
               </button>
             </ActionForm>
+          </li>
+        ))}
+        {waitlists.entries.map((e) => (
+          <li
+            key={e.id}
+            className="flex flex-wrap items-center gap-3 px-4 py-3"
+            data-testid="waitlist-entry"
+          >
+            <span>
+              {e.position === null
+                ? t("pending.waitlistOffered", {
+                    person: personLabel(e.person),
+                    group: e.group.name,
+                    club: e.club.name,
+                  })
+                : t("pending.waitlist", {
+                    person: personLabel(e.person),
+                    group: e.group.name,
+                    club: e.club.name,
+                    position: e.position,
+                    waiting: e.waiting,
+                  })}
+            </span>
           </li>
         ))}
         {pendingCreations.map((r) => (

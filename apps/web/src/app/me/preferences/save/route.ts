@@ -36,5 +36,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ locale: locale || null, timeZone: timeZone || null }),
   });
-  return redirectTo(res.ok ? "/me/preferences?saved=1" : "/me/preferences?error=1");
+  if (res.ok) return redirectTo("/me/preferences?saved=1");
+  return redirectTo(`/me/preferences?error=${await errorOf(res)}`);
+}
+
+/** Which field the API refused, so the page shows its own message (P1.6b). */
+async function errorOf(res: Response): Promise<string> {
+  if (res.status === 429) return "rate_limited";
+  if (res.status !== 400) return "failed";
+  const body = (await res.json().catch(() => null)) as {
+    errors?: { path?: string }[];
+  } | null;
+  const paths = (body?.errors ?? []).map((e) => e.path ?? "");
+  if (paths.some((p) => p.startsWith("timeZone"))) return "timeZone";
+  if (paths.some((p) => p.startsWith("locale"))) return "locale";
+  return "failed";
 }

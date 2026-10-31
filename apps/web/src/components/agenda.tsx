@@ -17,6 +17,8 @@ export interface AgendaItem {
   href: string;
   title: string;
   kind: string;
+  /** What an "other" activity is (P1.6b), shown instead of "Other". */
+  kindLabel?: string | null | undefined;
   status: "scheduled" | "cancelled";
   cancelledReason: string | null;
   startsAt: string;
@@ -113,7 +115,7 @@ export async function Agenda({
                     >
                       {item.title}
                     </a>{" "}
-                    <RoleBadge label={t(enumKey("activityKinds", item.kind))} />
+                    <RoleBadge label={item.kindLabel ?? t(enumKey("activityKinds", item.kind))} />
                     {cancelled ? (
                       <>
                         {" "}
@@ -204,6 +206,7 @@ export function agendaItemOf(a: {
   id: string;
   title: string;
   kind: string;
+  kindLabel?: string | null | undefined;
   status: "scheduled" | "cancelled";
   cancelledReason: string | null;
   startsAt: string;
@@ -223,6 +226,7 @@ export function agendaItemOf(a: {
     href: `/activities/${a.id}`,
     title: a.title,
     kind: a.kind,
+    kindLabel: a.kindLabel ?? null,
     status: a.status,
     cancelledReason: a.cancelledReason,
     startsAt: a.startsAt,

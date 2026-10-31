@@ -95,6 +95,28 @@ export default async function GroupPage({ params, searchParams }: Params) {
           <RoleBadge label={t(enumKey("kinds", group.kind))} />
           {group.archived ? <RoleBadge label={t("groups.archived")} /> : null}
         </h1>
+        {query.saved ? <Notice>{t("groupForm.saved")}</Notice> : null}
+        {query.updated ? <Notice>{t("groupForm.updated")}</Notice> : null}
+        {group.canManage ? (
+          <p className="mt-2 flex flex-wrap gap-2">
+            <a
+              href={`/groups/${group.id}/edit`}
+              className={secondaryButtonClass}
+              data-testid="group-edit"
+            >
+              {t("groupForm.editTitle")}
+            </a>
+            {!group.archived ? (
+              <a
+                href={`/clubs/${group.clubId}/groups/new?parentGroupId=${group.id}`}
+                className={secondaryButtonClass}
+                data-testid="group-new-subgroup"
+              >
+                {t("groupForm.newSubgroup")}
+              </a>
+            ) : null}
+          </p>
+        ) : null}
         <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
           {group.sport ? (
             <>
@@ -138,7 +160,21 @@ export default async function GroupPage({ params, searchParams }: Params) {
               </a>
             ) : null}
           </div>
-          <EventList events={events.items} testId="group-events" />
+          <EventList
+            events={events.items.filter((e) => e.status !== "draft")}
+            testId="group-events"
+          />
+          {events.items.some((e) => e.status === "draft") ? (
+            <div className="space-y-2" data-testid="group-drafts">
+              <h3 className="flex items-center gap-2 font-semibold">
+                {t("events.drafts")}
+                <span className="rounded-full bg-notice px-2 py-0.5 text-xs text-notice-fg">
+                  {events.items.filter((e) => e.status === "draft").length}
+                </span>
+              </h3>
+              <EventList events={events.items.filter((e) => e.status === "draft")} />
+            </div>
+          ) : null}
         </section>
       ) : null}
 

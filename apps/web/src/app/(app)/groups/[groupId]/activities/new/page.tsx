@@ -53,7 +53,11 @@ export default async function NewActivityPage({ params, searchParams }: Props) {
       <FormError code={query.error} />
       <ActionForm action="create-activity" className="space-y-4" testId="new-activity-form">
         <input type="hidden" name="groupId" value={group.id} />
-        <ActivityFields timeZone={club.timeZone} locations={locations} />
+        <ActivityFields
+          timeZone={club.timeZone}
+          locations={locations}
+          addPlaceHref={`/clubs/${club.id}/locations#new-location`}
+        />
         {others.length > 0 ? (
           <fieldset className="space-y-1">
             <legend className="text-sm">{t("activities.jointGroups")}</legend>

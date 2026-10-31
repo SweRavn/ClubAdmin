@@ -51,6 +51,10 @@ const NOTICE_PARAMS = [
   "answered",
   "stale",
   "rows",
+  "draft",
+  "qrows",
+  "srows",
+  "prows",
 ];
 
 export const buttonClass = "rounded-md bg-accent px-4 py-2 text-sm text-accent-fg";

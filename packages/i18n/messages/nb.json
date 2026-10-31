@@ -42,7 +42,8 @@
     "invitations": "Invitasjoner",
     "schedule": "Min timeplan",
     "calendar": "Kalender",
-    "locations": "Steder"
+    "locations": "Steder",
+    "events": "Arrangementer"
   },
   "clubSwitcher": {
     "label": "Klubb: {club}",
@@ -101,7 +102,14 @@
     "automatic": "Automatisk (klubb eller nettleser)",
     "saved": "Lagret.",
     "invalidTimeZone": "Ukjent tidssone. Bruk et navn som Europe/Oslo.",
-    "timeZoneHint": "For eksempel Europe/Oslo. La stå tomt for å bruke klubbens eller nettleserens."
+    "timeZoneHint": "For eksempel Europe/Oslo. La stå tomt for å bruke klubbens eller nettleserens.",
+    "clubTimeZone": "Klubbens tidssone",
+    "errors": {
+      "timeZone": "Ukjent tidssone. Velg en fra listen.",
+      "locale": "Språket støttes ikke.",
+      "rate_limited": "For mange endringer på kort tid. Vent litt og prøv igjen.",
+      "failed": "Innstillingene kunne ikke lagres. Prøv igjen."
+    }
   },
   "locales": {
     "sv": "Svenska",
@@ -213,7 +221,7 @@
     "apply": "Vis",
     "clear": "Fjern filtre",
     "sort": "Sorter etter",
-    "sortName": "Navn",
+    "sortName": "Fornavn",
     "sortMemberNumber": "Medlemsnummer",
     "sortJoined": "Innmeldingsdato",
     "order": "Rekkefølge",
@@ -238,7 +246,8 @@
     "updated": "Medlemskapet er endret.",
     "add": "Legg til medlem",
     "import": "Importer medlemmer",
-    "added": "Medlemmen ble lagt til."
+    "added": "Medlemmen ble lagt til.",
+    "sortFamilyName": "Etternavn"
   },
   "time": {
     "viewerZone": "{time} hos deg ({zone})"
@@ -349,7 +358,8 @@
     "signOutPendingBody": "Svar eller oppmøte registrert uten nett er ikke sendt ennå. Logger du ut, slettes de.",
     "signOutAnyway": "Logg ut likevel",
     "takeAttendance": "Registrer oppmøte",
-    "attendanceOffline": "Uten nett: oppmøtet lagres på telefonen og sendes når du er på nett."
+    "attendanceOffline": "Uten nett: oppmøtet lagres på telefonen og sendes når du er på nett.",
+    "searchTimeZone": "Søk tidssone (f.eks. Oslo)"
   },
   "email": {
     "footer": "Denne e-posten ble sendt av ClubAdmin på vegne av {club}.",
@@ -425,7 +435,10 @@
     "creationRequested": "Søknaden din om å opprette en klubb er sendt til administratorene.",
     "handover": "{from} vil overlate rollen som klubbansvarlig i {club} til deg.",
     "accept": "Takk ja",
-    "decline": "Takk nei"
+    "decline": "Takk nei",
+    "preferredGroups": "Ønsker: {groups}",
+    "waitlist": "{person} står på venteliste til {group} ({club}): plass {position} av {waiting}",
+    "waitlistOffered": "{person} har fått tilbud om plass i {group} ({club})"
   },
   "findClub": {
     "title": "Finn en klubb",
@@ -520,7 +533,8 @@
     "invalid": "Invitasjonen gjelder ikke lenger. Be klubben om en ny.",
     "login": "Logg inn eller opprett en konto for å takke ja",
     "accept": "Bli med i {club}",
-    "intro": "Du er invitert til å bli med i {club} i ClubAdmin."
+    "intro": "Du er invitert til å bli med i {club} i ClubAdmin.",
+    "completeProfile": "Fyll ut profilen din først, så kommer du tilbake hit."
   },
   "managers": {
     "title": "Klubbansvarlige",
@@ -643,7 +657,12 @@
     "group_has_children": "Gruppen har aktive undergrupper. Arkiver eller flytt dem først.",
     "group_in_use": "Gruppen har vært brukt (medlemmer, aktiviteter eller historikk) og kan bare arkiveres.",
     "event_period_invalid": "Slutten må være etter starten, og påmeldingen må stenge før slutten.",
-    "invalid_organization_number": "Organisasjonsnummeret er ikke gyldig."
+    "invalid_organization_number": "Organisasjonsnummeret er ikke gyldig.",
+    "group_cycle": "En gruppe kan ikke ligge under seg selv eller sine undergrupper.",
+    "group_parent_invalid": "Den valgte overordnede gruppen finnes ikke.",
+    "group_archived": "Gruppen er arkivert.",
+    "devMfaHint": "Utvikling: logg inn igjen med boksen for annen faktor (MFA) krysset av.",
+    "devMfaLink": "Til innloggingen"
   },
   "memberExport": {
     "columns": {
@@ -1086,7 +1105,8 @@
     "homeAway": "Hjemme eller borte",
     "notGiven": "Ikke oppgitt",
     "jointGroups": "Felles med",
-    "jointHint": "Du må kunne administrere aktivitetene i hver gruppe du velger."
+    "jointHint": "Du må kunne administrere aktivitetene i hver gruppe du velger.",
+    "kindLabel": "Hva er det? (f.eks. Lunsj)"
   },
   "series": {
     "newTitle": "Ny treningsserie",
@@ -1144,7 +1164,8 @@
     "archive": "Arkiver",
     "restore": "Gjenopprett",
     "archived": "arkivert",
-    "conflicts": "Dobbeltbookinger de neste åtte ukene"
+    "conflicts": "Dobbeltbookinger de neste åtte ukene",
+    "addLink": "Mangler stedet? Legg til et sted"
   },
   "responses": {
     "title": "Svar",
@@ -1172,7 +1193,9 @@
     "respondByHint": "Tomt: frem til start. Etter fristen godtas bare «kommer ikke».",
     "family": "Min familie",
     "modeDefault": "Standard for typen",
-    "answerByLabel": "Svar innen"
+    "answerByLabel": "Svar innen",
+    "save": "Lagre svaret",
+    "yourAnswer": "Ditt svar"
   },
   "responseModes": {
     "none": "Ingen svar",
@@ -1350,6 +1373,84 @@
       "expired": "Tilbudet gikk ut",
       "removed": "Fjernet"
     },
-    "needsConnection": "Krever tilkobling"
+    "needsConnection": "Krever tilkobling",
+    "startHint": "Dato kreves; uten klokkeslett starter det ved midnatt.",
+    "endHint": "Tomt: slutter ved dagens slutt (23:59).",
+    "opensHint": "Tomt: påmeldingen åpner så snart arrangementet publiseres.",
+    "closesHint": "Tomt: påmeldingen stenger når arrangementet starter.",
+    "cancelHint": "Tomt: det samme som påmeldingsfristen.",
+    "capacityHint": "Ubegrenset",
+    "endBeforeStart": "Slutten må være etter starten.",
+    "closesAfterEnd": "Påmeldingen kan ikke stenge etter at arrangementet er slutt.",
+    "removeRow": "Fjern",
+    "addSession": "Legg til økt",
+    "drafted": "Utkastet ble lagret. Du finner det under Arrangementer i klubbmenyen og på gruppesiden under Utkast.",
+    "drafts": "Utkast"
+  },
+  "groupForm": {
+    "newTitle": "Ny gruppe",
+    "newSubgroup": "Ny undergruppe",
+    "editTitle": "Endre gruppe",
+    "name": "Navn",
+    "noParent": "Ingen (øverst)",
+    "birthYearFrom": "Født fra år",
+    "birthYearTo": "Født til år",
+    "genderCategory": "Klasse",
+    "notSet": "Ikke angitt",
+    "genderCategories": {
+      "female": "Jenter/kvinner",
+      "male": "Gutter/menn",
+      "mixed": "Mix",
+      "open": "Åpen"
+    },
+    "level": "Nivå",
+    "admissionMode": "Opptak",
+    "admissionModes": {
+      "direct": "Direkte",
+      "waitlist": "Venteliste",
+      "closed": "Stengt"
+    },
+    "offerReplyDays": "Dager til å svare på en tilbudt plass",
+    "create": "Opprett gruppe",
+    "save": "Lagre",
+    "saved": "Gruppen ble opprettet.",
+    "updated": "Gruppen ble lagret.",
+    "deleted": "Gruppen ble slettet.",
+    "archivedHint": "Gruppen er arkivert. Gjenopprett den for å endre den.",
+    "archiveTitle": "Arkiver",
+    "archiveHint": "En gruppe som er avsluttet arkiveres: historikken blir værende, men medlemmene ser den ikke lenger.",
+    "archive": "Arkiver gruppen",
+    "restoreTitle": "Gjenopprett",
+    "restoreHint": "Klubbens administratorer kan gjenopprette en arkivert gruppe.",
+    "restore": "Gjenopprett gruppen",
+    "deleteTitle": "Slett",
+    "deleteHint": "Gruppen har aldri vært brukt (ingen medlemmer, aktiviteter eller arrangementer) og kan slettes.",
+    "deleteConfirm": "Ja, slett {group} for godt",
+    "delete": "Slett gruppen"
+  },
+  "timeZones": {
+    "other": "Andre"
+  },
+  "clubSettings": {
+    "title": "Klubbens innstillinger",
+    "saved": "Innstillingene ble lagret.",
+    "mfaHint": "Lagring krever innlogging med en annen faktor (MFA).",
+    "timeZone": "Tidssone",
+    "defaultLocale": "Standardspråk",
+    "email": "E-post",
+    "organizationNumber": "Organisasjonsnummer",
+    "address": "Postadresse",
+    "save": "Lagre innstillingene",
+    "phoneNumbers": "Telefonnumre",
+    "phoneLabel": "Hva (f.eks. Kontor)",
+    "phoneNumber": "Nummer",
+    "phoneOrder": "Rekkefølge",
+    "addPhone": "Legg til nummer",
+    "savePhones": "Lagre telefonnumrene"
+  },
+  "joinCode": {
+    "title": "Bli med med en kode",
+    "intro": "Har du fått en kode fra en klubb? Skriv den her, så ser du hvilken klubb den gjelder.",
+    "lookUp": "Fortsett"
   }
 }

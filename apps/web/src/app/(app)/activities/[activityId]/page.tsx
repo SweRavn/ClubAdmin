@@ -21,7 +21,7 @@ import {
 import { ActivityFields } from "../../../../components/activity-fields.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
-import { ResponseButtons } from "../../../../components/response-buttons.tsx";
+import { ResponseButtons, ResponseForm } from "../../../../components/response-buttons.tsx";
 import {
   getActivity,
   getLocations,
@@ -76,7 +76,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
         data-testid="activity-heading"
       >
         {activity.title}
-        <RoleBadge label={t(enumKey("activityKinds", activity.kind))} />
+        <RoleBadge label={activity.kindLabel ?? t(enumKey("activityKinds", activity.kind))} />
         {cancelled ? <RoleBadge tone="accent" label={t("activities.cancelled")} /> : null}
       </h1>
       {query.saved ? <Notice>{t("activities.saved")}</Notice> : null}
@@ -232,10 +232,11 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                     ) : null}
                   </p>
                   {r.canRespond ? (
-                    <ResponseButtons
+                    <ResponseForm
                       activityId={activity.id}
                       personId={r.person.id}
                       status={r.status}
+                      note={r.note}
                       deadlinePassed={answers.deadlinePassed}
                     />
                   ) : null}
@@ -282,6 +283,22 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                       }
                     />
                     {r.note ? <span className="text-sm text-muted">{r.note}</span> : null}
+                    {r.respondedBy && r.respondedBy.id !== r.person.id ? (
+                      <span className="text-xs text-muted" data-testid="answered-by">
+                        {t("responses.answeredBy", { name: personLabel(r.respondedBy) })}
+                      </span>
+                    ) : null}
+                    {/* Leaders answer for participants, also after the deadline (P1.6b). */}
+                    {answers.open ? (
+                      <span className="ml-auto">
+                        <ResponseButtons
+                          activityId={activity.id}
+                          personId={r.person.id}
+                          status={r.status}
+                          testId="leader-response"
+                        />
+                      </span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -362,8 +379,10 @@ export default async function ActivityPage({ params, searchParams }: Props) {
               <ActivityFields
                 timeZone={zone}
                 locations={locations}
+                addPlaceHref={`/clubs/${activity.clubId}/locations#new-location`}
                 values={{
                   kind: activity.kind,
+                  kindLabel: activity.kindLabel ?? null,
                   title: activity.title,
                   date: localDate(start, zone),
                   startTime: localTime(start, zone),

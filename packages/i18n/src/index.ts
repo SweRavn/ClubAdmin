@@ -123,7 +123,9 @@ export type EnumNamespace =
   | "grantHints.lok"
   | "events.waitlistModes"
   | "events.questionTypes"
-  | "events.registrationStatus";
+  | "events.registrationStatus"
+  | "groupForm.genderCategories"
+  | "groupForm.admissionModes";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

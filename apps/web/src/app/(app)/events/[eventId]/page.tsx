@@ -73,6 +73,7 @@ export default async function EventPage({ params, searchParams }: Props) {
         )}
       </div>
       {query.saved ? <Notice>{t("events.saved")}</Notice> : null}
+      {query.drafted ? <Notice>{t("events.drafted")}</Notice> : null}
       {query.updated ? <Notice>{t("events.updated")}</Notice> : null}
       <FormError code={query.error} />
       {event.status === "draft" ? <p className="font-medium">{t("events.draftHint")}</p> : null}
