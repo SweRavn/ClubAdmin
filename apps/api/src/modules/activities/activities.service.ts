@@ -725,15 +725,9 @@ export class ActivitiesService {
         checkedRange(query),
       );
       const ids = [...new Set(pairs.flat())];
-      const rows = await Promise.all(ids.map((id) => repo.findActivity(tx, id)));
+      const rows = await repo.findActivities(tx, ids);
       const views = new Map(
-        (
-          await this.views(
-            tx,
-            context.clubId,
-            rows.filter((r): r is repo.ActivityRow => r !== null),
-          )
-        ).map((v) => [v.activity.id, v]),
+        (await this.views(tx, context.clubId, rows)).map((v) => [v.activity.id, v]),
       );
       return pairs.flatMap(([a, b]) => {
         const first = views.get(a);

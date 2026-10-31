@@ -134,6 +134,13 @@
       "when": 1793455583294,
       "tag": "0018_push_device_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793460713001,
+      "tag": "0019_related_clubs",
+      "breakpoints": true
     }
   ]
 }

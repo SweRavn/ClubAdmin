@@ -117,6 +117,11 @@ export const ENV_TEMPLATE: EnvSection[] = [
         comment: "API and worker: unprivileged role, subject to row-level security",
       },
       {
+        key: "DATABASE_POOL_MAX",
+        value: "10",
+        comment: "Connections per API instance (behind PgBouncer: its pool size divided by the instances)",
+      },
+      {
         key: "DATABASE_OWNER_URL",
         value:
           "postgresql://clubadmin_owner:${DB_OWNER_PASSWORD}@127.0.0.1:${POSTGRES_PORT}/${POSTGRES_DB}",

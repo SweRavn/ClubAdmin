@@ -79,8 +79,8 @@ export class NotificationsService {
   }
 
   /** The logged-in person's notices, newest first (keyset by ID). */
-  inbox(context: ActorContext, query: NotificationListQuery): Promise<InboxPage> {
-    return this.db.withActor(context, async (tx) => {
+  async inbox(context: ActorContext, query: NotificationListQuery): Promise<InboxPage> {
+    const page = await this.db.withActor(context, async (tx) => {
       const personId = actorPersonId(context);
       const rows = await repo.listNotifications(tx, personId, {
         cursor: query.cursor,
@@ -88,21 +88,23 @@ export class NotificationsService {
         category: query.category,
         limit: INBOX_PAGE_SIZE + 1,
       });
-      const items = rows.slice(0, INBOX_PAGE_SIZE);
       const account = await repo.accountSettings(tx, personId);
-      const clubIds = [...new Set(items.flatMap((n) => (n.clubId ? [n.clubId] : [])))];
-      return {
-        items,
-        nextCursor: rows.length > INBOX_PAGE_SIZE ? items.at(-1)!.id : null,
-        locale: account?.locale ?? null,
-        // Clubs the notices came from, also clubs the person has left.
-        clubs: clubIds.length
-          ? await this.db.withSystem("notifications:club-names", {}, (system) =>
-              repo.clubLabels(system, clubIds),
-            )
-          : new Map(),
-      };
+      return { rows, locale: account?.locale ?? null };
     });
+    const items = page.rows.slice(0, INBOX_PAGE_SIZE);
+    const clubIds = [...new Set(items.flatMap((n) => (n.clubId ? [n.clubId] : [])))];
+    return {
+      items,
+      nextCursor: page.rows.length > INBOX_PAGE_SIZE ? items.at(-1)!.id : null,
+      locale: page.locale,
+      // Clubs the notices came from, also clubs the person has left. After the
+      // actor's transaction, never inside it: one connection per request at a time.
+      clubs: clubIds.length
+        ? await this.db.withSystem("notifications:club-names", {}, (system) =>
+            repo.clubLabels(system, clubIds),
+          )
+        : new Map<string, repo.ClubLabel>(),
+    };
   }
 
   unreadCount(context: ActorContext): Promise<number> {

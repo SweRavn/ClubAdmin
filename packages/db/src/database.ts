@@ -5,6 +5,8 @@
 // record history and audit events see them, and PgBouncer transaction pooling
 // keeps working.
 
+import { AsyncLocalStorage } from "node:async_hooks";
+
 import { DrizzleQueryError, sql } from "drizzle-orm";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import type pg from "pg";
@@ -60,11 +62,29 @@ export function unwrapQueryError(error: unknown): unknown {
   return error;
 }
 
+/**
+ * The transaction this async call chain is in. Opening another one inside it
+ * holds two connections for one request: under load the pool runs dry and
+ * requests wait on each other (docs/performance.md, "One connection per
+ * request"). Outside production that is an error, so tests find it.
+ */
+const inTransaction = new AsyncLocalStorage<true>();
+const refuseNesting = process.env.NODE_ENV !== "production";
+
 export function createDatabase(options: PoolOptions): Database {
   const pool = createPool(options);
   const migrationFiles = readMigrationFiles();
 
   const run = async <T>(settings: Settings, fn: (tx: Tx) => Promise<T>): Promise<T> => {
+    if (refuseNesting && inTransaction.getStore()) {
+      throw new Error(
+        "a transaction was opened inside another one (two connections for one request); run them one after the other",
+      );
+    }
+    return inTransaction.run(true, () => transaction(settings, fn));
+  };
+
+  const transaction = async <T>(settings: Settings, fn: (tx: Tx) => Promise<T>): Promise<T> => {
     const client = await pool.connect();
     let broken: Error | undefined;
     try {

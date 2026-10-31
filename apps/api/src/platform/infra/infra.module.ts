@@ -13,7 +13,7 @@ import { createValkeyClient, VALKEY_CLIENT, type ValkeyClient } from "./valkey.t
     {
       provide: DATABASE,
       inject: [API_CONFIG],
-      useFactory: (config: ApiConfig) => createApiDatabase(config.DATABASE_URL),
+      useFactory: (config: ApiConfig) => createApiDatabase(config.DATABASE_URL, config.DATABASE_POOL_MAX),
     },
     {
       provide: FIELD_ENCRYPTION,

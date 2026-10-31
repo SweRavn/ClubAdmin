@@ -171,25 +171,29 @@ export class PersonMergeService {
    * of co-guardians' wards are read without an actor, for the candidates'
    * IDs only; the controller leaves out people the guardian may not see.
    */
-  familyDuplicates(context: Context): Promise<{
+  async familyDuplicates(context: Context): Promise<{
     candidates: repo.DuplicateCandidate[];
     people: DuplicatePerson[];
     details: repo.DuplicateDetails[];
     merges: PersonMerge[];
   }> {
-    return runAs(this.db, context, async (tx) => {
+    const { candidates, merges } = await runAs(this.db, context, async (tx) => {
       const me = actorPersonId(context);
-      const candidates = await repo.familyDuplicateCandidates(tx);
-      const merges = await repo.undoableMergesBy(tx, me);
-      const ids = [...new Set(candidates.flatMap((c) => [c.personId, c.duplicatePersonId]))];
-      if (ids.length === 0) return { candidates, people: [], details: [], merges };
-      const job = "person-merge:family_duplicates";
-      const [people, details] = await Promise.all([
-        this.people.duplicateCandidatePeople(job, ids),
-        this.db.withSystem(job, {}, (system) => repo.duplicateDetails(system, ids)),
-      ]);
-      return { candidates, people, details, merges };
+      return {
+        candidates: await repo.familyDuplicateCandidates(tx),
+        merges: await repo.undoableMergesBy(tx, me),
+      };
     });
+    const ids = [...new Set(candidates.flatMap((c) => [c.personId, c.duplicatePersonId]))];
+    if (ids.length === 0) return { candidates, people: [], details: [], merges };
+    // After the actor's transaction and one after the other: one connection
+    // per request at a time (ADR 0040).
+    const job = "person-merge:family_duplicates";
+    const people = await this.people.duplicateCandidatePeople(job, ids);
+    const details = await this.db.withSystem(job, {}, (system) =>
+      repo.duplicateDetails(system, ids),
+    );
+    return { candidates, people, details, merges };
   }
 
   /** Pairs of the club's members that look like the same person, paged (club administrators). */

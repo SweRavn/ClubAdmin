@@ -205,22 +205,28 @@ export async function eventsForPeople(
 ): Promise<EventRow[]> {
   if (input.personIds.length === 0) return [];
   const people = uuidArray(input.personIds);
+  // From the people to the events (memberships, groups, registrations by
+  // their person indexes), never through all events: the cost follows the
+  // family, not the number of clubs and events (request budgets, ADR 0040).
   const { rows } = await tx.execute<{ id: string }>(sql`
-    SELECT e.id FROM public.events e
+    WITH clubs AS MATERIALIZED (
+      SELECT DISTINCT m.club_id FROM public.club_memberships m
+      WHERE m.person_id = ANY (${people}::uuid[]) AND m.valid_to IS NULL
+        AND m.status IN ('active', 'paused')
+    ), teams AS MATERIALIZED (
+      SELECT DISTINCT gm.club_id, gm.group_id FROM public.group_memberships gm
+      WHERE gm.person_id = ANY (${people}::uuid[]) AND gm.function = 'member' AND gm.valid_to IS NULL
+    ), candidates AS MATERIALIZED (
+      SELECT e.id FROM clubs c
+      JOIN public.events e ON e.club_id = c.club_id AND e.audience = 'club'
+      UNION
+      SELECT g.event_id FROM teams t
+      JOIN public.event_groups g ON g.club_id = t.club_id AND g.group_id = t.group_id
+      UNION
+      SELECT r.event_id FROM public.event_registrations r WHERE r.person_id = ANY (${people}::uuid[])
+    )
+    SELECT e.id FROM candidates JOIN public.events e ON e.id = candidates.id
     WHERE e.status <> 'draft' AND e.ends_at > ${input.now}
-      AND (
-        (e.audience = 'club' AND EXISTS (
-          SELECT 1 FROM public.club_memberships m
-          WHERE m.club_id = e.club_id AND m.person_id = ANY (${people}::uuid[])
-            AND m.valid_to IS NULL AND m.status IN ('active', 'paused')))
-        OR EXISTS (
-          SELECT 1 FROM public.event_groups g
-          JOIN public.group_memberships gm ON gm.group_id = g.group_id
-          WHERE g.event_id = e.id AND gm.person_id = ANY (${people}::uuid[])
-            AND gm.function = 'member' AND gm.valid_to IS NULL)
-        OR EXISTS (
-          SELECT 1 FROM public.event_registrations r
-          WHERE r.event_id = e.id AND r.person_id = ANY (${people}::uuid[])))
       ${
         input.cursor
           ? sql`AND (e.starts_at, e.id) > (SELECT c.starts_at, c.id FROM public.events c WHERE c.id = ${input.cursor})`

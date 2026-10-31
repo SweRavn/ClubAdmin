@@ -9,8 +9,8 @@ export const DATABASE = Symbol("DATABASE");
 
 export type OptionalDatabase = Database | undefined;
 
-export function createApiDatabase(url: string | undefined): OptionalDatabase {
-  return url ? createDatabase({ url, max: 10, applicationName: "clubadmin-api" }) : undefined;
+export function createApiDatabase(url: string | undefined, max = 10): OptionalDatabase {
+  return url ? createDatabase({ url, max, applicationName: "clubadmin-api" }) : undefined;
 }
 
 /**

@@ -20,6 +20,8 @@ export const apiConfigSchema = z
     /** Fastify trustProxy: which proxies may set X-Forwarded-For (Caddy). */
     TRUST_PROXY: z.string().default("loopback,uniquelocal"),
     DATABASE_URL: z.string().optional(),
+    /** Connections per API instance (behind PgBouncer: its pool size divided by the instances). */
+    DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
     VALKEY_URL: z.string().optional(),
     /** Field encryption master keys, `id:base64key` comma-separated, current first (docs/security.md). */
     ENCRYPTION_MASTER_KEYS: z.string().optional(),
