@@ -127,6 +127,13 @@
       "when": 1793451311352,
       "tag": "0017_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793455583294,
+      "tag": "0018_push_device_sessions",
+      "breakpoints": true
     }
   ]
 }

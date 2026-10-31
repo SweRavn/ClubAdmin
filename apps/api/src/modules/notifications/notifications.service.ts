@@ -178,7 +178,11 @@ export class NotificationsService {
    * Registers this phone's push token on the caller's account. Called on
    * every start of the app: an already registered token is only touched.
    */
-  registerDevice(context: ActorContext, input: RegisterPushDeviceInput): Promise<repo.DeviceRow> {
+  registerDevice(
+    context: ActorContext,
+    input: RegisterPushDeviceInput,
+    sessionHandle: string | null = null,
+  ): Promise<repo.DeviceRow> {
     const key = this.options.tokenKey;
     if (!this.options.push || !key) throw new DomainError("push_not_available");
     return this.db.withActor(context, async (tx) => {
@@ -191,6 +195,7 @@ export class NotificationsService {
         tokenSealed: sealPushToken(key, data.token),
         platform: data.platform,
         appVariant: data.appVariant,
+        sessionHandle,
       });
       if (!existing || existing.disabledAt) {
         await audit.record(tx, {
@@ -213,6 +218,22 @@ export class NotificationsService {
         resourceType: "push_device",
         resourceId: deviceId,
       });
+    });
+  }
+
+  /** Ending an app session in the sessions list removes its phones (audited per device). */
+  removeForSession(context: ActorContext, sessionHandle: string): Promise<number> {
+    return this.db.withActor(context, async (tx) => {
+      actorPersonId(context);
+      const ids = await repo.deleteSessionDevices(tx, sessionHandle);
+      for (const id of ids) {
+        await audit.record(tx, {
+          action: "push_device.removed",
+          resourceType: "push_device",
+          resourceId: id,
+        });
+      }
+      return ids.length;
     });
   }
 

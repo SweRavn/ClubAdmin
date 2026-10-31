@@ -9,8 +9,6 @@
 // also puts the session on a deny list: the AuthGuard refuses every token of
 // that Zitadel session from then on, refreshed or not (ADR 0028).
 
-import { createHash } from "node:crypto";
-
 import { type ActorContext, audit, type Database } from "@clubadmin/db";
 import {
   CLIENT_DEVICE_HEADER,
@@ -25,6 +23,7 @@ import {
 } from "@clubadmin/shared";
 import type { FastifyRequest } from "fastify";
 
+import { mobileSessionHandle } from "../../platform/http/session-handle.ts";
 import type { ValkeyClient } from "../../platform/infra/valkey.ts";
 
 export interface ZitadelSessions {
@@ -60,9 +59,12 @@ const REVOKED_TTL_SECONDS = 90 * 86_400;
 /** How long one API instance trusts a "not revoked" answer (revocation reaches other instances within this). */
 const NOT_REVOKED_CACHE_MS = 10_000;
 
-/** Public handle of a mobile session: derived from the Zitadel session, so it is stable. */
-export const mobileSessionHandle = (idpSessionId: string) =>
-  `m-${createHash("sha256").update(idpSessionId).digest("base64url").slice(0, 22)}`;
+export { mobileSessionHandle };
+
+/** What ending an app session also ends: its phone's push notifications (P1.7). */
+export interface SessionDevices {
+  removeForSession(context: ActorContext, handle: string): Promise<number>;
+}
 
 const headerText = (request: FastifyRequest, name: string, max: number) => {
   const value = request.headers[name];
@@ -92,10 +94,18 @@ export class SessionsService {
   /** Mobile session handle → until when it is known not to be revoked. */
   private readonly notRevoked = new Map<string, number>();
 
-  constructor(db: Database, valkey: ValkeyClient, zitadel: ZitadelSessions | undefined) {
+  private readonly devices: SessionDevices | undefined;
+
+  constructor(
+    db: Database,
+    valkey: ValkeyClient,
+    zitadel: ZitadelSessions | undefined,
+    devices?: SessionDevices,
+  ) {
     this.db = db;
     this.valkey = valkey;
     this.zitadel = zitadel;
+    this.devices = devices;
   }
 
   async list(personId: string): Promise<SessionMetadata[]> {
@@ -129,6 +139,10 @@ export class SessionsService {
     this.notRevoked.delete(handle);
     if (metadata.success && metadata.data.idpSessionId && !metadata.data.devAuth && this.zitadel) {
       await this.zitadel.end(metadata.data.idpSessionId);
+    }
+    // The phone of an ended app session gets no more push notifications.
+    if (metadata.success && metadata.data.client === "mobile" && this.devices) {
+      await this.devices.removeForSession(context, handle);
     }
     await this.db.withActor(context, (tx) =>
       audit.record(tx, { action: "session.revoked", resourceType: "session" }),

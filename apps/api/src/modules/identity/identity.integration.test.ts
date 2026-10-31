@@ -57,6 +57,8 @@ beforeAll(async () => {
       ZITADEL_API_TOKEN: "test-token",
       DEV_AUTH: "true",
       DEV_AUTH_KEY: TEST_DEV_AUTH_KEY,
+      NOTIFICATION_TOKEN_KEY: "notification-token-key-for-tests-0123456789",
+      PUSH_PROVIDER: "fake",
     },
     [],
   );
@@ -398,6 +400,15 @@ describe("sessions", () => {
 
     const handle = listed[0]!.id;
     expect(handle).not.toContain(sid);
+    // The phone registered for push in this session (P1.7).
+    const device = await inject({
+      method: "PUT",
+      url: "/api/v1/me/push-devices",
+      headers: withTokens(tokens, app),
+      payload: { token: `ExponentPushToken[${uuidv7()}]`, platform: "android" },
+    });
+    expect(device.statusCode).toBe(200);
+    const deviceId = device.json<{ id: string }>().id;
     const revoke = await inject({
       method: "DELETE",
       url: `/api/v1/me/sessions/${handle}`,
@@ -405,6 +416,17 @@ describe("sessions", () => {
     });
     expect(revoke.statusCode).toBe(204);
     expect(issuer.deletedSessions).toContain(sid);
+    // Its phone gets no more push notifications.
+    const { rows: devices } = await t.query("admin", "SELECT 1 FROM push_devices WHERE id = $1", [
+      deviceId,
+    ]);
+    expect(devices).toEqual([]);
+    const { rows: removed } = await t.query(
+      "admin",
+      "SELECT 1 FROM audit.events WHERE action = 'push_device.removed' AND resource_id = $1",
+      [deviceId],
+    );
+    expect(removed).toHaveLength(1);
     // Zitadel may still refresh the app's tokens, so the API refuses the whole
     // session from now on (deny list), and it is not registered again.
     const refused = await inject({

@@ -36,6 +36,7 @@ import { Body, Controller, Param, Query, Req } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 
 import { Endpoint } from "../../platform/http/endpoint.ts";
+import { mobileSessionHandle } from "../../platform/http/session-handle.ts";
 import {
   CurrentAuthorization,
   PersonPresenter,
@@ -209,7 +210,15 @@ export class NotificationsController {
     @CurrentAuthorization() authz: RequestAuthorization,
     @Body() body: RegisterPushDeviceInput,
   ) {
-    return toDevice(await this.notifications.registerDevice(authz.context, body));
+    // The app's login session, so ending it in the sessions list removes this phone.
+    const session = authz.principal.sessionId;
+    return toDevice(
+      await this.notifications.registerDevice(
+        authz.context,
+        body,
+        session ? mobileSessionHandle(session) : null,
+      ),
+    );
   }
 
   @Endpoint({

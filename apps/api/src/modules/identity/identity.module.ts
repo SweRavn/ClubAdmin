@@ -17,6 +17,7 @@ import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { EntitlementsService } from "../entitlements/index.ts";
 import { GroupsModule } from "../groups/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
+import { NotificationsModule, NotificationsService } from "../notifications/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
 import { RolesModule, RolesService } from "../roles/index.ts";
 import { AuthGuard } from "./auth.guard.ts";
@@ -41,6 +42,7 @@ export class IdentityModule {
         ClubsModule,
         GroupsModule,
         MembershipsModule,
+        NotificationsModule,
         RolesModule,
       ],
       controllers: config.DEV_AUTH ? [MeController, DevController] : [MeController],
@@ -70,8 +72,13 @@ export class IdentityModule {
         },
         {
           provide: SessionsService,
-          inject: [API_CONFIG, DATABASE, VALKEY_CLIENT],
-          useFactory: (c: ApiConfig, db: OptionalDatabase, valkey: ValkeyClient) => {
+          inject: [API_CONFIG, DATABASE, VALKEY_CLIENT, NotificationsService],
+          useFactory: (
+            c: ApiConfig,
+            db: OptionalDatabase,
+            valkey: ValkeyClient,
+            notifications: NotificationsService,
+          ) => {
             const zitadelUrl = c.ZITADEL_API_URL ?? c.AUTH_ISSUER;
             return new SessionsService(
               requireDatabase(db),
@@ -79,6 +86,7 @@ export class IdentityModule {
               zitadelUrl && c.ZITADEL_API_TOKEN
                 ? zitadelSessions(zitadelUrl, c.ZITADEL_API_TOKEN)
                 : undefined,
+              notifications,
             );
           },
         },

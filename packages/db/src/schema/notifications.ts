@@ -82,6 +82,8 @@ export const pushDevices = pgTable(
     provider: text().notNull().default("expo"),
     platform: text().notNull(),
     appVariant: text().notNull().default("production"),
+    /** The app's login session (its handle in the sessions list): ending it removes the device. */
+    sessionHandle: text(),
     lastSeenAt: timestamp(tz).notNull().defaultNow(),
     disabledAt: timestamp(tz),
     ...timestamps,
@@ -91,6 +93,9 @@ export const pushDevices = pgTable(
     check("push_devices_platform", oneOf(t.platform, PUSH_PLATFORMS)),
     check("push_devices_provider", oneOf(t.provider, ["expo"])),
     index("push_devices_account_idx").on(t.accountId),
+    index("push_devices_session_idx")
+      .on(t.sessionHandle)
+      .where(sql`${t.sessionHandle} IS NOT NULL`),
   ],
 );
 
@@ -124,8 +129,10 @@ export const notificationDeliveries = pgTable(
       .on(t.sendAfter)
       .where(sql`${t.status} IN ('queued', 'held')`),
     index("notification_deliveries_notification_idx").on(t.notificationId),
-    index("notification_deliveries_receipts_idx")
+    // Push sent recently: the per-person hourly budget and the receipts check.
+    index("notification_deliveries_push_sent_idx")
       .on(t.sentAt)
-      .where(sql`${t.channel} = 'push' AND ${t.status} = 'sent' AND ${t.providerRef} IS NOT NULL`),
+      .where(sql`${t.channel} = 'push' AND ${t.status} = 'sent'`),
+    index("notification_deliveries_created_idx").on(t.createdAt),
   ],
 );
