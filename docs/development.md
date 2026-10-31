@@ -130,6 +130,21 @@ recompile and restart when you save a file.
 | API directly | http://127.0.0.1:4000 (health: `/health/live`, `/health/ready`) |
 | OpenAPI document | https://api.clubadmin.localhost/api/v1/openapi.json (development only) |
 
+### Notifications (P1.7)
+
+The worker turns domain events into notices (ADR 0039). Locally
+`.env.local` sets `PUSH_PROVIDER=fake` (pushes are recorded in
+`notification_deliveries`, never sent) and `SMTP_URL` points at Mailpit
+(https://mail.clubadmin.localhost). Emails about something within the next
+daily email plus 24 hours, and immediate types, arrive at once; the rest
+wait for the daily email at 17:00 in the recipient's time zone. To see a
+daily email now, release the held deliveries in `pnpm db:psql`
+(`UPDATE notification_deliveries SET send_after = now() WHERE status =
+'held'`); the worker sends them within a minute. Mailpit shows the
+`List-Unsubscribe` header and its one-click button. Real push to a phone
+needs `PUSH_PROVIDER=expo`, a development build with an EAS project ID and
+`NOTIFICATION_TOKEN_KEY`; the app registers its token after login.
+
 After changing an endpoint, run `pnpm api:client` and commit the regenerated
 `packages/api-client` files (a test fails otherwise). `pnpm test:integration`
 runs the tests that need the local services.

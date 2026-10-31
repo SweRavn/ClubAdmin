@@ -171,6 +171,15 @@ later phase. Backup and disaster recovery are in
   keys derived from `BLIND_INDEX_KEY`). Record history stores encrypted
   columns as `[changed]` only. Decrypting a personal identity number is
   audited (`person.personal_identity_number.viewed`).
+- Notifications (P1.7, ADR 0039): push tokens are sealed (AES-256-GCM, key
+  derived from `NOTIFICATION_TOKEN_KEY`) and looked up by their SHA-256;
+  push texts and notification params never hold people's names, notes or
+  addresses. Unsubscribe links are HMAC-signed for one account and
+  category, never stored; the public unsubscribe endpoint is rate-limited
+  per IP and can only turn email off. Settings changes, device
+  registrations and removals, and unsubscribes are audited
+  (`account.notification_settings.updated`, `push_device.registered`,
+  `push_device.removed`, `notifications.unsubscribed`).
 - Background-check documents are **never stored**; only type, verified date,
   verifier, validity end.
 - Personal data never written to logs, traces or error reports (redaction

@@ -64,6 +64,8 @@ by the CI check when added.
 | Tailwind CSS (`tailwindcss`, `@tailwindcss/postcss`; build time) | MIT |
 | Radix UI primitives (`@radix-ui/react-dropdown-menu`) | MIT |
 | Mobile app (P0.10): expo-auth-session, expo-web-browser, expo-secure-store, expo-local-authentication, expo-localization, expo-updates, expo-screen-capture, expo-crypto, expo-file-system and the other `expo-*` modules | MIT |
+| Push notifications in the app (P1.7): expo-notifications (with badgin, MIT) | MIT |
+| intl-messageformat (notification texts in the API and worker, P1.7; also the catalogue check) | BSD-3-Clause |
 | react-native-mmkv, react-native-nitro-modules | MIT |
 | react-native-svg, react-native-safe-area-context, react-native-screens, react-native-reanimated, react-native-worklets, react-native-gesture-handler, `@react-native-community/netinfo` | MIT |
 | use-intl (mobile i18n, next-intl's core), `@formatjs/intl-pluralrules` | MIT |
@@ -112,8 +114,7 @@ by the CI check when added.
 ### Development and CI tools (not distributed)
 
 SWC (`@swc/core`, `@swc/cli`: Apache-2.0, MIT), unplugin-swc (MIT), chokidar (MIT),
-openapi-typescript (MIT), dependency-cruiser (MIT), intl-messageformat (BSD-3-Clause,
-catalogue check), `@axe-core/playwright` and axe-core (MPL-2.0, accessibility
+openapi-typescript (MIT), dependency-cruiser (MIT), `@axe-core/playwright` and axe-core (MPL-2.0, accessibility
 checks), Lighthouse CI (Apache-2.0; run with `pnpm dlx`, not a workspace
 dependency, ADR 0027),
 Renovate (AGPL-3.0), OSV-Scanner (Apache-2.0), Trivy (Apache-2.0), k6 (AGPL-3.0), Weblate (GPL-3.0-or-later), CodeQL (free for
@@ -122,7 +123,8 @@ conflict.
 
 ### Commercial services (optional, behind provider interfaces)
 
-Email providers, Stripe, Swish, Expo Push service / EAS Build, video providers
+Email providers, Stripe, Swish, Expo Push service (called over HTTPS
+without its SDK, P1.7) / EAS Build, video providers
 (api.video, Mux), eID brokers (Criipto, Signicat), Fortnox. These are used
 through APIs; there is no licence conflict, and each has an open alternative or
 can be switched off so self-hosters are never forced to use them.

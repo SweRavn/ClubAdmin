@@ -617,6 +617,36 @@ country's consent age, by a guardian. Timestamped, versioned text, revocable
   (`app.purge_expired_event_data`, run by `attendance:retention`); erasure
   clears a person's answers and scrubs them from history.
 
+### Notifications (P1.7, ADR 0039)
+Global, recipient-owned tables (row-level security on the person, not the
+club; only the worker writes):
+- `notifications`: the inbox. `recipient_person_id`, `club_id` (nullable,
+  for display, retention and erasure), `category`, `type` (the catalogue in
+  `packages/shared/src/notifications.ts`), `subject_type`/`subject_id`,
+  `about_person_ids` (the wards or player it concerns, at most 10), `params`
+  (IDs, enum values, counts, times, titles of activities and events; never
+  names, notes or addresses), `dedupe_key` (unique per recipient: a
+  redelivered event creates nothing), `read_at` (the only column people
+  update). Texts are rendered when read, in the reader's language.
+- `notification_deliveries`: one per channel and push device, `queued`,
+  `held` (quiet hours or the daily email), `sent`, `failed` or `skipped`
+  with a reason; system only, no record history (delivery log).
+- `push_devices`: the account's phones (sealed Expo push token and its
+  hash, platform, app variant, last seen, disabled when Expo reports the
+  token unregistered).
+- `accounts.notification_settings`: per category email `always` (in the
+  daily email at 17:00 local time), `no_app` (only without an app with
+  push) or `never`, and push on or off; quiet hours for push (default
+  21:00–07:00) and lock-screen text. Missing keys mean the defaults.
+  Mandatory emails (managers changed, member exports, the email change)
+  ignore the settings; immediate types and notices about something within
+  the next daily email plus 24 hours are emailed at once.
+
+Who hears about what (guardians with `receive_messages` plus
+`view_schedule`, `sign_up` or neither, depending on the type; leaders of
+the activity's groups for late "not coming") is in the prompt's catalogue,
+docs/prompts/P1.7-notifications.md.
+
 ### `calendar_feeds` (ADR 0021)
 Personal, secret, revocable iCalendar subscription URLs: `person_id`, `scope`
 (`my_schedule` incl. children, `group`, `club_public`), `scope_id`,

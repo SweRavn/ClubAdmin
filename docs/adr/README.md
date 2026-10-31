@@ -44,3 +44,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0036](0036-call-ups.md) | Call-ups: only the people called up take part in an activity | Accepted |
 | [0037](0037-governing-documents-and-settings.md) | Governing documents: club settings taken from adopted documents | Accepted (Phase 2) |
 | [0038](0038-events-and-sign-up.md) | Events with sign-up: a container linked to activities through call-ups | Accepted |
+| [0039](0039-notifications.md) | Notifications: a recipient-owned inbox, rendered when read, delivered by the worker | Accepted |

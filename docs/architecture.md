@@ -401,8 +401,12 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   entry before the details arrive), attendance (leaders, P1.5), clubs and groups (my clubs with the club switcher, my groups, my
   children's groups, "viewing as"), club overview, groups tree, group (owners, leaders,
   members, keyset-paginated), profile, settings (language, time zone, theme,
-  biometric unlock, sessions, about, logout), about (version, "Source code",
-  licences). Deep links (`clubadmin://groups/<id>` and so on) accept UUIDs
+  biometric unlock, notification settings, sessions, about, logout), about
+  (version, "Source code", licences), notifications (the inbox, P1.7).
+- **Push** (P1.7, ADR 0039): with a server that lists
+  `notifications.push`, the app asks for permission after login, registers
+  its Expo push token (`PUT /me/push-devices`) and removes it on logout;
+  tapping a notification opens the activity or event. Deep links (`clubadmin://groups/<id>` and so on) accept UUIDs
   only.
 - **Offline:** the query cache is persisted to MMKV, encrypted per account,
   and shown at once on start; requests pause while offline (NetInfo) and run
@@ -527,6 +531,11 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `members:purge_imports` | hourly | Deletes member import staging rows and files seven days after the import ended (P1.3b) |
 | `members:import_parse`, `members:import_run` | per import (status trigger on `member_imports`) | **Run by the API process** (ADR 0033), not the worker: read and validate an import file; add the confirmed members in batches |
 | `members:expire_exports` | every 10 minutes | Deletes export files 24 hours after they are ready, fails exports still queued after two hours |
+| `notifications:fanout` | per debounced change (`job_key`) | Re-reads an activity, series or late answer and creates its notices (P1.7, ADR 0039) |
+| `notifications:deliver` | every minute and when notices are queued | Sends due push (batches of 100, per-person budget) and emails; the daily email at 17:00 local time; skips held deliveries whose notice was read or whose activity started |
+| `notifications:response_reminders`, `notifications:event_reminders` | every 15 minutes | Answer reminders to those who have not answered; sign-up reminders before an event's deadline, club by club |
+| `notifications:push_receipts` | every 15 minutes | Reads Expo's receipts; disables unregistered devices |
+| `notifications:retention` | daily 05:37 UTC | Deletes notices after 90 days, deliveries after 30, devices 90 days after last use |
 
 Outbox handlers besides the authorization cache: `entitlements-cache`
 (`club.entitlements.changed` → Valkey channel `entitlements:invalidate`) and,
@@ -535,7 +544,12 @@ trial on the default plan). See docs/hosting-and-billing.md and ADR 0031.
 With `SMTP_URL` set, `mail` sends the transactional emails of P1.1
 (`invitation.created`, `join_request.decided`, `club.manager.changed`,
 `club_creation_request.decided`), rendered from the `email` namespace of the
-message catalogues in the recipient's language (ADR 0032).
+message catalogues in the recipient's language (ADR 0032). Since P1.7 only
+the invitation emails to addresses without an account stay in `mail`; the
+`notifications` handler turns domain events into notices in the
+recipients' inboxes (ADR 0039) and their deliveries by push and email, by
+each person's settings: the existing account-bound emails keep their text
+and gain an unsubscribe footer.
 
 ## Country packs
 

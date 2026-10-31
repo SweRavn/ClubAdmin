@@ -35,7 +35,7 @@ Ordered so each package only depends on earlier ones. Prompts:
 | P1.5 | Responses (attending / not attending) and attendance taking |
 | P1.6 | Events with sign-up forms, deadlines, capacity, waiting lists |
 | P1.6b | Clean-up after hands-on testing: events with only name and start, any number of sessions and questions, given-name order, creating/editing/deleting groups, leaders' places and answers, club settings and contact details, queue status, joining with a code, `pnpm dev:idp-sync` |
-| P1.7 | Notifications: email (templates, i18n), push, in-app; user preferences |
+| P1.7 | Notifications: an inbox on web and in the app, push (Expo), one daily email at 17:00 with urgent notices at once, settings per category, quiet hours, one-click unsubscribe (ADR 0039) |
 | P1.8 | Privacy: consents, "download my data", leave club, anonymisation and retention jobs |
 | P1.9 | Audit log and record-history UI ("History" panel on detail pages) |
 | P1.10 | Groups admin: group owners, group hierarchy, waiting lists with offers and admission (ADR 0019) |

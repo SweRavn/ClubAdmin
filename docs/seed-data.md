@@ -246,6 +246,19 @@ schedule (Ola left two years ago).
   meeting with agenda.
 - Team cash desk for SVK F2017 with a cup income and two expenses.
 - Two sponsor banners for SVK.
+- **Notifications** (P1.7, ADR 0039, `apps/api/src/seed/steps/notifications.ts`):
+  the seed has no worker, so it writes the inboxes directly (system
+  context) with the params the worker would store, and marks its own domain
+  events as handled by the worker's `notifications` handler (they are
+  history, not news: starting the worker sends nothing for them). Anna:
+  next week's cancelled F2017 Tuesday (about Elsa) and Oskar's call-up for
+  an IKN P2012 session, both unread, and an answer reminder for F2017
+  (read), plus a phone with push (fake provider, when
+  `NOTIFICATION_TOKEN_KEY` is set). Mikael: the same cancellation; email
+  "never" for the schedule and quiet hours 22:00–06:30. Erik: a late "not
+  coming" for Elsa. Liam: no longer called up (English). Lars: a moved FIL
+  session (Norwegian). Gunilla: her join request decided. Nils and Bo get
+  nothing (no account). The load scenario has no notifications yet.
 - **Billing** (only with `BILLING_ENABLED=true`, P0.12): plans Free, Standard
   and the Streaming add-on; SVK on Standard with Streaming (active), IKN on
   Free (active), FIL in a Standard trial ending in ten days. With billing off

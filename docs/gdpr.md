@@ -7,6 +7,11 @@
   Every club accepts a data processing agreement (DPA) when it signs up; the list
   of sub-processors is public and clubs are notified of changes.
 - **Self-hosting organisations** are controller (and their own processor).
+- **Push notifications** (P1.7) go through Expo's push service (a
+  sub-processor when the server sets `PUSH_PROVIDER=expo`): it receives
+  the device's push token, a title and body without people's names
+  (or only "New notification" with lock-screen text off), the notice's ID
+  and a path with IDs. Without `PUSH_PROVIDER` nothing leaves the server.
 - The person's global account data (login, preferences) is controlled by the
   operator; this is described in the platform privacy notice.
 
@@ -45,7 +50,9 @@
   happened is kept). The database function `privacy.erase_person` does this
   for the data that exists so far (people row: names emptied, birth date kept
   as the year, identity number, phone and address removed; login email
-  replaced; club notes and emergency contacts; invitations; record history)
+  replaced; club notes and emergency contacts; invitations; notifications
+  and push devices, and the person removed from others' notices; record
+  history)
   and records the person in the deletion ledger; it is idempotent, so it is
   run again for every ledger entry after a restore (ADR 0030). The erasure
   job and its triggers (account deletion, retention) come in P1.8.
@@ -76,6 +83,9 @@
 | Guardian and own-login invitations that were never accepted (P1.3) | 12 months after they expired or were revoked (worker `joining:retention`); accepted ones stay as the record of the guardianship or login |
 | Merges (`people_merges`) | The record and what was moved stay for the 30-day undo period, then as the record of the merge (audit trail) |
 | Invitation email addresses | With the invitation (above); never logged, never in outbox or job payloads |
+| Notifications (P1.7): the inbox | 90 days after the notice was created (worker `notifications:retention`); texts hold no names (people are shown through the presenter when read) |
+| Notification deliveries (which channel, when, provider ticket; no texts or addresses) | 30 days |
+| Push devices (sealed Expo push token, platform) | Until logout, Expo reports the token unregistered, or 90 days after last use |
 | Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
 
 ## Protected identity

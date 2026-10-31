@@ -43,6 +43,13 @@ budgets are requirements; CI measures them.
 - ETags and `304 Not Modified`; compression (Brotli) at the proxy.
 - Heavy work (emails to 500 members, exports, report generation, image
   resizing) always in the worker, never in the request.
+- Notifications (P1.7): the inbox is keyset-paginated on
+  `(recipient_person_id, id DESC)`; the unread count stops at 100 on a
+  partial index; the bell reads only the count. Fan-out resolves
+  recipients with one statement per question and inserts notices and
+  deliveries in bulk (`jsonb_to_recordset`); answer reminders use a partial
+  index on `activities (coalesce(respond_by, starts_at))` for requested,
+  scheduled activities.
 
 ### Web
 - React Server Components and streaming for first load; client components only
