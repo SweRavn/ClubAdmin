@@ -7,7 +7,9 @@
 // club manager, and 32 trainings per team (P1.4) with attendance for the
 // six latest past ones and answers from half of the children to the next
 // four (P1.5), and a cup for the first team with twelve places and the
-// rest of the team waiting (P1.6). Default size 1,000 clubs, about 200,000 people, 256,000
+// rest of the team waiting (P1.6), and ten notifications per child to its
+// parent over the last 90 days (P1.7: the inbox; the latest unread, push and
+// daily-email deliveries for the last 30 days). Default size 1,000 clubs, about 200,000 people, 256,000
 // activities and 0.8 million attendance marks. Plus one
 // large club (P1.2, the member register's budgets): 10,000 members in 40
 // teams, half with photo consent, some paused, a few protected.
@@ -148,6 +150,37 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
       FROM le AS e
       JOIN group_memberships AS gm ON gm.group_id = e.group_id AND gm.function = 'member'
       JOIN guardianships AS gu ON gu.ward_person_id = gm.person_id;
+    -- Notifications (P1.7): ten per child to its parent, one every nine days
+    -- over the last 90 (IDs follow the time, as the worker's do); the latest
+    -- unread; a push and a daily-email delivery for those of the last 30 days.
+    CREATE TEMP TABLE lak ON COMMIT DROP AS
+      SELECT id, group_id, (row_number() OVER (PARTITION BY group_id ORDER BY starts_at) - 1)::int AS k
+      FROM la;
+    ANALYZE lak;
+    CREATE TEMP TABLE ln ON COMMIT DROP AS
+      SELECT uuidv7(-make_interval(days => k.k * 9, mins => c.n)) AS id, gu.guardian_person_id AS recipient,
+             c.club_id, c.id AS child, k.k, now() - make_interval(days => k.k * 9, mins => c.n) AS created_at,
+             a.id AS activity_id
+      FROM lp AS c
+      JOIN guardianships AS gu ON gu.ward_person_id = c.id
+      JOIN lg AS g ON g.club_id = c.club_id AND g.g = 1 + (c.n - 1) % 8
+      CROSS JOIN generate_series(0, 9) AS k(k)
+      JOIN lak AS a ON a.group_id = g.id AND a.k = k.k
+      WHERE c.child;
+    INSERT INTO notifications (id, recipient_person_id, club_id, category, type, subject_type, subject_id,
+                               about_person_ids, params, dedupe_key, read_at, created_at, updated_at)
+      SELECT id, recipient, club_id,
+             CASE WHEN k % 3 = 0 THEN 'responses' ELSE 'schedule' END,
+             CASE k % 3 WHEN 0 THEN 'response.reminder' WHEN 1 THEN 'activity.cancelled' ELSE 'activity.moved' END,
+             'activity', activity_id, ARRAY[child],
+             jsonb_build_object('title', 'Träning', 'startsAt', created_at + interval '2 days',
+                                'timeZone', 'Europe/Stockholm', 'group', 'Lag'),
+             'load:' || id, CASE WHEN k > 0 THEN created_at + interval '3 hours' END, created_at, created_at
+      FROM ln;
+    INSERT INTO notification_deliveries (notification_id, channel, status, digest, send_after, sent_at, created_at, updated_at)
+      SELECT id, ch.channel, 'sent', ch.channel = 'email', created_at, created_at + interval '1 minute', created_at, created_at
+      FROM ln CROSS JOIN (VALUES ('push'), ('email')) AS ch(channel)
+      WHERE k <= 3;
     -- The large club.
     CREATE TEMP TABLE bc ON COMMIT DROP AS SELECT uuidv7() AS id;
     INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number)

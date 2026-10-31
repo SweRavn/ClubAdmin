@@ -83,8 +83,13 @@ const pickLocale = (...tags: (string | null | undefined)[]): Locale =>
 const started = (row: DueRow, now: Date) =>
   typeof row.params.startsAt === "string" && Date.parse(row.params.startsAt) <= now.getTime();
 
-const due = (tx: Tx, channel: "email" | "push", digest: boolean, now: Date, extra = sql``) =>
-  tx.execute<DueRow>(sql`
+/** Due deliveries of a channel, oldest first, locked (the partial index `notification_deliveries_due_idx`). */
+export const dueQuery = (
+  channel: "email" | "push",
+  digest: boolean,
+  now: Date,
+  extra = sql``,
+) => sql`
     SELECT d.id, d.status, d.attempts, n.id AS notification_id, n.type, n.category, n.club_id,
       c.name AS club_name, c.default_locale AS club_locale, n.subject_type, n.subject_id,
       n.about_person_ids, n.params, n.read_at IS NOT NULL AS read, n.recipient_person_id,
@@ -99,7 +104,33 @@ const due = (tx: Tx, channel: "email" | "push", digest: boolean, now: Date, extr
       AND d.send_after <= ${now.toISOString()}::timestamptz ${extra}
     ORDER BY d.send_after, d.id
     LIMIT ${BATCH}
-    FOR UPDATE OF d SKIP LOCKED`);
+    FOR UPDATE OF d SKIP LOCKED`;
+
+const due = (tx: Tx, channel: "email" | "push", digest: boolean, now: Date, extra = sql``) =>
+  tx.execute<DueRow>(dueQuery(channel, digest, now, extra));
+
+/** Pushes sent to these people in the hour before `at` (the per-person budget). */
+export const pushBudgetQuery = (people: readonly string[], at: Date) => sql`
+      SELECT n.recipient_person_id AS person_id, count(*)::int AS n
+      FROM public.notification_deliveries d JOIN public.notifications n ON n.id = d.notification_id
+      WHERE d.channel = 'push' AND d.status = 'sent'
+        AND d.sent_at > ${new Date(at.getTime() - 3_600_000).toISOString()}::timestamptz
+        AND n.recipient_person_id = ANY (${`{${people.join(",")}}`}::uuid[])
+      GROUP BY n.recipient_person_id`;
+
+/**
+ * Recipients whose daily email is due. Starts from the due deliveries (a
+ * materialised step on `notification_deliveries_due_idx`): few are due at a
+ * time, so walking all recipients' notices would cost far more.
+ */
+export const digestRecipientsQuery = (at: Date) => sql`
+      WITH due AS MATERIALIZED (
+        SELECT d.notification_id FROM public.notification_deliveries d
+        WHERE d.status = 'held' AND d.send_after <= ${at.toISOString()}::timestamptz
+          AND d.channel = 'email' AND d.digest)
+      SELECT DISTINCT n.recipient_person_id AS person_id
+      FROM due JOIN public.notifications n ON n.id = due.notification_id
+      LIMIT ${DIGEST_RECIPIENTS}`;
 
 async function mark(
   tx: Tx,
@@ -156,13 +187,9 @@ export async function deliverPush(deps: DeliveryDependencies, at: Date): Promise
     const { rows } = await due(tx, "push", false, at);
     if (rows.length === 0) return 0;
     const people = [...new Set(rows.map((r) => r.recipient_person_id))];
-    const { rows: recent } = await tx.execute<{ person_id: string; n: number }>(sql`
-      SELECT n.recipient_person_id AS person_id, count(*)::int AS n
-      FROM public.notification_deliveries d JOIN public.notifications n ON n.id = d.notification_id
-      WHERE d.channel = 'push' AND d.status = 'sent'
-        AND d.sent_at > ${new Date(at.getTime() - 3_600_000).toISOString()}::timestamptz
-        AND n.recipient_person_id = ANY (${`{${people.join(",")}}`}::uuid[])
-      GROUP BY n.recipient_person_id`);
+    const { rows: recent } = await tx.execute<{ person_id: string; n: number }>(
+      pushBudgetQuery(people, at),
+    );
     const sentLastHour = new Map(recent.map((r) => [r.person_id, r.n]));
     const outgoing: { row: DueRow; message: PushMessage }[] = [];
     for (const row of rows) {
@@ -391,12 +418,7 @@ export async function deliverEmails(deps: DeliveryDependencies, at: Date): Promi
 export async function deliverDigests(deps: DeliveryDependencies, at: Date): Promise<number> {
   const mail = deps.mail!;
   const { rows: people } = await deps.db.withSystem("notifications:digest", {}, (tx) =>
-    tx.execute<{ person_id: string }>(sql`
-      SELECT DISTINCT n.recipient_person_id AS person_id
-      FROM public.notification_deliveries d JOIN public.notifications n ON n.id = d.notification_id
-      WHERE d.channel = 'email' AND d.digest AND d.status = 'held'
-        AND d.send_after <= ${at.toISOString()}::timestamptz
-      LIMIT ${DIGEST_RECIPIENTS}`),
+    tx.execute<{ person_id: string }>(digestRecipientsQuery(at)),
   );
   let sent = 0;
   for (const { person_id } of people) {

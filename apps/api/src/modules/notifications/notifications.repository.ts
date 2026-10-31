@@ -3,7 +3,7 @@
 // logged-in person, their account's settings and push devices. Row-level
 // security limits every statement to the caller's own rows.
 
-import { and, desc, eq, inArray, isNull, lt, lte, schema, sql, type Tx } from "@clubadmin/db";
+import { and, asc, desc, eq, inArray, isNull, lt, lte, schema, sql, type Tx } from "@clubadmin/db";
 import type { NotificationCategory } from "@clubadmin/shared";
 
 const { notifications, pushDevices, accounts, clubs } = schema;
@@ -22,48 +22,62 @@ export type NotificationRow = Pick<
   | "readAt"
 >;
 
+export interface InboxOptions {
+  cursor?: string | undefined;
+  unread: boolean;
+  category?: NotificationCategory | undefined;
+  limit: number;
+}
+
+/** The inbox page (keyset on `notifications_inbox_idx`); also used by the query-plan test. */
+export function inboxQuery(tx: Tx, personId: string, options: InboxOptions) {
+  return (
+    tx
+      .select({
+        id: notifications.id,
+        clubId: notifications.clubId,
+        category: notifications.category,
+        type: notifications.type,
+        subjectType: notifications.subjectType,
+        subjectId: notifications.subjectId,
+        aboutPersonIds: notifications.aboutPersonIds,
+        params: notifications.params,
+        createdAt: notifications.createdAt,
+        readAt: notifications.readAt,
+      })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.recipientPersonId, personId),
+          options.cursor ? lt(notifications.id, options.cursor) : undefined,
+          options.unread ? isNull(notifications.readAt) : undefined,
+          options.category ? eq(notifications.category, options.category) : undefined,
+        ),
+      )
+      // The index's own order (recipient, id DESC): the planner then never walks
+      // the primary key backwards past other people's notices.
+      .orderBy(asc(notifications.recipientPersonId), desc(notifications.id))
+      .limit(options.limit)
+  );
+}
+
 export async function listNotifications(
   tx: Tx,
   personId: string,
-  options: {
-    cursor?: string | undefined;
-    unread: boolean;
-    category?: NotificationCategory | undefined;
-    limit: number;
-  },
+  options: InboxOptions,
 ): Promise<NotificationRow[]> {
-  return tx
-    .select({
-      id: notifications.id,
-      clubId: notifications.clubId,
-      category: notifications.category,
-      type: notifications.type,
-      subjectType: notifications.subjectType,
-      subjectId: notifications.subjectId,
-      aboutPersonIds: notifications.aboutPersonIds,
-      params: notifications.params,
-      createdAt: notifications.createdAt,
-      readAt: notifications.readAt,
-    })
-    .from(notifications)
-    .where(
-      and(
-        eq(notifications.recipientPersonId, personId),
-        options.cursor ? lt(notifications.id, options.cursor) : undefined,
-        options.unread ? isNull(notifications.readAt) : undefined,
-        options.category ? eq(notifications.category, options.category) : undefined,
-      ),
-    )
-    .orderBy(desc(notifications.id))
-    .limit(options.limit);
+  return inboxQuery(tx, personId, options);
 }
+
+/** Unread notices up to `cap`, on the partial index `notifications_unread_idx`. */
+export const unreadCountQuery = (personId: string, cap: number) => sql`
+  SELECT count(*)::int AS n FROM (
+    SELECT 1 FROM public.notifications
+    WHERE recipient_person_id = ${personId} AND read_at IS NULL LIMIT ${cap}) u`;
 
 /** Unread notices, counted up to `cap` (the partial index stops there). */
 export async function countUnread(tx: Tx, personId: string, cap: number): Promise<number> {
-  const { rows } = await tx.execute<{ n: number }>(sql`
-    SELECT count(*)::int AS n FROM (
-      SELECT 1 FROM public.notifications
-      WHERE recipient_person_id = ${personId} AND read_at IS NULL LIMIT ${cap}) u`);
+  const { rows } = await tx.execute<{ n: number }>(unreadCountQuery(personId, cap));
   return rows[0]?.n ?? 0;
 }
 
@@ -164,16 +178,31 @@ export async function ownDeviceByHash(tx: Tx, tokenHash: string): Promise<Device
 /** Registers the token on the caller's account (moving it from another account). */
 export async function claimDevice(
   tx: Tx,
-  values: { tokenHash: string; tokenSealed: string; platform: string; appVariant: string },
+  values: {
+    tokenHash: string;
+    tokenSealed: string;
+    platform: string;
+    appVariant: string;
+    sessionHandle: string | null;
+  },
 ): Promise<DeviceRow> {
   const { rows } = await tx.execute<{ id: string }>(sql`
     SELECT app.claim_push_device(${values.tokenHash}, ${values.tokenSealed},
-      ${values.platform}, ${values.appVariant}) AS id`);
+      ${values.platform}, ${values.appVariant}, ${values.sessionHandle}::text) AS id`);
   const [row] = await tx
     .select(deviceColumns)
     .from(pushDevices)
     .where(eq(pushDevices.id, rows[0]!.id));
   return row!;
+}
+
+/** The caller's devices registered in an app session (row-level security: own account only). */
+export async function deleteSessionDevices(tx: Tx, sessionHandle: string): Promise<string[]> {
+  const rows = await tx
+    .delete(pushDevices)
+    .where(eq(pushDevices.sessionHandle, sessionHandle))
+    .returning({ id: pushDevices.id });
+  return rows.map((r) => r.id);
 }
 
 export async function deleteDevice(tx: Tx, id: string): Promise<boolean> {

@@ -179,13 +179,7 @@ export function responseRemindersTask(deps: NotificationTaskDependencies): Task 
     for (const clubId of await clubIds(deps.db)) {
       await deps.db.withSystem("notifications:response_reminders", { clubId }, async (tx) => {
         // The partial index activities_reminder_idx, in each club (tenant row-level security).
-        const { rows } = await tx.execute<{ id: string; club_id: string }>(sql`
-        SELECT a.id, a.club_id FROM public.activities a
-        WHERE a.response_mode = 'requested' AND a.status = 'scheduled'
-          AND coalesce(a.respond_by, a.starts_at) > ${at.toISOString()}::timestamptz
-          AND coalesce(a.respond_by, a.starts_at) <= ${new Date(at.getTime() + NOTICE_LEAD_HOURS * HOUR_MS).toISOString()}::timestamptz
-          AND a.starts_at > ${at.toISOString()}::timestamptz
-        LIMIT 2000`);
+        const { rows } = await tx.execute<{ id: string; club_id: string }>(reminderScanQuery(at));
         for (const row of rows) {
           const a = await activityFacts(tx, row.club_id, row.id);
           if (!a) continue;
@@ -229,6 +223,15 @@ async function clubIds(db: Database): Promise<string[]> {
   );
   return rows.map((r) => r.id);
 }
+
+/** Requested activities of the club (its RLS context) whose answer is due within the lead time. */
+export const reminderScanQuery = (at: Date) => sql`
+        SELECT a.id, a.club_id FROM public.activities a
+        WHERE a.response_mode = 'requested' AND a.status = 'scheduled'
+          AND coalesce(a.respond_by, a.starts_at) > ${at.toISOString()}::timestamptz
+          AND coalesce(a.respond_by, a.starts_at) <= ${new Date(at.getTime() + NOTICE_LEAD_HOURS * HOUR_MS).toISOString()}::timestamptz
+          AND a.starts_at > ${at.toISOString()}::timestamptz
+        LIMIT 2000`;
 
 /** 24 hours before sign-up closes, the audience who have not signed up (via those who may sign up). */
 export function eventRemindersTask(deps: NotificationTaskDependencies): Task {
@@ -277,19 +280,29 @@ export function eventRemindersTask(deps: NotificationTaskDependencies): Task {
   };
 }
 
+/** What retention deletes (each on its own index: created_at, created_at, account/last seen). */
+export function retentionQueries(at: Date) {
+  const before = (days: number) => new Date(at.getTime() - days * DAY_MS).toISOString();
+  return {
+    deliveries: sql`
+        DELETE FROM public.notification_deliveries WHERE created_at < ${before(30)}::timestamptz`,
+    notices: sql`
+        DELETE FROM public.notifications WHERE created_at < ${before(90)}::timestamptz`,
+    devices: sql`
+        DELETE FROM public.push_devices
+        WHERE last_seen_at < ${before(90)}::timestamptz OR disabled_at < ${before(7)}::timestamptz`,
+  };
+}
+
 /** Retention (decision 9): notices 90 days, deliveries 30 days, devices 90 days after last seen. */
 export function notificationsRetentionTask(db: Database, now?: () => Date): Task {
   return async (_payload, helpers) => {
     const at = now?.() ?? new Date();
-    const before = (days: number) => new Date(at.getTime() - days * DAY_MS).toISOString();
     const result = await db.withSystem("notifications:retention", {}, async (tx) => {
-      const deliveries = await tx.execute(sql`
-        DELETE FROM public.notification_deliveries WHERE created_at < ${before(30)}::timestamptz`);
-      const notices = await tx.execute(sql`
-        DELETE FROM public.notifications WHERE created_at < ${before(90)}::timestamptz`);
-      const devices = await tx.execute(sql`
-        DELETE FROM public.push_devices
-        WHERE last_seen_at < ${before(90)}::timestamptz OR disabled_at < ${before(7)}::timestamptz`);
+      const queries = retentionQueries(at);
+      const deliveries = await tx.execute(queries.deliveries);
+      const notices = await tx.execute(queries.notices);
+      const devices = await tx.execute(queries.devices);
       return {
         deliveries: deliveries.rowCount ?? 0,
         notices: notices.rowCount ?? 0,
