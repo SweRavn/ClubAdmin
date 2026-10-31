@@ -5,7 +5,7 @@
 import { X509Certificate } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 
-import { bootstrap, migrate, passwordsFromEnv } from "@clubadmin/db/admin";
+import { bootstrap, migrate, passwordsFromEnv, withAdminConnection } from "@clubadmin/db/admin";
 
 import { exportCaddyRootCert } from "./caddy.ts";
 import {
@@ -20,6 +20,7 @@ import { doctor } from "./doctor.ts";
 import { ensureEnvLocal, loadEnv, requireEnv, setEnvValues } from "./env.ts";
 import { setupGarage } from "./garage.ts";
 import { fetchWithCa, isCertificateError, servedChain } from "./https.ts";
+import { idpPersonas, idpSyncRefusal, syncPersonas } from "./idp-sync.ts";
 import { caddyRootCertFile } from "./paths.ts";
 import { run } from "./process.ts";
 import { smoke } from "./smoke.ts";
@@ -39,7 +40,8 @@ const USAGE = `Usage: pnpm dev[:command]
   trust-ca       trust Caddy's local CA in the OS (--print to only show the commands);
                  --ios: booted iOS simulators, --android: the running Android emulator
   smoke          check that every service works end to end
-  auth-configure apply infra/zitadel/ to Zitadel (also run by services); --print only prints the results`;
+  auth-configure apply infra/zitadel/ to Zitadel (also run by services); --print only prints the results
+  idp-sync       create the demo personas as Zitadel users (password demo-password-123; development only)`;
 
 /** Caddy's CA from the running container, or the copy exported earlier. */
 function localCa(): string {
@@ -85,6 +87,31 @@ async function authConfigure(print: boolean): Promise<boolean> {
     changes.length === 0 && written.length === 0
       ? "Zitadel: up to date"
       : `Zitadel: configured${written.length > 0 ? ` (.env.local: ${written.join(", ")})` : ""}`,
+  );
+  return true;
+}
+
+/** The demo personas as users of the local Zitadel (P1.6b, docs/seed-data.md). */
+async function idpSync(): Promise<boolean> {
+  const env = loadEnv();
+  for (const [key, value] of Object.entries(process.env)) if (value) env.set(key, value);
+  const refusal = idpSyncRefusal(env);
+  if (refusal) {
+    console.error(`idp-sync is for development only: ${refusal}.`);
+    return false;
+  }
+  const baseUrl = requireEnv(env, "AUTH_ISSUER");
+  const result = await withAdminConnection(requireEnv(env, "DATABASE_ADMIN_URL"), (query) =>
+    syncPersonas({
+      baseUrl,
+      token: env.get("ZITADEL_PAT") ?? readZitadelAdminPat(),
+      personas: idpPersonas(),
+      query,
+      fetch: fetchWithCa(localCa()),
+    }),
+  );
+  console.log(
+    `Zitadel: ${result.created} personas created, ${result.updated} updated, ${result.linked} accounts linked (password demo-password-123)`,
   );
   return true;
 }
@@ -323,6 +350,8 @@ async function main(argv: string[]): Promise<number> {
       return (await smoke()) ? 0 : 1;
     case "auth-configure":
       return (await authConfigure(flag("--print"))) ? 0 : 1;
+    case "idp-sync":
+      return (await idpSync()) ? 0 : 1;
     case "help":
     case "--help":
       console.log(USAGE);

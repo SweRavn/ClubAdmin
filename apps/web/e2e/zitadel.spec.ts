@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Real login through Zitadel's login pages: sign up, verify the email from
 // Mailpit, land on the home page; duplicate email; MFA step-up with TOTP;
-// logout.
+// logout; a demo persona with email and password (`pnpm dev:idp-sync`, P1.6b).
 
 import { expect, type Page, test } from "@playwright/test";
 
@@ -29,7 +29,12 @@ async function skipMfaPrompt(page: Page): Promise<void> {
   if (await skip.isVisible({ timeout: 3_000 }).catch(() => false)) await skip.click();
 }
 
-async function logIn(page: Page, address: string, otpSecret?: string): Promise<void> {
+async function logIn(
+  page: Page,
+  address: string,
+  otpSecret?: string,
+  password = PASSWORD,
+): Promise<void> {
   await page.goto("/auth/login?returnTo=%2Fme");
   await page.getByTestId("real-login").click();
   // Zitadel remembers accounts used in this browser and may offer them first.
@@ -39,7 +44,7 @@ async function logIn(page: Page, address: string, otpSecret?: string): Promise<v
   if (await other.isVisible()) await other.click();
   await emailField.fill(address);
   await page.getByRole("button", { name: "Fortsätt" }).click();
-  await page.getByLabel("Lösenord").fill(PASSWORD);
+  await page.getByLabel("Lösenord").fill(password);
   await page.getByRole("button", { name: "Fortsätt" }).click();
   if (otpSecret) {
     await page.getByLabel("Kod").fill(totp(otpSecret));
@@ -118,4 +123,9 @@ test("an MFA-gated endpoint answers mfa_required, and works after enrolling TOTP
   await page.waitForURL((url) => !url.pathname.startsWith("/me"));
   await page.context().addCookies([cookie]);
   expect((await page.request.get("/api/v1/me")).status()).toBe(401);
+});
+
+test("Anna logs in with her email and the demo password (pnpm dev:idp-sync)", async ({ page }) => {
+  await logIn(page, "anna.lindqvist@example.test", undefined, "demo-password-123");
+  await expect(page.getByTestId("me-name")).toContainText("Anna Lindqvist");
 });

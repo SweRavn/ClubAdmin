@@ -20,6 +20,7 @@
     "dev:trust-ca": "node packages/devtools/src/cli.ts trust-ca",
     "dev:smoke": "node packages/devtools/src/cli.ts smoke",
     "auth:configure": "node packages/devtools/src/cli.ts auth-configure",
+    "dev:idp-sync": "node packages/devtools/src/cli.ts idp-sync",
     "lint": "turbo run lint && pnpm run lint:root && pnpm run lint:deps && pnpm run format:check",
     "lint:root": "eslint --no-warn-ignored eslint.config.js dependency-cruiser.config.mjs",
     "lint:fix": "turbo run lint -- --fix && eslint --fix --no-warn-ignored eslint.config.js && prettier --write .",

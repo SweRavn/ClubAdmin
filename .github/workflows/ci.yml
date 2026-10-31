@@ -143,6 +143,8 @@ jobs:
         run: |
           set -a; . ./.env.local; set +a
           docker compose --project-name clubadmin cp zitadel:/zitadel/bootstrap/admin.pat "$RUNNER_TEMP/admin.pat"
+          # The demo personas as Zitadel users (password demo-password-123, P1.6b).
+          ZITADEL_PAT="$(cat "$RUNNER_TEMP/admin.pat")" pnpm dev:idp-sync
           ZITADEL_PAT="$(cat "$RUNNER_TEMP/admin.pat")" pnpm --filter @clubadmin/web test:e2e
 
       # The production build (ADR 0027): strict CSP and Trusted Types, the
