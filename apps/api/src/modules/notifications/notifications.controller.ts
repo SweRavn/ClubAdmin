@@ -86,11 +86,14 @@ export class NotificationsController {
     @Req() request: FastifyRequest,
   ): Promise<NotificationList> {
     const page = await this.notifications.inbox(authz.context, query);
-    const locale = localeOf(page.locale) ?? negotiateLocale(request.headers["accept-language"]);
+    // As in emails: the account's language, else the club's, else the browser's.
+    const fallback = negotiateLocale(request.headers["accept-language"]);
     const about = await this.about(authz, page.items);
     return {
       items: page.items.map((n): NotificationItem => {
-        const clubName = n.clubId ? (page.clubNames.get(n.clubId) ?? null) : null;
+        const club = n.clubId ? page.clubs.get(n.clubId) : undefined;
+        const clubName = club?.name ?? null;
+        const locale = localeOf(page.locale) ?? localeOf(club?.defaultLocale) ?? fallback;
         const text = renderNotice(locale, {
           type: n.type,
           clubId: n.clubId,

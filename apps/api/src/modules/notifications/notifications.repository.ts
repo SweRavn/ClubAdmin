@@ -88,14 +88,22 @@ export async function markRead(
   return rows.length;
 }
 
-/** Club names for notices (also clubs the person has left since). */
-export async function clubNames(tx: Tx, clubIds: readonly string[]): Promise<Map<string, string>> {
+export interface ClubLabel {
+  name: string;
+  defaultLocale: string;
+}
+
+/** Names and languages of the clubs notices came from (also clubs the person has left since). */
+export async function clubLabels(
+  tx: Tx,
+  clubIds: readonly string[],
+): Promise<Map<string, ClubLabel>> {
   if (clubIds.length === 0) return new Map();
   const rows = await tx
-    .select({ id: clubs.id, name: clubs.name })
+    .select({ id: clubs.id, name: clubs.name, defaultLocale: clubs.defaultLocale })
     .from(clubs)
     .where(inArray(clubs.id, [...clubIds]));
-  return new Map(rows.map((r) => [r.id, r.name]));
+  return new Map(rows.map((r) => [r.id, { name: r.name, defaultLocale: r.defaultLocale }]));
 }
 
 export type SettingsRow = { id: string; locale: string | null; settings: unknown };

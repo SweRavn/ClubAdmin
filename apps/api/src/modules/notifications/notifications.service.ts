@@ -66,7 +66,7 @@ export interface InboxPage {
   items: repo.NotificationRow[];
   nextCursor: string | null;
   locale: string | null;
-  clubNames: Map<string, string>;
+  clubs: Map<string, repo.ClubLabel>;
 }
 
 export class NotificationsService {
@@ -95,10 +95,10 @@ export class NotificationsService {
         items,
         nextCursor: rows.length > INBOX_PAGE_SIZE ? items.at(-1)!.id : null,
         locale: account?.locale ?? null,
-        // Names of clubs the notices came from, also clubs the person has left.
-        clubNames: clubIds.length
+        // Clubs the notices came from, also clubs the person has left.
+        clubs: clubIds.length
           ? await this.db.withSystem("notifications:club-names", {}, (system) =>
-              repo.clubNames(system, clubIds),
+              repo.clubLabels(system, clubIds),
             )
           : new Map(),
       };
