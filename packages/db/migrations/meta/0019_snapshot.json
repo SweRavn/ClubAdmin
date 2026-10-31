@@ -307,56 +307,36 @@
         "activities_club_id_clubs_id_fk": {
           "name": "activities_club_id_clubs_id_fk",
           "tableFrom": "activities",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activities_created_by_person_id_people_id_fk": {
           "name": "activities_created_by_person_id_people_id_fk",
           "tableFrom": "activities",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activities_series_fk": {
           "name": "activities_series_fk",
           "tableFrom": "activities",
-          "columnsFrom": [
-            "club_id",
-            "series_id"
-          ],
+          "columnsFrom": ["club_id", "series_id"],
           "tableTo": "activity_series",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activities_location_fk": {
           "name": "activities_location_fk",
           "tableFrom": "activities",
-          "columnsFrom": [
-            "club_id",
-            "location_id"
-          ],
+          "columnsFrom": ["club_id", "location_id"],
           "tableTo": "locations",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -365,10 +345,7 @@
       "uniqueConstraints": {
         "activities_club_id_unique": {
           "name": "activities_club_id_unique",
-          "columns": [
-            "club_id",
-            "id"
-          ],
+          "columns": ["club_id", "id"],
           "nullsNotDistinct": false
         }
       },
@@ -476,43 +453,27 @@
         "activity_groups_club_id_clubs_id_fk": {
           "name": "activity_groups_club_id_clubs_id_fk",
           "tableFrom": "activity_groups",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_groups_activity_fk": {
           "name": "activity_groups_activity_fk",
           "tableFrom": "activity_groups",
-          "columnsFrom": [
-            "club_id",
-            "activity_id"
-          ],
+          "columnsFrom": ["club_id", "activity_id"],
           "tableTo": "activities",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "activity_groups_group_fk": {
           "name": "activity_groups_group_fk",
           "tableFrom": "activity_groups",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -521,10 +482,7 @@
       "uniqueConstraints": {
         "activity_groups_unique": {
           "name": "activity_groups_unique",
-          "columns": [
-            "activity_id",
-            "group_id"
-          ],
+          "columns": ["activity_id", "group_id"],
           "nullsNotDistinct": false
         }
       },
@@ -693,41 +651,27 @@
         "activity_series_club_id_clubs_id_fk": {
           "name": "activity_series_club_id_clubs_id_fk",
           "tableFrom": "activity_series",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_series_created_by_person_id_people_id_fk": {
           "name": "activity_series_created_by_person_id_people_id_fk",
           "tableFrom": "activity_series",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_series_location_fk": {
           "name": "activity_series_location_fk",
           "tableFrom": "activity_series",
-          "columnsFrom": [
-            "club_id",
-            "location_id"
-          ],
+          "columnsFrom": ["club_id", "location_id"],
           "tableTo": "locations",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -736,10 +680,7 @@
       "uniqueConstraints": {
         "activity_series_club_id_unique": {
           "name": "activity_series_club_id_unique",
-          "columns": [
-            "club_id",
-            "id"
-          ],
+          "columns": ["club_id", "id"],
           "nullsNotDistinct": false
         }
       },
@@ -839,43 +780,27 @@
         "activity_series_groups_club_id_clubs_id_fk": {
           "name": "activity_series_groups_club_id_clubs_id_fk",
           "tableFrom": "activity_series_groups",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_series_groups_series_fk": {
           "name": "activity_series_groups_series_fk",
           "tableFrom": "activity_series_groups",
-          "columnsFrom": [
-            "club_id",
-            "series_id"
-          ],
+          "columnsFrom": ["club_id", "series_id"],
           "tableTo": "activity_series",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "activity_series_groups_group_fk": {
           "name": "activity_series_groups_group_fk",
           "tableFrom": "activity_series_groups",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -884,10 +809,7 @@
       "uniqueConstraints": {
         "activity_series_groups_unique": {
           "name": "activity_series_groups_unique",
-          "columns": [
-            "series_id",
-            "group_id"
-          ],
+          "columns": ["series_id", "group_id"],
           "nullsNotDistinct": false
         }
       },
@@ -1024,26 +946,18 @@
         "locations_club_id_clubs_id_fk": {
           "name": "locations_club_id_clubs_id_fk",
           "tableFrom": "locations",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "locations_created_by_person_id_people_id_fk": {
           "name": "locations_created_by_person_id_people_id_fk",
           "tableFrom": "locations",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1052,10 +966,7 @@
       "uniqueConstraints": {
         "locations_club_id_unique": {
           "name": "locations_club_id_unique",
-          "columns": [
-            "club_id",
-            "id"
-          ],
+          "columns": ["club_id", "id"],
           "nullsNotDistinct": false
         }
       },
@@ -1246,28 +1157,18 @@
         "schedule_entries_club_id_clubs_id_fk": {
           "name": "schedule_entries_club_id_clubs_id_fk",
           "tableFrom": "schedule_entries",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "schedule_entries_activity_fk": {
           "name": "schedule_entries_activity_fk",
           "tableFrom": "schedule_entries",
-          "columnsFrom": [
-            "club_id",
-            "activity_id"
-          ],
+          "columnsFrom": ["club_id", "activity_id"],
           "tableTo": "activities",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1276,10 +1177,7 @@
       "uniqueConstraints": {
         "schedule_entries_unique": {
           "name": "schedule_entries_unique",
-          "columns": [
-            "activity_id",
-            "group_id"
-          ],
+          "columns": ["activity_id", "group_id"],
           "nullsNotDistinct": false
         }
       },
@@ -1400,54 +1298,36 @@
         "activity_invitees_club_id_clubs_id_fk": {
           "name": "activity_invitees_club_id_clubs_id_fk",
           "tableFrom": "activity_invitees",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_invitees_person_id_people_id_fk": {
           "name": "activity_invitees_person_id_people_id_fk",
           "tableFrom": "activity_invitees",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_invitees_invited_by_person_id_people_id_fk": {
           "name": "activity_invitees_invited_by_person_id_people_id_fk",
           "tableFrom": "activity_invitees",
-          "columnsFrom": [
-            "invited_by_person_id"
-          ],
+          "columnsFrom": ["invited_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_invitees_activity_fk": {
           "name": "activity_invitees_activity_fk",
           "tableFrom": "activity_invitees",
-          "columnsFrom": [
-            "club_id",
-            "activity_id"
-          ],
+          "columnsFrom": ["club_id", "activity_id"],
           "tableTo": "activities",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -1456,10 +1336,7 @@
       "uniqueConstraints": {
         "activity_invitees_unique": {
           "name": "activity_invitees_unique",
-          "columns": [
-            "activity_id",
-            "person_id"
-          ],
+          "columns": ["activity_id", "person_id"],
           "nullsNotDistinct": false
         }
       },
@@ -1599,54 +1476,36 @@
         "activity_responses_club_id_clubs_id_fk": {
           "name": "activity_responses_club_id_clubs_id_fk",
           "tableFrom": "activity_responses",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_responses_person_id_people_id_fk": {
           "name": "activity_responses_person_id_people_id_fk",
           "tableFrom": "activity_responses",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_responses_responded_by_person_id_people_id_fk": {
           "name": "activity_responses_responded_by_person_id_people_id_fk",
           "tableFrom": "activity_responses",
-          "columnsFrom": [
-            "responded_by_person_id"
-          ],
+          "columnsFrom": ["responded_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "activity_responses_activity_fk": {
           "name": "activity_responses_activity_fk",
           "tableFrom": "activity_responses",
-          "columnsFrom": [
-            "club_id",
-            "activity_id"
-          ],
+          "columnsFrom": ["club_id", "activity_id"],
           "tableTo": "activities",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1655,10 +1514,7 @@
       "uniqueConstraints": {
         "activity_responses_unique": {
           "name": "activity_responses_unique",
-          "columns": [
-            "activity_id",
-            "person_id"
-          ],
+          "columns": ["activity_id", "person_id"],
           "nullsNotDistinct": false
         }
       },
@@ -1827,54 +1683,36 @@
         "attendance_records_club_id_clubs_id_fk": {
           "name": "attendance_records_club_id_clubs_id_fk",
           "tableFrom": "attendance_records",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "attendance_records_person_id_people_id_fk": {
           "name": "attendance_records_person_id_people_id_fk",
           "tableFrom": "attendance_records",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "attendance_records_recorded_by_person_id_people_id_fk": {
           "name": "attendance_records_recorded_by_person_id_people_id_fk",
           "tableFrom": "attendance_records",
-          "columnsFrom": [
-            "recorded_by_person_id"
-          ],
+          "columnsFrom": ["recorded_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "attendance_records_activity_fk": {
           "name": "attendance_records_activity_fk",
           "tableFrom": "attendance_records",
-          "columnsFrom": [
-            "club_id",
-            "activity_id"
-          ],
+          "columnsFrom": ["club_id", "activity_id"],
           "tableTo": "activities",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1883,10 +1721,7 @@
       "uniqueConstraints": {
         "attendance_records_unique": {
           "name": "attendance_records_unique",
-          "columns": [
-            "activity_id",
-            "person_id"
-          ],
+          "columns": ["activity_id", "person_id"],
           "nullsNotDistinct": false
         }
       },
@@ -2010,39 +1845,27 @@
         "club_manager_handovers_club_id_clubs_id_fk": {
           "name": "club_manager_handovers_club_id_clubs_id_fk",
           "tableFrom": "club_manager_handovers",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_manager_handovers_from_person_id_people_id_fk": {
           "name": "club_manager_handovers_from_person_id_people_id_fk",
           "tableFrom": "club_manager_handovers",
-          "columnsFrom": [
-            "from_person_id"
-          ],
+          "columnsFrom": ["from_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_manager_handovers_to_person_id_people_id_fk": {
           "name": "club_manager_handovers_to_person_id_people_id_fk",
           "tableFrom": "club_manager_handovers",
-          "columnsFrom": [
-            "to_person_id"
-          ],
+          "columnsFrom": ["to_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -2245,26 +2068,18 @@
         "club_memberships_club_id_clubs_id_fk": {
           "name": "club_memberships_club_id_clubs_id_fk",
           "tableFrom": "club_memberships",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_memberships_person_id_people_id_fk": {
           "name": "club_memberships_person_id_people_id_fk",
           "tableFrom": "club_memberships",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -2369,13 +2184,9 @@
         "club_phone_numbers_club_id_clubs_id_fk": {
           "name": "club_phone_numbers_club_id_clubs_id_fk",
           "tableFrom": "club_phone_numbers",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -2504,26 +2315,18 @@
         "club_profiles_club_id_clubs_id_fk": {
           "name": "club_profiles_club_id_clubs_id_fk",
           "tableFrom": "club_profiles",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_profiles_person_id_people_id_fk": {
           "name": "club_profiles_person_id_people_id_fk",
           "tableFrom": "club_profiles",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -2532,18 +2335,12 @@
       "uniqueConstraints": {
         "club_profiles_person_unique": {
           "name": "club_profiles_person_unique",
-          "columns": [
-            "club_id",
-            "person_id"
-          ],
+          "columns": ["club_id", "person_id"],
           "nullsNotDistinct": false
         },
         "club_profiles_member_number_unique": {
           "name": "club_profiles_member_number_unique",
-          "columns": [
-            "club_id",
-            "member_number"
-          ],
+          "columns": ["club_id", "member_number"],
           "nullsNotDistinct": false
         }
       },
@@ -2701,52 +2498,36 @@
         "club_role_assignments_club_id_clubs_id_fk": {
           "name": "club_role_assignments_club_id_clubs_id_fk",
           "tableFrom": "club_role_assignments",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_role_assignments_person_id_people_id_fk": {
           "name": "club_role_assignments_person_id_people_id_fk",
           "tableFrom": "club_role_assignments",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_role_assignments_assigned_by_person_id_people_id_fk": {
           "name": "club_role_assignments_assigned_by_person_id_people_id_fk",
           "tableFrom": "club_role_assignments",
-          "columnsFrom": [
-            "assigned_by_person_id"
-          ],
+          "columnsFrom": ["assigned_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_role_assignments_ended_by_person_id_people_id_fk": {
           "name": "club_role_assignments_ended_by_person_id_people_id_fk",
           "tableFrom": "club_role_assignments",
-          "columnsFrom": [
-            "ended_by_person_id"
-          ],
+          "columnsFrom": ["ended_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -3110,52 +2891,36 @@
         "consents_club_id_clubs_id_fk": {
           "name": "consents_club_id_clubs_id_fk",
           "tableFrom": "consents",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "consents_person_id_people_id_fk": {
           "name": "consents_person_id_people_id_fk",
           "tableFrom": "consents",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "consents_given_by_person_id_people_id_fk": {
           "name": "consents_given_by_person_id_people_id_fk",
           "tableFrom": "consents",
-          "columnsFrom": [
-            "given_by_person_id"
-          ],
+          "columnsFrom": ["given_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "consents_revoked_by_person_id_people_id_fk": {
           "name": "consents_revoked_by_person_id_people_id_fk",
           "tableFrom": "consents",
-          "columnsFrom": [
-            "revoked_by_person_id"
-          ],
+          "columnsFrom": ["revoked_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -3281,26 +3046,18 @@
         "employments_club_id_clubs_id_fk": {
           "name": "employments_club_id_clubs_id_fk",
           "tableFrom": "employments",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "employments_person_id_people_id_fk": {
           "name": "employments_person_id_people_id_fk",
           "tableFrom": "employments",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -3391,43 +3148,27 @@
         "event_activities_club_id_clubs_id_fk": {
           "name": "event_activities_club_id_clubs_id_fk",
           "tableFrom": "event_activities",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "event_activities_event_fk": {
           "name": "event_activities_event_fk",
           "tableFrom": "event_activities",
-          "columnsFrom": [
-            "club_id",
-            "event_id"
-          ],
+          "columnsFrom": ["club_id", "event_id"],
           "tableTo": "events",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "event_activities_activity_fk": {
           "name": "event_activities_activity_fk",
           "tableFrom": "event_activities",
-          "columnsFrom": [
-            "club_id",
-            "activity_id"
-          ],
+          "columnsFrom": ["club_id", "activity_id"],
           "tableTo": "activities",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -3436,9 +3177,7 @@
       "uniqueConstraints": {
         "event_activities_activity_unique": {
           "name": "event_activities_activity_unique",
-          "columns": [
-            "activity_id"
-          ],
+          "columns": ["activity_id"],
           "nullsNotDistinct": false
         }
       },
@@ -3517,43 +3256,27 @@
         "event_groups_club_id_clubs_id_fk": {
           "name": "event_groups_club_id_clubs_id_fk",
           "tableFrom": "event_groups",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "event_groups_event_fk": {
           "name": "event_groups_event_fk",
           "tableFrom": "event_groups",
-          "columnsFrom": [
-            "club_id",
-            "event_id"
-          ],
+          "columnsFrom": ["club_id", "event_id"],
           "tableTo": "events",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "event_groups_group_fk": {
           "name": "event_groups_group_fk",
           "tableFrom": "event_groups",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -3562,10 +3285,7 @@
       "uniqueConstraints": {
         "event_groups_unique": {
           "name": "event_groups_unique",
-          "columns": [
-            "event_id",
-            "group_id"
-          ],
+          "columns": ["event_id", "group_id"],
           "nullsNotDistinct": false
         }
       },
@@ -3786,54 +3506,36 @@
         "event_registrations_club_id_clubs_id_fk": {
           "name": "event_registrations_club_id_clubs_id_fk",
           "tableFrom": "event_registrations",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "event_registrations_person_id_people_id_fk": {
           "name": "event_registrations_person_id_people_id_fk",
           "tableFrom": "event_registrations",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "event_registrations_registered_by_person_id_people_id_fk": {
           "name": "event_registrations_registered_by_person_id_people_id_fk",
           "tableFrom": "event_registrations",
-          "columnsFrom": [
-            "registered_by_person_id"
-          ],
+          "columnsFrom": ["registered_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "event_registrations_event_fk": {
           "name": "event_registrations_event_fk",
           "tableFrom": "event_registrations",
-          "columnsFrom": [
-            "club_id",
-            "event_id"
-          ],
+          "columnsFrom": ["club_id", "event_id"],
           "tableTo": "events",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -4039,41 +3741,27 @@
         "events_club_id_clubs_id_fk": {
           "name": "events_club_id_clubs_id_fk",
           "tableFrom": "events",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "events_created_by_person_id_people_id_fk": {
           "name": "events_created_by_person_id_people_id_fk",
           "tableFrom": "events",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "events_location_fk": {
           "name": "events_location_fk",
           "tableFrom": "events",
-          "columnsFrom": [
-            "club_id",
-            "location_id"
-          ],
+          "columnsFrom": ["club_id", "location_id"],
           "tableTo": "locations",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -4082,10 +3770,7 @@
       "uniqueConstraints": {
         "events_club_id_unique": {
           "name": "events_club_id_unique",
-          "columns": [
-            "club_id",
-            "id"
-          ],
+          "columns": ["club_id", "id"],
           "nullsNotDistinct": false
         }
       },
@@ -4279,41 +3964,27 @@
         "group_memberships_club_id_clubs_id_fk": {
           "name": "group_memberships_club_id_clubs_id_fk",
           "tableFrom": "group_memberships",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_memberships_person_id_people_id_fk": {
           "name": "group_memberships_person_id_people_id_fk",
           "tableFrom": "group_memberships",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_memberships_group_fk": {
           "name": "group_memberships_group_fk",
           "tableFrom": "group_memberships",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -4456,54 +4127,36 @@
         "group_owners_club_id_clubs_id_fk": {
           "name": "group_owners_club_id_clubs_id_fk",
           "tableFrom": "group_owners",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_owners_person_id_people_id_fk": {
           "name": "group_owners_person_id_people_id_fk",
           "tableFrom": "group_owners",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_owners_assigned_by_person_id_people_id_fk": {
           "name": "group_owners_assigned_by_person_id_people_id_fk",
           "tableFrom": "group_owners",
-          "columnsFrom": [
-            "assigned_by_person_id"
-          ],
+          "columnsFrom": ["assigned_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_owners_group_fk": {
           "name": "group_owners_group_fk",
           "tableFrom": "group_owners",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -4580,43 +4233,27 @@
         "group_seasons_club_id_clubs_id_fk": {
           "name": "group_seasons_club_id_clubs_id_fk",
           "tableFrom": "group_seasons",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_seasons_group_fk": {
           "name": "group_seasons_group_fk",
           "tableFrom": "group_seasons",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_seasons_season_fk": {
           "name": "group_seasons_season_fk",
           "tableFrom": "group_seasons",
-          "columnsFrom": [
-            "club_id",
-            "season_id"
-          ],
+          "columnsFrom": ["club_id", "season_id"],
           "tableTo": "seasons",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -4625,10 +4262,7 @@
       "uniqueConstraints": {
         "group_seasons_unique": {
           "name": "group_seasons_unique",
-          "columns": [
-            "group_id",
-            "season_id"
-          ],
+          "columns": ["group_id", "season_id"],
           "nullsNotDistinct": false
         }
       },
@@ -4803,28 +4437,18 @@
         "groups_club_id_clubs_id_fk": {
           "name": "groups_club_id_clubs_id_fk",
           "tableFrom": "groups",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "groups_parent_same_club_fk": {
           "name": "groups_parent_same_club_fk",
           "tableFrom": "groups",
-          "columnsFrom": [
-            "club_id",
-            "parent_group_id"
-          ],
+          "columnsFrom": ["club_id", "parent_group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -4833,10 +4457,7 @@
       "uniqueConstraints": {
         "groups_club_id_unique": {
           "name": "groups_club_id_unique",
-          "columns": [
-            "club_id",
-            "id"
-          ],
+          "columns": ["club_id", "id"],
           "nullsNotDistinct": false
         }
       },
@@ -4950,13 +4571,9 @@
         "seasons_club_id_clubs_id_fk": {
           "name": "seasons_club_id_clubs_id_fk",
           "tableFrom": "seasons",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -4965,10 +4582,7 @@
       "uniqueConstraints": {
         "seasons_club_id_unique": {
           "name": "seasons_club_id_unique",
-          "columns": [
-            "club_id",
-            "id"
-          ],
+          "columns": ["club_id", "id"],
           "nullsNotDistinct": false
         }
       },
@@ -5141,26 +4755,18 @@
         "club_creation_requests_requested_by_person_id_people_id_fk": {
           "name": "club_creation_requests_requested_by_person_id_people_id_fk",
           "tableFrom": "club_creation_requests",
-          "columnsFrom": [
-            "requested_by_person_id"
-          ],
+          "columnsFrom": ["requested_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_creation_requests_decided_by_person_id_people_id_fk": {
           "name": "club_creation_requests_decided_by_person_id_people_id_fk",
           "tableFrom": "club_creation_requests",
-          "columnsFrom": [
-            "decided_by_person_id"
-          ],
+          "columnsFrom": ["decided_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -5261,39 +4867,27 @@
         "club_manager_reassignments_club_id_clubs_id_fk": {
           "name": "club_manager_reassignments_club_id_clubs_id_fk",
           "tableFrom": "club_manager_reassignments",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_manager_reassignments_person_id_people_id_fk": {
           "name": "club_manager_reassignments_person_id_people_id_fk",
           "tableFrom": "club_manager_reassignments",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "club_manager_reassignments_operator_person_id_people_id_fk": {
           "name": "club_manager_reassignments_operator_person_id_people_id_fk",
           "tableFrom": "club_manager_reassignments",
-          "columnsFrom": [
-            "operator_person_id"
-          ],
+          "columnsFrom": ["operator_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -5487,67 +5081,45 @@
         "group_waitlist_entries_club_id_clubs_id_fk": {
           "name": "group_waitlist_entries_club_id_clubs_id_fk",
           "tableFrom": "group_waitlist_entries",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_waitlist_entries_person_id_people_id_fk": {
           "name": "group_waitlist_entries_person_id_people_id_fk",
           "tableFrom": "group_waitlist_entries",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_waitlist_entries_requested_by_person_id_people_id_fk": {
           "name": "group_waitlist_entries_requested_by_person_id_people_id_fk",
           "tableFrom": "group_waitlist_entries",
-          "columnsFrom": [
-            "requested_by_person_id"
-          ],
+          "columnsFrom": ["requested_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_waitlist_entries_decided_by_person_id_people_id_fk": {
           "name": "group_waitlist_entries_decided_by_person_id_people_id_fk",
           "tableFrom": "group_waitlist_entries",
-          "columnsFrom": [
-            "decided_by_person_id"
-          ],
+          "columnsFrom": ["decided_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "group_waitlist_entries_group_fk": {
           "name": "group_waitlist_entries_group_fk",
           "tableFrom": "group_waitlist_entries",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -5660,39 +5232,27 @@
         "invitation_acceptances_club_id_clubs_id_fk": {
           "name": "invitation_acceptances_club_id_clubs_id_fk",
           "tableFrom": "invitation_acceptances",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "invitation_acceptances_invitation_id_invitations_id_fk": {
           "name": "invitation_acceptances_invitation_id_invitations_id_fk",
           "tableFrom": "invitation_acceptances",
-          "columnsFrom": [
-            "invitation_id"
-          ],
+          "columnsFrom": ["invitation_id"],
           "tableTo": "invitations",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "invitation_acceptances_person_id_people_id_fk": {
           "name": "invitation_acceptances_person_id_people_id_fk",
           "tableFrom": "invitation_acceptances",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -5850,54 +5410,36 @@
         "invitations_club_id_clubs_id_fk": {
           "name": "invitations_club_id_clubs_id_fk",
           "tableFrom": "invitations",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "invitations_created_by_person_id_people_id_fk": {
           "name": "invitations_created_by_person_id_people_id_fk",
           "tableFrom": "invitations",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "invitations_accepted_by_person_id_people_id_fk": {
           "name": "invitations_accepted_by_person_id_people_id_fk",
           "tableFrom": "invitations",
-          "columnsFrom": [
-            "accepted_by_person_id"
-          ],
+          "columnsFrom": ["accepted_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "invitations_group_fk": {
           "name": "invitations_group_fk",
           "tableFrom": "invitations",
-          "columnsFrom": [
-            "club_id",
-            "group_id"
-          ],
+          "columnsFrom": ["club_id", "group_id"],
           "tableTo": "groups",
-          "columnsTo": [
-            "club_id",
-            "id"
-          ],
+          "columnsTo": ["club_id", "id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -6073,52 +5615,36 @@
         "join_requests_club_id_clubs_id_fk": {
           "name": "join_requests_club_id_clubs_id_fk",
           "tableFrom": "join_requests",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "join_requests_person_id_people_id_fk": {
           "name": "join_requests_person_id_people_id_fk",
           "tableFrom": "join_requests",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "join_requests_requested_by_person_id_people_id_fk": {
           "name": "join_requests_requested_by_person_id_people_id_fk",
           "tableFrom": "join_requests",
-          "columnsFrom": [
-            "requested_by_person_id"
-          ],
+          "columnsFrom": ["requested_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "join_requests_decided_by_person_id_people_id_fk": {
           "name": "join_requests_decided_by_person_id_people_id_fk",
           "tableFrom": "join_requests",
-          "columnsFrom": [
-            "decided_by_person_id"
-          ],
+          "columnsFrom": ["decided_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -6287,26 +5813,18 @@
         "member_exports_club_id_clubs_id_fk": {
           "name": "member_exports_club_id_clubs_id_fk",
           "tableFrom": "member_exports",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "member_exports_requested_by_person_id_people_id_fk": {
           "name": "member_exports_requested_by_person_id_people_id_fk",
           "tableFrom": "member_exports",
-          "columnsFrom": [
-            "requested_by_person_id"
-          ],
+          "columnsFrom": ["requested_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -6485,26 +6003,18 @@
         "member_import_rows_import_id_member_imports_id_fk": {
           "name": "member_import_rows_import_id_member_imports_id_fk",
           "tableFrom": "member_import_rows",
-          "columnsFrom": [
-            "import_id"
-          ],
+          "columnsFrom": ["import_id"],
           "tableTo": "member_imports",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "member_import_rows_club_id_clubs_id_fk": {
           "name": "member_import_rows_club_id_clubs_id_fk",
           "tableFrom": "member_import_rows",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -6722,39 +6232,27 @@
         "member_imports_club_id_clubs_id_fk": {
           "name": "member_imports_club_id_clubs_id_fk",
           "tableFrom": "member_imports",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "member_imports_created_by_person_id_people_id_fk": {
           "name": "member_imports_created_by_person_id_people_id_fk",
           "tableFrom": "member_imports",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "member_imports_confirmed_by_person_id_people_id_fk": {
           "name": "member_imports_confirmed_by_person_id_people_id_fk",
           "tableFrom": "member_imports",
-          "columnsFrom": [
-            "confirmed_by_person_id"
-          ],
+          "columnsFrom": ["confirmed_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -6938,26 +6436,18 @@
         "notification_deliveries_notification_id_notifications_id_fk": {
           "name": "notification_deliveries_notification_id_notifications_id_fk",
           "tableFrom": "notification_deliveries",
-          "columnsFrom": [
-            "notification_id"
-          ],
+          "columnsFrom": ["notification_id"],
           "tableTo": "notifications",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "notification_deliveries_push_device_id_push_devices_id_fk": {
           "name": "notification_deliveries_push_device_id_push_devices_id_fk",
           "tableFrom": "notification_deliveries",
-          "columnsFrom": [
-            "push_device_id"
-          ],
+          "columnsFrom": ["push_device_id"],
           "tableTo": "push_devices",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "set null"
         }
@@ -7138,26 +6628,18 @@
         "notifications_recipient_person_id_people_id_fk": {
           "name": "notifications_recipient_person_id_people_id_fk",
           "tableFrom": "notifications",
-          "columnsFrom": [
-            "recipient_person_id"
-          ],
+          "columnsFrom": ["recipient_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "notifications_club_id_clubs_id_fk": {
           "name": "notifications_club_id_clubs_id_fk",
           "tableFrom": "notifications",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -7166,10 +6648,7 @@
       "uniqueConstraints": {
         "notifications_dedupe_unique": {
           "name": "notifications_dedupe_unique",
-          "columns": [
-            "recipient_person_id",
-            "dedupe_key"
-          ],
+          "columns": ["recipient_person_id", "dedupe_key"],
           "nullsNotDistinct": false
         }
       },
@@ -7306,13 +6785,9 @@
         "push_devices_account_id_accounts_id_fk": {
           "name": "push_devices_account_id_accounts_id_fk",
           "tableFrom": "push_devices",
-          "columnsFrom": [
-            "account_id"
-          ],
+          "columnsFrom": ["account_id"],
           "tableTo": "accounts",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -7321,9 +6796,7 @@
       "uniqueConstraints": {
         "push_devices_token_unique": {
           "name": "push_devices_token_unique",
-          "columns": [
-            "token_hash"
-          ],
+          "columns": ["token_hash"],
           "nullsNotDistinct": false
         }
       },
@@ -7444,26 +6917,18 @@
         "account_invitations_person_id_people_id_fk": {
           "name": "account_invitations_person_id_people_id_fk",
           "tableFrom": "account_invitations",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "account_invitations_created_by_person_id_people_id_fk": {
           "name": "account_invitations_created_by_person_id_people_id_fk",
           "tableFrom": "account_invitations",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -7605,13 +7070,9 @@
         "accounts_person_id_people_id_fk": {
           "name": "accounts_person_id_people_id_fk",
           "tableFrom": "accounts",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -7796,52 +7257,36 @@
         "guardian_invitations_ward_person_id_people_id_fk": {
           "name": "guardian_invitations_ward_person_id_people_id_fk",
           "tableFrom": "guardian_invitations",
-          "columnsFrom": [
-            "ward_person_id"
-          ],
+          "columnsFrom": ["ward_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "guardian_invitations_invited_by_person_id_people_id_fk": {
           "name": "guardian_invitations_invited_by_person_id_people_id_fk",
           "tableFrom": "guardian_invitations",
-          "columnsFrom": [
-            "invited_by_person_id"
-          ],
+          "columnsFrom": ["invited_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "guardian_invitations_accepted_by_person_id_people_id_fk": {
           "name": "guardian_invitations_accepted_by_person_id_people_id_fk",
           "tableFrom": "guardian_invitations",
-          "columnsFrom": [
-            "accepted_by_person_id"
-          ],
+          "columnsFrom": ["accepted_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "guardian_invitations_guardianship_id_guardianships_id_fk": {
           "name": "guardian_invitations_guardianship_id_guardianships_id_fk",
           "tableFrom": "guardian_invitations",
-          "columnsFrom": [
-            "guardianship_id"
-          ],
+          "columnsFrom": ["guardianship_id"],
           "tableTo": "guardianships",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -8049,52 +7494,36 @@
         "guardianships_guardian_person_id_people_id_fk": {
           "name": "guardianships_guardian_person_id_people_id_fk",
           "tableFrom": "guardianships",
-          "columnsFrom": [
-            "guardian_person_id"
-          ],
+          "columnsFrom": ["guardian_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "guardianships_ward_person_id_people_id_fk": {
           "name": "guardianships_ward_person_id_people_id_fk",
           "tableFrom": "guardianships",
-          "columnsFrom": [
-            "ward_person_id"
-          ],
+          "columnsFrom": ["ward_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "guardianships_created_by_person_id_people_id_fk": {
           "name": "guardianships_created_by_person_id_people_id_fk",
           "tableFrom": "guardianships",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "guardianships_granted_by_person_id_people_id_fk": {
           "name": "guardianships_granted_by_person_id_people_id_fk",
           "tableFrom": "guardianships",
-          "columnsFrom": [
-            "granted_by_person_id"
-          ],
+          "columnsFrom": ["granted_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -8325,26 +7754,18 @@
         "people_merged_into_person_id_people_id_fk": {
           "name": "people_merged_into_person_id_people_id_fk",
           "tableFrom": "people",
-          "columnsFrom": [
-            "merged_into_person_id"
-          ],
+          "columnsFrom": ["merged_into_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "people_created_by_person_id_people_id_fk": {
           "name": "people_created_by_person_id_people_id_fk",
           "tableFrom": "people",
-          "columnsFrom": [
-            "created_by_person_id"
-          ],
+          "columnsFrom": ["created_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -8491,52 +7912,36 @@
         "people_merges_kept_person_id_people_id_fk": {
           "name": "people_merges_kept_person_id_people_id_fk",
           "tableFrom": "people_merges",
-          "columnsFrom": [
-            "kept_person_id"
-          ],
+          "columnsFrom": ["kept_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "people_merges_merged_person_id_people_id_fk": {
           "name": "people_merges_merged_person_id_people_id_fk",
           "tableFrom": "people_merges",
-          "columnsFrom": [
-            "merged_person_id"
-          ],
+          "columnsFrom": ["merged_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "people_merges_merged_by_person_id_people_id_fk": {
           "name": "people_merges_merged_by_person_id_people_id_fk",
           "tableFrom": "people_merges",
-          "columnsFrom": [
-            "merged_by_person_id"
-          ],
+          "columnsFrom": ["merged_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "people_merges_undone_by_person_id_people_id_fk": {
           "name": "people_merges_undone_by_person_id_people_id_fk",
           "tableFrom": "people_merges",
-          "columnsFrom": [
-            "undone_by_person_id"
-          ],
+          "columnsFrom": ["undone_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -8614,13 +8019,9 @@
         "platform_operators_person_id_people_id_fk": {
           "name": "platform_operators_person_id_people_id_fk",
           "tableFrom": "platform_operators",
-          "columnsFrom": [
-            "person_id"
-          ],
+          "columnsFrom": ["person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -8747,52 +8148,36 @@
         "support_access_grants_club_id_clubs_id_fk": {
           "name": "support_access_grants_club_id_clubs_id_fk",
           "tableFrom": "support_access_grants",
-          "columnsFrom": [
-            "club_id"
-          ],
+          "columnsFrom": ["club_id"],
           "tableTo": "clubs",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "support_access_grants_operator_person_id_people_id_fk": {
           "name": "support_access_grants_operator_person_id_people_id_fk",
           "tableFrom": "support_access_grants",
-          "columnsFrom": [
-            "operator_person_id"
-          ],
+          "columnsFrom": ["operator_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "support_access_grants_granted_by_person_id_people_id_fk": {
           "name": "support_access_grants_granted_by_person_id_people_id_fk",
           "tableFrom": "support_access_grants",
-          "columnsFrom": [
-            "granted_by_person_id"
-          ],
+          "columnsFrom": ["granted_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "support_access_grants_revoked_by_person_id_people_id_fk": {
           "name": "support_access_grants_revoked_by_person_id_people_id_fk",
           "tableFrom": "support_access_grants",
-          "columnsFrom": [
-            "revoked_by_person_id"
-          ],
+          "columnsFrom": ["revoked_by_person_id"],
           "tableTo": "people",
-          "columnsTo": [
-            "id"
-          ],
+          "columnsTo": ["id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }

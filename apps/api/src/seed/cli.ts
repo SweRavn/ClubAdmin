@@ -126,7 +126,11 @@ async function main(command: string | undefined, argv: string[]): Promise<number
         billingEnabled: ["true", "1"].includes((process.env.BILLING_ENABLED ?? "").toLowerCase()),
         invitationTokenKey: process.env.INVITATION_TOKEN_KEY,
       },
-      { scenario: args.scenario, ...(args.size ? { size: args.size } : {}), log: (m) => console.log(m) },
+      {
+        scenario: args.scenario,
+        ...(args.size ? { size: args.size } : {}),
+        log: (m) => console.log(m),
+      },
     );
   } finally {
     await db.close();

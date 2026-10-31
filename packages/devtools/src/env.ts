@@ -119,7 +119,8 @@ export const ENV_TEMPLATE: EnvSection[] = [
       {
         key: "DATABASE_POOL_MAX",
         value: "10",
-        comment: "Connections per API instance (behind PgBouncer: its pool size divided by the instances)",
+        comment:
+          "Connections per API instance (behind PgBouncer: its pool size divided by the instances)",
       },
       {
         key: "DATABASE_OWNER_URL",
