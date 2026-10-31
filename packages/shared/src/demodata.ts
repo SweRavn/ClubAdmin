@@ -114,6 +114,22 @@ export const DemoClubSchema = z.object({
   foundedAt: RelativeTimeSchema,
   /** Who acts for the club when the data does not say (a current manager). */
   actor: key,
+  /** Contact details (P1.6b), set by the actor after the club is created. */
+  contact: z
+    .object({
+      email: z.email().optional(),
+      organizationNumber: z.string().optional(),
+      address: z
+        .object({
+          street: z.string(),
+          postalCode: z.string(),
+          city: z.string(),
+          country: z.string().regex(/^[A-Z]{2}$/),
+        })
+        .optional(),
+      phoneNumbers: z.array(z.object({ label: z.string(), number: z.string() })).default([]),
+    })
+    .optional(),
 });
 export type DemoClub = z.infer<typeof DemoClubSchema>;
 

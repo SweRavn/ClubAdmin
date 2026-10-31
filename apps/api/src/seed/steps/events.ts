@@ -2,8 +2,8 @@
 // Demo events (P1.6, ADR 0038; docs/seed-data.md), through the events
 // service with the persona as actor: Erik's "Höstcupen i Strandviken" for
 // SVK F2017 (six places, offers on the waiting list, a form with a T-shirt
-// size, allergies as a sensitive question and "can drive", two matches
-// created with it), full with four waiting; one player cancelled
+// size, allergies as a sensitive question and "can drive", two matches and
+// a lunch (an "other" session with a label) created with it), full with four waiting; one player cancelled
 // yesterday, so the first in the queue had an offer that has run out (the
 // API's job expires it and offers the place to the next). Karin's
 // "Avslutningsfest" for all of IKN (places move up automatically), with
@@ -80,6 +80,14 @@ export const eventsDemoStep: DemoStep = {
       ],
       activities: [
         { kind: "match", title: "Höstcupen: gruppspel", startsAt: day(12, 7), endsAt: day(12, 9) },
+        // An "other" session that says what it is (P1.6b).
+        {
+          kind: "other",
+          kindLabel: "Lunch",
+          title: "Höstcupen: lunch",
+          startsAt: day(12, 9),
+          endsAt: day(12, 10),
+        },
         { kind: "match", title: "Höstcupen: slutspel", startsAt: day(12, 11), endsAt: day(12, 13) },
       ],
       publish: true,

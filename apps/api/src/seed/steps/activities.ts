@@ -18,6 +18,8 @@ export const DEMO_ACTIVITY_IDS = {
   norrbackaIp: "0199a000-0000-7000-8013-000000000003",
   norrbackaHall: "0199a000-0000-7000-8013-000000000004",
   fjordvikTurf: "0199a000-0000-7000-8013-000000000005",
+  /** Added by Erik, a leader (P1.6b): he may change it, other leaders may not. */
+  strandvikenGym: "0199a000-0000-7000-8013-000000000006",
   svkF2017Series: "0199a000-0000-7000-8014-000000000001",
   svkHerrSeries: "0199a000-0000-7000-8014-000000000002",
   svkHerrWinter: "0199a000-0000-7000-8014-000000000003",
@@ -167,6 +169,13 @@ export const activitiesDemoStep: DemoStep = {
       endsAt: at(date(16), "18:00"),
       locationId: DEMO_ACTIVITY_IDS.strandvikenSchool,
     });
+
+    // A place a leader added (P1.6b, ADR 0034): Erik, coach of F2017.
+    await s.activities.createLocation(
+      as("erik", "svk"),
+      { name: "Strandviksskolans gymnastiksal", street: "Skolgatan 3", city: "Strandviken" },
+      { id: DEMO_ACTIVITY_IDS.strandvikenGym },
+    );
 
     // --- IK Norrbacka (Karin) -------------------------------------------------------
     const karin = as("karin", "ikn");

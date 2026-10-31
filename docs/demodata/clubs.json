@@ -10,7 +10,27 @@
       "joinPolicy": "approval",
       "foundedBy": "peter",
       "foundedAt": "-6y",
-      "actor": "anna"
+      "actor": "anna",
+      "contact": {
+        "email": "kansli@strandvikens-vk.test",
+        "organizationNumber": "802000-0009",
+        "address": {
+          "street": "Idrottsvägen 4",
+          "postalCode": "451 50",
+          "city": "Strandviken",
+          "country": "SE"
+        },
+        "phoneNumbers": [
+          {
+            "label": "Kansli",
+            "number": "+46 522 000 00"
+          },
+          {
+            "label": "Kiosken i sporthallen",
+            "number": "+46 70 000 00 17"
+          }
+        ]
+      }
     },
     {
       "key": "ikn",

@@ -205,6 +205,12 @@ class CoreSeeder {
       const where = sql`club_id = ${c.id} AND person_id = ${this.id(c.foundedBy)}`;
       await this.backdate("club_memberships", c.key, where, { from });
       await this.backdate("club_role_assignments", c.key, where, { from });
+      if (c.contact) {
+        const by = this.as(c.foundedBy, c.key, c.foundedAt);
+        const { phoneNumbers, ...settings } = c.contact;
+        await this.s.clubs.updateSettings(by, settings);
+        await this.s.clubs.setPhoneNumbers(by, { numbers: phoneNumbers });
+      }
     }
   }
 

@@ -101,6 +101,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "locations": [
           "Strandvikens skola, gymnastiksalen",
           "Strandvikens sporthall",
+          "Strandviksskolans gymnastiksal",
         ],
         "series": [
           "Träning: svk-f2017",
@@ -114,6 +115,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
           "training Extrapass inför matchen: svk-f2017",
           "meeting Föräldramöte inför vårsäsongen: svk-f2017",
           "match Höstcupen: gruppspel: svk-f2017",
+          "other Höstcupen: lunch: svk-f2017",
           "match Höstcupen: slutspel: svk-f2017",
           "match Poolspel F10: svk-f2017",
           "match Seriematch mot Kustens VK: svk-f2017",
