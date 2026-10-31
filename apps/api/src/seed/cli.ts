@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // pnpm db:seed [--scenario demo|minimal|load] [--size n] [--if-empty]
+// pnpm db:seed --scenario load --size n --add: load clubs on top of the demo
+//   (request budgets and query plans with the demo personas on volume)
 // pnpm db:reset [--scenario ...]: drop and recreate the development
 // database, bootstrap roles, migrate, then seed.
 // Both refuse to run in production or on the hosted service (guard.ts).
@@ -28,7 +30,12 @@ function requireEnv(name: string): string {
   return value;
 }
 
-function parseArgs(argv: string[]): { scenario: Scenario; size?: number; ifEmpty: boolean } {
+function parseArgs(argv: string[]): {
+  scenario: Scenario;
+  size?: number;
+  ifEmpty: boolean;
+  add: boolean;
+} {
   const value = (flag: string) => {
     const i = argv.indexOf(flag);
     return i >= 0 ? argv[i + 1] : undefined;
@@ -40,6 +47,7 @@ function parseArgs(argv: string[]): { scenario: Scenario; size?: number; ifEmpty
     scenario,
     ...(size ? { size: Number(size) } : {}),
     ifEmpty: argv.includes("--if-empty"),
+    add: argv.includes("--add"),
   };
 }
 
@@ -58,7 +66,7 @@ async function main(command: string | undefined, argv: string[]): Promise<number
   loadEnvFiles();
   if (command !== "seed" && command !== "reset") {
     console.error(
-      "Usage: cli.js seed|reset [--scenario demo|minimal|load] [--size n] [--if-empty]",
+      "Usage: cli.js seed|reset [--scenario demo|minimal|load] [--size n] [--if-empty] [--add]",
     );
     return 1;
   }
@@ -80,7 +88,7 @@ async function main(command: string | undefined, argv: string[]): Promise<number
     const { rows } = await query<{ n: number }>("SELECT count(*)::int AS n FROM clubs");
     return rows[0]!.n;
   });
-  if (existing > 0) {
+  if (existing > 0 && !(args.add && args.scenario === "load")) {
     if (args.ifEmpty) {
       console.log("The database already has data; not seeding.");
       return 0;
@@ -118,7 +126,7 @@ async function main(command: string | undefined, argv: string[]): Promise<number
         billingEnabled: ["true", "1"].includes((process.env.BILLING_ENABLED ?? "").toLowerCase()),
         invitationTokenKey: process.env.INVITATION_TOKEN_KEY,
       },
-      { ...args, log: (m) => console.log(m) },
+      { scenario: args.scenario, ...(args.size ? { size: args.size } : {}), log: (m) => console.log(m) },
     );
   } finally {
     await db.close();
