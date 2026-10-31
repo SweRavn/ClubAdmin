@@ -16,6 +16,7 @@ import { billingDemoStep } from "./steps/billing.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
 import { eventsDemoStep } from "./steps/events.ts";
 import { importsDemoStep } from "./steps/imports.ts";
+import { notificationsDemoStep } from "./steps/notifications.ts";
 import { SeedClock } from "./time.ts";
 
 export const SCENARIOS = ["demo", "minimal", "load"] as const;
@@ -27,6 +28,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   activitiesDemoStep,
   attendanceDemoStep,
   eventsDemoStep,
+  notificationsDemoStep,
 ];
 
 export interface SeedOptions {
