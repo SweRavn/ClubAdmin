@@ -91,7 +91,10 @@ export class MetaController {
       apiVersion: API_MAJOR_VERSION,
       serverVersion: this.config.APP_VERSION,
       apps: { ios: appSupport(this.config, "IOS"), android: appSupport(this.config, "ANDROID") },
-      features: [...SERVER_FEATURES],
+      // Push only with a push provider (P1.7); the app then asks for permission.
+      features: SERVER_FEATURES.filter(
+        (f) => f !== "notifications.push" || this.config.PUSH_PROVIDER !== undefined,
+      ),
       flags: parseFeatureFlags(this.config.FEATURE_FLAGS),
     };
   }

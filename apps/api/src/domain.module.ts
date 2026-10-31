@@ -16,6 +16,7 @@ import { GuardianshipsModule } from "./modules/guardianships/index.ts";
 import { JoiningModule } from "./modules/joining/index.ts";
 import { MembersModule } from "./modules/members/index.ts";
 import { MembershipsModule } from "./modules/memberships/index.ts";
+import { NotificationsModule } from "./modules/notifications/index.ts";
 import { OnboardingModule } from "./modules/onboarding/index.ts";
 import { PeopleModule } from "./modules/people/index.ts";
 import { PersonMergeModule } from "./modules/person-merge/index.ts";
@@ -40,6 +41,7 @@ const MODULES = [
   ActivitiesModule,
   EventsModule,
   PersonProfilesModule,
+  NotificationsModule,
   BackupsModule,
 ];
 

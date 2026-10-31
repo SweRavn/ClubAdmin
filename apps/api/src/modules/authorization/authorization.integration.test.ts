@@ -246,6 +246,16 @@ describe("permission matrix", () => {
       body: { numbers: [] },
     },
     "GET /api/v1/me/waitlists": { url: () => "/api/v1/me/waitlists", expected: ALL_OK },
+    "GET /api/v1/me/notifications": { url: () => "/api/v1/me/notifications", expected: ALL_OK },
+    "GET /api/v1/me/notifications/unread-count": {
+      url: () => "/api/v1/me/notifications/unread-count",
+      expected: ALL_OK,
+    },
+    "GET /api/v1/me/notification-settings": {
+      url: () => "/api/v1/me/notification-settings",
+      expected: ALL_OK,
+    },
+    "GET /api/v1/me/push-devices": { url: () => "/api/v1/me/push-devices", expected: ALL_OK },
     "GET /api/v1/groups/:groupId/members": {
       url: () => `/api/v1/groups/${m.team.id}/members`,
       expected: ROSTER,

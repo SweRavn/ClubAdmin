@@ -56,7 +56,8 @@
     "account": "Mitt konto",
     "language": "Språk och tidszon",
     "sessions": "Där jag är inloggad",
-    "logout": "Logga ut"
+    "logout": "Logga ut",
+    "notifications": "Notiser"
   },
   "viewingAs": {
     "label": "Visar som",
@@ -662,7 +663,10 @@
     "group_parent_invalid": "Den valda överordnade gruppen finns inte.",
     "group_archived": "Gruppen är arkiverad.",
     "devMfaHint": "Utveckling: logga in igen med rutan för andra faktor (MFA) ikryssad.",
-    "devMfaLink": "Till inloggningen"
+    "devMfaLink": "Till inloggningen",
+    "notification_mandatory": "De här e-postmeddelandena går inte att stänga av.",
+    "push_not_available": "Pushnotiser finns inte på den här servern.",
+    "unsubscribe_token_invalid": "Avregistreringslänken fungerar inte."
   },
   "memberExport": {
     "columns": {
@@ -1621,5 +1625,61 @@
     "family": "Familjen",
     "account": "Ditt konto",
     "waitlist": "Köer"
+  },
+  "notifications": {
+    "title": "Notiser",
+    "bell": "{count, plural, =0 {Notiser} one {Notiser, # oläst} other {Notiser, # olästa}}",
+    "settingsLink": "Inställningar för notiser",
+    "filter": "Visa",
+    "all": "Alla",
+    "unread": "Olästa",
+    "unreadMark": "Oläst:",
+    "markAll": "Markera alla som lästa",
+    "empty": "Inga notiser än. Ändringar i ditt schema, evenemang och din familj visas här.",
+    "noneUnread": "Inget oläst.",
+    "older": "Äldre notiser",
+    "emailModes": {
+      "always": "Alltid",
+      "no_app": "Bara utan appen",
+      "never": "Aldrig"
+    },
+    "platforms": {
+      "ios": "iPhone",
+      "android": "Android-telefon"
+    },
+    "settings": {
+      "title": "Inställningar för notiser",
+      "intro": "Välj hur du får veta det som rör dig och din familj. Allt finns alltid bland dina notiser här och i appen.",
+      "category": "Vad",
+      "email": "E-post",
+      "push": "Push",
+      "emailFor": "E-post för {category}",
+      "pushFor": "Push för {category}",
+      "mandatory": "En del av dessa e-postmeddelanden skickas alltid.",
+      "quietHours": "Tysta timmar",
+      "quietHint": "Inga pushnotiser under de här timmarna, utom om något som börjar strax efter.",
+      "quietOn": "Använd tysta timmar",
+      "from": "Från",
+      "to": "Till",
+      "pushPreview": "Visa pushnotisernas text på låsskärmen",
+      "digestHint": "E-post samlas i ett mejl om dagen kl. 17.00. Det som händer inom 24 timmar, eller är brådskande, skickas direkt.",
+      "saved": "Dina inställningar för notiser är sparade.",
+      "devices": "Telefoner med push",
+      "noDevices": "Ingen telefon får pushnotiser. Logga in i appen för att få dem.",
+      "lastSeen": "Senast använd {time}",
+      "removeDevice": "Stäng av push",
+      "deviceRemoved": "Telefonen får inte längre pushnotiser.",
+      "pushPermission": "Tillåt notiser för att direkt få veta om inställda träningar och ändringar.",
+      "pushDenied": "Notiser är avstängda för appen i telefonens inställningar."
+    },
+    "unsubscribe": {
+      "title": "Avregistrera",
+      "intro": "Sluta få e-post om {category}? Du ser dem fortfarande bland dina notiser.",
+      "confirm": "Avregistrera",
+      "done": "Du får inte längre e-post om {category}. Du kan ändra det i inställningarna för notiser.",
+      "invalid": "Länken fungerar inte. Ändra vad du får i inställningarna för notiser i stället.",
+      "mandatory": "De här e-postmeddelandena går inte att stänga av.",
+      "settings": "Inställningar för notiser"
+    }
   }
 }

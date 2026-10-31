@@ -56,7 +56,8 @@
     "account": "My account",
     "language": "Language and time zone",
     "sessions": "Where I am logged in",
-    "logout": "Log out"
+    "logout": "Log out",
+    "notifications": "Notifications"
   },
   "viewingAs": {
     "label": "Viewing as",
@@ -662,7 +663,10 @@
     "group_parent_invalid": "The chosen parent group does not exist.",
     "group_archived": "The group is archived.",
     "devMfaHint": "Development: log in again with the second factor (MFA) box ticked.",
-    "devMfaLink": "To the login"
+    "devMfaLink": "To the login",
+    "notification_mandatory": "These emails cannot be turned off.",
+    "push_not_available": "Push notifications are not available on this server.",
+    "unsubscribe_token_invalid": "This unsubscribe link does not work."
   },
   "memberExport": {
     "columns": {
@@ -1621,5 +1625,61 @@
     "family": "Family",
     "account": "Your account",
     "waitlist": "Waiting lists"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "{count, plural, =0 {Notifications} one {Notifications, # unread} other {Notifications, # unread}}",
+    "settingsLink": "Notification settings",
+    "filter": "Show",
+    "all": "All",
+    "unread": "Unread",
+    "unreadMark": "Unread:",
+    "markAll": "Mark all as read",
+    "empty": "No notifications yet. Changes to your schedule, events and family show up here.",
+    "noneUnread": "Nothing unread.",
+    "older": "Older notifications",
+    "emailModes": {
+      "always": "Always",
+      "no_app": "Only without the app",
+      "never": "Never"
+    },
+    "platforms": {
+      "ios": "iPhone",
+      "android": "Android phone"
+    },
+    "settings": {
+      "title": "Notification settings",
+      "intro": "Choose how you hear about what concerns you and your family. Everything is always in your notifications here and in the app.",
+      "category": "What",
+      "email": "Email",
+      "push": "Push",
+      "emailFor": "Email for {category}",
+      "pushFor": "Push for {category}",
+      "mandatory": "Some of these emails are always sent.",
+      "quietHours": "Quiet hours",
+      "quietHint": "No push notifications during these hours, except about something that starts soon after.",
+      "quietOn": "Use quiet hours",
+      "from": "From",
+      "to": "To",
+      "pushPreview": "Show the text of push notifications on the lock screen",
+      "digestHint": "Emails are gathered into one email a day at 17:00. Anything happening within 24 hours, or urgent, is sent at once.",
+      "saved": "Your notification settings are saved.",
+      "devices": "Phones with push",
+      "noDevices": "No phone gets push notifications. Log in in the app to get them.",
+      "lastSeen": "Last used {time}",
+      "removeDevice": "Stop push",
+      "deviceRemoved": "The phone no longer gets push notifications.",
+      "pushPermission": "Allow notifications to hear about cancelled trainings and changes at once.",
+      "pushDenied": "Notifications are turned off for this app in the phone's settings."
+    },
+    "unsubscribe": {
+      "title": "Unsubscribe",
+      "intro": "Stop emails about {category}? You still see them in your notifications.",
+      "confirm": "Unsubscribe",
+      "done": "You will no longer get emails about {category}. You can change this in your notification settings.",
+      "invalid": "This link does not work. Change what you get in your notification settings instead.",
+      "mandatory": "These emails cannot be turned off.",
+      "settings": "Notification settings"
+    }
   }
 }

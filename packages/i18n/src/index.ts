@@ -89,6 +89,9 @@ export function withFallback(locale: Locale): Catalogue {
 
 /** Namespaces whose keys are the values of an API enum (roles, group kinds, ...). */
 export type EnumNamespace =
+  | "notifyCategories"
+  | "notifications.emailModes"
+  | "notifications.platforms"
   | "roles"
   | "functions"
   | "kinds"

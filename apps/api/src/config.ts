@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { baseConfigShape, envBoolean, envList, parseConfig } from "@clubadmin/server-kit";
+import { notificationsConfigShape } from "@clubadmin/server-kit/notifications";
 import {
   objectStorageConfigIssues,
   objectStorageConfigShape,
@@ -10,6 +11,7 @@ export const apiConfigSchema = z
   .object({
     ...baseConfigShape,
     ...objectStorageConfigShape,
+    ...notificationsConfigShape,
     API_HOST: z.string().default("0.0.0.0"),
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     PUBLIC_WEB_URL: z.url().default("https://clubadmin.localhost"),
@@ -103,6 +105,13 @@ export const apiConfigSchema = z
     if (devAuth) ctx.addIssue({ code: "custom", path: ["DEV_AUTH"], message: devAuth });
     for (const issue of objectStorageConfigIssues(config)) {
       ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
+    }
+    if (config.PUSH_PROVIDER && !config.NOTIFICATION_TOKEN_KEY) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["NOTIFICATION_TOKEN_KEY"],
+        message: "required with PUSH_PROVIDER",
+      });
     }
     if (config.DEV_AUTH && !config.DEV_AUTH_KEY) {
       ctx.addIssue({

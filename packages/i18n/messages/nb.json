@@ -56,7 +56,8 @@
     "account": "Min konto",
     "language": "Språk og tidssone",
     "sessions": "Hvor jeg er logget inn",
-    "logout": "Logg ut"
+    "logout": "Logg ut",
+    "notifications": "Varsler"
   },
   "viewingAs": {
     "label": "Viser som",
@@ -662,7 +663,10 @@
     "group_parent_invalid": "Den valgte overordnede gruppen finnes ikke.",
     "group_archived": "Gruppen er arkivert.",
     "devMfaHint": "Utvikling: logg inn igjen med boksen for annen faktor (MFA) krysset av.",
-    "devMfaLink": "Til innloggingen"
+    "devMfaLink": "Til innloggingen",
+    "notification_mandatory": "Disse e-postene kan ikke slås av.",
+    "push_not_available": "Pushvarsler er ikke tilgjengelig på denne serveren.",
+    "unsubscribe_token_invalid": "Avmeldingslenken virker ikke."
   },
   "memberExport": {
     "columns": {
@@ -1621,5 +1625,61 @@
     "family": "Familien",
     "account": "Kontoen din",
     "waitlist": "Ventelister"
+  },
+  "notifications": {
+    "title": "Varsler",
+    "bell": "{count, plural, =0 {Varsler} one {Varsler, # ulest} other {Varsler, # uleste}}",
+    "settingsLink": "Innstillinger for varsler",
+    "filter": "Vis",
+    "all": "Alle",
+    "unread": "Uleste",
+    "unreadMark": "Ulest:",
+    "markAll": "Merk alle som lest",
+    "empty": "Ingen varsler ennå. Endringer i timeplanen din, arrangementer og familien din vises her.",
+    "noneUnread": "Ingenting ulest.",
+    "older": "Eldre varsler",
+    "emailModes": {
+      "always": "Alltid",
+      "no_app": "Bare uten appen",
+      "never": "Aldri"
+    },
+    "platforms": {
+      "ios": "iPhone",
+      "android": "Android-telefon"
+    },
+    "settings": {
+      "title": "Innstillinger for varsler",
+      "intro": "Velg hvordan du får vite om det som gjelder deg og familien din. Alt finnes alltid blant varslene dine her og i appen.",
+      "category": "Hva",
+      "email": "E-post",
+      "push": "Push",
+      "emailFor": "E-post for {category}",
+      "pushFor": "Push for {category}",
+      "mandatory": "Noen av disse e-postene sendes alltid.",
+      "quietHours": "Stille timer",
+      "quietHint": "Ingen pushvarsler i disse timene, unntatt om noe som begynner like etter.",
+      "quietOn": "Bruk stille timer",
+      "from": "Fra",
+      "to": "Til",
+      "pushPreview": "Vis teksten i pushvarsler på låseskjermen",
+      "digestHint": "E-post samles i én e-post om dagen kl. 17.00. Det som skjer innen 24 timer, eller haster, sendes med en gang.",
+      "saved": "Innstillingene dine for varsler er lagret.",
+      "devices": "Telefoner med push",
+      "noDevices": "Ingen telefon får pushvarsler. Logg inn i appen for å få dem.",
+      "lastSeen": "Sist brukt {time}",
+      "removeDevice": "Slå av push",
+      "deviceRemoved": "Telefonen får ikke lenger pushvarsler.",
+      "pushPermission": "Tillat varsler for å få vite om avlyste treninger og endringer med en gang.",
+      "pushDenied": "Varsler er slått av for appen i telefonens innstillinger."
+    },
+    "unsubscribe": {
+      "title": "Avslutt abonnement",
+      "intro": "Slutte å få e-post om {category}? Du ser dem fortsatt blant varslene dine.",
+      "confirm": "Avslutt",
+      "done": "Du får ikke lenger e-post om {category}. Du kan endre dette i innstillingene for varsler.",
+      "invalid": "Lenken virker ikke. Endre hva du får i innstillingene for varsler i stedet.",
+      "mandatory": "Disse e-postene kan ikke slås av.",
+      "settings": "Innstillinger for varsler"
+    }
   }
 }

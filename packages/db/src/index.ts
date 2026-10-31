@@ -35,6 +35,8 @@ export {
   inArray,
   isNotNull,
   isNull,
+  lt,
+  lte,
   ne,
   or,
   type SQL,

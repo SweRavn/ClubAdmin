@@ -137,6 +137,11 @@ export const DOMAIN_ERRORS = {
   capacity_below_confirmed: "conflict",
   questions_locked: "conflict",
   event_period_invalid: "validation",
+  // Notifications (P1.7)
+  /** Email cannot be turned off for a category whose notices all require it. */
+  notification_mandatory: "validation",
+  push_not_available: "conflict",
+  unsubscribe_token_invalid: "bad-request",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

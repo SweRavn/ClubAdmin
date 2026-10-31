@@ -263,11 +263,26 @@ export const PushDeviceListSchema = z
   .object({ items: z.array(PushDeviceSchema) })
   .openapi("PushDeviceList");
 
+const unsubscribeTokenSchema = z.string().min(20).max(300);
+
+/**
+ * The unsubscribe page posts the token as JSON; mail clients' one-click
+ * unsubscribe (RFC 8058) posts "List-Unsubscribe=One-Click" as a form with
+ * the token in the query.
+ */
 export const UnsubscribeSchema = z
-  .object({ token: z.string().min(20).max(300) })
+  .object({
+    token: unsubscribeTokenSchema.optional(),
+    "List-Unsubscribe": z.literal("One-Click").optional(),
+  })
   .strict()
   .openapi("Unsubscribe");
+export type UnsubscribeInput = z.infer<typeof UnsubscribeSchema>;
+
+export const UnsubscribeQuerySchema = z.object({ token: unsubscribeTokenSchema.optional() });
 
 export const UnsubscribeResultSchema = z
   .object({ category: z.enum(NOTIFICATION_CATEGORIES) })
   .openapi("UnsubscribeResult");
+
+export const PushDeviceParamsSchema = z.object({ deviceId: z.uuid() });
