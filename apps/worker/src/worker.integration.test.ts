@@ -27,6 +27,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { billingTrialHandler } from "./billing.ts";
 import { graphileLogger } from "./graphile-logger.ts";
 import { mailHandler, memoryMailProvider } from "./mail.ts";
+import { deliverEmails } from "./notifications/deliver.ts";
+import { notificationsHandler } from "./notifications/handler.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { deleteExpiredAttendance } from "./tasks/attendance.ts";
 import { readBackupMetrics } from "./tasks/backup-metrics.ts";
@@ -49,6 +51,41 @@ beforeAll(async () => {
 afterAll(async () => {
   await t.drop();
 });
+
+const NOTIFICATION_KEY = "worker-test-notification-key-0123456789";
+
+/**
+ * Dispatches an event as the worker does (P1.7): invitations by mail.ts,
+ * account-bound emails through notifications; then sends every email
+ * delivery at once (as if the daily email were due) with `provider`.
+ */
+async function dispatchMail(
+  eventId: string,
+  provider: ReturnType<typeof memoryMailProvider>,
+  invitationTokenKey: string | undefined,
+): Promise<void> {
+  const mail = { webUrl: "https://clubadmin.test", invitationTokenKey };
+  await outbox.dispatch(t.db, eventId, [
+    mailHandler({ provider, ...mail }),
+    notificationsHandler({ channels: { email: true, push: false }, mail }),
+  ]);
+  await t.query(
+    "admin",
+    "UPDATE notification_deliveries SET digest = false, status = 'queued', send_after = now() WHERE channel = 'email' AND status = 'held'",
+  );
+  await deliverEmails(
+    {
+      db: t.db,
+      mail: provider,
+      push: null,
+      tokenKey: NOTIFICATION_KEY,
+      webUrl: mail.webUrl,
+      mailOptions: mail,
+      pushPerHour: 10,
+    },
+    new Date(Date.now() + 5_000),
+  );
+}
 
 describe("worker with PostgreSQL (as clubadmin_app)", () => {
   it("dispatches committed outbox events to handlers once", async () => {
@@ -358,9 +395,7 @@ describe("transactional email (P1.1)", () => {
         outbox.publish(tx, "invitation.created", { invitationId, clubId: club }),
       );
       const provider = memoryMailProvider();
-      await outbox.dispatch(t.db, eventId, [
-        mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: key }),
-      ]);
+      await dispatchMail(eventId, provider, key);
       expect(provider.sent).toHaveLength(1);
       const [mail] = provider.sent;
       expect(mail!.to).toBe("nora@example.test");
@@ -384,12 +419,7 @@ describe("transactional email (P1.1)", () => {
       outbox.publish(tx, "join_request.decided", { joinRequestId: requestId, clubId: club }),
     );
     const provider = memoryMailProvider();
-    const handler = mailHandler({
-      provider,
-      webUrl: "https://clubadmin.test",
-      invitationTokenKey: key,
-    });
-    await outbox.dispatch(t.db, decided, [handler]);
+    await dispatchMail(decided, provider, key);
     expect(provider.sent.map((m) => [m.subject, m.text.includes("Training on Tuesdays")])).toEqual([
       ["Mail IF: welcome!", true],
     ]);
@@ -406,7 +436,7 @@ describe("transactional email (P1.1)", () => {
         change: "appointed",
       }),
     );
-    await outbox.dispatch(t.db, changed, [handler]);
+    await dispatchMail(changed, provider, key);
     const managerMails = provider.sent.slice(1);
     expect(managerMails.map((m) => m.subject).sort()).toEqual([
       "Mail IF: club managers changed",
@@ -420,8 +450,6 @@ describe("transactional email (P1.1)", () => {
 
 describe("family emails (P1.3)", () => {
   const key = "worker-test-invitation-key-0123456789";
-  const handler = (provider: ReturnType<typeof memoryMailProvider>) =>
-    mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: key });
 
   async function family(options: { protectedWard?: boolean } = {}) {
     const [anna, mikael, child] = [uuidv7(), uuidv7(), uuidv7()];
@@ -466,7 +494,7 @@ describe("family emails (P1.3)", () => {
       const event = await t.db.withSystem("test", {}, (tx) =>
         outbox.publish(tx, "guardianship.invited", { invitationId, wardPersonId: child }),
       );
-      await outbox.dispatch(t.db, event, [handler(provider)]);
+      await dispatchMail(event, provider, key);
       const [mail] = provider.sent;
       expect(mail!.to).toBe("gunilla@example.test");
       expect(mail!.subject).toBe("Anna Lindqvist bjuder in dig till ClubAdmin");
@@ -485,7 +513,7 @@ describe("family emails (P1.3)", () => {
       const again = await t.db.withSystem("test", {}, (tx) =>
         outbox.publish(tx, "guardianship.invited", { invitationId, wardPersonId: child }),
       );
-      await outbox.dispatch(t.db, again, [handler(provider)]);
+      await dispatchMail(again, provider, key);
       expect(provider.sent[1]!.text).toContain(
         guardianInvitationToken(key, invitationId, resentAt),
       );
@@ -528,7 +556,7 @@ describe("family emails (P1.3)", () => {
       const event = await t.db.withSystem("test", {}, (tx) =>
         outbox.publish(tx, "guardianship.invited", { invitationId, wardPersonId: child }),
       );
-      await outbox.dispatch(t.db, event, [handler(provider)]);
+      await dispatchMail(event, provider, key);
       const [mail] = provider.sent;
       expect(mail!.subject).toBe("Bonus IK bjuder in dig till ClubAdmin");
       expect(mail!.text).toContain("som bonusförälder");
@@ -558,7 +586,7 @@ describe("family emails (P1.3)", () => {
       const id = await t.db.withSystem("test", {}, (tx) =>
         outbox.publish(tx, type, payload as never),
       );
-      await outbox.dispatch(t.db, id, [handler(provider)]);
+      await dispatchMail(id, provider, key);
     };
     await dispatch("guardianship.invitation.accepted", { invitationId, wardPersonId: child });
     expect(provider.sent.at(-1)).toMatchObject({
@@ -748,9 +776,7 @@ describe("member exports (P1.2)", () => {
       outbox.publish(tx, "members.exported", { exportId, clubId: club }),
     );
     const provider = memoryMailProvider();
-    await outbox.dispatch(t.db, eventId, [
-      mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: undefined }),
-    ]);
+    await dispatchMail(eventId, provider, undefined);
     expect(provider.sent).toHaveLength(1);
     const [mail] = provider.sent;
     expect(mail!.subject).toBe("Export IF: medlemsregistret har exporterats");
@@ -784,9 +810,7 @@ describe("member exports (P1.2)", () => {
       outbox.publish(tx, "members.import.finished", { importId, clubId: club }),
     );
     const provider = memoryMailProvider();
-    await outbox.dispatch(t.db, eventId, [
-      mailHandler({ provider, webUrl: "https://clubadmin.test", invitationTokenKey: undefined }),
-    ]);
+    await dispatchMail(eventId, provider, undefined);
     expect(provider.sent).toHaveLength(1);
     const [mail] = provider.sent;
     expect(mail!.subject).toBe("Export IF: en medlemsimport är klar");
@@ -1060,12 +1084,7 @@ describe("events (P1.6)", () => {
       }),
     );
     const provider = memoryMailProvider();
-    const handler = mailHandler({
-      provider,
-      webUrl: "https://clubadmin.test",
-      invitationTokenKey: undefined,
-    });
-    await outbox.dispatch(t.db, offered, [handler]);
+    await dispatchMail(offered, provider, undefined);
     expect(provider.sent.map((m) => [m.to.startsWith("karin-"), m.subject])).toEqual([
       [true, "Cup IF: en plats på Höstcupen erbjuds Ebbe Lind"],
     ]);
@@ -1086,7 +1105,7 @@ describe("events (P1.6)", () => {
         kind: "offered",
       }),
     );
-    await outbox.dispatch(t.db, late, [handler]);
+    await dispatchMail(late, provider, undefined);
     expect(provider.sent).toHaveLength(1);
   });
 

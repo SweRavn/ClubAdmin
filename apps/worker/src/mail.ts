@@ -7,8 +7,10 @@
 // The API publishes domain events with IDs only; this handler reads what the
 // email needs, renders it from the ICU catalogues in the recipient's
 // language and sends it through a MailProvider. Names of protected people
-// are left out unless the recipient may see them (ADR 0022). Notification
-// preferences, push and in-app messages come with P1.7.
+// are left out unless the recipient may see them (ADR 0022).
+// Since P1.7 this handler sends only the emails to an address without an
+// account (invitations); the account-bound emails go through notifications
+// (notifications/handler.ts), which runs this code to render them.
 
 import { type OutboxEvent, type OutboxHandler, sql, type Tx } from "@clubadmin/db";
 import { type Catalogue, catalogues, DEFAULT_LOCALE, type Locale, localeOf } from "@clubadmin/i18n";
@@ -32,6 +34,8 @@ export interface MailMessage {
   text: string;
   /** Stable per event and recipient: a resent email keeps its Message-ID. */
   messageId: string;
+  /** Extra headers (List-Unsubscribe, P1.7). */
+  headers?: Record<string, string>;
 }
 
 export interface MailProvider {
@@ -50,6 +54,7 @@ export function smtpMailProvider(options: { url: string; from: string }): MailPr
         subject: message.subject,
         text: message.text,
         messageId: `<${message.messageId}@${domain}>`,
+        ...(message.headers ? { headers: message.headers } : {}),
       });
     },
   };
@@ -154,21 +159,8 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
 
   return {
     name: "mail",
-    types: [
-      "invitation.created",
-      "join_request.decided",
-      "club.manager.changed",
-      "club_creation_request.decided",
-      "members.exported",
-      "members.import.finished",
-      "guardianship.invited",
-      "guardianship.invitation.accepted",
-      "account.invited",
-      "guardianship.ward.own_login_age",
-      "guardianship.ward.adult",
-      "guardianship.adult.ended",
-      "event.offer.made",
-    ],
+    // Emails to addresses without an account; the others are notifications (P1.7).
+    types: ["invitation.created", "guardianship.invited", "account.invited"],
     async handle(event, tx) {
       switch (event.type) {
         case "invitation.created": {

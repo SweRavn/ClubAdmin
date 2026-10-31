@@ -14,6 +14,8 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
   "ops.*": "backup and restore bookkeeping written by the backup tooling; no personal data",
   "public.schedule_entries":
     "the calendars' read model, derived from activities and activity_groups (which have history) in the same transaction",
+  "public.notification_deliveries":
+    "delivery log of notifications (status, attempts, provider IDs; no personal values), high volume, deleted after 30 days (P1.7)",
   "public.member_import_rows":
     "staging rows of a member import (the file's values), deleted seven days after the import ends; the people created from them have history",
 };

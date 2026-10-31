@@ -242,6 +242,23 @@ export const ENV_TEMPLATE: EnvSection[] = [
       { key: "MAILPIT_UI_PORT", value: "8025" },
     ],
   },
+  {
+    title: "Notifications (P1.7, ADR 0039)",
+    variables: [
+      {
+        key: "NOTIFICATION_TOKEN_KEY",
+        value: () => hex(32),
+        comment: "Signs unsubscribe links and seals push tokens (API and worker)",
+      },
+      {
+        key: "PUSH_PROVIDER",
+        value: "fake",
+        comment: "expo (Expo Push), fake (records pushes without sending) or empty (no push)",
+      },
+      { key: "EXPO_ACCESS_TOKEN", value: "", comment: "Only if the Expo project requires one" },
+      { key: "NOTIFY_PUSH_PER_PERSON_HOUR", value: "10" },
+    ],
+  },
 ];
 
 export const ALL_KEYS = ENV_TEMPLATE.flatMap((s) => s.variables.map((v) => v.key));

@@ -1452,5 +1452,174 @@
     "title": "Gå med med en kod",
     "intro": "Har du fått en kod från en förening? Skriv den här så ser du vilken förening den gäller.",
     "lookUp": "Fortsätt"
+  },
+  "notify": {
+    "activity": {
+      "cancelled": {
+        "title": "Inställt: {title} {when}",
+        "body": "{club} · {group}"
+      },
+      "restored": {
+        "title": "Blir av igen: {title} {when}",
+        "body": "{club} · {group}"
+      },
+      "moved": {
+        "title": "Ändrat: {title} {when}",
+        "body": "{hasPlace, select, yes {Plats: {place}. } other {}}{club} · {group}"
+      },
+      "added": {
+        "title": "Ny aktivitet: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "series": {
+      "changed": {
+        "title": "Schemat ändrat: {title}",
+        "body": "Nästa tillfälle {when}. {club} · {group}"
+      }
+    },
+    "callup": {
+      "added": {
+        "title": "Kallad: {title} {when}",
+        "body": "Svara gärna så snart du vet. {club} · {group}"
+      },
+      "removed": {
+        "title": "Inte längre kallad: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "response": {
+      "reminder": {
+        "title": "Svar saknas: {title} {when}",
+        "body": "Svara om ni kommer. {club} · {group}"
+      },
+      "late_decline": {
+        "title": "Sent återbud: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "event": {
+      "published": {
+        "title": "Anmälan öppen: {title}",
+        "body": "{when}. Sista anmälan {deadline}. {club}"
+      },
+      "cancelled": {
+        "title": "Inställt: {title} {when}",
+        "body": "{club}"
+      },
+      "registration": {
+        "confirmed": {
+          "title": "Anmäld: {title} {when}",
+          "body": "{club}"
+        },
+        "waitlisted": {
+          "title": "På väntelistan: {title}",
+          "body": "{when}. {club}"
+        },
+        "removed": {
+          "title": "Inte längre anmäld: {title}",
+          "body": "Arrangörerna har tagit bort anmälan. {club}"
+        }
+      },
+      "offer": {
+        "offered": {
+          "title": "Plats erbjuden: {title}",
+          "body": "Svara senast {deadline}. {club}"
+        },
+        "confirmed": {
+          "title": "Plats bekräftad: {title}",
+          "body": "{when}. {club}"
+        }
+      },
+      "signup": {
+        "reminder": {
+          "title": "Anmälan stänger snart: {title}",
+          "body": "Sista anmälan {deadline}. {club}"
+        }
+      }
+    },
+    "join_request": {
+      "decided": {
+        "title": "{status, select, approved {Ansökan godkänd: {club}} other {Ansökan inte godkänd: {club}}}"
+      }
+    },
+    "club_creation": {
+      "decided": {
+        "title": "{status, select, approved {Föreningen {title} är skapad} other {Föreningen {title} skapades inte}}"
+      }
+    },
+    "club": {
+      "managers": {
+        "changed": {
+          "title": "Föreningens administratörer har ändrats",
+          "body": "{club}"
+        }
+      }
+    },
+    "members": {
+      "exported": {
+        "title": "Medlemsregistret har exporterats",
+        "body": "{club}"
+      },
+      "import": {
+        "finished": {
+          "title": "{status, select, done {Importen är klar: {imported} medlemmar} other {Importen misslyckades}}",
+          "body": "{club}"
+        }
+      }
+    },
+    "family": {
+      "accepted": {
+        "title": "En inbjudan i familjen har accepterats"
+      },
+      "own_login_age": {
+        "title": "Dags för egen inloggning",
+        "body": "Ett barn kan nu få en egen inloggning."
+      },
+      "adult": {
+        "title": "Vuxen: se över kopplingen",
+        "body": "Ett barn i familjen har blivit vuxet."
+      },
+      "adult_ended": {
+        "title": "En koppling i familjen har avslutats"
+      }
+    },
+    "account": {
+      "email": {
+        "changed": {
+          "title": "Din e-postadress har ändrats",
+          "body": "Var det inte du? Kontakta din förening direkt."
+        }
+      }
+    },
+    "unknown": {
+      "title": "Ny notis"
+    },
+    "generic": {
+      "title": "ClubAdmin",
+      "body": "Ny notis från ClubAdmin"
+    },
+    "about": "Gäller: {names}",
+    "protectedMember": "en medlem (skyddad identitet)",
+    "mandatory": "Det här mejlet går inte att stänga av: det gäller ditt konto eller föreningens administration.",
+    "unsubscribe": "Vill du inte ha sådana mejl? {url}\nÄndra vilka mejl du får: {settings}",
+    "digest": {
+      "subject": "ClubAdmin: {count, plural, one {# nyhet} other {# nyheter}} till dig",
+      "intro": "Det här har hänt sedan sist ({count, plural, one {# sak} other {# saker}}):",
+      "noClub": "Ditt konto och din familj",
+      "unsubscribeCategory": "Inga fler mejl om {category}: {url}",
+      "settings": "Ändra vilka mejl du får: {url}"
+    }
+  },
+  "notifyCategories": {
+    "schedule": "Schemat",
+    "responses": "Svarspåminnelser",
+    "leader": "Som ledare",
+    "events": "Evenemang",
+    "membership": "Medlemskap",
+    "club_admin": "Föreningens administration",
+    "family": "Familjen",
+    "account": "Ditt konto",
+    "waitlist": "Köer"
   }
 }

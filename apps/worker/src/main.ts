@@ -12,6 +12,7 @@ import { Redis } from "ioredis";
 import { loadWorkerConfig } from "./config.ts";
 import { graphileLogger } from "./graphile-logger.ts";
 import { smtpMailProvider } from "./mail.ts";
+import { expoPushProvider, fakePushProvider } from "./notifications/push.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { BILLING_CRONTAB, createTaskList, crontab } from "./tasks/index.ts";
 
@@ -31,6 +32,21 @@ const storage = storageConfig ? new ObjectStorage(storageConfig) : null;
 // Reconnects automatically; a failed handler is retried by the outbox.
 valkey?.on("error", () => undefined);
 
+const mailProvider = config.SMTP_URL
+  ? smtpMailProvider({ url: config.SMTP_URL, from: config.MAIL_FROM_ADDRESS })
+  : null;
+// Push (P1.7): Expo Push, or the fake provider in development and CI.
+const pushProvider =
+  config.PUSH_PROVIDER === "expo"
+    ? expoPushProvider({ accessToken: config.EXPO_ACCESS_TOKEN })
+    : config.PUSH_PROVIDER === "fake"
+      ? fakePushProvider()
+      : null;
+const emailCode = {
+  webUrl: config.PUBLIC_WEB_URL,
+  invitationTokenKey: config.INVITATION_TOKEN_KEY,
+};
+
 const runner = await run({
   connectionString: config.DATABASE_URL,
   concurrency: config.WORKER_CONCURRENCY,
@@ -49,14 +65,20 @@ const runner = await run({
             trialDays: config.BILLING_TRIAL_DAYS,
           }
         : undefined,
-      mail: config.SMTP_URL
-        ? {
-            provider: smtpMailProvider({ url: config.SMTP_URL, from: config.MAIL_FROM_ADDRESS }),
-            webUrl: config.PUBLIC_WEB_URL,
-            invitationTokenKey: config.INVITATION_TOKEN_KEY,
-          }
-        : undefined,
+      mail: mailProvider ? { provider: mailProvider, ...emailCode } : undefined,
+      notifications: {
+        channels: { email: mailProvider !== null, push: pushProvider !== null },
+        mail: emailCode,
+      },
     }),
+    delivery: {
+      mail: mailProvider,
+      push: pushProvider,
+      tokenKey: config.NOTIFICATION_TOKEN_KEY,
+      webUrl: config.PUBLIC_WEB_URL,
+      mailOptions: emailCode,
+      pushPerHour: config.NOTIFY_PUSH_PER_PERSON_HOUR,
+    },
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
     storage,
@@ -68,6 +90,7 @@ logger.info(
   {
     concurrency: config.WORKER_CONCURRENCY,
     mail: config.SMTP_URL ? "smtp" : "off",
+    push: pushProvider?.name ?? "off",
     objectStorage: storage ? "s3" : "off",
   },
   "worker started",

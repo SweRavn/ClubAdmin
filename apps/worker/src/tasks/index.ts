@@ -8,6 +8,17 @@ import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 
 import { generateInvoicesTask } from "../billing.ts";
+import {
+  deliverTask,
+  type DeliveryDependencies,
+  pushReceiptsTask,
+} from "../notifications/deliver.ts";
+import {
+  eventRemindersTask,
+  fanoutTask,
+  notificationsRetentionTask,
+  responseRemindersTask,
+} from "../notifications/tasks.ts";
 import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
@@ -23,6 +34,8 @@ export interface TaskDependencies {
   storage?: ObjectStorage | null;
   /** DEFAULT_COUNTRY: age rules for wards without clubs (P1.3). */
   defaultCountry?: string;
+  /** Notifications (P1.7): delivery by email and push; without it nothing is delivered. */
+  delivery?: Omit<DeliveryDependencies, "db"> | undefined;
 }
 
 /** Does nothing; used to check that jobs are picked up. */
@@ -92,6 +105,29 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
     "members:purge_imports": purgeMemberImportsTask(deps.db, deps.storage ?? null),
     "billing:generate_invoices": generateInvoicesTask,
+    ...notificationTasks(deps),
+  };
+}
+
+function notificationTasks(deps: TaskDependencies): TaskList {
+  const channels = { email: Boolean(deps.delivery?.mail), push: Boolean(deps.delivery?.push) };
+  const delivery: DeliveryDependencies = {
+    db: deps.db,
+    mail: null,
+    push: null,
+    tokenKey: undefined,
+    webUrl: "https://clubadmin.invalid",
+    mailOptions: { webUrl: "https://clubadmin.invalid", invitationTokenKey: undefined },
+    pushPerHour: 10,
+    ...deps.delivery,
+  };
+  return {
+    "notifications:fanout": fanoutTask({ db: deps.db, channels }),
+    "notifications:deliver": deliverTask(delivery),
+    "notifications:push_receipts": pushReceiptsTask(delivery),
+    "notifications:response_reminders": responseRemindersTask({ db: deps.db, channels }),
+    "notifications:event_reminders": eventRemindersTask({ db: deps.db, channels }),
+    "notifications:retention": notificationsRetentionTask(deps.db),
   };
 }
 
@@ -102,7 +138,10 @@ export function createTaskList(deps: TaskDependencies): TaskList {
  * downtime), backup metrics every
  * five minutes, joining retention daily at 04:53 UTC, answers and attendance
  * past their club's retention daily at 05:07 UTC (#18), expired member
- * exports every ten minutes and member import staging data hourly (P1.3b).
+ * exports every ten minutes and member import staging data hourly (P1.3b);
+ * notifications (P1.7): delivery every minute (also woken when notices are
+ * created), reminders and push receipts every 15 minutes, retention daily
+ * at 05:37 UTC.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -113,6 +152,11 @@ export const crontab = [
   "7 5 * * * attendance:retention ?fill=2d",
   "*/10 * * * * members:expire_exports ?max=1",
   "17 * * * * members:purge_imports ?max=1",
+  "* * * * * notifications:deliver ?max=1&jobKey=notifications:deliver",
+  "*/15 * * * * notifications:response_reminders ?max=1",
+  "*/15 * * * * notifications:event_reminders ?max=1",
+  "*/15 * * * * notifications:push_receipts ?max=1",
+  "37 5 * * * notifications:retention ?fill=2d",
 ].join("\n");
 
 /** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */

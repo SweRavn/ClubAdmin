@@ -1452,5 +1452,174 @@
     "title": "Bli med med en kode",
     "intro": "Har du fått en kode fra en klubb? Skriv den her, så ser du hvilken klubb den gjelder.",
     "lookUp": "Fortsett"
+  },
+  "notify": {
+    "activity": {
+      "cancelled": {
+        "title": "Avlyst: {title} {when}",
+        "body": "{club} · {group}"
+      },
+      "restored": {
+        "title": "Blir likevel: {title} {when}",
+        "body": "{club} · {group}"
+      },
+      "moved": {
+        "title": "Endret: {title} {when}",
+        "body": "{hasPlace, select, yes {Sted: {place}. } other {}}{club} · {group}"
+      },
+      "added": {
+        "title": "Ny aktivitet: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "series": {
+      "changed": {
+        "title": "Timeplanen endret: {title}",
+        "body": "Neste økt {when}. {club} · {group}"
+      }
+    },
+    "callup": {
+      "added": {
+        "title": "Innkalt: {title} {when}",
+        "body": "Svar gjerne så snart du vet. {club} · {group}"
+      },
+      "removed": {
+        "title": "Ikke lenger innkalt: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "response": {
+      "reminder": {
+        "title": "Svar mangler: {title} {when}",
+        "body": "Svar om dere kommer. {club} · {group}"
+      },
+      "late_decline": {
+        "title": "Sent avbud: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "event": {
+      "published": {
+        "title": "Påmelding åpen: {title}",
+        "body": "{when}. Påmeldingsfrist {deadline}. {club}"
+      },
+      "cancelled": {
+        "title": "Avlyst: {title} {when}",
+        "body": "{club}"
+      },
+      "registration": {
+        "confirmed": {
+          "title": "Påmeldt: {title} {when}",
+          "body": "{club}"
+        },
+        "waitlisted": {
+          "title": "På ventelisten: {title}",
+          "body": "{when}. {club}"
+        },
+        "removed": {
+          "title": "Ikke lenger påmeldt: {title}",
+          "body": "Arrangørene har fjernet påmeldingen. {club}"
+        }
+      },
+      "offer": {
+        "offered": {
+          "title": "Plass tilbudt: {title}",
+          "body": "Svar innen {deadline}. {club}"
+        },
+        "confirmed": {
+          "title": "Plass bekreftet: {title}",
+          "body": "{when}. {club}"
+        }
+      },
+      "signup": {
+        "reminder": {
+          "title": "Påmeldingen stenger snart: {title}",
+          "body": "Frist {deadline}. {club}"
+        }
+      }
+    },
+    "join_request": {
+      "decided": {
+        "title": "{status, select, approved {Søknad godkjent: {club}} other {Søknad ikke godkjent: {club}}}"
+      }
+    },
+    "club_creation": {
+      "decided": {
+        "title": "{status, select, approved {Klubben {title} er opprettet} other {Klubben {title} ble ikke opprettet}}"
+      }
+    },
+    "club": {
+      "managers": {
+        "changed": {
+          "title": "Klubbens administratorer er endret",
+          "body": "{club}"
+        }
+      }
+    },
+    "members": {
+      "exported": {
+        "title": "Medlemsregisteret er eksportert",
+        "body": "{club}"
+      },
+      "import": {
+        "finished": {
+          "title": "{status, select, done {Importen er ferdig: {imported} medlemmer} other {Importen mislyktes}}",
+          "body": "{club}"
+        }
+      }
+    },
+    "family": {
+      "accepted": {
+        "title": "En invitasjon i familien er akseptert"
+      },
+      "own_login_age": {
+        "title": "Tid for egen innlogging",
+        "body": "Et barn kan nå få sin egen innlogging."
+      },
+      "adult": {
+        "title": "Myndig: se over koblingen",
+        "body": "Et barn i familien er blitt myndig."
+      },
+      "adult_ended": {
+        "title": "En kobling i familien er avsluttet"
+      }
+    },
+    "account": {
+      "email": {
+        "changed": {
+          "title": "E-postadressen din er endret",
+          "body": "Var det ikke deg? Kontakt klubben din med en gang."
+        }
+      }
+    },
+    "unknown": {
+      "title": "Nytt varsel"
+    },
+    "generic": {
+      "title": "ClubAdmin",
+      "body": "Nytt varsel fra ClubAdmin"
+    },
+    "about": "Gjelder: {names}",
+    "protectedMember": "et medlem (beskyttet identitet)",
+    "mandatory": "Denne e-posten kan ikke slås av: den gjelder kontoen din eller klubbens administrasjon.",
+    "unsubscribe": "Vil du ikke ha slike e-poster? {url}\nEndre hvilke e-poster du får: {settings}",
+    "digest": {
+      "subject": "ClubAdmin: {count, plural, one {# nyhet} other {# nyheter}} til deg",
+      "intro": "Dette har skjedd siden sist ({count, plural, one {# sak} other {# saker}}):",
+      "noClub": "Kontoen og familien din",
+      "unsubscribeCategory": "Ingen flere e-poster om {category}: {url}",
+      "settings": "Endre hvilke e-poster du får: {url}"
+    }
+  },
+  "notifyCategories": {
+    "schedule": "Timeplan",
+    "responses": "Svarpåminnelser",
+    "leader": "Som leder",
+    "events": "Arrangementer",
+    "membership": "Medlemskap",
+    "club_admin": "Klubbens administrasjon",
+    "family": "Familien",
+    "account": "Kontoen din",
+    "waitlist": "Ventelister"
   }
 }

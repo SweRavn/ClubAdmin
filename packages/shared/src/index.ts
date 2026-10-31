@@ -26,6 +26,7 @@ export * from "./http/meta.ts";
 export * from "./http/problem.ts";
 export * from "./ids/uuidv7.ts";
 export * from "./logging/redact.ts";
+export * from "./notifications.ts";
 export * from "./ops/backup-status.ts";
 export * from "./permissions.ts";
 export { z } from "./zod.ts";

@@ -209,6 +209,10 @@ export const activities = pgTable(
       .on(t.clubId, t.locationId, t.startsAt)
       .where(sql`${t.locationId} IS NOT NULL`),
     index("activities_creator_idx").on(t.createdByPersonId),
+    // Answer reminders (P1.7): requested, scheduled activities by their deadline (or start).
+    index("activities_reminder_idx")
+      .on(sql`coalesce(${t.respondBy}, ${t.startsAt})`)
+      .where(sql`${t.responseMode} = 'requested' AND ${t.status} = 'scheduled'`),
   ],
 );
 

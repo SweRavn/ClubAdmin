@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { baseConfigShape, parseConfig } from "@clubadmin/server-kit";
+import { notificationsConfigShape } from "@clubadmin/server-kit/notifications";
 import {
   objectStorageConfigIssues,
   objectStorageConfigShape,
@@ -10,6 +11,7 @@ export const workerConfigSchema = z
   .object({
     ...baseConfigShape,
     ...objectStorageConfigShape,
+    ...notificationsConfigShape,
     /** clubadmin_app connection: jobs and their database work are subject to row-level security. */
     DATABASE_URL: z.string().min(1, "required: the worker stores its jobs in PostgreSQL"),
     /** Valkey of the API: domain events invalidate its authorization caches. */
@@ -27,6 +29,14 @@ export const workerConfigSchema = z
     PUBLIC_WEB_URL: z.url().default("https://clubadmin.localhost"),
   })
   .superRefine((config, ctx) => {
+    // Unsubscribe links (email) and sealed push tokens need the key (P1.7).
+    if ((config.SMTP_URL || config.PUSH_PROVIDER) && !config.NOTIFICATION_TOKEN_KEY) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["NOTIFICATION_TOKEN_KEY"],
+        message: "required with SMTP_URL or PUSH_PROVIDER (at least 32 characters)",
+      });
+    }
     for (const issue of objectStorageConfigIssues(config)) {
       ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
     }

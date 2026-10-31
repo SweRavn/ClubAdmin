@@ -1452,5 +1452,174 @@
     "title": "Join with a code",
     "intro": "Did a club give you a code? Enter it here to see which club it is for.",
     "lookUp": "Continue"
+  },
+  "notify": {
+    "activity": {
+      "cancelled": {
+        "title": "Cancelled: {title} {when}",
+        "body": "{club} · {group}"
+      },
+      "restored": {
+        "title": "On again: {title} {when}",
+        "body": "{club} · {group}"
+      },
+      "moved": {
+        "title": "Changed: {title} {when}",
+        "body": "{hasPlace, select, yes {Place: {place}. } other {}}{club} · {group}"
+      },
+      "added": {
+        "title": "New activity: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "series": {
+      "changed": {
+        "title": "Schedule changed: {title}",
+        "body": "Next session {when}. {club} · {group}"
+      }
+    },
+    "callup": {
+      "added": {
+        "title": "Called up: {title} {when}",
+        "body": "Please answer as soon as you know. {club} · {group}"
+      },
+      "removed": {
+        "title": "No longer called up: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "response": {
+      "reminder": {
+        "title": "No answer yet: {title} {when}",
+        "body": "Please say whether you are coming. {club} · {group}"
+      },
+      "late_decline": {
+        "title": "Late cancellation: {title} {when}",
+        "body": "{club} · {group}"
+      }
+    },
+    "event": {
+      "published": {
+        "title": "Sign-up open: {title}",
+        "body": "{when}. Sign up by {deadline}. {club}"
+      },
+      "cancelled": {
+        "title": "Cancelled: {title} {when}",
+        "body": "{club}"
+      },
+      "registration": {
+        "confirmed": {
+          "title": "Signed up: {title} {when}",
+          "body": "{club}"
+        },
+        "waitlisted": {
+          "title": "On the waiting list: {title}",
+          "body": "{when}. {club}"
+        },
+        "removed": {
+          "title": "No longer signed up: {title}",
+          "body": "The organisers removed the sign-up. {club}"
+        }
+      },
+      "offer": {
+        "offered": {
+          "title": "Place offered: {title}",
+          "body": "Answer by {deadline}. {club}"
+        },
+        "confirmed": {
+          "title": "Place confirmed: {title}",
+          "body": "{when}. {club}"
+        }
+      },
+      "signup": {
+        "reminder": {
+          "title": "Sign-up closes soon: {title}",
+          "body": "Sign up by {deadline}. {club}"
+        }
+      }
+    },
+    "join_request": {
+      "decided": {
+        "title": "{status, select, approved {Application approved: {club}} other {Application not approved: {club}}}"
+      }
+    },
+    "club_creation": {
+      "decided": {
+        "title": "{status, select, approved {The club {title} was created} other {The club {title} was not created}}"
+      }
+    },
+    "club": {
+      "managers": {
+        "changed": {
+          "title": "The club's managers changed",
+          "body": "{club}"
+        }
+      }
+    },
+    "members": {
+      "exported": {
+        "title": "The member register was exported",
+        "body": "{club}"
+      },
+      "import": {
+        "finished": {
+          "title": "{status, select, done {Import finished: {imported} members} other {The import failed}}",
+          "body": "{club}"
+        }
+      }
+    },
+    "family": {
+      "accepted": {
+        "title": "A family invitation was accepted"
+      },
+      "own_login_age": {
+        "title": "Time for an own login",
+        "body": "A child can now get a login of their own."
+      },
+      "adult": {
+        "title": "Of age: review the link",
+        "body": "A child in the family has come of age."
+      },
+      "adult_ended": {
+        "title": "A family link ended"
+      }
+    },
+    "account": {
+      "email": {
+        "changed": {
+          "title": "Your email address changed",
+          "body": "If this was not you, contact your club at once."
+        }
+      }
+    },
+    "unknown": {
+      "title": "New notification"
+    },
+    "generic": {
+      "title": "ClubAdmin",
+      "body": "New notification from ClubAdmin"
+    },
+    "about": "About: {names}",
+    "protectedMember": "a member (protected identity)",
+    "mandatory": "This email cannot be turned off: it is about your account or the club's administration.",
+    "unsubscribe": "Do not want such emails? {url}\nChange which emails you get: {settings}",
+    "digest": {
+      "subject": "ClubAdmin: {count, plural, one {# update} other {# updates}} for you",
+      "intro": "Since the last email ({count, plural, one {# item} other {# items}}):",
+      "noClub": "Your account and family",
+      "unsubscribeCategory": "No more emails about {category}: {url}",
+      "settings": "Change which emails you get: {url}"
+    }
+  },
+  "notifyCategories": {
+    "schedule": "Schedule",
+    "responses": "Answer reminders",
+    "leader": "As a leader",
+    "events": "Events",
+    "membership": "Membership",
+    "club_admin": "Club administration",
+    "family": "Family",
+    "account": "Your account",
+    "waitlist": "Waiting lists"
   }
 }

@@ -13,7 +13,8 @@
     "./env": "./src/env.ts",
     "./dev-tokens": "./src/dev-tokens.ts",
     "./invitations": "./src/invitations.ts",
-    "./object-storage": "./src/object-storage.ts"
+    "./object-storage": "./src/object-storage.ts",
+    "./notifications": "./src/notifications.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -21,6 +22,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clubadmin/i18n": "workspace:*",
     "@clubadmin/shared": "workspace:*",
     "@opentelemetry/api": "catalog:",
     "@opentelemetry/exporter-metrics-otlp-http": "catalog:",
@@ -35,6 +37,7 @@
     "@opentelemetry/sdk-trace-base": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
     "import-in-the-middle": "catalog:",
+    "intl-messageformat": "catalog:",
     "jose": "catalog:",
     "pino": "catalog:"
   },

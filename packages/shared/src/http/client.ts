@@ -28,6 +28,9 @@ export const SERVER_FEATURES = [
   "me.groups",
   "sessions.mobile",
   "rate-limits.account",
+  /** P1.7: the inbox and notification settings; "notifications.push" only with a push provider. */
+  "notifications.inbox",
+  "notifications.push",
 ] as const;
 
 /** Dotted numeric version, e.g. "1.4.0". */
