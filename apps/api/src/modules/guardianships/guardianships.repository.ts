@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { and, asc, eq, isNotNull, isNull, schema, sql, type Tx } from "@clubadmin/db";
 
+import { givenNameSortKey } from "../people/index.ts";
+
 const { guardianships, guardianInvitations } = schema;
 
 export type GuardianshipRow = typeof guardianships.$inferSelect;
@@ -33,7 +35,7 @@ export function guardiansOfQuery(tx: Tx, wardPersonId: string) {
     .select()
     .from(guardianships)
     .where(and(eq(guardianships.wardPersonId, wardPersonId), isNull(guardianships.validTo)))
-    .orderBy(guardianships.id);
+    .orderBy(givenNameSortKey(sql`${guardianships.guardianPersonId}`), guardianships.id);
 }
 
 /** "Wards of person": guardianships_guardian_idx. */
@@ -42,7 +44,7 @@ export function wardsOfQuery(tx: Tx, guardianPersonId: string) {
     .select()
     .from(guardianships)
     .where(and(eq(guardianships.guardianPersonId, guardianPersonId), isNull(guardianships.validTo)))
-    .orderBy(guardianships.id);
+    .orderBy(givenNameSortKey(sql`${guardianships.wardPersonId}`), guardianships.id);
 }
 
 export async function insertInvitation(

@@ -148,22 +148,26 @@ export class AttendanceService {
   /**
    * Sets a person's answer (the caller has checked that the actor may answer
    * for them). Until the deadline any answer; after it only "not attending"
-   * (illness). Sending the same answer again changes nothing.
+   * (illness). A leader of the activity's groups answers for a participant
+   * at any time (`byLeader`, P1.6b). Without a note the current note stays.
+   * Sending the same answer again changes nothing.
    */
   respond(
     context: TenantContext,
     activityId: string,
     personId: string,
     input: SetResponseInput,
+    options: { byLeader?: boolean } = {},
   ): Promise<ResponseRow> {
-    return this.db.withTenant(onBehalf(context, personId), async (tx) => {
+    const txContext = options.byLeader ? context : onBehalf(context, personId);
+    return this.db.withTenant(txContext, async (tx) => {
       const data = parseInput(SetResponseSchema, input);
       const activity = await this.answerable(tx, activityId, personId);
       const state = answerState(activity, this.now());
       const [current] = await records.responses(tx, activityId, [personId]);
-      const note = data.note ?? null;
+      const note = data.note === undefined ? (current?.note ?? null) : data.note;
       if (current?.status === data.status && current.note === note) return current;
-      if (state.deadlinePassed && data.status !== "not_attending") {
+      if (!options.byLeader && state.deadlinePassed && data.status !== "not_attending") {
         throw new DomainError("response_closed");
       }
       const response = await records.upsertResponse(tx, {
@@ -175,7 +179,7 @@ export class AttendanceService {
         respondedByPersonId: actorPersonId(context),
       });
       await audit.record(tx, {
-        action: "activity.response.set",
+        action: options.byLeader ? "activity.response.set_by_leader" : "activity.response.set",
         resourceType: "activity_response",
         resourceId: response.id,
         changedFields: current

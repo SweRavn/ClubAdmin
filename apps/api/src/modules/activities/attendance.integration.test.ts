@@ -222,7 +222,7 @@ describe("responses", () => {
     const coach = await api(x.coach.id, "PUT", `/activities/${id}/responses/${x.coach.id}`, {
       body: { status: "attending" },
     });
-    expect(coach.statusCode).toBe(403);
+    expect([coach.statusCode, detail(coach)]).toEqual([409, "not_on_roster"]);
     const other = await api(x.member.id, "PUT", `/activities/${id}/responses/${x.child.id}`, {
       body: { status: "attending" },
     });
@@ -801,5 +801,103 @@ describe("activities with answers", () => {
     const kept = await api(x.coach.id, "GET", `/activities/${answered}`);
     expect(kept.json<{ status: string }>().status).toBe("cancelled");
     expect((await api(x.coach.id, "GET", `/activities/${sessions[0]!.id}`)).statusCode).toBe(404);
+  });
+});
+
+describe("leaders answer for participants (P1.6b)", () => {
+  it("also after the deadline; the note stays when left out; recorded as the leader's", async () => {
+    const x = await team();
+    const id = await activity(x, {
+      startsAt: at(2 * DAY),
+      endsAt: at(2 * DAY + HOUR),
+      respondBy: at(-HOUR),
+    });
+    const sick = await api(x.member.id, "PUT", `/activities/${id}/responses/${x.member.id}`, {
+      body: { status: "not_attending", note: "Sjuk" },
+    });
+    expect(sick.statusCode).toBe(200);
+    const byLeader = await api(x.coach.id, "PUT", `/activities/${id}/responses/${x.member.id}`, {
+      body: { status: "attending" },
+    });
+    expect(byLeader.statusCode, byLeader.body).toBe(200);
+    const list = await api(x.coach.id, "GET", `/activities/${id}/responses`);
+    const row = list
+      .json<{
+        items: {
+          person: { id: string };
+          status: string | null;
+          note?: string | null;
+          respondedBy?: { id: string } | null;
+        }[];
+      }>()
+      .items.find((r) => r.person.id === x.member.id);
+    expect(row).toMatchObject({
+      status: "attending",
+      note: "Sjuk",
+      respondedBy: { id: x.coach.id },
+    });
+    expect(await audit(x.club.id)).toContain("activity.response.set_by_leader");
+
+    // Leaders answer only for the roster.
+    const stranger = await buildPerson(s);
+    await s.memberships.addMember(x.club.ctx, stranger.id);
+    const refused = await api(x.coach.id, "PUT", `/activities/${id}/responses/${stranger.id}`, {
+      body: { status: "attending" },
+    });
+    expect([refused.statusCode, detail(refused)]).toEqual([409, "not_on_roster"]);
+    // A member still cannot answer for another member.
+    const other = await api(x.member.id, "PUT", `/activities/${id}/responses/${x.child.id}`, {
+      body: { status: "attending" },
+    });
+    expect(other.statusCode).toBe(404);
+  });
+
+  it("the leaders' list is in given-name order", async () => {
+    const club = await buildClub(s);
+    const group = await s.groups.createGroup(club.ctx, { name: "P2012", kind: "team" });
+    const coach = await buildPerson(s);
+    await s.memberships.addMember(club.ctx, coach.id);
+    await s.memberships.addToGroup(club.ctx, group.id, coach.id, "head_coach");
+    const people = [];
+    for (const [givenName, familyName] of [
+      ["Örjan", "Andersson"],
+      ["Anna", "Öberg"],
+      ["Bertil", "Berg"],
+    ] as const) {
+      const p = await buildPerson(s, { givenName, familyName });
+      await s.memberships.addMember(club.ctx, p.id);
+      await s.memberships.addToGroup(club.ctx, group.id, p.id);
+      people.push(p);
+    }
+    const res = await app.app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: "POST",
+        url: `/api/v1/groups/${group.id}/activities`,
+        headers: { authorization: `Bearer ${await devToken(coach.id)}` },
+        payload: {
+          kind: "match",
+          title: "Match",
+          startsAt: at(3 * DAY),
+          endsAt: at(3 * DAY + HOUR),
+        },
+      });
+    const id = res.json<{ id: string }>().id;
+    const order = async (cursor?: string) =>
+      (
+        await api(
+          coach.id,
+          "GET",
+          `/activities/${id}/responses?limit=2${cursor ? `&cursor=${cursor}` : ""}`,
+        )
+      ).json<{ items: { person: { id: string } }[]; nextCursor: string | null }>();
+    const first = await order();
+    const second = await order(first.nextCursor!);
+    expect([...first.items, ...second.items].map((r) => r.person.id)).toEqual([
+      people[1]!.id,
+      people[2]!.id,
+      people[0]!.id,
+    ]);
   });
 });

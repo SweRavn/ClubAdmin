@@ -13,6 +13,7 @@ import {
   JOIN_POLICIES,
   JOIN_REQUEST_STATUSES,
   MEMBERSHIP_TYPES,
+  WAITLIST_STATUSES,
 } from "./core.ts";
 import { ClubSchema } from "./responses.ts";
 import { CreateClubSchema } from "./schemas.ts";
@@ -185,6 +186,40 @@ export const MyJoinRequestsSchema = z
   })
   .openapi("MyJoinRequests");
 export type MyJoinRequests = z.infer<typeof MyJoinRequestsSchema>;
+
+/**
+ * Where the caller and their wards stand in queues (P1.6b; read-only, P1.10
+ * adds accepting and withdrawing): open waiting-list entries with their place,
+ * and pending join requests with the groups they ask for.
+ */
+export const MyWaitlistsSchema = z
+  .object({
+    entries: z.array(
+      z.object({
+        id: z.uuid(),
+        person: PersonSummarySchema,
+        club: z.object({ id: z.uuid(), name: z.string() }),
+        group: z.object({ id: z.uuid(), name: z.string() }),
+        status: z.enum(WAITLIST_STATUSES),
+        /** 1 = next; null while an offer is out. */
+        position: z.number().int().nullable(),
+        waiting: z.number().int(),
+        queuedAt: z.iso.datetime(),
+        offerExpiresAt: z.iso.datetime().nullable(),
+      }),
+    ),
+    joinRequests: z.array(
+      z.object({
+        id: z.uuid(),
+        person: PersonSummarySchema,
+        club: z.object({ id: z.uuid(), name: z.string() }),
+        preferredGroups: z.array(z.object({ id: z.uuid(), name: z.string() })),
+        createdAt: z.iso.datetime(),
+      }),
+    ),
+  })
+  .openapi("MyWaitlists");
+export type MyWaitlists = z.infer<typeof MyWaitlistsSchema>;
 
 export const JoinRequestListSchema = z
   .object({

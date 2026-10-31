@@ -6,6 +6,8 @@
 import { and, asc, eq, inArray, schema, type SQL, sql, type Tx } from "@clubadmin/db";
 import type { RegistrationStatus } from "@clubadmin/shared";
 
+import { givenNameSortKey } from "../people/index.ts";
+
 const { events, eventGroups, eventActivities, eventRegistrations } = schema;
 
 export type EventRow = typeof events.$inferSelect;
@@ -335,13 +337,16 @@ export async function nextWaiting(
     .limit(limit);
 }
 
-/** Confirmed participants of an event (IDs; the call-up of its activities). */
+/** Confirmed participants of an event (IDs, given name first; the call-up of its activities). */
 export async function confirmedPeople(tx: Tx, eventId: string): Promise<string[]> {
   const rows = await tx
     .select({ personId: eventRegistrations.personId })
     .from(eventRegistrations)
     .where(and(eq(eventRegistrations.eventId, eventId), eq(eventRegistrations.status, "confirmed")))
-    .orderBy(asc(eventRegistrations.personId));
+    .orderBy(
+      givenNameSortKey(sql`${eventRegistrations.personId}`),
+      asc(eventRegistrations.personId),
+    );
   return rows.map((r) => r.personId);
 }
 
@@ -399,8 +404,9 @@ export async function positionsOf(
 }
 
 /**
- * The organisers' list: open registrations first (confirmed, offered, then
- * the queue), then the others, keyset by registration ID within that order.
+ * The organisers' list: open registrations first (confirmed, given name
+ * first; offered and the queue in queue order), then the others, keyset by
+ * registration ID within that order.
  */
 export async function registrationPage(
   tx: Tx,
@@ -412,19 +418,21 @@ export async function registrationPage(
   },
 ): Promise<RegistrationRow[]> {
   const rank = sql`CASE r.status WHEN 'confirmed' THEN 0 WHEN 'offered' THEN 1 WHEN 'waitlisted' THEN 2 ELSE 3 END`;
+  const name = (r: string) =>
+    sql`CASE WHEN ${sql.raw(r)}.status = 'confirmed' THEN ${givenNameSortKey(sql.raw(`${r}.person_id`))} ELSE '' END`;
   const { rows } = await tx.execute<{ id: string }>(sql`
     SELECT r.id FROM public.event_registrations r
     WHERE r.event_id = ${input.eventId}
       ${input.status ? sql`AND r.status = ${input.status}` : sql``}
       ${
         input.cursor
-          ? sql`AND (${rank}, r.queued_at, r.id) > (
+          ? sql`AND (${rank}, ${name("r")}, r.queued_at, r.id) > (
               SELECT CASE c.status WHEN 'confirmed' THEN 0 WHEN 'offered' THEN 1 WHEN 'waitlisted' THEN 2 ELSE 3 END,
-                c.queued_at, c.id
+                ${name("c")}, c.queued_at, c.id
               FROM public.event_registrations c WHERE c.id = ${input.cursor})`
           : sql``
       }
-    ORDER BY ${rank}, r.queued_at, r.id
+    ORDER BY ${rank}, ${name("r")}, r.queued_at, r.id
     LIMIT ${input.limit}`);
   if (rows.length === 0) return [];
   const found = await tx

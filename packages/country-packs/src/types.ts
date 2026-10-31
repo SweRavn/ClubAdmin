@@ -91,6 +91,8 @@ export interface CountryPack {
   publicHolidays(year: number): string[];
   /** The per-session grant rules of the country, or null if it has none (P1.5). */
   grantRules: GrantRules | null;
+  /** A club's organisation number in its canonical form, or null if it is not valid (P1.6b). */
+  normalizeOrganizationNumber(input: string): string | null;
 }
 
 /** Age reached during the calendar year of `date` (how grant rules count ages). */

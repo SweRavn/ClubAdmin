@@ -12,6 +12,8 @@ import type {
   ResponseStatus,
 } from "@clubadmin/shared";
 
+import { givenNameSortKey } from "../people/index.ts";
+
 const uuidArray = (ids: readonly string[]) => `{${ids.join(",")}}`;
 
 export interface ResponseRow {
@@ -74,9 +76,9 @@ export async function roster(
   activityId: string,
   options: { wholeGroups?: boolean } = {},
 ): Promise<RosterRow[]> {
-  const { rows } = await tx.execute<{ person_id: string; role: AttendanceRole }>(
-    rosterQuery([activityId], options),
-  );
+  const { rows } = await tx.execute<{ person_id: string; role: AttendanceRole }>(sql`
+    SELECT r.person_id, r.role FROM (${rosterQuery([activityId], options)}) r
+    ORDER BY ${givenNameSortKey(sql`r.person_id`)}, r.person_id`);
   return rows.map((r) => ({ personId: r.person_id, role: r.role }));
 }
 
@@ -242,7 +244,7 @@ export async function responseCounts(
   );
 }
 
-/** The leaders' list: the roster's participants with their answers, keyset by person. */
+/** The leaders' list: the roster's participants with their answers, given name first (keyset). */
 export async function responseList(
   tx: Tx,
   activityId: string,
@@ -256,13 +258,20 @@ export async function responseList(
     responded_by_person_id: string | null;
     responded_at: string | null;
   }>(sql`
-    SELECT ar.id, r.person_id, ar.status, ar.note, ar.responded_by_person_id, ar.responded_at
-    FROM (${rosterQuery([activityId])}) r
-    LEFT JOIN public.activity_responses ar ON ar.activity_id = r.activity_id AND ar.person_id = r.person_id
-    WHERE r.role = 'participant'
-      ${page.status === "none" ? sql`AND ar.id IS NULL` : page.status ? sql`AND ar.status = ${page.status}` : sql``}
-      ${page.cursor ? sql`AND r.person_id > ${page.cursor}` : sql``}
-    ORDER BY r.person_id
+    SELECT * FROM (
+      SELECT ar.id, r.person_id, ar.status, ar.note, ar.responded_by_person_id, ar.responded_at,
+        ${givenNameSortKey(sql`r.person_id`)} AS sort_key
+      FROM (${rosterQuery([activityId])}) r
+      LEFT JOIN public.activity_responses ar ON ar.activity_id = r.activity_id AND ar.person_id = r.person_id
+      WHERE r.role = 'participant'
+        ${page.status === "none" ? sql`AND ar.id IS NULL` : page.status ? sql`AND ar.status = ${page.status}` : sql``}
+    ) x
+    ${
+      page.cursor
+        ? sql`WHERE (x.sort_key, x.person_id) > (${givenNameSortKey(sql`${page.cursor}::uuid`)}, ${page.cursor}::uuid)`
+        : sql``
+    }
+    ORDER BY x.sort_key, x.person_id
     LIMIT ${page.limit}`);
   return rows.map((r) => ({
     personId: r.person_id,
@@ -481,14 +490,22 @@ export function memberSummaryQuery(
 ): SQL {
   return sql`
     WITH s AS (${groupSessionsQuery(groupId, range)}),
-    m AS (
-      SELECT gm.person_id, array_agg(tstzrange(gm.valid_from, gm.valid_to)) AS periods
+    g AS (
+      SELECT gm.person_id, array_agg(tstzrange(gm.valid_from, gm.valid_to)) AS periods,
+        ${givenNameSortKey(sql`gm.person_id`)} AS sort_key
       FROM public.group_memberships gm
       WHERE gm.club_id = ${clubId} AND gm.group_id = ${groupId} AND gm.function = 'member'
         AND gm.valid_from < ${range.to} AND (gm.valid_to IS NULL OR gm.valid_to > ${range.from})
-        ${page.cursor ? sql`AND gm.person_id > ${page.cursor}` : sql``}
       GROUP BY gm.person_id
-      ORDER BY gm.person_id
+    ),
+    m AS (
+      SELECT * FROM g
+      ${
+        page.cursor
+          ? sql`WHERE (g.sort_key, g.person_id) > (${givenNameSortKey(sql`${page.cursor}::uuid`)}, ${page.cursor}::uuid)`
+          : sql``
+      }
+      ORDER BY g.sort_key, g.person_id
       LIMIT ${page.limit}
     )
     SELECT m.person_id,
@@ -500,8 +517,8 @@ export function memberSummaryQuery(
     FROM m
     LEFT JOIN public.attendance_records ar ON ar.club_id = ${clubId} AND ar.person_id = m.person_id
       AND ar.activity_id IN (SELECT s.activity_id FROM s)
-    GROUP BY m.person_id, m.periods
-    ORDER BY m.person_id`;
+    GROUP BY m.person_id, m.periods, m.sort_key
+    ORDER BY m.sort_key, m.person_id`;
 }
 
 export async function memberSummary(

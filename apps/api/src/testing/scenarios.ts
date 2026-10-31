@@ -25,6 +25,8 @@ export interface MatrixScenario {
   section: Group;
   team: Group;
   otherTeam: Group;
+  /** An unused child group of the section (P1.6b): archived, restored and deleted in the matrix. */
+  spareGroup: Group;
   manager: BuiltPerson;
   registrar: BuiltPerson;
   owner: BuiltPerson;
@@ -79,6 +81,11 @@ export async function buildMatrixScenario(
     parentGroupId: section.id,
   });
   const otherTeam = await s.groups.createGroup(a, { name: "P2014", kind: "team" });
+  const spareGroup = await s.groups.createGroup(a, {
+    name: "F2017",
+    kind: "team",
+    parentGroupId: section.id,
+  });
 
   const join = async (overrides: Parameters<typeof buildPerson>[1] = {}) => {
     const person = await buildPerson(s, overrides);
@@ -172,6 +179,7 @@ export async function buildMatrixScenario(
     section,
     team,
     otherTeam,
+    spareGroup,
     manager: clubA.manager,
     registrar,
     owner,

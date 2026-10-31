@@ -639,7 +639,11 @@
     "activity_has_call_up": "The activity already has its own call-up.",
     "activity_in_other_event": "The activity belongs to another event.",
     "capacity_below_confirmed": "The number of places cannot be lower than the confirmed participants.",
-    "questions_locked": "Questions that have been answered cannot be removed or changed in type."
+    "questions_locked": "Questions that have been answered cannot be removed or changed in type.",
+    "group_has_children": "The group has active subgroups. Archive or move them first.",
+    "group_in_use": "The group has been used (members, activities or history) and can only be archived.",
+    "event_period_invalid": "The end must be after the start, and sign-up must close before the end.",
+    "invalid_organization_number": "The organisation number is not valid."
   },
   "memberExport": {
     "columns": {

@@ -90,6 +90,7 @@ export class ScheduleController {
             activityId: row.activityId,
             club: { id: row.clubId, name: club.name, timeZone: club.timeZone },
             kind: row.kind as SchedulePage["items"][number]["kind"],
+            kindLabel: row.kindLabel,
             title: row.title,
             status: row.status as SchedulePage["items"][number]["status"],
             cancelledReason: row.cancelledReason,

@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Groups (ADR 0019): kinds, hierarchy (same club, no cycles; enforced by the
 // database), admission mode and capacity, and group owners. Groups are
-// archived, never deleted.
+// archived; only a group that was never used can be deleted (P1.6b).
 
 import {
+  type ActorContext,
   audit,
   type Database,
   isCheckViolation,
   isForeignKeyViolation,
   isUniqueViolation,
   outbox,
+  savepoint,
   type TenantContext,
   type Tx,
 } from "@clubadmin/db";
@@ -189,11 +191,13 @@ export class GroupsService {
     });
   }
 
+  /** Archives the group; refused while it has child groups that are not archived. */
   archiveGroup(context: TenantContext, groupId: string): Promise<void> {
     return this.db.withTenant(context, async (tx) => {
       const current = await repo.lockGroup(tx, groupId);
       if (!current) throw new DomainError("not_found");
       if (current.archivedAt) return;
+      if (await repo.hasActiveChildren(tx, groupId)) throw new DomainError("group_has_children");
       await repo.updateGroup(tx, groupId, { archivedAt: new Date() });
       await audit.record(tx, {
         action: "group.archived",
@@ -201,6 +205,82 @@ export class GroupsService {
         resourceId: groupId,
       });
     });
+  }
+
+  /** Restores an archived group (the caller checked that a club manager asks). */
+  restoreGroup(context: TenantContext, groupId: string): Promise<Group> {
+    return this.db.withTenant(context, async (tx) => {
+      const current = await repo.lockGroup(tx, groupId);
+      if (!current) throw new DomainError("not_found");
+      if (!current.archivedAt) return current;
+      await repo.updateGroup(tx, groupId, { archivedAt: null });
+      await audit.record(tx, {
+        action: "group.restored",
+        resourceType: "group",
+        resourceId: groupId,
+      });
+      return this.getGroupInTx(tx, groupId);
+    });
+  }
+
+  /**
+   * Deletes a group that was never used (P1.6b): no memberships, owners,
+   * activities, events, waiting-list entries, invitations or child groups,
+   * ever. Everything else is archived instead (`group_in_use`).
+   */
+  deleteGroup(context: TenantContext, groupId: string): Promise<void> {
+    return this.db.withTenant(context, async (tx) => {
+      const current = await repo.lockGroup(tx, groupId);
+      if (!current) throw new DomainError("not_found");
+      if (await repo.isInUse(tx, groupId)) throw new DomainError("group_in_use");
+      await savepoint(tx, () => repo.deleteGroup(tx, groupId)).catch((error: unknown) => {
+        if (isForeignKeyViolation(error)) throw new DomainError("group_in_use");
+        throw error;
+      });
+      await audit.record(tx, {
+        action: "group.deleted",
+        resourceType: "group",
+        resourceId: groupId,
+      });
+    });
+  }
+
+  /**
+   * The open waiting-list entries of the given people (the caller and their
+   * wards) with their place in the queue (P1.6b). The entries are read
+   * through own_relationships; the queue is counted in one tenant
+   * transaction per club, since the applicant may not read the club's other
+   * entries or, before admission, its groups.
+   */
+  async myWaitlistEntries(
+    context: ActorContext,
+    personIds: readonly string[],
+  ): Promise<(repo.OwnWaitlistEntry & repo.WaitlistQueue)[]> {
+    const own = await this.db.withActor(context, (tx) =>
+      repo.ownOpenWaitlistEntries(tx, personIds),
+    );
+    const byClub = new Map<string, repo.OwnWaitlistEntry[]>();
+    for (const e of own) byClub.set(e.clubId, [...(byClub.get(e.clubId) ?? []), e]);
+    const queue = new Map<string, repo.WaitlistQueue>();
+    // One club at a time: a person waits in few clubs.
+    for (const [clubId, entries] of byClub) {
+      const found = await this.db.withTenant({ ...context, clubId }, (tx) =>
+        repo.waitlistPositions(
+          tx,
+          entries.map((e) => e.id),
+        ),
+      );
+      for (const [id, q] of found) queue.set(id, q);
+    }
+    return own.flatMap((e) => {
+      const q = queue.get(e.id);
+      return q ? [{ ...e, ...q }] : [];
+    });
+  }
+
+  /** Whether the group was never used and can be deleted. */
+  isDeletable(context: TenantContext, groupId: string): Promise<boolean> {
+    return this.db.withTenant(context, async (tx) => !(await repo.isInUse(tx, groupId)));
   }
 
   /** The group and its ancestors, nearest first (ownership of a parent includes its children). */

@@ -100,7 +100,8 @@ export class AttendanceController {
   @Endpoint({
     method: "PUT",
     path: "activities/:activityId/responses/:personId",
-    summary: "Answer attending or not attending, for myself or a ward (until the deadline)",
+    summary:
+      "Answer attending or not attending, for myself or a ward (until the deadline), or as a leader for a participant",
     tags: ["activities"],
     access: { permission: "activity.respond", resource: "activity" },
     request: { params: ResponseParamsSchema, body: SetResponseSchema },
@@ -111,12 +112,20 @@ export class AttendanceController {
     @Param() params: z.infer<typeof ResponseParamsSchema>,
     @Body() body: SetResponseInput,
   ): Promise<ResponseSummary> {
-    const { clubId } = this.answerFor(authz, params.personId);
+    const resource = resourceOf(authz, "activity");
+    // Leaders of its groups answer for any participant, also after the
+    // deadline (P1.6b); the service checks the roster.
+    const byLeader =
+      params.personId !== authz.actor.personId &&
+      !authz.actor.onBehalfOf &&
+      leads(authz.actor, resource.groups);
+    const { clubId } = byLeader ? resource : this.answerFor(authz, params.personId);
     await this.attendance.respond(
       tenantContext(authz, clubId),
       params.activityId,
       params.personId,
       body,
+      { byLeader },
     );
     return this.summaryOf(authz, params.activityId);
   }

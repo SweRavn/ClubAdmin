@@ -16,6 +16,8 @@ import {
   type ClubAccessState,
   type CreateClubInput,
   CreateClubSchema,
+  type SetClubPhoneNumbersInput,
+  SetClubPhoneNumbersSchema,
   type UpdateClubSettingsInput,
   UpdateClubSettingsSchema,
 } from "@clubadmin/shared";
@@ -25,6 +27,7 @@ import { definedOnly, parseInput } from "../../platform/domain/run.ts";
 import * as repo from "./clubs.repository.ts";
 
 export type Club = repo.ClubRow;
+export type ClubPhoneNumber = repo.PhoneNumberRow;
 
 export class ClubsService {
   private readonly db: Database;
@@ -96,6 +99,14 @@ export class ClubsService {
     return this.db.withTenant(context, async (tx) => {
       const data = definedOnly(parseInput(UpdateClubSettingsSchema, patch));
       const current = await this.lockClubInTx(tx, context.clubId);
+      // The organisation number in the country's canonical form (P1.6b).
+      if (data.organizationNumber) {
+        const normalized = isSupportedCountry(current.country)
+          ? getCountryPack(current.country).normalizeOrganizationNumber(data.organizationNumber)
+          : data.organizationNumber;
+        if (normalized === null) throw new DomainError("invalid_organization_number");
+        data.organizationNumber = normalized;
+      }
       const changed = (Object.keys(data) as (keyof typeof data)[]).filter(
         (key) => JSON.stringify(data[key]) !== JSON.stringify(current[key]),
       );
@@ -109,6 +120,37 @@ export class ClubsService {
         });
       }
       return this.getClubInTx(tx, context.clubId);
+    });
+  }
+
+  /** The club's phone numbers in the order shown (P1.6b). */
+  phoneNumbers(context: TenantContext): Promise<ClubPhoneNumber[]> {
+    return this.db.withTenant(context, (tx) => repo.phoneNumbers(tx, context.clubId));
+  }
+
+  /** Replaces the club's phone numbers (add, edit, remove and reorder in one call). */
+  setPhoneNumbers(
+    context: TenantContext,
+    input: SetClubPhoneNumbersInput,
+  ): Promise<ClubPhoneNumber[]> {
+    return this.db.withTenant(context, async (tx) => {
+      const data = parseInput(SetClubPhoneNumbersSchema, input);
+      await this.lockClubInTx(tx, context.clubId);
+      const current = await repo.phoneNumbers(tx, context.clubId);
+      const same =
+        current.length === data.numbers.length &&
+        current.every(
+          (c, i) => c.label === data.numbers[i]!.label && c.number === data.numbers[i]!.number,
+        );
+      if (same) return current;
+      await repo.replacePhoneNumbers(tx, context.clubId, data.numbers);
+      await audit.record(tx, {
+        action: "club.phone_numbers.updated",
+        resourceType: "club",
+        resourceId: context.clubId,
+        changedFields: ["phone_numbers"],
+      });
+      return repo.phoneNumbers(tx, context.clubId);
     });
   }
 

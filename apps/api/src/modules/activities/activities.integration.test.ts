@@ -587,3 +587,65 @@ describe("my schedule", () => {
     expect(rest.nextCursor).toBeNull();
   });
 });
+
+describe("places added by leaders (P1.6b)", () => {
+  it("leaders add places and change only their own; club managers change any", async () => {
+    const { club, coach } = await team();
+    const managers = await api(club.manager.id, "POST", `/clubs/${club.id}/locations`, {
+      body: { name: "Klubbstugan" },
+    });
+    const own = await api(coach.id, "POST", `/clubs/${club.id}/locations`, {
+      body: { name: "Strandviksskolans gymnastiksal" },
+    });
+    expect(own.statusCode, own.body).toBe(201);
+    expect(own.json<{ canEdit: boolean }>().canEdit).toBe(true);
+    const ownId = own.json<{ id: string }>().id;
+    const managersId = managers.json<{ id: string }>().id;
+
+    const list = await api(coach.id, "GET", `/clubs/${club.id}/locations`);
+    const canEdit = new Map(
+      list
+        .json<{ items: { id: string; canEdit?: boolean }[] }>()
+        .items.map((l) => [l.id, l.canEdit]),
+    );
+    expect([canEdit.get(ownId), canEdit.get(managersId)]).toEqual([true, false]);
+
+    const others = await api(coach.id, "PATCH", `/clubs/${club.id}/locations/${managersId}`, {
+      body: { directions: "Ingång B" },
+    });
+    expect([others.statusCode, detail(others)]).toEqual([403, "not_allowed"]);
+    const mine = await api(coach.id, "PATCH", `/clubs/${club.id}/locations/${ownId}`, {
+      body: { directions: "Ingång från skolgården" },
+    });
+    expect(mine.statusCode).toBe(200);
+    const byManager = await api(club.manager.id, "PATCH", `/clubs/${club.id}/locations/${ownId}`, {
+      body: { city: "Strandviken" },
+    });
+    expect(byManager.statusCode).toBe(200);
+  });
+
+  it("an 'other' activity says what it is (kindLabel); other kinds have none", async () => {
+    const { groupId, coach } = await team();
+    const lunch = await api(coach.id, "POST", `/groups/${groupId}/activities`, {
+      body: {
+        kind: "other",
+        kindLabel: "Lunch",
+        title: "Lunch",
+        startsAt: `${day(9)}T11:00:00Z`,
+        endsAt: `${day(9)}T12:00:00Z`,
+      },
+    });
+    expect(lunch.statusCode, lunch.body).toBe(201);
+    expect(lunch.json<{ kindLabel: string | null }>().kindLabel).toBe("Lunch");
+    const match = await api(coach.id, "POST", `/groups/${groupId}/activities`, {
+      body: {
+        kind: "match",
+        kindLabel: "Cup",
+        title: "Match",
+        startsAt: `${day(9)}T13:00:00Z`,
+        endsAt: `${day(9)}T14:00:00Z`,
+      },
+    });
+    expect(match.json<{ kindLabel: string | null }>().kindLabel ?? null).toBeNull();
+  });
+});

@@ -149,6 +149,8 @@ export const RegistrationParamsSchema = z.object({ eventId: z.uuid(), personId: 
 export const EventActivityInputSchema = z
   .object({
     kind: z.enum(ACTIVITY_KINDS),
+    /** What an `other` session is ("Lunch"; P1.6b). */
+    kindLabel: text(60).nullish(),
     title: text(120),
     startsAt: time,
     endsAt: time,
@@ -165,14 +167,16 @@ const eventFields = {
   title: text(200),
   description: text(4000).nullish(),
   startsAt: time,
-  endsAt: time,
+  /** Default: the end of the start day in the club's time zone (P1.6b). */
+  endsAt: time.optional(),
   locationId: z.uuid().nullish(),
   locationText: text(200).nullish(),
   /** Shown as written; no payments (Phase 3). */
   priceText: text(100).nullish(),
   /** Null: open when published. */
   registrationOpensAt: time.nullish(),
-  registrationClosesAt: time,
+  /** Default: the start (P1.6b). */
+  registrationClosesAt: time.optional(),
   /** Null: the same as registrationClosesAt. */
   cancellationClosesAt: time.nullish(),
   /** Null: unlimited. */
@@ -182,10 +186,8 @@ const eventFields = {
   questions: EventQuestionsSchema.optional(),
 };
 
-const periodOk = (v: { startsAt?: string | undefined; endsAt?: string | undefined }) =>
-  v.startsAt === undefined ||
-  v.endsAt === undefined ||
-  Date.parse(v.endsAt) > Date.parse(v.startsAt);
+// The period (end after start, sign-up closing by the end) is checked by the
+// service, which answers `event_period_invalid` (P1.6b).
 
 export const CreateEventSchema = z
   .object({
@@ -199,7 +201,6 @@ export const CreateEventSchema = z
     publish: z.boolean().default(false),
   })
   .strict()
-  .refine(periodOk, { message: "endsAt must be after startsAt", path: ["endsAt"] })
   .refine((v) => (v.audience === "groups" ? v.groupIds.length > 0 : v.groupIds.length === 0), {
     message: "groupIds are required for a group event and not allowed for a club event",
     path: ["groupIds"],
@@ -226,7 +227,6 @@ export const UpdateEventSchema = z
   })
   .partial()
   .strict()
-  .refine(periodOk, { message: "endsAt must be after startsAt", path: ["endsAt"] })
   .openapi("UpdateEventRequest");
 export type UpdateEventInput = z.input<typeof UpdateEventSchema>;
 
@@ -322,6 +322,7 @@ export const EventSchema = z
       z.object({
         id: z.uuid(),
         kind: z.enum(ACTIVITY_KINDS),
+        kindLabel: z.string().nullable().optional(),
         title: z.string(),
         status: z.enum(ACTIVITY_STATUSES),
         startsAt: time,

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { and, eq, inArray, isNull, schema, sql, type Tx } from "@clubadmin/db";
+import type { WaitlistStatus } from "@clubadmin/shared";
 
-const { groups, groupOwners, seasons, groupSeasons } = schema;
+const { groups, groupOwners, seasons, groupSeasons, groupWaitlistEntries } = schema;
 
 export type GroupRow = typeof groups.$inferSelect;
 export type NewGroupRow = typeof groups.$inferInsert;
@@ -52,6 +53,36 @@ export async function lockGroup(tx: Tx, id: string): Promise<GroupRow | null> {
 
 export async function updateGroup(tx: Tx, id: string, values: Partial<NewGroupRow>): Promise<void> {
   await tx.update(groups).set(values).where(eq(groups.id, id));
+}
+
+export async function deleteGroup(tx: Tx, id: string): Promise<void> {
+  await tx.delete(groups).where(eq(groups.id, id));
+}
+
+/** Child groups that are not archived. */
+export async function hasActiveChildren(tx: Tx, id: string): Promise<boolean> {
+  const { rows } = await tx.execute(sql`
+    SELECT 1 FROM public.groups WHERE parent_group_id = ${id} AND archived_at IS NULL LIMIT 1`);
+  return rows.length > 0;
+}
+
+/**
+ * Whether anything refers to the group (P1.6b): the tables whose foreign keys
+ * keep a group from being deleted (none cascades). Reads only whether rows
+ * exist, never their content; the delete itself relies on the keys.
+ */
+export async function isInUse(tx: Tx, id: string): Promise<boolean> {
+  const { rows } = await tx.execute<{ used: boolean }>(sql`
+    SELECT EXISTS (SELECT 1 FROM public.group_memberships WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.group_owners WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.group_seasons WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.groups WHERE parent_group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.group_waitlist_entries WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.invitations WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.activity_groups WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.activity_series_groups WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.event_groups WHERE group_id = ${id}) AS used`);
+  return rows[0]?.used ?? true;
 }
 
 /** The group and its ancestors, nearest first. */
@@ -175,4 +206,94 @@ export async function activeGroupNames(
     .select({ id: groups.id, name: groups.name })
     .from(groups)
     .where(and(eq(groups.clubId, clubId), isNull(groups.archivedAt)));
+}
+
+// --- My waiting lists (P1.6b) ----------------------------------------------
+
+export interface OwnWaitlistEntry {
+  id: string;
+  clubId: string;
+  groupId: string;
+  personId: string;
+  status: WaitlistStatus;
+  queuedAt: Date;
+  offerExpiresAt: Date | null;
+}
+
+/**
+ * The open entries of the given people (the caller and their wards) in every
+ * club: own_relationships, uses group_waitlist_entries_person_idx.
+ */
+export async function ownOpenWaitlistEntries(
+  tx: Tx,
+  personIds: readonly string[],
+): Promise<OwnWaitlistEntry[]> {
+  if (personIds.length === 0) return [];
+  return tx
+    .select({
+      id: groupWaitlistEntries.id,
+      clubId: groupWaitlistEntries.clubId,
+      groupId: groupWaitlistEntries.groupId,
+      personId: groupWaitlistEntries.personId,
+      status: groupWaitlistEntries.status,
+      queuedAt: groupWaitlistEntries.queuedAt,
+      offerExpiresAt: groupWaitlistEntries.offerExpiresAt,
+    })
+    .from(groupWaitlistEntries)
+    .where(
+      and(
+        inArray(groupWaitlistEntries.personId, [...personIds]),
+        inArray(groupWaitlistEntries.status, ["waiting", "offered"]),
+      ),
+    )
+    .orderBy(groupWaitlistEntries.queuedAt, groupWaitlistEntries.id)
+    .limit(100);
+}
+
+export interface WaitlistQueue {
+  position: number | null;
+  waiting: number;
+  groupName: string;
+  clubName: string;
+}
+
+/**
+ * Place in the queue (1 = next; null while an offer is out) and the number
+ * waiting, in the transaction's club. Same order as the queue
+ * (group_waitlist_entries_order_idx: priority first, then queued_at).
+ */
+export async function waitlistPositions(
+  tx: Tx,
+  entryIds: readonly string[],
+): Promise<Map<string, WaitlistQueue>> {
+  if (entryIds.length === 0) return new Map();
+  const { rows } = await tx.execute<{
+    id: string;
+    position: number | null;
+    waiting: number;
+    group_name: string;
+    club_name: string;
+  }>(sql`
+    SELECT e.id, g.name AS group_name, c.name AS club_name,
+      CASE WHEN e.status = 'waiting' THEN (
+        SELECT count(*)::int + 1 FROM public.group_waitlist_entries o
+        WHERE o.group_id = e.group_id AND o.status = 'waiting'
+          AND (o.priority > e.priority
+            OR (o.priority = e.priority AND (o.queued_at, o.id) < (e.queued_at, e.id)))
+      ) END AS position,
+      (SELECT count(*)::int FROM public.group_waitlist_entries w
+       WHERE w.group_id = e.group_id AND w.status = 'waiting') AS waiting
+    FROM public.group_waitlist_entries e
+    JOIN public.groups g ON g.club_id = e.club_id AND g.id = e.group_id
+    JOIN public.clubs c ON c.id = e.club_id
+    WHERE e.id IN (${sql.join(
+      entryIds.map((id) => sql`${id}`),
+      sql`, `,
+    )})`);
+  return new Map(
+    rows.map((r) => [
+      r.id,
+      { position: r.position, waiting: r.waiting, groupName: r.group_name, clubName: r.club_name },
+    ]),
+  );
 }

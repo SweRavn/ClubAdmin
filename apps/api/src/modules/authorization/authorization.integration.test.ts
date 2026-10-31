@@ -207,6 +207,45 @@ describe("permission matrix", () => {
       expected: INSIDERS,
     },
     "GET /api/v1/groups/:groupId": { url: () => `/api/v1/groups/${m.team.id}`, expected: INSIDERS },
+    // Groups (P1.6b): club managers, and owners for groups under theirs.
+    // Creating under a parent that does not exist: allowed callers get the
+    // service's 400 (the flows: groups.integration.test.ts). The spare group
+    // is archived, restored by club managers only, then deleted.
+    "POST /api/v1/clubs/:clubId/groups": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups`,
+      expected: { ...CLUB_FORBIDDEN, manager: 400, owner: 400 },
+      body: () => ({ name: "Matrix team", kind: "team", parentGroupId: uuidv7() }),
+    },
+    "PATCH /api/v1/groups/:groupId": {
+      url: () => `/api/v1/groups/${m.team.id}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+      body: { capacity: 30 },
+    },
+    "POST /api/v1/groups/:groupId/archive": {
+      url: () => `/api/v1/groups/${m.spareGroup.id}/archive`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+    },
+    "POST /api/v1/groups/:groupId/restore": {
+      url: () => `/api/v1/groups/${m.spareGroup.id}/restore`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 403 },
+    },
+    "DELETE /api/v1/groups/:groupId": {
+      url: () => `/api/v1/groups/${m.spareGroup.id}`,
+      // After the manager deletes it, the group is gone for everyone.
+      expected: { ...ALL_NOT_FOUND, manager: 204 },
+    },
+    "PATCH /api/v1/clubs/:clubId/settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/settings`,
+      // club.settings.update needs a second factor: even the manager gets 403 here.
+      expected: CLUB_FORBIDDEN,
+      body: { timeZone: "Europe/Stockholm" },
+    },
+    "PUT /api/v1/clubs/:clubId/phone-numbers": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/phone-numbers`,
+      expected: CLUB_FORBIDDEN,
+      body: { numbers: [] },
+    },
+    "GET /api/v1/me/waitlists": { url: () => "/api/v1/me/waitlists", expected: ALL_OK },
     "GET /api/v1/groups/:groupId/members": {
       url: () => `/api/v1/groups/${m.team.id}/members`,
       expected: ROSTER,
@@ -469,14 +508,17 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/locations`,
       expected: INSIDERS,
     },
+    // P1.6b: those who manage any group's activities add places (after the
+    // manager's, the same name is taken: 409); only the club manager or the
+    // place's creator changes one (the manager created this one: 403).
     "POST /api/v1/clubs/:clubId/locations": {
       url: () => `/api/v1/clubs/${m.clubA.id}/locations`,
-      expected: { ...CLUB_FORBIDDEN, manager: 201 },
+      expected: { ...TEAM_MANAGERS(409), manager: 201 },
       body: { name: "Matrix pitch" },
     },
     "PATCH /api/v1/clubs/:clubId/locations/:locationId": {
       url: () => `/api/v1/clubs/${m.clubA.id}/locations/${m.locationId}`,
-      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+      expected: { ...TEAM_MANAGERS(403), manager: 200 },
       body: { directions: "Entrance B" },
     },
     "GET /api/v1/clubs/:clubId/locations/:locationId/conflicts": {
@@ -561,17 +603,19 @@ describe("permission matrix", () => {
     },
     "GET /api/v1/me/schedule": { url: () => `/api/v1/me/schedule?${RANGE}`, expected: ALL_OK },
     // Responses and attendance (P1.5): the flows are in attendance.integration.test.ts.
-    // Only the parent answers for the child (the member may answer only for
-    // themselves: 404); leaders see the answers and take attendance (the
-    // match is ahead: 409 activity_not_started), registrars too.
+    // The parent answers for the child, and since P1.6b its leaders (the
+    // member may answer only for themselves: 404); leaders see the answers
+    // and take attendance (the match is ahead: 409 activity_not_started),
+    // registrars too.
     "PUT /api/v1/activities/:activityId/responses/:personId": {
       url: () => `/api/v1/activities/${m.activityId}/responses/${m.child.id}`,
-      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 200 },
+      expected: { ...TEAM_MANAGERS(200), member: 404, parent: 200 },
       body: { status: "attending" },
     },
+    // Leaders set an answer but do not withdraw one (the person or a guardian does): 404.
     "DELETE /api/v1/activities/:activityId/responses/:personId": {
       url: () => `/api/v1/activities/${m.activityId}/responses/${m.child.id}`,
-      expected: { ...CLUB_FORBIDDEN, member: 404, parent: 200 },
+      expected: { ...TEAM_MANAGERS(404), member: 404, parent: 200 },
     },
     "GET /api/v1/activities/:activityId/responses/summary": {
       url: () => `/api/v1/activities/${m.activityId}/responses/summary`,
@@ -874,6 +918,40 @@ describe("reads", () => {
     }>();
     expect(section.name).toBe("Fotboll");
     expect(section.owners.map((p) => p.id)).toEqual([m.owner.id]);
+  });
+
+  it("PATCH /clubs/:clubId/settings and PUT phone-numbers (with MFA) show in GET /clubs/:clubId (P1.6b)", async () => {
+    const send = async (method: "PATCH" | "PUT", url: string, payload: object) =>
+      inject({
+        method,
+        url,
+        payload,
+        headers: { authorization: `Bearer ${await devToken(m.manager.id, { mfa: true })}` },
+      });
+    const settings = await send("PATCH", `/api/v1/clubs/${m.clubA.id}/settings`, {
+      email: "kansli@example.org",
+      organizationNumber: "8020000009",
+    });
+    expect(settings.statusCode).toBe(200);
+    expect(settings.json()).toMatchObject({ organizationNumber: "802000-0009" });
+    const bad = await send("PATCH", `/api/v1/clubs/${m.clubA.id}/settings`, {
+      organizationNumber: "802000-0008",
+    });
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json()).toMatchObject({ detail: "invalid_organization_number" });
+    const phones = await send("PUT", `/api/v1/clubs/${m.clubA.id}/phone-numbers`, {
+      numbers: [
+        { label: "Kansli", number: "+46 8 000 00 00" },
+        { label: "Kiosk", number: "+46 70 000 00 01" },
+      ],
+    });
+    expect(phones.statusCode).toBe(200);
+    const club = (await get(m.member.id, `/api/v1/clubs/${m.clubA.id}`)).json<{
+      email: string;
+      phoneNumbers: { label: string; number: string }[];
+    }>();
+    expect(club.email).toBe("kansli@example.org");
+    expect(club.phoneNumbers.map((p) => p.label)).toEqual(["Kansli", "Kiosk"]);
   });
 
   it("GET /me/wards lists wards with rights", async () => {

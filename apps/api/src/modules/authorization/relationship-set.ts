@@ -251,6 +251,11 @@ export class Actor {
     return this.functions.has(groupId);
   }
 
+  /** Owns at least one group of the club. */
+  ownsAnyGroup(clubId: string): boolean {
+    return this.relationships.ownedGroups.some((o) => o.clubId === clubId);
+  }
+
   /** Owns a group of the club or plans one's activities (may create group events, P1.6). */
   managesAnyGroupActivities(clubId: string): boolean {
     return (

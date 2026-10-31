@@ -132,7 +132,7 @@ export interface paths {
     };
     get?: never;
     /**
-     * Answer attending or not attending, for myself or a ward (until the deadline)
+     * Answer attending or not attending, for myself or a ward (until the deadline), or as a leader for a participant
      * @description Requires permission `activity.respond` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     put: operations["Attendance_respond"];
@@ -409,7 +409,11 @@ export interface paths {
      */
     get: operations["Groups_listGroups"];
     put?: never;
-    post?: never;
+    /**
+     * Create a group (club managers; owners of a group create child groups of it)
+     * @description Requires permission `club.groups.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Groups_createGroup"];
     delete?: never;
     options?: never;
     head?: never;
@@ -535,8 +539,8 @@ export interface paths {
     get: operations["Activities_listLocations"];
     put?: never;
     /**
-     * Add a location (hall, pitch) where the club's activities take place
-     * @description Requires permission `club.locations.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     * Add a location (hall, pitch): club managers and those who plan a group's activities
+     * @description Requires permission `club.locations.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["Activities_createLocation"];
     delete?: never;
@@ -559,8 +563,8 @@ export interface paths {
     options?: never;
     head?: never;
     /**
-     * Change or archive a location
-     * @description Requires permission `club.locations.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     * Change or archive a location (club managers, or the person who added it)
+     * @description Requires permission `club.locations.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     patch: operations["Activities_updateLocation"];
     trace?: never;
@@ -965,6 +969,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/phone-numbers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Set the club's phone numbers (the whole list, in the order shown)
+     * @description Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Clubs_setPhoneNumbers"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/settings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change the club's settings: time zone, contact details, organisation number, language (P1.6b)
+     * @description Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["Clubs_updateSettings"];
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/subscription": {
     parameters: {
       query?: never;
@@ -1255,10 +1299,18 @@ export interface paths {
     get: operations["Groups_getGroup"];
     put?: never;
     post?: never;
-    delete?: never;
+    /**
+     * Delete a group that was never used (otherwise archive it: group_in_use)
+     * @description Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Groups_deleteGroup"];
     options?: never;
     head?: never;
-    patch?: never;
+    /**
+     * Change a group: name, kind, details, admission, parent (no cycles)
+     * @description Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["Groups_updateGroup"];
     trace?: never;
   };
   "/api/v1/groups/{groupId}/activities": {
@@ -1325,6 +1377,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/groups/{groupId}/archive": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Archive a group (refused while it has child groups that are not archived)
+     * @description Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Groups_archiveGroup"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/groups/{groupId}/attendance": {
     parameters: {
       query?: never;
@@ -1379,6 +1451,26 @@ export interface paths {
     get: operations["GroupMembers_listMembers"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/restore": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Restore an archived group (club managers)
+     * @description Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Groups_restoreGroup"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1898,6 +1990,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/waitlists": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My and my children's open waiting-list entries (place in the queue) and pending join requests */
+    get: operations["Joining_waitlists"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/wards": {
     parameters: {
       query?: never;
@@ -2244,6 +2353,7 @@ export interface components {
       /** Format: uri */
       mapUrl: string | null;
       archived: boolean;
+      canEdit?: boolean;
     } | null;
     ResponseCounts: {
       attending: number;
@@ -2269,6 +2379,7 @@ export interface components {
       seriesId: string | null;
       /** @enum {string} */
       kind: "training" | "match" | "meeting" | "other";
+      kindLabel?: string | null;
       title: string;
       /** @enum {string} */
       status: "scheduled" | "cancelled";
@@ -2309,6 +2420,7 @@ export interface components {
     UpdateActivityRequest: {
       /** @enum {string} */
       kind?: "training" | "match" | "meeting" | "other";
+      kindLabel?: string | null;
       title?: string;
       notes?: string | null;
       leaderNotes?: string | null;
@@ -2619,6 +2731,20 @@ export interface components {
     };
     ClubDetail: components["schemas"]["Club"] & {
       managers: components["schemas"]["PersonSummary"][];
+      email?: string | null;
+      organizationNumber?: string | null;
+      address?: {
+        street: string;
+        postalCode: string;
+        city: string;
+        country: string;
+      } | null;
+      phoneNumbers?: {
+        /** Format: uuid */
+        id: string;
+        label: string;
+        number: string;
+      }[];
     };
     ClubAccessState: {
       /** Format: uuid */
@@ -2725,6 +2851,7 @@ export interface components {
         id: string;
         /** @enum {string} */
         kind: "training" | "match" | "meeting" | "other";
+        kindLabel?: string | null;
         title: string;
         /** @enum {string} */
         status: "scheduled" | "cancelled";
@@ -2757,7 +2884,7 @@ export interface components {
       /** Format: date-time */
       startsAt: string;
       /** Format: date-time */
-      endsAt: string;
+      endsAt?: string;
       /** Format: uuid */
       locationId?: string | null;
       locationText?: string | null;
@@ -2765,7 +2892,7 @@ export interface components {
       /** Format: date-time */
       registrationOpensAt?: string | null;
       /** Format: date-time */
-      registrationClosesAt: string;
+      registrationClosesAt?: string;
       /** Format: date-time */
       cancellationClosesAt?: string | null;
       capacity?: number | null;
@@ -2781,6 +2908,7 @@ export interface components {
       activities: {
         /** @enum {string} */
         kind: "training" | "match" | "meeting" | "other";
+        kindLabel?: string | null;
         title: string;
         /** Format: date-time */
         startsAt: string;
@@ -3535,6 +3663,12 @@ export interface components {
         count: number;
       }[];
     };
+    SetClubPhoneNumbersRequest: {
+      numbers: {
+        label: string;
+        number: string;
+      }[];
+    };
     SubscriptionResponse: {
       subscription: components["schemas"]["Subscription"];
     };
@@ -3640,6 +3774,8 @@ export interface components {
     };
     GroupDetail: components["schemas"]["Group"] & {
       owners: components["schemas"]["PersonSummary"][];
+      canManage?: boolean;
+      deletable?: boolean;
     };
     GroupCalendar: components["schemas"]["ActivityPage"] & {
       canManage: boolean;
@@ -3648,6 +3784,7 @@ export interface components {
     CreateActivityRequest: {
       /** @enum {string} */
       kind: "training" | "match" | "meeting" | "other";
+      kindLabel?: string | null;
       title: string;
       notes?: string | null;
       leaderNotes?: string | null;
@@ -3923,6 +4060,7 @@ export interface components {
           | "club.members.import"
           | "group.read"
           | "group.update"
+          | "club.groups.create"
           | "group.owners.manage"
           | "group.members.read"
           | "group.members.manage"
@@ -3932,6 +4070,7 @@ export interface components {
           | "activity.manage"
           | "club.activities.read"
           | "club.locations.manage"
+          | "club.locations.create"
           | "activity.respond"
           | "activity.responses.read"
           | "activity.attendance.manage"
@@ -4115,6 +4254,7 @@ export interface components {
       };
       /** @enum {string} */
       kind: "training" | "match" | "meeting" | "other";
+      kindLabel?: string | null;
       title: string;
       /** @enum {string} */
       status: "scheduled" | "cancelled";
@@ -4206,6 +4346,56 @@ export interface components {
       invitation: components["schemas"]["GuardianInvitationCreated"] &
         (Record<string, never> | null);
       guardianship: components["schemas"]["GuardianshipCreated"] & (Record<string, never> | null);
+    };
+    MyWaitlists: {
+      entries: {
+        /** Format: uuid */
+        id: string;
+        person: components["schemas"]["PersonSummary"];
+        club: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        };
+        group: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        };
+        /** @enum {string} */
+        status:
+          | "waiting"
+          | "offered"
+          | "accepted"
+          | "declined"
+          | "expired"
+          | "admitted"
+          | "withdrawn"
+          | "removed";
+        position: number | null;
+        waiting: number;
+        /** Format: date-time */
+        queuedAt: string;
+        /** Format: date-time */
+        offerExpiresAt: string | null;
+      }[];
+      joinRequests: {
+        /** Format: uuid */
+        id: string;
+        person: components["schemas"]["PersonSummary"];
+        club: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        };
+        preferredGroups: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        }[];
+        /** Format: date-time */
+        createdAt: string;
+      }[];
     };
     MyWards: {
       wards: {
@@ -6539,6 +6729,111 @@ export interface operations {
       };
     };
   };
+  Groups_createGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          name: string;
+          /** @enum {string} */
+          kind:
+            | "section"
+            | "team"
+            | "training_group"
+            | "age_group"
+            | "committee"
+            | "board"
+            | "volunteers"
+            | "other";
+          /** Format: uuid */
+          parentGroupId?: string | null;
+          sport?: string | null;
+          birthYearFrom?: number | null;
+          birthYearTo?: number | null;
+          /** @enum {string|null} */
+          genderCategory?: "female" | "male" | "mixed" | "open" | null;
+          level?: string | null;
+          capacity?: number | null;
+          /** @enum {string} */
+          admissionMode?: "direct" | "waitlist" | "closed";
+          waitlistVisiblePublicly?: boolean;
+          offerReplyDays?: number;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Group"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   ClubGuardians_end: {
     parameters: {
       query?: never;
@@ -8777,7 +9072,7 @@ export interface operations {
           | "streaming"
           | "marketing"
           | "federation_sharing";
-        sort?: "name" | "member_number" | "joined";
+        sort?: "name" | "family_name" | "member_number" | "joined";
         order?: "asc" | "desc";
         cursor?: string;
         limit?: number;
@@ -9217,6 +9512,190 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["RegisterFacets"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Clubs_setPhoneNumbers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetClubPhoneNumbersRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubDetail"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Clubs_updateSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          name?: string;
+          shortName?: string | null;
+          defaultLocale?: string;
+          timeZone?: string;
+          /** Format: email */
+          email?: string | null;
+          currency?: string;
+          organizationNumber?: string | null;
+          federationIds?: {
+            [key: string]: string;
+          };
+          address?: {
+            street: string;
+            postalCode: string;
+            city: string;
+            country: string;
+          } | null;
+          /** @enum {string} */
+          joinPolicy?: "open" | "approval" | "invite_only";
+          ownersCanAppointCoOwners?: boolean;
+          groupOwnersAdmitToClub?: boolean;
+          attendanceLockDays?: number;
+          attendanceRetentionMonths?: number;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubDetail"];
         };
       };
       /** @description Invalid request */
@@ -10686,6 +11165,185 @@ export interface operations {
       };
     };
   };
+  Groups_deleteGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Groups_updateGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          name?: string;
+          /** @enum {string} */
+          kind?:
+            | "section"
+            | "team"
+            | "training_group"
+            | "age_group"
+            | "committee"
+            | "board"
+            | "volunteers"
+            | "other";
+          /** Format: uuid */
+          parentGroupId?: string | null;
+          sport?: string | null;
+          birthYearFrom?: number | null;
+          birthYearTo?: number | null;
+          /** @enum {string|null} */
+          genderCategory?: "female" | "male" | "mixed" | "open" | null;
+          level?: string | null;
+          capacity?: number | null;
+          /** @enum {string} */
+          admissionMode?: "direct" | "waitlist" | "closed";
+          waitlistVisiblePublicly?: boolean;
+          offerReplyDays?: number;
+        };
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Group"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Activities_groupCalendar: {
     parameters: {
       query: {
@@ -11007,6 +11665,82 @@ export interface operations {
       };
     };
   };
+  Groups_archiveGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Group"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Attendance_groupAttendance: {
     parameters: {
       query: {
@@ -11190,6 +11924,82 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["GroupMemberList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Groups_restoreGroup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Group"];
         };
       };
       /** @description Invalid request */
@@ -13224,6 +14034,62 @@ export interface operations {
         };
         content: {
           "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Joining_waitlists: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyWaitlists"];
         };
       };
       /** @description Not logged in */

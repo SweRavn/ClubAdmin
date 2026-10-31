@@ -37,6 +37,7 @@ import {
 import { clubRef, personRef } from "./clubs.ts";
 import { id, oneOf, timestamps, tz } from "./columns.ts";
 import { groups } from "./groups.ts";
+import { people } from "./people.ts";
 
 export const locations = pgTable(
   "locations",
@@ -52,10 +53,13 @@ export const locations = pgTable(
     /** "Entrance B, hall 2". */
     directions: text(),
     archivedAt: timestamp(tz),
+    /** Who added it (P1.6b): they and club managers may change it; null = a club manager. */
+    createdByPersonId: uuid().references(() => people.id),
     ...timestamps,
   },
   (t) => [
     unique("locations_club_id_unique").on(t.clubId, t.id),
+    index("locations_creator_idx").on(t.createdByPersonId),
     uniqueIndex("locations_name_unique")
       .on(t.clubId, sql`lower(${t.name})`)
       .where(sql`${t.archivedAt} IS NULL`),
@@ -143,6 +147,8 @@ export const activities = pgTable(
     /** The local date of the session in its series (matches it when the series changes). */
     occurrenceOn: date({ mode: "string" }),
     kind: text().$type<ActivityKind>().notNull(),
+    /** What an `other` activity is ("Cup", "Lunch"; P1.6b). */
+    kindLabel: text(),
     title: text().notNull(),
     status: text().$type<ActivityStatus>().notNull().default("scheduled"),
     cancelledReason: text(),
@@ -184,6 +190,10 @@ export const activities = pgTable(
       foreignColumns: [locations.clubId, locations.id],
     }),
     check("activities_kind", oneOf(t.kind, ACTIVITY_KINDS)),
+    check(
+      "activities_kind_label",
+      sql`${t.kindLabel} IS NULL OR (${t.kind} = 'other' AND length(${t.kindLabel}) BETWEEN 1 AND 60)`,
+    ),
     check("activities_status", oneOf(t.status, ACTIVITY_STATUSES)),
     check("activities_home_away", sql`${t.homeAway} IS NULL OR ${oneOf(t.homeAway, HOME_AWAY)}`),
     check("activities_period", sql`${t.endsAt} > ${t.startsAt}`),
@@ -241,6 +251,7 @@ export const scheduleEntries = pgTable(
     activityId: uuid().notNull(),
     groupId: uuid().notNull(),
     kind: text().$type<ActivityKind>().notNull(),
+    kindLabel: text(),
     title: text().notNull(),
     status: text().$type<ActivityStatus>().notNull(),
     cancelledReason: text(),

@@ -60,6 +60,9 @@ describe("tenant isolation of club-owned tables", () => {
         INSERT INTO group_waitlist_entries (club_id, group_id, person_id, requested_by_person_id)
         VALUES (${a.id}, ${group.id}, ${family.child.id}, ${family.guardian.id})`);
       await tx.execute(sql`
+        INSERT INTO club_phone_numbers (club_id, label, number, sort_order)
+        VALUES (${a.id}, 'Kansli', '+46 8 000 00 00', 0)`);
+      await tx.execute(sql`
         INSERT INTO join_requests (club_id, person_id, requested_by_person_id)
         VALUES (${a.id}, ${family.child.id}, ${family.guardian.id})`);
       await tx.execute(sql`

@@ -63,6 +63,8 @@ export function registerSortKey(sort: RegisterSort): SQL {
     case "joined":
       return sql.raw("e.valid_from");
     case "name":
+      return sql.raw("e.sort_given_name");
+    case "family_name":
       return sql.raw("e.sort_name");
   }
 }

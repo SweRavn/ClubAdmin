@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { addDays, type CountryPack, easterSunday, isoDate, personalIdFormat } from "../types.ts";
 import { parseFodselsnummer } from "./fodselsnummer.ts";
+import { normalizeOrganisasjonsnummer } from "./organisasjonsnummer.ts";
 
 export const NO: CountryPack = {
   code: "NO",
   // GDPR consent age in Norway is 13 (personopplysningsloven § 5).
   ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18 },
+  normalizeOrganizationNumber: normalizeOrganisasjonsnummer,
   personalIdFormat: personalIdFormat(parseFodselsnummer),
   localeDefaults: { locale: "nb-NO", timeZone: "Europe/Oslo", currency: "NOK" },
   // Offentlige høytidsdager (helligdagsloven) and 1 and 17 May.

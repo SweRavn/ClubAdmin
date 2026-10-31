@@ -2,6 +2,7 @@
 // Responses of the identity endpoints (/api/v1/me, /api/v1/dev/personas).
 
 import { CLUB_ROLES } from "../domain/core.ts";
+import { isTimeZone } from "../domain/schemas.ts";
 import { z } from "../zod.ts";
 import { SessionMetadataSchema } from "./sessions.ts";
 
@@ -26,15 +27,6 @@ export type PersonSummary = z.infer<typeof PersonSummarySchema>;
 export const UI_LOCALES = ["sv", "en", "nb"] as const;
 export type UiLocale = (typeof UI_LOCALES)[number];
 export const THEMES = ["light", "dark", "system"] as const;
-
-const isTimeZone = (value: string) => {
-  try {
-    new Intl.DateTimeFormat("en", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 /** Account preferences; null means "not set" (club default, then the browser). */
 export const PreferencesSchema = z

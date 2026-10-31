@@ -639,7 +639,11 @@
     "activity_has_call_up": "Aktiviteten har redan en egen kallelse.",
     "activity_in_other_event": "Aktiviteten hör till ett annat evenemang.",
     "capacity_below_confirmed": "Antalet platser kan inte vara lägre än antalet bekräftade deltagare.",
-    "questions_locked": "Frågor som har besvarats kan inte tas bort eller byta typ."
+    "questions_locked": "Frågor som har besvarats kan inte tas bort eller byta typ.",
+    "group_has_children": "Gruppen har aktiva undergrupper. Arkivera eller flytta dem först.",
+    "group_in_use": "Gruppen har använts (medlemmar, aktiviteter eller historik) och kan bara arkiveras.",
+    "event_period_invalid": "Slutet måste vara efter starten, och anmälan måste stänga före slutet.",
+    "invalid_organization_number": "Organisationsnumret är inte giltigt."
   },
   "memberExport": {
     "columns": {

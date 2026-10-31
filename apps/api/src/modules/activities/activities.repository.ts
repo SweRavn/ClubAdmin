@@ -180,10 +180,10 @@ export async function syncScheduleEntries(
     DELETE FROM public.schedule_entries se USING public.activities a
     WHERE se.activity_id = a.id AND ${where}`);
   await tx.execute(sql`
-    INSERT INTO public.schedule_entries (club_id, activity_id, group_id, kind, title, status,
-      cancelled_reason, starts_at, ends_at, all_day, meet_at, place, changed_at, response_mode,
-      respond_by, invitees_only)
-    SELECT a.club_id, a.id, ag.group_id, a.kind, a.title, a.status, a.cancelled_reason,
+    INSERT INTO public.schedule_entries (club_id, activity_id, group_id, kind, kind_label, title,
+      status, cancelled_reason, starts_at, ends_at, all_day, meet_at, place, changed_at,
+      response_mode, respond_by, invitees_only)
+    SELECT a.club_id, a.id, ag.group_id, a.kind, a.kind_label, a.title, a.status, a.cancelled_reason,
       a.starts_at, a.ends_at, a.all_day, a.meet_at, coalesce(l.name, a.location_text), a.changed_at,
       a.response_mode, a.respond_by, a.invitees_only
     FROM public.activities a
@@ -431,6 +431,7 @@ export interface ScheduleRow {
   activityId: string;
   clubId: string;
   kind: string;
+  kindLabel: string | null;
   title: string;
   status: string;
   cancelledReason: string | null;
@@ -484,9 +485,9 @@ export function scheduleQuery(input: ScheduleInput): SQL {
           SELECT 1 FROM public.activity_invitees i
           WHERE i.activity_id = se.activity_id AND i.person_id = m.person_id))
     )
-    SELECT h.activity_id, h.club_id, h.kind, h.title, h.status, h.cancelled_reason, h.starts_at,
-      h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode, h.respond_by,
-      array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids,
+    SELECT h.activity_id, h.club_id, h.kind, h.kind_label, h.title, h.status, h.cancelled_reason,
+      h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode,
+      h.respond_by, array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids,
       coalesce(array_agg(DISTINCT h.person_id) FILTER (WHERE h.function = 'member'), '{}') AS member_ids,
       (SELECT coalesce(jsonb_object_agg(r.person_id, r.status), '{}') FROM public.activity_responses r
        WHERE r.person_id = ANY (array_agg(DISTINCT h.person_id)) AND r.activity_id = h.activity_id) AS answers,
@@ -498,7 +499,7 @@ export function scheduleQuery(input: ScheduleInput): SQL {
         ? sql`AND (h.starts_at, h.activity_id) > (SELECT a.starts_at, a.activity_id FROM public.schedule_entries a WHERE a.activity_id = ${input.cursor} LIMIT 1)`
         : sql``
     }
-    GROUP BY h.activity_id, h.club_id, h.kind, h.title, h.status, h.cancelled_reason,
+    GROUP BY h.activity_id, h.club_id, h.kind, h.kind_label, h.title, h.status, h.cancelled_reason,
       h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode,
       h.respond_by
     ORDER BY h.starts_at, h.activity_id
@@ -511,6 +512,7 @@ export async function schedule(tx: Tx, input: ScheduleInput): Promise<ScheduleRo
     activity_id: string;
     club_id: string;
     kind: string;
+    kind_label: string | null;
     title: string;
     status: string;
     cancelled_reason: string | null;
@@ -532,6 +534,7 @@ export async function schedule(tx: Tx, input: ScheduleInput): Promise<ScheduleRo
     activityId: r.activity_id,
     clubId: r.club_id,
     kind: r.kind,
+    kindLabel: r.kind_label,
     title: r.title,
     status: r.status,
     cancelledReason: r.cancelled_reason,

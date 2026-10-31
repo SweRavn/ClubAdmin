@@ -93,6 +93,7 @@ function locationWriteError(error: unknown): never {
 /** Fields of a session that a calendar shows: changing one bumps sequence and changed_at. */
 const SHOWN_FIELDS = [
   "kind",
+  "kindLabel",
   "title",
   "notes",
   "startsAt",
@@ -157,6 +158,7 @@ export class ActivitiesService {
           latitude: data.latitude ?? null,
           longitude: data.longitude ?? null,
           directions: data.directions ?? null,
+          createdByPersonId: context.personId ?? null,
         })
         .catch(locationWriteError);
       await audit.record(tx, {
@@ -169,16 +171,27 @@ export class ActivitiesService {
     });
   }
 
-  /** Archiving keeps the activities there; a new name shows in calendars at once. */
+  /**
+   * Archiving keeps the activities there; a new name shows in calendars at
+   * once. Without `anyLocation` (club managers) only the person who added the
+   * location may change it (P1.6b).
+   */
   updateLocation(
     context: TenantContext,
     locationId: string,
     input: UpdateLocationInput,
+    options: { anyLocation?: boolean } = { anyLocation: true },
   ): Promise<Location> {
     return this.db.withTenant(context, async (tx) => {
       const data = definedOnly(parseInput(UpdateLocationSchema, input));
       const [current] = await repo.findLocations(tx, [locationId]);
       if (current?.clubId !== context.clubId) throw new DomainError("not_found");
+      if (
+        !options.anyLocation &&
+        (current.createdByPersonId === null || current.createdByPersonId !== context.personId)
+      ) {
+        throw new DomainError("not_allowed");
+      }
       const { archived, ...fields } = data;
       const values = {
         ...fields,
@@ -237,6 +250,7 @@ export class ActivitiesService {
         id: options.id ?? uuidv7(),
         clubId: context.clubId,
         kind: data.kind,
+        kindLabel: data.kind === "other" ? (data.kindLabel ?? null) : null,
         title: data.title,
         notes: data.notes ?? null,
         leaderNotes: data.leaderNotes ?? null,
@@ -286,6 +300,14 @@ export class ActivitiesService {
       if (!current) throw new DomainError("not_found");
       const next: Partial<repo.NewActivityRow> = {
         ...(data.kind === undefined ? {} : { kind: data.kind }),
+        // The label belongs to `other` activities only (P1.6b).
+        ...((data.kind ?? current.kind) !== "other"
+          ? current.kindLabel === null
+            ? {}
+            : { kindLabel: null }
+          : "kindLabel" in data
+            ? { kindLabel: data.kindLabel ?? null }
+            : {}),
         ...(data.title === undefined ? {} : { title: data.title }),
         ...("notes" in data ? { notes: data.notes ?? null } : {}),
         ...("leaderNotes" in data ? { leaderNotes: data.leaderNotes ?? null } : {}),

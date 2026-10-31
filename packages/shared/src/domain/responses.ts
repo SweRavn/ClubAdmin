@@ -70,6 +70,13 @@ export type ClubResponse = z.infer<typeof ClubSchema>;
 /** A club with its managers (GET /clubs/{clubId}). */
 export const ClubDetailSchema = ClubSchema.extend({
   managers: z.array(PersonSummarySchema),
+  /** Contact details (P1.6b), for people related to the club. */
+  email: z.string().nullable().optional(),
+  organizationNumber: z.string().nullable().optional(),
+  address: PostalAddressSchema.nullable().optional(),
+  phoneNumbers: z
+    .array(z.object({ id: z.uuid(), label: z.string(), number: z.string() }))
+    .optional(),
 }).openapi("ClubDetail");
 export type ClubDetail = z.infer<typeof ClubDetailSchema>;
 
@@ -141,6 +148,10 @@ export type GroupResponse = z.infer<typeof GroupSchema>;
 /** A group with its owners (GET /groups/{groupId}). */
 export const GroupDetailSchema = GroupSchema.extend({
   owners: z.array(PersonSummarySchema),
+  /** The viewer may edit, archive and delete it (group.update; P1.6b). */
+  canManage: z.boolean().optional(),
+  /** Never used (no memberships, activities, events or waiting-list entries): it can be deleted. */
+  deletable: z.boolean().optional(),
 }).openapi("GroupDetail");
 export type GroupDetail = z.infer<typeof GroupDetailSchema>;
 

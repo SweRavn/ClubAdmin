@@ -65,6 +65,8 @@ export const LocationSchema = z
     /** An OpenStreetMap link (coordinates, or the address searched). */
     mapUrl: z.url().nullable(),
     archived: z.boolean(),
+    /** The viewer may change it: club managers, or the person who added it (P1.6b). */
+    canEdit: z.boolean().optional(),
   })
   .openapi("Location");
 export type Location = z.infer<typeof LocationSchema>;
@@ -108,9 +110,13 @@ const details = {
   competition: text(120).nullish(),
 };
 
+/** What an `other` activity is ("Cup", "Lunch"; P1.6b). */
+const kindLabel = text(60).nullish();
+
 export const CreateActivitySchema = z
   .object({
     kind: z.enum(ACTIVITY_KINDS),
+    kindLabel,
     ...details,
     ...place,
     startsAt: z.iso.datetime({ offset: true }),
@@ -133,6 +139,7 @@ export type CreateActivityInput = z.input<typeof CreateActivitySchema>;
 export const UpdateActivitySchema = z
   .object({
     kind: z.enum(ACTIVITY_KINDS).optional(),
+    kindLabel,
     title: details.title.optional(),
     notes: details.notes,
     leaderNotes: details.leaderNotes,
@@ -260,6 +267,8 @@ export const ActivitySchema = z
     timeZone: z.string(),
     seriesId: z.uuid().nullable(),
     kind: z.enum(ACTIVITY_KINDS),
+    /** What an `other` activity is (P1.6b). */
+    kindLabel: z.string().nullable().optional(),
     title: z.string(),
     status: z.enum(ACTIVITY_STATUSES),
     cancelledReason: z.string().nullable(),
@@ -388,6 +397,8 @@ export const ScheduleEntrySchema = z
     activityId: z.uuid(),
     club: z.object({ id: z.uuid(), name: z.string(), timeZone: z.string() }),
     kind: z.enum(ACTIVITY_KINDS),
+    /** What an `other` activity is (P1.6b). */
+    kindLabel: z.string().nullable().optional(),
     title: z.string(),
     status: z.enum(ACTIVITY_STATUSES),
     cancelledReason: z.string().nullable(),

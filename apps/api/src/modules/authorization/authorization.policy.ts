@@ -244,6 +244,14 @@ export const POLICIES: readonly Policy[] = [
     "group",
     ({ actor, resource }) => actor.isClubManager(resource.clubId) || actor.ownsGroup(resource),
   ),
+  // P1.6b: club managers; owners of a group create child groups of it (the
+  // service checks the parent).
+  definePolicy(
+    "club.groups.create",
+    "club",
+    ({ actor, resource }) =>
+      actor.isClubManager(resource.clubId) || actor.ownsAnyGroup(resource.clubId),
+  ),
   definePolicy(
     "group.owners.manage",
     "group",
@@ -287,6 +295,14 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("club.locations.manage", "club", ({ actor, resource }) =>
     actor.isClubManager(resource.clubId),
   ),
+  // P1.6b: leaders add the places they use; they change only their own (the
+  // service checks the creator for those who are not club managers).
+  definePolicy(
+    "club.locations.create",
+    "club",
+    ({ actor, resource }) =>
+      actor.isClubManager(resource.clubId) || actor.managesAnyGroupActivities(resource.clubId),
+  ),
   // Events with sign-up (P1.6).
   definePolicy("club.events.read", "club", ({ actor, resource }) =>
     actor.hasClubRelationship(resource.clubId),
@@ -327,8 +343,9 @@ export const POLICIES: readonly Policy[] = [
   ),
   // Responses and attendance (P1.5). The service checks whose answer it is
   // (the caller or a ward with sign_up, on the roster) and the lock.
+  // Leaders of one of its groups answer for its participants too (P1.6b).
   definePolicy("activity.respond", "activity", ({ actor, resource }) =>
-    resource.groups.some((g) => canRespondInGroup(actor, g)),
+    resource.groups.some((g) => canRespondInGroup(actor, g) || canLeadGroupActivities(actor, g)),
   ),
   definePolicy("activity.responses.read", "activity", ({ actor, resource }) =>
     resource.groups.some((g) => canLeadGroupActivities(actor, g)),

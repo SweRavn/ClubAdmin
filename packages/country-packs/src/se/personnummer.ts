@@ -7,7 +7,7 @@
 
 import { isCalendarDate, isoDate, type ParsedPersonalId } from "../types.ts";
 
-function luhnValid(digits: string): boolean {
+export function luhnValid(digits: string): boolean {
   let sum = 0;
   for (let i = 0; i < digits.length; i++) {
     let d = Number(digits[i]) * (i % 2 === 0 ? 2 : 1);

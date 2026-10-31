@@ -48,7 +48,10 @@ export const ResponseParamsSchema = z.object({ activityId: z.uuid(), personId: z
 export const SetResponseSchema = z
   .object({
     status: z.enum(RESPONSE_STATUSES),
-    /** To the leaders only ("fever"); never more than needed. */
+    /**
+     * To the leaders only ("fever"); never more than needed. Left out: the
+     * current note stays (P1.6b); null clears it.
+     */
     note: note.nullish(),
   })
   .strict()

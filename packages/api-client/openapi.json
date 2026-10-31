@@ -170,6 +170,9 @@
           },
           "archived": {
             "type": "boolean"
+          },
+          "canEdit": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -264,6 +267,12 @@
               "match",
               "meeting",
               "other"
+            ]
+          },
+          "kindLabel": {
+            "type": [
+              "string",
+              "null"
             ]
           },
           "title": {
@@ -443,6 +452,14 @@
               "meeting",
               "other"
             ]
+          },
+          "kindLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 60
           },
           "title": {
             "type": "string",
@@ -1809,6 +1826,74 @@
                 "items": {
                   "$ref": "#/components/schemas/PersonSummary"
                 }
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "organizationNumber": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "address": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "street": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "postalCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 20
+                  },
+                  "city": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "country": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}$"
+                  }
+                },
+                "required": [
+                  "street",
+                  "postalCode",
+                  "city",
+                  "country"
+                ]
+              },
+              "phoneNumbers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "number": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "label",
+                    "number"
+                  ]
+                }
               }
             },
             "required": [
@@ -2172,6 +2257,12 @@
                     "other"
                   ]
                 },
+                "kindLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "title": {
                   "type": "string"
                 },
@@ -2428,6 +2519,14 @@
                     "other"
                   ]
                 },
+                "kindLabel": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 60
+                },
                 "title": {
                   "type": "string",
                   "minLength": 1,
@@ -2476,8 +2575,6 @@
         "required": [
           "title",
           "startsAt",
-          "endsAt",
-          "registrationClosesAt",
           "audience"
         ],
         "additionalProperties": false
@@ -4990,6 +5087,40 @@
           "groups"
         ]
       },
+      "SetClubPhoneNumbersRequest": {
+        "type": "object",
+        "properties": {
+          "numbers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "number": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 40,
+                  "pattern": "^[+0-9 ()-]+$"
+                }
+              },
+              "required": [
+                "label",
+                "number"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 10
+          }
+        },
+        "required": [
+          "numbers"
+        ],
+        "additionalProperties": false
+      },
       "SubscriptionResponse": {
         "type": "object",
         "properties": {
@@ -5465,6 +5596,12 @@
                 "items": {
                   "$ref": "#/components/schemas/PersonSummary"
                 }
+              },
+              "canManage": {
+                "type": "boolean"
+              },
+              "deletable": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -5506,6 +5643,14 @@
               "meeting",
               "other"
             ]
+          },
+          "kindLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 60
           },
           "title": {
             "type": "string",
@@ -6497,6 +6642,7 @@
                       "club.members.import",
                       "group.read",
                       "group.update",
+                      "club.groups.create",
                       "group.owners.manage",
                       "group.members.read",
                       "group.members.manage",
@@ -6506,6 +6652,7 @@
                       "activity.manage",
                       "club.activities.read",
                       "club.locations.manage",
+                      "club.locations.create",
                       "activity.respond",
                       "activity.responses.read",
                       "activity.attendance.manage",
@@ -7160,6 +7307,12 @@
               "other"
             ]
           },
+          "kindLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "title": {
             "type": "string"
           },
@@ -7516,6 +7669,167 @@
         "required": [
           "invitation",
           "guardianship"
+        ]
+      },
+      "MyWaitlists": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "club": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                },
+                "group": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "waiting",
+                    "offered",
+                    "accepted",
+                    "declined",
+                    "expired",
+                    "admitted",
+                    "withdrawn",
+                    "removed"
+                  ]
+                },
+                "position": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "waiting": {
+                  "type": "integer"
+                },
+                "queuedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "offerExpiresAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "person",
+                "club",
+                "group",
+                "status",
+                "position",
+                "waiting",
+                "queuedAt",
+                "offerExpiresAt"
+              ]
+            }
+          },
+          "joinRequests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "club": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                },
+                "preferredGroups": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ]
+                  }
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "person",
+                "club",
+                "preferredGroups",
+                "createdAt"
+              ]
+            }
+          }
+        },
+        "required": [
+          "entries",
+          "joinRequests"
         ]
       },
       "MyWards": {
@@ -9435,7 +9749,7 @@
       },
       "put": {
         "operationId": "Attendance_respond",
-        "summary": "Answer attending or not attending, for myself or a ward (until the deadline)",
+        "summary": "Answer attending or not attending, for myself or a ward (until the deadline), or as a leader for a participant",
         "tags": [
           "activities"
         ],
@@ -11282,6 +11596,211 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "Groups_createGroup",
+        "summary": "Create a group (club managers; owners of a group create child groups of it)",
+        "tags": [
+          "groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.groups.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "section",
+                      "team",
+                      "training_group",
+                      "age_group",
+                      "committee",
+                      "board",
+                      "volunteers",
+                      "other"
+                    ]
+                  },
+                  "parentGroupId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid"
+                  },
+                  "sport": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 50
+                  },
+                  "birthYearFrom": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1900,
+                    "maximum": 2200
+                  },
+                  "birthYearTo": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1900,
+                    "maximum": 2200
+                  },
+                  "genderCategory": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "female",
+                      "male",
+                      "mixed",
+                      "open",
+                      null
+                    ]
+                  },
+                  "level": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 50
+                  },
+                  "capacity": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "admissionMode": {
+                    "type": "string",
+                    "enum": [
+                      "direct",
+                      "waitlist",
+                      "closed"
+                    ]
+                  },
+                  "waitlistVisiblePublicly": {
+                    "type": "boolean"
+                  },
+                  "offerReplyDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60
+                  }
+                },
+                "required": [
+                  "name",
+                  "kind"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/clubs/{clubId}/guardianships/{guardianshipId}/end": {
@@ -12217,7 +12736,7 @@
       },
       "post": {
         "operationId": "Activities_createLocation",
-        "summary": "Add a location (hall, pitch) where the club's activities take place",
+        "summary": "Add a location (hall, pitch): club managers and those who plan a group's activities",
         "tags": [
           "activities"
         ],
@@ -12226,7 +12745,7 @@
             "bearer": []
           }
         ],
-        "description": "Requires permission `club.locations.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "description": "Requires permission `club.locations.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
         "parameters": [
           {
             "schema": {
@@ -12325,7 +12844,7 @@
     "/api/v1/clubs/{clubId}/locations/{locationId}": {
       "patch": {
         "operationId": "Activities_updateLocation",
-        "summary": "Change or archive a location",
+        "summary": "Change or archive a location (club managers, or the person who added it)",
         "tags": [
           "activities"
         ],
@@ -12334,7 +12853,7 @@
             "bearer": []
           }
         ],
-        "description": "Requires permission `club.locations.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "description": "Requires permission `club.locations.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
         "parameters": [
           {
             "schema": {
@@ -14589,6 +15108,7 @@
               "type": "string",
               "enum": [
                 "name",
+                "family_name",
                 "member_number",
                 "joined"
               ],
@@ -15272,6 +15792,331 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RegisterFacets"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/phone-numbers": {
+      "put": {
+        "operationId": "Clubs_setPhoneNumbers",
+        "summary": "Set the club's phone numbers (the whole list, in the order shown)",
+        "tags": [
+          "clubs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetClubPhoneNumbersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/settings": {
+      "patch": {
+        "operationId": "Clubs_updateSettings",
+        "summary": "Change the club's settings: time zone, contact details, organisation number, language (P1.6b)",
+        "tags": [
+          "clubs"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 200
+                  },
+                  "shortName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1,
+                    "maxLength": 20
+                  },
+                  "defaultLocale": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 20
+                  },
+                  "timeZone": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "email": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 254,
+                    "format": "email"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  },
+                  "organizationNumber": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 30
+                  },
+                  "federationIds": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 100
+                    }
+                  },
+                  "address": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "street": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 200
+                      },
+                      "postalCode": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 20
+                      },
+                      "city": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                      },
+                      "country": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{2}$"
+                      }
+                    },
+                    "required": [
+                      "street",
+                      "postalCode",
+                      "city",
+                      "country"
+                    ]
+                  },
+                  "joinPolicy": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "approval",
+                      "invite_only"
+                    ]
+                  },
+                  "ownersCanAppointCoOwners": {
+                    "type": "boolean"
+                  },
+                  "groupOwnersAdmitToClub": {
+                    "type": "boolean"
+                  },
+                  "attendanceLockDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 365
+                  },
+                  "attendanceRetentionMonths": {
+                    "type": "integer",
+                    "minimum": 12,
+                    "maximum": 120
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubDetail"
                 }
               }
             }
@@ -17177,6 +18022,95 @@
       }
     },
     "/api/v1/groups/{groupId}": {
+      "delete": {
+        "operationId": "Groups_deleteGroup",
+        "summary": "Delete a group that was never used (otherwise archive it: group_in_use)",
+        "tags": [
+          "groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "operationId": "Groups_getGroup",
         "summary": "A group with its owners (people the caller may not see are left out)",
@@ -17207,6 +18141,207 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GroupDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "Groups_updateGroup",
+        "summary": "Change a group: name, kind, details, admission, parent (no cycles)",
+        "tags": [
+          "groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "section",
+                      "team",
+                      "training_group",
+                      "age_group",
+                      "committee",
+                      "board",
+                      "volunteers",
+                      "other"
+                    ]
+                  },
+                  "parentGroupId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid"
+                  },
+                  "sport": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 50
+                  },
+                  "birthYearFrom": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1900,
+                    "maximum": 2200
+                  },
+                  "birthYearTo": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1900,
+                    "maximum": 2200
+                  },
+                  "genderCategory": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "female",
+                      "male",
+                      "mixed",
+                      "open",
+                      null
+                    ]
+                  },
+                  "level": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 50
+                  },
+                  "capacity": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "admissionMode": {
+                    "type": "string",
+                    "enum": [
+                      "direct",
+                      "waitlist",
+                      "closed"
+                    ]
+                  },
+                  "waitlistVisiblePublicly": {
+                    "type": "boolean"
+                  },
+                  "offerReplyDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
                 }
               }
             }
@@ -17732,6 +18867,104 @@
         }
       }
     },
+    "/api/v1/groups/{groupId}/archive": {
+      "post": {
+        "operationId": "Groups_archiveGroup",
+        "summary": "Archive a group (refused while it has child groups that are not archived)",
+        "tags": [
+          "groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/groups/{groupId}/attendance": {
       "get": {
         "operationId": "Attendance_groupAttendance",
@@ -18055,6 +19288,104 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GroupMemberList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}/restore": {
+      "post": {
+        "operationId": "Groups_restoreGroup",
+        "summary": "Restore an archived group (club managers)",
+        "tags": [
+          "groups"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
                 }
               }
             }
@@ -20764,6 +22095,73 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/waitlists": {
+      "get": {
+        "operationId": "Joining_waitlists",
+        "summary": "My and my children's open waiting-list entries (place in the queue) and pending join requests",
+        "tags": [
+          "me",
+          "joining"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyWaitlists"
                 }
               }
             }

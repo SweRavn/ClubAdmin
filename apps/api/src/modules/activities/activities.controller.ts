@@ -85,7 +85,7 @@ import { AttendanceService } from "./attendance.service.ts";
 
 const iso = (date: Date) => date.toISOString();
 
-export function toLocationResponse(location: LocationRow): Location {
+export function toLocationResponse(location: LocationRow, canEdit?: boolean): Location {
   return {
     id: location.id,
     name: location.name,
@@ -97,8 +97,14 @@ export function toLocationResponse(location: LocationRow): Location {
     directions: location.directions,
     mapUrl: mapUrlOf(location),
     archived: location.archivedAt !== null,
+    ...(canEdit === undefined ? {} : { canEdit }),
   };
 }
+
+/** Club managers change every location; others only those they added (P1.6b). */
+const canEditLocation = (authz: RequestAuthorization, location: LocationRow) =>
+  authz.actor.isClubManager(location.clubId) ||
+  (location.createdByPersonId !== null && location.createdByPersonId === authz.actor.personId);
 
 export function toActivityResponse(view: ActivityView, canManage: boolean): Activity {
   const a = view.activity;
@@ -108,6 +114,7 @@ export function toActivityResponse(view: ActivityView, canManage: boolean): Acti
     timeZone: view.timeZone,
     seriesId: a.seriesId,
     kind: a.kind,
+    kindLabel: a.kindLabel,
     title: a.title,
     status: a.status,
     cancelledReason: a.cancelledReason,
@@ -208,15 +215,18 @@ export class ActivitiesController {
   ): Promise<LocationList> {
     const { clubId } = resourceOf(authz, "club");
     const page = await this.activities.listLocations(tenantContext(authz, clubId), query);
-    return { items: page.items.map(toLocationResponse), nextCursor: page.nextCursor };
+    return {
+      items: page.items.map((l) => toLocationResponse(l, canEditLocation(authz, l))),
+      nextCursor: page.nextCursor,
+    };
   }
 
   @Endpoint({
     method: "POST",
     path: "clubs/:clubId/locations",
-    summary: "Add a location (hall, pitch) where the club's activities take place",
+    summary: "Add a location (hall, pitch): club managers and those who plan a group's activities",
     tags: ["activities"],
-    access: { permission: "club.locations.manage", resource: "club" },
+    access: { permission: "club.locations.create", resource: "club" },
     request: { params: ClubParamsSchema, body: LocationInputSchema },
     response: LocationSchema,
   })
@@ -227,15 +237,16 @@ export class ActivitiesController {
     const { clubId } = resourceOf(authz, "club");
     return toLocationResponse(
       await this.activities.createLocation(tenantContext(authz, clubId), body),
+      true,
     );
   }
 
   @Endpoint({
     method: "PATCH",
     path: "clubs/:clubId/locations/:locationId",
-    summary: "Change or archive a location",
+    summary: "Change or archive a location (club managers, or the person who added it)",
     tags: ["activities"],
-    access: { permission: "club.locations.manage", resource: "club" },
+    access: { permission: "club.locations.create", resource: "club" },
     request: { params: LocationParamsSchema, body: UpdateLocationSchema },
     response: LocationSchema,
   })
@@ -246,7 +257,10 @@ export class ActivitiesController {
   ): Promise<Location> {
     const { clubId } = resourceOf(authz, "club");
     return toLocationResponse(
-      await this.activities.updateLocation(tenantContext(authz, clubId), params.locationId, body),
+      await this.activities.updateLocation(tenantContext(authz, clubId), params.locationId, body, {
+        anyLocation: authz.actor.isClubManager(clubId),
+      }),
+      true,
     );
   }
 

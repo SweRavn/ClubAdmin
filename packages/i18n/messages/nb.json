@@ -639,7 +639,11 @@
     "activity_has_call_up": "Aktiviteten har allerede sin egen innkalling.",
     "activity_in_other_event": "Aktiviteten hører til et annet arrangement.",
     "capacity_below_confirmed": "Antall plasser kan ikke være lavere enn antall bekreftede deltakere.",
-    "questions_locked": "Spørsmål som er besvart kan ikke fjernes eller bytte type."
+    "questions_locked": "Spørsmål som er besvart kan ikke fjernes eller bytte type.",
+    "group_has_children": "Gruppen har aktive undergrupper. Arkiver eller flytt dem først.",
+    "group_in_use": "Gruppen har vært brukt (medlemmer, aktiviteter eller historikk) og kan bare arkiveres.",
+    "event_period_invalid": "Slutten må være etter starten, og påmeldingen må stenge før slutten.",
+    "invalid_organization_number": "Organisasjonsnummeret er ikke gyldig."
   },
   "memberExport": {
     "columns": {

@@ -23,7 +23,8 @@ export type RegisterAccess = (typeof REGISTER_ACCESS_LEVELS)[number];
 export const REGISTER_STATUSES = ["active", "paused", "left"] as const;
 export type RegisterStatus = (typeof REGISTER_STATUSES)[number];
 
-export const REGISTER_SORTS = ["name", "member_number", "joined"] as const;
+/** "name": given name first (P1.6b); "family_name": family name first. */
+export const REGISTER_SORTS = ["name", "family_name", "member_number", "joined"] as const;
 export type RegisterSort = (typeof REGISTER_SORTS)[number];
 
 export const MEMBER_EXPORT_STATUSES = ["queued", "ready", "failed", "expired"] as const;

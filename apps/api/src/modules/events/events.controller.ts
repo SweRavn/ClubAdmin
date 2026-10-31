@@ -837,6 +837,7 @@ export function toEvent(view: EventView, canManage: boolean): Event {
     activities: view.activities.map((a) => ({
       id: a.id,
       kind: a.kind as Event["activities"][number]["kind"],
+      kindLabel: a.kindLabel,
       title: a.title,
       status: a.status as Event["activities"][number]["status"],
       startsAt: iso(a.startsAt),

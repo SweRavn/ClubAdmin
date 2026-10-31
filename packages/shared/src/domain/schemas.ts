@@ -89,12 +89,24 @@ export const CreateClubSchema = z.object({
 });
 export type CreateClubInput = z.input<typeof CreateClubSchema>;
 
+/** An IANA time zone this runtime knows ("Europe/Stockholm"). */
+export const isTimeZone = (value: string): boolean => {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const UpdateClubSettingsSchema = z
   .object({
     name: z.string().trim().min(2).max(200),
     shortName: z.string().trim().min(1).max(20).nullable(),
     defaultLocale: z.string().min(2).max(20),
-    timeZone: z.string().min(1).max(64),
+    timeZone: z.string().min(1).max(64).refine(isTimeZone, "unknown time zone"),
+    /** The club's contact address (P1.6b). */
+    email: z.email().max(254).nullable(),
     currency: z.string().regex(/^[A-Z]{3}$/),
     organizationNumber: z.string().trim().max(30).nullable(),
     federationIds: z.record(z.string(), z.string().max(100)),
@@ -110,6 +122,31 @@ export const UpdateClubSettingsSchema = z
   .partial()
   .strict();
 export type UpdateClubSettingsInput = z.input<typeof UpdateClubSettingsSchema>;
+
+export const CLUB_PHONE_NUMBERS_MAX = 10;
+
+/** The club's phone numbers, in the order shown (P1.6b): the whole list at once. */
+export const SetClubPhoneNumbersSchema = z
+  .object({
+    numbers: z
+      .array(
+        z
+          .object({
+            label: z.string().trim().min(1).max(60),
+            number: z
+              .string()
+              .trim()
+              .min(3)
+              .max(40)
+              .regex(/^[+0-9 ()-]+$/, "digits, spaces, +, - and ()"),
+          })
+          .strict(),
+      )
+      .max(CLUB_PHONE_NUMBERS_MAX),
+  })
+  .strict()
+  .openapi("SetClubPhoneNumbersRequest");
+export type SetClubPhoneNumbersInput = z.input<typeof SetClubPhoneNumbersSchema>;
 
 const year = z.number().int().min(1900).max(2200);
 

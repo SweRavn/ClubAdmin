@@ -213,18 +213,18 @@ export function groupMembersPageQuery(
 ) {
   return sql`
     WITH anchor AS (
-      SELECT v.sort_name, v.person_id FROM app.visible_group_members v
+      SELECT v.sort_given_name, v.person_id FROM app.visible_group_members v
       WHERE v.club_id = ${clubId} AND v.group_id = ${groupId} AND v.person_id = ${page.cursor}
       LIMIT 1
     ), page AS (
       SELECT v.person_id, array_agg(v.function ORDER BY v.function) AS functions,
-        row_number() OVER (ORDER BY v.sort_name, v.person_id) AS ord
+        row_number() OVER (ORDER BY v.sort_given_name, v.person_id) AS ord
       FROM app.visible_group_members v
       WHERE v.club_id = ${clubId} AND v.group_id = ${groupId}
         AND (${page.cursor}::uuid IS NULL
-          OR (v.sort_name, v.person_id) > (SELECT a.sort_name, a.person_id FROM anchor a))
-      GROUP BY v.person_id, v.sort_name
-      ORDER BY v.sort_name, v.person_id
+          OR (v.sort_given_name, v.person_id) > (SELECT a.sort_given_name, a.person_id FROM anchor a))
+      GROUP BY v.person_id, v.sort_given_name
+      ORDER BY v.sort_given_name, v.person_id
       LIMIT ${page.limit}
     )
     SELECT

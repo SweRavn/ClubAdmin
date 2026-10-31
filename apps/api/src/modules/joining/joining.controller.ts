@@ -22,6 +22,8 @@ import {
   MyJoinRequestParamsSchema,
   type MyJoinRequests,
   MyJoinRequestsSchema,
+  type MyWaitlists,
+  MyWaitlistsSchema,
   OkSchema,
   type PersonSummary,
 } from "@clubadmin/shared";
@@ -131,6 +133,80 @@ export class JoiningController {
         const person = shown.get(r.personId);
         const club = names.get(r.clubId);
         return person ? [{ ...fields(r), club: { id: r.clubId, name: club ?? "" }, person }] : [];
+      }),
+    };
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "me/waitlists",
+    summary:
+      "My and my children's open waiting-list entries (place in the queue) and pending join requests",
+    tags: ["me", "joining"],
+    access: { authenticated: true },
+    response: MyWaitlistsSchema,
+  })
+  async waitlists(@CurrentAuthorization() authz: RequestAuthorization): Promise<MyWaitlists> {
+    const self = authz.actor.relationships.personId;
+    const ids = [self, ...authz.actor.relationships.wards.map((w) => w.personId)];
+    // One connection per call: the reads run one after the other.
+    const entries = await this.groups.myWaitlistEntries(authz.context, ids);
+    const requests = (await this.joinRequests.mine(authz.context, ids)).filter(
+      (r) => r.status === "pending",
+    );
+    const names = await this.joinRequests.clubNames(
+      authz.context,
+      requests.map((r) => r.clubId),
+    );
+    const shown = await this.presentIds(authz, null, [
+      ...entries.map((e) => e.personId),
+      ...requests.map((r) => r.personId),
+    ]);
+    // Preferred groups: the applicant cannot read the club's groups, so their
+    // names are read in the club (one transaction per club with a request).
+    const groupNames = new Map<string, string>();
+    for (const clubId of new Set(requests.map((r) => r.clubId))) {
+      const ids = [
+        ...new Set(requests.filter((r) => r.clubId === clubId).flatMap((r) => r.preferredGroupIds)),
+      ];
+      if (ids.length === 0) continue;
+      const found = await this.groups.findGroups({ ...authz.context, clubId }, ids);
+      for (const g of found) groupNames.set(g.id, g.name);
+    }
+
+    return {
+      entries: entries.flatMap((e) => {
+        const person = shown.get(e.personId);
+        if (!person) return [];
+        return [
+          {
+            id: e.id,
+            person,
+            club: { id: e.clubId, name: e.clubName },
+            group: { id: e.groupId, name: e.groupName },
+            status: e.status,
+            position: e.position,
+            waiting: e.waiting,
+            queuedAt: e.queuedAt.toISOString(),
+            offerExpiresAt: iso(e.offerExpiresAt),
+          },
+        ];
+      }),
+      joinRequests: requests.flatMap((r) => {
+        const person = shown.get(r.personId);
+        if (!person) return [];
+        return [
+          {
+            id: r.id,
+            person,
+            club: { id: r.clubId, name: names.get(r.clubId) ?? "" },
+            preferredGroups: r.preferredGroupIds.flatMap((id) => {
+              const name = groupNames.get(id);
+              return name ? [{ id, name }] : [];
+            }),
+            createdAt: r.createdAt.toISOString(),
+          },
+        ];
       }),
     };
   }

@@ -30,6 +30,7 @@ export const DOMAIN_ERRORS = {
   // clubs and roles
   club_slug_taken: "conflict",
   unsupported_country: "validation",
+  invalid_organization_number: "validation",
   role_already_assigned: "conflict",
   last_club_manager: "conflict",
   not_a_club_manager: "forbidden",
@@ -38,6 +39,8 @@ export const DOMAIN_ERRORS = {
   group_cycle: "conflict",
   group_parent_invalid: "validation",
   group_archived: "conflict",
+  group_has_children: "conflict",
+  group_in_use: "conflict",
   already_group_owner: "conflict",
   // memberships
   already_member: "conflict",
@@ -133,6 +136,7 @@ export const DOMAIN_ERRORS = {
   activity_in_other_event: "conflict",
   capacity_below_confirmed: "conflict",
   questions_locked: "conflict",
+  event_period_invalid: "validation",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

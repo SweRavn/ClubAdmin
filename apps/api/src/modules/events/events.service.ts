@@ -19,6 +19,7 @@ import {
   type EventListQuery,
   type EventQuestion,
   EventQuestionsSchema,
+  localDate,
   type RegisterInput,
   RegisterSchema,
   type RegistrationListQuery,
@@ -29,6 +30,7 @@ import {
   UpdateEventSchema,
   uuidv7,
   type WaitlistMode,
+  zonedTime,
 } from "@clubadmin/shared";
 
 import type { FieldEncryption } from "../../platform/crypto/field-encryption.ts";
@@ -55,6 +57,7 @@ export interface EventView {
   activities: {
     id: string;
     kind: string;
+    kindLabel: string | null;
     title: string;
     status: string;
     startsAt: Date;
@@ -112,6 +115,31 @@ export function validAnswers(
   throw new DomainError("answer_invalid");
 }
 
+/** The end of the start's day in the club's time zone (23:59; P1.6b, decision 1). */
+export function endOfDay(startsAt: Date, timeZone: string): Date {
+  const end = zonedTime(localDate(startsAt, timeZone), "23:59", timeZone);
+  return end && end > startsAt ? end : new Date(startsAt.getTime() + 60_000);
+}
+
+/**
+ * The event's period (P1.6b): the end after the start, sign-up closing by the
+ * end and opening before it closes; else `event_period_invalid`.
+ */
+export function checkPeriod(e: {
+  startsAt: Date;
+  endsAt: Date;
+  registrationOpensAt: Date | null;
+  registrationClosesAt: Date;
+}): void {
+  if (
+    e.endsAt <= e.startsAt ||
+    e.registrationClosesAt > e.endsAt ||
+    (e.registrationOpensAt !== null && e.registrationOpensAt >= e.registrationClosesAt)
+  ) {
+    throw new DomainError("event_period_invalid");
+  }
+}
+
 export function isOpen(event: repo.EventRow, now: Date): boolean {
   return (
     event.status === "published" &&
@@ -150,10 +178,17 @@ export class EventsService {
       await this.deps.activities.requireGroupsInTx(tx, context.clubId, groupIds);
       const locationId = data.locationId ?? null;
       if (locationId) await this.requireLocation(tx, context.clubId, locationId);
-      this.checkDeadlines({
-        startsAt: new Date(data.startsAt),
+      const startsAt = new Date(data.startsAt);
+      const club = await this.deps.clubs.getClubInTx(tx, context.clubId);
+      const endsAt = data.endsAt ? new Date(data.endsAt) : endOfDay(startsAt, club.timeZone);
+      const registrationClosesAt = data.registrationClosesAt
+        ? new Date(data.registrationClosesAt)
+        : startsAt;
+      checkPeriod({
+        startsAt,
+        endsAt,
         registrationOpensAt: data.registrationOpensAt ? new Date(data.registrationOpensAt) : null,
-        registrationClosesAt: new Date(data.registrationClosesAt),
+        registrationClosesAt,
       });
       const waitlistMode: WaitlistMode =
         data.waitlistMode ?? (data.audience === "club" ? "auto" : "offer");
@@ -164,13 +199,13 @@ export class EventsService {
         description: data.description ?? null,
         audience: data.audience,
         status: data.publish ? "published" : "draft",
-        startsAt: new Date(data.startsAt),
-        endsAt: new Date(data.endsAt),
+        startsAt,
+        endsAt,
         locationId,
         locationText: locationId ? null : (data.locationText ?? null),
         priceText: data.priceText ?? null,
         registrationOpensAt: data.registrationOpensAt ? new Date(data.registrationOpensAt) : null,
-        registrationClosesAt: new Date(data.registrationClosesAt),
+        registrationClosesAt,
         cancellationClosesAt: data.cancellationClosesAt
           ? new Date(data.cancellationClosesAt)
           : null,
@@ -185,6 +220,7 @@ export class EventsService {
       for (const a of data.activities) {
         const view = await this.deps.activities.createActivityInTx(tx, context, groupIds[0]!, {
           kind: a.kind,
+          ...(a.kindLabel ? { kindLabel: a.kindLabel } : {}),
           title: a.title,
           startsAt: a.startsAt,
           endsAt: a.endsAt,
@@ -297,9 +333,9 @@ export class EventsService {
       }
       const startsAt = next.startsAt ?? current.startsAt;
       const endsAt = next.endsAt ?? current.endsAt;
-      if (endsAt.getTime() <= startsAt.getTime()) throw new DomainError("invalid_input");
-      this.checkDeadlines({
+      checkPeriod({
         startsAt,
+        endsAt,
         registrationOpensAt:
           next.registrationOpensAt === undefined
             ? current.registrationOpensAt
@@ -844,16 +880,6 @@ export class EventsService {
     if (now > event.registrationClosesAt) throw new DomainError("registration_closed");
   }
 
-  private checkDeadlines(e: {
-    startsAt: Date;
-    registrationOpensAt: Date | null;
-    registrationClosesAt: Date;
-  }): void {
-    if (e.registrationOpensAt && e.registrationOpensAt >= e.registrationClosesAt) {
-      throw new DomainError("invalid_input");
-    }
-  }
-
   private async requireLocation(tx: Tx, clubId: string, locationId: string): Promise<void> {
     const [location] = await this.deps.activities.locationsInTx(tx, [locationId]);
     if (location?.clubId !== clubId) throw new DomainError("not_found");
@@ -1081,6 +1107,7 @@ export class EventsService {
           .map((a) => ({
             id: a.id,
             kind: a.kind,
+            kindLabel: a.kindLabel,
             title: a.title,
             status: a.status,
             startsAt: a.startsAt,

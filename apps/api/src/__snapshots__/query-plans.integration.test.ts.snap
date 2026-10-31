@@ -4,6 +4,7 @@ exports[`query plans (10k rows) > guardians of person 1`] = `
 [
   "Sort",
   "Index Scan guardianships guardianships_ward_idx",
+  "Index Scan people people_pkey",
 ]
 `;
 
@@ -89,5 +90,6 @@ exports[`query plans (10k rows) > wards of person 1`] = `
 [
   "Sort",
   "Index Scan guardianships guardianships_guardian_idx",
+  "Index Scan people people_pkey",
 ]
 `;

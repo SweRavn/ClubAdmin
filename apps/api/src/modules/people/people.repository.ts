@@ -2,9 +2,19 @@
 // Queries on people. Row-level security limits every query to people the
 // actor may reach (the person, their family, the current club's members).
 
-import { eq, inArray, schema, sql, type Tx } from "@clubadmin/db";
+import { eq, inArray, schema, type SQL, sql, type Tx } from "@clubadmin/db";
 
 const { people } = schema;
+
+/**
+ * Lists order people given name first (P1.6b): the sort key of the person
+ * whose ID `personId` evaluates to. Names never leave the database; people
+ * the viewer may not read sort first and are left out by the presenter.
+ */
+export function givenNameSortKey(personId: SQL): SQL {
+  return sql`coalesce((SELECT lower(sk.given_name) || ' ' || lower(sk.family_name)
+    FROM public.people sk WHERE sk.id = ${personId}), '')`;
+}
 
 export type PersonRow = typeof people.$inferSelect;
 export type NewPersonRow = typeof people.$inferInsert;

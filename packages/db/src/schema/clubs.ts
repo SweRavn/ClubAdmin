@@ -60,6 +60,8 @@ export const clubs = pgTable(
     /** ISO 4217. */
     currency: text().notNull(),
     organizationNumber: text(),
+    /** The club's contact address (not a login; P1.6b). */
+    email: text(),
     federationIds: jsonb().$type<Record<string, string>>().notNull().default({}),
     address: jsonb().$type<PostalAddress>(),
     /** Object storage key of the logo. */
@@ -94,6 +96,10 @@ export const clubs = pgTable(
     check("clubs_currency", sql`${t.currency} ~ '^[A-Z]{3}$'`),
     check("clubs_slug_shape", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     check("clubs_next_member_number", sql`${t.nextMemberNumber} > 0`),
+    check(
+      "clubs_email",
+      sql`${t.email} IS NULL OR (length(${t.email}) <= 254 AND ${t.email} ~ '^[^@\\s]+@[^@\\s]+$')`,
+    ),
   ],
 );
 
@@ -105,6 +111,25 @@ export const personRef = () =>
   uuid()
     .notNull()
     .references(() => people.id);
+
+/** The club's phone numbers (P1.6b): the office, the chair, … in the order shown. */
+export const clubPhoneNumbers = pgTable(
+  "club_phone_numbers",
+  {
+    id: id(),
+    clubId: clubRef(),
+    /** "Kansli", "Ordförande". */
+    label: text().notNull(),
+    number: text().notNull(),
+    sortOrder: integer().notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    index("club_phone_numbers_club_idx").on(t.clubId, t.sortOrder),
+    check("club_phone_numbers_label", sql`length(${t.label}) BETWEEN 1 AND 60`),
+    check("club_phone_numbers_number", sql`length(${t.number}) BETWEEN 3 AND 40`),
+  ],
+);
 
 /** What a club sees about a person (domain-model.md). Created with the first membership. */
 export const clubProfiles = pgTable(

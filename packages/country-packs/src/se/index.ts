@@ -8,12 +8,14 @@ import {
   isoDate,
   personalIdFormat,
 } from "../types.ts";
+import { normalizeOrganisationsnummer } from "./organisationsnummer.ts";
 import { parsePersonnummer } from "./personnummer.ts";
 
 export const SE: CountryPack = {
   code: "SE",
   // GDPR consent age in Sweden is 13 (Lag 2018:218, 2 kap. 4 §).
   ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18 },
+  normalizeOrganizationNumber: normalizeOrganisationsnummer,
   personalIdFormat: personalIdFormat(parsePersonnummer),
   localeDefaults: { locale: "sv-SE", timeZone: "Europe/Stockholm", currency: "SEK" },
   // Allmänna helgdagar (lag 1989:253) and the eves that are de facto days off

@@ -505,3 +505,43 @@ describe("capacity under concurrency", () => {
     ]);
   });
 });
+
+describe("only the name and the start are required (P1.6b)", () => {
+  it("ends at the end of the start day in the club's time zone; sign-up closes at the start", async () => {
+    const x = await team(1);
+    const res = await api(x.coach.id, "POST", `/clubs/${x.club.id}/events`, {
+      body: {
+        title: "Lagfest",
+        audience: "groups",
+        groupIds: [x.groupId],
+        startsAt: "2027-03-10T17:00:00Z",
+      },
+    });
+    expect(res.statusCode, res.body).toBe(201);
+    // 23:59 in Europe/Stockholm (CET, UTC+1).
+    expect(res.json()).toMatchObject({
+      endsAt: "2027-03-10T22:59:00.000Z",
+      registrationClosesAt: "2027-03-10T17:00:00.000Z",
+      status: "draft",
+    });
+  });
+
+  it("refuses an end before the start, on create and on change", async () => {
+    const x = await team(1);
+    const bad = await api(x.coach.id, "POST", `/clubs/${x.club.id}/events`, {
+      body: {
+        title: "Läger",
+        audience: "groups",
+        groupIds: [x.groupId],
+        startsAt: at(10 * DAY),
+        endsAt: at(9 * DAY),
+      },
+    });
+    expect([bad.statusCode, detail(bad)]).toEqual([400, "event_period_invalid"]);
+    const id = await createEvent(x);
+    const changed = await api(x.coach.id, "PATCH", `/events/${id}`, {
+      body: { endsAt: at(5 * DAY) },
+    });
+    expect([changed.statusCode, detail(changed)]).toEqual([400, "event_period_invalid"]);
+  });
+});

@@ -326,7 +326,14 @@ const CASES: Record<Permission, Case[]> = {
       resource: activityR,
       allowed: false,
     },
-    { name: "coach (not a member)", actor: coach, resource: activityR, allowed: false },
+    {
+      name: "head coach answering for players (P1.6b)",
+      actor: coach,
+      resource: activityR,
+      allowed: true,
+    },
+    { name: "other leader", actor: otherLeader, resource: activityR, allowed: true },
+    { name: "physio", actor: physio, resource: activityR, allowed: false },
     { name: "outsider", actor: outsider, resource: activityR, allowed: false },
   ],
   "activity.responses.read": [
@@ -355,6 +362,21 @@ const CASES: Record<Permission, Case[]> = {
       resource: activityR,
       allowed: false,
     },
+  ],
+  "club.groups.create": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "owner of a section", actor: sectionOwner, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.locations.create": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: true },
+    { name: "owner of a section", actor: sectionOwner, resource: clubR, allowed: true },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "parent", actor: parent, resource: clubR, allowed: false },
+    { name: "physio", actor: physio, resource: clubR, allowed: false },
   ],
   "club.events.read": [
     { name: "member", actor: plainMember, resource: clubR, allowed: true },

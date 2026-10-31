@@ -167,3 +167,18 @@ describe("grant rules (P1.5)", () => {
     expect(NO.grantRules).toBeNull();
   });
 });
+
+describe("organisation numbers (P1.6b)", () => {
+  it("accepts and normalises a Swedish organisationsnummer", () => {
+    // Synthetic numbers: Luhn-valid, an association (starts with 8).
+    expect(getCountryPack("SE").normalizeOrganizationNumber("8020000009")).toBe("802000-0009");
+    expect(getCountryPack("SE").normalizeOrganizationNumber("802000-0008")).toBeNull();
+    expect(getCountryPack("SE").normalizeOrganizationNumber("801231-1234")).toBeNull();
+  });
+
+  it("accepts and normalises a Norwegian organisasjonsnummer", () => {
+    // A number with a valid modulus-11 check digit.
+    expect(getCountryPack("NO").normalizeOrganizationNumber("970078851")).toBe("970 078 851");
+    expect(getCountryPack("NO").normalizeOrganizationNumber("970078852")).toBeNull();
+  });
+});

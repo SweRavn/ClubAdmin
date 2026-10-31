@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { isDomainError } from "../../platform/domain/domain-error.ts";
 import { actor, buildClub, buildPerson } from "../../testing/builders.ts";
-import { useCoreDatabase } from "../../testing/core.ts";
+import { auditActionsOf, historyOf, useCoreDatabase } from "../../testing/core.ts";
 
 const c = useCoreDatabase();
 
@@ -77,19 +77,58 @@ describe("group hierarchy", () => {
     ).rejects.toMatchObject({ constraint: "groups_parent_same_club_fk" });
   });
 
-  it("archives instead of deleting", async () => {
+  it("archives and restores; a group with active subgroups is not archived", async () => {
     const club = await buildClub(c.s);
-    const group = await c.s.groups.createGroup(club.ctx, { name: "Old", kind: "team" });
-    await c.s.groups.archiveGroup(club.ctx, group.id);
-    expect((await c.s.groups.getGroup(club.ctx, group.id)).archivedAt).not.toBeNull();
-    await expect(c.s.groups.updateGroup(club.ctx, group.id, { name: "New" })).rejects.toSatisfy(
+    const section = await c.s.groups.createGroup(club.ctx, { name: "Fotboll", kind: "section" });
+    const team = await c.s.groups.createGroup(club.ctx, {
+      name: "Old",
+      kind: "team",
+      parentGroupId: section.id,
+    });
+    await expect(c.s.groups.archiveGroup(club.ctx, section.id)).rejects.toSatisfy((e) =>
+      isDomainError(e, "group_has_children"),
+    );
+    await c.s.groups.archiveGroup(club.ctx, team.id);
+    expect((await c.s.groups.getGroup(club.ctx, team.id)).archivedAt).not.toBeNull();
+    await expect(c.s.groups.updateGroup(club.ctx, team.id, { name: "New" })).rejects.toSatisfy(
       (e) => isDomainError(e, "group_archived"),
     );
+    await c.s.groups.archiveGroup(club.ctx, section.id);
+    const restored = await c.s.groups.restoreGroup(club.ctx, team.id);
+    expect(restored.archivedAt).toBeNull();
+    expect(await auditActionsOf(c.t, team.id)).toEqual(
+      expect.arrayContaining(["group.archived", "group.restored"]),
+    );
+  });
+
+  it("deletes a group only while nothing refers to it (P1.6b)", async () => {
+    const club = await buildClub(c.s);
+    const unused = await c.s.groups.createGroup(club.ctx, { name: "Mistake", kind: "team" });
+    expect(await c.s.groups.isDeletable(club.ctx, unused.id)).toBe(true);
+    await c.s.groups.deleteGroup(club.ctx, unused.id);
+    await expect(c.s.groups.getGroup(club.ctx, unused.id)).rejects.toSatisfy((e) =>
+      isDomainError(e, "not_found"),
+    );
+    expect((await historyOf(c.t, "public.groups", unused.id)).map((r) => r.operation)).toEqual([
+      "INSERT",
+      "DELETE",
+    ]);
+    expect(await auditActionsOf(c.t, unused.id)).toContain("group.deleted");
+
+    const used = await c.s.groups.createGroup(club.ctx, { name: "Used", kind: "team" });
+    const person = await buildPerson(c.s);
+    await c.s.memberships.addMember(club.ctx, person.id);
+    await c.s.memberships.addToGroup(club.ctx, used.id, person.id);
+    expect(await c.s.groups.isDeletable(club.ctx, used.id)).toBe(false);
+    await expect(c.s.groups.deleteGroup(club.ctx, used.id)).rejects.toSatisfy((e) =>
+      isDomainError(e, "group_in_use"),
+    );
+    // The foreign keys refuse it too.
     await expect(
       c.t.db.withTenant(club.ctx, (tx) =>
-        tx.execute(sql`DELETE FROM groups WHERE id = ${group.id}`),
+        tx.execute(sql`DELETE FROM groups WHERE id = ${used.id}`),
       ),
-    ).rejects.toMatchObject({ code: "42501" });
+    ).rejects.toMatchObject({ code: "23503" });
   });
 
   it("stores admission mode, capacity and per-season settings", async () => {
@@ -161,5 +200,44 @@ describe("group owners", () => {
     await expect(
       c.s.groups.removeOwner(actor(stranger.id, club.id), team.id, coOwner.id, "group_owner"),
     ).rejects.toSatisfy((e) => isDomainError(e, "not_allowed"));
+  });
+});
+
+describe("my waiting lists (P1.6b)", () => {
+  it("shows my and my ward's open entries with the place in the queue", async () => {
+    const club = await buildClub(c.s);
+    const group = await c.s.groups.createGroup(club.ctx, {
+      name: "P2016",
+      kind: "team",
+      admissionMode: "waitlist",
+    });
+    const first = await buildPerson(c.s);
+    const second = await buildPerson(c.s);
+    const prioritised = await buildPerson(c.s);
+    const queue = async (personId: string, minutesAgo: number, priority = 0) =>
+      c.t.db.withTenant(club.ctx, (tx) =>
+        tx.execute(sql`
+          INSERT INTO group_waitlist_entries (club_id, group_id, person_id, requested_by_person_id, queued_at, priority)
+          VALUES (${club.id}, ${group.id}, ${personId}, ${personId},
+            now() - make_interval(mins => ${minutesAgo}), ${priority})`),
+      );
+    await queue(first.id, 30);
+    await queue(second.id, 20);
+    await queue(prioritised.id, 10, 1);
+
+    const mine = await c.s.groups.myWaitlistEntries(actor(second.id), [second.id]);
+    expect(mine).toEqual([
+      expect.objectContaining({
+        clubId: club.id,
+        groupId: group.id,
+        groupName: "P2016",
+        personId: second.id,
+        status: "waiting",
+        position: 3,
+        waiting: 3,
+      }),
+    ]);
+    // Only the caller's own entries.
+    expect(await c.s.groups.myWaitlistEntries(actor(second.id), [first.id])).toEqual([]);
   });
 });
