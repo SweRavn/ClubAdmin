@@ -145,6 +145,18 @@ daily email now, release the held deliveries in `pnpm db:psql`
 needs `PUSH_PROVIDER=expo`, a development build with an EAS project ID and
 `NOTIFICATION_TOKEN_KEY`; the app registers its token after login.
 
+### Request budgets and query plans
+
+`apps/api/src/request-budgets.integration.test.ts` measures what each request
+of the app costs the database (statements and pages, ADR 0040);
+`BUDGET_DEBUG=1` prints every statement with its pages and `BUDGET_EXPLAIN=1`
+writes the plans to the PostgreSQL log (`docker logs clubadmin-postgres-1`).
+To look at plans with the demo personas on volume, add load clubs on top of
+the demo data: `pnpm db:seed --scenario load --size 200 --add` (about 1.5
+minutes), then `CREATE EXTENSION IF NOT EXISTS pg_stat_statements` in
+`pnpm db:psql` and run the API with `DATABASE_POOL_MAX=1` to measure a
+request on a warm connection.
+
 After changing an endpoint, run `pnpm api:client` and commit the regenerated
 `packages/api-client` files (a test fails otherwise). `pnpm test:integration`
 runs the tests that need the local services.

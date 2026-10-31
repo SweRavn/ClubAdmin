@@ -1,7 +1,43 @@
 # Performance
 
 Existing club systems are often slow. ClubAdmin aims to feel instant. These
-budgets are requirements; CI measures them.
+budgets are requirements; CI measures them. Responsiveness for the person
+using it is the main quality goal, and most people use the app, so the app
+comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
+120 members each (the `load` scenario).
+
+## Rules for every change
+
+1. **Every endpoint the apps call has a request budget**
+   (`apps/api/src/request-budgets.integration.test.ts`): at most so many SQL
+   statements and so many database pages (8 KB blocks) read, measured
+   through the HTTP stack with row-level security. These numbers do not
+   depend on the hardware. The test fails when an endpoint the app calls is
+   missing.
+2. **The cost does not grow with the data.** The same test measures again
+   after adding about 30 times the data: the statements must be the same and
+   the pages may grow by index levels only (at most 2.5 times plus 20 pages),
+   never in proportion. Queries start from the person, club or group through
+   an index and join outwards; a whole table (events, notifications,
+   activities) is never filtered by conditions on the person.
+3. **No N+1, no per-row lookups in policies.** Statements per request do not
+   depend on the size of the result. Row-level security policies compare
+   with arrays computed once per statement (`app.self_and_wards()`,
+   `app.related_club_ids()`, wrapped in a scalar subquery), never call a
+   function with its own lookups for every row (migration 0019).
+4. **One transaction at a time per request.** Never `withSystem`/`withActor`
+   inside another, nor several in parallel for one request: each holds a
+   pool connection, and under load requests wait on each other.
+   `@clubadmin/db` throws outside production when it happens.
+5. **The app is cache first.** It shows cached data at once, refreshes in
+   the background, prefetches what is likely opened next (the coming week's
+   activities and their answers, events on the schedule), and saves writes
+   that can wait (answers, attendance) in its outbox. A tap never waits for
+   the network when cached data could be shown. New screens use the shared
+   query options in `apps/mobile/src/api/queries.ts`, so prefetched data is
+   the data the screen reads.
+6. **A budget is raised only with a reason** in the commit (what the
+   request now does that it did not before).
 
 ## Budgets
 
@@ -85,6 +121,26 @@ budgets are requirements; CI measures them.
 - Push notifications carry IDs, not data; the app fetches the data.
 
 ## Measurement
+
+- Request budgets (ADR 0040), on the demo data and after adding 40 load clubs
+  and the club of 10,000 members, with Valkey and one warm connection
+  (`DATABASE_POOL_MAX=1`): statements and pages per request. At the time of
+  writing (pages before → after the extra data):
+
+  | Request | Statements | Pages |
+  |---|---|---|
+  | `GET /me` | 2 | 3 → 4 |
+  | `GET /me/clubs`, `/me/groups`, `/me/wards` | 1–3 | 6–15 → 14–32 |
+  | `GET /me/schedule` (four weeks) | 4 | 84 → 163 |
+  | `GET /me/events` | 17 | 134 → 264 (was 940 before the rewrite) |
+  | `GET /me/notifications`, unread count | 4, 1 | 5 → 9, 1 → 3 |
+  | `GET /activities/:id` | 7 | 61 → 99 |
+  | `GET /activities/:id/responses` (leaders) | 6 | 133 → 240 |
+  | `GET /events/:id` | 14 | 76 → 128 |
+  | `PUT` an answer | 9 | 105 → 166 |
+
+  The busiest requests have room for fewer statements (an event's page reads
+  each part separately); none grows with the data.
 
 - `pnpm --filter @clubadmin/api build && pnpm --filter @clubadmin/api bench [path] [seconds] [connections]`
   measures the request pipeline (validation, problem details, logging, security

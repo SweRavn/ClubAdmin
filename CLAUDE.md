@@ -39,9 +39,18 @@ PostgreSQL. All TypeScript. See `docs/architecture.md`.
    store background-check documents, only verification metadata.
 6. **Validate at the boundary.** All input is validated with the shared Zod
    schemas in `packages/shared`. The same schemas generate the OpenAPI spec.
-7. **Performance budgets** in `docs/performance.md` are requirements. No N+1
-   queries, all list endpoints paginate with keyset pagination, every new query
-   on a large table needs a supporting index (justify in the PR).
+7. **Responsiveness first** (`docs/performance.md`, ADR 0040). The budgets
+   are requirements. No N+1 queries, all list endpoints paginate with keyset
+   pagination, every new query on a large table needs a supporting index
+   (justify in the PR). Every endpoint the apps call has a request budget in
+   `apps/api/src/request-budgets.integration.test.ts` (SQL statements and
+   database pages read, independent of the hardware), and its cost must not
+   grow with the amount of data: queries start from the person, club or
+   group (their indexes), never from a whole table. One transaction at a time
+   per request (never `withSystem`/`withActor` inside another; outside
+   production that throws). The mobile app is cache first: it shows what it
+   has at once, prefetches what is likely opened next and never makes a tap
+   wait for the network when it could show cached data.
 8. **Times.** Store `timestamptz` in UTC. Store the club's IANA time zone on the
    club. Calendar-type values (birth dates, all-day events) use `date`.
 9. **i18n.** No user-facing string literals in components or emails. Use message

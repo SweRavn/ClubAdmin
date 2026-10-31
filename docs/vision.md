@@ -34,12 +34,20 @@ A fast, secure, open-source club management system that:
 
 ## Principles
 
-1. **Speed is a feature.** See `performance.md`.
-2. **Privacy and safety by design.** Least data, least access, everything audited.
-3. **One person, many contexts.** A person has one account and many memberships.
-4. **Country-agnostic core, country packs at the edge.**
-5. **Open data.** Full export in documented formats. No lock-in.
-6. **Boring, maintainable technology.** One language, one database, few moving parts.
+1. **Speed is a feature.** Responsiveness for the person using it comes
+   first, and is designed for, measured and kept (see `performance.md`).
+2. **The app first, the cache first.** Most people use ClubAdmin through the
+   mobile app, so the app is where responsiveness matters most. The app keeps
+   as much as it can on the phone and shows it at once: everything it has
+   shown, and what the person will most likely open next (the coming week),
+   fetched in the background. The network refreshes what is shown; it never
+   stands between a tap and the screen. Writes that can wait (answers,
+   attendance) are saved on the phone and sent when there is coverage.
+3. **Privacy and safety by design.** Least data, least access, everything audited.
+4. **One person, many contexts.** A person has one account and many memberships.
+5. **Country-agnostic core, country packs at the edge.**
+6. **Open data.** Full export in documented formats. No lock-in.
+7. **Boring, maintainable technology.** One language, one database, few moving parts.
 
 ## Non-goals (for now)
 
