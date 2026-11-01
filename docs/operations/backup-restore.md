@@ -52,7 +52,8 @@ daily run. No retention or erasure job deletes or rewrites a backup.
 Gaps known in the protection against ransomware (not fixed yet): the
 object storage replica is not object-locked, and the audit stream to
 separate append-only storage is not implemented. The ledger export must go
-to the same object-locked target as the database backups.
+to the same object-locked target as the database backups; that check is
+missing too ([#21](https://github.com/SweRavn/ClubAdmin/issues/21)).
 
 ## Restore scenarios
 
