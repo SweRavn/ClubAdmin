@@ -1,0 +1,57 @@
+# Account deletion (P1.8b; app stores require it inside the app): Mikael
+# opens Privacy in the settings, sees what deleting his account means,
+# confirms, sees the banner with the date and cancels the deletion again.
+appId: ${APP_ID}
+name: Schedule and cancel an account deletion
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000002
+- tapOn:
+    id: "open-settings"
+- scrollUntilVisible:
+    element:
+      id: "open-privacy"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "open-privacy"
+- extendedWaitUntil:
+    visible:
+      id: "privacy-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: "Radera mitt konto…|Delete my account…"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    text: "Radera mitt konto…|Delete my account…"
+- extendedWaitUntil:
+    visible:
+      id: "delete-account-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "confirm-deletion"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "confirm-deletion"
+- tapOn:
+    id: "schedule-deletion"
+- extendedWaitUntil:
+    visible:
+      id: "cancel-deletion"
+    timeout: 20000
+- assertVisible:
+    id: "deletion-banner"
+- tapOn:
+    id: "cancel-deletion"
+- extendedWaitUntil:
+    visible:
+      id: "confirm-deletion"
+    timeout: 20000
+- assertNotVisible:
+    id: "deletion-banner"

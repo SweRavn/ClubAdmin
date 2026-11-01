@@ -3,7 +3,8 @@
 // the club's text; each given or withdrawn with one tap (shown at once,
 // rolled back if the server refuses). The club's privacy policy opens in
 // the app; leaving a club, with its preview and what must be settled
-// first, opens the web page.
+// first, opens the web page. P1.8b: deleting my account (in the app);
+// "download my data" opens the web page.
 
 import { personLabel } from "@clubadmin/shared";
 import { router } from "expo-router";
@@ -105,6 +106,20 @@ export default function PrivacyScreen() {
           </Row>
         </Section>
       ))}
+      <Section title={t("privacy.exports.title")}>
+        <Row last>
+          <LinkButton
+            label={t("privacy.exports.openWeb")}
+            onPress={() => void Linking.openURL(webUrl("/me/privacy#exports"))}
+            testID="open-data-export"
+          />
+        </Row>
+      </Section>
+      <Section title={t("privacy.deletion.title")}>
+        <Row last onPress={() => router.push("/settings/delete-account")}>
+          <Body>{t("privacy.deletion.open")}</Body>
+        </Row>
+      </Section>
     </Screen>
   );
 }

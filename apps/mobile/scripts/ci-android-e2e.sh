@@ -54,8 +54,8 @@ flows responses maestro/08-answer.yaml maestro/09-offline-attendance.yaml
 # The inbox and notification settings (P1.7).
 flows notifications maestro/10-notifications.yaml
 
-# Consents (P1.8a).
-flows privacy maestro/11-consents.yaml
+# Consents (P1.8a) and account deletion (P1.8b).
+flows privacy maestro/11-consents.yaml maestro/12-account-deletion.yaml
 
 # The Custom Tab is Chrome, which shows its first-run screens on a fresh
 # emulator. Skip them (Chrome reads this file on emulator images); the flow

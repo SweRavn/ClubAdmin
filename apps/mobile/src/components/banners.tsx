@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Banners above every signed-in screen: offline (with the age of the shown
-// data), "viewing as" a ward, and an available update.
+// data), "viewing as" a ward, a planned account deletion (P1.8b) and an
+// available update.
 
 import { personLabel } from "@clubadmin/shared";
 import { onlineManager, useIsRestoring } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
-import { useTranslations } from "use-intl";
+import { useFormatter, useTranslations } from "use-intl";
 
-import { useMyWards } from "../api/queries.ts";
+import { useAccountDeletion, useMe, useMyWards } from "../api/queries.ts";
 import { useSession } from "../state/session.tsx";
 import { UpdateNotice } from "./gates.tsx";
 import { Banner, LinkButton } from "./ui.tsx";
@@ -51,11 +52,36 @@ export function ViewingAsBanner() {
   );
 }
 
+export function DeletionBanner() {
+  const t = useTranslations("privacy.deletion");
+  const format = useFormatter();
+  const me = useMe();
+  const { cancel } = useAccountDeletion();
+  const scheduledFor = me.data?.pendingDeletion?.scheduledFor;
+  if (!scheduledFor) return null;
+  return (
+    <Banner
+      tone="warning"
+      testID="deletion-banner"
+      action={
+        <LinkButton
+          label={t("bannerCancel")}
+          onPress={() => cancel.mutate()}
+          testID="banner-cancel-deletion"
+        />
+      }
+    >
+      {t("banner", { date: format.dateTime(new Date(scheduledFor), { dateStyle: "long" }) })}
+    </Banner>
+  );
+}
+
 export function Banners() {
   return (
     <>
       <OfflineBanner />
       <ViewingAsBanner />
+      <DeletionBanner />
       <UpdateNotice />
     </>
   );

@@ -583,3 +583,40 @@ export function useChangeConsent() {
     onSettled: () => void queryClient.invalidateQueries({ queryKey: key }),
   });
 }
+
+// Account deletion (P1.8b): the preview is cached like everything else but
+// always refreshed before confirming; scheduling and cancelling update /me
+// (the banner) and the preview.
+export type AccountDeletionPreview = Schemas["AccountDeletionPreview"];
+
+export const deletionPreviewQuery = (api: ApiClient, personId: string | null) => ({
+  queryKey: ["me", personId, "account-deletion"] as const,
+  queryFn: async () => data(await api.GET("/api/v1/me/account/deletion")),
+});
+
+export function useDeletionPreview() {
+  const { api, personId } = useSession();
+  return useQuery({ ...deletionPreviewQuery(api, personId), enabled: personId !== null });
+}
+
+export function useAccountDeletion() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  const settle = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["me", personId, "account-deletion"] }),
+      queryClient.invalidateQueries({ queryKey: ["me", personId], exact: true }),
+    ]);
+  const schedule = useMutation({
+    mutationFn: async (eraseWardIds: string[]) =>
+      data(await api.POST("/api/v1/me/account/deletion", { body: { eraseWardIds } })),
+    onSettled: settle,
+  });
+  const cancel = useMutation({
+    mutationFn: async () => {
+      data(await api.DELETE("/api/v1/me/account/deletion"));
+    },
+    onSettled: settle,
+  });
+  return { schedule, cancel };
+}
