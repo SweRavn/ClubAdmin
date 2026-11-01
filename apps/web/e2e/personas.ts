@@ -10,6 +10,7 @@ const group = (n: number) => `0199a000-0000-7000-8002-${String(n).padStart(12, "
 
 export const PERSONAS = {
   anna: { id: person(1), name: "Anna Lindqvist" },
+  mikael: { id: person(2), name: "Mikael Lindqvist" },
   elsa: { id: person(3), name: "Elsa Lindqvist" },
   oskar: { id: person(4), name: "Oskar Lindqvist" },
   erik: { id: person(5), name: "Erik Johansson" },
@@ -19,6 +20,7 @@ export const PERSONAS = {
   johan: { id: person(10), name: "Johan Nilsson" },
   lars: { id: person(11), name: "Lars Haugen" },
   karin: { id: person(13), name: "Karin Ek" },
+  ahmed: { id: person(14), name: "Ahmed Yilmaz" },
   liam: { id: person(15), name: "Liam Yilmaz" },
   peter: { id: person(16), name: "Peter Sund" },
   emma: { id: person(21), name: "Emma Svensson" },

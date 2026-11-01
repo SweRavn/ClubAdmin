@@ -4,8 +4,8 @@
 // "viewing as" banners. Data comes from /me, /me/clubs and /me/wards, read in
 // parallel.
 
-import { ClubSwitcher, Menu, type MenuItem, personLabel } from "@clubadmin/ui";
-import { getTranslations } from "next-intl/server";
+import { ClubSwitcher, formatDateTime, Menu, type MenuItem, personLabel } from "@clubadmin/ui";
+import { getLocale, getTimeZone, getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 import { getCurrentClub } from "../server/context.ts";
@@ -17,14 +17,17 @@ import {
   getUnreadCount,
   requireSession,
 } from "../server/data.ts";
+import { ActionForm } from "./action-form.tsx";
 
 export const LOGOUT_FORM = "logout-form";
 export const VIEWING_AS_FORM = "viewing-as-form";
 
 export async function AppFrame({ children }: { children: ReactNode }) {
   const session = await requireSession();
-  const [t, me, clubs, wards, club, path, unread] = await Promise.all([
+  const [t, locale, timeZone, me, clubs, wards, club, path, unread] = await Promise.all([
     getTranslations(),
+    getLocale(),
+    getTimeZone(),
     getMe(),
     getMyClubs(),
     getMyWards(),
@@ -252,6 +255,32 @@ export async function AppFrame({ children }: { children: ReactNode }) {
           >
             {t("viewingAs.stop")}
           </button>
+        </div>
+      ) : null}
+      {me.pendingDeletion ? (
+        <div
+          role="status"
+          data-testid="deletion-banner"
+          className="flex flex-wrap items-center justify-center gap-3 bg-notice px-4 py-2 text-sm text-notice-fg"
+        >
+          <span>
+            {t("privacy.deletion.banner", {
+              date: formatDateTime(me.pendingDeletion.scheduledFor, {
+                locale,
+                timeZone,
+                dateStyle: "long",
+              }),
+            })}
+          </span>
+          <ActionForm action="cancel-deletion" back={path}>
+            <button
+              type="submit"
+              className="rounded-md border border-notice-fg px-2 py-0.5"
+              data-testid="banner-cancel-deletion"
+            >
+              {t("privacy.deletion.bannerCancel")}
+            </button>
+          </ActionForm>
         </div>
       ) : null}
       <form id={LOGOUT_FORM} method="post" action="/auth/logout" hidden>

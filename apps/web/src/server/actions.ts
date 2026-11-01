@@ -1130,6 +1130,48 @@ const PRIVACY_ACTIONS: Record<string, FormAction> = {
     },
     done: () => "/me/privacy?left=1",
   },
+  // "Download my data" and erasure (P1.8b).
+  "request-export": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      return {
+        path: "/api/v1/me/data-exports",
+        method: "POST",
+        body: personId ? { personId } : {},
+      };
+    },
+    done: () => "/me/privacy?exported=1#exports",
+  },
+  "schedule-deletion": {
+    call: (form) => {
+      if (text(form, "confirm") !== "on") return null;
+      const eraseWardIds = form
+        .getAll("eraseWard")
+        .filter((v): v is string => typeof v === "string" && isUuid(v));
+      return { path: "/api/v1/me/account/deletion", method: "POST", body: { eraseWardIds } };
+    },
+    done: () => "/me/privacy/delete",
+  },
+  "cancel-deletion": {
+    call: () => ({ path: "/api/v1/me/account/deletion", method: "DELETE" }),
+    done: (form) => withParam(back(form, "/me/privacy/delete"), "cancelled", "1"),
+  },
+  "schedule-ward-erasure": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      if (!personId || text(form, "confirm") !== "on") return null;
+      return { path: `/api/v1/me/wards/${personId}/erasure`, method: "POST" };
+    },
+    done: (form) => `/me/family/${id(form, "personId") ?? ""}/erase`,
+  },
+  "cancel-ward-erasure": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      if (!personId) return null;
+      return { path: `/api/v1/me/wards/${personId}/erasure`, method: "DELETE" };
+    },
+    done: (form) => `/me/family/${id(form, "personId") ?? ""}/erase?cancelled=1`,
+  },
   "record-decision": {
     call: (form) => {
       const clubId = id(form, "clubId");

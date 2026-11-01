@@ -5,6 +5,7 @@
 // not-found page, 403 → the forbidden page.
 
 import {
+  AccountDeletionPreviewSchema,
   ActivityDetailSchema,
   type ActivityPage,
   ActivityPageSchema,
@@ -17,6 +18,7 @@ import {
   ClubPrivacySchema,
   ClubSearchResultSchema,
   ConsentTextVersionsSchema,
+  DataExportsPageSchema,
   DecisionsPageSchema,
   EventDetailSchema,
   EventPageSchema,
@@ -74,6 +76,7 @@ import {
   TrustedPeopleSchema,
   UnreadCountSchema,
   VersionResponseSchema,
+  WardErasurePreviewSchema,
   WardGuardiansSchema,
   type z,
 } from "@clubadmin/shared";
@@ -188,6 +191,19 @@ export const getPushDevices = cache(() =>
 );
 // Privacy (P1.8a).
 export const getMyConsents = cache(() => required("/api/v1/me/consents", MyConsentsSchema));
+// "Download my data" and erasure (P1.8b): always the logged-in person's own.
+export const getDataExports = cache(() =>
+  required("/api/v1/me/data-exports?limit=20", DataExportsPageSchema),
+);
+export const getDeletionPreview = cache(() =>
+  required("/api/v1/me/account/deletion", AccountDeletionPreviewSchema),
+);
+/** A ward's erasure preview, or null if the caller is not their full guardian. */
+export const getWardErasure = cache((personId: string) =>
+  apiGet(`/api/v1/me/wards/${requireId(personId)}/erasure`, WardErasurePreviewSchema, {
+    nullOn: [403, 404],
+  }),
+);
 /** A person's consents in a club, or null if the viewer may not see them. */
 export const getPersonConsents = cache((personId: string, clubId: string) =>
   apiGet(

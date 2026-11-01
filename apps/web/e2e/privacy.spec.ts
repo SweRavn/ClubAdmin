@@ -49,3 +49,39 @@ test("leaving is refused while the person still has assignments", async ({ page 
   await expect(page.getByTestId("leave-assignments")).toBeVisible();
   await expect(page.getByTestId("leave-form")).toHaveCount(0);
 });
+
+// P1.8b: "download my data", account deletion and ward erasure.
+
+test("a parent requests her own data and her child's; the requests are listed", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.anna, { returnTo: "/me/privacy" });
+  const exports = page.getByTestId("exports");
+  // The seed's two requests from yesterday are listed.
+  await expect(exports.getByTestId("data-export")).toHaveCount(2);
+  await exports.getByTestId("request-export-self").click();
+  await expect(page.getByText("Begärt. Du får en avisering när filen är klar.")).toBeVisible();
+  await expect(page.getByTestId("exports").getByTestId("data-export")).toHaveCount(3);
+});
+
+test("deleting the account is refused while the coach owns a group, with the club named", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.ahmed, { returnTo: "/me/privacy/delete" });
+  await expect(page.getByTestId("erasure-blockers")).toContainText("IK Norrbacka");
+  await expect(page.getByTestId("blocker-roles_must_be_removed")).toBeVisible();
+  await expect(page.getByTestId("schedule-deletion")).toBeDisabled();
+});
+
+test("a parent schedules her account deletion, sees the banner and cancels it", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.mikael, { returnTo: "/me/privacy/delete" });
+  await page.getByTestId("confirm-deletion").check();
+  await page.getByTestId("schedule-deletion").click();
+  await expect(page.getByTestId("deletion-pending")).toBeVisible();
+  await expect(page.getByTestId("deletion-banner")).toBeVisible();
+  await page.getByTestId("cancel-deletion").click();
+  await expect(page.getByText("Raderingen är avbruten.")).toBeVisible();
+  await expect(page.getByTestId("deletion-banner")).toHaveCount(0);
+});

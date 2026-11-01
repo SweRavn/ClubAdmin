@@ -235,6 +235,15 @@ export default async function FamilyPage({ searchParams }: Props) {
                   {t("family.ownLogin.rule", { age: ward.ownLoginFromAge })}
                 </p>
               ) : null}
+              {ward.hasLogin === false ? (
+                <a
+                  href={`/me/family/${ward.person.id}/erase`}
+                  className="text-sm text-accent underline"
+                  data-testid="open-ward-erasure"
+                >
+                  {t("privacy.wardErasure.open", { name: personLabel(ward.person) })}
+                </a>
+              ) : null}
             </article>
           );
         })}
