@@ -16,8 +16,8 @@
 // - Two generated people without login are orphaned: one 40 months ago
 //   (erased by the first privacy:retention run), one 6 months ago.
 // P1.8b:
-// - Anna requested "download my data" for herself and for Elsa yesterday
-//   (ready once the API's job runner has run).
+// - Anna requested "download my data" for herself and for Elsa ten days
+//   ago; the files have expired (the requests stay listed).
 // - A generated SVK Herr player scheduled their account deletion three
 //   days ago (the grace period runs; it can be cancelled).
 // - Another generated Herr player deleted their account a month ago (left
@@ -152,18 +152,23 @@ export const privacyDemoStep: DemoStep = {
       }
     }
 
-    // "Download my data" (P1.8b): Anna for herself and for Elsa, yesterday.
+    // "Download my data" (P1.8b): Anna for herself and for Elsa ten days ago;
+    // the files were deleted after seven days (the rows stay, expired). Expired
+    // already when the API's job runner sees them, so they add no notices.
     const anna = {
       actorKind: "person" as const,
       personId: id("anna"),
       requestId: "seed",
-      seedTime: env.clock.at("-1d"),
+      seedTime: env.clock.at("-10d"),
     };
     for (const subject of [id("anna"), id("elsa")]) {
       const row = await s.dataExports.request(anna, subject, "sv");
-      await env.admin(
-        `UPDATE public.data_exports SET created_at = now() - interval '1 day' WHERE id = '${row.id}'`,
-      );
+      await env.admin(`
+        UPDATE public.data_exports
+        SET status = 'expired', created_at = now() - interval '10 days',
+            ready_at = now() - interval '10 days', expires_at = now() - interval '3 days',
+            size_bytes = 48213
+        WHERE id = '${row.id}'`);
     }
 
     // A Herr player scheduled their account deletion three days ago.

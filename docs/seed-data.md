@@ -279,8 +279,8 @@ schedule (Ola left two years ago).
   without a login and without any club are orphaned: one 40 months ago
   (erased by the first `privacy:retention` run), one 6 months ago. Erik's
   leave preview lists his head-coach function in F2017 to step down from.
-  P1.8b: Anna requested "download my data" for herself and for Elsa
-  yesterday (the files are written when the API's job runner runs). A
+  P1.8b: Anna requested "download my data" for herself and for Elsa ten
+  days ago (the files have expired; the requests stay listed). A
   generated SVK Herr player scheduled their account deletion three days
   ago (the grace period runs); another deleted their account a month ago
   (left SVK, anonymised, in the deletion ledger). Ahmed's deletion preview

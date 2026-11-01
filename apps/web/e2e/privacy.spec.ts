@@ -52,16 +52,20 @@ test("leaving is refused while the person still has assignments", async ({ page 
 
 // P1.8b: "download my data", account deletion and ward erasure.
 
-test("a parent requests her own data and her child's; the requests are listed", async ({
-  page,
-}) => {
+test("a parent sees her expired data requests; another requests his own data", async ({ page }) => {
   await loginAs(page, PERSONAS.anna, { returnTo: "/me/privacy" });
+  // The seed's two requests from ten days ago, their files deleted.
   const exports = page.getByTestId("exports");
-  // The seed's two requests from yesterday are listed.
-  await expect(exports.getByTestId("data-export")).toHaveCount(2);
-  await exports.getByTestId("request-export-self").click();
+  await expect(exports.locator('[data-testid="data-export"][data-status="expired"]')).toHaveCount(
+    2,
+  );
+  await expect(exports.getByTestId("download-export")).toHaveCount(0);
+
+  // Henrik (not used by the notification tests: the file's notice is his).
+  await loginAs(page, PERSONAS.henrik, { returnTo: "/me/privacy" });
+  await page.getByTestId("request-export-self").click();
   await expect(page.getByText("Begärt. Du får en avisering när filen är klar.")).toBeVisible();
-  await expect(page.getByTestId("exports").getByTestId("data-export")).toHaveCount(3);
+  await expect(page.getByTestId("exports").getByTestId("data-export")).toHaveCount(1);
 });
 
 test("deleting the account is refused while the coach owns a group, with the club named", async ({

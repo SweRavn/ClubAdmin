@@ -8,7 +8,6 @@ import { expect } from "vitest";
 
 import type { TenantContext } from "../context.ts";
 import { createDatabase, type Database, type Tx } from "../database.ts";
-import { createPool } from "../internal/pool.ts";
 import type { ROLES } from "../roles.ts";
 import { withDatabase } from "../urls.ts";
 import { testEnv } from "./env.ts";
@@ -64,10 +63,15 @@ export async function createTestDatabase(): Promise<TestDatabase> {
     db,
     url: (role) => env.urlFor(role, name),
     pgPool(role) {
-      const pool = createPool({
-        url: env.urlFor(role, name),
+      const pool = new pg.Pool({
+        connectionString: env.urlFor(role, name),
         max: 4,
-        applicationName: "clubadmin-test",
+        application_name: "clubadmin-test",
+      });
+      // As createPool: no uncaught error when the server ends an idle or closing client.
+      pool.on("error", () => undefined);
+      pool.on("connect", (client) => {
+        client.on("error", () => undefined);
       });
       pools.push(pool);
       return pool;
