@@ -97,6 +97,27 @@ later phase. Backup and disaster recovery are in
   lifecycle rule for `exports/` after two days as a backstop). A requester
   who lost the role before the file is written gets nothing. Cells a
   spreadsheet would run as formulas get a leading apostrophe.
+- "Download my data" (P1.8b, ADR 0041): the most sensitive file there is,
+  so only the person (or a full guardian, for a ward) requests it, at most
+  three a day, with a login in the last 15 minutes; only the requester
+  downloads it, again with a recent login, through a pre-signed link valid
+  five minutes; it is never emailed (the notice links to the page) and
+  never logged; the object key holds the export ID only
+  (`data-exports/<id>.zip`), the file is deleted after seven days (worker;
+  a bucket lifecycle rule for `data-exports/` after eight days). A
+  guardian who is no longer one when the file is written gets nothing.
+  Sealed event answers are decrypted only into the subject's or their
+  guardian's file. Audited: `privacy.export.requested`,
+  `privacy.export.downloaded`.
+- Account deletion and ward erasure (P1.8b): scheduling needs a login in the
+  last five minutes; a grace period (`ERASURE_GRACE_DAYS`) in which the
+  person, or any other full guardian of a ward, can cancel; the job runs
+  `privacy.erase_person` as `clubadmin_retention`, then revokes every
+  session (browser sessions deleted, app sessions deny-listed, Zitadel
+  sessions ended) and deletes the Zitadel user with the `clubadmin-api`
+  machine user (`IAM_USER_MANAGER`). Audited: `account.deletion.scheduled`,
+  `account.deletion.cancelled`, `person.erasure.scheduled`,
+  `person.erasure.cancelled`, `person.erased`.
 - Adding and importing members (P1.3b): `club.members.add` for registrars
   (club managers with a second factor); `club.members.import` for registrars
   and club managers, always with a second factor, confirming with a login in

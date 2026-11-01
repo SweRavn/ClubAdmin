@@ -541,10 +541,15 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `privacy:purge_member` | per request (leaving with "remove now") | The former-member purge at once, as `clubadmin_retention` |
 | `privacy:protection_changed` | per protection change (outbox handler `privacy`) | Ends a protected person's photo, video, streaming and contact consents |
 | `audit:retention` | daily 05:43 UTC | As `clubadmin_retention`: deletes audit events older than `AUDIT_RETENTION_MONTHS` in batches of 10,000 |
+| `privacy:export` | per request (insert trigger on `data_exports`) | **Run by the API process** (ADR 0033): writes a "download my data" ZIP (`data.json`, `index.html`) to `data-exports/<id>.zip` in parts, then the notice `privacy.export.ready` (P1.8b, ADR 0041) |
+| `privacy:erase` | every 10 minutes | **Run by the API process**: runs account deletions and ward erasures whose grace period has passed (checks the blockers again, leaves every club, ends guardianships, deletes export files, `privacy.erase_person` as `clubadmin_retention`, then revokes sessions and deletes the Zitadel user) |
+| `privacy:expire_exports` | hourly at :07 | Deletes "download my data" files seven days after they are ready (the row stays, `expired`); fails exports still queued after two hours |
 
 The privacy jobs need `DATABASE_RETENTION_URL` (`clubadmin_retention`, one
 connection); without it the worker logs a warning at start and the jobs
-log an error and do nothing.
+log an error and do nothing. The API's job runner opens its own retention
+connection for `privacy:erase` and the export's record history (P1.8b);
+without it erasures wait with `error_code = erasure_unavailable`.
 
 Outbox handlers besides the authorization cache: `entitlements-cache`
 (`club.entitlements.changed` → Valkey channel `entitlements:invalidate`) and,

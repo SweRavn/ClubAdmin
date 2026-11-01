@@ -1,6 +1,7 @@
 # 0041 — Privacy: consents per purpose, leaving without open assignments, board-decided settings, retention as its own role
 
-**Status:** Accepted (P1.8a; P1.8b extends it with exports and erasure).
+**Status:** Accepted (P1.8a; extended in P1.8b with "download my data",
+account deletion and ward erasure).
 
 **Context.** Until P1.8 consents were a schema without endpoints, a member
 could not leave a club themselves, the retention periods of `gdpr.md` for
@@ -63,6 +64,47 @@ were taken with the maintainer on 2026-11-01.
   in the backups taken before, encrypted, until they expire; any restore
   replays the deletion ledger before the database is used.
 
+**P1.8b: download, deletion, erasure.**
+
+- **"Download my data"** is one request per subject (the person, or a ward
+  of a full guardian), at most three a day, written by `privacy:export` as
+  a ZIP (`data.json` with a versioned schema, `docs/api/data-export.md`,
+  and a self-contained `index.html` in the requester's language) streamed
+  part by part into a multipart upload. Other people are named through the
+  PersonPresenter as the requester may see them. Only the requester
+  downloads it, with a recent login, through a five-minute link; the file
+  goes after seven days (`privacy:expire_exports`), the row after 12
+  months. The files live under `data-exports/` with their own lifecycle
+  rule (eight days): the `exports/` rule of member exports (two days)
+  would delete them before the seven days are over.
+- **Account deletion** waits `ERASURE_GRACE_DAYS` (default 14, 0–30) and
+  can be cancelled until then; a banner says so on the web and in the app.
+  The blockers of leaving a club apply in every club, to the person and to
+  each ward erased with them; the preview names each with the club, and
+  the job checks again (a role given during the grace period stops it,
+  `error_code = blocked`, and the person is told with the notice
+  `account.deletion.blocked`). Wards without a login whose only full
+  guardian with a login is the person are erased too unless the person
+  keeps them. A full guardian erases a ward without a login the same way;
+  every other full guardian is told and may cancel.
+- **The jobs run in the API's job runner** (ADR 0033), not the worker:
+  `privacy:export` needs the presenter and the field encryption,
+  `privacy:erase` leaves clubs and ends guardianships through the domain
+  services and revokes sessions in Valkey and Zitadel. The API gets the
+  retention handle (`DATABASE_RETENTION_URL`) for `privacy.erase_person`
+  and for checking the blockers across clubs; without it erasures wait
+  (`erasure_unavailable`). The Zitadel user is deleted after the database
+  part by the `clubadmin-api` machine user (instance role
+  `IAM_USER_MANAGER`, `pnpm auth:configure`); its ID waits in the request
+  until then, so a failure there is retried and the database erasure is
+  never rolled back.
+- **Cross-club facts for the caller** come from two `SECURITY DEFINER`
+  functions limited to the caller and their wards
+  (`app.erasure_assignments`, `app.ward_logins`): with row-level security
+  a person sees only their own relationships, not whether they are a
+  club's last manager or whether a co-guardian has a login. Names and
+  logins are looked up by key so their cost does not grow with the data.
+
 **Consequences.**
 
 - Members see and change their consents on `/me/privacy` and in the app;
@@ -72,6 +114,12 @@ were taken with the maintainer on 2026-11-01.
   `club.privacy_policy.updated` join the catalogue (ADR 0039).
 - The group roster does not show phones (its budget is three statements);
   the profile does.
+- P1.8b: `/me/privacy` gains "Download my data" and "Delete my account"
+  (`/me/privacy/delete`); a ward's family entry gains "Delete {name}'s
+  data" (`/me/family/{id}/erase`); the app has account deletion under
+  Settings → Privacy. Notices `privacy.export.ready`,
+  `account.deletion.scheduled`, `account.deletion.blocked` and
+  `person.erasure.scheduled` (mandatory emails) join the catalogue.
 - Deferred: restorable club profiles (a sealed archive of a purged
   profile); a second board member confirming a decision; decisions taken
   from adopted minutes (Phase 2, ADR 0037).

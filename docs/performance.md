@@ -100,6 +100,13 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   `activities_reminder_idx`, and daily retention from the creation
   indexes.
 
+- "Download my data" (P1.8b): the export is read one part at a time (the
+  platform's, then each club's, all by the person's indexes) and deflated
+  into a multipart upload, so memory stays bounded by one club's rows. The
+  cross-club facts of the deletion preview (`app.erasure_assignments`,
+  `app.ward_logins`) look names and logins up by key: a join let the
+  planner scan `people` and `accounts` under their policies, which grew
+  with the data (40 → 195 pages before, flat now).
 - Privacy retention (P1.8a, `privacy-plans.integration.test.ts` in the
   worker, as `clubadmin_retention`): on 100,000 members in 100 clubs, 15 %
   of them former members, and 600,000 audit events, a club's former members
@@ -137,7 +144,7 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 
   | Request | Statements | Pages |
   |---|---|---|
-  | `GET /me` | 2 | 3 → 4 |
+  | `GET /me` (with a pending deletion, P1.8b) | 3 | 3 → 4 |
   | `GET /me/clubs`, `/me/groups`, `/me/wards` | 1–3 | 6–15 → 14–32 |
   | `GET /me/schedule` (four weeks) | 4 | 84 → 163 |
   | `GET /me/events` | 17 | 134 → 264 (was 940 before the rewrite) |
@@ -147,6 +154,9 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   | `GET /events/:id` | 14 | 76 → 128 |
   | `PUT` an answer | 9 | 105 → 166 |
   | `GET /me/consents` (P1.8a) | 4 | 51 → 107 |
+  | `GET /me/data-exports` (P1.8b) | 2 | 3 → 4 |
+  | `GET /me/account/deletion` (P1.8b) | 3 | 42 → 63 |
+  | `GET /me/wards/{personId}/erasure` (P1.8b) | 4 | 40 → 58 |
   | `GET /groups/:id/consents` (a team) | 5 | 176 → 290 |
   | `GET /people/:id/consents`, `PUT` a consent | 7, 6 | 36, 35 → 36, 34 |
   | Club privacy page, policy, decisions, texts | 2–6 | 3–9 → 4–12 |

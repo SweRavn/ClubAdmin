@@ -44,9 +44,11 @@ restores. Implementing it raised questions ADR 0014 did not answer:
   invitations to the person, scrubs the personal values from the record
   history, and records the ledger entry and an audit event.
   `privacy.replay_deletion_ledger(external)` runs it for every entry;
-  `privacy.unerased_people()` must be empty after a restore. The erasure job
-  of P1.8 (account deletion, retention) calls this function and extends it
-  as modules with personal data arrive.
+  `privacy.unerased_people()` must be empty after a restore. The erasure
+  jobs call this function and extend it as modules with personal data
+  arrive: `privacy:retention` (former members, orphans; P1.8a) and
+  `privacy:erase` (account deletion and ward erasure, P1.8b, ADR 0041),
+  which also deletes the person's "download my data" files and rows.
 - **Verification** (`pnpm ops:verify-backup`, package `packages/ops`)
   restores into a temporary container with archiving off, checks migrations,
   row counts against the snapshot taken with each backup

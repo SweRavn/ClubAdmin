@@ -38,8 +38,22 @@
 
 ## Data subject rights (self-service)
 
-- **Access / portability:** "Download my data" (all clubs, JSON + human-readable
-  PDF/HTML), produced by the worker within minutes.
+- **Access / portability (Art. 15 and 20, P1.8b):** "Download my data" on
+  `/me/privacy` (the app opens it): a ZIP with `data.json` (versioned
+  schema, [docs/api/data-export.md](api/data-export.md)) and a
+  self-contained `index.html` in the requester's language, for the person
+  or a ward of a full guardian, ready within minutes (`privacy:export` in
+  the API's job runner). It holds the person, the account and settings,
+  push devices (never tokens), family links, the inbox of the last 90
+  days, and per club the profile, memberships, groups, roles, employments,
+  consents with the text agreed to, applications, waiting lists, answers,
+  attendance, call-ups, event sign-ups (sealed answers decrypted into this
+  file only), invitations sent and the record history of the person's own
+  rows. Other people are named only as the requester may see them. Not
+  included: the clubs' notes (the README says to ask the club), other
+  people's contact details, IP hashes, backups. Only the requester
+  downloads it, with a recent login, through a five-minute link, for seven
+  days; three requests a day.
 - **Rectification:** person edits own profile; club managers edit club-specific data.
 - **Erasure:** person can leave a club; leaving schedules deletion of club-specific
   data after the club's retention period (records required by law, e.g. accounting
@@ -65,7 +79,19 @@
   once. Former members are purged after the club's period and people
   without a login and without any relationship are erased after
   `ORPHAN_RETENTION_MONTHS` (worker `privacy:retention`, as
-  `clubadmin_retention`). Account deletion comes in P1.8b.
+  `clubadmin_retention`).
+  **Account deletion (Art. 17, P1.8b):** on `/me/privacy/delete` and in
+  the app, after `ERASURE_GRACE_DAYS` (default 14) in which it can be
+  cancelled; refused while the person (or a ward to be erased) holds a club
+  role, a leader function or a group ownership anywhere, or owes a club
+  invoices, each named with the club. The person chooses for each ward
+  without a login whose only guardian with a login they are whether the
+  ward is erased too. Then `privacy:erase` checks again, leaves every club,
+  ends the guardianships, deletes export files, runs `privacy.erase_person`
+  as `clubadmin_retention`, deletes the Zitadel user and revokes every
+  session. A full guardian erases a ward without a login the same way; the
+  other full guardians are told and may cancel. After a restore the ledger
+  replay erases the person again.
 - **Objection / consent withdrawal:** one click per consent; effects apply
   immediately (e.g. hidden from photo galleries and streams). Consents are
   given per purpose (photo, video, streaming, marketing, federation
@@ -101,6 +127,9 @@
 | Guardian and own-login invitations that were never accepted (P1.3; retention: `unaccepted_invitations`) | 12 months after they expired or were revoked (worker `joining:retention`); accepted ones stay as the record of the guardianship or login |
 | Merges (`people_merges`) | The record and what was moved stay for the 30-day undo period, then as the record of the merge (audit trail) |
 | Invitation email addresses | With the invitation (above); never logged, never in outbox or job payloads |
+| "Download my data" files (P1.8b; retention: `data_export_files`) | Seven days after they are ready (worker `privacy:expire_exports`, hourly; the bucket's lifecycle rule deletes `data-exports/` after eight days as a backstop); only the requester downloads them, through a five-minute link |
+| "Download my data" requests (IDs, status, size; retention: `data_export_requests`) | 12 months, as the record that an access request was answered (worker `privacy:retention`) |
+| Account deletion and ward erasure requests (IDs, dates, status; retention: `erasure_requests`) | 24 months after they ended (worker `privacy:retention`); the deletion ledger keeps the fact of the erasure |
 | Notifications (P1.7): the inbox (retention: `notifications`) | 90 days after the notice was created (worker `notifications:retention`); texts hold no names (people are shown through the presenter when read) |
 | Notification deliveries (which channel, when, provider ticket; no texts or addresses; retention: `notification_deliveries`) | 30 days |
 | Push devices (sealed Expo push token, platform; retention: `push_devices`) | Until logout, Expo reports the token unregistered, or 90 days after last use |
