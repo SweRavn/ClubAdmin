@@ -586,8 +586,9 @@ class CoreSeeder {
     for (const c of r.consents) {
       await this.inClub(c.givenBy, c.club, (tx, clubId) =>
         tx.execute(sql`
-          INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id)
-          VALUES (${clubId}, ${this.id(c.person)}, ${c.purpose}, 'v1', ${this.id(c.givenBy)})`),
+          INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id, source)
+          VALUES (${clubId}, ${this.id(c.person)}, ${c.purpose}, 'default:1', ${this.id(c.givenBy)},
+                  ${c.person === c.givenBy ? "self" : "guardian"})`),
       );
     }
     for (const j of r.joinRequests) {

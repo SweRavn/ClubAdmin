@@ -62,6 +62,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         ],
       },
       "consents": [
+        "oskar: photo_publication by oskar",
         "maja: photo_publication by erik",
       ],
       "country": "SE",
@@ -123,8 +124,10 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         ],
       },
       "consents": [
+        "anna: contacts_group by anna",
         "elsa: photo_publication by anna",
         "maja: photo_publication by erik",
+        "generated: photo_publication by johan",
       ],
       "country": "SE",
       "employments": [],
@@ -147,8 +150,8 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "sara",
       ],
       "memberships": {
-        "active": 25,
-        "left": 1,
+        "active": 24,
+        "left": 2,
         "paused": 1,
       },
       "slug": "strandvikens-vk",
@@ -299,7 +302,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
     "svk-herr": {
       "admission": "direct",
       "capacity": null,
-      "generated": 4,
+      "generated": 3,
       "kind": "team",
       "named": [
         "johan",

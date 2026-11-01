@@ -208,7 +208,7 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
     INSERT INTO group_memberships (club_id, group_id, person_id, function)
       SELECT bc.id, bg.id, bp.id, 'member' FROM bp CROSS JOIN bc JOIN bg ON bg.g = 1 + bp.n % 40;
     INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id)
-      SELECT bc.id, bp.id, 'photo_publication', 'v1', bp.id FROM bp CROSS JOIN bc WHERE n % 2 = 0;
+      SELECT bc.id, bp.id, 'photo_publication', 'default:1', bp.id FROM bp CROSS JOIN bc WHERE n % 2 = 0;
     COMMIT;
     ANALYZE;
   `);
