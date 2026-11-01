@@ -93,6 +93,12 @@ export interface CountryPack {
   grantRules: GrantRules | null;
   /** A club's organisation number in its canonical form, or null if it is not valid (P1.6b). */
   normalizeOrganizationNumber(input: string): string | null;
+  /**
+   * Narrower limits for club settings of the settings registry (P1.8a,
+   * packages/shared club-settings.ts), by registry key. The strictest of the
+   * registry and the pack applies; a pack never widens the registry's limits.
+   */
+  retentionLimits?: Readonly<Record<string, { min?: number; max?: number }>>;
 }
 
 /** Age reached during the calendar year of `date` (how grant rules count ages). */

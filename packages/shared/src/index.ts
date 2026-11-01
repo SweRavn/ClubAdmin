@@ -29,4 +29,8 @@ export * from "./logging/redact.ts";
 export * from "./notifications.ts";
 export * from "./ops/backup-status.ts";
 export * from "./permissions.ts";
+export * from "./privacy/club-settings.ts";
+export * from "./privacy/consent-texts.ts";
+export * from "./privacy/retention.ts";
+export * from "./privacy/schemas.ts";
 export { z } from "./zod.ts";

@@ -7,6 +7,7 @@ import { z } from "../zod.ts";
 import {
   ADMISSION_MODES,
   CLUB_ROLES,
+  CONSENT_PURPOSES,
   EMPLOYMENT_TYPES,
   GENDER_CATEGORIES,
   GENDERS,
@@ -118,6 +119,12 @@ export const UpdateClubSettingsSchema = z
     attendanceLockDays: z.number().int().min(1).max(365),
     /** Months after an activity that its answers and attendance are kept (at least 12). */
     attendanceRetentionMonths: z.number().int().min(12).max(120),
+    /** Board settings (P1.8a): changed only through a recorded decision (club-settings.ts). */
+    formerMemberRetentionMonths: z.number().int().min(6).max(120),
+    consentPurposes: z.array(z.enum(CONSENT_PURPOSES)).max(CONSENT_PURPOSES.length),
+    consentReconfirmOnNewVersion: z.boolean(),
+    /** Where members send privacy questions (P1.8a). */
+    privacyContactEmail: z.email().max(254).nullable(),
   })
   .partial()
   .strict();

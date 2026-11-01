@@ -58,6 +58,8 @@ export const people = pgTable(
     address: jsonb().$type<PostalAddress>(),
     deceasedAt: timestamp(tz),
     anonymizedAt: timestamp(tz),
+    /** No login and no relationship anywhere since (P1.8a); erased after ORPHAN_RETENTION_MONTHS. */
+    orphanedSince: timestamp(tz),
     /** Set when this person was merged into another (people_merges). */
     mergedIntoPersonId: uuid().references((): AnyPgColumn => people.id),
     createdByPersonId: uuid().references((): AnyPgColumn => people.id),
@@ -81,6 +83,9 @@ export const people = pgTable(
     index("people_protected_idx")
       .on(t.id)
       .where(sql`${t.protectedIdentity}`),
+    index("people_orphaned_idx")
+      .on(t.orphanedSince)
+      .where(sql`${t.orphanedSince} IS NOT NULL`),
   ],
 );
 

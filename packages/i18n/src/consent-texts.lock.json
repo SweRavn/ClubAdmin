@@ -1,0 +1,23 @@
+{
+  "en.contacts_club.v1": "a38541bfe559a23406c2869e68cf8b85d497569216842a7fae4927e82f3e6c94",
+  "en.contacts_group.v1": "1d9423a12513b0f7ef52ad363ec4d3dc5a6d3a4fe6342b746852f12469aa0d84",
+  "en.federation_sharing.v1": "8055a928d7dd2ea63cc59b478fb072943fce4cfaa3203ddc3b0c6ed431fecb07",
+  "en.marketing.v1": "575320a4769dc1d0062ff08fe00086ed489ffab8a86336fb967276d6d0253142",
+  "en.photo_publication.v1": "bde217dd005c025dbd50ac4ff07633f3c8d441dbc6e63b616eb0ed4970e9148a",
+  "en.streaming.v1": "c7ee93ef3e57c8edbc2b3e0ed6ed8aff0431ba17427c68f8d19f92f7ef8602f9",
+  "en.video_publication.v1": "a6dacba217c5b2bef71cc8014384109074a9a0a6b9b8482e12c86d979a3ee2dd",
+  "nb.contacts_club.v1": "eeb0887f7b9d73bb4eb7a3900bd85ab3e34c550228f8c95620b09c798873befe",
+  "nb.contacts_group.v1": "1f1cd8123bcb7d6a35c4ed0be06bf79fe9431f8949d6c3831857336709372c70",
+  "nb.federation_sharing.v1": "4149cfc68fe302e0f67bb4981b7805b769428c2823b907260c36f3b546af4b85",
+  "nb.marketing.v1": "8175d812e8aabc4d0d345a97cf169297e3b5429bb936e40b1749bbd4291afcba",
+  "nb.photo_publication.v1": "ae42c65ed6198089e3582651349f901d92da3f3f7ec5a72d3e23dd6a8489d4e2",
+  "nb.streaming.v1": "67f321c6ee8c61e2edcfa9b3646ab69e230408b808baaa0d34014b1076558b44",
+  "nb.video_publication.v1": "f68a6a11e75611713ea1dd6f5e5c031b4957089c18557fa73e4d694420d9da0c",
+  "sv.contacts_club.v1": "c547287f772aee94e591371ef23b418bed9613c4b751145ac2157af9392bbefa",
+  "sv.contacts_group.v1": "7758b5e32b754467c03653580a6f66ed89dc744006f03e9721e1c46734a95225",
+  "sv.federation_sharing.v1": "f1ec392d21c6609af783476aea5513077d9740ac051ffe347f53fea838deb157",
+  "sv.marketing.v1": "a50ba597977be5ce3d5aaf76c66752c7d2eadca667195355d0a7a0171e461e34",
+  "sv.photo_publication.v1": "94460d49425b3ae07fe35f83213dcf151e648f2777c1be2e018413185b60616e",
+  "sv.streaming.v1": "4bf4c137d359d2074fa97d29f11b4c1d0bc79a054708284f620743cd1e1550df",
+  "sv.video_publication.v1": "2d1f6dbba929c7707ce38eac14d1eff3d6345247900475bb5d4a07ad6f324736"
+}

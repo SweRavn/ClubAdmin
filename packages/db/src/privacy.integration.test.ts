@@ -228,6 +228,262 @@ describe("privacy.replay_deletion_ledger", () => {
   });
 });
 
+/** Free text and consents erasure covers since P1.8a, for a person in the test club. */
+async function addFreeText(id: string, email: string) {
+  const other = uuidv7();
+  await t.query(
+    "admin",
+    "INSERT INTO people (id, given_name, family_name) VALUES ($1, 'Parent', 'Other')",
+    [other],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO join_requests (club_id, person_id, requested_by_person_id, status, message, decision_message)
+     VALUES ($1, $2, $2, 'rejected', 'My son has asthma', 'Sorry, the team is full')`,
+    [club, id],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights, consent_note, ended_reason)
+     VALUES ($1, $2, 'parent', '{view_schedule}', 'Paper form in the office', 'Custody dispute')`,
+    [other, id],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id, source, club_note)
+     VALUES ($1, $2, 'photo_publication', 'default:1', $2, 'club_record', 'Signed by grandmother')`,
+    [club, id],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO invitations (club_id, kind, email, token_hash, expires_at, created_by_person_id)
+     VALUES ($1, 'email', $2, $3, now() + interval '7 days', $4)`,
+    [club, email, `hash-${id}`, other],
+  );
+}
+
+describe("privacy.erase_person (P1.8a)", () => {
+  it("clears join request, guardianship and consent notes, invitations to the address, and open consents", async () => {
+    const id = await createPerson("Fredrik");
+    const email = (
+      await t.query<{ email: string }>("admin", "SELECT email FROM accounts WHERE person_id = $1", [
+        id,
+      ])
+    ).rows[0]!.email;
+    await addFreeText(id, email);
+    await t.query("retention", "SELECT privacy.erase_person($1, 'account_deleted')", [id]);
+
+    const rows = await t.query(
+      "admin",
+      `SELECT
+         (SELECT row(message, decision_message)::text FROM join_requests WHERE person_id = $1) AS request,
+         (SELECT row(consent_note, ended_reason)::text FROM guardianships WHERE ward_person_id = $1) AS guardianship,
+         (SELECT row(revoked_reason, club_note)::text FROM consents WHERE person_id = $1) AS consent,
+         (SELECT count(*)::int FROM invitations WHERE email = $2) AS invitations`,
+      [id, email],
+    );
+    expect(rows.rows[0]).toEqual({
+      request: "(,)",
+      guardianship: "(,)",
+      consent: "(erased,)",
+      invitations: 0,
+    });
+    const history = await t.query<{ v: unknown }>(
+      "admin",
+      `SELECT coalesce(old_values, '{}') || coalesce(new_values, '{}') AS v FROM history.record_changes
+       WHERE table_name IN ('public.join_requests', 'public.guardianships', 'public.consents', 'public.invitations')`,
+    );
+    const text = JSON.stringify(history.rows);
+    for (const value of ["asthma", "team is full", "Paper form", "Custody", "grandmother", email]) {
+      expect(text).not.toContain(value);
+    }
+    expect(await unerased()).not.toContain(id);
+  });
+
+  it("the ledger replay clears them again after a restore", async () => {
+    const id = await createPerson("Gunnel");
+    await addFreeText(id, `gunnel-${id}@example.test`);
+    await t.query("retention", "SELECT privacy.erase_person($1, 'account_deleted')", [id]);
+    // The restore brings back the request's message and an open consent.
+    await t.query(
+      "admin",
+      "UPDATE join_requests SET message = 'Restored text' WHERE person_id = $1",
+      [id],
+    );
+    await t.query(
+      "admin",
+      "UPDATE consents SET revoked_at = NULL, revoked_reason = NULL WHERE person_id = $1",
+      [id],
+    );
+    expect(await unerased()).toContain(id);
+    await t.query("retention", "SELECT * FROM privacy.replay_deletion_ledger()");
+    expect(await unerased()).toEqual([]);
+  });
+});
+
+/** A former member: a membership that ended `monthsAgo` months ago, with club data to purge. */
+async function formerMember(monthsAgo: number, withAccount = false): Promise<string> {
+  const id = uuidv7();
+  await t.query(
+    "admin",
+    "INSERT INTO people (id, given_name, family_name, phone) VALUES ($1, 'Former', 'Member', '+4670111')",
+    [id],
+  );
+  if (withAccount) {
+    await t.query(
+      "admin",
+      "INSERT INTO accounts (person_id, email, email_verified_at) VALUES ($1, $2, now())",
+      [id, `former-${id}@example.test`],
+    );
+  }
+  await t.query(
+    "admin",
+    `INSERT INTO club_profiles (club_id, person_id, shared_fields, emergency_contacts, notes)
+     VALUES ($1, $2, '{phone}', '[{"name":"Mamma","phone":"+4670222"}]', 'Club note about knees')`,
+    [club, id],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO club_memberships (club_id, person_id, status, valid_from, valid_to)
+     VALUES ($1, $2, 'left', now() - make_interval(months => $3 + 24), now() - make_interval(months => $3))`,
+    [club, id, monthsAgo],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id, revoked_at, revoked_reason)
+     VALUES ($1, $2, 'photo_publication', 'default:1', $2, now() - make_interval(months => $3), 'left_club')`,
+    [club, id, monthsAgo],
+  );
+  await t.query(
+    "admin",
+    `INSERT INTO join_requests (club_id, person_id, requested_by_person_id, status, message)
+     VALUES ($1, $2, $2, 'approved', 'Please let me join, I play left back')`,
+    [club, id],
+  );
+  return id;
+}
+
+const purge = (person: string, now = false) =>
+  t
+    .query<{ purged: boolean }>(
+      "retention",
+      "SELECT privacy.purge_former_member($1, $2, $3) AS purged",
+      [club, person, now],
+    )
+    .then((r) => r.rows[0]?.purged);
+
+describe("privacy.purge_former_member", () => {
+  it("keeps the minimised facts and clears contact data, notes, consents and free text after the period", async () => {
+    const id = await formerMember(30);
+    expect(await purge(id)).toBe(true);
+    const profile = await t.query(
+      "admin",
+      `SELECT shared_fields, emergency_contacts, notes, member_number IS NOT NULL AS numbered,
+              club_data_purged_at IS NOT NULL AS purged
+       FROM club_profiles WHERE person_id = $1`,
+      [id],
+    );
+    expect(profile.rows[0]).toEqual({
+      shared_fields: [],
+      emergency_contacts: [],
+      notes: null,
+      numbered: true,
+      purged: true,
+    });
+    const rest = await t.query(
+      "admin",
+      `SELECT (SELECT count(*)::int FROM consents WHERE person_id = $1) AS consents,
+              (SELECT message FROM join_requests WHERE person_id = $1) AS message,
+              (SELECT count(*)::int FROM club_memberships WHERE person_id = $1) AS memberships`,
+      [id],
+    );
+    expect(rest.rows[0]).toEqual({ consents: 0, message: null, memberships: 1 });
+    const history = await t.query(
+      "admin",
+      `SELECT old_values, new_values FROM history.record_changes
+       WHERE record_id IN (SELECT id FROM club_profiles WHERE person_id = $1)
+          OR record_id IN (SELECT id FROM join_requests WHERE person_id = $1)`,
+      [id],
+    );
+    const text = JSON.stringify(history.rows);
+    for (const value of ["knees", "Mamma", "left back"]) expect(text).not.toContain(value);
+    const audit = await t.query(
+      "admin",
+      "SELECT action, club_id FROM audit.events WHERE resource_id = $1",
+      [id],
+    );
+    expect(audit.rows).toEqual([{ action: "person.club_data.purged", club_id: club }]);
+    // Idempotent.
+    expect(await purge(id)).toBe(false);
+  });
+
+  it("waits for the club's period unless the person chose to remove the data now", async () => {
+    const id = await formerMember(3);
+    expect(await purge(id)).toBe(false);
+    expect(await purge(id, true)).toBe(true);
+  });
+
+  it("never purges someone with an open relationship to the club", async () => {
+    const id = await formerMember(30);
+    await t.query(
+      "admin",
+      "INSERT INTO join_requests (club_id, person_id, requested_by_person_id) VALUES ($1, $2, $2)",
+      [club, id],
+    );
+    expect(await purge(id)).toBe(false);
+  });
+
+  it("cannot be run by the app role", async () => {
+    const id = await formerMember(30);
+    await expect(
+      t.query("app", "SELECT privacy.purge_former_member($1, $2)", [club, id]),
+    ).rejects.toThrow(/permission denied/);
+  });
+});
+
+describe("orphaned people", () => {
+  const mark = (person: string) =>
+    t
+      .query<{ since: Date | null }>("retention", "SELECT privacy.mark_orphan($1) AS since", [
+        person,
+      ])
+      .then((r) => r.rows[0]?.since ?? null);
+
+  it("a purged former member without login becomes an orphan; a guardianship or a login keeps them", async () => {
+    const orphan = await formerMember(30);
+    expect(await mark(orphan)).toBeNull();
+    await purge(orphan);
+    expect(await mark(orphan)).toBeInstanceOf(Date);
+
+    const withLogin = await formerMember(30, true);
+    await purge(withLogin);
+    expect(await mark(withLogin)).toBeNull();
+
+    const ward = await formerMember(30);
+    await purge(ward);
+    const guardian = uuidv7();
+    await t.query(
+      "admin",
+      "INSERT INTO people (id, given_name, family_name) VALUES ($1, 'Guardian', 'Present')",
+      [guardian],
+    );
+    await t.query(
+      "admin",
+      "INSERT INTO guardianships (guardian_person_id, ward_person_id, kind, rights) VALUES ($1, $2, 'parent', '{view_schedule}')",
+      [guardian, ward],
+    );
+    expect(await mark(ward)).toBeNull();
+
+    // A new relationship clears the mark.
+    await t.query(
+      "admin",
+      "INSERT INTO club_memberships (club_id, person_id, status) VALUES ($1, $2, 'active')",
+      [club, orphan],
+    );
+    expect(await mark(orphan)).toBeNull();
+  });
+});
+
 describe("ops.key_table_counts", () => {
   it("counts the key tables", async () => {
     const result = await t.query<{ counts: Record<string, number> }>(

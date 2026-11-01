@@ -67,6 +67,16 @@ export const baseConfigShape = {
   GIT_COMMIT: z.string().default("unknown"),
   SOURCE_URL: z.url().default("https://github.com/SweRavn/ClubAdmin"),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.url().optional(),
+  /** Record history kept for this many months (ADR 0017). */
+  HISTORY_RETENTION_MONTHS: z.coerce.number().int().min(1).default(24),
+  /** Audit events kept for this many months (P1.8a, audit:retention; at least 12). */
+  AUDIT_RETENTION_MONTHS: z.coerce.number().int().min(12).default(24),
+  /**
+   * People without a login and without any relationship are kept this many
+   * months in case a club or a guardian links them again, then erased
+   * (P1.8a, privacy:retention; at least 12).
+   */
+  ORPHAN_RETENTION_MONTHS: z.coerce.number().int().min(12).default(36),
 } as const;
 
 export function parseConfig<T extends z.ZodType>(

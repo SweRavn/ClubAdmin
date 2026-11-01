@@ -165,6 +165,11 @@ export function noticeLink(input: NoticeInput): string {
       return input.clubId && id ? `/clubs/${input.clubId}/members/import?import=${id}` : "/";
     case "club":
       return input.clubId ? `/clubs/${input.clubId}` : "/";
+    // Privacy (P1.8a): the register of the club a member left, the club's privacy page.
+    case "club_membership":
+      return input.clubId ? `/clubs/${input.clubId}/members` : "/";
+    case "club_privacy_policy":
+      return input.clubId ? `/clubs/${input.clubId}/privacy` : "/";
     case "club_creation_request": {
       const created = str(input.params.createdClubId);
       return created ? `/clubs/${created}` : "/";

@@ -10,7 +10,13 @@ import {
   type ClubRole,
   type ClubStatus,
   CONSENT_PURPOSES,
+  CONSENT_REVOKED_REASONS,
+  CONSENT_SOURCES,
   type ConsentPurpose,
+  type ConsentRevokedReason,
+  type ConsentSource,
+  DECISION_BODIES,
+  type DecisionBody,
   EMPLOYMENT_TYPES,
   type EmploymentType,
   HANDOVER_STATUSES,
@@ -80,6 +86,18 @@ export const clubs = pgTable(
     attendanceLockDays: integer().notNull().default(30),
     /** Months after an activity that its answers and attendance are kept (at least 12; #18). */
     attendanceRetentionMonths: integer().notNull().default(12),
+    /** The consents the club asks for (P1.8a; a board setting). */
+    consentPurposes: text()
+      .array()
+      .$type<ConsentPurpose[]>()
+      .notNull()
+      .default(sql`'{photo_publication,video_publication}'::text[]`),
+    /** A new consent text version revokes open consents of older versions (P1.8a). */
+    consentReconfirmOnNewVersion: boolean().notNull().default(false),
+    /** Months after the last membership ended that a former member's profile is kept (P1.8a). */
+    formerMemberRetentionMonths: integer().notNull().default(24),
+    /** Where members send privacy questions (a function address; P1.8a). */
+    privacyContactEmail: text(),
     ...timestamps,
   },
   (t) => [
@@ -91,6 +109,15 @@ export const clubs = pgTable(
     check(
       "clubs_attendance_retention_months",
       sql`${t.attendanceRetentionMonths} BETWEEN 12 AND 120`,
+    ),
+    check("clubs_consent_purposes", subsetOf(t.consentPurposes, CONSENT_PURPOSES)),
+    check(
+      "clubs_former_member_retention_months",
+      sql`${t.formerMemberRetentionMonths} BETWEEN 6 AND 120`,
+    ),
+    check(
+      "clubs_privacy_contact_email",
+      sql`${t.privacyContactEmail} IS NULL OR (length(${t.privacyContactEmail}) <= 254 AND ${t.privacyContactEmail} ~ '^[^@\\s]+@[^@\\s]+$')`,
     ),
     check("clubs_country", sql`${t.country} ~ '^[A-Z]{2}$'`),
     check("clubs_currency", sql`${t.currency} ~ '^[A-Z]{3}$'`),
@@ -155,6 +182,8 @@ export const clubProfiles = pgTable(
     notes: text(),
     /** Club-level protected identity (ADR 0022), set by a club manager. */
     protectedIdentityClub: boolean().notNull().default(false),
+    /** The former-member purge ran for this person and club (P1.8a). */
+    clubDataPurgedAt: timestamp(tz),
     ...timestamps,
   },
   (t) => [
@@ -198,6 +227,10 @@ export const clubMemberships = pgTable(
     index("club_memberships_person_active_idx")
       .on(t.personId)
       .where(sql`${t.validTo} IS NULL`),
+    // Former members past the club's retention period (P1.8a).
+    index("club_memberships_left_idx")
+      .on(t.clubId, t.validTo)
+      .where(sql`${t.status} = 'left'`),
   ],
 );
 
@@ -288,13 +321,104 @@ export const consents = pgTable(
     givenAt: timestamp(tz).notNull().defaultNow(),
     revokedAt: timestamp(tz),
     revokedByPersonId: uuid().references(() => people.id),
+    /** Who gave it: the person, a guardian, or the club recording a paper form (P1.8a). */
+    source: text().$type<ConsentSource>().notNull().default("self"),
+    /** The club's note on a recorded consent ("paper form 2026-08-14"); never in audit events. */
+    clubNote: text(),
+    revokedReason: text().$type<ConsentRevokedReason>(),
     ...timestamps,
   },
   (t) => [
     check("consents_purpose", oneOf(t.purpose, CONSENT_PURPOSES)),
+    check("consents_source", oneOf(t.source, CONSENT_SOURCES)),
+    check(
+      "consents_revoked_reason",
+      sql`${t.revokedReason} IS NULL OR ${oneOf(t.revokedReason, CONSENT_REVOKED_REASONS)}`,
+    ),
+    check(
+      "consents_club_note",
+      sql`${t.clubNote} IS NULL OR (${t.source} = 'club_record' AND length(${t.clubNote}) <= 500)`,
+    ),
+    check("consents_text_version", sql`${t.textVersion} ~ '^(default|club):[1-9][0-9]*$'`),
     uniqueIndex("consents_open_unique")
       .on(t.clubId, t.personId, t.purpose)
       .where(sql`${t.revokedAt} IS NULL`),
     index("consents_person_idx").on(t.personId),
+    // Group overviews and field visibility: who in the club has an open consent (P1.8a).
+    index("consents_club_purpose_idx")
+      .on(t.clubId, t.purpose, t.personId)
+      .where(sql`${t.revokedAt} IS NULL`),
+  ],
+);
+
+/** A club's own text for a consent purpose (P1.8a); immutable versions. */
+export const consentTexts = pgTable(
+  "consent_texts",
+  {
+    id: id(),
+    clubId: clubRef(),
+    purpose: text().$type<ConsentPurpose>().notNull(),
+    version: integer().notNull(),
+    /** { sv?, en?, nb? }: at least the club's default language. */
+    texts: jsonb().$type<Partial<Record<"sv" | "en" | "nb", string>>>().notNull(),
+    publishedByPersonId: personRef(),
+    publishedAt: timestamp(tz).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (t) => [
+    check("consent_texts_purpose", oneOf(t.purpose, CONSENT_PURPOSES)),
+    check("consent_texts_version", sql`${t.version} > 0`),
+    unique("consent_texts_version_unique").on(t.clubId, t.purpose, t.version),
+  ],
+);
+
+/** A recorded decision by a club's board or meeting on its settings (P1.8a, ADR 0037). */
+export const clubSettingDecisions = pgTable(
+  "club_setting_decisions",
+  {
+    id: id(),
+    clubId: clubRef(),
+    body: text().$type<DecisionBody>().notNull(),
+    decidedOn: date({ mode: "string" }).notNull(),
+    /** The minutes' paragraph ("§ 7"). */
+    reference: text().notNull(),
+    effectiveFrom: date({ mode: "string" }).notNull(),
+    /** Registry key → value; only settings the board decides. */
+    settings: jsonb().$type<Record<string, unknown>>().notNull(),
+    /** Set when the values were written to the club (at once, or by clubs:apply_decisions). */
+    appliedAt: timestamp(tz),
+    recordedByPersonId: personRef(),
+    recordedAt: timestamp(tz).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (t) => [
+    check("club_setting_decisions_body", oneOf(t.body, DECISION_BODIES)),
+    check("club_setting_decisions_reference", sql`length(${t.reference}) BETWEEN 1 AND 200`),
+    check("club_setting_decisions_effective", sql`${t.effectiveFrom} >= ${t.decidedOn}`),
+    index("club_setting_decisions_club_idx").on(t.clubId, t.effectiveFrom.desc(), t.id.desc()),
+    index("club_setting_decisions_pending_idx")
+      .on(t.effectiveFrom)
+      .where(sql`${t.appliedAt} IS NULL`),
+  ],
+);
+
+/** Each published version of a club's privacy policy (P1.8a). */
+export const clubPrivacyPolicies = pgTable(
+  "club_privacy_policies",
+  {
+    id: id(),
+    clubId: clubRef(),
+    version: integer().notNull(),
+    /** The country pack's template version. */
+    templateVersion: integer().notNull(),
+    /** Snapshot of the values the policy shows (registry key → value, purposes asked). */
+    settings: jsonb().$type<Record<string, unknown>>().notNull(),
+    decisionId: uuid().references(() => clubSettingDecisions.id),
+    effectiveFrom: date({ mode: "string" }).notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    check("club_privacy_policies_version", sql`${t.version} > 0`),
+    unique("club_privacy_policies_version_unique").on(t.clubId, t.version),
   ],
 );

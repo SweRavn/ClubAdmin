@@ -31,6 +31,8 @@ export const SERVER_FEATURES = [
   /** P1.7: the inbox and notification settings; "notifications.push" only with a push provider. */
   "notifications.inbox",
   "notifications.push",
+  /** P1.8a: consents, leaving a club, the clubs' privacy policies. */
+  "privacy.consents",
 ] as const;
 
 /** Dotted numeric version, e.g. "1.4.0". */

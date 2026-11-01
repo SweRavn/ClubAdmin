@@ -166,8 +166,45 @@ export const CONSENT_PURPOSES = [
   "streaming",
   "marketing",
   "federation_sharing",
+  /** The person's shared contact details visible to their groups' members and guardians (P1.8a). */
+  "contacts_group",
+  /** The person's shared contact details visible to every insider of the club (P1.8a). */
+  "contacts_club",
 ] as const;
 export type ConsentPurpose = (typeof CONSENT_PURPOSES)[number];
+
+/** Purposes a protected person cannot consent to (ADR 0022): they would show or publish them. */
+export const PROTECTED_INAPPLICABLE_PURPOSES = [
+  "photo_publication",
+  "video_publication",
+  "streaming",
+  "contacts_group",
+  "contacts_club",
+] as const satisfies readonly ConsentPurpose[];
+
+/** Purposes about a guardian's own contact details when shown on a ward's card. */
+export const CONTACT_PURPOSES = [
+  "contacts_group",
+  "contacts_club",
+] as const satisfies readonly ConsentPurpose[];
+
+/** Who gave a consent (P1.8a). */
+export const CONSENT_SOURCES = ["self", "guardian", "club_record"] as const;
+export type ConsentSource = (typeof CONSENT_SOURCES)[number];
+
+/** Why a consent ended (P1.8a; may grow, ADR 0029). */
+export const CONSENT_REVOKED_REASONS = [
+  "withdrawn",
+  "left_club",
+  "superseded",
+  "erased",
+  "not_applicable",
+] as const;
+export type ConsentRevokedReason = (typeof CONSENT_REVOKED_REASONS)[number];
+
+/** The bodies of a club that decide its settings (P1.8a, ADR 0037). */
+export const DECISION_BODIES = ["board", "annual_meeting", "extra_meeting"] as const;
+export type DecisionBody = (typeof DECISION_BODIES)[number];
 
 /** Person fields a club can be given access to (club_profiles.shared_fields). */
 export const SHAREABLE_PERSON_FIELDS = [

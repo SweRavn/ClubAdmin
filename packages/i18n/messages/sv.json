@@ -57,7 +57,8 @@
     "language": "Språk och tidszon",
     "sessions": "Där jag är inloggad",
     "logout": "Logga ut",
-    "notifications": "Notiser"
+    "notifications": "Notiser",
+    "privacy": "Integritet"
   },
   "viewingAs": {
     "label": "Visar som",
@@ -666,7 +667,17 @@
     "devMfaLink": "Till inloggningen",
     "notification_mandatory": "De här e-postmeddelandena går inte att stänga av.",
     "push_not_available": "Pushnotiser finns inte på den här servern.",
-    "unsubscribe_token_invalid": "Avregistreringslänken fungerar inte."
+    "unsubscribe_token_invalid": "Avregistreringslänken fungerar inte.",
+    "consent_purpose_not_asked": "Klubben ber inte om det här samtycket.",
+    "consent_not_applicable": "Samtycket gäller inte för en person med skyddad identitet.",
+    "consent_age_required": "Vid den här åldern bestämmer någon annan om samtycket.",
+    "consent_text_outdated": "Klubben har publicerat en ny text. Läs den och försök igen.",
+    "consent_text_language_required": "Skriv texten åtminstone på klubbens språk.",
+    "roles_must_be_removed": "Lämna dina uppdrag i klubben först.",
+    "outstanding_invoices": "Det finns fakturor från klubben som måste regleras först.",
+    "decision_required": "Inställningen beslutas av styrelsen: registrera beslutet på integritetssidan.",
+    "decision_invalid": "Beslutet är inte giltigt: kontrollera datumet och värdena.",
+    "guardian_must_leave": "En vårdnadshavare lämnar klubben åt dig."
   },
   "memberExport": {
     "columns": {
@@ -699,7 +710,9 @@
     "video_publication": "Publicering av video",
     "streaming": "Livesändning",
     "marketing": "Marknadsföring",
-    "federation_sharing": "Delning med förbund"
+    "federation_sharing": "Delning med förbund",
+    "contacts_group": "Kontaktuppgifter till laget",
+    "contacts_club": "Kontaktuppgifter till klubben"
   },
   "memberExports": {
     "title": "Exporter av medlemsregistret",
@@ -1558,6 +1571,12 @@
           "title": "Föreningens administratörer har ändrats",
           "body": "{club}"
         }
+      },
+      "privacy_policy": {
+        "updated": {
+          "title": "{club} har en ny integritetspolicy",
+          "body": "Läs vad som ändrats och vilket beslut det bygger på."
+        }
       }
     },
     "members": {
@@ -1613,6 +1632,18 @@
       "noClub": "Ditt konto och din familj",
       "unsubscribeCategory": "Inga fler mejl om {category}: {url}",
       "settings": "Ändra vilka mejl du får: {url}"
+    },
+    "membership": {
+      "left": {
+        "title": "En medlem har lämnat {club}",
+        "body": "Medlemskap, grupper och samtycken har avslutats."
+      }
+    },
+    "assignment": {
+      "ended": {
+        "title": "Någon har lämnat ett uppdrag i {club}",
+        "body": "Ett uppdrag har avslutats ({kind, select, role {en roll i klubben} group_function {en ledarfunktion} other {ett gruppägarskap}}). Se om det behöver en efterträdare."
+      }
     }
   },
   "notifyCategories": {
@@ -1681,5 +1712,159 @@
       "mandatory": "De här e-postmeddelandena går inte att stänga av.",
       "settings": "Inställningar för notiser"
     }
+  },
+  "consentTexts": {
+    "photo_publication": {
+      "v1": "{club} får publicera bilder där du (eller ditt barn) går att känna igen: på klubbens webbplats, i dess sociala medier och i tryckt material om klubbens verksamhet. Namn visas inte med bilderna om du inte samtycker till det separat. Du kan när som helst ta tillbaka samtycket; redan publicerade bilder tas bort när det rimligen går."
+    },
+    "video_publication": {
+      "v1": "{club} får publicera filmer där du (eller ditt barn) går att känna igen, till exempel från matcher, tävlingar och träningar, på klubbens webbplats och i dess sociala medier. Du kan när som helst ta tillbaka samtycket; redan publicerade filmer tas bort när det rimligen går."
+    },
+    "streaming": {
+      "v1": "{club} får sända matcher och tävlingar där du (eller ditt barn) deltar direkt och ha inspelningarna tillgängliga efteråt. Du kan när som helst ta tillbaka samtycket; det gäller från nästa sändning."
+    },
+    "marketing": {
+      "v1": "{club} får skicka information om klubbens egna erbjudanden, evenemang, sponsorer och insamlingar via e-post eller i appen. Du kan när som helst ta tillbaka samtycket; det påverkar inte meddelanden du behöver som medlem."
+    },
+    "federation_sharing": {
+      "v1": "{club} får dela ditt (eller ditt barns) namn, födelsedatum och medlemskap med de förbund klubben tillhör, utöver vad deras regler kräver (till exempel för statistik, försäkringserbjudanden eller förbundens egna nyhetsbrev). Du kan när som helst ta tillbaka samtycket."
+    },
+    "contacts_group": {
+      "v1": "De andra medlemmarna i dina (eller ditt barns) lag och grupper, och deras vårdnadshavare, får se det telefonnummer du delat med {club}, så att familjer och ledare kan nå varandra, till exempel för samåkning. Du kan när som helst ta tillbaka samtycket; det gäller direkt."
+    },
+    "contacts_club": {
+      "v1": "Alla i {club} får se det telefonnummer du delat med klubben, så att medlemmar kan nå dig. Du kan när som helst ta tillbaka samtycket; det gäller direkt."
+    }
+  },
+  "privacyPolicy": {
+    "noPurposes": "inga",
+    "v1": {
+      "controller": {
+        "title": "Vem som ansvarar",
+        "body": "{club} (organisationsnummer {organizationNumber}) är personuppgiftsansvarig för uppgifterna om sina medlemmar, deras vårdnadshavare och sina ledare. ClubAdmin behandlar uppgifterna för klubbens räkning."
+      },
+      "data": {
+        "title": "Vad vi sparar",
+        "body": "Namn, födelsedatum, de kontaktuppgifter du väljer att dela med klubben, medlemskap, lag och grupper, uppdrag, svar på aktiviteter och närvaro, anmälningar till evenemang och de samtycken du ger."
+      },
+      "purposes": {
+        "title": "Varför",
+        "body": "För att driva klubben: medlemskap, lag, aktiviteter, kommunikation, årsredovisning och bidragsansökningar. Det mesta behövs för ditt medlemskap; det som är frivilligt bygger på ditt samtycke."
+      },
+      "consents": {
+        "title": "Samtycken",
+        "body": "Klubben ber om dessa samtycken: {purposes}. Du ger eller tar tillbaka vart och ett för sig, när som helst, i ClubAdmin. Barn under samtyckesåldern företräds av sina vårdnadshavare."
+      },
+      "retention": {
+        "title": "Hur länge",
+        "body": "När du lämnat klubben sparar vi dina kontaktuppgifter i {formerMemberMonths} månader, därefter finns bara ditt medlemsnummer, dina medlemsdatum och medlemstyp, dina grupper och uppdrag kvar. Svar och närvaro sparas i {attendanceMonths} månader efter aktiviteten. Granskningsloggen sparas i {auditMonths} månader och ändringshistoriken i {historyMonths} månader. Personer utan inloggning och utan koppling till någon klubb raderas efter {orphanMonths} månader."
+      },
+      "recipients": {
+        "title": "Vem som får uppgifter",
+        "body": "De förbund klubben tillhör, i den omfattning deras regler kräver, och ClubAdmins leverantörer av drift, e-post och pushnotiser. Uppgifter säljs aldrig."
+      },
+      "rights": {
+        "title": "Dina rättigheter",
+        "body": "Du får se vilka uppgifter klubben har om dig, rätta dem, ladda ner dem, få dem raderade när de inte längre behövs, invända mot behandlingen och ta tillbaka dina samtycken. Du kan klaga hos Integritetsskyddsmyndigheten."
+      },
+      "contact": {
+        "title": "Kontakt",
+        "body": "Frågor om personuppgifter: {contact}."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Integritet",
+    "intro": "Välj vad dina klubbar får göra med dina och dina barns uppgifter, läs deras integritetspolicy och lämna en klubb.",
+    "consents": "Samtycken",
+    "noClubs": "Du är inte medlem i någon klubb.",
+    "noneAsked": "Klubben ber inte om några samtycken.",
+    "me": "Jag",
+    "policyLink": "Integritetspolicy",
+    "notApplicable": "Fotograferas, sänds och listas inte (skyddad identitet)",
+    "givenOn": "Givet {when} av {by}",
+    "notGiven": "Inte givet",
+    "newText": "Klubben har en ny text",
+    "give": "Ge",
+    "withdraw": "Ta tillbaka",
+    "readText": "Läs texten",
+    "consentGiven": "Samtycket är givet.",
+    "consentWithdrawn": "Samtycket är tillbakataget.",
+    "left": "Du har lämnat klubben.",
+    "steppedDown": "Du har lämnat uppdraget.",
+    "leaveSelf": "Lämna {club}",
+    "leaveFor": "{name} lämnar {club}",
+    "leaveTitle": "Lämna en klubb",
+    "leaveHeading": "Lämna {club}",
+    "ends": "Det här avslutas nu",
+    "endsItems": {
+      "membership": "Medlemskapet",
+      "groups": "Lag och grupper",
+      "join_requests": "Väntande ansökningar",
+      "waiting_lists": "Platser i köer",
+      "event_registrations": "Anmälningar till kommande evenemang",
+      "consents": "Samtycken till klubben"
+    },
+    "keeps": "Det här sparar klubben",
+    "keepsText": "Dina kontaktuppgifter i {months} månader efter att du lämnat, därefter bara medlemsnummer, medlemsdatum, grupper och uppdrag.",
+    "assignmentsFirst": "Du har uppdrag i klubben. Lämna vart och ett innan du lämnar klubben:",
+    "functionIn": "{function} i {group}",
+    "ownerOf": "Ägare av {group}",
+    "stepDown": "Lämna uppdraget",
+    "invoicesFirst": "{count, plural, one {Det finns en faktura} other {Det finns # fakturor}} från klubben att reglera först. Kontakta {role}.",
+    "removeNow": "Ta bort mina kontaktuppgifter från klubben nu",
+    "removeNowHint": "Bara medlemsnummer, medlemsdatum, grupper och uppdrag finns kvar, för klubbens rapporter.",
+    "leaveConfirm": "Ja, lämna {club}",
+    "leaveButton": "Lämna klubben",
+    "clubTitle": "Integritet",
+    "clubHeading": "Integritet i {club}",
+    "policy": "Integritetspolicy, version {version} (från {date})",
+    "versions": "Tidigare versioner:",
+    "versionShort": "{version} ({date})",
+    "rules": "Regler och beslut",
+    "decidedBy": "{body} {date}, {reference}",
+    "notDecided": "Standardvärde, ännu inte beslutat av styrelsen",
+    "bodies": {
+      "board": "Beslutat av styrelsen",
+      "annual_meeting": "Beslutat av årsmötet",
+      "extra_meeting": "Beslutat av extra möte"
+    },
+    "settings": {
+      "former_member_retention_months": "Tidigare medlemmars uppgifter sparas",
+      "attendance_retention_months": "Svar och närvaro sparas",
+      "consent_purposes": "Samtycken klubben ber om",
+      "consent_reconfirm_on_new_version": "En ny samtyckestext frågar alla igen"
+    },
+    "days": "dagar",
+    "months": "månader",
+    "pending": "{count, plural, one {Ett beslut börjar gälla senare.} other {# beslut börjar gälla senare.}}",
+    "texts": "Samtyckestexter",
+    "decisions": "Registrerade beslut",
+    "effectiveFrom": "gäller från {date}",
+    "recordDecision": "Registrera ett styrelsebeslut",
+    "recordHint": "De här inställningarna ändras bara genom beslut av styrelsen eller ett möte. ClubAdmin registrerar beslutet; kontrollera att det följer stadgarna.",
+    "body": "Beslutat av",
+    "decidedOn": "Beslutsdatum",
+    "reference": "Paragraf i protokollet (t.ex. § 7)",
+    "effectiveFromLabel": "Gäller från (tomt: beslutsdatum)",
+    "recordButton": "Registrera beslutet",
+    "decisionRecorded": "Beslutet är registrerat.",
+    "publishText": "Publicera en samtyckestext",
+    "publishButton": "Publicera som ny version",
+    "textPublished": "Texten är publicerad.",
+    "contact": "Kontakt för personuppgifter (e-post)",
+    "groupConsents": "Samtycken",
+    "groupConsentsOf": "Samtycken i {group}",
+    "purpose": "Samtycke",
+    "allPurposes": "Allt klubben ber om",
+    "show": "Visa",
+    "countOf": "{consented} av {total}",
+    "member": "Medlem",
+    "statusGiven": "Givet",
+    "statusMissing": "Saknas",
+    "statusNotApplicable": "Gäller inte",
+    "withdrawOnRequest": "Ta tillbaka på begäran",
+    "clubNote": "Anteckning (t.ex. pappersblankett augusti)",
+    "recordPaper": "Registrera pappersamtycke"
   }
 }

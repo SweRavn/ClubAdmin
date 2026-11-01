@@ -57,7 +57,8 @@
     "language": "Language and time zone",
     "sessions": "Where I am logged in",
     "logout": "Log out",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "privacy": "Privacy"
   },
   "viewingAs": {
     "label": "Viewing as",
@@ -666,7 +667,17 @@
     "devMfaLink": "To the login",
     "notification_mandatory": "These emails cannot be turned off.",
     "push_not_available": "Push notifications are not available on this server.",
-    "unsubscribe_token_invalid": "This unsubscribe link does not work."
+    "unsubscribe_token_invalid": "This unsubscribe link does not work.",
+    "consent_purpose_not_asked": "The club does not ask for this consent.",
+    "consent_not_applicable": "This consent does not apply to a person with protected identity.",
+    "consent_age_required": "This consent is decided by someone else at this age.",
+    "consent_text_outdated": "The club has published a new text. Read it and try again.",
+    "consent_text_language_required": "Write the text at least in the club's language.",
+    "roles_must_be_removed": "Step down from your assignments in the club first.",
+    "outstanding_invoices": "There are invoices from the club to settle first.",
+    "decision_required": "This setting is decided by the board: record the decision on the privacy page.",
+    "decision_invalid": "The decision is not valid: check the date and the values.",
+    "guardian_must_leave": "A guardian leaves the club for you."
   },
   "memberExport": {
     "columns": {
@@ -699,7 +710,9 @@
     "video_publication": "Video publication",
     "streaming": "Live streaming",
     "marketing": "Marketing",
-    "federation_sharing": "Sharing with federations"
+    "federation_sharing": "Sharing with federations",
+    "contacts_group": "Contact details to the team",
+    "contacts_club": "Contact details to the club"
   },
   "memberExports": {
     "title": "Exports of the member register",
@@ -1558,6 +1571,12 @@
           "title": "The club's managers changed",
           "body": "{club}"
         }
+      },
+      "privacy_policy": {
+        "updated": {
+          "title": "{club} has a new privacy policy",
+          "body": "Read what changed and which decision it rests on."
+        }
       }
     },
     "members": {
@@ -1613,6 +1632,18 @@
       "noClub": "Your account and family",
       "unsubscribeCategory": "No more emails about {category}: {url}",
       "settings": "Change which emails you get: {url}"
+    },
+    "membership": {
+      "left": {
+        "title": "A member left {club}",
+        "body": "Their membership, groups and consents have ended."
+      }
+    },
+    "assignment": {
+      "ended": {
+        "title": "Someone stepped down in {club}",
+        "body": "An assignment ended ({kind, select, role {a club role} group_function {a leader function} other {a group ownership}}). Check whether it needs a successor."
+      }
     }
   },
   "notifyCategories": {
@@ -1681,5 +1712,159 @@
       "mandatory": "These emails cannot be turned off.",
       "settings": "Notification settings"
     }
+  },
+  "consentTexts": {
+    "photo_publication": {
+      "v1": "{club} may publish photos in which you (or your child) can be recognised: on the club's website, in its social media and in printed material about the club's activities. Names are not shown with the photos unless you agree separately. You can withdraw this consent at any time; photos already published are taken down when that is reasonably possible."
+    },
+    "video_publication": {
+      "v1": "{club} may publish video recordings in which you (or your child) can be recognised, for example from matches, competitions and trainings, on the club's website and in its social media. You can withdraw this consent at any time; videos already published are taken down when that is reasonably possible."
+    },
+    "streaming": {
+      "v1": "{club} may broadcast matches and competitions live in which you (or your child) take part, and keep the recordings available afterwards. You can withdraw this consent at any time; it applies from the next broadcast."
+    },
+    "marketing": {
+      "v1": "{club} may send you information about its own offers, events, sponsors and fundraising by email or in the app. You can withdraw this consent at any time; it does not affect messages you need as a member."
+    },
+    "federation_sharing": {
+      "v1": "{club} may share your (or your child's) name, birth date and membership with the sports federations the club belongs to, beyond what their rules require (for example for statistics, insurance offers or the federations' own newsletters). You can withdraw this consent at any time."
+    },
+    "contacts_group": {
+      "v1": "The other members of your (or your child's) teams and groups, and their guardians, may see the phone number you shared with {club}, so that families and leaders can reach each other, for example for carpooling. You can withdraw this consent at any time; it applies at once."
+    },
+    "contacts_club": {
+      "v1": "Everyone in {club} may see the phone number you shared with the club, so that members can reach you. You can withdraw this consent at any time; it applies at once."
+    }
+  },
+  "privacyPolicy": {
+    "noPurposes": "none",
+    "v1": {
+      "controller": {
+        "title": "Who is responsible",
+        "body": "{club} (organisation number {organizationNumber}) is responsible for the personal data of its members, their guardians and its leaders. ClubAdmin processes the data on the club's behalf."
+      },
+      "data": {
+        "title": "What we keep",
+        "body": "Names, birth dates, the contact details you choose to share with the club, memberships, teams and groups, roles, answers to activities and attendance, registrations to events, and the consents you give."
+      },
+      "purposes": {
+        "title": "Why",
+        "body": "To run the club: membership, teams, activities, communication, annual reports and grant reports. Most of it is needed for your membership; what is optional is based on your consent."
+      },
+      "consents": {
+        "title": "Consents",
+        "body": "The club asks for these consents: {purposes}. You give or withdraw each one separately, at any time, in ClubAdmin. Children under the consent age are represented by their guardians."
+      },
+      "retention": {
+        "title": "How long",
+        "body": "After you leave the club we keep your contact details for {formerMemberMonths} months, then only your member number, your membership dates and type, your groups and roles remain. Answers and attendance are kept for {attendanceMonths} months after the activity. The audit log is kept for {auditMonths} months and the change history for {historyMonths} months. People without a login and without any connection to a club are deleted after {orphanMonths} months."
+      },
+      "recipients": {
+        "title": "Who receives data",
+        "body": "The sports federations the club belongs to, as their rules require, and ClubAdmin's suppliers of hosting, email and push notifications. Data is not sold."
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": "You may see the data the club holds about you, correct it, download it, have it deleted when it is no longer needed, object to processing and withdraw your consents. You may complain to the data protection authority."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "Questions about privacy: {contact}."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "Choose what your clubs may do with your and your children's data, read their privacy policies, and leave a club.",
+    "consents": "Consents",
+    "noClubs": "You are not a member of any club.",
+    "noneAsked": "This club asks for no consents.",
+    "me": "Me",
+    "policyLink": "Privacy policy",
+    "notApplicable": "Not photographed, streamed or listed (protected identity)",
+    "givenOn": "Given {when} by {by}",
+    "notGiven": "Not given",
+    "newText": "The club has a new text",
+    "give": "Give",
+    "withdraw": "Withdraw",
+    "readText": "Read the text",
+    "consentGiven": "The consent was given.",
+    "consentWithdrawn": "The consent was withdrawn.",
+    "left": "You have left the club.",
+    "steppedDown": "You have stepped down.",
+    "leaveSelf": "Leave {club}",
+    "leaveFor": "{name} leaves {club}",
+    "leaveTitle": "Leave a club",
+    "leaveHeading": "Leave {club}",
+    "ends": "What ends now",
+    "endsItems": {
+      "membership": "The membership",
+      "groups": "Teams and groups",
+      "join_requests": "Pending join requests",
+      "waiting_lists": "Places in waiting lists",
+      "event_registrations": "Registrations to coming events",
+      "consents": "Consents given to the club"
+    },
+    "keeps": "What the club keeps",
+    "keepsText": "Your contact details for {months} months after you leave, then only your member number, membership dates, groups and roles.",
+    "assignmentsFirst": "You have assignments in the club. Step down from each before you leave:",
+    "functionIn": "{function} in {group}",
+    "ownerOf": "Owner of {group}",
+    "stepDown": "Step down",
+    "invoicesFirst": "There {count, plural, one {is an invoice} other {are # invoices}} from the club to settle first. Contact the {role}.",
+    "removeNow": "Remove my contact details from the club now",
+    "removeNowHint": "Only your member number, membership dates, groups and roles stay, for the club's reports.",
+    "leaveConfirm": "Yes, leave {club}",
+    "leaveButton": "Leave the club",
+    "clubTitle": "Privacy",
+    "clubHeading": "Privacy in {club}",
+    "policy": "Privacy policy, version {version} (from {date})",
+    "versions": "Earlier versions:",
+    "versionShort": "{version} ({date})",
+    "rules": "Rules and decisions",
+    "decidedBy": "{body} {date}, {reference}",
+    "notDecided": "Default value, not yet decided by the board",
+    "bodies": {
+      "board": "Decided by the board",
+      "annual_meeting": "Decided by the annual meeting",
+      "extra_meeting": "Decided by an extra meeting"
+    },
+    "settings": {
+      "former_member_retention_months": "Former members' data kept",
+      "attendance_retention_months": "Answers and attendance kept",
+      "consent_purposes": "Consents the club asks for",
+      "consent_reconfirm_on_new_version": "A new consent text asks everyone again"
+    },
+    "days": "days",
+    "months": "months",
+    "pending": "{count, plural, one {A decision takes effect later.} other {# decisions take effect later.}}",
+    "texts": "Consent texts",
+    "decisions": "Recorded decisions",
+    "effectiveFrom": "in effect from {date}",
+    "recordDecision": "Record a board decision",
+    "recordHint": "These settings change only through a decision of the board or a meeting. ClubAdmin records the decision; check that it follows the statutes.",
+    "body": "Decided by",
+    "decidedOn": "Date of the decision",
+    "reference": "Minutes paragraph (e.g. § 7)",
+    "effectiveFromLabel": "In effect from (empty: the date of the decision)",
+    "recordButton": "Record the decision",
+    "decisionRecorded": "The decision was recorded.",
+    "publishText": "Publish a consent text",
+    "publishButton": "Publish as a new version",
+    "textPublished": "The text was published.",
+    "contact": "Privacy contact (email)",
+    "groupConsents": "Consents",
+    "groupConsentsOf": "Consents in {group}",
+    "purpose": "Consent",
+    "allPurposes": "All the club asks for",
+    "show": "Show",
+    "countOf": "{consented} of {total}",
+    "member": "Member",
+    "statusGiven": "Given",
+    "statusMissing": "Missing",
+    "statusNotApplicable": "Not applicable",
+    "withdrawOnRequest": "Withdraw on request",
+    "clubNote": "Note (e.g. paper form August)",
+    "recordPaper": "Record a paper consent"
   }
 }

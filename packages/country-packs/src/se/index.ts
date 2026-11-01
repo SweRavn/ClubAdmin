@@ -16,6 +16,9 @@ export const SE: CountryPack = {
   // GDPR consent age in Sweden is 13 (Lag 2018:218, 2 kap. 4 §).
   ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18 },
   normalizeOrganizationNumber: normalizeOrganisationsnummer,
+  // Former members (P1.8a): at least six months, so a member who left can
+  // still be found for the annual report and grant reports of the year.
+  retentionLimits: { former_member_retention_months: { min: 6 } },
   personalIdFormat: personalIdFormat(parsePersonnummer),
   localeDefaults: { locale: "sv-SE", timeZone: "Europe/Stockholm", currency: "SEK" },
   // Allmänna helgdagar (lag 1989:253) and the eves that are de facto days off

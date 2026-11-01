@@ -15,6 +15,19 @@ export const DOMAIN_EVENTS = {
   /** A club's plan, subscription status or access state changed (entitlements cache). */
   "club.entitlements.changed": z.object({ clubId: id }),
   "role.changed": z.object({ clubId: id, personId: id }),
+  /** The person left the club themselves (P1.8a): tell the managers and registrars. */
+  "membership.left": z.object({ clubId: id, personId: id }),
+  /** The person stepped down from a role, leader function or ownership (P1.8a). */
+  "assignment.ended": z.object({
+    clubId: id,
+    personId: id,
+    kind: z.enum(["role", "group_function", "group_owner"]),
+    groupId: id.optional(),
+  }),
+  /** A consent was given or withdrawn (P1.8a); later consumers (photos, streams) react. */
+  "consent.changed": z.object({ clubId: id, personId: id, purpose: z.string() }),
+  /** A new version of the club's privacy policy took effect (P1.8a): tell the members. */
+  "club.privacy_policy.published": z.object({ clubId: id, policyId: id }),
   "group.owner.changed": z.object({ clubId: id, groupId: id, personId: id }),
   "group.parent.changed": z.object({ clubId: id, groupId: id }),
   "guardianship.changed": z.object({ guardianPersonId: id, wardPersonId: id }),
