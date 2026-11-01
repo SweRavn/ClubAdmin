@@ -23,6 +23,11 @@ const DEV_ONLY = [
 const stub = path.join(__dirname, "src", "dev-only-stub.ts");
 
 const config = getDefaultConfig(__dirname);
+
+// Expo's transformer, wrapped to leave the web-only message namespaces out
+// of the bundle (metro-transformer.js). Set before the workers start.
+process.env.CLUBADMIN_UPSTREAM_TRANSFORMER ??= config.transformerPath;
+config.transformerPath = path.join(__dirname, "metro-transformer.js");
 if (variant !== "development") {
   config.resolver.resolveRequest = (context, moduleName, platform) => {
     const resolved = context.resolveRequest(context, moduleName, platform);

@@ -294,6 +294,11 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
     code is in it. At P0.10: 4.16 MiB on Android (4.2 MB on iOS). React
     Native, Expo Router and React Navigation make up most of it; the
     catalogues of all three languages and the licence list are about 0.1 MiB.
+    At P1.8a: 4.56 MiB, with the message namespaces only the web app, emails
+    and the server use left out of the app's catalogues
+    (`apps/mobile/src/i18n/web-only-namespaces.json`, applied by
+    `apps/mobile/metro-transformer.js`; a test keeps the app from using
+    them).
   - Cold start to Home with cached data, on a release build of the
     development variant on the CI Android emulator (API 34, x86_64,
     software rendering, no network needed for the first frame):
