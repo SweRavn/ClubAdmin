@@ -290,8 +290,9 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   (`/health/live`, not rate limited) is unchanged: p95 0.44 ms.
 - Mobile (P0.10, ADR 0028):
   - `pnpm --filter @clubadmin/mobile bundle:check` bundles the production
-    variant and fails above 4.6 MiB of Hermes bytecode, or if development-only
-    code is in it. At P0.10: 4.16 MiB on Android (4.2 MB on iOS). React
+    variant and fails above 20 MiB of Hermes bytecode (4.6 MiB until P1.8a;
+    an upper bound against accidental growth, cold start has its own
+    budget), or if development-only code is in it. At P0.10: 4.16 MiB on Android (4.2 MB on iOS). React
     Native, Expo Router and React Navigation make up most of it; the
     catalogues of all three languages and the licence list are about 0.1 MiB.
     At P1.8a: 4.56 MiB, with the message namespaces only the web app, emails

@@ -13,11 +13,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Budget for the Hermes bytecode bundle, set from the first measurement at
- * P0.10 (4.16 MiB on Android) plus about 10 % (docs/performance.md). Raise
- * it deliberately, with the reason, when a feature needs it.
+ * Budget for the Hermes bytecode bundle: an upper bound against accidental
+ * growth (a large dependency, data bundled by mistake), not a target. Set
+ * to 20 MiB at P1.8a (4.56 MiB then; it was 4.6 MiB from P0.10); Hermes
+ * maps the bytecode lazily, so cold start depends little on its size, and
+ * the cold-start measurement is the budget that guards it
+ * (docs/performance.md).
  */
-const BUDGET_BYTES = 4.6 * 1024 * 1024;
+const BUDGET_BYTES = 20 * 1024 * 1024;
 /** Strings that only development-only modules contain. */
 const FORBIDDEN = ["/api/v1/dev/tokens", "/api/v1/dev/personas", "persona-picker"];
 
