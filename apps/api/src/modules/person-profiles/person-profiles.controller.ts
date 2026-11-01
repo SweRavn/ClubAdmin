@@ -19,21 +19,25 @@ import {
 } from "../authorization/index.ts";
 import { GuardianshipsService } from "../guardianships/index.ts";
 import { PeopleService } from "../people/index.ts";
+import { ConsentsService } from "../privacy/index.ts";
 
 @Controller("people")
 export class PersonProfilesController {
   private readonly people: PeopleService;
   private readonly guardianships: GuardianshipsService;
   private readonly presenter: PersonProfilePresenter;
+  private readonly consents: ConsentsService;
 
   constructor(
     people: PeopleService,
     guardianships: GuardianshipsService,
     presenter: PersonProfilePresenter,
+    consents: ConsentsService,
   ) {
     this.people = people;
     this.guardianships = guardianships;
     this.presenter = presenter;
+    this.consents = consents;
   }
 
   @Endpoint({
@@ -52,12 +56,32 @@ export class PersonProfilesController {
     const context = resource.clubId ? tenantContext(authz, resource.clubId) : authz.context;
     const person = await this.people.getPerson(context, resource.personId);
 
-    const guardianships =
-      access === "member"
-        ? []
-        : (await this.guardianships.guardiansOf(context, resource.personId)).filter(
-            (g) => g.status === "active",
-          );
+    let guardianships = (await this.guardianships.guardiansOf(context, resource.personId)).filter(
+      (g) => g.status === "active",
+    );
+    // Others in the club see only the guardians who chose to show their
+    // contact details to the ward's groups or the whole club (P1.8a).
+    if (access === "member") {
+      const consents =
+        resource.clubId && !resource.inClub?.protected
+          ? await this.consents.contactConsentsOf(
+              tenantContext(authz, resource.clubId),
+              guardianships.map((g) => g.guardianPersonId),
+            )
+          : new Map<string, Set<string>>();
+      const sharesGroup = resource.groups.some(
+        (g) =>
+          authz.actor.isGroupMember(g.groupId) ||
+          authz.actor.isGuardianOfGroupMember(g.groupId, "act_on_behalf"),
+      );
+      guardianships = guardianships.filter((g) => {
+        const given = consents.get(g.guardianPersonId);
+        return (
+          given !== undefined &&
+          (given.has("contacts_club") || (sharesGroup && given.has("contacts_group")))
+        );
+      });
+    }
     const guardianPeople = new Map(
       (
         await this.people.getPeople(

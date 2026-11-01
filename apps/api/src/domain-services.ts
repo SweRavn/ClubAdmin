@@ -19,6 +19,12 @@ import { MembershipsService } from "./modules/memberships/index.ts";
 import { OnboardingService } from "./modules/onboarding/index.ts";
 import { PeopleService } from "./modules/people/index.ts";
 import { PersonMergeService } from "./modules/person-merge/index.ts";
+import {
+  ClubPrivacyService,
+  ConsentsService,
+  LeavingService,
+  type OutstandingObligationsProvider,
+} from "./modules/privacy/index.ts";
 import { RolesService } from "./modules/roles/index.ts";
 import type { FieldEncryption } from "./platform/crypto/field-encryption.ts";
 
@@ -41,6 +47,9 @@ export interface CoreServices {
   activities: ActivitiesService;
   attendance: AttendanceService;
   events: EventsService;
+  consents: ConsentsService;
+  clubPrivacy: ClubPrivacyService;
+  leaving: LeavingService;
 }
 
 export function createCoreServices(
@@ -51,6 +60,8 @@ export function createCoreServices(
     invitationTokenKey?: string;
     webUrl?: string;
     storage?: ObjectStorage | null;
+    /** What members owe their clubs (P1.8a; tests register a fake). */
+    obligations?: readonly OutstandingObligationsProvider[];
   },
 ): CoreServices {
   const { encryption } = options;
@@ -85,11 +96,25 @@ export function createCoreServices(
   });
   const activities = new ActivitiesService(db, clubs);
   const attendance = new AttendanceService(db, { clubs, people, memberships });
+  const events = new EventsService(db, { clubs, activities, attendance, encryption });
+  const consents = new ConsentsService(db, { clubs });
   return {
     encryption,
     activities,
     attendance,
-    events: new EventsService(db, { clubs, activities, attendance, encryption }),
+    events,
+    consents,
+    clubPrivacy: new ClubPrivacyService(db, { clubs }),
+    leaving: new LeavingService(db, {
+      clubs,
+      roles,
+      groups,
+      memberships,
+      joinRequests,
+      events,
+      consents,
+      obligations: options.obligations ?? [],
+    }),
     people,
     merge: new PersonMergeService(db, { people, profiles }),
     accounts,

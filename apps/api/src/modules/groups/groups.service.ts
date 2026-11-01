@@ -166,6 +166,54 @@ export class GroupsService {
     }
   }
 
+  /**
+   * Ends one of the person's group ownerships by its ID (stepping down,
+   * P1.8a); false if it is not theirs or not open.
+   */
+  async endOwnershipOfPersonInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+    ownershipId: string,
+  ): Promise<boolean> {
+    const groupId = await repo.endOwnershipOfPerson(tx, context.clubId, personId, ownershipId);
+    if (!groupId) return false;
+    await audit.record(tx, {
+      action: "group.owner.removed",
+      resourceType: "group_owner",
+      resourceId: ownershipId,
+    });
+    await outbox.publish(tx, "group.owner.changed", { clubId: context.clubId, groupId, personId });
+    return true;
+  }
+
+  /** The person's open group ownerships in the club (P1.8a). */
+  ownershipsOfPersonInTx(
+    tx: Tx,
+    clubId: string,
+    personId: string,
+  ): Promise<{ id: string; groupId: string }[]> {
+    return repo.ownershipsOfPerson(tx, clubId, personId);
+  }
+
+  /** Withdraws the person's open waiting-list entries in the club (leaving, P1.8a). */
+  async withdrawWaitlistEntriesOfPersonInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+  ): Promise<number> {
+    const ids = await repo.withdrawWaitlistEntriesOfPerson(tx, context.clubId, personId);
+    for (const id of ids) {
+      await audit.record(tx, {
+        action: "group.waitlist.withdrawn",
+        resourceType: "group_waitlist_entry",
+        resourceId: id,
+        changedFields: ["status"],
+      });
+    }
+    return ids.length;
+  }
+
   updateGroup(context: TenantContext, groupId: string, patch: UpdateGroupInput): Promise<Group> {
     return this.db.withTenant(context, async (tx) => {
       const data = definedOnly(parseInput(UpdateGroupSchema, patch));

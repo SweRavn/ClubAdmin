@@ -668,6 +668,31 @@ export class EventsService {
     });
   }
 
+  /**
+   * Cancels the person's registrations to coming events in the club when
+   * they leave it (P1.8a), whatever the cancellation deadline; freed places
+   * go to the next ones.
+   */
+  async cancelComingRegistrationsOfPersonInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+  ): Promise<number> {
+    const eventIds = await repo.comingOpenRegistrationEventIds(tx, context.clubId, personId);
+    for (const eventId of eventIds) {
+      const event = await repo.lockEvent(tx, eventId);
+      const current = event ? await repo.lockOpenRegistration(tx, eventId, personId) : null;
+      if (!event || !current) continue;
+      await this.endRegistration(tx, context, event, current, "cancelled");
+      await audit.record(tx, {
+        action: "event.registration.cancelled",
+        resourceType: "event_registration",
+        resourceId: current.id,
+      });
+    }
+    return eventIds.length;
+  }
+
   /** Accepts an offered place (until the offer expires, also after the sign-up closed). */
   acceptOffer(
     context: TenantContext,

@@ -40,6 +40,28 @@ export async function findActiveAssignment(
   return row ?? null;
 }
 
+/** An open role assignment of the person in the club, by ID, locked. */
+export async function lockOpenAssignmentOfPerson(
+  tx: Tx,
+  clubId: string,
+  personId: string,
+  id: string,
+): Promise<RoleAssignmentRow | null> {
+  const [row] = await tx
+    .select()
+    .from(roles)
+    .where(
+      and(
+        eq(roles.id, id),
+        eq(roles.clubId, clubId),
+        eq(roles.personId, personId),
+        isNull(roles.validTo),
+      ),
+    )
+    .for("update");
+  return row ?? null;
+}
+
 export async function activeAssignmentsOfPerson(
   tx: Tx,
   clubId: string,

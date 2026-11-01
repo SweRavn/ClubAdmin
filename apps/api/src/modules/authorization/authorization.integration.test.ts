@@ -749,6 +749,54 @@ describe("permission matrix", () => {
       body: { reason: "Duplicate" },
     },
     "GET /api/v1/me/events": { url: () => "/api/v1/me/events", expected: ALL_OK },
+    // Privacy (P1.8a). A person's consents: the family, administrators and
+    // the leaders of their groups; giving needs a note from administrators
+    // (400 without), withdrawing is open to the family and administrators.
+    "GET /api/v1/me/consents": { url: () => "/api/v1/me/consents", expected: ALL_OK },
+    "GET /api/v1/people/:personId/consents": {
+      url: () => `/api/v1/people/${m.child.id}/consents?clubId=${m.clubA.id}`,
+      expected: { ...PROFILE, member: 404 },
+    },
+    "PUT /api/v1/people/:personId/consents/:purpose": {
+      url: () => `/api/v1/people/${m.child.id}/consents/photo_publication?clubId=${m.clubA.id}`,
+      expected: { ...ALL_NOT_FOUND, parent: 200, manager: 400, registrar: 400 },
+      body: { textVersion: "default:1" },
+    },
+    "DELETE /api/v1/people/:personId/consents/:purpose": {
+      url: () => `/api/v1/people/${m.child.id}/consents/photo_publication?clubId=${m.clubA.id}`,
+      expected: { ...ALL_NOT_FOUND, parent: 200, manager: 200, registrar: 200 },
+    },
+    "GET /api/v1/groups/:groupId/consents": {
+      url: () => `/api/v1/groups/${m.team.id}/consents`,
+      expected: { ...TEAM_MANAGERS(200), registrar: 200 },
+    },
+    "GET /api/v1/clubs/:clubId/privacy": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/privacy`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/clubs/:clubId/privacy-policy": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/privacy-policy`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/clubs/:clubId/setting-decisions": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/setting-decisions`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/setting-decisions": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/setting-decisions`,
+      // club.settings.update needs a second factor: even the manager gets 403 here.
+      expected: CLUB_FORBIDDEN,
+      body: { body: "board", decidedOn: "2026-01-01", reference: "§ 1", settings: {} },
+    },
+    "GET /api/v1/clubs/:clubId/consent-texts": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/consent-texts?purpose=photo_publication`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/consent-texts": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/consent-texts`,
+      expected: CLUB_FORBIDDEN,
+      body: { purpose: "photo_publication", texts: { sv: "En text som är lång nog." } },
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {

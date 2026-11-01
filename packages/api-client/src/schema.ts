@@ -332,6 +332,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/consent-texts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's published texts of a consent purpose, and the platform default
+     * @description Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubPrivacy_textVersions"];
+    put?: never;
+    /**
+     * Publish the club's next version of a consent text
+     * @description Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["ClubPrivacy_publishText"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/duplicates": {
     parameters: {
       query?: never;
@@ -989,6 +1013,70 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/privacy": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's privacy rules: consents asked, texts, settings and the decisions behind them
+     * @description Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubPrivacy_privacyPage"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/privacy-policy": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's privacy policy in my language (current, or a given version)
+     * @description Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubPrivacy_policy"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/setting-decisions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's recorded decisions on its settings, newest first
+     * @description Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubPrivacy_decisions"];
+    put?: never;
+    /**
+     * Record a decision of the board (or a meeting) on the club's privacy settings
+     * @description Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["ClubPrivacy_recordDecision"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/settings": {
     parameters: {
       query?: never;
@@ -1417,6 +1505,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/groups/{groupId}/consents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Who in the group has consented to what (leaders: whom not to photograph)
+     * @description Requires permission `group.consents.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Consents_groupConsents"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/groups/{groupId}/events": {
     parameters: {
       query?: never;
@@ -1759,6 +1867,91 @@ export interface paths {
     };
     /** My clubs (or my ward's, with X-On-Behalf-Of): membership and roles */
     get: operations["Me_myClubs"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/clubs/{clubId}/assignments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My (or my child's) club roles, leader functions and group ownerships in a club */
+    get: operations["Leaving_assignments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/clubs/{clubId}/assignments/{assignmentId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Step down from a club role, a leader function or a group ownership */
+    delete: operations["Leaving_stepDown"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/clubs/{clubId}/leave": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Leave the club (myself, or my child) */
+    post: operations["Leaving_leave"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/clubs/{clubId}/leave-preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** What leaving the club ends, what the club keeps, and what must be settled first */
+    get: operations["Leaving_preview"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/consents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My consents and my children's, per club, with the texts in my language */
+    get: operations["Consents_mine"];
     put?: never;
     post?: never;
     delete?: never;
@@ -2341,6 +2534,50 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/people/{personId}/consents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A person's consents in a club (status; history for the family and administrators)
+     * @description Requires permission `person.consents.read` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Consents_personConsents"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/people/{personId}/consents/{purpose}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Give a consent for the club's current text (registrars: record a paper consent)
+     * @description Requires permission `person.consents.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Consents_give"];
+    post?: never;
+    /**
+     * Withdraw a consent, with immediate effect
+     * @description Requires permission `person.consents.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Consents_withdraw"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/people/{personId}/merge": {
     parameters: {
       query?: never;
@@ -2881,6 +3118,50 @@ export interface components {
       /** Format: uuid */
       nextCursor: string | null;
     };
+    ConsentTextVersions: {
+      /** @enum {string} */
+      purpose:
+        | "photo_publication"
+        | "video_publication"
+        | "streaming"
+        | "marketing"
+        | "federation_sharing"
+        | "contacts_group"
+        | "contacts_club";
+      current: string;
+      default: components["schemas"]["ConsentText"];
+      versions: {
+        textVersion: string;
+        texts: {
+          [key: string]: string;
+        };
+        /** Format: date-time */
+        publishedAt: string;
+        publishedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      }[];
+    };
+    ConsentText: {
+      textVersion: string;
+      body: string;
+      /** Format: date-time */
+      publishedAt: string | null;
+    };
+    PublishConsentText: {
+      /** @enum {string} */
+      purpose:
+        | "photo_publication"
+        | "video_publication"
+        | "streaming"
+        | "marketing"
+        | "federation_sharing"
+        | "contacts_group"
+        | "contacts_club";
+      texts: {
+        sv?: string;
+        en?: string;
+        nb?: string;
+      };
+    };
     ClubDuplicates: {
       items: {
         person: components["schemas"]["PersonSummary"];
@@ -3373,7 +3654,9 @@ export interface components {
           | "video_publication"
           | "streaming"
           | "marketing"
-          | "federation_sharing";
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
       };
       columns: (
         | "name"
@@ -3641,7 +3924,13 @@ export interface components {
         phone: string | null;
       }[];
       missingConsents?: (
-        "photo_publication" | "video_publication" | "streaming" | "marketing" | "federation_sharing"
+        | "photo_publication"
+        | "video_publication"
+        | "streaming"
+        | "marketing"
+        | "federation_sharing"
+        | "contacts_group"
+        | "contacts_club"
       )[];
     };
     AddMemberResult: {
@@ -3789,6 +4078,127 @@ export interface components {
         label: string;
         number: string;
       }[];
+    };
+    ClubPrivacy: {
+      /** Format: uuid */
+      clubId: string;
+      privacyContactEmail: string | null;
+      consentPurposes: (
+        | "photo_publication"
+        | "video_publication"
+        | "streaming"
+        | "marketing"
+        | "federation_sharing"
+        | "contacts_group"
+        | "contacts_club"
+      )[];
+      texts: (components["schemas"]["ConsentText"] & {
+        /** @enum {string} */
+        purpose:
+          | "photo_publication"
+          | "video_publication"
+          | "streaming"
+          | "marketing"
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
+      })[];
+      settings: {
+        key: string;
+        value?: unknown;
+        default?: unknown;
+        /** @enum {string} */
+        decidedBy: "board" | "manager";
+        min?: number;
+        max?: number;
+        /** @enum {string} */
+        unit?: "days" | "months";
+        decision: components["schemas"]["SettingDecisionRef"];
+      }[];
+      retention: {
+        key: string;
+        period:
+          | {
+              value: number;
+              /** @enum {string} */
+              unit: "hours" | "days" | "months" | "years";
+            }
+          | "until_erased";
+        setting: string | null;
+        installationSetting: string | null;
+        /** @enum {string} */
+        status: "implemented" | "planned";
+      }[];
+      pending: components["schemas"]["SettingDecisionRef"][];
+    };
+    SettingDecisionRef: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      body: "board" | "annual_meeting" | "extra_meeting";
+      /** Format: date */
+      decidedOn: string;
+      reference: string;
+      /** Format: date */
+      effectiveFrom: string;
+    } | null;
+    PrivacyPolicy: {
+      /** Format: uuid */
+      clubId: string;
+      version: number;
+      /** Format: date */
+      effectiveFrom: string;
+      templateVersion: number;
+      sections: {
+        key: string;
+        title: string;
+        body: string;
+      }[];
+      decisions: {
+        key: string;
+        decision: components["schemas"]["SettingDecisionRef"];
+      }[];
+      versions: {
+        version: number;
+        /** Format: date */
+        effectiveFrom: string;
+        decision: components["schemas"]["SettingDecisionRef"];
+      }[];
+    };
+    SettingDecisions: {
+      items: components["schemas"]["SettingDecision"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    SettingDecision: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      body: "board" | "annual_meeting" | "extra_meeting";
+      /** Format: date */
+      decidedOn: string;
+      reference: string;
+      /** Format: date */
+      effectiveFrom: string;
+      settings: {
+        [key: string]: unknown;
+      };
+      applied: boolean;
+      /** Format: date-time */
+      recordedAt: string;
+      recordedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+    };
+    RecordDecision: {
+      /** @enum {string} */
+      body: "board" | "annual_meeting" | "extra_meeting";
+      /** Format: date */
+      decidedOn: string;
+      reference: string;
+      /** Format: date */
+      effectiveFrom?: string;
+      settings: {
+        [key: string]: unknown;
+      };
     };
     SubscriptionResponse: {
       subscription: components["schemas"]["Subscription"];
@@ -4021,6 +4431,49 @@ export interface components {
       /** Format: uuid */
       nextCursor: string | null;
     };
+    GroupConsents: {
+      purposes: (
+        | "photo_publication"
+        | "video_publication"
+        | "streaming"
+        | "marketing"
+        | "federation_sharing"
+        | "contacts_group"
+        | "contacts_club"
+      )[];
+      counts: {
+        /** @enum {string} */
+        purpose:
+          | "photo_publication"
+          | "video_publication"
+          | "streaming"
+          | "marketing"
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
+        consented: number;
+        notApplicable: number;
+        total: number;
+      }[];
+      items: {
+        person: components["schemas"]["PersonSummary"];
+        consents: {
+          /** @enum {string} */
+          purpose:
+            | "photo_publication"
+            | "video_publication"
+            | "streaming"
+            | "marketing"
+            | "federation_sharing"
+            | "contacts_group"
+            | "contacts_club";
+          /** @enum {string} */
+          status: "given" | "missing" | "not_applicable";
+        }[];
+      }[];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
     GroupMemberList: {
       items: {
         person: components["schemas"]["PersonSummary"];
@@ -4210,6 +4663,9 @@ export interface components {
           | "person.guardians.manage"
           | "person.merge"
           | "person.own_login.invite"
+          | "person.consents.read"
+          | "person.consents.manage"
+          | "group.consents.read"
           | "club.guardians.manage"
           | "ops.backup.read"
           | "club.access_state.update"
@@ -4226,6 +4682,134 @@ export interface components {
         )[];
       }[];
     };
+    Assignments: {
+      /** Format: uuid */
+      personId: string;
+      /** Format: uuid */
+      clubId: string;
+      items: components["schemas"]["Assignment"][];
+    };
+    Assignment: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      kind: "role" | "group_function" | "group_owner";
+      /** @enum {string} */
+      role?:
+        | "chair"
+        | "vice_chair"
+        | "treasurer"
+        | "secretary"
+        | "board_member"
+        | "deputy_board_member"
+        | "auditor"
+        | "nomination_committee"
+        | "club_manager"
+        | "registrar"
+        | "safeguarding_officer"
+        | "communications"
+        | "staff";
+      /** Format: uuid */
+      groupId?: string;
+      groupName?: string;
+      /** @enum {string} */
+      function?:
+        "member" | "head_coach" | "assistant_coach" | "team_manager" | "physio" | "other_leader";
+      /** @enum {string|null} */
+      blockedBy: "last_club_manager" | null;
+    };
+    Empty: Record<string, never>;
+    LeaveClub: {
+      /** Format: uuid */
+      personId: string;
+      /** @default false */
+      removeNow: boolean;
+    };
+    LeavePreview: {
+      /** Format: uuid */
+      personId: string;
+      /** Format: uuid */
+      clubId: string;
+      clubName: string;
+      blockers: {
+        /** @enum {string} */
+        code: "roles_must_be_removed" | "outstanding_invoices" | "last_club_manager";
+        assignments?: components["schemas"]["Assignment"][];
+        count?: number;
+        /** @enum {string} */
+        contactRole?:
+          | "chair"
+          | "vice_chair"
+          | "treasurer"
+          | "secretary"
+          | "board_member"
+          | "deputy_board_member"
+          | "auditor"
+          | "nomination_committee"
+          | "club_manager"
+          | "registrar"
+          | "safeguarding_officer"
+          | "communications"
+          | "staff";
+      }[];
+      ends: (
+        | "membership"
+        | "groups"
+        | "join_requests"
+        | "waiting_lists"
+        | "event_registrations"
+        | "consents"
+      )[];
+      keeps: {
+        formerMemberRetentionMonths: number;
+      };
+    };
+    MyConsents: {
+      clubs: {
+        /** Format: uuid */
+        clubId: string;
+        clubName: string;
+        texts: (components["schemas"]["ConsentText"] & {
+          /** @enum {string} */
+          purpose:
+            | "photo_publication"
+            | "video_publication"
+            | "streaming"
+            | "marketing"
+            | "federation_sharing"
+            | "contacts_group"
+            | "contacts_club";
+        })[];
+        people: {
+          person: components["schemas"]["PersonSummary"];
+          purposes: components["schemas"]["ConsentStatus"][];
+        }[];
+      }[];
+    };
+    ConsentStatus: {
+      /** @enum {string} */
+      purpose:
+        | "photo_publication"
+        | "video_publication"
+        | "streaming"
+        | "marketing"
+        | "federation_sharing"
+        | "contacts_group"
+        | "contacts_club";
+      applicable: boolean;
+      consent: components["schemas"]["OpenConsent"];
+      mayGive: boolean;
+      mayWithdraw: boolean;
+    };
+    OpenConsent: {
+      textVersion: string;
+      current: boolean;
+      /** @enum {string} */
+      source: "self" | "guardian" | "club_record";
+      /** Format: date-time */
+      givenAt: string;
+      givenBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+    } | null;
     FamilyDuplicates: {
       pairs: {
         person: {
@@ -4839,6 +5423,41 @@ export interface components {
           | "foster_parent";
         phone?: string | null;
       }[];
+    };
+    PersonConsents: {
+      /** Format: uuid */
+      personId: string;
+      /** Format: uuid */
+      clubId: string;
+      purposes: components["schemas"]["ConsentStatus"][];
+      history?: components["schemas"]["ConsentHistoryEntry"][];
+      mayRecord: boolean;
+    };
+    ConsentHistoryEntry: {
+      /** @enum {string} */
+      purpose:
+        | "photo_publication"
+        | "video_publication"
+        | "streaming"
+        | "marketing"
+        | "federation_sharing"
+        | "contacts_group"
+        | "contacts_club";
+      textVersion: string;
+      /** @enum {string} */
+      source: "self" | "guardian" | "club_record";
+      /** Format: date-time */
+      givenAt: string;
+      givenBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** Format: date-time */
+      revokedAt: string | null;
+      /** @enum {string|null} */
+      revokedReason: "withdrawn" | "left_club" | "superseded" | "erased" | "not_applicable" | null;
+      clubNote?: string | null;
+    };
+    GiveConsent: {
+      textVersion: string;
+      clubNote?: string;
     };
     MergeResult: {
       /** Format: uuid */
@@ -6517,6 +7136,171 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ActivityPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubPrivacy_textVersions: {
+    parameters: {
+      query: {
+        purpose:
+          | "photo_publication"
+          | "video_publication"
+          | "streaming"
+          | "marketing"
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ConsentTextVersions"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubPrivacy_publishText: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PublishConsentText"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ConsentTextVersions"];
         };
       };
       /** @description Invalid request */
@@ -9312,7 +10096,9 @@ export interface operations {
           | "video_publication"
           | "streaming"
           | "marketing"
-          | "federation_sharing";
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
         sort?: "name" | "family_name" | "member_number" | "joined";
         order?: "asc" | "desc";
         cursor?: string;
@@ -9891,6 +10677,319 @@ export interface operations {
       };
     };
   };
+  ClubPrivacy_privacyPage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubPrivacy"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubPrivacy_policy: {
+    parameters: {
+      query?: {
+        version?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PrivacyPolicy"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubPrivacy_decisions: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingDecisions"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubPrivacy_recordDecision: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RecordDecision"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SettingDecision"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Clubs_updateSettings: {
     parameters: {
       query?: never;
@@ -9926,6 +11025,19 @@ export interface operations {
           groupOwnersAdmitToClub?: boolean;
           attendanceLockDays?: number;
           attendanceRetentionMonths?: number;
+          formerMemberRetentionMonths?: number;
+          consentPurposes?: (
+            | "photo_publication"
+            | "video_publication"
+            | "streaming"
+            | "marketing"
+            | "federation_sharing"
+            | "contacts_group"
+            | "contacts_club"
+          )[];
+          consentReconfirmOnNewVersion?: boolean;
+          /** Format: email */
+          privacyContactEmail?: string | null;
         };
       };
     };
@@ -12063,6 +13175,93 @@ export interface operations {
       };
     };
   };
+  Consents_groupConsents: {
+    parameters: {
+      query?: {
+        purpose?:
+          | "photo_publication"
+          | "video_publication"
+          | "streaming"
+          | "marketing"
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupConsents"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Events_groupEvents: {
     parameters: {
       query?: {
@@ -13327,6 +14526,341 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MyClubs"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Leaving_assignments: {
+    parameters: {
+      query?: {
+        personId?: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Assignments"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Leaving_stepDown: {
+    parameters: {
+      query?: {
+        personId?: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+        assignmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Empty"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Leaving_leave: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LeaveClub"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Empty"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Leaving_preview: {
+    parameters: {
+      query?: {
+        personId?: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LeavePreview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Consents_mine: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyConsents"];
         };
       };
       /** @description Not logged in */
@@ -15780,6 +17314,260 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["PersonProfile"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Consents_personConsents: {
+    parameters: {
+      query: {
+        clubId: string;
+      };
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PersonConsents"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Consents_give: {
+    parameters: {
+      query: {
+        clubId: string;
+      };
+      header?: never;
+      path: {
+        personId: string;
+        purpose:
+          | "photo_publication"
+          | "video_publication"
+          | "streaming"
+          | "marketing"
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["GiveConsent"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Empty"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Consents_withdraw: {
+    parameters: {
+      query: {
+        clubId: string;
+      };
+      header?: never;
+      path: {
+        personId: string;
+        purpose:
+          | "photo_publication"
+          | "video_publication"
+          | "streaming"
+          | "marketing"
+          | "federation_sharing"
+          | "contacts_group"
+          | "contacts_club";
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Empty"];
         };
       };
       /** @description Invalid request */

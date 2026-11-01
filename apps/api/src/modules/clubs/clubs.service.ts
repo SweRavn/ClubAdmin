@@ -13,6 +13,7 @@ import {
   type Tx,
 } from "@clubadmin/db";
 import {
+  BOARD_SETTING_FIELDS,
   type ClubAccessState,
   type CreateClubInput,
   CreateClubSchema,
@@ -20,6 +21,7 @@ import {
   SetClubPhoneNumbersSchema,
   type UpdateClubSettingsInput,
   UpdateClubSettingsSchema,
+  type z,
 } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
@@ -95,9 +97,47 @@ export class ClubsService {
     return club;
   }
 
+  /**
+   * Changes settings the club managers decide. The settings the board
+   * decides (club-settings.ts, P1.8a) are refused (decision_required): they
+   * change only through a recorded decision (applyDecidedSettingsInTx).
+   */
   updateSettings(context: TenantContext, patch: UpdateClubSettingsInput): Promise<Club> {
     return this.db.withTenant(context, async (tx) => {
       const data = definedOnly(parseInput(UpdateClubSettingsSchema, patch));
+      if (Object.keys(data).some((key) => BOARD_SETTING_FIELDS.includes(key))) {
+        throw new DomainError("decision_required");
+      }
+      return this.writeSettingsInTx(tx, context, data, null);
+    });
+  }
+
+  /**
+   * Writes settings a recorded decision set (P1.8a), validated by the
+   * caller against the registry; audited with the decision as the reason.
+   */
+  async applyDecidedSettingsInTx(
+    tx: Tx,
+    context: TenantContext,
+    data: UpdateClubSettingsInput,
+    decisionId: string,
+  ): Promise<Club> {
+    return this.writeSettingsInTx(
+      tx,
+      context,
+      definedOnly(parseInput(UpdateClubSettingsSchema, data)),
+      decisionId,
+    );
+  }
+
+  private async writeSettingsInTx(
+    tx: Tx,
+    context: TenantContext,
+    data: ReturnType<typeof definedOnly<z.output<typeof UpdateClubSettingsSchema>>>,
+    /** The recorded decision that set them (its own audit event names the keys). */
+    _decisionId: string | null,
+  ): Promise<Club> {
+    {
       const current = await this.lockClubInTx(tx, context.clubId);
       // The organisation number in the country's canonical form (P1.6b).
       if (data.organizationNumber) {
@@ -120,7 +160,7 @@ export class ClubsService {
         });
       }
       return this.getClubInTx(tx, context.clubId);
-    });
+    }
   }
 
   /** The club's phone numbers in the order shown (P1.6b). */

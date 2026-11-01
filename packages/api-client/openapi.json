@@ -1956,6 +1956,144 @@
           "nextCursor"
         ]
       },
+      "ConsentTextVersions": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "photo_publication",
+              "video_publication",
+              "streaming",
+              "marketing",
+              "federation_sharing",
+              "contacts_group",
+              "contacts_club"
+            ]
+          },
+          "current": {
+            "type": "string",
+            "pattern": "^(default|club):[1-9][0-9]*$"
+          },
+          "default": {
+            "$ref": "#/components/schemas/ConsentText"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "textVersion": {
+                  "type": "string",
+                  "pattern": "^(default|club):[1-9][0-9]*$"
+                },
+                "texts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "publishedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "publishedBy": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PersonSummary"
+                    },
+                    {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "textVersion",
+                "texts",
+                "publishedAt",
+                "publishedBy"
+              ]
+            }
+          }
+        },
+        "required": [
+          "purpose",
+          "current",
+          "default",
+          "versions"
+        ]
+      },
+      "ConsentText": {
+        "type": "object",
+        "properties": {
+          "textVersion": {
+            "type": "string",
+            "pattern": "^(default|club):[1-9][0-9]*$"
+          },
+          "body": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "textVersion",
+          "body",
+          "publishedAt"
+        ]
+      },
+      "PublishConsentText": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "photo_publication",
+              "video_publication",
+              "streaming",
+              "marketing",
+              "federation_sharing",
+              "contacts_group",
+              "contacts_club"
+            ]
+          },
+          "texts": {
+            "type": "object",
+            "properties": {
+              "sv": {
+                "type": "string",
+                "minLength": 20,
+                "maxLength": 4000
+              },
+              "en": {
+                "type": "string",
+                "minLength": 20,
+                "maxLength": 4000
+              },
+              "nb": {
+                "type": "string",
+                "minLength": 20,
+                "maxLength": 4000
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "purpose",
+          "texts"
+        ],
+        "additionalProperties": false
+      },
       "ClubDuplicates": {
         "type": "object",
         "properties": {
@@ -3730,7 +3868,9 @@
                   "video_publication",
                   "streaming",
                   "marketing",
-                  "federation_sharing"
+                  "federation_sharing",
+                  "contacts_group",
+                  "contacts_club"
                 ]
               }
             },
@@ -4558,7 +4698,9 @@
                 "video_publication",
                 "streaming",
                 "marketing",
-                "federation_sharing"
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
               ]
             }
           }
@@ -5118,6 +5260,441 @@
         },
         "required": [
           "numbers"
+        ],
+        "additionalProperties": false
+      },
+      "ClubPrivacy": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "privacyContactEmail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "consentPurposes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "photo_publication",
+                "video_publication",
+                "streaming",
+                "marketing",
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
+              ]
+            }
+          },
+          "texts": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ConsentText"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "purpose": {
+                      "type": "string",
+                      "enum": [
+                        "photo_publication",
+                        "video_publication",
+                        "streaming",
+                        "marketing",
+                        "federation_sharing",
+                        "contacts_group",
+                        "contacts_club"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "purpose"
+                  ]
+                }
+              ]
+            }
+          },
+          "settings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "value": {},
+                "default": {},
+                "decidedBy": {
+                  "type": "string",
+                  "enum": [
+                    "board",
+                    "manager"
+                  ]
+                },
+                "min": {
+                  "type": "integer"
+                },
+                "max": {
+                  "type": "integer"
+                },
+                "unit": {
+                  "type": "string",
+                  "enum": [
+                    "days",
+                    "months"
+                  ]
+                },
+                "decision": {
+                  "$ref": "#/components/schemas/SettingDecisionRef"
+                }
+              },
+              "required": [
+                "key",
+                "decidedBy",
+                "decision"
+              ]
+            }
+          },
+          "retention": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "period": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "number"
+                        },
+                        "unit": {
+                          "type": "string",
+                          "enum": [
+                            "hours",
+                            "days",
+                            "months",
+                            "years"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "unit"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "until_erased"
+                      ]
+                    }
+                  ]
+                },
+                "setting": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "installationSetting": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "implemented",
+                    "planned"
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "period",
+                "setting",
+                "installationSetting",
+                "status"
+              ]
+            }
+          },
+          "pending": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingDecisionRef"
+            }
+          }
+        },
+        "required": [
+          "clubId",
+          "privacyContactEmail",
+          "consentPurposes",
+          "texts",
+          "settings",
+          "retention",
+          "pending"
+        ]
+      },
+      "SettingDecisionRef": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string",
+            "enum": [
+              "board",
+              "annual_meeting",
+              "extra_meeting"
+            ]
+          },
+          "decidedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "id",
+          "body",
+          "decidedOn",
+          "reference",
+          "effectiveFrom"
+        ]
+      },
+      "PrivacyPolicy": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "templateVersion": {
+            "type": "integer"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "body": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "title",
+                "body"
+              ]
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "decision": {
+                  "$ref": "#/components/schemas/SettingDecisionRef"
+                }
+              },
+              "required": [
+                "key",
+                "decision"
+              ]
+            }
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "integer"
+                },
+                "effectiveFrom": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "decision": {
+                  "$ref": "#/components/schemas/SettingDecisionRef"
+                }
+              },
+              "required": [
+                "version",
+                "effectiveFrom",
+                "decision"
+              ]
+            }
+          }
+        },
+        "required": [
+          "clubId",
+          "version",
+          "effectiveFrom",
+          "templateVersion",
+          "sections",
+          "decisions",
+          "versions"
+        ]
+      },
+      "SettingDecisions": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingDecision"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "SettingDecision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string",
+            "enum": [
+              "board",
+              "annual_meeting",
+              "extra_meeting"
+            ]
+          },
+          "decidedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "applied": {
+            "type": "boolean"
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recordedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "body",
+          "decidedOn",
+          "reference",
+          "effectiveFrom",
+          "settings",
+          "applied",
+          "recordedAt",
+          "recordedBy"
+        ]
+      },
+      "RecordDecision": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "enum": [
+              "board",
+              "annual_meeting",
+              "extra_meeting"
+            ]
+          },
+          "decidedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "body",
+          "decidedOn",
+          "reference",
+          "settings"
         ],
         "additionalProperties": false
       },
@@ -6139,6 +6716,121 @@
           "nextCursor"
         ]
       },
+      "GroupConsents": {
+        "type": "object",
+        "properties": {
+          "purposes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "photo_publication",
+                "video_publication",
+                "streaming",
+                "marketing",
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
+              ]
+            }
+          },
+          "counts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "photo_publication",
+                    "video_publication",
+                    "streaming",
+                    "marketing",
+                    "federation_sharing",
+                    "contacts_group",
+                    "contacts_club"
+                  ]
+                },
+                "consented": {
+                  "type": "integer"
+                },
+                "notApplicable": {
+                  "type": "integer"
+                },
+                "total": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "purpose",
+                "consented",
+                "notApplicable",
+                "total"
+              ]
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "consents": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "photo_publication",
+                          "video_publication",
+                          "streaming",
+                          "marketing",
+                          "federation_sharing",
+                          "contacts_group",
+                          "contacts_club"
+                        ]
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "given",
+                          "missing",
+                          "not_applicable"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "purpose",
+                      "status"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "person",
+                "consents"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "purposes",
+          "counts",
+          "items",
+          "nextCursor"
+        ]
+      },
       "GroupMemberList": {
         "type": "object",
         "properties": {
@@ -6671,6 +7363,9 @@
                       "person.guardians.manage",
                       "person.merge",
                       "person.own_login.invite",
+                      "person.consents.read",
+                      "person.consents.manage",
+                      "group.consents.read",
                       "club.guardians.manage",
                       "ops.backup.read",
                       "club.access_state.update",
@@ -6699,6 +7394,377 @@
         },
         "required": [
           "clubs"
+        ]
+      },
+      "Assignments": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Assignment"
+            }
+          }
+        },
+        "required": [
+          "personId",
+          "clubId",
+          "items"
+        ]
+      },
+      "Assignment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "role",
+              "group_function",
+              "group_owner"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "chair",
+              "vice_chair",
+              "treasurer",
+              "secretary",
+              "board_member",
+              "deputy_board_member",
+              "auditor",
+              "nomination_committee",
+              "club_manager",
+              "registrar",
+              "safeguarding_officer",
+              "communications",
+              "staff"
+            ]
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "function": {
+            "type": "string",
+            "enum": [
+              "member",
+              "head_coach",
+              "assistant_coach",
+              "team_manager",
+              "physio",
+              "other_leader"
+            ]
+          },
+          "blockedBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "last_club_manager",
+              null
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "blockedBy"
+        ]
+      },
+      "Empty": {
+        "type": "object",
+        "properties": {}
+      },
+      "LeaveClub": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "removeNow": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "personId"
+        ],
+        "additionalProperties": false
+      },
+      "LeavePreview": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clubName": {
+            "type": "string"
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "roles_must_be_removed",
+                    "outstanding_invoices",
+                    "last_club_manager"
+                  ]
+                },
+                "assignments": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Assignment"
+                  }
+                },
+                "count": {
+                  "type": "integer"
+                },
+                "contactRole": {
+                  "type": "string",
+                  "enum": [
+                    "chair",
+                    "vice_chair",
+                    "treasurer",
+                    "secretary",
+                    "board_member",
+                    "deputy_board_member",
+                    "auditor",
+                    "nomination_committee",
+                    "club_manager",
+                    "registrar",
+                    "safeguarding_officer",
+                    "communications",
+                    "staff"
+                  ]
+                }
+              },
+              "required": [
+                "code"
+              ]
+            }
+          },
+          "ends": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "membership",
+                "groups",
+                "join_requests",
+                "waiting_lists",
+                "event_registrations",
+                "consents"
+              ]
+            }
+          },
+          "keeps": {
+            "type": "object",
+            "properties": {
+              "formerMemberRetentionMonths": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "formerMemberRetentionMonths"
+            ]
+          }
+        },
+        "required": [
+          "personId",
+          "clubId",
+          "clubName",
+          "blockers",
+          "ends",
+          "keeps"
+        ]
+      },
+      "MyConsents": {
+        "type": "object",
+        "properties": {
+          "clubs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "clubId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "clubName": {
+                  "type": "string"
+                },
+                "texts": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/ConsentText"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "photo_publication",
+                              "video_publication",
+                              "streaming",
+                              "marketing",
+                              "federation_sharing",
+                              "contacts_group",
+                              "contacts_club"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "purpose"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "people": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "person": {
+                        "$ref": "#/components/schemas/PersonSummary"
+                      },
+                      "purposes": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/ConsentStatus"
+                        }
+                      }
+                    },
+                    "required": [
+                      "person",
+                      "purposes"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "clubId",
+                "clubName",
+                "texts",
+                "people"
+              ]
+            }
+          }
+        },
+        "required": [
+          "clubs"
+        ]
+      },
+      "ConsentStatus": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "photo_publication",
+              "video_publication",
+              "streaming",
+              "marketing",
+              "federation_sharing",
+              "contacts_group",
+              "contacts_club"
+            ]
+          },
+          "applicable": {
+            "type": "boolean"
+          },
+          "consent": {
+            "$ref": "#/components/schemas/OpenConsent"
+          },
+          "mayGive": {
+            "type": "boolean"
+          },
+          "mayWithdraw": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "purpose",
+          "applicable",
+          "consent",
+          "mayGive",
+          "mayWithdraw"
+        ]
+      },
+      "OpenConsent": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "textVersion": {
+            "type": "string",
+            "pattern": "^(default|club):[1-9][0-9]*$"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "self",
+              "guardian",
+              "club_record"
+            ]
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "givenBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "textVersion",
+          "current",
+          "source",
+          "givenAt",
+          "givenBy"
         ]
       },
       "FamilyDuplicates": {
@@ -9025,6 +10091,140 @@
         "required": [
           "person"
         ]
+      },
+      "PersonConsents": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purposes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsentStatus"
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsentHistoryEntry"
+            }
+          },
+          "mayRecord": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "personId",
+          "clubId",
+          "purposes",
+          "mayRecord"
+        ]
+      },
+      "ConsentHistoryEntry": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "photo_publication",
+              "video_publication",
+              "streaming",
+              "marketing",
+              "federation_sharing",
+              "contacts_group",
+              "contacts_club"
+            ]
+          },
+          "textVersion": {
+            "type": "string",
+            "pattern": "^(default|club):[1-9][0-9]*$"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "self",
+              "guardian",
+              "club_record"
+            ]
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "givenBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "revokedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "revokedReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "withdrawn",
+              "left_club",
+              "superseded",
+              "erased",
+              "not_applicable",
+              null
+            ]
+          },
+          "clubNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "purpose",
+          "textVersion",
+          "source",
+          "givenAt",
+          "givenBy",
+          "revokedAt",
+          "revokedReason"
+        ]
+      },
+      "GiveConsent": {
+        "type": "object",
+        "properties": {
+          "textVersion": {
+            "type": "string",
+            "pattern": "^(default|club):[1-9][0-9]*$"
+          },
+          "clubNote": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "textVersion"
+        ],
+        "additionalProperties": false
       },
       "MergeResult": {
         "type": "object",
@@ -11364,6 +12564,227 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ActivityPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/consent-texts": {
+      "get": {
+        "operationId": "ClubPrivacy_textVersions",
+        "summary": "The club's published texts of a consent purpose, and the platform default",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "photo_publication",
+                "video_publication",
+                "streaming",
+                "marketing",
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
+              ]
+            },
+            "required": true,
+            "name": "purpose",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentTextVersions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "ClubPrivacy_publishText",
+        "summary": "Publish the club's next version of a consent text",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishConsentText"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentTextVersions"
                 }
               }
             }
@@ -15505,7 +16926,9 @@
                 "video_publication",
                 "streaming",
                 "marketing",
-                "federation_sharing"
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
               ]
             },
             "required": false,
@@ -16376,6 +17799,435 @@
         }
       }
     },
+    "/api/v1/clubs/{clubId}/privacy": {
+      "get": {
+        "operationId": "ClubPrivacy_privacyPage",
+        "summary": "The club's privacy rules: consents asked, texts, settings and the decisions behind them",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubPrivacy"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/privacy-policy": {
+      "get": {
+        "operationId": "ClubPrivacy_policy",
+        "summary": "The club's privacy policy in my language (current, or a given version)",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "required": false,
+            "name": "version",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyPolicy"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/setting-decisions": {
+      "get": {
+        "operationId": "ClubPrivacy_decisions",
+        "summary": "The club's recorded decisions on its settings, newest first",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingDecisions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "ClubPrivacy_recordDecision",
+        "summary": "Record a decision of the board (or a meeting) on the club's privacy settings",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingDecision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clubs/{clubId}/settings": {
       "patch": {
         "operationId": "Clubs_updateSettings",
@@ -16512,6 +18364,38 @@
                     "type": "integer",
                     "minimum": 12,
                     "maximum": 120
+                  },
+                  "formerMemberRetentionMonths": {
+                    "type": "integer",
+                    "minimum": 6,
+                    "maximum": 120
+                  },
+                  "consentPurposes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "photo_publication",
+                        "video_publication",
+                        "streaming",
+                        "marketing",
+                        "federation_sharing",
+                        "contacts_group",
+                        "contacts_club"
+                      ]
+                    },
+                    "maxItems": 7
+                  },
+                  "consentReconfirmOnNewVersion": {
+                    "type": "boolean"
+                  },
+                  "privacyContactEmail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 254,
+                    "format": "email"
                   }
                 },
                 "additionalProperties": false
@@ -19510,6 +21394,141 @@
         }
       }
     },
+    "/api/v1/groups/{groupId}/consents": {
+      "get": {
+        "operationId": "Consents_groupConsents",
+        "summary": "Who in the group has consented to what (leaders: whom not to photograph)",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.consents.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "photo_publication",
+                "video_publication",
+                "streaming",
+                "marketing",
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
+              ]
+            },
+            "required": false,
+            "name": "purpose",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupConsents"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/groups/{groupId}/events": {
       "get": {
         "operationId": "Events_groupEvents",
@@ -21212,6 +23231,466 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MyClubs"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/clubs/{clubId}/assignments": {
+      "get": {
+        "operationId": "Leaving_assignments",
+        "summary": "My (or my child's) club roles, leader functions and group ownerships in a club",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "personId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assignments"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/clubs/{clubId}/assignments/{assignmentId}": {
+      "delete": {
+        "operationId": "Leaving_stepDown",
+        "summary": "Step down from a club role, a leader function or a group ownership",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "assignmentId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "personId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/clubs/{clubId}/leave": {
+      "post": {
+        "operationId": "Leaving_leave",
+        "summary": "Leave the club (myself, or my child)",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaveClub"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/clubs/{clubId}/leave-preview": {
+      "get": {
+        "operationId": "Leaving_preview",
+        "summary": "What leaving the club ends, what the club keeps, and what must be settled first",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "personId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeavePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/consents": {
+      "get": {
+        "operationId": "Consents_mine",
+        "summary": "My consents and my children's, per club, with the texts in my language",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyConsents"
                 }
               }
             }
@@ -24539,6 +27018,369 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PersonProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/{personId}/consents": {
+      "get": {
+        "operationId": "Consents_personConsents",
+        "summary": "A person's consents in a club (status; history for the family and administrators)",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `person.consents.read` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonConsents"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/{personId}/consents/{purpose}": {
+      "delete": {
+        "operationId": "Consents_withdraw",
+        "summary": "Withdraw a consent, with immediate effect",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `person.consents.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "photo_publication",
+                "video_publication",
+                "streaming",
+                "marketing",
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
+              ]
+            },
+            "required": true,
+            "name": "purpose",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "Consents_give",
+        "summary": "Give a consent for the club's current text (registrars: record a paper consent)",
+        "tags": [
+          "privacy"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `person.consents.manage` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "photo_publication",
+                "video_publication",
+                "streaming",
+                "marketing",
+                "federation_sharing",
+                "contacts_group",
+                "contacts_club"
+              ]
+            },
+            "required": true,
+            "name": "purpose",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiveConsent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empty"
                 }
               }
             }

@@ -12,6 +12,9 @@ import { useCoreDatabase } from "./testing/core.ts";
 
 const c = useCoreDatabase();
 
+/** Club-owned tables the app role may not update at all. */
+const IMMUTABLE = ["club_privacy_policies", "club_setting_decisions", "consent_texts"];
+
 describe("tenant isolation of club-owned tables", () => {
   it("covers every table with club_id, plus clubs", async () => {
     const a = await buildClub(c.s);
@@ -55,7 +58,7 @@ describe("tenant isolation of club-owned tables", () => {
         VALUES (${a.id}, ${member.id}, 'Administrator', 'hourly', '2026-01-01')`);
       await tx.execute(sql`
         INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id)
-        VALUES (${a.id}, ${member.id}, 'photo_publication', 'v1', ${member.id})`);
+        VALUES (${a.id}, ${member.id}, 'photo_publication', 'default:1', ${member.id})`);
       await tx.execute(sql`
         INSERT INTO group_waitlist_entries (club_id, group_id, person_id, requested_by_person_id)
         VALUES (${a.id}, ${group.id}, ${family.child.id}, ${family.guardian.id})`);
@@ -119,6 +122,17 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO event_registrations (club_id, event_id, person_id, registered_by_person_id, status)
         VALUES (${a.id}, ${event.event.id}, ${member.id}, ${member.id}, 'confirmed')`);
+      // Privacy (P1.8a): a club text, a board decision and the policy version it published.
+      await tx.execute(sql`
+        INSERT INTO consent_texts (club_id, purpose, version, texts, published_by_person_id)
+        VALUES (${a.id}, 'photo_publication', 1, '{"sv": "Klubben får publicera bilder."}', ${a.manager.id})`);
+      await tx.execute(sql`
+        INSERT INTO club_setting_decisions (club_id, body, decided_on, reference, effective_from, settings, recorded_by_person_id)
+        VALUES (${a.id}, 'board', current_date, '§ 7', current_date + 30,
+                '{"former_member_retention_months": 12}', ${a.manager.id})`);
+      await tx.execute(sql`
+        INSERT INTO club_privacy_policies (club_id, version, template_version, settings, effective_from)
+        VALUES (${a.id}, 1, 1, '{}', current_date)`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(
@@ -143,10 +157,17 @@ describe("tenant isolation of club-owned tables", () => {
       await expectTenantIsolation(c.t.db, b.id, (tx) =>
         tx.execute(sql`SELECT * FROM ${t} WHERE club_id = ${a.id}`),
       );
-      const updated = await c.t.db.withTenant(outsider, (tx) =>
-        tx.execute(sql`UPDATE ${t} SET updated_at = now() WHERE club_id = ${a.id}`),
-      );
-      expect(updated.rowCount, `update ${table}`).toBe(0);
+      const updated = await c.t.db
+        .withTenant(outsider, (tx) =>
+          tx.execute(sql`UPDATE ${t} SET updated_at = now() WHERE club_id = ${a.id}`),
+        )
+        .catch((error: unknown) => error);
+      if (IMMUTABLE.includes(table)) {
+        // Published texts, policies and decisions are never updated by the app (P1.8a).
+        expect(updated, `update ${table}`).toMatchObject({ code: "42501" });
+      } else {
+        expect((updated as { rowCount: number }).rowCount, `update ${table}`).toBe(0);
+      }
       // Moving one of club B's rows into club A is refused by the policy's WITH CHECK.
       const { rows: own } = await c.t.query<{ n: number }>(
         "admin",

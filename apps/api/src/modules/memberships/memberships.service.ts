@@ -147,6 +147,61 @@ export class MembershipsService {
   }
 
   /**
+   * The person leaves the club themselves (P1.8a): the privacy module has
+   * checked that they hold no assignments; ends the membership and group
+   * memberships. Returns false if they had no open membership.
+   */
+  async leaveClubInTx(tx: Tx, context: TenantContext, personId: string): Promise<boolean> {
+    const membership = await repo.findOpenMembership(tx, context.clubId, personId);
+    if (!membership) return false;
+    await this.endMembershipInTx(tx, context, membership, new Date());
+    return true;
+  }
+
+  /** The person's open membership in the club, if any (status and since when). */
+  async openMembershipInTx(
+    tx: Tx,
+    clubId: string,
+    personId: string,
+  ): Promise<ClubMembership | null> {
+    return repo.findOpenMembership(tx, clubId, personId);
+  }
+
+  /** The person's leader functions (not plain membership) in the club's groups, open. */
+  leaderFunctionsOfPersonInTx(
+    tx: Tx,
+    clubId: string,
+    personId: string,
+  ): Promise<{ id: string; groupId: string; function: GroupFunction }[]> {
+    return repo.leaderFunctionsOfPerson(tx, clubId, personId);
+  }
+
+  /**
+   * Ends one of the person's group memberships (a leader function) by its ID
+   * (stepping down, P1.8a); false if it is not theirs or not open.
+   */
+  async endGroupMembershipOfPersonInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+    groupMembershipId: string,
+  ): Promise<boolean> {
+    const row = await repo.findGroupMembership(tx, groupMembershipId);
+    if (!row || row.validTo || row.personId !== personId || row.clubId !== context.clubId) {
+      return false;
+    }
+    await repo.endGroupMembership(tx, row.id);
+    await audit.record(tx, {
+      action: "group.membership.ended",
+      resourceType: "group_membership",
+      resourceId: row.id,
+      changedFields: ["valid_to"],
+    });
+    await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
+    return true;
+  }
+
+  /**
    * The member register's membership changes (P1.2, club.members.manage):
    * pause, resume, end (optionally on an earlier date; groups, group
    * ownerships and club roles end now) or change the membership type. Ending

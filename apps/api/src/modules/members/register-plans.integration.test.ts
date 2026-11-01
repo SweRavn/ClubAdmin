@@ -48,7 +48,7 @@ const LOAD_SQL = `
     SELECT lm.club_id, lg.id, lm.person_id
     FROM lm JOIN lc ON lc.id = lm.club_id JOIN lg ON lg.club_i = lc.i AND lg.i = (lc.i - 1) * 40 + 1 + lm.i % 40;
   INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id)
-    SELECT club_id, person_id, 'photo_publication', 'v1', person_id FROM lm WHERE i % 2 = 0;
+    SELECT club_id, person_id, 'photo_publication', 'default:1', person_id FROM lm WHERE i % 2 = 0;
   CREATE TABLE public.register_ids AS
     SELECT (SELECT id FROM lc WHERE i = 1) AS club, (SELECT id FROM lp WHERE i = 1) AS registrar,
            (SELECT id FROM lg WHERE i = 7) AS "group";

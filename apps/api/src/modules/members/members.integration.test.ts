@@ -139,7 +139,7 @@ describe("member register", () => {
     await t.query(
       "admin",
       `INSERT INTO consents (club_id, person_id, purpose, text_version, given_by_person_id)
-       VALUES ($1, $2, 'photo_publication', 'v1', $2)`,
+       VALUES ($1, $2, 'photo_publication', 'default:1', $2)`,
       [club.id, elsa.id],
     );
   });

@@ -125,6 +125,67 @@ export async function isOwnerOfAny(tx: Tx, groupIds: string[], personId: string)
   return rows[0]?.ok === true;
 }
 
+/** The person's open group ownerships in the club. */
+export async function ownershipsOfPerson(
+  tx: Tx,
+  clubId: string,
+  personId: string,
+): Promise<{ id: string; groupId: string }[]> {
+  return tx
+    .select({ id: groupOwners.id, groupId: groupOwners.groupId })
+    .from(groupOwners)
+    .where(
+      and(
+        eq(groupOwners.clubId, clubId),
+        eq(groupOwners.personId, personId),
+        isNull(groupOwners.validTo),
+      ),
+    )
+    .orderBy(groupOwners.groupId);
+}
+
+/** Ends one open ownership of the person by its ID; its group, or null. */
+export async function endOwnershipOfPerson(
+  tx: Tx,
+  clubId: string,
+  personId: string,
+  id: string,
+): Promise<string | null> {
+  const [row] = await tx
+    .update(groupOwners)
+    .set({ validTo: sql`now()` })
+    .where(
+      and(
+        eq(groupOwners.id, id),
+        eq(groupOwners.clubId, clubId),
+        eq(groupOwners.personId, personId),
+        isNull(groupOwners.validTo),
+      ),
+    )
+    .returning({ groupId: groupOwners.groupId });
+  return row?.groupId ?? null;
+}
+
+/** Withdraws the person's open waiting-list entries in the club; their IDs. */
+export async function withdrawWaitlistEntriesOfPerson(
+  tx: Tx,
+  clubId: string,
+  personId: string,
+): Promise<string[]> {
+  const rows = await tx
+    .update(groupWaitlistEntries)
+    .set({ status: "withdrawn" })
+    .where(
+      and(
+        eq(groupWaitlistEntries.clubId, clubId),
+        eq(groupWaitlistEntries.personId, personId),
+        inArray(groupWaitlistEntries.status, ["waiting", "offered"]),
+      ),
+    )
+    .returning({ id: groupWaitlistEntries.id });
+  return rows.map((r) => r.id);
+}
+
 export async function endOwner(tx: Tx, groupId: string, personId: string): Promise<string | null> {
   const [row] = await tx
     .update(groupOwners)

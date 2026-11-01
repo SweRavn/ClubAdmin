@@ -163,6 +163,8 @@ export interface PersonInClubRow {
   sharedFields: string[];
   protected: boolean;
   membership: { status: MembershipStatus; membershipType: MembershipType } | null;
+  /** Open contact consents in the club (P1.8a): who else may see the shared phone. */
+  contactConsents?: ("contacts_group" | "contacts_club")[];
 }
 
 /** The person's profile in the transaction's club (null if they never were a member). */
@@ -176,8 +178,13 @@ export async function loadPersonInClub(
     shared_fields: string[];
     protected: boolean;
     membership: PersonInClubRow["membership"];
+    contact_consents: ("contacts_group" | "contacts_club")[];
   }>(sql`
     SELECT cp.member_number, cp.shared_fields,
+      ARRAY(SELECT k.purpose FROM public.consents k
+            WHERE k.club_id = cp.club_id AND k.person_id = cp.person_id AND k.revoked_at IS NULL
+              AND k.purpose IN ('contacts_group', 'contacts_club')
+            ORDER BY k.purpose) AS contact_consents,
       cp.protected_identity_club OR coalesce(p.protected_identity, false) AS protected,
       (SELECT jsonb_build_object('status', m.status, 'membershipType', m.membership_type)
        FROM public.club_memberships m
@@ -192,6 +199,7 @@ export async function loadPersonInClub(
     sharedFields: row.shared_fields,
     protected: row.protected,
     membership: row.membership,
+    contactConsents: row.contact_consents,
   };
 }
 

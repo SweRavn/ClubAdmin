@@ -142,6 +142,21 @@ export const DOMAIN_ERRORS = {
   notification_mandatory: "validation",
   push_not_available: "conflict",
   unsubscribe_token_invalid: "bad-request",
+  // Privacy (P1.8a)
+  consent_purpose_not_asked: "conflict",
+  /** Photo, video, streaming and contact purposes for a protected person. */
+  consent_not_applicable: "conflict",
+  /** The person has not reached the consent age, or a guardian gives past it. */
+  consent_age_required: "forbidden",
+  consent_text_outdated: "conflict",
+  consent_text_language_required: "validation",
+  /** Leaving (or removing everything) while holding club roles, leader functions or ownerships. */
+  roles_must_be_removed: "conflict",
+  /** Leaving while invoices from the club are neither paid nor written off. */
+  outstanding_invoices: "conflict",
+  /** A board setting changed without a recorded decision. */
+  decision_required: "validation",
+  decision_invalid: "validation",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { and, eq, isNull, schema, sql, type Tx } from "@clubadmin/db";
+import { and, eq, isNull, ne, schema, sql, type Tx } from "@clubadmin/db";
 import type { GroupFunction } from "@clubadmin/shared";
 
 const { clubMemberships, groupMemberships } = schema;
@@ -101,6 +101,30 @@ export async function endGroupMembership(tx: Tx, id: string): Promise<void> {
     .update(groupMemberships)
     .set({ validTo: sql`now()` })
     .where(eq(groupMemberships.id, id));
+}
+
+/** The person's open leader functions (anything but plain membership) in the club's groups. */
+export async function leaderFunctionsOfPerson(
+  tx: Tx,
+  clubId: string,
+  personId: string,
+): Promise<{ id: string; groupId: string; function: GroupFunction }[]> {
+  return tx
+    .select({
+      id: groupMemberships.id,
+      groupId: groupMemberships.groupId,
+      function: groupMemberships.function,
+    })
+    .from(groupMemberships)
+    .where(
+      and(
+        eq(groupMemberships.clubId, clubId),
+        eq(groupMemberships.personId, personId),
+        isNull(groupMemberships.validTo),
+        ne(groupMemberships.function, "member"),
+      ),
+    )
+    .orderBy(groupMemberships.groupId, groupMemberships.function);
 }
 
 /** Ends all open group memberships of a person in the club; returns their IDs. */

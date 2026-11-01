@@ -12,7 +12,7 @@ import {
   type PersonProfile,
 } from "@clubadmin/shared";
 
-import type { ProfileAccess } from "../authorization.policy.ts";
+import { contactVisible, type ProfileAccess } from "../authorization.policy.ts";
 import type { PersonResource } from "../policy.ts";
 import type { RequestAuthorization } from "../request-authorization.ts";
 import type { PersonPresenter, PresentablePerson } from "./person.presenter.ts";
@@ -47,7 +47,18 @@ export class PersonProfilePresenter {
     const summary = await this.people.presentOne(authorization, resource.clubId, person);
     if (!summary) return null;
     const profile: PersonProfile = { person: summary };
-    if (access === "member") return profile;
+    if (access === "member") {
+      // Contact details the person (or their guardians) chose to show (P1.8a).
+      if (
+        contactVisible(authorization.actor, resource) &&
+        (resource.inClub?.sharedFields ?? []).includes("phone")
+      ) {
+        profile.phone = person.phone;
+      }
+      if (guardians.length > 0)
+        profile.guardians = await this.guardiansOf(authorization, resource, guardians);
+      return profile;
+    }
 
     const shared = new Set(resource.inClub?.sharedFields ?? []);
     const sees = (field: "phone" | "address" | "gender") =>
@@ -72,7 +83,16 @@ export class PersonProfilePresenter {
       };
     }
 
-    // Guardians (with their phone numbers) for whoever is responsible for the person.
+    profile.guardians = await this.guardiansOf(authorization, resource, guardians);
+    return profile;
+  }
+
+  /** Guardians (with their phone numbers) for whoever is responsible for the person. */
+  private async guardiansOf(
+    authorization: RequestAuthorization,
+    resource: PersonResource,
+    guardians: readonly ProfileGuardian[],
+  ): Promise<NonNullable<PersonProfile["guardians"]>> {
     const shown = new Map(
       (
         await this.people.present(
@@ -82,10 +102,9 @@ export class PersonProfilePresenter {
         )
       ).map((s) => [s.id, s]),
     );
-    profile.guardians = guardians.flatMap((g) => {
+    return guardians.flatMap((g) => {
       const person = shown.get(g.person.id);
       return person ? [{ person, kind: g.kind, phone: g.person.phone }] : [];
     });
-    return profile;
   }
 }

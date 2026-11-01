@@ -57,7 +57,31 @@ export function profileAccess(actor: Actor, resource: PersonResource): ProfileAc
   ) {
     return "member";
   }
+  // Contact details shown to the whole club (P1.8a): every insider sees the name and phone.
+  if (inClub.contactConsents?.includes("contacts_club") && actor.hasClubRelationship(clubId)) {
+    return "member";
+  }
   return null;
+}
+
+/**
+ * Whether a viewer with member access sees the person's shared phone
+ * (P1.8a): the person consented to show it to their groups (and the viewer
+ * shares one, or is the guardian of someone in one) or to the whole club.
+ * Never for a protected person.
+ */
+export function contactVisible(actor: Actor, resource: PersonResource): boolean {
+  const { clubId, inClub, groups } = resource;
+  if (!clubId || !inClub || inClub.protected) return false;
+  const consents = inClub.contactConsents ?? [];
+  if (consents.includes("contacts_club") && actor.hasClubRelationship(clubId)) return true;
+  return (
+    consents.includes("contacts_group") &&
+    groups.some(
+      (g) =>
+        actor.isGroupMember(g.groupId) || actor.isGuardianOfGroupMember(g.groupId, "act_on_behalf"),
+    )
+  );
 }
 
 const isAdmin = (actor: Actor, clubId: string) =>
@@ -435,6 +459,46 @@ export const POLICIES: readonly Policy[] = [
         (resource.clubId !== null &&
           resource.inClub?.membership != null &&
           isAdmin(actor, resource.clubId))),
+  ),
+  // Consents (P1.8a), in one club (clubId in the query). Status and history:
+  // the person, full guardians, club managers and registrars; status only
+  // for the owners and leaders of the person's groups (the service decides
+  // what each sees). Not members of the same group, relatives or support.
+  definePolicy("person.consents.read", "person", ({ actor, resource }) => {
+    const { personId, clubId, inClub, groups } = resource;
+    if (!clubId) return false;
+    if (actor.isSelf(personId) || actor.isFullGuardianOf(personId)) return true;
+    if (!inClub) return false;
+    return (
+      isAdmin(actor, clubId) ||
+      groups.some(
+        (g) =>
+          actor.ownsGroup({ clubId, groupId: g.groupId, ancestorIds: g.ancestorIds }) ||
+          actor.leadsGroup(g.groupId),
+      )
+    );
+  }),
+  // Giving and withdrawing: the person (the service requires the consent
+  // age), full guardians (the service allows giving below the consent age,
+  // withdrawing until the adult age, and their own contact purposes), and
+  // registrars and club managers recording a paper consent or a withdrawal
+  // on request. Never relatives, step or foster parents, contact persons or
+  // leaders.
+  definePolicy("person.consents.manage", "person", ({ actor, resource }) => {
+    const { personId, clubId, inClub } = resource;
+    if (!clubId) return false;
+    if (actor.isSelf(personId) || actor.isFullGuardianOf(personId)) return true;
+    return actor.onBehalfOf === null && inClub !== null && isAdmin(actor, clubId);
+  }),
+  // A group's consent overview (whom not to photograph): its leaders and
+  // owners (also of parent groups), club managers and registrars.
+  definePolicy(
+    "group.consents.read",
+    "group",
+    ({ actor, resource }) =>
+      isAdmin(actor, resource.clubId) ||
+      actor.ownsGroup(resource) ||
+      actor.leadsGroup(resource.groupId),
   ),
   // Guardianships as the club sees them (paper applications): club managers
   // and registrars. Ending a full guardian's guardianship needs a club

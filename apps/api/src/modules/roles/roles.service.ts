@@ -82,6 +82,33 @@ export class RolesService {
     });
   }
 
+  /**
+   * Ends one of the person's open roles by its ID (stepping down, P1.8a);
+   * false if it is not theirs or not open. The last club manager is refused.
+   */
+  async endRoleOfPersonInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+    assignmentId: string,
+  ): Promise<boolean> {
+    const assignment = await repo.lockOpenAssignmentOfPerson(
+      tx,
+      context.clubId,
+      personId,
+      assignmentId,
+    );
+    if (!assignment) return false;
+    if (assignment.role === "club_manager") await this.clubs.lockClubInTx(tx, context.clubId);
+    await this.endAssignmentInTx(tx, context, assignment);
+    return true;
+  }
+
+  /** The person's open roles in the club (stepping down and leaving, P1.8a). */
+  activeRolesOfPersonInTx(tx: Tx, clubId: string, personId: string): Promise<RoleAssignment[]> {
+    return repo.activeAssignmentsOfPerson(tx, clubId, personId);
+  }
+
   /** Ends every active role of a person in the club (leaving the club). */
   async endAllRolesInTx(tx: Tx, context: TenantContext, personId: string): Promise<void> {
     const assignments = await repo.activeAssignmentsOfPerson(tx, context.clubId, personId);

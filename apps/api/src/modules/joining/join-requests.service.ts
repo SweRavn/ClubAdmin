@@ -152,6 +152,23 @@ export class JoinRequestsService {
     });
   }
 
+  /** Withdraws the person's pending request to the club, if any (leaving, P1.8a). */
+  async withdrawPendingInTx(tx: Tx, context: TenantContext, personId: string): Promise<boolean> {
+    const pending = await repo.findPendingJoinRequest(tx, context.clubId, personId);
+    if (!pending) return false;
+    await repo.decideJoinRequest(tx, pending.id, {
+      status: "withdrawn",
+      decidedByPersonId: context.personId ?? null,
+    });
+    await audit.record(tx, {
+      action: "join_request.withdrawn",
+      resourceType: "join_request",
+      resourceId: pending.id,
+      changedFields: ["status", "decided_at"],
+    });
+    return true;
+  }
+
   /** The caller's and their wards' requests in all clubs. */
   mine(context: ActorContext, personIds: readonly string[]): Promise<JoinRequest[]> {
     return this.db.withActor(context, (tx) => repo.myJoinRequests(tx, personIds));

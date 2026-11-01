@@ -285,6 +285,21 @@ export async function countsOf(
   return map;
 }
 
+/** The person's open registrations to events in the club that have not ended (leaving, P1.8a). */
+export async function comingOpenRegistrationEventIds(
+  tx: Tx,
+  clubId: string,
+  personId: string,
+): Promise<string[]> {
+  const { rows } = await tx.execute<{ event_id: string }>(sql`
+    SELECT r.event_id FROM public.event_registrations r
+    JOIN public.events e ON e.club_id = r.club_id AND e.id = r.event_id
+    WHERE r.club_id = ${clubId} AND r.person_id = ${personId}
+      AND r.status IN ('confirmed', 'waitlisted', 'offered') AND e.ends_at > now()
+    ORDER BY r.event_id`);
+  return rows.map((r) => r.event_id);
+}
+
 /** The open registration (confirmed, waiting or offered) of a person, locked. */
 export async function lockOpenRegistration(
   tx: Tx,

@@ -30,9 +30,11 @@ export function createCoreServices(
     defaultCountry?: string;
     invitationTokenKey?: string;
     storage?: ObjectStorage | null;
+    obligations?: Parameters<typeof createServices>[1]["obligations"];
   } = {},
 ): CoreServices {
   return createServices(db, {
+    ...(options.obligations ? { obligations: options.obligations } : {}),
     ...(options.storage ? { storage: options.storage } : {}),
     encryption: options.encryption ?? testEncryption(),
     ...(options.defaultCountry ? { defaultCountry: options.defaultCountry } : {}),
