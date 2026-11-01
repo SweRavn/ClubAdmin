@@ -54,8 +54,9 @@ test the foundation by hand.
 | [P1.6 Events with sign-up forms, deadlines, capacity and waiting lists](P1.6-events-and-sign-up.md) | P1.5 |
 | [P1.6b Clean-up after hands-on testing: forms, groups, places, club settings, answers](P1.6b-cleanup-after-testing.md) | P1.6 |
 | [P1.7 Notifications: email, push, in-app; preferences](P1.7-notifications.md) | P1.6b |
-| [P1.8 Privacy: consents, download my data, leaving, erasure, retention](P1.8-privacy.md) (draft) | P1.7 |
-| [P1.9 Audit log and record-history UI](P1.9-audit-and-history-ui.md) (draft) | P1.8 |
+| [P1.8a Privacy I: consents, leaving, privacy policy, retention](P1.8a-consents-leaving-retention.md) | P1.7 |
+| [P1.8b Privacy II: download my data, account deletion, ward erasure](P1.8b-export-and-erasure.md) | P1.8a |
+| [P1.9 Audit log and record-history UI](P1.9-audit-and-history-ui.md) (draft) | P1.8b |
 | [P1.10 Groups admin, owners, hierarchy and waiting lists](P1.10-groups-admin-and-waiting-lists.md) (draft) | P1.7 |
 | [P1.11 Calendar subscriptions with answer links](P1.11-calendar-subscriptions.md) (draft) | P1.5 |
 | [P1.12 Protected identity UI and profile view log](P1.12-protected-identity-ui.md) (draft) | P1.9 |
