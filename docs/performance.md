@@ -100,6 +100,14 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   `activities_reminder_idx`, and daily retention from the creation
   indexes.
 
+- Privacy retention (P1.8a, `privacy-plans.integration.test.ts` in the
+  worker, as `clubadmin_retention`): on 100,000 members in 100 clubs, 15 %
+  of them former members, and 600,000 audit events, a club's former members
+  past the period come from `club_memberships_left_idx`, the orphans due
+  for erasure from `people_orphaned_idx`, and a batch of audit retention
+  from `events_created_idx`, deleted by primary key (`id = ANY(ARRAY(...))`;
+  `id IN (subquery)` scanned the whole table).
+
 ### Web
 - React Server Components and streaming for first load; client components only
   where interactive.

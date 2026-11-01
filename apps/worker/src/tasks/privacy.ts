@@ -14,7 +14,7 @@
 // - privacy:protection_changed: a protected person's photo, video, streaming
 //   and contact consents end (outbox, person.protection.changed).
 
-import { audit, type Database, outbox, type OutboxHandler, sql } from "@clubadmin/db";
+import { audit, type Database, outbox, type OutboxHandler, type SQL, sql } from "@clubadmin/db";
 import {
   CLUB_SETTINGS,
   type ClubSettingKey,
@@ -42,6 +42,45 @@ function requireRetention(
     logger.error("DATABASE_RETENTION_URL is not set: privacy jobs do nothing");
   }
   return options.retentionDb;
+}
+
+/**
+ * Former members of a club past the club's period whose data was not purged
+ * since they left (club_memberships_left_idx).
+ */
+export function formerMembersQuery(clubId: string, limit = BATCH): SQL {
+  return sql`
+      SELECT DISTINCT m.person_id
+      FROM public.club_memberships m
+      JOIN public.clubs c ON c.id = m.club_id
+      JOIN public.club_profiles p ON p.club_id = m.club_id AND p.person_id = m.person_id
+      WHERE m.club_id = ${clubId} AND m.status = 'left'
+        AND m.valid_to < now() - make_interval(months => c.former_member_retention_months)
+        AND (p.club_data_purged_at IS NULL OR p.club_data_purged_at < m.valid_to)
+        AND NOT EXISTS (SELECT 1 FROM public.club_memberships o
+                    WHERE o.club_id = m.club_id AND o.person_id = m.person_id
+                      AND o.valid_to IS NULL)
+      LIMIT ${limit}`;
+}
+
+/** People marked orphaned longer than the period (people_orphaned_idx). */
+export function orphansQuery(months: number, limit = BATCH): SQL {
+  return sql`
+    SELECT id FROM public.people
+    WHERE orphaned_since < now() - make_interval(months => ${months})
+    ORDER BY orphaned_since LIMIT ${limit}`;
+}
+
+/**
+ * One batch of audit events older than the period: found by events_created_idx,
+ * deleted by their keys (an IN subquery would scan the whole table).
+ */
+export function auditRetentionQuery(months: number): SQL {
+  return sql`
+    DELETE FROM audit.events WHERE id = ANY (ARRAY(
+      SELECT id FROM audit.events
+      WHERE created_at < now() - make_interval(months => ${months})
+      ORDER BY created_at LIMIT 10000))`;
 }
 
 /** Purges one person's club data and marks or clears them as orphaned. */
@@ -73,18 +112,7 @@ export async function runPrivacyRetention(
       // Former members past the club's period whose data was not purged since they left
       // (club_memberships_left_idx).
       const { rows } = await db.withSystem("privacy:retention", { clubId }, (tx) =>
-        tx.execute<{ person_id: string }>(sql`
-          SELECT DISTINCT m.person_id
-          FROM public.club_memberships m
-          JOIN public.clubs c ON c.id = m.club_id
-          JOIN public.club_profiles p ON p.club_id = m.club_id AND p.person_id = m.person_id
-          WHERE m.club_id = ${clubId} AND m.status = 'left'
-            AND m.valid_to < now() - make_interval(months => c.former_member_retention_months)
-            AND (p.club_data_purged_at IS NULL OR p.club_data_purged_at < m.valid_to)
-            AND NOT EXISTS (SELECT 1 FROM public.club_memberships o
-                            WHERE o.club_id = m.club_id AND o.person_id = m.person_id
-                              AND o.valid_to IS NULL)
-          LIMIT ${BATCH}`),
+        tx.execute<{ person_id: string }>(formerMembersQuery(clubId)),
       );
       let done = 0;
       for (const { person_id: personId } of rows) {
@@ -99,10 +127,7 @@ export async function runPrivacyRetention(
   let erased = 0;
   for (;;) {
     const { rows } = await db.withSystem("privacy:retention", {}, (tx) =>
-      tx.execute<{ id: string }>(sql`
-        SELECT id FROM public.people
-        WHERE orphaned_since < now() - make_interval(months => ${options.orphanRetentionMonths})
-        ORDER BY orphaned_since LIMIT ${BATCH}`),
+      tx.execute<{ id: string }>(orphansQuery(options.orphanRetentionMonths)),
     );
     for (const { id } of rows) {
       await db.withSystem("privacy:retention", {}, async (tx) => {
@@ -148,11 +173,7 @@ export async function runAuditRetention(db: Database, months: number): Promise<n
   let deleted = 0;
   for (;;) {
     const result = await db.withSystem("audit:retention", {}, (tx) =>
-      tx.execute(sql`
-        DELETE FROM audit.events WHERE id IN (
-          SELECT id FROM audit.events
-          WHERE created_at < now() - make_interval(months => ${months})
-          ORDER BY created_at LIMIT 10000)`),
+      tx.execute(auditRetentionQuery(months)),
     );
     deleted += result.rowCount ?? 0;
     if ((result.rowCount ?? 0) < 10_000) return deleted;
