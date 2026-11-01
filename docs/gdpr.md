@@ -54,10 +54,28 @@
   and push devices, and the person removed from others' notices; record
   history)
   and records the person in the deletion ledger; it is idempotent, so it is
-  run again for every ledger entry after a restore (ADR 0030). The erasure
-  job and its triggers (account deletion, retention) come in P1.8.
+  run again for every ledger entry after a restore (ADR 0030). Since P1.8a
+  it also clears join request, waiting-list and guardianship notes, the
+  invitations sent to the person's address and open consents.
+  Leaving a club yourself (P1.8a, ADR 0041) ends the membership, groups,
+  pending requests, waiting places, coming event registrations and
+  consents; it is refused while the person holds a club role, a leader
+  function or a group ownership (step down first) or has unsettled invoices
+  from the club. "Remove my contact details now" purges the club's data at
+  once. Former members are purged after the club's period and people
+  without a login and without any relationship are erased after
+  `ORPHAN_RETENTION_MONTHS` (worker `privacy:retention`, as
+  `clubadmin_retention`). Account deletion comes in P1.8b.
 - **Objection / consent withdrawal:** one click per consent; effects apply
-  immediately (e.g. hidden from photo galleries and streams).
+  immediately (e.g. hidden from photo galleries and streams). Consents are
+  given per purpose (photo, video, streaming, marketing, federation
+  sharing, contact details to the team or the club), for the club's current
+  text version, on `/me/privacy` and in the app (P1.8a). Legal basis:
+  Art. 6(1)(a), Art. 8 for minors through the country pack's consent age.
+- **Transparency:** each club has a privacy policy built from a versioned
+  template and its settings; settings the board decides change only through
+  a recorded decision, and the policy shows the decision each value rests
+  on (P1.8a, ADR 0037). Members are told when it changes.
 - Guardians exercise rights for children below the consent age; teenagers get
   increasing control as they approach adulthood (country pack rules).
 
@@ -65,28 +83,30 @@
 
 | Data | Default |
 |---|---|
-| Former member's profile | 2 years after leaving (allows re-joining, annual reports) |
-| Answers and attendance (P1.5) | The club's `attendance_retention_months` after the activity ended: at least 12 (the default), at most 120, a club setting (no page sets it yet; the club settings page will); a club that reports grants from its attendance sets it as long as the grant rules require (worker `attendance:retention`, [#18](https://github.com/SweRavn/ClubAdmin/issues/18)). Record history keeps the deleted rows for its own period |
-| Event registrations (P1.6) | As answers and attendance: the club's `attendance_retention_months` after the event ended (`attendance:retention`) |
-| Answers to sensitive sign-up questions (health, allergies, medication; P1.6) | 30 days after the event ended, then deleted (`app.purge_expired_event_data`); sealed with field-level encryption until then, shown only to organisers, the participant and guardians with `see_medical`, never in emails, logs or calendars |
-| Accounting records | 7 years (Bokföringslagen) |
-| Chat messages | Until room deleted, or club rule (e.g. 2 years) |
-| Background-check verification metadata | While role is held + 1 year |
-| Audit log | 2 years (security) |
-| Record history | 2 years (configurable); personal values scrubbed on erasure |
-| Join requests (decided) and invitations that can no longer be used, with their acceptances | 12 months after the last change (worker `joining:retention`, P1.1); pending requests and usable invitations stay |
-| Member register export files (P1.2) | 24 hours (worker `members:expire_exports`; the bucket's lifecycle rule deletes `exports/` after two days as a backstop); only the requester can download them, through a pre-signed link valid five minutes |
+| Former member's profile (retention: `former_member_profile`) | The club's `former_member_retention_months` after the last membership ended: default 24, between 6 and 120, decided by the club's board (P1.8a). Then contact details shared with the club, emergency contacts, the club's notes, consents and free text (notes on answers, join requests, waiting lists, sign-up answers) are cleared, also in the history; the member number, membership dates and type, groups and roles stay as facts for annual and grant reports (worker `privacy:retention`, `privacy.purge_former_member`). "Remove my contact details now" when leaving does the same at once |
+| Answers and attendance (P1.5; retention: `attendance`) | The club's `attendance_retention_months` after the activity ended: at least 12 (the default), at most 120, a club setting (no page sets it yet; the club settings page will); a club that reports grants from its attendance sets it as long as the grant rules require (worker `attendance:retention`, [#18](https://github.com/SweRavn/ClubAdmin/issues/18)). Record history keeps the deleted rows for its own period |
+| Event registrations (P1.6; retention: `event_registrations`) | As answers and attendance: the club's `attendance_retention_months` after the event ended (`attendance:retention`) |
+| Answers to sensitive sign-up questions (health, allergies, medication; P1.6; retention: `sensitive_event_answers`) | 30 days after the event ended, then deleted (`app.purge_expired_event_data`); sealed with field-level encryption until then, shown only to organisers, the participant and guardians with `see_medical`, never in emails, logs or calendars |
+| Accounting records (retention: `accounting_records`, planned) | 7 years (Bokföringslagen) |
+| Chat messages (retention: `chat_messages`, planned) | Until room deleted, or club rule (e.g. 2 years) |
+| Background-check verification metadata (retention: `background_checks`, planned) | While role is held + 1 year |
+| Audit log (retention: `audit_log`) | `AUDIT_RETENTION_MONTHS` (an installation setting, default 24, at least 12), deleted in batches by age (worker `audit:retention`, P1.8a) |
+| Record history (retention: `record_history`) | 2 years (configurable); personal values scrubbed on erasure |
+| Join requests (decided) and invitations that can no longer be used, with their acceptances (retention: `join_requests`) | 12 months after the last change (worker `joining:retention`, P1.1); pending requests and usable invitations stay |
+| Member register export files (P1.2; retention: `member_export_files`) | 24 hours (worker `members:expire_exports`; the bucket's lifecycle rule deletes `exports/` after two days as a backstop); only the requester can download them, through a pre-signed link valid five minutes |
 | Member register export records (who, when, which columns and filter, row count; no values) | Kept as part of the audit trail, like the audit log |
 | Member import files (P1.3b) | Deleted as soon as they are read (the bucket's lifecycle rule deletes `imports/` after two days as a backstop) |
-| Member import staging rows (the file's values, personal identity numbers sealed) | Seven days after the import ends or is cancelled; an import left in review for seven days is cancelled (worker `members:purge_imports`). The import record (who, when, counts) is kept like the audit log |
+| Member import staging rows (the file's values, personal identity numbers sealed; retention: `member_import_rows`) | Seven days after the import ends or is cancelled; an import left in review for seven days is cancelled (worker `members:purge_imports`). The import record (who, when, counts) is kept like the audit log |
 | Emails from an import file | Never stored on people (ADR 0020): only in the invitations sent (guardian and own-login invitations, deleted with them) |
-| Guardian and own-login invitations that were never accepted (P1.3) | 12 months after they expired or were revoked (worker `joining:retention`); accepted ones stay as the record of the guardianship or login |
+| Guardian and own-login invitations that were never accepted (P1.3; retention: `unaccepted_invitations`) | 12 months after they expired or were revoked (worker `joining:retention`); accepted ones stay as the record of the guardianship or login |
 | Merges (`people_merges`) | The record and what was moved stay for the 30-day undo period, then as the record of the merge (audit trail) |
 | Invitation email addresses | With the invitation (above); never logged, never in outbox or job payloads |
-| Notifications (P1.7): the inbox | 90 days after the notice was created (worker `notifications:retention`); texts hold no names (people are shown through the presenter when read) |
-| Notification deliveries (which channel, when, provider ticket; no texts or addresses) | 30 days |
-| Push devices (sealed Expo push token, platform) | Until logout, Expo reports the token unregistered, or 90 days after last use |
-| Backups | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
+| Notifications (P1.7): the inbox (retention: `notifications`) | 90 days after the notice was created (worker `notifications:retention`); texts hold no names (people are shown through the presenter when read) |
+| Notification deliveries (which channel, when, provider ticket; no texts or addresses; retention: `notification_deliveries`) | 30 days |
+| Push devices (sealed Expo push token, platform; retention: `push_devices`) | Until logout, Expo reports the token unregistered, or 90 days after last use |
+| People without a login and without any relationship (retention: `orphaned_people`) | Kept `ORPHAN_RETENTION_MONTHS` (an installation setting, default 36, at least 12) after their last relationship ended and every club purged them, in case a club or a guardian links them again; then erased (`privacy.erase_person`, worker `privacy:retention`). A new relationship clears the mark. Accounts with a login are never erased automatically (P1.8a) |
+| Restorable club profiles (retention: `restorable_club_profiles`, planned) | Deferred from P1.8 |
+| Backups (retention: `backups`) | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
 
 ## Protected identity
 

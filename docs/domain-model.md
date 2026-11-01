@@ -482,12 +482,51 @@ Person employed by a club: `title`, `starts_on`/`ends_on`, `employment_type`
 (permanent, fixed_term, hourly, volunteer_stipend), `hours_per_week`. Salary data
 lives in the `staff` module (later phase) with stricter access.
 
-### `consents`
-Purpose-based consents (photo/video publication, streaming, marketing, data
-sharing with federation). Given by the person or, for minors under the
-country's consent age, by a guardian. Timestamped, versioned text, revocable
-(`purpose`, `text_version`, `given_by_person_id`, `given_at`, `revoked_at`,
-`revoked_by_person_id`; one open consent per purpose).
+### `consents` (P1.8a, ADR 0041)
+Purpose-based consents, each given and withdrawn on its own for the whole
+club: photo and video publication, streaming, marketing, sharing with
+federations, and the contact purposes `contacts_group` (the phone the
+person shared with the club is visible to the other members of their
+groups and their guardians) and `contacts_club` (to everyone in the club).
+A guardian decides the contact purposes for their own phone (shown on a
+ward's card) only. The club chooses which purposes it asks for
+(`clubs.consent_purposes`, a board setting). Given by the person from the
+country pack's consent age, by a full guardian (parent, legal guardian
+with `act_on_behalf`) for a younger ward, or recorded from a paper form by
+a registrar or club manager (`source` `self`, `guardian`, `club_record`;
+`club_note`, never in audit events); a full guardian may withdraw until the
+adult age. Each records the text it was given for (`text_version`:
+`default:<n>`, the platform's versioned text, or `club:<n>`, the club's own
+immutable `consent_texts`). Revoked, never deleted by the app
+(`revoked_reason`: `withdrawn`, `left_club`, `superseded`, `erased`,
+`not_applicable`); one open consent per purpose. Photo, video, streaming
+and contact purposes do not apply to a protected person and end when the
+flag is set.
+
+### Board decisions and the privacy policy (P1.8a, ADR 0037, ADR 0041)
+Settings the club's board decides (`decidedBy: board` in the settings
+registry, `packages/shared` `club-settings.ts`: former members' period,
+attendance retention, the consents asked, reconfirming on a new text)
+change only through a recorded decision (`club_setting_decisions`: body,
+date, minutes reference, effective date, the values). A decision is
+applied when it takes effect (`app.apply_setting_decision`) and publishes
+the next version of the club's privacy policy (`club_privacy_policies`, a
+snapshot of the values); members and full guardians of members get a
+notice. Decisions, texts and policies are immutable; every insider reads
+them.
+
+### Leaving a club (P1.8a)
+A member leaves themselves (`POST /me/clubs/:clubId/leave`); a minor's full
+guardians leave for them. Refused while the person holds an assignment in
+the club (a club role, a leader function, a group ownership: they step
+down first, `DELETE /me/clubs/:clubId/assignments/:id`, or the club ends
+it; the last club manager hands over first) or has invoices from the club
+that are neither paid nor written off (`OutstandingObligations` providers).
+Ends the membership, group memberships, pending join requests, waiting-list
+places, registrations to coming events and consents in one transaction.
+"Remove my contact details now" runs the former-member purge at once;
+otherwise it runs `former_member_retention_months` after the end. Club
+managers and registrars get the notice `membership.left`.
 
 ### Activities and "My schedule" (P1.4, ADR 0034)
 - `locations` (club-owned): name (unique among the club's unarchived
@@ -745,6 +784,9 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `club.handover.respond` | handover | the proposed successor (accept, decline) and the proposer (cancel); nobody else learns that it exists |
 | `club.managers.claim` | club | the board chair, with MFA, when the club has no active manager |
 | `club.managers.reassign` | club | platform operators, with MFA (reason recorded; no access to club data) |
+| `person.consents.read` | person (`?clubId`) | the person, full guardians, club managers, registrars; status only for owners and leaders of the person's groups (P1.8a) |
+| `person.consents.manage` | person (`?clubId`) | the person (from the consent age), full guardians (giving below the consent age, withdrawing until the adult age, their own contact purposes), registrars and club managers (a paper consent with a note, withdrawing on request) |
+| `group.consents.read` | group | the group's leaders and owners (also of parent groups), club managers, registrars |
 
 Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
 `/me/preferences`, `/me/profile`, `/me/join-requests`,
@@ -774,7 +816,8 @@ shared them with it (`club_profiles.shared_fields`).
 | The person, guardian with `act_on_behalf` | everything: birth date, gender, phone, address, club profile (member number, membership, groups), guardians with phone numbers |
 | Club manager, registrar | birth date; shared phone, gender and address; member number, membership, groups; guardians with phone numbers |
 | Owner or leader of one of the person's groups | birth date, shared phone, member number, groups, guardians with phone numbers |
-| Same group, their guardians, support access | name only (never a protected person) |
+| Same group, their guardians, support access | name only (never a protected person); the shared phone with the person's `contacts_group` or `contacts_club` consent, and guardians who gave theirs (P1.8a) |
+| Anyone else in the club | nothing, or with the person's `contacts_club` consent the name and shared phone (never a protected person) |
 
 ## Age and child-safety rules (configured per country pack)
 

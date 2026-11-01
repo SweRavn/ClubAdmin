@@ -180,6 +180,15 @@ later phase. Backup and disaster recovery are in
   registrations and removals, and unsubscribes are audited
   (`account.notification_settings.updated`, `push_device.registered`,
   `push_device.removed`, `notifications.unsubscribed`).
+- Privacy (P1.8a, ADR 0041): retention and erasure run in the worker as
+  `clubadmin_retention` (its own `DATABASE_RETENTION_URL`); the app roles
+  cannot call `privacy.erase_person` or `privacy.purge_former_member`, nor
+  delete consents, audit events or history. Consents, consent texts,
+  board decisions and policy versions are audited (`consent.given`,
+  `consent.withdrawn`, `consent.recorded` without the club's note,
+  `consent_text.published`, `club.settings.decided`,
+  `club.privacy_policy.published`, `person.club_data.purged`). Leaving a
+  club and stepping down need a recent login (15 minutes).
 - Background-check documents are **never stored**; only type, verified date,
   verifier, validity end.
 - Personal data never written to logs, traces or error reports (redaction
@@ -247,7 +256,9 @@ later phase. Backup and disaster recovery are in
   resource, before/after field names (not values for sensitive fields), IP hash,
   request id, timestamp.
 - Audit events are also streamed to separate storage the application cannot
-  delete from.
+  delete from (planned; not yet implemented, see backup-restore.md).
+- Audit events are kept `AUDIT_RETENTION_MONTHS` (an installation setting,
+  default 24, at least 12) and then deleted by `audit:retention` (P1.8a).
 - Club managers can view their club's audit log; operators can see operator
   actions only.
 - **Record history** (ADR 0017): a database trigger on every table records

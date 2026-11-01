@@ -38,6 +38,22 @@ must not be able to destroy or read the backups.**
 - Separate operator accounts, with hardware-key MFA, for the backup provider.
 - Restore runbooks do not depend on production being reachable.
 
+### Erasure and immutable backups (P1.8a, ADR 0041)
+
+Backups cannot be changed (object lock), so erasure and purges never touch
+them: a person erased or purged today stays in the backups taken before,
+encrypted and unreadable without the backup keys, until those backups
+expire (35 days; monthly ones 12 months). Whenever a backup is restored,
+the deletion ledger (IDs of erased people, kept outside the backups and
+exported next to them) is replayed before the database is used, so erased
+people are erased again; the former-member purge runs again on its next
+daily run. No retention or erasure job deletes or rewrites a backup.
+
+Gaps known in the protection against ransomware (not fixed yet): the
+object storage replica is not object-locked, and the audit stream to
+separate append-only storage is not implemented. The ledger export must go
+to the same object-locked target as the database backups.
+
 ## Restore scenarios
 
 1. **Single club made a mistake** (deleted a team, wrong bulk import): restore

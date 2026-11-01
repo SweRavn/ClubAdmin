@@ -138,6 +138,11 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   | `GET /activities/:id/responses` (leaders) | 6 | 133 → 240 |
   | `GET /events/:id` | 14 | 76 → 128 |
   | `PUT` an answer | 9 | 105 → 166 |
+  | `GET /me/consents` (P1.8a) | 4 | 51 → 107 |
+  | `GET /groups/:id/consents` (a team) | 5 | 176 → 290 |
+  | `GET /people/:id/consents`, `PUT` a consent | 7, 6 | 36, 35 → 36, 34 |
+  | Club privacy page, policy, decisions, texts | 2–6 | 3–9 → 4–12 |
+  | Assignments, leave preview | 4, 5 | 6, 8 → 9, 12 |
 
   The busiest requests have room for fewer statements (an event's page reads
   each part separately); none grows with the data.

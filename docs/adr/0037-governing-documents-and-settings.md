@@ -1,7 +1,8 @@
 # 0037 — Governing documents: club settings taken from adopted documents
 
-**Status:** Accepted (design; the documents module comes in Phase 2, the
-settings registry it relies on in P1.8).
+**Status:** Accepted (design; the documents module comes in Phase 2; the
+settings registry it relies on exists since P1.8a: `packages/shared`
+`club-settings.ts`, with `decidedBy` and recorded board decisions, ADR 0041).
 
 **Context.** Clubs decide many of the values ClubAdmin needs at their
 annual meeting or in the board: how long former members' data is kept, how

@@ -159,7 +159,7 @@ club has roughly 10 named/central users plus generated players.
 | 16 | **Peter Sund** | 60 | yes | IKN **treasurer**; former SVK board member and **manager**, handed over to Anna last year → historic roles (valid_to in past); has a **pending manager hand-over** from Karin in IKN |
 | 17 | **Nora Lund** | 30 | invited | SVK new leader, **invitation pending** (not yet accepted) |
 | 18 | **Sofie Dahl** | 12 | no | Applied to FIL (J2014 preferred) through her mother: a **pending join request** (P1.1: no membership until approved) |
-| 19 | **Ola Former** | 34 | yes | Left SVK 2 years ago, scheduled for **anonymisation** → retention job |
+| 19 | **Ola Former** | 34 | yes | Left SVK 25 months ago: the first `privacy:retention` run purges his SVK profile (contact details, notes, consents); his account stays |
 | 20 | **Platform Operator** | — | yes | Operator account with **no** club access; one time-limited support grant to IKN |
 | 21 | **Emma Svensson** | 29 | yes | **Signed up without invitation, no club yet** → onboarding screen (find club / create club) |
 | 22 | **Henrik Malm** | 36 | yes | Self-signed-up, added his son **Viktor Malm** (8, no login, no email) via "Add child"; Viktor is **#2 on SVK F2017's waiting list**, which also created a pending club join request |
@@ -262,6 +262,23 @@ schedule (Ola left two years ago).
   parent over the last 90 days (about 600,000 at full size, adding about
   a minute), the latest unread, with push and daily-email deliveries for
   the last 30 days.
+- **Privacy** (P1.8a, ADR 0041, `apps/api/src/seed/steps/privacy.ts`, before
+  the notifications step so its events are not news): SVK's board decided
+  the former-member period (24 months) and the consents asked (photo, video,
+  contact details to the team and to the club) three months ago (§ 7), so
+  SVK's privacy policy is version 2; IKN's board asked for photo, streaming
+  and marketing a year ago (§ 12); FIL uses the defaults ("not yet
+  decided"). SVK published its own photo text a year ago and a new version
+  last month: Anna's consent for Elsa was given for the first, so she sees
+  "the club has a new text". Anna shows her phone to Elsa's team
+  (`contacts_group`), Mikael does not. Oskar (14) gave his own photo consent
+  in IKN and withdrew streaming. Johan recorded a paper consent for an F2017
+  player ("Pappersblankett augusti"). Nadia's photo consents are "not
+  applicable" (protected). A Herr senior player left SVK last week and
+  chose "remove my contact details now" (the worker purges them). Two people
+  without a login and without any club are orphaned: one 40 months ago
+  (erased by the first `privacy:retention` run), one 6 months ago. Erik's
+  leave preview lists his head-coach function in F2017 to step down from.
 - **Billing** (only with `BILLING_ENABLED=true`, P0.12): plans Free, Standard
   and the Streaming add-on; SVK on Standard with Streaming (active), IKN on
   Free (active), FIL in a Standard trial ending in ten days. With billing off

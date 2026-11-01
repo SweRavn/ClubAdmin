@@ -132,7 +132,7 @@ Planned modules (see `roadmap.md` for order):
 | `clubadmin_owner` | `pnpm db:migrate` | Owns schemas and tables; runs DDL. Never used by the apps. |
 | `clubadmin_app` | API, worker | DML on application tables, subject to RLS; insert-only on audit; read-only on history; no DDL, no `BYPASSRLS`. |
 | `clubadmin_operator` | operator tooling | Like the app role, but every change must identify an operator (`app.actor_kind = 'operator'`), or it is rejected. |
-| `clubadmin_retention` | retention and erasure jobs | May delete or scrub history and audit rows, across clubs. |
+| `clubadmin_retention` | retention and erasure jobs (the worker's `DATABASE_RETENTION_URL` handle, P1.8a) | May delete or scrub history and audit rows, across clubs; the only role that may call `privacy.erase_person` and `privacy.purge_former_member`. |
 
 `pnpm db:bootstrap` (superuser, idempotent) creates them from
 `packages/db/sql/roles.sql` and sets passwords from `DB_*_PASSWORD`;
@@ -536,6 +536,15 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `notifications:response_reminders`, `notifications:event_reminders` | every 15 minutes | Answer reminders to those who have not answered; sign-up reminders before an event's deadline, club by club |
 | `notifications:push_receipts` | every 15 minutes | Reads Expo's receipts; disables unregistered devices |
 | `notifications:retention` | daily 05:37 UTC | Deletes notices after 90 days, deliveries after 30, devices 90 days after last use |
+| `clubs:apply_decisions` | daily 00:17 UTC | Applies board decisions whose effective date has come (in the club's time zone) and publishes the club's next privacy policy (P1.8a) |
+| `privacy:retention` | daily 05:31 UTC | As `clubadmin_retention`: purges former members past their club's `former_member_retention_months` (`privacy.purge_former_member`), marks people without a login and without any relationship as orphaned, and erases them after `ORPHAN_RETENTION_MONTHS` (P1.8a, ADR 0041) |
+| `privacy:purge_member` | per request (leaving with "remove now") | The former-member purge at once, as `clubadmin_retention` |
+| `privacy:protection_changed` | per protection change (outbox handler `privacy`) | Ends a protected person's photo, video, streaming and contact consents |
+| `audit:retention` | daily 05:43 UTC | As `clubadmin_retention`: deletes audit events older than `AUDIT_RETENTION_MONTHS` in batches of 10,000 |
+
+The privacy jobs need `DATABASE_RETENTION_URL` (`clubadmin_retention`, one
+connection); without it the worker logs a warning at start and the jobs
+log an error and do nothing.
 
 Outbox handlers besides the authorization cache: `entitlements-cache`
 (`club.entitlements.changed` → Valkey channel `entitlements:invalidate`) and,
