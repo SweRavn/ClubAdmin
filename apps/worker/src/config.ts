@@ -14,13 +14,16 @@ export const workerConfigSchema = z
     ...notificationsConfigShape,
     /** clubadmin_app connection: jobs and their database work are subject to row-level security. */
     DATABASE_URL: z.string().min(1, "required: the worker stores its jobs in PostgreSQL"),
+    /**
+     * clubadmin_retention connection (P1.8a): the privacy jobs (former members,
+     * orphaned people, audit log, erasure). Without it they log an error and do nothing.
+     */
+    DATABASE_RETENTION_URL: z.string().optional(),
     /** Valkey of the API: domain events invalidate its authorization caches. */
     VALKEY_URL: z.string().optional(),
     WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(5),
     /** Fallback polling interval; jobs are normally picked up instantly via LISTEN/NOTIFY. */
     WORKER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(2_000),
-    /** Record history kept for this many months (ADR 0017). */
-    HISTORY_RETENTION_MONTHS: z.coerce.number().int().min(1).default(24),
     HISTORY_PARTITIONS_AHEAD: z.coerce.number().int().min(1).max(24).default(3),
     /** Transactional email (ADR 0032): an SMTP URL (smtp:// or smtps://, with credentials if needed). */
     SMTP_URL: z.string().optional(),

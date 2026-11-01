@@ -247,7 +247,7 @@ describe("a cancelled activity", () => {
     expect(await noticesOf(x.anna)).toHaveLength(1);
 
     const { deps, push } = delivery();
-    await deliverPush(deps, new Date());
+    await deliverPush(deps, noon);
     const toAnna = push.sent.filter((m) => m.to === x.annaToken);
     expect(toAnna).toHaveLength(1);
     expect(toAnna[0]).toMatchObject({ channelId: "schedule" });
@@ -443,7 +443,7 @@ describe("push failures", () => {
     const push = memoryPushProvider();
     push.unregistered.add(x.annaToken);
     const { deps } = delivery(memoryMailProvider(), push);
-    await deliverPush(deps, new Date());
+    await deliverPush(deps, noon);
     const { rows } = await t.query<{ disabled: boolean }>(
       "admin",
       `SELECT d.disabled_at IS NOT NULL AS disabled FROM push_devices d JOIN accounts a ON a.id = d.account_id
@@ -824,5 +824,54 @@ describe("every type reaches the right people", () => {
     const notices = await noticesOf(x.mikael);
     expect(notices.map((n) => [n.type, n.about_person_ids])).toEqual([["family.adult_ended", []]]);
     expect(await types(x.anna)).toEqual([]);
+  });
+});
+
+describe("privacy notices (P1.8a)", () => {
+  it("membership.left reaches the club managers and registrars, about the person", async () => {
+    const ids = await team();
+    const event = await publish(ids.club, "membership.left", {
+      clubId: ids.club,
+      personId: ids.elsa,
+    });
+    await outbox.dispatch(t.db, event, [handler()]);
+    expect(await noticesOf(ids.coach)).toMatchObject([
+      { type: "membership.left", about_person_ids: [ids.elsa] },
+    ]);
+    expect(await noticesOf(ids.anna)).toEqual([]);
+  });
+
+  it("assignment.ended reaches the club managers, not the person who stepped down", async () => {
+    const ids = await team();
+    const event = await publish(ids.club, "assignment.ended", {
+      clubId: ids.club,
+      personId: ids.anna,
+      kind: "group_function",
+      groupId: ids.group,
+    });
+    await outbox.dispatch(t.db, event, [handler()]);
+    expect(await noticesOf(ids.coach)).toMatchObject([{ type: "assignment.ended" }]);
+    expect(await noticesOf(ids.anna)).toEqual([]);
+  });
+
+  it("a new privacy policy reaches the members and the full guardians of members", async () => {
+    const ids = await team();
+    await t.query(
+      "admin",
+      `INSERT INTO club_memberships (club_id, person_id, status) VALUES ($1, $2, 'active'), ($1, $3, 'active')`,
+      [ids.club, ids.elsa, ids.coach],
+    );
+    const policyId = uuidv7();
+    const event = await publish(ids.club, "club.privacy_policy.published", {
+      clubId: ids.club,
+      policyId,
+    });
+    await outbox.dispatch(t.db, event, [handler()]);
+    for (const person of [ids.coach, ids.anna, ids.mikael]) {
+      expect(await noticesOf(person)).toMatchObject([{ type: "club.privacy_policy.updated" }]);
+    }
+    // A relative and a contact person are not told.
+    expect(await noticesOf(ids.gunilla)).toEqual([]);
+    expect(await noticesOf(ids.nils)).toEqual([]);
   });
 });

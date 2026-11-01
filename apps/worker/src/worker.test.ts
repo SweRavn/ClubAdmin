@@ -18,7 +18,7 @@ const taskList = createTaskList({
 });
 
 describe("worker", () => {
-  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining and attendance retention, export expiry, import purging and notifications; every cron task exists", () => {
+  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining and attendance retention, export expiry, import purging, notifications and privacy; every cron task exists", () => {
     const items = parseCrontab(crontab);
     expect(items.map((i) => i.task)).toEqual([
       "heartbeat",
@@ -34,6 +34,9 @@ describe("worker", () => {
       "notifications:event_reminders",
       "notifications:push_receipts",
       "notifications:retention",
+      "clubs:apply_decisions",
+      "privacy:retention",
+      "audit:retention",
     ]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
   });
@@ -41,6 +44,8 @@ describe("worker", () => {
   it("has a task for the jobs database triggers enqueue (outbox, member exports)", () => {
     expect(taskList["outbox:dispatch"]).toBeTypeOf("function");
     expect(taskList["members:export"]).toBeTypeOf("function");
+    expect(taskList["privacy:purge_member"]).toBeTypeOf("function");
+    expect(taskList["privacy:protection_changed"]).toBeTypeOf("function");
   });
 
   it("requires DATABASE_URL", () => {

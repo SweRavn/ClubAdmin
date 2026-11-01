@@ -104,6 +104,9 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "event.changed",
       "event.registration.changed",
       "account.email.changed",
+      "membership.left",
+      "assignment.ended",
+      "club.privacy_policy.published",
       ...MOVED_EVENTS,
     ],
     async handle(event, tx) {
@@ -307,6 +310,86 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `account:${event.idempotencyKey}`,
             },
           ]);
+          return;
+        }
+        // Privacy (P1.8a): a member left; someone stepped down; a new policy.
+        case "membership.left": {
+          const { clubId, personId } = DOMAIN_EVENTS["membership.left"].parse(event.payload);
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            SELECT DISTINCT person_id FROM public.club_role_assignments
+            WHERE club_id = ${clubId} AND role IN ('club_manager', 'registrar')
+              AND valid_to IS NULL AND person_id <> ${personId}`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId,
+              type: "membership.left" as const,
+              subjectType: "club_membership",
+              subjectId: null,
+              about: [personId],
+              params: {},
+              dedupeKey: `membership.left:${event.idempotencyKey}`,
+            })),
+          );
+          return;
+        }
+        case "assignment.ended": {
+          const { clubId, personId, kind, groupId } = DOMAIN_EVENTS["assignment.ended"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM public.club_role_assignments
+            WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL
+            UNION
+            SELECT person_id FROM public.group_owners
+            WHERE club_id = ${clubId} AND group_id = ${groupId ?? null}::uuid AND valid_to IS NULL`);
+          await notify(
+            tx,
+            rows
+              .filter((r) => r.person_id !== personId)
+              .map((r) => ({
+                recipientPersonId: r.person_id,
+                clubId,
+                type: "assignment.ended" as const,
+                subjectType: "club",
+                subjectId: clubId,
+                about: [personId],
+                params: { kind },
+                dedupeKey: `assignment.ended:${event.idempotencyKey}`,
+              })),
+          );
+          return;
+        }
+        case "club.privacy_policy.published": {
+          const { clubId, policyId } = DOMAIN_EVENTS["club.privacy_policy.published"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          // Members and the full guardians of members (one statement each).
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            SELECT m.person_id FROM public.club_memberships m
+            WHERE m.club_id = ${clubId} AND m.valid_to IS NULL AND m.status IN ('active', 'paused')`);
+          const recipients = await withGuardians(
+            tx,
+            rows.map((r) => r.person_id),
+            ["act_on_behalf"],
+          );
+          await notify(
+            tx,
+            [...recipients.keys()].map((recipient) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type: "club.privacy_policy.updated" as const,
+              subjectType: "club_privacy_policy",
+              subjectId: policyId,
+              about: [],
+              params: {},
+              dedupeKey: `club.privacy_policy:${policyId}`,
+            })),
+          );
           return;
         }
         default:

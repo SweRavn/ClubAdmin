@@ -24,6 +24,14 @@ import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
 import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
+import {
+  applyDecisionsTask,
+  auditRetentionTask,
+  type PrivacyJobOptions,
+  privacyRetentionTask,
+  protectionChangedTask,
+  purgeMemberTask,
+} from "./privacy.ts";
 
 export interface TaskDependencies {
   db: Database;
@@ -36,6 +44,8 @@ export interface TaskDependencies {
   defaultCountry?: string;
   /** Notifications (P1.7): delivery by email and push; without it nothing is delivered. */
   delivery?: Omit<DeliveryDependencies, "db"> | undefined;
+  /** Privacy jobs (P1.8a): the retention handle and the installation's periods. */
+  privacy?: PrivacyJobOptions | undefined;
 }
 
 /** Does nothing; used to check that jobs are picked up. */
@@ -106,6 +116,22 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "members:purge_imports": purgeMemberImportsTask(deps.db, deps.storage ?? null),
     "billing:generate_invoices": generateInvoicesTask,
     ...notificationTasks(deps),
+    ...privacyTasks(deps),
+  };
+}
+
+function privacyTasks(deps: TaskDependencies): TaskList {
+  const options: PrivacyJobOptions = deps.privacy ?? {
+    retentionDb: null,
+    orphanRetentionMonths: 36,
+    auditRetentionMonths: 24,
+  };
+  return {
+    "privacy:retention": privacyRetentionTask(options),
+    "privacy:purge_member": purgeMemberTask(options),
+    "privacy:protection_changed": protectionChangedTask(options),
+    "audit:retention": auditRetentionTask(options),
+    "clubs:apply_decisions": applyDecisionsTask(deps.db, options),
   };
 }
 
@@ -141,7 +167,9 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * exports every ten minutes and member import staging data hourly (P1.3b);
  * notifications (P1.7): delivery every minute (also woken when notices are
  * created), reminders and push receipts every 15 minutes, retention daily
- * at 05:37 UTC.
+ * at 05:37 UTC; privacy (P1.8a): board decisions taking effect at 00:17
+ * UTC, former members and orphaned people at 05:31 UTC, the audit log at
+ * 05:43 UTC.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -157,6 +185,9 @@ export const crontab = [
   "*/15 * * * * notifications:event_reminders ?max=1",
   "*/15 * * * * notifications:push_receipts ?max=1",
   "37 5 * * * notifications:retention ?fill=2d",
+  "17 0 * * * clubs:apply_decisions ?fill=2d",
+  "31 5 * * * privacy:retention ?fill=2d",
+  "43 5 * * * audit:retention ?fill=2d",
 ].join("\n");
 
 /** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */

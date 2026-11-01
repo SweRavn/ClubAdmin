@@ -24,6 +24,15 @@ const db = createDatabase({
   max: config.WORKER_CONCURRENCY,
   applicationName: "clubadmin-worker",
 });
+// The privacy jobs' own handle (clubadmin_retention, P1.8a): one connection, one job at a time.
+const retentionDb = config.DATABASE_RETENTION_URL
+  ? createDatabase({
+      url: config.DATABASE_RETENTION_URL,
+      max: 1,
+      applicationName: "clubadmin-worker-retention",
+    })
+  : null;
+if (!retentionDb) logger.warn("DATABASE_RETENTION_URL is not set: the privacy jobs do nothing");
 const valkey = config.VALKEY_URL
   ? new Redis(config.VALKEY_URL, { maxRetriesPerRequest: 3, connectionName: "clubadmin-worker" })
   : undefined;
@@ -83,6 +92,11 @@ const runner = await run({
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
     storage,
     defaultCountry: config.DEFAULT_COUNTRY,
+    privacy: {
+      retentionDb,
+      orphanRetentionMonths: config.ORPHAN_RETENTION_MONTHS,
+      auditRetentionMonths: config.AUDIT_RETENTION_MONTHS,
+    },
   }),
   crontab: config.BILLING_ENABLED ? `${crontab}\n${BILLING_CRONTAB}` : crontab,
 });
@@ -116,5 +130,6 @@ if (storage) {
 onShutdown(logger, async () => {
   await runner.stop();
   await db.close();
+  await retentionDb?.close();
   await valkey?.quit();
 });
