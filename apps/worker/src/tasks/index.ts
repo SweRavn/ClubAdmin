@@ -27,6 +27,7 @@ import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } fro
 import {
   applyDecisionsTask,
   auditRetentionTask,
+  expireDataExportsTask,
   type PrivacyJobOptions,
   privacyRetentionTask,
   protectionChangedTask,
@@ -130,6 +131,7 @@ function privacyTasks(deps: TaskDependencies): TaskList {
     "privacy:retention": privacyRetentionTask(options),
     "privacy:purge_member": purgeMemberTask(options),
     "privacy:protection_changed": protectionChangedTask(options),
+    "privacy:expire_exports": expireDataExportsTask(deps.db, deps.storage ?? null),
     "audit:retention": auditRetentionTask(options),
     "clubs:apply_decisions": applyDecisionsTask(deps.db, options),
   };
@@ -169,7 +171,7 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * created), reminders and push receipts every 15 minutes, retention daily
  * at 05:37 UTC; privacy (P1.8a): board decisions taking effect at 00:17
  * UTC, former members and orphaned people at 05:31 UTC, the audit log at
- * 05:43 UTC.
+ * 05:43 UTC; "download my data" files past seven days hourly at :07 (P1.8b).
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -187,6 +189,7 @@ export const crontab = [
   "37 5 * * * notifications:retention ?fill=2d",
   "17 0 * * * clubs:apply_decisions ?fill=2d",
   "31 5 * * * privacy:retention ?fill=2d",
+  "7 * * * * privacy:expire_exports ?max=1",
   "43 5 * * * audit:retention ?fill=2d",
 ].join("\n");
 

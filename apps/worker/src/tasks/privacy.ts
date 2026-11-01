@@ -15,9 +15,11 @@
 //   and contact consents end (outbox, person.protection.changed).
 
 import { audit, type Database, outbox, type OutboxHandler, type SQL, sql } from "@clubadmin/db";
+import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import {
   CLUB_SETTINGS,
   type ClubSettingKey,
+  DATA_EXPORT_STALE_HOURS,
   DOMAIN_EVENTS,
   PRIVACY_POLICY_TEMPLATE_VERSION,
   PROTECTED_INAPPLICABLE_PURPOSES,
@@ -102,7 +104,7 @@ async function purgeOne(db: Database, clubId: string, personId: string, now: boo
 export async function runPrivacyRetention(
   db: Database,
   options: { orphanRetentionMonths: number },
-): Promise<{ purged: number; erased: number }> {
+): Promise<{ purged: number; erased: number; requests: number }> {
   let purged = 0;
   const { rows: clubs } = await db.withSystem("privacy:retention", {}, (tx) =>
     tx.execute<{ id: string }>(sql`SELECT id FROM public.clubs ORDER BY id`),
@@ -145,7 +147,31 @@ export async function runPrivacyRetention(
     }
     if (rows.length < BATCH) break;
   }
-  return { purged, erased };
+
+  // "Download my data" and erasure requests (P1.8b): the record that a
+  // request was answered is kept 12 and 24 months (IDs only).
+  const requests = await db.withSystem("privacy:retention", {}, async (tx) => {
+    const exportsDeleted = await tx.execute(dataRequestRetentionQueries().exports);
+    const erasuresDeleted = await tx.execute(dataRequestRetentionQueries().erasures);
+    return (exportsDeleted.rowCount ?? 0) + (erasuresDeleted.rowCount ?? 0);
+  });
+  return { purged, erased, requests };
+}
+
+/**
+ * Old "download my data" rows (12 months; their files went after seven
+ * days) and finished erasure requests (24 months after they ended).
+ */
+export function dataRequestRetentionQueries(): { exports: SQL; erasures: SQL } {
+  return {
+    exports: sql`
+      DELETE FROM public.data_exports
+      WHERE created_at < now() - interval '12 months' AND status <> 'ready'`,
+    erasures: sql`
+      DELETE FROM public.erasure_requests
+      WHERE status IN ('done', 'cancelled', 'failed')
+        AND coalesce(done_at, cancelled_at, updated_at) < now() - interval '24 months'`,
+  };
 }
 
 export function privacyRetentionTask(options: PrivacyJobOptions): Task {
@@ -305,5 +331,47 @@ export function privacyHandler(): OutboxHandler {
           ${JSON.stringify({ personId, ...(clubId ? { clubId } : {}) })}::json,
           job_key := ${`privacy:protection:${personId}:${clubId ?? "all"}`}, max_attempts := 10)`);
     },
+  };
+}
+
+/**
+ * privacy:expire_exports (P1.8b, hourly): deletes "download my data" files
+ * seven days after they were ready (the row stays as the record, status
+ * expired) and fails exports still queued after two hours. The bucket's
+ * data-exports/ lifecycle rule is the backstop.
+ */
+export async function expireDataExports(
+  db: Database,
+  storage: ObjectStorage | null,
+): Promise<{ expired: number; failed: number }> {
+  const { rows } = await db.withSystem("privacy:expire_exports", {}, (tx) =>
+    tx.execute<{ id: string; object_key: string }>(sql`
+      SELECT id, object_key FROM public.data_exports
+      WHERE status = 'ready' AND expires_at <= now()
+      ORDER BY expires_at LIMIT 500`),
+  );
+  let expired = 0;
+  for (const row of rows) {
+    if (storage) await storage.deleteObject(row.object_key);
+    await db.withSystem("privacy:expire_exports", {}, (tx) =>
+      tx.execute(sql`
+        UPDATE public.data_exports SET status = 'expired', object_key = NULL
+        WHERE id = ${row.id} AND status = 'ready'`),
+    );
+    expired++;
+  }
+  const stale = await db.withSystem("privacy:expire_exports", {}, (tx) =>
+    tx.execute(sql`
+      UPDATE public.data_exports SET status = 'failed', error_code = 'stale'
+      WHERE status = 'queued'
+        AND created_at < now() - make_interval(hours => ${DATA_EXPORT_STALE_HOURS})`),
+  );
+  return { expired, failed: stale.rowCount ?? 0 };
+}
+
+export function expireDataExportsTask(db: Database, storage: ObjectStorage | null): Task {
+  return async (_payload, helpers) => {
+    const result = await expireDataExports(db, storage);
+    helpers.logger.info("data exports expired", result);
   };
 }

@@ -89,6 +89,14 @@ export async function movedEmails(
   return new Map(capture.sent.map((m) => [m.messageId.slice(m.messageId.lastIndexOf(".") + 1), m]));
 }
 
+/** The person's time zone for dates in notices (the account's, else Stockholm). */
+async function accountTimeZone(tx: Tx, personId: string): Promise<string> {
+  const { rows } = await tx.execute<{ time_zone: string | null }>(
+    sql`SELECT time_zone FROM public.accounts WHERE person_id = ${personId}`,
+  );
+  return rows[0]?.time_zone ?? "Europe/Stockholm";
+}
+
 export function notificationsHandler(options: NotificationsOptions): OutboxHandler {
   const now = () => options.now?.() ?? new Date();
   const notify = (tx: Tx, notices: Notice[]) =>
@@ -107,6 +115,9 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "membership.left",
       "assignment.ended",
       "club.privacy_policy.published",
+      "privacy.export.ready",
+      "privacy.erasure.scheduled",
+      "privacy.erasure.blocked",
       ...MOVED_EVENTS,
     ],
     async handle(event, tx) {
@@ -390,6 +401,93 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `club.privacy_policy:${policyId}`,
             })),
           );
+          return;
+        }
+        // Privacy (P1.8b): a data file is ready; an erasure was scheduled or stopped.
+        case "privacy.export.ready": {
+          const { exportId, requestedByPersonId } = DOMAIN_EVENTS["privacy.export.ready"].parse(
+            event.payload,
+          );
+          await notify(tx, [
+            {
+              recipientPersonId: requestedByPersonId,
+              clubId: null,
+              type: "privacy.export.ready",
+              subjectType: "data_export",
+              subjectId: exportId,
+              about: [],
+              params: {},
+              dedupeKey: `privacy.export.ready:${exportId}`,
+            },
+          ]);
+          return;
+        }
+        case "privacy.erasure.scheduled":
+        case "privacy.erasure.blocked": {
+          const { requestId } = DOMAIN_EVENTS[event.type].parse(event.payload);
+          const { rows } = await tx.execute<{
+            person_id: string;
+            requested_by_person_id: string;
+            kind: string;
+            scheduled_for: Date;
+          }>(sql`
+            SELECT person_id, requested_by_person_id, kind, scheduled_for
+            FROM public.erasure_requests WHERE id = ${requestId}`);
+          const request = rows[0];
+          if (!request) return;
+          const scheduledFor = new Date(request.scheduled_for).toISOString();
+          if (event.type === "privacy.erasure.blocked") {
+            await notify(tx, [
+              {
+                recipientPersonId: request.requested_by_person_id,
+                clubId: null,
+                type: "account.deletion.blocked",
+                subjectType: "erasure_request",
+                subjectId: requestId,
+                about: request.kind === "ward_erasure" ? [request.person_id] : [],
+                params: {},
+                dedupeKey: `account.deletion.blocked:${requestId}`,
+              },
+            ]);
+            return;
+          }
+          if (request.kind === "account_deletion") {
+            const timeZone = await accountTimeZone(tx, request.person_id);
+            await notify(tx, [
+              {
+                recipientPersonId: request.person_id,
+                clubId: null,
+                type: "account.deletion.scheduled",
+                subjectType: "erasure_request",
+                subjectId: requestId,
+                about: [],
+                params: { scheduledFor, timeZone },
+                dedupeKey: `account.deletion.scheduled:${requestId}`,
+              },
+            ]);
+            return;
+          }
+          // A ward's erasure: every other full guardian is told and may cancel.
+          const { rows: guardians } = await tx.execute<{ guardian_person_id: string }>(sql`
+            SELECT guardian_person_id FROM public.guardianships
+            WHERE ward_person_id = ${request.person_id}
+              AND guardian_person_id <> ${request.requested_by_person_id}
+              AND kind IN ('parent', 'legal_guardian') AND status = 'active'
+              AND valid_to IS NULL`);
+          const notices: Notice[] = [];
+          for (const g of guardians) {
+            notices.push({
+              recipientPersonId: g.guardian_person_id,
+              clubId: null,
+              type: "person.erasure.scheduled",
+              subjectType: "erasure_request",
+              subjectId: requestId,
+              about: [request.person_id],
+              params: { scheduledFor, timeZone: await accountTimeZone(tx, g.guardian_person_id) },
+              dedupeKey: `person.erasure.scheduled:${requestId}`,
+            });
+          }
+          await notify(tx, notices);
           return;
         }
         default:

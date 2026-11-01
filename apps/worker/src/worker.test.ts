@@ -36,6 +36,7 @@ describe("worker", () => {
       "notifications:retention",
       "clubs:apply_decisions",
       "privacy:retention",
+      "privacy:expire_exports",
       "audit:retention",
     ]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
