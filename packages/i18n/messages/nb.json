@@ -582,7 +582,7 @@
     "export_not_available": "Eksporten kan ikke lenger lastes ned.",
     "export_storage_unavailable": "Eksporter er ikke tilgjengelige i denne installasjonen.",
     "invalid_end_date": "Sluttdatoen kan ikke være i fremtiden eller før medlemskapet startet.",
-    "reauthentication_required": "Logg inn på nytt først for å eksportere (du logget inn for mer enn 15 minutter siden).",
+    "reauthentication_required": "Dette krever en fersk innlogging: logg ut og inn igjen, og prøv så en gang til.",
     "membership_status_invalid": "Medlemskapet kan ikke endres på den måten.",
     "birth_date_in_future": "Fødselsdatoen kan ikke være i fremtiden.",
     "rights_not_allowed": "De rettighetene kan ikke gis her.",
@@ -677,7 +677,12 @@
     "outstanding_invoices": "Det er fakturaer fra klubben som må gjøres opp først.",
     "decision_required": "Innstillingen besluttes av styret: registrer vedtaket på personvernsiden.",
     "decision_invalid": "Vedtaket er ikke gyldig: sjekk datoen og verdiene.",
-    "guardian_must_leave": "En foresatt melder deg ut av klubben."
+    "guardian_must_leave": "En foresatt melder deg ut av klubben.",
+    "export_expired": "Filen er slettet. Be om en ny.",
+    "erasure_pending": "En sletting er allerede planlagt.",
+    "erasure_blocked": "Noe må ordnes først; se listen.",
+    "ward_has_login": "Barnet har egen innlogging og sletter kontoen sin selv.",
+    "erasure_unavailable": "Sletting er ikke mulig akkurat nå. Prøv igjen senere."
   },
   "memberExport": {
     "columns": {
@@ -1613,6 +1618,16 @@
           "title": "E-postadressen din er endret",
           "body": "Var det ikke deg? Kontakt klubben din med en gang."
         }
+      },
+      "deletion": {
+        "scheduled": {
+          "title": "Kontoen din blir slettet",
+          "body": "Den {scheduledFor}. Logg inn og avbryt slettingen hvis du ombestemmer deg."
+        },
+        "blocked": {
+          "title": "Slettingen ble stoppet",
+          "body": "En rolle eller faktura kom til i ventetiden. Se personvernsiden."
+        }
       }
     },
     "unknown": {
@@ -1643,6 +1658,22 @@
       "ended": {
         "title": "Noen har gått av fra et verv i {club}",
         "body": "Et verv er avsluttet ({kind, select, role {et verv i klubben} group_function {en lederfunksjon} other {et grupperansvar}}). Sjekk om det trenger en etterfølger."
+      }
+    },
+    "privacy": {
+      "export": {
+        "ready": {
+          "title": "Filen med opplysningene dine er klar",
+          "body": "Last den ned på personvernsiden innen sju dager."
+        }
+      }
+    },
+    "person": {
+      "erasure": {
+        "scheduled": {
+          "title": "Et barns opplysninger blir slettet",
+          "body": "Den {scheduledFor}, etter ønske fra en annen forelder. Du kan avbryte på familiesiden."
+        }
       }
     }
   },
@@ -1865,6 +1896,209 @@
     "statusNotApplicable": "Gjelder ikke",
     "withdrawOnRequest": "Trekk tilbake etter ønske",
     "clubNote": "Merknad (f.eks. papirskjema august)",
-    "recordPaper": "Registrer papirsamtykke"
+    "recordPaper": "Registrer papirsamtykke",
+    "exports": {
+      "title": "Last ned opplysningene mine",
+      "intro": "Få en fil med alt ClubAdmin og klubbene dine har om deg eller barna dine: lesbar i en nettleser og som data. Den er klar i løpet av noen minutter og kan lastes ned i sju dager.",
+      "requestSelf": "Be om opplysningene mine",
+      "requestFor": "Be om opplysningene til {name}",
+      "requested": "Bedt om. Du får et varsel når filen er klar.",
+      "none": "Ingen forespørsler ennå.",
+      "subject": "Hvis opplysninger",
+      "created": "Bedt om {date}",
+      "expires": "Kan lastes ned til {date}",
+      "download": "Last ned",
+      "status": {
+        "queued": "Forberedes",
+        "ready": "Klar",
+        "failed": "Mislyktes",
+        "expired": "Slettet"
+      },
+      "openWeb": "Last ned opplysningene mine (åpner nettet)"
+    },
+    "deletion": {
+      "title": "Slett kontoen min",
+      "intro": "Innloggingen din og alt om deg slettes etter {days} dager. Frem til da kan du angre.",
+      "open": "Slett kontoen min…",
+      "heading": "Slett kontoen min",
+      "whatHappens": "Etter {days} dager forlater du alle klubbene, familiekoblingene dine opphører, og navnet ditt og opplysningene dine slettes overalt, også fra gjenopprettede sikkerhetskopier. Klubbene beholder bare det loven krever, uten navnet ditt.",
+      "blockersTitle": "Før du kan slette kontoen din",
+      "blocker": {
+        "roles_must_be_removed": "{club}: gå av fra vervene dine først.",
+        "last_club_manager": "{club}: du er eneste klubbansvarlige; overlat til noen først.",
+        "outstanding_invoices": "{club}: {count, plural, one {# faktura er} other {# fakturaer er}} ikke gjort opp; kontakt klubbens {role}."
+      },
+      "manageAssignments": "Gå av fra verv i {club}",
+      "wardsTitle": "Barna dine uten innlogging",
+      "wardsIntro": "Du er den eneste forelderen med innlogging for disse barna. Velg om opplysningene deres også skal slettes.",
+      "eraseWard": "Slett også opplysningene til {name}",
+      "confirm": "Jeg forstår at kontoen min slettes {date} og ikke kan gjenopprettes.",
+      "confirmButton": "Slett kontoen min",
+      "scheduled": "Kontoen din slettes {date}.",
+      "cancelButton": "Avbryt slettingen",
+      "cancelled": "Slettingen er avbrutt.",
+      "banner": "Kontoen din slettes {date}.",
+      "bannerCancel": "Avbryt slettingen",
+      "refreshing": "Sjekker…"
+    },
+    "wardErasure": {
+      "title": "Slett opplysningene til {name}",
+      "open": "Slett opplysningene til {name}…",
+      "intro": "Alt om {name} slettes etter {days} dager: medlemskap, grupper, svar og familiekoblinger. De andre foreldrene får beskjed og kan stoppe det.",
+      "hasLogin": "{name} har egen innlogging og sletter kontoen sin selv.",
+      "confirm": "Jeg forstår at opplysningene til {name} slettes {date}.",
+      "button": "Slett opplysningene til {name}",
+      "scheduled": "Opplysningene til {name} slettes {date}.",
+      "cancel": "Avbryt slettingen",
+      "cancelled": "Slettingen er avbrutt."
+    }
+  },
+  "dataExport": {
+    "title": "Opplysninger om {name}",
+    "generated": "Laget {date}.",
+    "platform": "ClubAdmin (plattformen)",
+    "hiddenPerson": "Noen du ikke kan se",
+    "yes": "Ja",
+    "no": "Nei",
+    "empty": "Ingenting her.",
+    "controller": {
+      "platform": "ClubAdmin er ansvarlig for denne delen: innlogging, innstillinger, familiekoblinger og varsler.",
+      "club": "{club} er ansvarlig for denne delen (behandlingsansvarlig etter GDPR)."
+    },
+    "readme": {
+      "title": "Om denne filen",
+      "intro": "Filen inneholder det ClubAdmin har om personen, fra plattformen og fra hver klubb. data.json inneholder det samme i maskinlesbar form (beskrevet i ClubAdmins dokumentasjon, docs/api/data-export.md).",
+      "controllers": "Hver klubb er ansvarlig for sin del; ClubAdmin er ansvarlig for innlogging, innstillinger, familiekoblinger og varsler.",
+      "notIncluded": "Ikke med: klubbenes interne notater, andres kontaktopplysninger, tekniske sikkerhetslogger og sikkerhetskopier.",
+      "askClub": "Vil du se en klubbs interne notater eller be den rette eller slette noe, kontakt klubben: kontaktopplysningene står i personvernerklæringen.",
+      "formats": "Datoer vises i din tidssone. Personer du ikke kan se i ClubAdmin, navngis ikke."
+    },
+    "sections": {
+      "person": "Person",
+      "account": "Innlogging og innstillinger",
+      "pushDevices": "Telefoner med varsler",
+      "guardianships": "Familiekoblinger",
+      "guardianInvitations": "Sendte familieinvitasjoner",
+      "notifications": "Varsler (siste 90 dager)",
+      "dataExports": "Forespørsler om dine opplysninger",
+      "erasureRequests": "Forespørsler om sletting",
+      "history": "Endringshistorikk",
+      "clubProfile": "Klubbprofil",
+      "memberships": "Medlemskap",
+      "groupMemberships": "Grupper",
+      "roles": "Klubbroller",
+      "employments": "Ansettelser",
+      "consents": "Samtykker",
+      "joinRequests": "Søknader",
+      "waitingLists": "Ventelister",
+      "responses": "Svar på aktiviteter",
+      "attendance": "Oppmøte",
+      "callUps": "Innkallinger",
+      "eventRegistrations": "Påmeldinger til arrangementer",
+      "invitationsSent": "Sendte klubbinvitasjoner"
+    },
+    "fields": {
+      "givenName": "Fornavn",
+      "familyName": "Etternavn",
+      "birthDate": "Fødselsdato",
+      "gender": "Kjønn",
+      "protectedIdentity": "Beskyttet identitet",
+      "phone": "Telefon",
+      "address": "Adresse",
+      "deceasedAt": "Død",
+      "createdAt": "Opprettet",
+      "updatedAt": "Endret",
+      "personalIdentityNumber": "Fødselsnummer",
+      "email": "E-post",
+      "emailVerifiedAt": "E-post bekreftet",
+      "locale": "Språk",
+      "timeZone": "Tidssone",
+      "theme": "Tema",
+      "notificationSettings": "Varslingsinnstillinger",
+      "provider": "Tjeneste",
+      "platform": "Plattform",
+      "appVariant": "App",
+      "lastSeenAt": "Sist brukt",
+      "disabledAt": "Slått av",
+      "guardianPersonId": "Foresatt",
+      "wardPersonId": "Barn",
+      "kind": "Type",
+      "rights": "Rettigheter",
+      "status": "Status",
+      "validFrom": "Fra",
+      "validTo": "Til",
+      "adultDecision": "Beslutning ved myndighetsalder",
+      "adultDecidedAt": "Besluttet",
+      "expiresAt": "Utløper",
+      "acceptedAt": "Akseptert",
+      "revokedAt": "Trukket tilbake",
+      "category": "Kategori",
+      "type": "Type",
+      "subjectType": "Gjelder",
+      "aboutPersonIds": "Om hvem",
+      "params": "Detaljer",
+      "readAt": "Lest",
+      "subjectPersonId": "Hvis opplysninger",
+      "requestedByPersonId": "Bedt om av",
+      "sizeBytes": "Størrelse (byte)",
+      "readyAt": "Klar",
+      "personId": "Person",
+      "scheduledFor": "Planlagt til",
+      "includeWardIds": "Barn som inngår",
+      "cancelledAt": "Avbrutt",
+      "doneAt": "Ferdig",
+      "changedAt": "Når",
+      "tableName": "Tabell",
+      "operation": "Endring",
+      "changedColumns": "Endrede felt",
+      "oldValues": "Før",
+      "newValues": "Etter",
+      "actorPersonId": "Endret av",
+      "actorKind": "Endret av (type)",
+      "memberNumber": "Medlemsnummer",
+      "sharedFields": "Delt med klubben",
+      "emergencyContacts": "Nødkontakter",
+      "protectedIdentityClub": "Beskyttet i klubben",
+      "membershipType": "Medlemskapstype",
+      "groupName": "Gruppe",
+      "function": "Funksjon",
+      "role": "Rolle",
+      "assignedByPersonId": "Utnevnt av",
+      "title": "Tittel",
+      "employmentType": "Ansettelse",
+      "startsOn": "Starter",
+      "endsOn": "Slutter",
+      "hoursPerWeek": "Timer i uken",
+      "purpose": "Formål",
+      "textVersion": "Tekstversjon",
+      "source": "Gitt via",
+      "givenByPersonId": "Gitt av",
+      "givenAt": "Gitt",
+      "revokedByPersonId": "Trukket tilbake av",
+      "revokedReason": "Hvorfor det opphørte",
+      "text": "Teksten som ble godtatt",
+      "message": "Melding",
+      "decisionMessage": "Klubbens svar",
+      "decidedAt": "Besluttet",
+      "queuedAt": "I køen siden",
+      "applicantNote": "Ditt notat",
+      "activityTitle": "Aktivitet",
+      "activityStartsAt": "Starter",
+      "note": "Notat",
+      "respondedByPersonId": "Svart av",
+      "respondedAt": "Svart",
+      "guest": "Gjest",
+      "recordedByPersonId": "Registrert av",
+      "recordedAt": "Registrert",
+      "correctedReason": "Retting",
+      "invitedByPersonId": "Innkalt av",
+      "eventTitle": "Arrangement",
+      "eventStartsAt": "Starter",
+      "answers": "Svar",
+      "sensitiveAnswers": "Sensitive svar",
+      "registeredByPersonId": "Påmeldt av",
+      "rolePreset": "Rolle",
+      "uses": "Brukt"
+    }
   }
 }

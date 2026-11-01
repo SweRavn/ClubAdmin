@@ -149,12 +149,14 @@ export function presignGetUrl(input: {
 
 /**
  * Lifecycle rules of the files bucket (docs/gdpr.md): member exports (P1.2)
- * and uploaded import files (P1.3b) are deleted after two days even if the
- * jobs that delete them do not run.
+ * and uploaded import files (P1.3b) are deleted after two days, "download
+ * my data" files (P1.8b, kept seven days) after eight, even if the jobs that
+ * delete them do not run.
  */
 export const FILE_EXPIRY_RULES = [
   { id: "member-exports", prefix: "exports/", days: 2 },
   { id: "member-imports", prefix: "imports/", days: 2 },
+  { id: "data-exports", prefix: "data-exports/", days: 8 },
 ] as const;
 
 /** S3_* settings (api and worker); without S3_ENDPOINT there is no object storage. */

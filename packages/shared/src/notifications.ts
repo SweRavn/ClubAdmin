@@ -84,6 +84,10 @@ export const NOTIFICATION_TYPES = {
   "family.adult": { category: "family" },
   "family.adult_ended": { category: "family" },
   "account.email.changed": { category: "account", mandatoryEmail: true, immediate: true },
+  "privacy.export.ready": { category: "account", mandatoryEmail: true, immediate: true },
+  "account.deletion.scheduled": { category: "account", mandatoryEmail: true, immediate: true },
+  "account.deletion.blocked": { category: "account", mandatoryEmail: true, immediate: true },
+  "person.erasure.scheduled": { category: "family", mandatoryEmail: true, immediate: true },
 } as const satisfies Record<string, NotificationTypeInfo>;
 export type NotificationType = keyof typeof NOTIFICATION_TYPES;
 export const NOTIFICATION_TYPE_NAMES = Object.keys(NOTIFICATION_TYPES) as NotificationType[];

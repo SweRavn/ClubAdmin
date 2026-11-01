@@ -26,6 +26,12 @@ export const DOMAIN_EVENTS = {
   }),
   /** A consent was given or withdrawn (P1.8a); later consumers (photos, streams) react. */
   "consent.changed": z.object({ clubId: id, personId: id, purpose: z.string() }),
+  /** A "download my data" file is ready (P1.8b): tell the requester. */
+  "privacy.export.ready": z.object({ exportId: id, requestedByPersonId: id }),
+  /** An account deletion or ward erasure was scheduled (P1.8b): tell those concerned. */
+  "privacy.erasure.scheduled": z.object({ requestId: id }),
+  /** The erasure job found a role or invoice given during the grace period (P1.8b): tell the person. */
+  "privacy.erasure.blocked": z.object({ requestId: id }),
   /** A new version of the club's privacy policy took effect (P1.8a): tell the members. */
   "club.privacy_policy.published": z.object({ clubId: id, policyId: id }),
   "group.owner.changed": z.object({ clubId: id, groupId: id, personId: id }),

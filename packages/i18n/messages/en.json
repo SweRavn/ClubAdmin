@@ -582,7 +582,7 @@
     "export_not_available": "This export can no longer be downloaded.",
     "export_storage_unavailable": "Exports are not available on this installation.",
     "invalid_end_date": "The end date cannot be in the future or before the membership started.",
-    "reauthentication_required": "For exports, log in again first (you logged in more than 15 minutes ago).",
+    "reauthentication_required": "This needs a recent login: log out and log in again, then try once more.",
     "membership_status_invalid": "This membership cannot be changed that way.",
     "birth_date_in_future": "The birth date cannot be in the future.",
     "rights_not_allowed": "Those rights cannot be given here (acting on behalf only for relatives, chosen by a guardian or an adult).",
@@ -677,7 +677,12 @@
     "outstanding_invoices": "There are invoices from the club to settle first.",
     "decision_required": "This setting is decided by the board: record the decision on the privacy page.",
     "decision_invalid": "The decision is not valid: check the date and the values.",
-    "guardian_must_leave": "A guardian leaves the club for you."
+    "guardian_must_leave": "A guardian leaves the club for you.",
+    "export_expired": "The file has been deleted. Request a new one.",
+    "erasure_pending": "A deletion is already planned.",
+    "erasure_blocked": "Something must be settled first; see the list.",
+    "ward_has_login": "The child has a login of their own and deletes their account themselves.",
+    "erasure_unavailable": "Deletion is not available right now. Try again later."
   },
   "memberExport": {
     "columns": {
@@ -1613,6 +1618,16 @@
           "title": "Your email address changed",
           "body": "If this was not you, contact your club at once."
         }
+      },
+      "deletion": {
+        "scheduled": {
+          "title": "Your account will be deleted",
+          "body": "On {scheduledFor}. Log in and cancel the deletion if you change your mind."
+        },
+        "blocked": {
+          "title": "The deletion was stopped",
+          "body": "A role or an invoice was added during the waiting period. See the privacy page."
+        }
       }
     },
     "unknown": {
@@ -1643,6 +1658,22 @@
       "ended": {
         "title": "Someone stepped down in {club}",
         "body": "An assignment ended ({kind, select, role {a club role} group_function {a leader function} other {a group ownership}}). Check whether it needs a successor."
+      }
+    },
+    "privacy": {
+      "export": {
+        "ready": {
+          "title": "Your data file is ready",
+          "body": "Download it on the privacy page within seven days."
+        }
+      }
+    },
+    "person": {
+      "erasure": {
+        "scheduled": {
+          "title": "A child's data will be erased",
+          "body": "On {scheduledFor}, at another parent's request. You can cancel it on the family page."
+        }
       }
     }
   },
@@ -1865,6 +1896,209 @@
     "statusNotApplicable": "Not applicable",
     "withdrawOnRequest": "Withdraw on request",
     "clubNote": "Note (e.g. paper form August)",
-    "recordPaper": "Record a paper consent"
+    "recordPaper": "Record a paper consent",
+    "exports": {
+      "title": "Download my data",
+      "intro": "Get a file with everything ClubAdmin and your clubs hold about you or your children: readable in a browser, and as data. It is ready within minutes and can be downloaded for seven days.",
+      "requestSelf": "Request my data",
+      "requestFor": "Request {name}'s data",
+      "requested": "Requested. You will get a notice when the file is ready.",
+      "none": "No requests yet.",
+      "subject": "Whose data",
+      "created": "Requested {date}",
+      "expires": "Can be downloaded until {date}",
+      "download": "Download",
+      "status": {
+        "queued": "Being prepared",
+        "ready": "Ready",
+        "failed": "Failed",
+        "expired": "Deleted"
+      },
+      "openWeb": "Download my data (opens the web)"
+    },
+    "deletion": {
+      "title": "Delete my account",
+      "intro": "Your login and everything about you is deleted after {days} days. Until then you can cancel.",
+      "open": "Delete my account…",
+      "heading": "Delete my account",
+      "whatHappens": "After {days} days you leave every club, your family links end, and your name and details are deleted everywhere, also from restored backups. Clubs keep only what the law requires, without your name.",
+      "blockersTitle": "Before you can delete your account",
+      "blocker": {
+        "roles_must_be_removed": "{club}: step down from your roles first.",
+        "last_club_manager": "{club}: you are the only club manager; hand over to someone first.",
+        "outstanding_invoices": "{club}: {count, plural, one {# invoice is} other {# invoices are}} not settled; contact the club's {role}."
+      },
+      "manageAssignments": "Step down in {club}",
+      "wardsTitle": "Your children without a login",
+      "wardsIntro": "You are the only parent with a login for these children. Choose whether their data is deleted too.",
+      "eraseWard": "Delete {name}'s data too",
+      "confirm": "I understand that my account will be deleted on {date} and cannot be restored.",
+      "confirmButton": "Delete my account",
+      "scheduled": "Your account will be deleted on {date}.",
+      "cancelButton": "Cancel deletion",
+      "cancelled": "The deletion is cancelled.",
+      "banner": "Your account will be deleted on {date}.",
+      "bannerCancel": "Cancel deletion",
+      "refreshing": "Checking…"
+    },
+    "wardErasure": {
+      "title": "Delete {name}'s data",
+      "open": "Delete {name}'s data…",
+      "intro": "Everything about {name} is deleted after {days} days: memberships, groups, answers and family links. The other parents are told and can stop it.",
+      "hasLogin": "{name} has a login of their own and deletes their account themselves.",
+      "confirm": "I understand that {name}'s data will be deleted on {date}.",
+      "button": "Delete {name}'s data",
+      "scheduled": "{name}'s data will be deleted on {date}.",
+      "cancel": "Cancel the deletion",
+      "cancelled": "The deletion is cancelled."
+    }
+  },
+  "dataExport": {
+    "title": "Data about {name}",
+    "generated": "Made on {date}.",
+    "platform": "ClubAdmin (the platform)",
+    "hiddenPerson": "Someone you cannot see",
+    "yes": "Yes",
+    "no": "No",
+    "empty": "Nothing here.",
+    "controller": {
+      "platform": "ClubAdmin is responsible for this part: your login, settings, family links and notifications.",
+      "club": "{club} is responsible for this part (the controller under GDPR)."
+    },
+    "readme": {
+      "title": "About this file",
+      "intro": "This file contains what ClubAdmin holds about the person, from the platform and from each club. data.json holds the same in a machine-readable form (documented in ClubAdmin's documentation, docs/api/data-export.md).",
+      "controllers": "Each club is responsible for its own part; ClubAdmin is responsible for the login, settings, family links and notifications.",
+      "notIncluded": "Not included: the clubs' internal notes, other people's contact details, technical security logs and backups.",
+      "askClub": "To see a club's internal notes or ask it to correct or delete something, contact the club: its contact details are in its privacy policy.",
+      "formats": "Dates are shown in your time zone. People you cannot see in ClubAdmin are not named."
+    },
+    "sections": {
+      "person": "Person",
+      "account": "Login and settings",
+      "pushDevices": "Phones with notifications",
+      "guardianships": "Family links",
+      "guardianInvitations": "Family invitations sent",
+      "notifications": "Notifications (last 90 days)",
+      "dataExports": "Requests for your data",
+      "erasureRequests": "Deletion requests",
+      "history": "Change history",
+      "clubProfile": "Club profile",
+      "memberships": "Memberships",
+      "groupMemberships": "Groups",
+      "roles": "Club roles",
+      "employments": "Employment",
+      "consents": "Consents",
+      "joinRequests": "Applications",
+      "waitingLists": "Waiting lists",
+      "responses": "Answers to activities",
+      "attendance": "Attendance",
+      "callUps": "Call-ups",
+      "eventRegistrations": "Event sign-ups",
+      "invitationsSent": "Club invitations sent"
+    },
+    "fields": {
+      "givenName": "Given name",
+      "familyName": "Family name",
+      "birthDate": "Birth date",
+      "gender": "Gender",
+      "protectedIdentity": "Protected identity",
+      "phone": "Phone",
+      "address": "Address",
+      "deceasedAt": "Deceased",
+      "createdAt": "Created",
+      "updatedAt": "Changed",
+      "personalIdentityNumber": "Personal identity number",
+      "email": "Email",
+      "emailVerifiedAt": "Email verified",
+      "locale": "Language",
+      "timeZone": "Time zone",
+      "theme": "Theme",
+      "notificationSettings": "Notification settings",
+      "provider": "Service",
+      "platform": "Platform",
+      "appVariant": "App",
+      "lastSeenAt": "Last used",
+      "disabledAt": "Turned off",
+      "guardianPersonId": "Guardian",
+      "wardPersonId": "Child",
+      "kind": "Kind",
+      "rights": "Rights",
+      "status": "Status",
+      "validFrom": "From",
+      "validTo": "To",
+      "adultDecision": "Decision at adult age",
+      "adultDecidedAt": "Decided",
+      "expiresAt": "Expires",
+      "acceptedAt": "Accepted",
+      "revokedAt": "Withdrawn",
+      "category": "Category",
+      "type": "Type",
+      "subjectType": "About",
+      "aboutPersonIds": "About whom",
+      "params": "Details",
+      "readAt": "Read",
+      "subjectPersonId": "Whose data",
+      "requestedByPersonId": "Requested by",
+      "sizeBytes": "Size (bytes)",
+      "readyAt": "Ready",
+      "personId": "Person",
+      "scheduledFor": "Planned for",
+      "includeWardIds": "Children included",
+      "cancelledAt": "Cancelled",
+      "doneAt": "Done",
+      "changedAt": "When",
+      "tableName": "Table",
+      "operation": "Change",
+      "changedColumns": "Changed fields",
+      "oldValues": "Before",
+      "newValues": "After",
+      "actorPersonId": "Changed by",
+      "actorKind": "Changed by (kind)",
+      "memberNumber": "Member number",
+      "sharedFields": "Shared with the club",
+      "emergencyContacts": "Emergency contacts",
+      "protectedIdentityClub": "Protected in the club",
+      "membershipType": "Membership type",
+      "groupName": "Group",
+      "function": "Function",
+      "role": "Role",
+      "assignedByPersonId": "Given by",
+      "title": "Title",
+      "employmentType": "Employment",
+      "startsOn": "Starts",
+      "endsOn": "Ends",
+      "hoursPerWeek": "Hours a week",
+      "purpose": "Purpose",
+      "textVersion": "Text version",
+      "source": "Given through",
+      "givenByPersonId": "Given by",
+      "givenAt": "Given",
+      "revokedByPersonId": "Withdrawn by",
+      "revokedReason": "Why it ended",
+      "text": "The text agreed to",
+      "message": "Message",
+      "decisionMessage": "The club's answer",
+      "decidedAt": "Decided",
+      "queuedAt": "In the queue since",
+      "applicantNote": "Your note",
+      "activityTitle": "Activity",
+      "activityStartsAt": "Starts",
+      "note": "Note",
+      "respondedByPersonId": "Answered by",
+      "respondedAt": "Answered",
+      "guest": "Guest",
+      "recordedByPersonId": "Recorded by",
+      "recordedAt": "Recorded",
+      "correctedReason": "Correction",
+      "invitedByPersonId": "Called up by",
+      "eventTitle": "Event",
+      "eventStartsAt": "Starts",
+      "answers": "Answers",
+      "sensitiveAnswers": "Sensitive answers",
+      "registeredByPersonId": "Signed up by",
+      "rolePreset": "Role",
+      "uses": "Used"
+    }
   }
 }

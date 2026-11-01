@@ -82,6 +82,24 @@ export const RETENTION_RULES: readonly RetentionRule[] = [
     status: "implemented",
   },
   {
+    key: "data_export_files",
+    period: { value: 7, unit: "days" },
+    task: "privacy:expire_exports",
+    status: "implemented",
+  },
+  {
+    key: "data_export_requests",
+    period: { value: 12, unit: "months" },
+    task: "privacy:retention",
+    status: "implemented",
+  },
+  {
+    key: "erasure_requests",
+    period: { value: 24, unit: "months" },
+    task: "privacy:retention",
+    status: "implemented",
+  },
+  {
     key: "notifications",
     period: { value: 90, unit: "days" },
     task: "notifications:retention",

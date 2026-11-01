@@ -174,6 +174,10 @@ export function noticeLink(input: NoticeInput): string {
       const created = str(input.params.createdClubId);
       return created ? `/clubs/${created}` : "/";
     }
+    // Privacy (P1.8b): the page with the person's exports and deletion.
+    case "data_export":
+    case "erasure_request":
+      return "/me/privacy";
     case "guardianship":
       return "/me/family";
     case "account":
@@ -197,6 +201,7 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     when: formatWhen(locale, p.startsAt, p.timeZone),
     previousWhen: formatWhen(locale, p.previousStartsAt, p.timeZone),
     deadline: formatWhen(locale, p.deadline, p.timeZone),
+    scheduledFor: formatWhen(locale, p.scheduledFor, p.timeZone),
     place: str(p.place),
     hasPlace: p.place ? "yes" : "no",
     status: str(p.status),

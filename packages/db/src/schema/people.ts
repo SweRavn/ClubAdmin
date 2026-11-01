@@ -6,6 +6,12 @@
 import {
   ADULT_DECISIONS,
   type AdultDecision,
+  DATA_EXPORT_STATUSES,
+  type DataExportStatus,
+  ERASURE_KINDS,
+  ERASURE_STATUSES,
+  type ErasureKind,
+  type ErasureStatus,
   GENDERS,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
@@ -17,10 +23,12 @@ import {
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
+  bigint,
   boolean,
   check,
   date,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -295,5 +303,101 @@ export const accountInvitations = pgTable(
     uniqueIndex("account_invitations_token_unique").on(t.tokenHash),
     index("account_invitations_person_idx").on(t.personId),
     check("account_invitations_email_normalised", sql`${t.email} = lower(btrim(${t.email}))`),
+  ],
+);
+
+/**
+ * "Download my data" (P1.8b, ADR 0041): one file per request for the
+ * requester or a ward. The row is kept 12 months as the record that the
+ * access request was answered; the file goes after seven days.
+ */
+export const dataExports = pgTable(
+  "data_exports",
+  {
+    id: id(),
+    subjectPersonId: uuid()
+      .notNull()
+      .references(() => people.id),
+    requestedByPersonId: uuid()
+      .notNull()
+      .references(() => people.id),
+    status: text().$type<DataExportStatus>().notNull().default("queued"),
+    /** data-exports/<id>.zip in the files bucket, once ready. */
+    objectKey: text(),
+    sizeBytes: bigint({ mode: "number" }),
+    /** The language the file is written in (the requester's at the time). */
+    locale: text().notNull(),
+    readyAt: timestamp(tz),
+    expiresAt: timestamp(tz),
+    errorCode: text(),
+    ...timestamps,
+  },
+  (t) => [
+    check("data_exports_status", oneOf(t.status, DATA_EXPORT_STATUSES)),
+    check(
+      "data_exports_ready",
+      sql`${t.status} <> 'ready' OR (${t.objectKey} IS NOT NULL AND ${t.expiresAt} IS NOT NULL)`,
+    ),
+    index("data_exports_requester_idx").on(t.requestedByPersonId, t.createdAt.desc()),
+    index("data_exports_subject_idx").on(t.subjectPersonId),
+    index("data_exports_open_idx")
+      .on(t.expiresAt)
+      .where(sql`${t.status} = 'ready'`),
+    index("data_exports_queued_idx")
+      .on(t.createdAt)
+      .where(sql`${t.status} = 'queued'`),
+  ],
+);
+
+/**
+ * Account deletions and ward erasures (P1.8b, ADR 0041): scheduled after a
+ * grace period, run by privacy:erase. IDs only; kept 24 months after done
+ * (the deletion ledger keeps the fact).
+ */
+export const erasureRequests = pgTable(
+  "erasure_requests",
+  {
+    id: id(),
+    personId: uuid()
+      .notNull()
+      .references(() => people.id),
+    requestedByPersonId: uuid()
+      .notNull()
+      .references(() => people.id),
+    kind: text().$type<ErasureKind>().notNull(),
+    status: text().$type<ErasureStatus>().notNull().default("scheduled"),
+    scheduledFor: timestamp(tz).notNull(),
+    /** Wards without a login erased with the requester (account deletion only). */
+    includeWardIds: uuid()
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
+    cancelledByPersonId: uuid().references(() => people.id),
+    cancelledAt: timestamp(tz),
+    startedAt: timestamp(tz),
+    doneAt: timestamp(tz),
+    /** The Zitadel user still to delete after the database erasure (an ID, cleared when done). */
+    pendingIdpSubject: text(),
+    errorCode: text(),
+    attempts: integer().notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    check("erasure_requests_kind", oneOf(t.kind, ERASURE_KINDS)),
+    check("erasure_requests_status", oneOf(t.status, ERASURE_STATUSES)),
+    check(
+      "erasure_requests_wards",
+      sql`${t.kind} = 'account_deletion' OR cardinality(${t.includeWardIds}) = 0`,
+    ),
+    uniqueIndex("erasure_requests_open_unique")
+      .on(t.personId)
+      .where(sql`${t.status} IN ('scheduled', 'running')`),
+    index("erasure_requests_due_idx")
+      .on(t.scheduledFor)
+      .where(sql`${t.status} IN ('scheduled', 'running')`),
+    index("erasure_requests_requester_idx").on(t.requestedByPersonId),
+    index("erasure_requests_done_idx")
+      .on(t.doneAt)
+      .where(sql`${t.doneAt} IS NOT NULL`),
   ],
 );

@@ -52,6 +52,8 @@ export const MeResponseSchema = z
     person: PersonSummarySchema,
     /** The logged-in person's account preferences (all null without an account). */
     preferences: PreferencesSchema,
+    /** The account is to be deleted then (P1.8b; cancel with DELETE /me/account/deletion). */
+    pendingDeletion: z.object({ scheduledFor: z.iso.datetime() }).nullable().optional(),
   })
   .openapi("Me");
 export type MeResponse = z.infer<typeof MeResponseSchema>;

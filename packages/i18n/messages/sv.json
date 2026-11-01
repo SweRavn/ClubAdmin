@@ -582,7 +582,7 @@
     "export_not_available": "Exporten kan inte längre laddas ner.",
     "export_storage_unavailable": "Exporter är inte tillgängliga i den här installationen.",
     "invalid_end_date": "Slutdatumet får inte ligga i framtiden eller före medlemskapets början.",
-    "reauthentication_required": "Logga in igen först för att exportera (du loggade in för mer än 15 minuter sedan).",
+    "reauthentication_required": "Det här kräver en färsk inloggning: logga ut och in igen och försök sedan en gång till.",
     "membership_status_invalid": "Medlemskapet kan inte ändras på det sättet.",
     "birth_date_in_future": "Födelsedatumet kan inte ligga i framtiden.",
     "rights_not_allowed": "De rättigheterna kan inte ges här (att agera för någon bara för släktingar, valt av en vårdnadshavare eller en vuxen).",
@@ -677,7 +677,12 @@
     "outstanding_invoices": "Det finns fakturor från klubben som måste regleras först.",
     "decision_required": "Inställningen beslutas av styrelsen: registrera beslutet på integritetssidan.",
     "decision_invalid": "Beslutet är inte giltigt: kontrollera datumet och värdena.",
-    "guardian_must_leave": "En vårdnadshavare lämnar klubben åt dig."
+    "guardian_must_leave": "En vårdnadshavare lämnar klubben åt dig.",
+    "export_expired": "Filen har raderats. Begär en ny.",
+    "erasure_pending": "En radering är redan planerad.",
+    "erasure_blocked": "Något måste ordnas först; se listan.",
+    "ward_has_login": "Barnet har en egen inloggning och raderar sitt konto själv.",
+    "erasure_unavailable": "Radering går inte just nu. Försök igen senare."
   },
   "memberExport": {
     "columns": {
@@ -1613,6 +1618,16 @@
           "title": "Din e-postadress har ändrats",
           "body": "Var det inte du? Kontakta din förening direkt."
         }
+      },
+      "deletion": {
+        "scheduled": {
+          "title": "Ditt konto kommer att raderas",
+          "body": "Den {scheduledFor}. Logga in och avbryt raderingen om du ångrar dig."
+        },
+        "blocked": {
+          "title": "Raderingen stoppades",
+          "body": "En roll eller faktura tillkom under väntetiden. Se integritetssidan."
+        }
       }
     },
     "unknown": {
@@ -1643,6 +1658,22 @@
       "ended": {
         "title": "Någon har lämnat ett uppdrag i {club}",
         "body": "Ett uppdrag har avslutats ({kind, select, role {en roll i klubben} group_function {en ledarfunktion} other {ett gruppägarskap}}). Se om det behöver en efterträdare."
+      }
+    },
+    "privacy": {
+      "export": {
+        "ready": {
+          "title": "Din fil med uppgifter är klar",
+          "body": "Ladda ned den på integritetssidan inom sju dagar."
+        }
+      }
+    },
+    "person": {
+      "erasure": {
+        "scheduled": {
+          "title": "Ett barns uppgifter kommer att raderas",
+          "body": "Den {scheduledFor}, på en annan förälders begäran. Du kan avbryta på familjesidan."
+        }
       }
     }
   },
@@ -1865,6 +1896,209 @@
     "statusNotApplicable": "Gäller inte",
     "withdrawOnRequest": "Ta tillbaka på begäran",
     "clubNote": "Anteckning (t.ex. pappersblankett augusti)",
-    "recordPaper": "Registrera pappersamtycke"
+    "recordPaper": "Registrera pappersamtycke",
+    "exports": {
+      "title": "Hämta mina uppgifter",
+      "intro": "Få en fil med allt ClubAdmin och dina klubbar har om dig eller dina barn: läsbar i en webbläsare och som data. Den är klar inom några minuter och kan laddas ned i sju dagar.",
+      "requestSelf": "Begär mina uppgifter",
+      "requestFor": "Begär {name}s uppgifter",
+      "requested": "Begärt. Du får en avisering när filen är klar.",
+      "none": "Inga begäranden än.",
+      "subject": "Vems uppgifter",
+      "created": "Begärd {date}",
+      "expires": "Kan laddas ned till {date}",
+      "download": "Ladda ned",
+      "status": {
+        "queued": "Förbereds",
+        "ready": "Klar",
+        "failed": "Misslyckades",
+        "expired": "Raderad"
+      },
+      "openWeb": "Hämta mina uppgifter (öppnar webben)"
+    },
+    "deletion": {
+      "title": "Radera mitt konto",
+      "intro": "Din inloggning och allt om dig raderas efter {days} dagar. Fram till dess kan du ångra dig.",
+      "open": "Radera mitt konto…",
+      "heading": "Radera mitt konto",
+      "whatHappens": "Efter {days} dagar lämnar du alla klubbar, dina familjekopplingar upphör och ditt namn och dina uppgifter raderas överallt, även ur återställda säkerhetskopior. Klubbarna behåller bara det lagen kräver, utan ditt namn.",
+      "blockersTitle": "Innan du kan radera ditt konto",
+      "blocker": {
+        "roles_must_be_removed": "{club}: lämna dina uppdrag först.",
+        "last_club_manager": "{club}: du är enda klubbansvarig; lämna över till någon först.",
+        "outstanding_invoices": "{club}: {count, plural, one {# faktura är} other {# fakturor är}} inte reglerade; kontakta klubbens {role}."
+      },
+      "manageAssignments": "Lämna uppdrag i {club}",
+      "wardsTitle": "Dina barn utan inloggning",
+      "wardsIntro": "Du är den enda föräldern med inloggning för de här barnen. Välj om deras uppgifter också ska raderas.",
+      "eraseWard": "Radera även {name}s uppgifter",
+      "confirm": "Jag förstår att mitt konto raderas den {date} och inte kan återställas.",
+      "confirmButton": "Radera mitt konto",
+      "scheduled": "Ditt konto raderas den {date}.",
+      "cancelButton": "Avbryt raderingen",
+      "cancelled": "Raderingen är avbruten.",
+      "banner": "Ditt konto raderas den {date}.",
+      "bannerCancel": "Avbryt raderingen",
+      "refreshing": "Kontrollerar…"
+    },
+    "wardErasure": {
+      "title": "Radera {name}s uppgifter",
+      "open": "Radera {name}s uppgifter…",
+      "intro": "Allt om {name} raderas efter {days} dagar: medlemskap, grupper, svar och familjekopplingar. De andra föräldrarna får veta det och kan stoppa det.",
+      "hasLogin": "{name} har en egen inloggning och raderar sitt konto själv.",
+      "confirm": "Jag förstår att {name}s uppgifter raderas den {date}.",
+      "button": "Radera {name}s uppgifter",
+      "scheduled": "{name}s uppgifter raderas den {date}.",
+      "cancel": "Avbryt raderingen",
+      "cancelled": "Raderingen är avbruten."
+    }
+  },
+  "dataExport": {
+    "title": "Uppgifter om {name}",
+    "generated": "Skapad {date}.",
+    "platform": "ClubAdmin (plattformen)",
+    "hiddenPerson": "Någon du inte kan se",
+    "yes": "Ja",
+    "no": "Nej",
+    "empty": "Inget här.",
+    "controller": {
+      "platform": "ClubAdmin ansvarar för den här delen: inloggning, inställningar, familjekopplingar och aviseringar.",
+      "club": "{club} ansvarar för den här delen (personuppgiftsansvarig enligt GDPR)."
+    },
+    "readme": {
+      "title": "Om den här filen",
+      "intro": "Filen innehåller det ClubAdmin har om personen, från plattformen och från varje klubb. data.json innehåller samma sak i maskinläsbar form (beskrivet i ClubAdmins dokumentation, docs/api/data-export.md).",
+      "controllers": "Varje klubb ansvarar för sin del; ClubAdmin ansvarar för inloggning, inställningar, familjekopplingar och aviseringar.",
+      "notIncluded": "Ingår inte: klubbarnas interna anteckningar, andras kontaktuppgifter, tekniska säkerhetsloggar och säkerhetskopior.",
+      "askClub": "Vill du se en klubbs interna anteckningar eller be den rätta eller radera något, kontakta klubben: kontaktuppgifterna finns i dess integritetspolicy.",
+      "formats": "Datum visas i din tidszon. Personer som du inte kan se i ClubAdmin namnges inte."
+    },
+    "sections": {
+      "person": "Person",
+      "account": "Inloggning och inställningar",
+      "pushDevices": "Telefoner med aviseringar",
+      "guardianships": "Familjekopplingar",
+      "guardianInvitations": "Skickade familjeinbjudningar",
+      "notifications": "Aviseringar (senaste 90 dagarna)",
+      "dataExports": "Begäranden om dina uppgifter",
+      "erasureRequests": "Begäranden om radering",
+      "history": "Ändringshistorik",
+      "clubProfile": "Klubbprofil",
+      "memberships": "Medlemskap",
+      "groupMemberships": "Grupper",
+      "roles": "Klubbroller",
+      "employments": "Anställningar",
+      "consents": "Samtycken",
+      "joinRequests": "Ansökningar",
+      "waitingLists": "Väntelistor",
+      "responses": "Svar på aktiviteter",
+      "attendance": "Närvaro",
+      "callUps": "Kallelser",
+      "eventRegistrations": "Anmälningar till evenemang",
+      "invitationsSent": "Skickade klubbinbjudningar"
+    },
+    "fields": {
+      "givenName": "Förnamn",
+      "familyName": "Efternamn",
+      "birthDate": "Födelsedatum",
+      "gender": "Kön",
+      "protectedIdentity": "Skyddad identitet",
+      "phone": "Telefon",
+      "address": "Adress",
+      "deceasedAt": "Avliden",
+      "createdAt": "Skapad",
+      "updatedAt": "Ändrad",
+      "personalIdentityNumber": "Personnummer",
+      "email": "E-post",
+      "emailVerifiedAt": "E-post bekräftad",
+      "locale": "Språk",
+      "timeZone": "Tidszon",
+      "theme": "Tema",
+      "notificationSettings": "Aviseringsinställningar",
+      "provider": "Tjänst",
+      "platform": "Plattform",
+      "appVariant": "App",
+      "lastSeenAt": "Senast använd",
+      "disabledAt": "Avstängd",
+      "guardianPersonId": "Vårdnadshavare",
+      "wardPersonId": "Barn",
+      "kind": "Typ",
+      "rights": "Rättigheter",
+      "status": "Status",
+      "validFrom": "Från",
+      "validTo": "Till",
+      "adultDecision": "Beslut vid myndighetsålder",
+      "adultDecidedAt": "Beslutat",
+      "expiresAt": "Upphör",
+      "acceptedAt": "Accepterad",
+      "revokedAt": "Återkallad",
+      "category": "Kategori",
+      "type": "Typ",
+      "subjectType": "Gäller",
+      "aboutPersonIds": "Om vem",
+      "params": "Detaljer",
+      "readAt": "Läst",
+      "subjectPersonId": "Vems uppgifter",
+      "requestedByPersonId": "Begärd av",
+      "sizeBytes": "Storlek (byte)",
+      "readyAt": "Klar",
+      "personId": "Person",
+      "scheduledFor": "Planerad till",
+      "includeWardIds": "Barn som ingår",
+      "cancelledAt": "Avbruten",
+      "doneAt": "Klar",
+      "changedAt": "När",
+      "tableName": "Tabell",
+      "operation": "Ändring",
+      "changedColumns": "Ändrade fält",
+      "oldValues": "Före",
+      "newValues": "Efter",
+      "actorPersonId": "Ändrad av",
+      "actorKind": "Ändrad av (typ)",
+      "memberNumber": "Medlemsnummer",
+      "sharedFields": "Delat med klubben",
+      "emergencyContacts": "Nödkontakter",
+      "protectedIdentityClub": "Skyddad i klubben",
+      "membershipType": "Medlemskapstyp",
+      "groupName": "Grupp",
+      "function": "Funktion",
+      "role": "Roll",
+      "assignedByPersonId": "Utsedd av",
+      "title": "Titel",
+      "employmentType": "Anställning",
+      "startsOn": "Börjar",
+      "endsOn": "Slutar",
+      "hoursPerWeek": "Timmar i veckan",
+      "purpose": "Ändamål",
+      "textVersion": "Textversion",
+      "source": "Lämnat via",
+      "givenByPersonId": "Lämnat av",
+      "givenAt": "Lämnat",
+      "revokedByPersonId": "Återkallat av",
+      "revokedReason": "Varför det upphörde",
+      "text": "Texten som godkändes",
+      "message": "Meddelande",
+      "decisionMessage": "Klubbens svar",
+      "decidedAt": "Beslutat",
+      "queuedAt": "I kön sedan",
+      "applicantNote": "Din anteckning",
+      "activityTitle": "Aktivitet",
+      "activityStartsAt": "Börjar",
+      "note": "Anteckning",
+      "respondedByPersonId": "Svarat av",
+      "respondedAt": "Svarat",
+      "guest": "Gäst",
+      "recordedByPersonId": "Registrerad av",
+      "recordedAt": "Registrerad",
+      "correctedReason": "Rättelse",
+      "invitedByPersonId": "Kallad av",
+      "eventTitle": "Evenemang",
+      "eventStartsAt": "Börjar",
+      "answers": "Svar",
+      "sensitiveAnswers": "Känsliga svar",
+      "registeredByPersonId": "Anmäld av",
+      "rolePreset": "Roll",
+      "uses": "Använd"
+    }
   }
 }
