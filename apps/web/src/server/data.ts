@@ -9,16 +9,21 @@ import {
   type ActivityPage,
   ActivityPageSchema,
   AdultGuardiansSchema,
+  AssignmentsSchema,
   AttendanceSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
+  ClubPrivacySchema,
   ClubSearchResultSchema,
+  ConsentTextVersionsSchema,
+  DecisionsPageSchema,
   EventDetailSchema,
   EventPageSchema,
   FamilyDuplicatesSchema,
   GroupAttendanceSchema,
   GroupCalendarSchema,
+  GroupConsentsSchema,
   GroupDetailSchema,
   type GroupList,
   GroupListSchema,
@@ -29,6 +34,7 @@ import {
   InviteesSchema,
   isUuid,
   JoinRequestListSchema,
+  LeavePreviewSchema,
   LocationConflictsSchema,
   type LocationList,
   LocationListSchema,
@@ -40,6 +46,7 @@ import {
   MeResponseSchema,
   MyClubCreationRequestsSchema,
   MyClubsSchema,
+  MyConsentsSchema,
   MyEventsSchema,
   MyGroupsSchema,
   MyHandoversSchema,
@@ -49,7 +56,9 @@ import {
   MyWardsSchema,
   NotificationListSchema,
   NotificationSettingsResponseSchema,
+  PersonConsentsSchema,
   PersonProfileSchema,
+  PrivacyPolicySchema,
   PushDeviceListSchema,
   RegisterFacetsSchema,
   RegisterPageSchema,
@@ -176,6 +185,53 @@ export const getNotificationSettings = cache(() =>
 );
 export const getPushDevices = cache(() =>
   required("/api/v1/me/push-devices", PushDeviceListSchema),
+);
+// Privacy (P1.8a).
+export const getMyConsents = cache(() => required("/api/v1/me/consents", MyConsentsSchema));
+/** A person's consents in a club, or null if the viewer may not see them. */
+export const getPersonConsents = cache((personId: string, clubId: string) =>
+  apiGet(
+    `/api/v1/people/${requireId(personId)}/consents?clubId=${requireId(clubId)}`,
+    PersonConsentsSchema,
+    { nullOn: [403, 404] },
+  ),
+);
+export const getGroupConsents = cache((groupId: string, purpose: string | null) =>
+  apiGet(
+    `/api/v1/groups/${requireId(groupId)}/consents?limit=200${purpose ? `&purpose=${encodeURIComponent(purpose)}` : ""}`,
+    GroupConsentsSchema,
+    { nullOn: [403] },
+  ),
+);
+export const getClubPrivacy = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/privacy`, ClubPrivacySchema),
+);
+export const getPrivacyPolicy = cache((clubId: string, version: number | null) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/privacy-policy${version ? `?version=${version}` : ""}`,
+    PrivacyPolicySchema,
+  ),
+);
+export const getSettingDecisions = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/setting-decisions?limit=50`, DecisionsPageSchema),
+);
+export const getConsentTexts = cache((clubId: string, purpose: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/consent-texts?purpose=${encodeURIComponent(purpose)}`,
+    ConsentTextVersionsSchema,
+  ),
+);
+export const getAssignments = cache((clubId: string, personId: string | null) =>
+  required(
+    `/api/v1/me/clubs/${requireId(clubId)}/assignments${personId && isUuid(personId) ? `?personId=${personId}` : ""}`,
+    AssignmentsSchema,
+  ),
+);
+export const getLeavePreview = cache((clubId: string, personId: string | null) =>
+  required(
+    `/api/v1/me/clubs/${requireId(clubId)}/leave-preview${personId && isUuid(personId) ? `?personId=${personId}` : ""}`,
+    LeavePreviewSchema,
+  ),
 );
 export const getClub = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}`, ClubDetailSchema),

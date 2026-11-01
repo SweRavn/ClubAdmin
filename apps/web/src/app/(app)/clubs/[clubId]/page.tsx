@@ -67,6 +67,13 @@ export default async function ClubPage({ params, searchParams }: Params) {
               {t("clubSettings.title")}
             </a>
           ) : null}
+          <a
+            href={`/clubs/${club.id}/privacy`}
+            className="text-sm text-accent underline"
+            data-testid="club-privacy-link"
+          >
+            {t("privacy.clubTitle")}
+          </a>
         </div>
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="text-muted">{t("club.timeZone")}</dt>

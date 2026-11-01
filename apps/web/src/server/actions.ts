@@ -11,7 +11,11 @@ import {
   ADMISSION_MODES,
   ATTENDANCE_ROLES,
   ATTENDANCE_STATUSES,
+  BOARD_SETTING_KEYS,
   CLUB_PHONE_NUMBERS_MAX,
+  CLUB_SETTINGS,
+  type ClubSettingDefinition,
+  CONSENT_PURPOSES,
   EMAIL_MODES,
   EVENT_ACTIVITIES_MAX,
   EVENT_QUESTIONS_MAX,
@@ -1064,8 +1068,135 @@ const NOTIFICATION_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+/** Privacy (P1.8a): consents, leaving a club, stepping down, the board's decisions. */
+const PRIVACY_ACTIONS: Record<string, FormAction> = {
+  "give-consent": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      const clubId = id(form, "clubId");
+      const purpose = text(form, "purpose");
+      // A paper consent names the version per purpose (the purpose is chosen in the form).
+      const textVersion = text(form, "textVersion") || text(form, `version.${purpose}`);
+      if (!personId || !clubId || !(CONSENT_PURPOSES as readonly string[]).includes(purpose)) {
+        return null;
+      }
+      const clubNote = optional(text(form, "clubNote"));
+      return {
+        path: `/api/v1/people/${personId}/consents/${purpose}?clubId=${clubId}`,
+        method: "PUT",
+        body: { textVersion, ...(clubNote ? { clubNote } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/privacy"), "consent", "given"),
+  },
+  "withdraw-consent": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      const clubId = id(form, "clubId");
+      const purpose = text(form, "purpose");
+      if (!personId || !clubId || !(CONSENT_PURPOSES as readonly string[]).includes(purpose)) {
+        return null;
+      }
+      return {
+        path: `/api/v1/people/${personId}/consents/${purpose}?clubId=${clubId}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => withParam(back(form, "/me/privacy"), "consent", "withdrawn"),
+  },
+  "step-down": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const assignmentId = id(form, "assignmentId");
+      const personId = id(form, "personId");
+      if (!clubId || !assignmentId) return null;
+      return {
+        path: `/api/v1/me/clubs/${clubId}/assignments/${assignmentId}${personId ? `?personId=${personId}` : ""}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => withParam(back(form, "/me/privacy"), "steppedDown", "1"),
+  },
+  "leave-club": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      if (!clubId || !personId || text(form, "confirm") !== "on") return null;
+      return {
+        path: `/api/v1/me/clubs/${clubId}/leave`,
+        method: "POST",
+        body: { personId, removeNow: text(form, "removeNow") === "on" },
+      };
+    },
+    done: () => "/me/privacy?left=1",
+  },
+  "record-decision": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      const settings: Record<string, unknown> = {};
+      for (const key of BOARD_SETTING_KEYS) {
+        if (form.get(`change.${key}`) !== "on") continue;
+        const definition: ClubSettingDefinition = CLUB_SETTINGS[key];
+        if (definition.type === "integer") settings[key] = Number(text(form, `value.${key}`));
+        else if (definition.type === "boolean") settings[key] = form.get(`value.${key}`) === "on";
+        else if (definition.type === "purposes") {
+          settings[key] = form
+            .getAll(`value.${key}`)
+            .filter((p) => (CONSENT_PURPOSES as readonly unknown[]).includes(p));
+        }
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/setting-decisions`,
+        method: "POST",
+        body: {
+          body: text(form, "body"),
+          decidedOn: text(form, "decidedOn"),
+          reference: text(form, "reference"),
+          ...(optional(text(form, "effectiveFrom"))
+            ? { effectiveFrom: text(form, "effectiveFrom") }
+            : {}),
+          settings,
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "decided", "1"),
+  },
+  "set-privacy-contact": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/settings`,
+        method: "PATCH",
+        body: { privacyContactEmail: text(form, "privacyContactEmail") || null },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "publish-consent-text": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const purpose = text(form, "purpose");
+      if (!clubId || !(CONSENT_PURPOSES as readonly string[]).includes(purpose)) return null;
+      const texts: Record<string, string> = {};
+      for (const locale of ["sv", "en", "nb"]) {
+        const value = text(form, `text.${locale}`);
+        if (value) texts[locale] = value;
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/consent-texts`,
+        method: "POST",
+        body: { purpose, texts },
+      };
+    },
+    done: (form) => withParam(back(form), "published", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
+  ...PRIVACY_ACTIONS,
   ...NOTIFICATION_ACTIONS,
   ...CLUB_ACTIONS,
   ...GROUP_ACTIONS,

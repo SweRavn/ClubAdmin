@@ -196,6 +196,15 @@ export default async function GroupPage({ params, searchParams }: Params) {
                     {t("attendance.summary")}
                   </a>
                 ) : null}
+                {calendar.canReadAttendance ? (
+                  <a
+                    href={`/groups/${group.id}/consents`}
+                    className={secondaryButtonClass}
+                    data-testid="group-consents"
+                  >
+                    {t("privacy.groupConsents")}
+                  </a>
+                ) : null}
                 {calendar.canManage ? (
                   <>
                     <a

@@ -14,6 +14,7 @@ import {
 } from "../../../../components/action-form.tsx";
 import { GuardianRow, RightsFields } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
+import { PersonConsents } from "../../../../components/person-consents.tsx";
 import {
   getClubGroups,
   getClubGuardians,
@@ -420,6 +421,7 @@ export default async function PersonPage({ params, searchParams }: Props) {
           </ul>
         </section>
       ) : null}
+      {profile.club ? <PersonConsents personId={personId} clubId={profile.club.clubId} /> : null}
     </div>
   );
 }
