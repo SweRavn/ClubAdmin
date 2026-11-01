@@ -5,7 +5,7 @@ import {
   objectStorageConfigIssues,
   objectStorageConfigShape,
 } from "@clubadmin/server-kit/object-storage";
-import { AppVersionSchema, devAuthViolation, z } from "@clubadmin/shared";
+import { AppVersionSchema, devAuthViolation, ERASURE_GRACE_DAYS, z } from "@clubadmin/shared";
 
 export const apiConfigSchema = z
   .object({
@@ -70,6 +70,19 @@ export const apiConfigSchema = z
     MEMBER_IMPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(20),
     /** Invitations imports send per club in 24 hours (the rest are left out and counted). */
     MEMBER_IMPORT_INVITATIONS_PER_CLUB_DAY: z.coerce.number().int().positive().default(2000),
+    /**
+     * The retention role's connection (clubadmin_retention): the erasure job
+     * (P1.8b) runs privacy.erase_person with it. Without it, erasures wait
+     * with error_code erasure_unavailable.
+     */
+    DATABASE_RETENTION_URL: z.string().optional(),
+    /** Days between an account deletion or ward erasure request and the erasure (P1.8b). */
+    ERASURE_GRACE_DAYS: z.coerce
+      .number()
+      .int()
+      .min(ERASURE_GRACE_DAYS.min)
+      .max(ERASURE_GRACE_DAYS.max)
+      .default(ERASURE_GRACE_DAYS.default),
     /** Run the API jobs in this process (ADR 0033): member imports, expiring event offers (P1.6). */
     MEMBER_IMPORT_JOBS: envBoolean(true),
     /** Import jobs at a time in this process. */

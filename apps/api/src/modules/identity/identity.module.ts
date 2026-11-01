@@ -147,7 +147,7 @@ export class IdentityModule {
             ),
         },
       ],
-      exports: [IdentityService, TokenVerifier],
+      exports: [IdentityService, TokenVerifier, SessionsService],
     };
   }
 }

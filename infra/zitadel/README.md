@@ -6,7 +6,7 @@ Zitadel through its API, idempotently. Implementation:
 
 | File | Contents |
 |---|---|
-| `clubadmin.json` | Project `clubadmin`; OIDC apps `web` (confidential, code + PKCE), `mobile` (native, PKCE) and the `api` app; the `clubadmin-api` machine user (ends Zitadel sessions when a session is revoked); login, password, lockout and domain policies; token lifetimes; branding; languages; which login UI the apps use. `${PUBLIC_WEB_URL}` and other `${VAR}`s come from the environment. |
+| `clubadmin.json` | Project `clubadmin`; OIDC apps `web` (confidential, code + PKCE), `mobile` (native, PKCE) and the `api` app; the `clubadmin-api` machine user (ends Zitadel sessions when a session is revoked; deletes the Zitadel user when an account is deleted, P1.8b, with the instance role `IAM_USER_MANAGER`); login, password, lockout and domain policies; token lifetimes; branding; languages; which login UI the apps use. `${PUBLIC_WEB_URL}` and other `${VAR}`s come from the environment. |
 | `login-texts/<lang>.json` | Overrides of the login UI's default texts (ClubAdmin wording) per language. |
 
 **Development:** the token of the `clubadmin-config` machine user is read from

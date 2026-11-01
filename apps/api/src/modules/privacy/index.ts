@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Public interface of the privacy module (P1.8a, ADR 0041).
+// Public interface of the privacy module (P1.8a/b, ADR 0041).
 export { ClubPrivacyService } from "./club-privacy.service.ts";
 export { type ConsentCaller, ConsentsService } from "./consents.service.ts";
+export { type DataExportJobDeps, runDataExport } from "./data-export.job.ts";
+export { DataExportsService } from "./data-exports.service.ts";
+export { type ErasureJobDeps, runDueErasures } from "./erasure.job.ts";
+export { ErasureService } from "./erasure.service.ts";
 export { LeavingService } from "./leaving.service.ts";
 export {
   OUTSTANDING_OBLIGATIONS,

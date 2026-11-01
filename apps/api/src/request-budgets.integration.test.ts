@@ -61,7 +61,8 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => "/api/v1/me",
-    statements: 2,
+    // The person, the account and a pending deletion (P1.8b).
+    statements: 3,
     pages: 10,
   },
   {
@@ -341,6 +342,33 @@ const CASES: Case[] = [
     pages: 30,
   },
   {
+    route: "GET /api/v1/me/data-exports",
+    persona: "anna",
+    method: "GET",
+    url: () => "/api/v1/me/data-exports",
+    // The requests, their subjects through the presenter (P1.8b).
+    statements: 3,
+    pages: 20,
+  },
+  {
+    route: "GET /api/v1/me/account/deletion",
+    persona: "anna",
+    method: "GET",
+    url: () => "/api/v1/me/account/deletion",
+    // Wards and their logins, assignments in every club, a pending request.
+    statements: 3,
+    pages: 80,
+  },
+  {
+    route: "GET /api/v1/me/wards/{personId}/erasure",
+    persona: "anna",
+    method: "GET",
+    url: () => `/api/v1/me/wards/${key("elsa")}/erasure`,
+    // As the deletion preview, for one ward.
+    statements: 4,
+    pages: 75,
+  },
+  {
     route: "PATCH /api/v1/me/preferences",
     persona: "anna",
     method: "PATCH",
@@ -356,6 +384,9 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  "POST /api/v1/me/account/deletion":
+    "needs a recent login; the preview's statements and one insert (privacy tests)",
+  "DELETE /api/v1/me/account/deletion": "one update by key, plus an audit row",
   "PUT /api/v1/me/push-devices": "needs a push provider; one upsert by token hash",
   "DELETE /api/v1/me/push-devices/{deviceId}": "one delete by primary key",
   "PUT /api/v1/me/notification-settings": "one account row",
@@ -496,6 +527,8 @@ beforeAll(async () => {
       "auto_explain.log_min_duration = 0",
       "auto_explain.log_analyze = on",
       "auto_explain.log_buffers = on",
+      // Also the statements inside SQL functions (app.erasure_assignments, P1.8b).
+      "auto_explain.log_nested_statements = on",
     ]) {
       await t.query("admin", `ALTER DATABASE ${t.name} SET ${setting}`);
     }

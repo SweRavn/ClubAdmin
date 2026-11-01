@@ -173,6 +173,22 @@ export class LeavingService {
     });
   }
 
+  /**
+   * The person leaves the club because their data is being erased (P1.8b):
+   * in the erasure job's system transaction for the club, after it checked
+   * that no blockers remain. Ends what leaving ends; the managers are told.
+   */
+  async leaveForErasureInTx(tx: Tx, clubId: string, personId: string): Promise<boolean> {
+    const context: TenantContext = { actorKind: "anonymous", personId: null, clubId };
+    const left = await this.deps.memberships.leaveClubInTx(tx, context, personId);
+    await this.deps.joinRequests.withdrawPendingInTx(tx, context, personId);
+    await this.deps.groups.withdrawWaitlistEntriesOfPersonInTx(tx, context, personId);
+    await this.deps.events.cancelComingRegistrationsOfPersonInTx(tx, context, personId);
+    await this.deps.consents.revokeForLeavingInTx(tx, context, personId);
+    if (left) await outbox.publish(tx, "membership.left", { clubId, personId });
+    return left;
+  }
+
   /** Whether the person is under the club's country pack adult age (a minor leaves through a guardian). */
   isMinor(context: TenantContext, personId: string): Promise<boolean> {
     return this.db.withTenant(context, async (tx) => {

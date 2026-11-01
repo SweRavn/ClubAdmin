@@ -46,6 +46,7 @@
     "@nestjs/core": "catalog:",
     "@nestjs/platform-fastify": "catalog:",
     "fastify": "catalog:",
+    "fflate": "catalog:",
     "graphile-worker": "catalog:",
     "ioredis": "catalog:",
     "jose": "catalog:",

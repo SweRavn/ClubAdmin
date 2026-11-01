@@ -33,8 +33,8 @@
   },
   "serviceUser": {
     "userName": "clubadmin-api",
-    "name": "ClubAdmin API (session revocation)",
-    "instanceRoles": ["IAM_LOGIN_CLIENT"]
+    "name": "ClubAdmin API (session revocation, account deletion)",
+    "instanceRoles": ["IAM_LOGIN_CLIENT", "IAM_USER_MANAGER"]
   },
   "loginPolicy": {
     "allowUsernamePassword": true,

@@ -1006,6 +1006,14 @@ export class EventsService {
     await outbox.publish(tx, "event.changed", { clubId: event.clubId, eventId: event.id, change });
   }
 
+  /**
+   * A registration's sealed answers in plain text, for the person's own
+   * "download my data" file (P1.8b); never logged.
+   */
+  unsealAnswersInTx(tx: Tx, registrationId: string, sealed: string): Promise<Answers> {
+    return this.unseal(tx, registrationId, sealed);
+  }
+
   private async seal(
     tx: Tx,
     clubId: string,

@@ -15,6 +15,7 @@ import {
   type Database,
   isUniqueViolation,
   outbox,
+  sql,
   type TenantContext,
   type Tx,
 } from "@clubadmin/db";
@@ -494,6 +495,36 @@ export class GuardianshipsService {
         wardPersonId: guardianship.wardPersonId,
       });
     });
+  }
+
+  /**
+   * Ends every open guardianship where the person is the guardian or the
+   * ward (account deletion and ward erasure, P1.8b), in the caller's system
+   * transaction. Returns how many ended.
+   */
+  async endAllOfPersonInTx(tx: Tx, personId: string): Promise<number> {
+    const { rows } = await tx.execute<{
+      id: string;
+      guardian_person_id: string;
+      ward_person_id: string;
+    }>(sql`
+      UPDATE public.guardianships SET status = 'ended', valid_to = now()
+      WHERE (guardian_person_id = ${personId} OR ward_person_id = ${personId})
+        AND valid_to IS NULL
+      RETURNING id, guardian_person_id, ward_person_id`);
+    for (const row of rows) {
+      await audit.record(tx, {
+        action: "guardianship.ended",
+        resourceType: "guardianship",
+        resourceId: row.id,
+        changedFields: ["status", "valid_to"],
+      });
+      await outbox.publish(tx, "guardianship.changed", {
+        guardianPersonId: row.guardian_person_id,
+        wardPersonId: row.ward_person_id,
+      });
+    }
+    return rows.length;
   }
 
   /**

@@ -49,6 +49,28 @@ export function zitadelSessions(baseUrl: string, token: string): ZitadelSessions
   };
 }
 
+export interface ZitadelUsers {
+  /** Deletes a Zitadel user; ignores users that are already gone. */
+  delete(userId: string): Promise<void>;
+}
+
+/**
+ * Zitadel user API v2 with the clubadmin-api machine user (P1.8b: account
+ * deletion; `pnpm auth:configure` grants it the user-delete permission).
+ */
+export function zitadelUsers(baseUrl: string, token: string): ZitadelUsers {
+  return {
+    async delete(userId) {
+      const res = await fetch(
+        `${baseUrl.replace(/\/$/, "")}/v2/users/${encodeURIComponent(userId)}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok && res.status !== 404)
+        throw new Error(`Zitadel user delete failed: HTTP ${res.status}`);
+    },
+  };
+}
+
 /** How often a mobile session's lastSeenAt is written (per API instance and session). */
 const TOUCH_INTERVAL_MS = 5 * 60_000;
 const TOUCHED_MAX = 50_000;
@@ -148,6 +170,37 @@ export class SessionsService {
       audit.record(tx, { action: "session.revoked", resourceType: "session" }),
     );
     return true;
+  }
+
+  /**
+   * Revokes every session of a person (account deletion, P1.8b): browser
+   * sessions are deleted, app sessions deny-listed, Zitadel sessions ended.
+   * Run by the system after the erasure (audited there, not per session).
+   * Returns how many sessions there were.
+   */
+  async revokeAllOf(personId: string): Promise<number> {
+    if (!this.valkey) return 0;
+    const entries = await this.valkey.hgetall(personSessionsKey(personId));
+    const tx = this.valkey.multi().del(personSessionsKey(personId));
+    const idpSessions: string[] = [];
+    for (const [handle, value] of Object.entries(entries)) {
+      const metadata = StoredSessionMetadataSchema.safeParse(JSON.parse(value));
+      if (!metadata.success) continue;
+      if (metadata.data.storageId) tx.del(sessionKey(metadata.data.storageId));
+      if (metadata.data.client === "mobile") {
+        tx.set(revokedKey(handle), "1", "EX", REVOKED_TTL_SECONDS);
+      }
+      if (metadata.data.idpSessionId && !metadata.data.devAuth) {
+        idpSessions.push(metadata.data.idpSessionId);
+      }
+      this.touched.delete(handle);
+      this.notRevoked.delete(handle);
+    }
+    await tx.exec();
+    if (this.zitadel) {
+      for (const id of idpSessions) await this.zitadel.end(id);
+    }
+    return Object.keys(entries).length;
   }
 
   /**

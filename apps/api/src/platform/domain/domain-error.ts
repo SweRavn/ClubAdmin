@@ -157,6 +157,17 @@ export const DOMAIN_ERRORS = {
   /** A board setting changed without a recorded decision. */
   decision_required: "validation",
   decision_invalid: "validation",
+  // Privacy (P1.8b): "download my data", account deletion, ward erasure
+  /** The file of a data export was deleted (after seven days) or never written. */
+  export_expired: "conflict",
+  /** An erasure of the person is already scheduled or running. */
+  erasure_pending: "conflict",
+  /** Roles, leader functions, ownerships or invoices remain (the preview names them). */
+  erasure_blocked: "conflict",
+  /** A ward with a login of their own deletes their account themselves. */
+  ward_has_login: "conflict",
+  /** Erasure needs the retention role, which this installation has not configured. */
+  erasure_unavailable: "unavailable",
   // Billing (P0.12)
   plan_not_found: "not-found",
   no_subscription: "not-found",

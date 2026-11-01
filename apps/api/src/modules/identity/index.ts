@@ -3,6 +3,7 @@
 export { IdentityModule } from "./identity.module.ts";
 export { IdentityService } from "./identity.service.ts";
 export { CurrentPrincipal, type Principal, RecentAuth, RequireMfa } from "./principal.ts";
+export { SessionsService, type ZitadelUsers, zitadelUsers } from "./sessions.service.ts";
 export {
   accessTokenHash,
   isMfa,

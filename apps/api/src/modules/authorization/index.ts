@@ -16,6 +16,7 @@ export {
   registerAccess,
 } from "./authorization.policy.ts";
 export { AuthorizationService } from "./authorization.service.ts";
+export { AuthorizationCache } from "./authorization-cache.ts";
 export { EndpointPolicyCheck, endpointPolicyProblems } from "./endpoint-policies.ts";
 export { PersonVisibility, type Visibility } from "./person-visibility.service.ts";
 export type {

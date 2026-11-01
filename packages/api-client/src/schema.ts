@@ -1807,6 +1807,25 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/account/deletion": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** What deleting my account needs, which children go with it, and a pending deletion */
+    get: operations["DataRights_deletionPreview"];
+    put?: never;
+    /** Delete my account after the grace period (and the chosen children without a login) */
+    post: operations["DataRights_scheduleDeletion"];
+    /** Cancel the deletion of my account during the grace period */
+    delete: operations["DataRights_cancelDeletion"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/adult-guardians": {
     parameters: {
       query?: never;
@@ -1952,6 +1971,41 @@ export interface paths {
     };
     /** My consents and my children's, per club, with the texts in my language */
     get: operations["Consents_mine"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/data-exports": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My requests for my data (newest first) */
+    get: operations["DataRights_listExports"];
+    put?: never;
+    /** Request a file with everything about me (or my child) */
+    post: operations["DataRights_requestExport"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/data-exports/{exportId}/download": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A five-minute download link for my data file */
+    get: operations["DataRights_download"];
     put?: never;
     post?: never;
     delete?: never;
@@ -2317,6 +2371,25 @@ export interface paths {
     /** Add a child without email; the caller becomes their parent (or legal guardian) */
     post: operations["Family_addChild"];
     delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/wards/{personId}/erasure": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** What erasing my child (without a login) needs, and a pending erasure */
+    get: operations["DataRights_wardPreview"];
+    put?: never;
+    /** Erase my child (without a login) after the grace period; other parents may cancel */
+    post: operations["DataRights_scheduleWardErasure"];
+    /** Cancel the scheduled erasure of my child */
+    delete: operations["DataRights_cancelWardErasure"];
     options?: never;
     head?: never;
     patch?: never;
@@ -4566,6 +4639,10 @@ export interface components {
       authTime: string | null;
       person: components["schemas"]["PersonSummary"];
       preferences: components["schemas"]["Preferences"];
+      pendingDeletion?: {
+        /** Format: date-time */
+        scheduledFor: string;
+      } | null;
     };
     Preferences: {
       /** @enum {string|null} */
@@ -4573,6 +4650,89 @@ export interface components {
       timeZone: string | null;
       /** @enum {string|null} */
       theme: "light" | "dark" | "system" | null;
+    };
+    Empty: Record<string, never>;
+    AccountDeletionPreview: {
+      graceDays: number;
+      blockers: components["schemas"]["ErasureBlocker"][];
+      wards: {
+        person: components["schemas"]["PersonSummary"];
+        blockers: components["schemas"]["ErasureBlocker"][];
+      }[];
+      pending: components["schemas"]["ErasureRequest"];
+    };
+    ErasureBlocker: {
+      /** Format: uuid */
+      personId: string;
+      /** Format: uuid */
+      clubId: string;
+      clubName: string;
+      /** @enum {string} */
+      code: "roles_must_be_removed" | "outstanding_invoices" | "last_club_manager";
+      assignments?: components["schemas"]["Assignment"][];
+      count?: number;
+      /** @enum {string} */
+      contactRole?:
+        | "chair"
+        | "vice_chair"
+        | "treasurer"
+        | "secretary"
+        | "board_member"
+        | "deputy_board_member"
+        | "auditor"
+        | "nomination_committee"
+        | "club_manager"
+        | "registrar"
+        | "safeguarding_officer"
+        | "communications"
+        | "staff";
+    };
+    Assignment: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      kind: "role" | "group_function" | "group_owner";
+      /** @enum {string} */
+      role?:
+        | "chair"
+        | "vice_chair"
+        | "treasurer"
+        | "secretary"
+        | "board_member"
+        | "deputy_board_member"
+        | "auditor"
+        | "nomination_committee"
+        | "club_manager"
+        | "registrar"
+        | "safeguarding_officer"
+        | "communications"
+        | "staff";
+      /** Format: uuid */
+      groupId?: string;
+      groupName?: string;
+      /** @enum {string} */
+      function?:
+        "member" | "head_coach" | "assistant_coach" | "team_manager" | "physio" | "other_leader";
+      /** @enum {string|null} */
+      blockedBy: "last_club_manager" | null;
+    };
+    ErasureRequest: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      personId: string;
+      /** @enum {string} */
+      kind: "account_deletion" | "ward_erasure";
+      /** @enum {string} */
+      status: "scheduled" | "cancelled" | "running" | "done" | "failed";
+      /** Format: date-time */
+      scheduledFor: string;
+      includeWardIds: string[];
+      requestedByYou: boolean;
+    } | null;
+    ScheduleAccountDeletion: {
+      /** @default [] */
+      eraseWardIds: string[];
     };
     AdultGuardians: {
       guardians: {
@@ -4689,36 +4849,6 @@ export interface components {
       clubId: string;
       items: components["schemas"]["Assignment"][];
     };
-    Assignment: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      kind: "role" | "group_function" | "group_owner";
-      /** @enum {string} */
-      role?:
-        | "chair"
-        | "vice_chair"
-        | "treasurer"
-        | "secretary"
-        | "board_member"
-        | "deputy_board_member"
-        | "auditor"
-        | "nomination_committee"
-        | "club_manager"
-        | "registrar"
-        | "safeguarding_officer"
-        | "communications"
-        | "staff";
-      /** Format: uuid */
-      groupId?: string;
-      groupName?: string;
-      /** @enum {string} */
-      function?:
-        "member" | "head_coach" | "assistant_coach" | "team_manager" | "physio" | "other_leader";
-      /** @enum {string|null} */
-      blockedBy: "last_club_manager" | null;
-    };
-    Empty: Record<string, never>;
     LeaveClub: {
       /** Format: uuid */
       personId: string;
@@ -4810,6 +4940,36 @@ export interface components {
       givenAt: string;
       givenBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
     } | null;
+    DataExportsPage: {
+      items: components["schemas"]["DataExport"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    DataExport: {
+      /** Format: uuid */
+      id: string;
+      subject: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** Format: uuid */
+      subjectPersonId: string;
+      /** @enum {string} */
+      status: "queued" | "ready" | "failed" | "expired";
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      expiresAt: string | null;
+      sizeBytes: number | null;
+      errorCode: string | null;
+    };
+    CreateDataExport: {
+      /** Format: uuid */
+      personId?: string;
+    };
+    DataExportDownload: {
+      /** Format: uri */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
+    };
     FamilyDuplicates: {
       pairs: {
         person: {
@@ -5233,6 +5393,12 @@ export interface components {
       person: components["schemas"]["PersonSummary"];
       /** Format: uuid */
       guardianshipId: string;
+    };
+    WardErasurePreview: {
+      graceDays: number;
+      hasLogin: boolean;
+      blockers: components["schemas"]["ErasureBlocker"][];
+      pending: components["schemas"]["ErasureRequest"];
     };
     WardGuardians: {
       ward: components["schemas"]["PersonSummary"];
@@ -14324,6 +14490,187 @@ export interface operations {
       };
     };
   };
+  DataRights_deletionPreview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AccountDeletionPreview"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_scheduleDeletion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ScheduleAccountDeletion"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErasureRequest"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_cancelDeletion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Empty"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Family_adultGuardians: {
     parameters: {
       query?: never;
@@ -14861,6 +15208,210 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MyConsents"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_listExports: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DataExportsPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_requestExport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateDataExport"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DataExport"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_download: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        exportId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DataExportDownload"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
       /** @description Not logged in */
@@ -16515,6 +17066,207 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ChildAdded"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_wardPreview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WardErasurePreview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_scheduleWardErasure: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErasureRequest"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  DataRights_cancelWardErasure: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Empty"];
         };
       };
       /** @description Invalid request */

@@ -105,6 +105,29 @@ export class AuthorizationService {
   }
 
   /**
+   * A person's authorization outside a request, for jobs that present people
+   * as that person would see them (the "download my data" file, P1.8b).
+   */
+  async forPerson(personId: string, requestId: string): Promise<RequestAuthorization> {
+    const set = await this.relationshipSet(personId, requestId);
+    const actor = Actor.of(set, { principalPersonId: personId, mfa: false });
+    return {
+      principal: {
+        accountId: null,
+        personId,
+        mfa: false,
+        authTime: null,
+        sessionId: null,
+        dev: false,
+      },
+      actor,
+      context: { actorKind: "person", personId, onBehalfOf: actor.onBehalfOf, requestId },
+      resource: null,
+      protectedSets: new Map(),
+    };
+  }
+
+  /**
    * Groups of a club as policy references (with ancestors and whether they
    * are archived), for decisions about more groups than the route's resource
    * (a joint activity names several). Groups outside the club, or that the

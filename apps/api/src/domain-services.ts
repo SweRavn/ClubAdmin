@@ -22,6 +22,8 @@ import { PersonMergeService } from "./modules/person-merge/index.ts";
 import {
   ClubPrivacyService,
   ConsentsService,
+  DataExportsService,
+  ErasureService,
   LeavingService,
   type OutstandingObligationsProvider,
 } from "./modules/privacy/index.ts";
@@ -50,6 +52,8 @@ export interface CoreServices {
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
   leaving: LeavingService;
+  dataExports: DataExportsService;
+  erasure: ErasureService;
 }
 
 export function createCoreServices(
@@ -62,6 +66,8 @@ export function createCoreServices(
     storage?: ObjectStorage | null;
     /** What members owe their clubs (P1.8a; tests register a fake). */
     obligations?: readonly OutstandingObligationsProvider[];
+    /** Days before a scheduled erasure runs (ERASURE_GRACE_DAYS, P1.8b). */
+    erasureGraceDays?: number;
   },
 ): CoreServices {
   const { encryption } = options;
@@ -105,6 +111,11 @@ export function createCoreServices(
     events,
     consents,
     clubPrivacy: new ClubPrivacyService(db, { clubs }),
+    dataExports: new DataExportsService(db, { storage: options.storage ?? null }),
+    erasure: new ErasureService(db, {
+      graceDays: options.erasureGraceDays ?? 14,
+      obligations: options.obligations ?? [],
+    }),
     leaving: new LeavingService(db, {
       clubs,
       roles,

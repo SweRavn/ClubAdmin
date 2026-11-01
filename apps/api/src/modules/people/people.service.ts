@@ -262,6 +262,21 @@ export class PeopleService {
   }
 
   /**
+   * The person's own personal identity number for their "download my data"
+   * file (P1.8b; the export job runs as the system). Null when none is stored.
+   */
+  async personalIdentityNumberInTx(
+    tx: Tx,
+    personId: string,
+  ): Promise<{ country: string; value: string } | null> {
+    const row = await repo.findPerson(tx, personId);
+    if (!row?.personalIdentityNumber) return null;
+    const plain = await this.encryption.decrypt(tx, row.personalIdentityNumber, pinAad(personId));
+    const separator = plain.indexOf(":");
+    return { country: plain.slice(0, separator), value: plain.slice(separator + 1) };
+  }
+
+  /**
    * The club's people (also former members) matching people of a file
    * (adding and importing members, P1.3b): never anyone outside the club.
    */

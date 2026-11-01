@@ -18,9 +18,13 @@ import {
   UpdatePreferencesSchema,
   z,
 } from "@clubadmin/shared";
-import { Body, Controller, Param, Req } from "@nestjs/common";
+import { Body, Controller, Inject, Param, Req } from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 
+import {
+  PENDING_DELETION,
+  type PendingDeletionLookup,
+} from "../../platform/domain/pending-deletion.ts";
 import { Endpoint } from "../../platform/http/endpoint.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
 import { AccountsService } from "../accounts/index.ts";
@@ -47,6 +51,7 @@ export class MeController {
   private readonly presenter: PersonPresenter;
   private readonly accounts: AccountsService;
   private readonly groups: GroupsService;
+  private readonly erasure: PendingDeletionLookup;
 
   constructor(
     people: PeopleService,
@@ -55,6 +60,7 @@ export class MeController {
     presenter: PersonPresenter,
     accounts: AccountsService,
     groups: GroupsService,
+    @Inject(PENDING_DELETION) erasure: PendingDeletionLookup,
   ) {
     this.people = people;
     this.clubs = clubs;
@@ -62,6 +68,7 @@ export class MeController {
     this.presenter = presenter;
     this.accounts = accounts;
     this.groups = groups;
+    this.erasure = erasure;
   }
 
   @Endpoint({
@@ -77,9 +84,10 @@ export class MeController {
     @Req() request: FastifyRequest,
   ): Promise<MeResponse> {
     const context = actorOf(principal, request);
-    const [person, preferences] = await Promise.all([
+    const [person, preferences, pendingDeletion] = await Promise.all([
       this.people.getPerson(context, principal.personId),
       this.accounts.getPreferences(context),
+      this.erasure.pendingDeletion(context),
     ]);
     return {
       personId: principal.personId,
@@ -88,6 +96,9 @@ export class MeController {
       authTime: principal.authTime?.toISOString() ?? null,
       person: this.presenter.presentSelf(person),
       preferences,
+      pendingDeletion: pendingDeletion
+        ? { scheduledFor: pendingDeletion.scheduledFor.toISOString() }
+        : null,
     };
   }
 

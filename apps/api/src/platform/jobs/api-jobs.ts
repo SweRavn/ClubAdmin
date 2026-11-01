@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Jobs that run in the API process (ADR 0033) because they act through the
-// domain services, which live here: member imports, and expiring event
-// offers (P1.6, ADR 0038). A Graphile Worker runner with only these tasks
+// domain services, which live here: member imports, expiring event offers
+// (P1.6, ADR 0038), and "download my data" and erasure (P1.8b, ADR 0041). A Graphile Worker runner with only these tasks
 // shares the queue with the worker app, which never picks them up (each
 // runner fetches only the tasks it knows). Payloads are IDs only.
 
@@ -17,6 +17,12 @@ import {
 
 import type { EventsService } from "../../modules/events/index.ts";
 import type { MemberImportsService } from "../../modules/members/index.ts";
+import {
+  type DataExportJobDeps,
+  type ErasureJobDeps,
+  runDataExport,
+  runDueErasures,
+} from "../../modules/privacy/index.ts";
 
 const ImportPayload = z.object({ importId: z.uuid(), clubId: z.uuid() });
 
@@ -47,8 +53,28 @@ export function eventTasks(events: EventsService): TaskList {
   };
 }
 
-/** Every minute: an offer is answered by its time to the minute. */
-export const API_CRONTAB = "* * * * * events:expire_offers ?max=1";
+const ExportPayload = z.object({ exportId: z.uuid() });
+
+export function privacyTasks(exports: DataExportJobDeps, erasure: ErasureJobDeps): TaskList {
+  return {
+    "privacy:export": async (payload) => {
+      const { exportId } = ExportPayload.parse(payload);
+      await runDataExport(exports, exportId);
+    },
+    "privacy:erase": async () => {
+      await runDueErasures(erasure);
+    },
+  };
+}
+
+/**
+ * Every minute: an offer is answered by its time to the minute. Every ten
+ * minutes: erasures whose grace period has passed.
+ */
+export const API_CRONTAB = [
+  "* * * * * events:expire_offers ?max=1",
+  "*/10 * * * * privacy:erase ?max=1",
+].join("\n");
 
 function graphileLogger(logger: Logger): GraphileLogger {
   return new GraphileLogger(
@@ -66,6 +92,8 @@ export function startApiJobs(options: {
   concurrency: number;
   imports: MemberImportsService;
   events: EventsService;
+  exports: DataExportJobDeps;
+  erasure: ErasureJobDeps;
   logger: Logger;
 }): Promise<Runner> {
   return run({
@@ -73,7 +101,11 @@ export function startApiJobs(options: {
     concurrency: options.concurrency,
     noHandleSignals: true,
     logger: graphileLogger(options.logger),
-    taskList: { ...memberImportTasks(options.imports), ...eventTasks(options.events) },
+    taskList: {
+      ...memberImportTasks(options.imports),
+      ...eventTasks(options.events),
+      ...privacyTasks(options.exports, options.erasure),
+    },
     crontab: API_CRONTAB,
   });
 }
