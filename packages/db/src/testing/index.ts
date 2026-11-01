@@ -8,6 +8,7 @@ import { expect } from "vitest";
 
 import type { TenantContext } from "../context.ts";
 import { createDatabase, type Database, type Tx } from "../database.ts";
+import { createPool } from "../internal/pool.ts";
 import type { ROLES } from "../roles.ts";
 import { withDatabase } from "../urls.ts";
 import { testEnv } from "./env.ts";
@@ -29,6 +30,13 @@ export interface TestDatabase {
   ): Promise<pg.QueryResult<R>>;
   /** A dedicated connection (e.g. to hold a transaction open across concurrent steps). Call end(). */
   connect(role: keyof typeof ROLES | "admin"): Promise<TestSession>;
+  /**
+   * A connection pool for code that takes one (Graphile Worker's `pgPool`),
+   * with the error listeners of createPool and closed by drop(): a pool the
+   * library creates itself may still be closing a connection when drop()
+   * terminates it, which Vitest reports as an uncaught error.
+   */
+  pgPool(role: keyof typeof ROLES): pg.Pool;
   drop(): Promise<void>;
 }
 
@@ -50,10 +58,20 @@ export async function createTestDatabase(): Promise<TestDatabase> {
     applicationName: "clubadmin-test",
     max: 5,
   });
+  const pools: pg.Pool[] = [];
   return {
     name,
     db,
     url: (role) => env.urlFor(role, name),
+    pgPool(role) {
+      const pool = createPool({
+        url: env.urlFor(role, name),
+        max: 4,
+        applicationName: "clubadmin-test",
+      });
+      pools.push(pool);
+      return pool;
+    },
     async query(role, text, values) {
       if (role === "admin") return withAdmin(name, (client) => client.query(text, values));
       const client = new pg.Client({ connectionString: env.urlFor(role, name) });
@@ -76,6 +94,7 @@ export async function createTestDatabase(): Promise<TestDatabase> {
       };
     },
     async drop() {
+      await Promise.all(pools.map((pool) => pool.end()));
       await db.close();
       await dropDatabase(name);
     },

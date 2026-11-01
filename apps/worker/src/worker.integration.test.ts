@@ -109,7 +109,7 @@ describe("worker with PostgreSQL (as clubadmin_app)", () => {
       historyRetentionMonths: 24,
       historyPartitionsAhead: 3,
     });
-    await runOnce({ connectionString: t.url("app"), taskList, logger });
+    await runOnce({ pgPool: t.pgPool("app"), taskList, logger });
 
     expect(received).toEqual([eventId]);
     const { rows } = await t.query("admin", "SELECT status FROM outbox.events WHERE id = $1", [
@@ -126,7 +126,7 @@ describe("worker with PostgreSQL (as clubadmin_app)", () => {
       historyRetentionMonths: 24,
       historyPartitionsAhead: 6,
     });
-    await runOnce({ connectionString: t.url("app"), taskList, logger });
+    await runOnce({ pgPool: t.pgPool("app"), taskList, logger });
     const { rows } = await t.query<{ n: number }>(
       "admin",
       "SELECT count(*)::int AS n FROM pg_inherits WHERE inhparent = 'history.record_changes'::regclass",
@@ -1141,7 +1141,7 @@ describe("authorization cache invalidation", () => {
   it("bumps the relationship version within a second of a committed role change", async () => {
     const valkey = new Redis(process.env.VALKEY_URL ?? "redis://127.0.0.1:6379");
     const runner = await run({
-      connectionString: t.url("app"),
+      pgPool: t.pgPool("app"),
       concurrency: 2,
       noHandleSignals: true,
       pollInterval: 60_000, // LISTEN/NOTIFY must deliver the job, not polling
