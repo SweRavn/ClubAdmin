@@ -474,3 +474,112 @@ export function useUpdateNotificationSettings() {
       queryClient.setQueryData(["me", personId, "notification-settings"], settings),
   });
 }
+
+// Privacy (P1.8a). The person's own data (never on behalf of a ward: the
+// guardian's overview covers the wards). Cache first: the screen shows the
+// cached consents at once; a change is shown at once and rolled back if the
+// server refuses it.
+export type MyConsents = Schemas["MyConsents"];
+export type PrivacyPolicy = Schemas["PrivacyPolicy"];
+
+export const myConsentsQuery = (api: ApiClient, personId: string | null) => ({
+  queryKey: ["me", personId, "consents"] as const,
+  queryFn: async () => data(await api.GET("/api/v1/me/consents")),
+});
+
+export function useMyConsents() {
+  const { api, personId } = useSession();
+  return useQuery({ ...myConsentsQuery(api, personId), enabled: personId !== null });
+}
+
+export const privacyPolicyQuery = (api: ApiClient, personId: string | null, clubId: string) => ({
+  queryKey: ["me", personId, "privacy-policy", clubId] as const,
+  queryFn: async () =>
+    data(
+      await api.GET("/api/v1/clubs/{clubId}/privacy-policy", {
+        params: { path: { clubId } },
+      }),
+    ),
+});
+
+export function usePrivacyPolicy(clubId: string) {
+  const { api, personId } = useSession();
+  return useQuery({ ...privacyPolicyQuery(api, personId, clubId), enabled: personId !== null });
+}
+
+interface ConsentChange {
+  clubId: string;
+  personId: string;
+  purpose: Schemas["ConsentStatus"]["purpose"];
+  /** The text version to give; null withdraws. */
+  give: string | null;
+}
+
+export function useChangeConsent() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  const key = ["me", personId, "consents"];
+  return useMutation({
+    mutationFn: async (change: ConsentChange) => {
+      const params = {
+        path: { personId: change.personId, purpose: change.purpose },
+        query: { clubId: change.clubId },
+      };
+      if (change.give) {
+        await api.PUT("/api/v1/people/{personId}/consents/{purpose}", {
+          params,
+          body: { textVersion: change.give },
+        });
+      } else {
+        await api.DELETE("/api/v1/people/{personId}/consents/{purpose}", { params });
+      }
+    },
+    // Shown at once (optimistic), rolled back when the server refuses.
+    onMutate: async (change) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<MyConsents>(key);
+      if (previous) {
+        queryClient.setQueryData<MyConsents>(key, {
+          clubs: previous.clubs.map((club) =>
+            club.clubId !== change.clubId
+              ? club
+              : {
+                  ...club,
+                  people: club.people.map((p) =>
+                    p.person.id !== change.personId
+                      ? p
+                      : {
+                          ...p,
+                          purposes: p.purposes.map((s) =>
+                            s.purpose !== change.purpose
+                              ? s
+                              : {
+                                  ...s,
+                                  mayGive: change.give === null,
+                                  mayWithdraw: change.give !== null,
+                                  // The server's answer (onSettled) fills in who gave it.
+                                  consent: change.give
+                                    ? ({
+                                        textVersion: change.give,
+                                        current: true,
+                                        source: "self",
+                                        givenAt: new Date().toISOString(),
+                                        givenBy: null,
+                                      } as unknown as Schemas["OpenConsent"])
+                                    : null,
+                                },
+                          ),
+                        },
+                  ),
+                },
+          ),
+        });
+      }
+      return { previous };
+    },
+    onError: (_error, _change, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: key }),
+  });
+}

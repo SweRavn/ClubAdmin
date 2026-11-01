@@ -1,0 +1,37 @@
+# Consents (P1.8a): Anna opens Privacy in the settings, shows her phone to
+# the whole of SVK (contacts_club) and withdraws it again: each tap changes
+# the switch at once and is sent to the server.
+appId: ${APP_ID}
+name: Give and withdraw a consent
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- tapOn:
+    id: "open-settings"
+- scrollUntilVisible:
+    element:
+      id: "open-privacy"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "open-privacy"
+- extendedWaitUntil:
+    visible:
+      id: "privacy-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "consent-0199a000-0000-7000-8000-000000000001-contacts_club"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "consent-0199a000-0000-7000-8000-000000000001-contacts_club"
+- waitForAnimationToEnd
+- tapOn:
+    id: "consent-0199a000-0000-7000-8000-000000000001-contacts_club"
+- waitForAnimationToEnd
+- assertNotVisible: ".*kunde inte sparas.*"
+- assertVisible:
+    id: "privacy-screen"

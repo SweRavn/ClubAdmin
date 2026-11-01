@@ -189,6 +189,11 @@ export default function Settings() {
             <Body>{t("notifications.settings.title")}</Body>
           </Row>
         ) : null}
+        {hasFeature(info.data, "privacy.consents") ? (
+          <Row onPress={() => router.push("/settings/privacy")} testID="open-privacy">
+            <Body>{t("privacy.title")}</Body>
+          </Row>
+        ) : null}
         <Row onPress={() => router.push("/settings/family")} testID="open-family">
           <Body>{t("family.title")}</Body>
         </Row>
