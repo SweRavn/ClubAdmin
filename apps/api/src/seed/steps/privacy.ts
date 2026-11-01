@@ -15,6 +15,15 @@
 //   details at once (the worker purges them when it runs).
 // - Two generated people without login are orphaned: one 40 months ago
 //   (erased by the first privacy:retention run), one 6 months ago.
+// P1.8b:
+// - Anna requested "download my data" for herself and for Elsa yesterday
+//   (ready once the API's job runner has run).
+// - A generated SVK Herr player scheduled their account deletion three
+//   days ago (the grace period runs; it can be cancelled).
+// - Another generated Herr player deleted their account a month ago (left
+//   SVK, anonymised, in the deletion ledger).
+// - Ahmed (IKN coach and owner) is blocked from deleting his account by his
+//   group ownership: the preview shows it (nothing to seed).
 // Runs before the notifications step, which marks the seed's events as
 // handled (they are history, not news).
 
@@ -42,7 +51,6 @@ export const privacyDemoStep: DemoStep = {
       seedTime: env.clock.at(at),
     });
     const svk = id("svk");
-    const ikn = id("ikn");
 
     // Board decisions (recorded by the club managers).
     await s.clubPrivacy.recordDecision(actorIn("sara", "svk", "-3mo"), {
@@ -144,11 +152,67 @@ export const privacyDemoStep: DemoStep = {
       }
     }
 
+    // "Download my data" (P1.8b): Anna for herself and for Elsa, yesterday.
+    const anna = {
+      actorKind: "person" as const,
+      personId: id("anna"),
+      requestId: "seed",
+      seedTime: env.clock.at("-1d"),
+    };
+    for (const subject of [id("anna"), id("elsa")]) {
+      const row = await s.dataExports.request(anna, subject, "sv");
+      await env.admin(
+        `UPDATE public.data_exports SET created_at = now() - interval '1 day' WHERE id = '${row.id}'`,
+      );
+    }
+
+    // A Herr player scheduled their account deletion three days ago.
+    const deleting = herr.at(-2);
+    if (deleting) {
+      const request = await s.erasure.scheduleDeletion(
+        {
+          actorKind: "person",
+          personId: deleting,
+          requestId: "seed",
+          seedTime: env.clock.at("-3d"),
+        },
+        [],
+      );
+      await env.admin(`
+        UPDATE public.erasure_requests
+        SET created_at = now() - interval '3 days',
+            scheduled_for = now() - interval '3 days' + make_interval(days => ${s.erasure.graceDays})
+        WHERE id = '${request.id}'`);
+    }
+
+    // A Herr player who deleted their account a month ago (as privacy:erase does it).
+    const erased = herr.at(-3);
+    if (erased) {
+      await s.leaving.leave(
+        {
+          actorKind: "person",
+          personId: erased,
+          clubId: svk,
+          requestId: "seed",
+          seedTime: env.clock.at("-1mo"),
+        },
+        erased,
+        { removeNow: false },
+      );
+      await env.admin(`
+        INSERT INTO public.erasure_requests
+          (person_id, requested_by_person_id, kind, status, scheduled_for, started_at, done_at,
+           created_at)
+        VALUES ('${erased}', '${erased}', 'account_deletion', 'done',
+          now() - interval '1 month', now() - interval '1 month', now() - interval '1 month',
+          now() - interval '1 month' - make_interval(days => ${s.erasure.graceDays}));
+        SELECT privacy.erase_person('${erased}', 'account_deleted');`);
+    }
+
     // Orphaned people without login (their club data purged long ago).
     await env.admin(`
       INSERT INTO public.people (id, given_name, family_name, birth_date, orphaned_since)
       VALUES ('${ORPHANS[0]}', 'Gammal', 'Medlem', '1990-03-03', now() - interval '40 months'),
              ('${ORPHANS[1]}', 'Nyligen', 'Medlem', '1992-05-05', now() - interval '6 months');`);
-    void ikn;
   },
 };

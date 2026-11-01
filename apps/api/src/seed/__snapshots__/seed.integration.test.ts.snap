@@ -150,8 +150,8 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "sara",
       ],
       "memberships": {
-        "active": 24,
-        "left": 2,
+        "active": 23,
+        "left": 3,
         "paused": 1,
       },
       "slug": "strandvikens-vk",
@@ -302,7 +302,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
     "svk-herr": {
       "admission": "direct",
       "capacity": null,
-      "generated": 3,
+      "generated": 2,
       "kind": "team",
       "named": [
         "johan",
