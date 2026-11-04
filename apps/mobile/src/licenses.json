@@ -624,7 +624,7 @@
 ["negotiator","0.6.3","MIT"],
 ["negotiator","0.6.4","MIT"],
 ["negotiator","1.1.0","MIT"],
-["node-forge","1.4.0","(BSD-3-Clause OR GPL-2.0)"],
+["node-forge","1.4.1","(BSD-3-Clause OR GPL-2.0)"],
 ["node-int64","0.4.0","MIT"],
 ["node-releases","2.0.58","MIT"],
 ["normalize-path","3.0.0","MIT"],
