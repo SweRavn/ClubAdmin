@@ -20,8 +20,8 @@ export {
 } from "./errors.ts";
 export {
   type AuditEventFilter,
-  auditEventsSql,
   type AuditEventRow,
+  auditEventsSql,
   type ClubHistoryFilter,
   clubHistorySql,
   decodeHistoryCursor,
@@ -36,8 +36,8 @@ export {
   readGlobalHistory,
   readRecordsHistory,
   type RecordChange,
-  recordsHistorySql,
   type RecordHistoryPage,
+  recordsHistorySql,
 } from "./history.ts";
 export * as tables from "./infra/tables.ts";
 export { dataKeyStore, type StoredDataKey } from "./keys.ts";
