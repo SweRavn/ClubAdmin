@@ -15,6 +15,13 @@ export const DOMAIN_ERRORS = {
   invalid_input: "validation",
   /** A pagination cursor that is not an item of the list (any more). */
   invalid_cursor: "bad-request",
+  // History and audit (P1.9)
+  /** A panel with more records than HISTORY_SCOPE_MAX: use the club-wide view. */
+  history_scope_too_large: "conflict",
+  /** A period longer than allowed (90 days for filtered changes, 400 for the audit log). */
+  range_too_large: "validation",
+  /** A history read ran into the history pool's statement timeout. */
+  history_timeout: "unavailable",
   // people
   protected_address: "validation",
   invalid_personal_identity_number: "validation",

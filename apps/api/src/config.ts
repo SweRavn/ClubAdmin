@@ -63,6 +63,8 @@ export const apiConfigSchema = z
     RATE_LIMIT_ACCOUNT_BULK_MAX: z.coerce.number().int().positive().default(240),
     /** Club searches, join requests, invitation acceptances and club creations per account and hour. */
     RATE_LIMIT_JOINING_MAX: z.coerce.number().int().positive().default(120),
+    /** History panels and the audit log per account and minute (P1.9, ADR 0042). */
+    RATE_LIMIT_HISTORY_MAX: z.coerce.number().int().positive().default(30),
     /** Member register exports (P1.2) per person and club, and per club, in 24 hours. */
     MEMBER_EXPORTS_PER_PERSON_DAY: z.coerce.number().int().positive().default(10),
     MEMBER_EXPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(30),
@@ -76,6 +78,16 @@ export const apiConfigSchema = z
      * with error_code erasure_unavailable.
      */
     DATABASE_RETENTION_URL: z.string().optional(),
+    /**
+     * History and audit reads (P1.9, ADR 0042): their own small pool, so a
+     * burst of history reads never takes connections from the main pool.
+     * May point at a streaming replica (same roles and functions); default
+     * DATABASE_URL.
+     */
+    HISTORY_DATABASE_URL: z.string().optional(),
+    HISTORY_POOL_MAX: z.coerce.number().int().min(1).max(20).default(2),
+    /** Statement timeout of history reads; a timeout is the problem history_timeout. */
+    HISTORY_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(100).max(60_000).default(3000),
     /** Days between an account deletion or ward erasure request and the erasure (P1.8b). */
     ERASURE_GRACE_DAYS: z.coerce
       .number()

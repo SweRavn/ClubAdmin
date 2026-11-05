@@ -138,11 +138,28 @@ export const activitiesDemoStep: DemoStep = {
         { id: DEMO_ACTIVITY_IDS.svkHerrWinter },
       );
     }
-    await matches(s.activities, anna, id("svk-f2017"), date, DEMO_ACTIVITY_IDS.strandvikenHall, [
-      ["Seriematch mot Kustens VK", "home", null],
-      ["Seriematch mot Älvdalens VBK", "away", "Älvdalshallen, Älvdalen"],
-      ["Poolspel F10", "neutral", "Göteborg, Valhalla sporthall"],
-    ]);
+    const f2017Matches = await matches(
+      s.activities,
+      anna,
+      id("svk-f2017"),
+      date,
+      DEMO_ACTIVITY_IDS.strandvikenHall,
+      [
+        ["Seriematch mot Kustens VK", "home", null],
+        ["Seriematch mot Älvdalens VBK", "away", "Älvdalshallen, Älvdalen"],
+        ["Poolspel F10", "neutral", "Göteborg, Valhalla sporthall"],
+      ],
+    );
+    // History (P1.9): Erik, the coach, moved the away match 30 minutes later.
+    const away = f2017Matches[1];
+    if (away) {
+      const later = (iso: string) => new Date(Date.parse(iso) + 30 * 60_000).toISOString();
+      await s.activities.updateActivity(as("erik", "svk"), away.id, {
+        startsAt: later(away.startsAt),
+        endsAt: later(away.endsAt),
+        ...(away.meetAt ? { meetAt: later(away.meetAt) } : {}),
+      });
+    }
     await matches(s.activities, anna, id("svk-herr"), date, DEMO_ACTIVITY_IDS.strandvikenHall, [
       ["Division 2: Kustens VK", "away", "Kusthallen"],
       ["Division 2: Hisingens VK", "home", null],
@@ -309,11 +326,12 @@ async function matches(
   date: (offset: number) => string,
   home: string,
   list: [title: string, homeAway: "home" | "away" | "neutral", place: string | null][],
-): Promise<void> {
+): Promise<{ id: string; startsAt: string; endsAt: string; meetAt: string | null }[]> {
   const offsets = [-14, 5, 19];
+  const created = [];
   for (const [i, [title, homeAway, place]] of list.entries()) {
     const day = date(offsets[i]!);
-    await activities.createActivity(ctx, groupId, {
+    const activity = await activities.createActivity(ctx, groupId, {
       kind: "match",
       title,
       homeAway,
@@ -323,5 +341,12 @@ async function matches(
       meetPlace: homeAway === "away" ? "Samling vid klubbhuset" : null,
       ...(place ? { locationText: place } : { locationId: home }),
     });
+    created.push({
+      id: activity.activity.id,
+      startsAt: `${day}T10:00:00Z`,
+      endsAt: `${day}T11:30:00Z`,
+      meetAt: `${day}T09:15:00Z`,
+    });
   }
+  return created;
 }

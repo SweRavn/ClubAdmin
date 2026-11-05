@@ -724,6 +724,17 @@ class CoreSeeder {
         await this.s.people.updateProfile(this.as(h.actor, null, h.at), this.id(h.person), {
           phone: h.phone,
         });
+      } else if (h.action === "membership.type") {
+        await this.s.memberships.updateMembership(
+          this.as(h.actor, h.club, h.at),
+          this.id(h.person),
+          { membershipType: h.membershipType },
+        );
+      } else if (h.action === "group.update") {
+        const g = this.group(h.group);
+        await this.s.groups.updateGroup(this.as(h.actor, g.club, h.at), g.id, {
+          capacity: h.capacity,
+        });
       } else if (h.action === "waitlist.offer.expire") {
         const g = this.group(h.group);
         await this.env.db.withSystem(

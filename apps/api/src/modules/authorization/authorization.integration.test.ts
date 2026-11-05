@@ -181,6 +181,18 @@ describe("permission matrix", () => {
     owner: status,
     coach: status,
   });
+  /** Managers and registrars 200; others who see the activity 403, everyone else 404 (P1.9). */
+  const ACTIVITY_READERS_FORBIDDEN = {
+    ...ALL_NOT_FOUND,
+    manager: 200,
+    registrar: 200,
+    owner: 403,
+    coach: 403,
+    member: 403,
+    parent: 403,
+    relative: 403,
+  };
+  const EVENT_READERS_FORBIDDEN = ACTIVITY_READERS_FORBIDDEN;
   const RANGE = `from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(
     new Date(Date.now() + 120 * 86_400_000).toISOString(),
   )}`;
@@ -796,6 +808,37 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/consent-texts`,
       expected: CLUB_FORBIDDEN,
       body: { purpose: "photo_publication", texts: { sv: "En text som är lång nog." } },
+    },
+    // History and audit (P1.9): club managers and registrars; the audit log
+    // and the club-wide changes need a second factor (these tokens have
+    // none: the manager gets 403 mfa-required). Person routes deny with 404.
+    "GET /api/v1/people/:personId/history": {
+      url: () => `/api/v1/people/${m.child.id}/history?clubId=${m.clubA.id}`,
+      expected: { ...ALL_NOT_FOUND, manager: 200, registrar: 200 },
+    },
+    "GET /api/v1/groups/:groupId/history": {
+      url: () => `/api/v1/groups/${m.team.id}/history`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/activities/:activityId/history": {
+      url: () => `/api/v1/activities/${m.activityId}/history`,
+      expected: ACTIVITY_READERS_FORBIDDEN,
+    },
+    "GET /api/v1/activity-series/:seriesId/history": {
+      url: () => `/api/v1/activity-series/${m.seriesId}/history`,
+      expected: ACTIVITY_READERS_FORBIDDEN,
+    },
+    "GET /api/v1/events/:eventId/history": {
+      url: () => `/api/v1/events/${m.eventId}/history`,
+      expected: EVENT_READERS_FORBIDDEN,
+    },
+    "GET /api/v1/clubs/:clubId/history": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/history`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "GET /api/v1/clubs/:clubId/audit-events": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/audit-events`,
+      expected: CLUB_FORBIDDEN,
     },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,

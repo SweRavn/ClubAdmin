@@ -280,14 +280,26 @@ later phase. Backup and disaster recovery are in
   delete from (planned; not yet implemented, see backup-restore.md).
 - Audit events are kept `AUDIT_RETENTION_MONTHS` (an installation setting,
   default 24, at least 12) and then deleted by `audit:retention` (P1.8a).
-- Club managers can view their club's audit log; operators can see operator
-  actions only.
+- Club managers (with a second factor) view their club's audit log at
+  `/clubs/:id/audit` (P1.9, ADR 0042): action names and field names only,
+  never values, `ip_hash` or `request_id`; operators can see operator actions
+  only (not built yet).
 - **Record history** (ADR 0017): a database trigger on every table records
   each insert/update/delete with changed columns, old/new values, actor and
   request id in `history.record_changes`. Insert-only for the app role,
-  RLS-scoped by club, values of restricted fields shown only to those allowed
-  to see the field. This also captures changes made outside the application
+  RLS-scoped by club. This also captures changes made outside the application
   (operator SQL, migrations).
+- **Who reads history** (ADR 0042, amending ADR 0017): club managers and
+  registrars read the panels of members, groups, activities, series and
+  events; club managers with a second factor the club-wide changes. Values
+  follow field visibility on the current record (a field no longer shared is
+  left out entirely); redacted and erased values never show; people pass the
+  presenter. Reading a protected member's history is access-logged
+  (`person.protected.viewed`, `changed_fields = ['history']`, until P1.12).
+  The person gets their own history in "download my data". Reads run on
+  their own small read-only pool with a statement timeout (optionally a
+  replica) and a per-account rate limit (`RATE_LIMIT_HISTORY_MAX`), so a
+  burst of history reads cannot take the database from everyone else.
 
 ### Development process
 - Branch protection, required review, CI: lint, typecheck, tests, licence check,

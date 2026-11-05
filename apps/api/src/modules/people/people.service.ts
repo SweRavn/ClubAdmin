@@ -219,13 +219,34 @@ export class PeopleService {
   }
 
   /** Access log: someone other than the person viewed a protected person's profile (ADR 0022). */
-  recordProtectedView(context: Context, personId: string): Promise<void> {
+  recordProtectedView(
+    context: Context,
+    personId: string,
+    changedFields: readonly string[] = [],
+  ): Promise<void> {
     return runAs(this.db, context, (tx) =>
       audit.record(tx, {
         action: "person.protected.viewed",
         resourceType: "person",
         resourceId: personId,
+        ...(changedFields.length > 0 ? { changedFields: [...changedFields] } : {}),
       }),
+    );
+  }
+
+  /**
+   * People named in a club's history and audit log (actors, subjects and
+   * person columns), read without an actor: former members, erased people
+   * and guardians are no longer reachable through the club, but their
+   * actions are the club's own records (ADR 0042). Only for those IDs, for
+   * club managers and registrars; pass the rows to PersonPresenter. Erased
+   * people (anonymized_at) are flagged so the caller shows "Deleted user".
+   */
+  historyPeople(
+    personIds: readonly string[],
+  ): Promise<(repo.PersonSummaryRow & { erased: boolean })[]> {
+    return this.db.withSystem("audit:history-people", {}, (tx) =>
+      repo.findHistoryPeople(tx, personIds),
     );
   }
 

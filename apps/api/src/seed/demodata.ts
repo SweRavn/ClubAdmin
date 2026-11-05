@@ -162,7 +162,10 @@ function checkReferences(data: DemoData): void {
     if ("person" in h) check("person", h.person, `history ${h.action}`);
     if (h.action === "group.move") for (const g of [h.from, h.to]) check("group", g, "history");
     if (h.action === "waitlist.offer.expire") check("group", h.group, "history");
-    if (h.action === "membership.approve") check("club", h.club, "history");
+    if (h.action === "membership.approve" || h.action === "membership.type") {
+      check("club", h.club, "history");
+    }
+    if (h.action === "group.update") check("group", h.group, "history");
   }
   if (problems.length > 0)
     throw new Error(`docs/demodata is inconsistent:\n  ${problems.join("\n  ")}`);

@@ -7,6 +7,8 @@ export interface PoolOptions {
   url: string;
   max?: number;
   applicationName?: string;
+  /** statement_timeout of every connection (the history pool, P1.9). */
+  statementTimeoutMs?: number;
 }
 
 export function createPool(options: PoolOptions): pg.Pool {
@@ -16,6 +18,7 @@ export function createPool(options: PoolOptions): pg.Pool {
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 30_000,
     application_name: options.applicationName ?? "clubadmin",
+    ...(options.statementTimeoutMs ? { statement_timeout: options.statementTimeoutMs } : {}),
   });
   // Errors on idle clients must not crash the process; the next query reports them.
   pool.on("error", () => undefined);

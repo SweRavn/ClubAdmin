@@ -2,6 +2,8 @@
 // pnpm db:seed [--scenario demo|minimal|load] [--size n] [--if-empty]
 // pnpm db:seed --scenario load --size n --add: load clubs on top of the demo
 //   (request budgets and query plans with the demo personas on volume)
+// pnpm db:seed --history-volume: two years of history and audit events for
+//   Storklubben on top of the load scenario (P1.9 volume tests; Nightly)
 // pnpm db:reset [--scenario ...]: drop and recreate the development
 // database, bootstrap roles, migrate, then seed.
 // Both refuse to run in production or on the hosted service (guard.ts).
@@ -22,6 +24,7 @@ import { loadEnvFiles } from "@clubadmin/server-kit";
 import { createCoreServices } from "../domain-services.ts";
 import { FieldEncryption } from "../platform/crypto/field-encryption.ts";
 import { resetRefusal, seedRefusal } from "./guard.ts";
+import { historyVolumeSql } from "./history-volume.ts";
 import { type Scenario, SCENARIOS, seed } from "./runner.ts";
 
 function requireEnv(name: string): string {
@@ -66,7 +69,7 @@ async function main(command: string | undefined, argv: string[]): Promise<number
   loadEnvFiles();
   if (command !== "seed" && command !== "reset") {
     console.error(
-      "Usage: cli.js seed|reset [--scenario demo|minimal|load] [--size n] [--if-empty] [--add]",
+      "Usage: cli.js seed|reset [--scenario demo|minimal|load] [--size n] [--if-empty] [--add] | seed --history-volume",
     );
     return 1;
   }
@@ -81,6 +84,28 @@ async function main(command: string | undefined, argv: string[]): Promise<number
   }
   const started = performance.now();
   if (command === "reset") await reset();
+
+  if (argv.includes("--history-volume")) {
+    const club = await asAdmin(async (query) => {
+      const { rows } = await query<{ n: number }>(
+        "SELECT count(*)::int AS n FROM clubs WHERE slug = 'load-large'",
+      );
+      return rows[0]!.n;
+    });
+    if (club === 0) {
+      console.error(
+        "No Storklubben: seed the load scenario first (pnpm db:reset --scenario load).",
+      );
+      return 1;
+    }
+    for (const statement of historyVolumeSql()) {
+      await asAdmin(async (query) => void (await query(statement)));
+    }
+    console.log(
+      `Seeded the history volume in ${((performance.now() - started) / 1000).toFixed(1)} s.`,
+    );
+    return 0;
+  }
 
   const existing = await asAdmin(async (query) => {
     // Seed mode: replayed changes get their past times in history (ADR 0026).

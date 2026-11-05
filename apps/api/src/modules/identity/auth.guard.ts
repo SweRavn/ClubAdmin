@@ -97,6 +97,7 @@ export class AuthGuard implements CanActivate {
     });
     await this.limits.account(request.principal);
     if (endpoint.accountLimit === "joining") await this.limits.joining(request.principal);
+    if (endpoint.accountLimit === "history") await this.limits.history(request.principal);
     if (verified.clientId && verified.sessionId && this.mobileClients.has(verified.clientId)) {
       // A revoked app session stays revoked, even with refreshed tokens (ADR 0028).
       if (await this.sessions.isRevoked(verified.sessionId)) {

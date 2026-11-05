@@ -14,6 +14,7 @@ import {
 } from "../../../../components/action-form.tsx";
 import { GuardianRow, RightsFields } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
+import { HistoryLink } from "../../../../components/history-view.tsx";
 import { PersonConsents } from "../../../../components/person-consents.tsx";
 import {
   getClubGroups,
@@ -141,6 +142,12 @@ export default async function PersonPage({ params, searchParams }: Props) {
       <h1 className="text-2xl font-semibold">
         <PersonName person={profile.person} protectedLabel={protectedLabel} />
       </h1>
+      {profile.club ? (
+        <HistoryLink
+          clubId={profile.club.clubId}
+          href={`/people/${personId}/history?clubId=${profile.club.clubId}`}
+        />
+      ) : null}
       {rows.length > 0 ? (
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
           {rows.map((row) => (

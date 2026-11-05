@@ -46,6 +46,8 @@ interface Case {
   statements: number;
   /** At most this many 8 KB pages read (shared buffers hit or read) on the larger data. */
   pages: number;
+  /** The token carries a second factor (club managers' audit log, P1.9). */
+  mfa?: boolean;
 }
 
 const range = () => {
@@ -56,6 +58,55 @@ const range = () => {
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // History panels and the audit log (P1.9, web only; ADR 0042). Read
+  // through the history pool: the scope, the club rows' history, the global
+  // rows' history, the current rows behind the page and the names it
+  // mentions in one read-only transaction (at most five statements), then
+  // the people for the presenter; the rest is authorization. The pages are
+  // mostly one index probe per record and monthly partition: bounded by the
+  // scope and the retention, not by the club's size.
+  {
+    route: "GET /api/v1/people/{personId}/history",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/people/${key("elsa")}/history?clubId=${key("svk")}`,
+    statements: 8,
+    pages: 900,
+  },
+  {
+    route: "GET /api/v1/groups/{groupId}/history",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/groups/${key("svk-f2017")}/history`,
+    statements: 6,
+    pages: 300,
+  },
+  {
+    route: "GET /api/v1/activities/{activityId}/history",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/activities/${ids.activity}/history`,
+    statements: 7,
+    pages: 250,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/history",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/history`,
+    statements: 4,
+    pages: 100,
+    mfa: true,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/audit-events",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/audit-events`,
+    statements: 4,
+    pages: 60,
+    mfa: true,
+  },
   {
     route: "GET /api/v1/me",
     persona: "anna",
@@ -408,7 +459,10 @@ interface Measure {
 }
 
 async function measure(c: Case): Promise<Measure> {
-  const token = await devToken(key(c.persona), { sid: `budget-${c.persona}` });
+  const token = await devToken(key(c.persona), {
+    sid: `budget-${c.persona}`,
+    ...(c.mfa ? { mfa: true } : {}),
+  });
   const request = async () => {
     const res = await app.app
       .getHttpAdapter()

@@ -10,6 +10,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { ActionForm, buttonClass, inputClass } from "../../../../components/action-form.tsx";
 import { Agenda, agendaItemOf } from "../../../../components/agenda.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
+import { HistoryLink } from "../../../../components/history-view.tsx";
 import { SeriesFields } from "../../../../components/series-fields.tsx";
 import { getActivity, getGroupCalendar, getLocations, getSeries } from "../../../../server/data.ts";
 
@@ -88,6 +89,7 @@ export default async function SeriesPage({ params, searchParams }: Props) {
       <h1 className="text-2xl font-semibold" data-testid="series-title-heading">
         {series.title}
       </h1>
+      <HistoryLink clubId={series.clubId} href={`/activity-series/${series.id}/history`} />
       {query.saved ? <Notice>{t("series.saved")}</Notice> : null}
       {query.updated ? <Notice>{t("series.updated")}</Notice> : null}
       <FormError code={query.error} />

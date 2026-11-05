@@ -18,6 +18,7 @@ import {
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { answerText, EventQuestions } from "../../../../components/event-questions.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
+import { HistoryLink } from "../../../../components/history-view.tsx";
 import { getEvent, getEventRegistrations } from "../../../../server/data.ts";
 
 type Props = {
@@ -58,6 +59,7 @@ export default async function EventPage({ params, searchParams }: Props) {
         <h1 className="text-2xl font-semibold" data-testid="event-title">
           {event.title}
         </h1>
+        <HistoryLink clubId={event.clubId} href={`/events/${event.id}/history`} />
         <p className="text-muted">
           {time(event.startsAt)} – {time(event.endsAt)}
           {event.location

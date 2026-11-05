@@ -18,7 +18,27 @@ export {
   isRlsViolation,
   isUniqueViolation,
 } from "./errors.ts";
-export { getRecordHistory, type RecordChange, type RecordHistoryPage } from "./history.ts";
+export {
+  type AuditEventFilter,
+  auditEventsSql,
+  type AuditEventRow,
+  type ClubHistoryFilter,
+  clubHistorySql,
+  decodeHistoryCursor,
+  encodeHistoryCursor,
+  getRecordHistory,
+  type HistoryPageOptions,
+  type HistoryPosition,
+  type HistoryRecordRef,
+  InvalidHistoryCursorError,
+  readAuditEvents,
+  readClubHistory,
+  readGlobalHistory,
+  readRecordsHistory,
+  type RecordChange,
+  recordsHistorySql,
+  type RecordHistoryPage,
+} from "./history.ts";
 export * as tables from "./infra/tables.ts";
 export { dataKeyStore, type StoredDataKey } from "./keys.ts";
 export type { MigrationStatus } from "./migrate.ts";

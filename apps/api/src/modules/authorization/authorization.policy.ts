@@ -507,6 +507,37 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("club.guardians.manage", "club", ({ actor, resource }) =>
     isAdmin(actor, resource.clubId),
   ),
+  // History and audit (P1.9, ADR 0042): club managers and registrars only;
+  // not owners, leaders, organisers, the person or their family (they get
+  // their own history through "download my data"). The audit log and the
+  // club-wide changes: club managers with a second factor.
+  definePolicy(
+    "person.history.read",
+    "person",
+    ({ actor, resource }) =>
+      resource.clubId !== null && resource.inClub !== null && isAdmin(actor, resource.clubId),
+  ),
+  definePolicy("group.history.read", "group", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
+  ),
+  definePolicy("activity.history.read", "activity", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
+  ),
+  definePolicy("event.history.read", "event", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
+  ),
+  definePolicy(
+    "club.history.read",
+    "club",
+    ({ actor, resource }) => actor.isClubManager(resource.clubId),
+    { mfa: true },
+  ),
+  definePolicy(
+    "club.audit.read",
+    "club",
+    ({ actor, resource }) => actor.isClubManager(resource.clubId),
+    { mfa: true },
+  ),
   // Operator endpoints (backup status): platform operators, who are also the
   // administrators of a self-hosted installation; with a second factor.
   definePolicy("ops.backup.read", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),

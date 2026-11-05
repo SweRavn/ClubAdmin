@@ -695,10 +695,20 @@ Personal, secret, revocable iCalendar subscription URLs: `person_id`, `scope`
 ### Record history (ADR 0017)
 Every table has a trigger writing to `history.record_changes`: table, record
 id, operation, changed columns with old/new values, actor, on-behalf-of,
-request id, time. Every detail screen can show "who changed what, when".
-Separate from `audit_events`, which record business-level actions. Actor names
-pass through the visibility service, so protected persons appear as
-"Protected member" to those not allowed to see them.
+request id, time. Separate from `audit_events`, which record business-level
+actions. Actor names pass through the visibility service, so protected
+persons appear as "Protected member" to those not allowed to see them.
+
+History views (P1.9, ADR 0042): the member (in a club), group, activity,
+series and event pages link to their history, read by club managers and
+registrars (`person.history.read`, `group.history.read`,
+`activity.history.read`, `event.history.read`); club managers with a second
+factor also read the club's own panel, the club-wide changes
+(`club.history.read`) and the audit log (`club.audit.read`). Not owners,
+leaders, organisers, the person or their family: the person's own history is
+in "download my data". What each column shows is the history view policy
+(`apps/api/src/modules/audit/history-columns.ts`): values only for classified
+columns and only while the viewer may see the field on the current record.
 
 ### Platform tables
 `platform_operators` (`person_id`, validity; written only by operator

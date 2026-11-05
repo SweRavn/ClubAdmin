@@ -171,6 +171,8 @@ export default async function MyPrivacyPage({ searchParams }: Props) {
           {t("privacy.exports.title")}
         </h2>
         <p className="text-sm text-muted">{t("privacy.exports.intro")}</p>
+        {/* P1.9: history panels are for club managers and registrars; the person's own history is here. */}
+        <p className="text-sm text-muted">{t("privacy.exports.includesHistory")}</p>
         <div className="flex flex-wrap gap-2">
           <ActionForm action="request-export" back="/me/privacy">
             <button type="submit" className={buttonClass} data-testid="request-export-self">

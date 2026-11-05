@@ -3,7 +3,17 @@ import { uuidv7 } from "@clubadmin/shared";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { getRecordHistory } from "./history.ts";
+import { audit } from "./audit.ts";
+import {
+  decodeHistoryCursor,
+  encodeHistoryCursor,
+  getRecordHistory,
+  InvalidHistoryCursorError,
+  readAuditEvents,
+  readClubHistory,
+  readGlobalHistory,
+  readRecordsHistory,
+} from "./history.ts";
 import { createSampleTable, SAMPLE_TABLE } from "./testing/fixtures.ts";
 import {
   asPerson,
@@ -163,6 +173,126 @@ describe("record history", () => {
       actor_kind: "operator",
       db_role: "clubadmin_operator",
     });
+  });
+});
+
+describe("history views (P1.9)", () => {
+  it("reads several records' history newest first, keyset-paginated, in the current club only", async () => {
+    const a = await insertItem("a0");
+    const b = await insertItem("b0");
+    await t.db.withTenant(asPerson(anna, club), async (tx) => {
+      await tx.execute(sql`UPDATE public.test_items SET name = 'a1' WHERE id = ${a}`);
+      await tx.execute(sql`UPDATE public.test_items SET name = 'b1' WHERE id = ${b}`);
+    });
+    const records = [
+      { table: SAMPLE_TABLE, id: a },
+      { table: SAMPLE_TABLE, id: b },
+    ];
+    const first = await t.db.withTenant(asPerson(anna, club), (tx) =>
+      readRecordsHistory(tx, records, { before: null, limit: 3 }),
+    );
+    expect(first.map((c) => c.newValues?.name)).toEqual(["b1", "a1", "b0"]);
+    const last = first.at(-1)!;
+    const rest = await t.db.withTenant(asPerson(anna, club), (tx) =>
+      readRecordsHistory(tx, records, { before: { at: last.changedAt, id: last.id }, limit: 3 }),
+    );
+    expect(rest.map((c) => c.newValues?.name)).toEqual(["a0"]);
+    const [otherClub = ""] = createTestClubs(1);
+    expect(
+      await t.db.withTenant(asPerson(anna, otherClub), (tx) =>
+        readRecordsHistory(tx, records, { before: null, limit: 10 }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("reads the club's changes with table, actor and date filters", async () => {
+    const [own = ""] = createTestClubs(1);
+    const sara = uuidv7();
+    const insert = (actor: string, name: string) =>
+      t.db.withTenant(asPerson(actor, own), (tx) =>
+        tx.execute(
+          sql`INSERT INTO public.test_items (club_id, name, secret) VALUES (${own}, ${name}, 'x')`,
+        ),
+      );
+    await insert(anna, "by anna");
+    await insert(sara, "by sara");
+    const read = (filter: Parameters<typeof readClubHistory>[2]) =>
+      t.db
+        .withTenant(asPerson(anna, own), (tx) =>
+          readClubHistory(tx, own, filter, { before: null, limit: 10 }),
+        )
+        .then((rows) => rows.map((r) => r.newValues?.name));
+    expect(await read({})).toEqual(["by sara", "by anna"]);
+    expect(await read({ actorPersonId: anna })).toEqual(["by anna"]);
+    expect(await read({ tables: ["public.other"] })).toEqual([]);
+    expect(await read({ tables: [SAMPLE_TABLE] })).toHaveLength(2);
+    expect(await read({ from: new Date(Date.now() + 60_000) })).toEqual([]);
+  });
+
+  it("reads the club's audit events with filters, never another club's", async () => {
+    const [own = "", other = ""] = createTestClubs(2);
+    const resource = uuidv7();
+    await t.db.withTenant(asPerson(anna, own), async (tx) => {
+      await audit.record(tx, {
+        action: "members.exported",
+        resourceType: "member_export",
+        resourceId: resource,
+      });
+      await audit.record(tx, {
+        action: "group.updated",
+        resourceType: "group",
+        resourceId: uuidv7(),
+      });
+    });
+    const read = (clubId: string, filter: Parameters<typeof readAuditEvents>[2]) =>
+      t.db
+        .withTenant(asPerson(anna, clubId), (tx) =>
+          readAuditEvents(tx, clubId, filter, { before: null, limit: 10 }),
+        )
+        .then((rows) => rows.map((r) => r.action));
+    expect(await read(own, {})).toEqual(["group.updated", "members.exported"]);
+    expect(await read(own, { actions: ["members.exported"] })).toEqual(["members.exported"]);
+    expect(await read(own, { resourceType: "member_export", resourceId: resource })).toEqual([
+      "members.exported",
+    ]);
+    expect(await read(own, { actorPersonId: uuidv7() })).toEqual([]);
+    expect(await read(other, {})).toEqual([]);
+  });
+
+  it("serves global rows only through read_global_changes, for people the caller may see", async () => {
+    const me = uuidv7();
+    const stranger = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO public.people (id, given_name, family_name) VALUES ($1, 'Me', 'Myself'), ($2, 'Stranger', 'Danger')`,
+      [me, stranger],
+    );
+    const records = [
+      { table: "public.people", id: me },
+      { table: "public.people", id: stranger },
+      { table: "public.accounts", id: me },
+    ];
+    // Not through the club view: people rows have no club.
+    expect(
+      await t.db.withTenant(asPerson(me, club), (tx) =>
+        readRecordsHistory(tx, records, { before: null, limit: 10 }),
+      ),
+    ).toEqual([]);
+    const rows = await t.db.withTenant(asPerson(me, club), (tx) =>
+      readGlobalHistory(tx, records, { before: null, limit: 10 }),
+    );
+    expect(rows.map((r) => [r.tableName, r.recordId, r.operation])).toEqual([
+      ["public.people", me, "INSERT"],
+    ]);
+  });
+
+  it("encodes and decodes cursors, refusing anything else", () => {
+    const at = new Date("2026-03-12T13:05:00.000Z");
+    const id = uuidv7();
+    expect(decodeHistoryCursor(encodeHistoryCursor(at, id))).toEqual({ at, id });
+    for (const bad of ["", "x", Buffer.from('["nope","x"]').toString("base64url")]) {
+      expect(() => decodeHistoryCursor(bad)).toThrow(InvalidHistoryCursorError);
+    }
   });
 });
 

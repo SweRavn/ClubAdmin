@@ -60,6 +60,13 @@ export const PERMISSIONS = [
   "club.handover.respond",
   "club.managers.claim",
   "club.managers.reassign",
+  // History and audit (P1.9, ADR 0042): club managers and registrars only.
+  "person.history.read",
+  "group.history.read",
+  "activity.history.read",
+  "event.history.read",
+  "club.history.read",
+  "club.audit.read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

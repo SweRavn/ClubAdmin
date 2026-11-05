@@ -46,6 +46,25 @@ export async function findSummaries(tx: Tx, ids: readonly string[]): Promise<Per
     .where(inArray(people.id, [...ids]));
 }
 
+/** Summaries with the erasure flag (history and audit views). */
+export async function findHistoryPeople(
+  tx: Tx,
+  ids: readonly string[],
+): Promise<(PersonSummaryRow & { erased: boolean })[]> {
+  if (ids.length === 0) return [];
+  const rows = await tx
+    .select({
+      id: people.id,
+      givenName: people.givenName,
+      familyName: people.familyName,
+      protectedIdentity: people.protectedIdentity,
+      anonymizedAt: people.anonymizedAt,
+    })
+    .from(people)
+    .where(inArray(people.id, [...ids]));
+  return rows.map(({ anonymizedAt, ...r }) => ({ ...r, erased: anonymizedAt !== null }));
+}
+
 export interface PersonSummaryRow {
   id: string;
   givenName: string;

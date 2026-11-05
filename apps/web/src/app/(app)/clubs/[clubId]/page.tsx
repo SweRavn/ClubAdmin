@@ -28,6 +28,9 @@ export default async function ClubPage({ params, searchParams }: Params) {
   const permissions = mine.clubs.find((c) => c.club.id === club.id)?.permissions ?? [];
   const canManage = permissions.includes("club.roles.manage");
   const canSettings = permissions.includes("club.settings.update");
+  // History and the audit log (P1.9): club managers.
+  const canHistory = permissions.includes("club.history.read");
+  const canAudit = permissions.includes("club.audit.read");
   const topLevel = groups.filter((g) => g.parentGroupId === null && !g.archived);
 
   return (
@@ -74,6 +77,33 @@ export default async function ClubPage({ params, searchParams }: Params) {
           >
             {t("privacy.clubTitle")}
           </a>
+          {canHistory ? (
+            <>
+              <a
+                href={`/clubs/${club.id}/history?scope=club`}
+                className="text-sm text-accent underline"
+                data-testid="history-link"
+              >
+                {t("history.show")}
+              </a>
+              <a
+                href={`/clubs/${club.id}/history`}
+                className="text-sm text-accent underline"
+                data-testid="club-history-link"
+              >
+                {t("history.clubTitle")}
+              </a>
+            </>
+          ) : null}
+          {canAudit ? (
+            <a
+              href={`/clubs/${club.id}/audit`}
+              className="text-sm text-accent underline"
+              data-testid="club-audit-link"
+            >
+              {t("audit.title")}
+            </a>
+          ) : null}
         </div>
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="text-muted">{t("club.timeZone")}</dt>

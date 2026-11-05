@@ -300,7 +300,17 @@ schedule (Ola left two years ago).
   which ended his manager role; his board role ended then too), Anna approved
   Johan's application (last year), Oskar and Liam got their own logins, and a
   system job expired an offer on F2017's waiting list (yesterday). Sara
-  corrected an attendance mark (P1.5, above).
+  corrected an attendance mark (P1.5, above). For the history views (P1.9):
+  Sara changed F2017's places from 12 to 10 five months ago, Johan changed
+  Elsa's membership type to family last month, and Erik moved the away match
+  (against Älvdalens VBK) 30 minutes later. The panels then show these with
+  the person acting; the erased Herr player (P1.8b) shows as "Deleted user".
+- **History volume** (P1.9, `pnpm db:seed --history-volume` on top of the
+  load scenario; Nightly and by hand only): two years of record history
+  (about 5 million rows) and audit events (about 500,000) for Storklubben,
+  with monthly partitions as in production, and five years of changes on its
+  member number 1 (the person panel's worst case). Used by
+  `pnpm --filter @clubadmin/api test:volume`.
 - **Member register** (P1.2): Johan is SVK's registrar, Lars's SVK membership
   is paused and Ola's ended; Elsa and Maja gave photo consent, the others in
   F2017 (Alva among them) did not. Sara exported SVK's register three days

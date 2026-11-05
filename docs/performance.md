@@ -54,6 +54,7 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 | Calendar feed (`.ics`) request, p95 | < 50 ms (served from precomputed schedule, ETag/`304`) |
 | Backups | No effect on the API budgets above (pgBackRest with 2 processes, zstd); measured under the load scenario: [#14](https://github.com/SweRavn/ClubAdmin/issues/14) |
 | Restore (RTO planning) | < 30 minutes for a 10 GB database (docs/operations/backup-restore.md) |
+| History panels, first page (P1.9) | < 300 ms p95; club-wide changes and the audit log < 500 ms p95 (volume tests, Nightly; ADR 0042) |
 
 ## Design rules
 
@@ -161,10 +162,23 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   | `GET /people/:id/consents`, `PUT` a consent | 7, 6 | 36, 35 → 36, 34 |
   | Club privacy page, policy, decisions, texts | 2–6 | 3–9 → 4–12 |
   | Assignments, leave preview | 4, 5 | 6, 8 → 9, 12 |
+  | History of a member, group, activity (P1.9) | 8, 6, 7 | 334 → 713, 154 → 193, 95 → 138 |
+  | Club-wide changes, audit log (P1.9) | 4, 4 | 40 → 51, 20 → 33 |
+
+  History reads go to their own pool (ADR 0042); their pages are mostly one
+  index probe per record and monthly partition, bounded by the panel's scope
+  and the retention, not by the club's size.
 
   The busiest requests have room for fewer statements (an event's page reads
   each part separately); none grows with the data.
 
+- History and audit on volume (P1.9, ADR 0042; Nightly and by hand, not
+  CI): `pnpm db:reset --scenario load && pnpm db:seed --history-volume &&
+  pnpm --filter @clubadmin/api test:volume`. Storklubben with two years of
+  history (5 million rows) and audit events (500,000): no sequential scans
+  of history partitions or the audit log, the club index newest first over
+  the partitions, a 90-day period prunes partitions, and the time budgets
+  above. HISTORY_VOLUME_RESULTS
 - `pnpm --filter @clubadmin/api build && pnpm --filter @clubadmin/api bench [path] [seconds] [connections]`
   measures the request pipeline (validation, problem details, logging, security
   headers, rate limiting) without a database. Baseline at P0.3 on a development

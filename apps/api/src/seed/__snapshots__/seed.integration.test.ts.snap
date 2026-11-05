@@ -424,7 +424,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "hasBirthDate": true,
       "memberships": [
-        "svk: active (active)",
+        "svk: active (family)",
       ],
       "pendingGuardianInvitations": 1,
       "protected": false,

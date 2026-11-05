@@ -11,6 +11,7 @@ import { secondaryButtonClass } from "../../../../components/action-form.tsx";
 import { Agenda, agendaItemOf, weekOffset, weekRange } from "../../../../components/agenda.tsx";
 import { EventList } from "../../../../components/event-list.tsx";
 import { Notice } from "../../../../components/form-error.tsx";
+import { HistoryLink } from "../../../../components/history-view.tsx";
 import { LazyGroupRoster } from "../../../../components/lazy-group-roster.tsx";
 import { RosterEntry } from "../../../../components/roster-entry.tsx";
 import {
@@ -95,6 +96,7 @@ export default async function GroupPage({ params, searchParams }: Params) {
           <RoleBadge label={t(enumKey("kinds", group.kind))} />
           {group.archived ? <RoleBadge label={t("groups.archived")} /> : null}
         </h1>
+        <HistoryLink clubId={group.clubId} href={`/groups/${group.id}/history`} />
         {query.saved ? <Notice>{t("groupForm.saved")}</Notice> : null}
         {query.updated ? <Notice>{t("groupForm.updated")}</Notice> : null}
         {group.canManage ? (

@@ -37,12 +37,20 @@ export const PageQuerySchema = z.object({
 });
 export type PageQuery = z.infer<typeof PageQuerySchema>;
 
-/** Who did something, in history and audit views: a hidden protected person is only "protected". */
+/**
+ * Who did something, in history and audit views: a hidden protected person
+ * is only "protected". Clients treat unknown kinds as "system" (ADR 0029).
+ */
 export const ActorReferenceSchema = z
   .discriminatedUnion("kind", [
     z.object({ kind: z.literal("person"), person: PersonSummarySchema }),
     z.object({ kind: z.literal("protected") }),
-    z.object({ kind: z.literal("system") }),
+    /** A background job (P1.9: the job's name, e.g. attendance:retention), migration or the database. */
+    z.object({ kind: z.literal("system"), job: z.string().optional() }),
+    /** A person whose data was erased (P1.9: "Deleted user"). */
+    z.object({ kind: z.literal("erased") }),
+    /** A platform operator (support access), never named (P1.9). */
+    z.object({ kind: z.literal("operator") }),
   ])
   .openapi("ActorReference");
 export type ActorReference = z.infer<typeof ActorReferenceSchema>;

@@ -351,6 +351,21 @@ export const DemoHistoryFileSchema = z.object({
         appliedAt: RelativeTimeSchema,
       }),
       z.object({
+        action: z.literal("membership.type"),
+        at: RelativeTimeSchema,
+        actor: key,
+        person: key,
+        club: key,
+        membershipType: z.enum(MEMBERSHIP_TYPES),
+      }),
+      z.object({
+        action: z.literal("group.update"),
+        at: RelativeTimeSchema,
+        actor: key,
+        group: key,
+        capacity: z.number().int().positive(),
+      }),
+      z.object({
         action: z.literal("waitlist.offer.expire"),
         at: RelativeTimeSchema,
         job: z.string(),

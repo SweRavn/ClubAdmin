@@ -157,6 +157,14 @@ minutes), then `CREATE EXTENSION IF NOT EXISTS pg_stat_statements` in
 `pnpm db:psql` and run the API with `DATABASE_POOL_MAX=1` to measure a
 request on a warm connection.
 
+History and audit on volume (P1.9, ADR 0042) are not part of
+`pnpm test:integration`: `pnpm db:reset --scenario load`, then
+`pnpm db:seed --history-volume` (two years of history for Storklubben, a few
+minutes) and `pnpm --filter @clubadmin/api test:volume`; the Nightly workflow
+runs the same. History reads use their own small pool (`HISTORY_POOL_MAX`,
+`HISTORY_STATEMENT_TIMEOUT_MS`) and may point at a replica with
+`HISTORY_DATABASE_URL` (`.env.example`).
+
 After changing an endpoint, run `pnpm api:client` and commit the regenerated
 `packages/api-client` files (a test fails otherwise). `pnpm test:integration`
 runs the tests that need the local services.

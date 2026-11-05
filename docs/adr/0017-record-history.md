@@ -40,6 +40,10 @@ addition to `audit_events`.
   records; anyone who can view a record can see *who* changed it and *which*
   fields; old/new **values** of restricted fields follow the field-level
   permissions of the current record. Operators see global-table history.
+  *Amended by ADR 0042 (P1.9):* only those who hold the record's history
+  permission read it: club managers and registrars (panels), club managers
+  with a second factor (the club-wide view and the audit log). The person
+  gets the history of their own rows through "download my data".
 - **Tamper resistance:** the app role may only `INSERT` (via the trigger,
   `SECURITY DEFINER`); no `UPDATE`/`DELETE`. Only the retention/erasure job role
   can delete or scrub rows.
@@ -49,7 +53,8 @@ addition to `audit_events`.
   anonymised person ID, which no longer resolves to a name). The fact that a
   change happened is kept.
 - **UI:** a "History" panel on every detail page (member, team, activity,
-  document, …) and a filterable history view for club managers.
+  document, …) and a filterable history view for club managers (built in
+  P1.9 as pages of their own, ADR 0042).
 
 **Implementation notes (P0.4).**
 - The helper is the SQL function `history.enable_history(table, redact, skip_insert)`,

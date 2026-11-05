@@ -24,6 +24,21 @@
       "phone": "+46 70 174 06 08"
     },
     {
+      "action": "group.update",
+      "at": "-5mo",
+      "actor": "sara",
+      "group": "svk-f2017",
+      "capacity": 10
+    },
+    {
+      "action": "membership.type",
+      "at": "-1mo",
+      "actor": "johan",
+      "person": "elsa",
+      "club": "svk",
+      "membershipType": "family"
+    },
+    {
       "action": "waitlist.offer.expire",
       "at": "-1d",
       "job": "waitlist:expire-offers",

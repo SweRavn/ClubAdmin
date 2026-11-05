@@ -21,6 +21,7 @@ import {
 import { ActivityFields } from "../../../../components/activity-fields.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
+import { HistoryLink } from "../../../../components/history-view.tsx";
 import { ResponseButtons, ResponseForm } from "../../../../components/response-buttons.tsx";
 import {
   getActivity,
@@ -79,6 +80,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
         <RoleBadge label={activity.kindLabel ?? t(enumKey("activityKinds", activity.kind))} />
         {cancelled ? <RoleBadge tone="accent" label={t("activities.cancelled")} /> : null}
       </h1>
+      <HistoryLink clubId={activity.clubId} href={`/activities/${activity.id}/history`} />
       {query.saved ? <Notice>{t("activities.saved")}</Notice> : null}
       {query.answered ? <Notice>{t("responses.saved")}</Notice> : null}
       {query.updated ? <Notice>{t("activities.updated")}</Notice> : null}

@@ -187,7 +187,20 @@ context through `app.current_club_id()`, `app.current_person_id()`,
   on-behalf-of, request ID, transaction, database role. Changes without context
   are recorded as `actor_kind = db_role`. The worker job
   `history:maintain_partitions` creates partitions ahead and drops expired ones.
-  Read with `getRecordHistory(tx, table, id, { cursor })`.
+  Read with `getRecordHistory(tx, table, id, { cursor })`, and for the views
+  (P1.9) `readRecordsHistory` (a panel's records), `readGlobalHistory`
+  (people and guardianships through `history.read_global_changes`, SECURITY
+  DEFINER), `readClubHistory` (the club index `record_changes_club_keyset_idx`)
+  and `readAuditEvents` in `packages/db/src/history.ts`, keyset on
+  `(changed_at, id)`.
+- **The audit module** (`apps/api/src/modules/audit`, P1.9, ADR 0042): the
+  history panels, the club-wide changes and the audit log. It reads through
+  its own `Database` (`HISTORY_DATABASE`): `HISTORY_POOL_MAX` connections,
+  read-only transactions, `HISTORY_STATEMENT_TIMEOUT_MS`, optionally a replica
+  (`HISTORY_DATABASE_URL`). The history view policy (`history-columns.ts`)
+  decides each column's display; scopes, current rows and record names come
+  from `history.repository.ts`; people from `PeopleService.historyPeople` and
+  the presenter.
 - **Audit events:** `audit.record(tx, { action, resourceType, resourceId, changedFields })`
   in the same transaction; actions are registered in
   `packages/shared/src/audit-actions.ts`.

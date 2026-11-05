@@ -12,6 +12,7 @@ import {
   AdultGuardiansSchema,
   AssignmentsSchema,
   AttendanceSchema,
+  AuditPageSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
@@ -31,6 +32,7 @@ import {
   GroupListSchema,
   GroupMemberListSchema,
   GuardianInvitationLookupSchema,
+  HistoryPageSchema,
   InvitationListSchema,
   InvitationLookupSchema,
   InviteesSchema,
@@ -558,3 +560,37 @@ async function publicMeta<S extends z.ZodType>(
 }
 export const getSource = cache(() => publicMeta("/api/v1/meta/source", SourceResponseSchema));
 export const getVersion = cache(() => publicMeta("/api/v1/meta/version", VersionResponseSchema));
+
+// History and audit (P1.9, ADR 0042): read only when their page is opened.
+// Expected refusals (a period too long, a scope too large, a timeout of the
+// history pool) come back as the problem's code for the page to explain.
+export type HistoryResult<T> = { page: T; error: null } | { page: null; error: string };
+
+async function historyGet<S extends z.ZodType>(
+  path: string,
+  schema: S,
+): Promise<HistoryResult<z.infer<S>>> {
+  const session = await requireSession();
+  const res = await apiFetch(path, session.record, { onBehalfOf: null });
+  if (res.ok) return { page: schema.parse(await res.json()), error: null };
+  if (res.status === 401) redirect(`/login?returnTo=${encodeURIComponent(await currentPath())}`);
+  if (res.status === 404) notFound();
+  if (res.status === 403) {
+    const body = (await res.json().catch(() => ({}))) as { detail?: unknown };
+    if (body.detail !== "mfa_required") forbidden();
+    return { page: null, error: "mfa_required" };
+  }
+  if ([400, 409, 503].includes(res.status)) {
+    const body = (await res.json().catch(() => ({}))) as { detail?: unknown };
+    return { page: null, error: typeof body.detail === "string" ? body.detail : "error" };
+  }
+  throw new ApiResponseError(res.status, res.headers.get("x-request-id"));
+}
+
+/** A detail page's history: path like "groups/<id>" (IDs checked), query with cursor etc. */
+export const getHistory = cache((path: string, query: string) =>
+  historyGet(`/api/v1/${path}/history?${query}`, HistoryPageSchema),
+);
+export const getAuditEvents = cache((clubId: string, query: string) =>
+  historyGet(`/api/v1/clubs/${requireId(clubId)}/audit-events?${query}`, AuditPageSchema),
+);

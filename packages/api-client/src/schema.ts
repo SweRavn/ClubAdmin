@@ -79,6 +79,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/activities/{activityId}/history": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * An activity's history: changes, answers and attendance (club managers and registrars)
+     * @description Requires permission `activity.history.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Audit_activityHistory"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activities/{activityId}/invitees": {
     parameters: {
       query?: never;
@@ -211,6 +231,26 @@ export interface paths {
     patch: operations["Activities_updateSeries"];
     trace?: never;
   };
+  "/api/v1/activity-series/{seriesId}/history": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * An activity series' history (club managers and registrars)
+     * @description Requires permission `activity.history.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Audit_seriesHistory"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activity-series/{seriesId}/split": {
     parameters: {
       query?: never;
@@ -324,6 +364,26 @@ export interface paths {
      * @description Requires permission `club.activities.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     get: operations["Activities_clubCalendar"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/audit-events": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's audit log: who did what, when (club managers)
+     * @description Requires permission `club.audit.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Audit_auditEvents"];
     put?: never;
     post?: never;
     delete?: never;
@@ -458,6 +518,26 @@ export interface paths {
      * @description Requires permission `club.guardians.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["ClubGuardians_end"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/history": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's changes, newest first; by kind of record or person acting within at most 90 days (club managers)
+     * @description Requires permission `club.history.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Audit_clubHistory"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1209,6 +1289,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/events/{eventId}/history": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * An event's history: changes and registrations (club managers and registrars)
+     * @description Requires permission `event.history.read` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Audit_eventHistory"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/events/{eventId}/publish": {
     parameters: {
       query?: never;
@@ -1537,6 +1637,26 @@ export interface paths {
      * @description Requires permission `group.activities.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     get: operations["Events_groupEvents"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/history": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A group's history (club managers and registrars)
+     * @description Requires permission `group.history.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Audit_groupHistory"];
     put?: never;
     post?: never;
     delete?: never;
@@ -2651,6 +2771,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/people/{personId}/history": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A member's history in a club (club managers and registrars)
+     * @description Requires permission `person.history.read` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Audit_personHistory"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/people/{personId}/merge": {
     parameters: {
       query?: never;
@@ -2926,6 +3066,212 @@ export interface components {
     CancelActivityRequest: {
       reason?: string;
     };
+    HistoryPage: {
+      items: components["schemas"]["HistoryItem"][];
+      nextCursor: string | null;
+      retentionMonths: number;
+    };
+    HistoryItem: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      changedAt: string;
+      /** @enum {string} */
+      operation: "created" | "updated" | "deleted";
+      /** @enum {string} */
+      resource:
+        | "person"
+        | "club_profile"
+        | "club_membership"
+        | "group_membership"
+        | "club_role_assignment"
+        | "employment"
+        | "consent"
+        | "join_request"
+        | "group_waitlist_entry"
+        | "guardianship"
+        | "group"
+        | "group_owner"
+        | "group_season"
+        | "season"
+        | "activity"
+        | "activity_group"
+        | "activity_response"
+        | "attendance_record"
+        | "activity_invitee"
+        | "activity_series"
+        | "activity_series_group"
+        | "event"
+        | "event_group"
+        | "event_activity"
+        | "event_registration"
+        | "club"
+        | "location"
+        | "club_phone_number"
+        | "consent_text"
+        | "club_setting_decision"
+        | "club_privacy_policy"
+        | "support_access_grant"
+        | "invitation"
+        | "invitation_acceptance"
+        | "member_export"
+        | "member_import"
+        | "club_manager_handover"
+        | "club_manager_reassignment"
+        | "guardian_invitation"
+        | "subscription";
+      /** Format: uuid */
+      recordId: string;
+      link: {
+        /** @enum {string} */
+        kind: "person" | "group" | "activity" | "series" | "event" | "club" | "location" | "season";
+        /** Format: uuid */
+        id: string;
+      } | null;
+      about: components["schemas"]["HistoryRef"][];
+      actor: components["schemas"]["ActorReference"];
+      onBehalfOf: components["schemas"]["ActorReference"];
+      changes: components["schemas"]["HistoryChange"][];
+      otherFieldsChanged: boolean;
+      transactionId: string;
+    };
+    HistoryRef:
+      | {
+          /** @enum {string} */
+          kind: "person";
+          person: components["schemas"]["PersonSummary"];
+        }
+      | {
+          /** @enum {string} */
+          kind: "hidden_person";
+        }
+      | {
+          /** @enum {string} */
+          kind: "erased_person";
+        }
+      | {
+          /** @enum {string} */
+          kind: "record";
+          /** @enum {string} */
+          type:
+            "person" | "group" | "activity" | "series" | "event" | "club" | "location" | "season";
+          /** Format: uuid */
+          id: string;
+          name: string | null;
+          /** Format: date-time */
+          startsAt?: string;
+        };
+    ActorReference:
+      | {
+          /** @enum {string} */
+          kind: "person";
+          person: components["schemas"]["PersonSummary"];
+        }
+      | {
+          /** @enum {string} */
+          kind: "protected";
+        }
+      | {
+          /** @enum {string} */
+          kind: "system";
+          job?: string;
+        }
+      | {
+          /** @enum {string} */
+          kind: "erased";
+        }
+      | {
+          /** @enum {string} */
+          kind: "operator";
+        };
+    HistoryChange: {
+      column: string;
+      labelKey: string;
+      /** @enum {string} */
+      kind: "value" | "erased" | "redacted";
+      old: components["schemas"]["HistoryValue"];
+      new: components["schemas"]["HistoryValue"];
+    };
+    HistoryValue:
+      | {
+          /** @enum {string} */
+          type: "text";
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "number";
+          value: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "boolean";
+          value: boolean;
+        }
+      | {
+          /** @enum {string} */
+          type: "date";
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "datetime";
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "enum";
+          enumKey: string;
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "ref";
+          ref: components["schemas"]["HistoryRef"];
+        }
+      | {
+          /** @enum {string} */
+          type: "list";
+          items: components["schemas"]["HistoryScalar"][];
+        }
+      | null;
+    HistoryScalar:
+      | {
+          /** @enum {string} */
+          type: "text";
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "number";
+          value: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "boolean";
+          value: boolean;
+        }
+      | {
+          /** @enum {string} */
+          type: "date";
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "datetime";
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "enum";
+          enumKey: string;
+          value: string;
+        }
+      | {
+          /** @enum {string} */
+          type: "ref";
+          ref: components["schemas"]["HistoryRef"];
+        };
     Invitees: {
       /** Format: uuid */
       activityId: string;
@@ -3190,6 +3536,47 @@ export interface components {
       items: components["schemas"]["Activity"][];
       /** Format: uuid */
       nextCursor: string | null;
+    };
+    AuditPage: {
+      items: components["schemas"]["AuditItem"][];
+      nextCursor: string | null;
+      retentionMonths: number;
+    };
+    AuditItem: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      createdAt: string;
+      action: string;
+      /** @enum {string} */
+      category:
+        | "members"
+        | "roles"
+        | "groups"
+        | "activities"
+        | "attendance"
+        | "events"
+        | "families"
+        | "privacy"
+        | "exports"
+        | "settings"
+        | "access";
+      resourceType: string;
+      /** Format: uuid */
+      resourceId: string | null;
+      link: {
+        /** @enum {string} */
+        kind: "person" | "group" | "activity" | "series" | "event" | "club" | "location" | "season";
+        /** Format: uuid */
+        id: string;
+      } | null;
+      about: components["schemas"]["HistoryRef"];
+      actor: components["schemas"]["ActorReference"];
+      onBehalfOf: components["schemas"]["ActorReference"];
+      changedFields: {
+        name: string;
+        labelKey: string | null;
+      }[];
     };
     ConsentTextVersions: {
       /** @enum {string} */
@@ -4839,6 +5226,12 @@ export interface components {
           | "club.handover.respond"
           | "club.managers.claim"
           | "club.managers.reassign"
+          | "person.history.read"
+          | "group.history.read"
+          | "activity.history.read"
+          | "event.history.read"
+          | "club.history.read"
+          | "club.audit.read"
         )[];
       }[];
     };
@@ -6126,6 +6519,85 @@ export interface operations {
       };
     };
   };
+  Audit_activityHistory: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HistoryPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Attendance_invitees: {
     parameters: {
       query?: never;
@@ -6828,6 +7300,85 @@ export interface operations {
       };
     };
   };
+  Audit_seriesHistory: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        seriesId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HistoryPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Activities_splitSeries: {
     parameters: {
       query?: never;
@@ -7302,6 +7853,103 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ActivityPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Audit_auditEvents: {
+    parameters: {
+      query?: {
+        category?:
+          | "members"
+          | "roles"
+          | "groups"
+          | "activities"
+          | "attendance"
+          | "events"
+          | "families"
+          | "privacy"
+          | "exports"
+          | "settings"
+          | "access";
+        action?: string;
+        actorId?: string;
+        resourceType?: string;
+        resourceId?: string;
+        from?: string;
+        to?: string;
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AuditPage"];
         };
       };
       /** @description Invalid request */
@@ -8050,6 +8698,126 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Audit_clubHistory: {
+    parameters: {
+      query?: {
+        scope?: "club";
+        table?:
+          | "club_profile"
+          | "club_membership"
+          | "group_membership"
+          | "club_role_assignment"
+          | "employment"
+          | "consent"
+          | "join_request"
+          | "group_waitlist_entry"
+          | "group"
+          | "group_owner"
+          | "group_season"
+          | "season"
+          | "activity"
+          | "activity_group"
+          | "activity_response"
+          | "attendance_record"
+          | "activity_invitee"
+          | "activity_series"
+          | "activity_series_group"
+          | "event"
+          | "event_group"
+          | "event_activity"
+          | "event_registration"
+          | "club"
+          | "location"
+          | "club_phone_number"
+          | "consent_text"
+          | "club_setting_decision"
+          | "club_privacy_policy"
+          | "support_access_grant"
+          | "invitation"
+          | "invitation_acceptance"
+          | "member_export"
+          | "member_import"
+          | "club_manager_handover"
+          | "club_manager_reassignment";
+        actorId?: string;
+        from?: string;
+        to?: string;
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HistoryPage"];
         };
       };
       /** @description Invalid request */
@@ -11899,6 +12667,85 @@ export interface operations {
       };
     };
   };
+  Audit_eventHistory: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HistoryPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Events_publish: {
     parameters: {
       query?: never;
@@ -13451,6 +14298,85 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["EventPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Audit_groupHistory: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HistoryPage"];
         };
       };
       /** @description Invalid request */
@@ -18320,6 +19246,86 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Empty"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Audit_personHistory: {
+    parameters: {
+      query: {
+        clubId: string;
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HistoryPage"];
         };
       };
       /** @description Invalid request */

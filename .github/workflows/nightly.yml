@@ -34,3 +34,14 @@ jobs:
       - name: Seed the load scenario
         timeout-minutes: 10
         run: pnpm db:reset --scenario load
+
+      # History and audit on volume (P1.9, ADR 0042): two years of history
+      # and audit events for Storklubben, then the plans and time budgets.
+      # Not in the CI workflow: reading history must not slow everything else.
+      - name: Seed the history volume
+        timeout-minutes: 20
+        run: pnpm db:seed --history-volume
+
+      - name: History and audit on volume
+        timeout-minutes: 10
+        run: pnpm --filter @clubadmin/api test:volume

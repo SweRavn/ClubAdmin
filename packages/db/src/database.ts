@@ -41,14 +41,14 @@ export interface Database {
 }
 
 /** BEGIN and the context settings in one round trip (values are escaped literals). */
-function beginSql(client: pg.PoolClient, settings: Settings): string {
+function beginSql(client: pg.PoolClient, settings: Settings, readOnly: boolean): string {
   const assignments = (Object.entries(settings) as [string, string][])
     .map(
       ([name, value]) =>
         `set_config(${client.escapeLiteral(name)}, ${client.escapeLiteral(value)}, true)`,
     )
     .join(", ");
-  return `BEGIN; SELECT ${assignments}`;
+  return `${readOnly ? "BEGIN READ ONLY" : "BEGIN"}; SELECT ${assignments}`;
 }
 
 /**
@@ -71,7 +71,15 @@ export function unwrapQueryError(error: unknown): unknown {
 const inTransaction = new AsyncLocalStorage<true>();
 const refuseNesting = process.env.NODE_ENV !== "production";
 
-export function createDatabase(options: PoolOptions): Database {
+export interface DatabaseOptions extends PoolOptions {
+  /**
+   * Every transaction is READ ONLY (the history pool, P1.9: it may point at a
+   * streaming replica, and reads must never write).
+   */
+  readOnly?: boolean;
+}
+
+export function createDatabase(options: DatabaseOptions): Database {
   const pool = createPool(options);
   const migrationFiles = readMigrationFiles();
 
@@ -88,7 +96,7 @@ export function createDatabase(options: PoolOptions): Database {
     const client = await pool.connect();
     let broken: Error | undefined;
     try {
-      await client.query(beginSql(client, settings));
+      await client.query(beginSql(client, settings, options.readOnly ?? false));
       const tx = drizzle({ client, casing: "snake_case" });
       const result = await fn(tx);
       await client.query("COMMIT");

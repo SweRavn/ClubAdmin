@@ -21,6 +21,8 @@ export * from "./domain/schemas.ts";
 export * from "./domain/zoned-time.ts";
 export * from "./domain-events.ts";
 export * from "./entitlements.ts";
+export * from "./history/catalogue.ts";
+export * from "./history/schemas.ts";
 export * from "./http/client.ts";
 export * from "./http/meta.ts";
 export * from "./http/problem.ts";

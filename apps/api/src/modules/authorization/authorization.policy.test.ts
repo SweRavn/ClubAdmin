@@ -844,6 +844,76 @@ const CASES: Record<Permission, Case[]> = {
     { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
     { name: "club manager", actor: manager, resource: platformR, allowed: false },
   ],
+  "person.history.read": [
+    { name: "club manager", actor: manager, resource: playerInTeam(), allowed: true },
+    { name: "registrar", actor: registrar, resource: playerInTeam(), allowed: true },
+    {
+      name: "the person themselves",
+      actor: as({ ...member(), personId: player }),
+      resource: playerInTeam(),
+      allowed: false,
+    },
+    { name: "a parent", actor: parent, resource: personResource(ward, club), allowed: false },
+    { name: "the group's coach", actor: coach, resource: playerInTeam(), allowed: false },
+    {
+      name: "the parent group's owner",
+      actor: sectionOwner,
+      resource: playerInTeam(),
+      allowed: false,
+    },
+    { name: "a relative", actor: relative, resource: personResource(ward, club), allowed: false },
+    {
+      name: "manager without clubId",
+      actor: manager,
+      resource: personResource(player, null),
+      allowed: false,
+    },
+    {
+      name: "manager, person never in the club",
+      actor: manager,
+      resource: personResource(player, club, { inClub: false }),
+      allowed: false,
+    },
+    {
+      name: "manager of another club",
+      actor: otherClubManager,
+      resource: playerInTeam(),
+      allowed: false,
+    },
+  ],
+  "group.history.read": [
+    { name: "club manager", actor: manager, resource: teamR, allowed: true },
+    { name: "registrar", actor: registrar, resource: teamR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: false },
+    { name: "coach", actor: coach, resource: teamR, allowed: false },
+    { name: "teammate", actor: teammate, resource: teamR, allowed: false },
+  ],
+  "activity.history.read": [
+    { name: "club manager", actor: manager, resource: activityR, allowed: true },
+    { name: "registrar", actor: registrar, resource: activityR, allowed: true },
+    { name: "head coach", actor: coach, resource: activityR, allowed: false },
+    { name: "owner of the parent group", actor: sectionOwner, resource: activityR, allowed: false },
+    { name: "player", actor: teammate, resource: activityR, allowed: false },
+  ],
+  "event.history.read": [
+    { name: "club manager", actor: manager, resource: eventR(), allowed: true },
+    { name: "registrar", actor: registrar, resource: eventR(), allowed: true },
+    { name: "organiser (head coach)", actor: coach, resource: eventR(), allowed: false },
+    { name: "chair (club event organiser)", actor: chair, resource: clubEventR, allowed: false },
+    { name: "parent", actor: parent, resource: eventR(), allowed: false },
+  ],
+  "club.history.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.audit.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: false },
+  ],
   "club.join_requests.manage": [
     { name: "manager", actor: manager, resource: clubR, allowed: true },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
@@ -938,6 +1008,14 @@ describe("policies", () => {
     expect(policyFor("club.read")!.requiresMfa({ actor: plainMember, resource: clubR })).toBe(
       false,
     );
+    for (const permission of ["club.history.read", "club.audit.read"] as const) {
+      expect(
+        policyFor(permission)!.requiresMfa({ actor: managerWithoutMfa, resource: clubR }),
+      ).toBe(true);
+    }
+    expect(
+      policyFor("person.history.read")!.requiresMfa({ actor: registrar, resource: playerInTeam() }),
+    ).toBe(false);
     expect(
       policyFor("ops.backup.read")!.requiresMfa({
         actor: operatorWithoutGrant,

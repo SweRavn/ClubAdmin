@@ -52,9 +52,10 @@ export interface EndpointOptions {
   /**
    * An extra per-account budget (docs/security.md, "Rate limits"): "joining"
    * for club search, join requests, invitations and club creation (anti-abuse,
-   * ADR 0018).
+   * ADR 0018); "history" for the history panels and the audit log (P1.9,
+   * ADR 0042: reading history must not burden the rest of the system).
    */
-  accountLimit?: "joining";
+  accountLimit?: "joining" | "history";
   /**
    * Pages through a club's people (rosters, later exports): also counts
    * against the per-club and per-account bulk-read budgets. Needs a club,

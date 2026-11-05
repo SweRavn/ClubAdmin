@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [swc.vite({ configFile: ".swcrc" })],
   test: {
     include: ["src/**/*.test.ts"],
-    exclude: ["src/**/*.integration.test.ts"],
+    exclude: ["src/**/*.integration.test.ts", "src/**/*.volume.test.ts"],
     environment: "node",
     passWithNoTests: false,
   },

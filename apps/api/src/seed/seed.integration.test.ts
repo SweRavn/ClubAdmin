@@ -121,9 +121,16 @@ describe("demo scenario", () => {
     const movedFrom = new Set(
       data.history.flatMap((h) => (h.action === "group.move" ? [`${h.person}/${h.from}`] : [])),
     );
+    // Membership types changed later in history.json (P1.9).
+    const retyped = new Map(
+      data.history.flatMap((h) =>
+        h.action === "membership.type" ? [[`${h.person}/${h.club}`, h.membershipType]] : [],
+      ),
+    );
     for (const m of r.memberships) {
+      const type = retyped.get(`${m.person}/${m.club}`) ?? m.membershipType;
       expect(summary[m.person]!.memberships, `${m.person} in ${m.club}`).toContain(
-        `${m.club}: ${m.status} (${m.membershipType})`,
+        `${m.club}: ${m.status} (${type})`,
       );
     }
     for (const role of r.roles) {
