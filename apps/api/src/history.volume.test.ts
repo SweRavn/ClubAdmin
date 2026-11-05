@@ -32,6 +32,8 @@ const DAY = 86_400_000;
 const RUNS = 20;
 
 let db: Database;
+/** Superuser lookups of the test's IDs (row-level security hides clubs from a job without a club). */
+let admin: Database;
 let context: TenantContext;
 let managerId: string;
 let clubId: string;
@@ -53,10 +55,15 @@ async function plan(query: SQL): Promise<PlanNode[]> {
   return nodes(rows[0]!["QUERY PLAN"][0]!.Plan);
 }
 
+/** Partitions and tables with data: the planner scans empty ones (future months) sequentially, at no cost. */
+let populated = new Set<string>();
+
 const seqScans = (all: PlanNode[]) =>
   all.filter(
     (n) =>
-      n["Node Type"] === "Seq Scan" && /^(record_changes|events)/.test(n["Relation Name"] ?? ""),
+      n["Node Type"] === "Seq Scan" &&
+      /^(record_changes|events)/.test(n["Relation Name"] ?? "") &&
+      populated.has(n["Relation Name"]!),
   );
 
 async function p95(fn: () => Promise<unknown>): Promise<number> {
@@ -75,7 +82,10 @@ beforeAll(async () => {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL must be set (pnpm dev:services)");
   db = createDatabase({ url, max: 2, readOnly: true, applicationName: "clubadmin-volume" });
-  const found = await db.withSystem("volume:setup", {}, (tx) =>
+  const adminUrl = process.env.DATABASE_ADMIN_URL;
+  if (!adminUrl) throw new Error("DATABASE_ADMIN_URL must be set (pnpm dev:services)");
+  admin = createDatabase({ url: adminUrl, max: 1, readOnly: true });
+  const found = await admin.withSystem("volume:setup", {}, (tx) =>
     tx.execute<{ club: string; manager: string }>(sql`
       SELECT c.id AS club, r.person_id AS manager FROM clubs c
       JOIN club_role_assignments r ON r.club_id = c.id AND r.role = 'club_manager'
@@ -95,7 +105,7 @@ beforeAll(async () => {
     requestId: "volume",
     viewerPrivileged: true,
   };
-  const count = await db.withSystem("volume:setup", {}, (tx) =>
+  const count = await admin.withSystem("volume:setup", {}, (tx) =>
     tx.execute<{ n: number }>(
       sql`SELECT count(*)::int AS n FROM history.record_changes WHERE request_id = 'volume'`,
     ),
@@ -103,6 +113,16 @@ beforeAll(async () => {
   if ((count.rows[0]?.n ?? 0) < 1_000_000) {
     throw new Error("No history volume: pnpm db:seed --history-volume");
   }
+  populated = new Set(
+    (
+      await admin.withSystem("volume:setup", {}, (tx) =>
+        tx.execute<{ name: string }>(sql`
+          SELECT c.relname AS name FROM pg_class c
+          WHERE c.relnamespace IN ('history'::regnamespace, 'audit'::regnamespace)
+            AND c.relkind = 'r' AND c.reltuples > 1000`),
+      )
+    ).rows.map((r) => r.name),
+  );
   // The panel of the member with five years of changes (member number 1).
   memberRecords = (
     await db.withTenant(context, (tx) =>
@@ -118,6 +138,7 @@ beforeAll(async () => {
 }, 120_000);
 afterAll(async () => {
   await db?.close();
+  await admin?.close();
 });
 
 describe("history and audit on volume", () => {

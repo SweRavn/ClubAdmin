@@ -178,7 +178,10 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   history (5 million rows) and audit events (500,000): no sequential scans
   of history partitions or the audit log, the club index newest first over
   the partitions, a 90-day period prunes partitions, and the time budgets
-  above. HISTORY_VOLUME_RESULTS
+  above.
+  Measured at P1.9 (local Docker PostgreSQL 18, warm): p95 of a member's
+  panel 10 ms, the club-wide changes 10 ms (filtered to 90 days 6 ms), the
+  audit log 3 ms (by actor 6 ms); seeding the volume about 1.5 minutes.
 - `pnpm --filter @clubadmin/api build && pnpm --filter @clubadmin/api bench [path] [seconds] [connections]`
   measures the request pipeline (validation, problem details, logging, security
   headers, rate limiting) without a database. Baseline at P0.3 on a development
