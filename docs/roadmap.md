@@ -39,7 +39,7 @@ Ordered so each package only depends on earlier ones. Prompts:
 | P1.8a | Privacy I: consents (incl. contact visibility), leave club, the club's privacy policy decided by the board, retention jobs |
 | P1.8b | Privacy II: "download my data", account deletion, ward erasure |
 | P1.9 | Audit log and record-history UI ("History" panel on detail pages) |
-| P1.10 | Groups admin: group owners, group hierarchy, waiting lists with offers and admission (ADR 0019) |
+| P1.10 | Groups admin: group owners, group hierarchy, waiting lists with offers and admission (ADR 0019); split into P1.10a (owners, seasons, members, archiving) and P1.10b (waiting lists) |
 | P1.11 | Calendar subscriptions: secret iCal feeds (my schedule / group / club) with one-click answer links (ADR 0021) |
 | P1.12 | Protected identity UI: flags, crossed-camera icon, chat-acceptance flow, access log (ADR 0022) |
 | P1.13 | Billing: plans, subscriptions, invoices (only active with `BILLING_ENABLED`) |
