@@ -89,7 +89,8 @@ export const NOTIFICATION_TYPES = {
   "account.deletion.blocked": { category: "account", mandatoryEmail: true, immediate: true },
   "person.erasure.scheduled": { category: "family", mandatoryEmail: true, immediate: true },
   // Waiting lists (P1.10a): an entry the club closed (the group was archived).
-  "waitlist.entry.closed": { category: "waitlist", mandatoryEmail: true, immediate: true },
+  // Not mandatory: the category's email follows the settings (P1.10b's offer will be).
+  "waitlist.entry.closed": { category: "waitlist", immediate: true },
 } as const satisfies Record<string, NotificationTypeInfo>;
 export type NotificationType = keyof typeof NOTIFICATION_TYPES;
 export const NOTIFICATION_TYPE_NAMES = Object.keys(NOTIFICATION_TYPES) as NotificationType[];
