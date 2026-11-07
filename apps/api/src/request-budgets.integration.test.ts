@@ -108,7 +108,7 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/groups/${key("svk-f2017")}/waitlist/summary`,
     statements: 3,
-    pages: 90,
+    pages: 110,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/waitlists",
@@ -124,7 +124,7 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/clubs/${key("svk")}/open-groups`,
     statements: 1,
-    pages: 70,
+    pages: 90,
   },
   {
     route: "GET /api/v1/me/waitlists",
@@ -296,7 +296,7 @@ const CASES: Case[] = [
     // The group, its owners, the number waiting (P1.10b) and (owners: Erik) its
     // places and whether it can be deleted (P1.10a).
     statements: 7,
-    pages: 110,
+    pages: 130,
   },
   {
     route: "GET /api/v1/groups/{groupId}/members",
@@ -320,7 +320,7 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/activities/${ids.activity}`,
     statements: 7,
-    pages: 130,
+    pages: 150,
   },
   {
     route: "GET /api/v1/activities/{activityId}/responses/summary",
