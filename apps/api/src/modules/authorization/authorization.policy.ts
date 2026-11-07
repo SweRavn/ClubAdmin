@@ -394,6 +394,15 @@ export const POLICIES: readonly Policy[] = [
     "group",
     ({ actor, resource }) => actor.isClubManager(resource.clubId) || actor.ownsGroup(resource),
   ),
+  // Waiting lists (P1.10b, ADR 0043): club managers, and owners of the group
+  // or a parent group while it is not archived. Not leaders who do not own
+  // it, registrars or members.
+  definePolicy(
+    "group.waitlist.manage",
+    "group",
+    ({ actor, resource }) =>
+      actor.isClubManager(resource.clubId) || (!resource.archived && actor.ownsGroup(resource)),
+  ),
   definePolicy(
     "person.profile.read",
     "person",
@@ -571,6 +580,12 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("club.creation.decide", "platform", ({ actor }) => actor.isOperator(), {
     mfa: true,
   }),
+  // All waiting lists and the out-of-order decisions (P1.10b): managers and
+  // registrars (they approve the club memberships that follow); owners see
+  // their own lists only.
+  definePolicy("club.waitlists.read", "club", ({ actor, resource }) =>
+    isAdmin(actor, resource.clubId),
+  ),
   definePolicy("club.join_requests.manage", "club", ({ actor, resource }) =>
     isAdmin(actor, resource.clubId),
   ),

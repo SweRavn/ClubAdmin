@@ -3,3 +3,4 @@
 export { type Invitation, InvitationsService, invitationState } from "./invitations.service.ts";
 export { type JoinRequest, JoinRequestsService } from "./join-requests.service.ts";
 export { JoiningModule } from "./joining.module.ts";
+export { WaitlistsService } from "./waitlists.service.ts";

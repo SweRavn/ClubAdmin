@@ -166,6 +166,7 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
       group_id: "hidden",
       person_id: "hidden",
       function: enumOf("function", "functions"),
+      queue_bypass_reason: text("queue_bypass_reason"),
       ...validity,
     },
   },
@@ -252,6 +253,11 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
       decided_by_person_id: "hidden",
       decided_at: "name_only",
       closed_reason: enumOf("closed_reason", "history.closedReasons"),
+      // P1.10b
+      offered_at: "name_only",
+      offered_by_person_id: "hidden",
+      join_request_id: "hidden",
+      priority_reason: enumOf("priority_reason", "history.priorityReasons"),
     },
   },
   // Groups.
@@ -273,6 +279,7 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
       admission_mode: value({ enum: "groupForm.admissionModes" }, "groupForm.admissionMode"),
       waitlist_visible_publicly: "name_only",
       offer_reply_days: num("offer_reply_days", "groupForm.offerReplyDays"),
+      waitlist_auto_offer: "name_only",
       archived_at: datetime("archived_at"),
     },
   },

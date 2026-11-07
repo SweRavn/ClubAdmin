@@ -175,6 +175,14 @@ export const GroupDetailSchema = GroupSchema.extend({
   canManageMembers: z.boolean().optional(),
   /** The viewer appoints and removes owners (group.owners.manage, P1.10a). */
   canManageOwners: z.boolean().optional(),
+  /** Waiting-list settings (P1.10b), for those who may edit the group. */
+  waitlistVisiblePublicly: z.boolean().optional(),
+  offerReplyDays: z.number().int().optional(),
+  waitlistAutoOffer: z.boolean().optional(),
+  /** People waiting (P1.10b; protected applicants count too). */
+  waitingCount: z.number().int().optional(),
+  /** The viewer runs the waiting list (group.waitlist.manage, P1.10b). */
+  canManageWaitlist: z.boolean().optional(),
 }).openapi("GroupDetail");
 export type GroupDetail = z.infer<typeof GroupDetailSchema>;
 

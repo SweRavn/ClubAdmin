@@ -1073,6 +1073,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/open-groups": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The club's groups that take applications for their waiting lists (no people); insiders also see non-public ones */
+    get: operations["Waitlists_openGroups"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/phone-numbers": {
     parameters: {
       query?: never;
@@ -1238,6 +1255,26 @@ export interface paths {
      * @description Requires permission `billing.subscription.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     put: operations["Billing_changeStatus"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/waitlists": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * All waiting lists of the club, and the out-of-order decisions and queue bypasses with their reasons
+     * @description Requires permission `club.waitlists.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Waitlists_club"];
+    put?: never;
     post?: never;
     delete?: never;
     options?: never;
@@ -1866,6 +1903,147 @@ export interface paths {
      * @description Requires permission `group.update` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     put: operations["Groups_putGroupSeason"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/waitlist": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The group's waiting list in fair order (priority, then time), or recently closed entries
+     * @description Requires permission `group.waitlist.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Waitlists_list"];
+    put?: never;
+    /** Put yourself or a child on a group's waiting list; outside the club this also asks to join the club */
+    post: operations["Waitlists_apply"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/waitlist/{entryId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change an entry's priority (with a reason) or the owners' note
+     * @description Requires permission `group.waitlist.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["Waitlists_update"];
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/waitlist/{entryId}/admit": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Admit directly, without an offer; skipping anyone needs a reason
+     * @description Requires permission `group.waitlist.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Waitlists_admit"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/waitlist/{entryId}/offer": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Offer a place until the end of the reply day; skipping anyone needs a reason
+     * @description Requires permission `group.waitlist.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Waitlists_offer"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/waitlist/{entryId}/remove": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove an entry with a reason; the applicant is told the reason, never the note
+     * @description Requires permission `group.waitlist.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Waitlists_remove"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/waitlist/{entryId}/withdraw-offer": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Withdraw an offer: the entry is back in line with its original time
+     * @description Requires permission `group.waitlist.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Waitlists_withdrawOffer"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/groups/{groupId}/waitlist/summary": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Places, waiting, offers out and accepted entries awaiting the club
+     * @description Requires permission `group.waitlist.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Waitlists_summary"];
+    put?: never;
     post?: never;
     delete?: never;
     options?: never;
@@ -2636,10 +2814,61 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** My and my children's open waiting-list entries (place in the queue) and pending join requests */
+    /** My and my children's waiting-list entries (place in the queue; closed ones of the last 12 months) and pending join requests */
     get: operations["Joining_waitlists"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/waitlists/{entryId}/accept": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept an offered place before it expires */
+    post: operations["Waitlists_accept"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/waitlists/{entryId}/decline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Decline an offered place (the entry closes) */
+    post: operations["Waitlists_decline"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/waitlists/{entryId}/withdraw": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Leave a waiting list (also withdraws a join request made with it) */
+    post: operations["Waitlists_withdraw"];
     delete?: never;
     options?: never;
     head?: never;
@@ -4705,6 +4934,32 @@ export interface components {
         count: number;
       }[];
     };
+    OpenGroups: {
+      items: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+        /** @enum {string} */
+        kind:
+          | "section"
+          | "team"
+          | "training_group"
+          | "age_group"
+          | "committee"
+          | "board"
+          | "volunteers"
+          | "other";
+        parentName: string | null;
+        sport: string | null;
+        birthYearFrom: number | null;
+        birthYearTo: number | null;
+        /** @enum {string|null} */
+        genderCategory: "female" | "male" | "mixed" | "open" | null;
+        level: string | null;
+        full: boolean;
+        waiting: number;
+      }[];
+    };
     SetClubPhoneNumbersRequest: {
       numbers: {
         label: string;
@@ -4881,6 +5136,37 @@ export interface components {
       /** @enum {string} */
       status: "trial" | "active" | "past_due" | "read_only" | "cancelled";
     };
+    ClubWaitlists: {
+      groups: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+        capacity: number | null;
+        occupied: number;
+        free: number | null;
+        waiting: number;
+        offers: number;
+        accepted: number;
+      }[];
+      decisions: {
+        /** Format: uuid */
+        id: string;
+        /** @enum {string} */
+        kind: "offer" | "admission" | "queue_bypass";
+        group: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        };
+        person: components["schemas"]["PersonSummary"];
+        decidedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+        /** Format: date-time */
+        decidedAt: string;
+        reason: string;
+      }[];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
     EventDetail: components["schemas"]["Event"] & {
       mine: {
         person: components["schemas"]["PersonSummary"];
@@ -4962,6 +5248,11 @@ export interface components {
       occupied?: number;
       canManageMembers?: boolean;
       canManageOwners?: boolean;
+      waitlistVisiblePublicly?: boolean;
+      offerReplyDays?: number;
+      waitlistAutoOffer?: boolean;
+      waitingCount?: number;
+      canManageWaitlist?: boolean;
     };
     GroupCalendar: components["schemas"]["ActivityPage"] & {
       canManage: boolean;
@@ -5193,6 +5484,7 @@ export interface components {
       function:
         "member" | "head_coach" | "assistant_coach" | "team_manager" | "physio" | "other_leader";
       overCapacity?: boolean;
+      queueBypassReason?: string;
     };
     AddGroupOwner: {
       /** Format: uuid */
@@ -5210,6 +5502,113 @@ export interface components {
     PutGroupSeason: {
       capacity: number | null;
       notes?: string | null;
+    };
+    GroupWaitlist: {
+      items: {
+        /** Format: uuid */
+        id: string;
+        person: components["schemas"]["PersonSummary"];
+        /** @enum {string} */
+        status:
+          | "waiting"
+          | "offered"
+          | "accepted"
+          | "declined"
+          | "expired"
+          | "admitted"
+          | "withdrawn"
+          | "removed";
+        position: number | null;
+        requestedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+        birthYear: number | null;
+        fitsBirthYears: boolean | null;
+        fitsGenderCategory: boolean | null;
+        /** Format: date-time */
+        queuedAt: string;
+        priority: number;
+        /** @enum {string|null} */
+        priorityReason: "sibling" | "returning_member" | "other" | null;
+        applicantNote: string | null;
+        ownerNote: string | null;
+        /** Format: date-time */
+        offeredAt: string | null;
+        /** Format: date-time */
+        offerExpiresAt: string | null;
+        autoOffer: boolean;
+        outOfOrderReason: string | null;
+        /** @enum {string|null} */
+        closedReason:
+          | "declined"
+          | "expired"
+          | "withdrawn"
+          | "removed_by_owner"
+          | "join_request_rejected"
+          | "left_club"
+          | "group_archived"
+          | "no_longer_eligible"
+          | "duplicate"
+          | "no_reply"
+          | null;
+        /** Format: date-time */
+        decidedAt: string | null;
+        awaitingClub: boolean;
+      }[];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    WaitlistEntryResult: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      status:
+        | "waiting"
+        | "offered"
+        | "accepted"
+        | "declined"
+        | "expired"
+        | "admitted"
+        | "withdrawn"
+        | "removed";
+      /** Format: date-time */
+      offerExpiresAt: string | null;
+      /** Format: uuid */
+      joinRequestId: string | null;
+    };
+    ApplyWaitlist: {
+      /** Format: uuid */
+      personId: string;
+      note?: string;
+    };
+    UpdateWaitlistEntry: {
+      priority?: number;
+      /** @enum {string|null} */
+      priorityReason?: "sibling" | "returning_member" | "other" | null;
+      ownerNote?: string | null;
+    };
+    AdmitWaitlistEntry: {
+      outOfOrderReason?: string;
+      overCapacity?: boolean;
+    };
+    OfferWaitlistEntry: {
+      replyDays?: number;
+      outOfOrderReason?: string;
+      overCapacity?: boolean;
+    };
+    RemoveWaitlistEntry: {
+      /** @enum {string} */
+      reason: "no_longer_eligible" | "duplicate" | "no_reply" | "other";
+    };
+    WaitlistSummary: {
+      /** @enum {string} */
+      admissionMode: "direct" | "waitlist" | "closed";
+      autoOffer: boolean;
+      offerReplyDays: number;
+      capacity: number | null;
+      occupied: number;
+      free: number | null;
+      waiting: number;
+      offers: number;
+      accepted: number;
     };
     GuardianInvitationCreated: {
       /** Format: uuid */
@@ -5451,6 +5850,8 @@ export interface components {
           | "group.owners.manage"
           | "group.members.read"
           | "group.members.manage"
+          | "group.waitlist.manage"
+          | "club.waitlists.read"
           | "group.activities.read"
           | "group.activities.manage"
           | "activity.read"
@@ -6004,6 +6405,23 @@ export interface components {
         queuedAt: string;
         /** Format: date-time */
         offerExpiresAt: string | null;
+        /** @enum {string|null} */
+        closedReason?:
+          | "declined"
+          | "expired"
+          | "withdrawn"
+          | "removed_by_owner"
+          | "join_request_rejected"
+          | "left_club"
+          | "group_archived"
+          | "no_longer_eligible"
+          | "duplicate"
+          | "no_reply"
+          | null;
+        /** Format: date-time */
+        decidedAt?: string | null;
+        clubTimeZone?: string;
+        canAct?: boolean;
       }[];
       joinRequests: {
         /** Format: uuid */
@@ -8870,6 +9288,7 @@ export interface operations {
           admissionMode?: "direct" | "waitlist" | "closed";
           waitlistVisiblePublicly?: boolean;
           offerReplyDays?: number;
+          waitlistAutoOffer?: boolean;
         };
       };
     };
@@ -11797,6 +12216,73 @@ export interface operations {
       };
     };
   };
+  Waitlists_openGroups: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OpenGroups"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Clubs_setPhoneNumbers: {
     parameters: {
       query?: never;
@@ -12641,6 +13127,86 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["SubscriptionResponse"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_club: {
+    parameters: {
+      query?: {
+        from?: string;
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubWaitlists"];
         };
       };
       /** @description Invalid request */
@@ -14063,6 +14629,7 @@ export interface operations {
           admissionMode?: "direct" | "waitlist" | "closed";
           waitlistVisiblePublicly?: boolean;
           offerReplyDays?: number;
+          waitlistAutoOffer?: boolean;
         };
       };
     };
@@ -15577,6 +16144,636 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["GroupSeason"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_list: {
+    parameters: {
+      query?: {
+        status?: "open" | "closed";
+        birthYear?: number;
+        fitsGender?: "true";
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupWaitlist"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_apply: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ApplyWaitlist"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistEntryResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateWaitlistEntry"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistEntryResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_admit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdmitWaitlistEntry"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistEntryResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_offer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OfferWaitlistEntry"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistEntryResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RemoveWaitlistEntry"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistEntryResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_withdrawOffer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistEntryResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_summary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistSummary"];
         };
       };
       /** @description Invalid request */
@@ -18905,6 +20102,207 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MyWaitlists"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_accept: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WaitlistEntryResult"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_decline: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Waitlists_withdraw: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        entryId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
         };
       };
       /** @description Not logged in */

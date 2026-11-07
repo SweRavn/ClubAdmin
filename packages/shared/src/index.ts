@@ -13,6 +13,7 @@ export * from "./domain/core.ts";
 export * from "./domain/events.ts";
 export * from "./domain/family.ts";
 export * from "./domain/groups-admin.ts";
+export * from "./domain/waitlists.ts";
 export * from "./domain/imports.ts";
 export * from "./domain/joining.ts";
 export * from "./domain/members.ts";

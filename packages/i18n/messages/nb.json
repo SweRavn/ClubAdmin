@@ -687,7 +687,16 @@
     "range_too_large": "Velg en kortere periode (høyst 90 dager med filter).",
     "history_timeout": "Det tok for lang tid. Velg en kortere periode.",
     "owner_not_eligible": "En gruppeeier må være et myndig medlem av klubben med innlogging.",
-    "group_full": "Gruppen er full. Kryss av for «Legg til selv om gruppen er full» for å legge til likevel."
+    "group_full": "Gruppen er full. Kryss av for «Legg til selv om gruppen er full» for å legge til likevel.",
+    "admission_closed": "Gruppen tar ikke imot søknader.",
+    "already_on_waitlist": "Står allerede i denne køen.",
+    "not_on_waitlist": "Står ikke i denne køen.",
+    "waitlist_entry_closed": "Køplassen er ikke lenger åpen.",
+    "out_of_order_reason_required": "Noen står foran i køen: oppgi en grunn.",
+    "queue_bypass_reason_required": "Det står personer i køen til gruppen: oppgi en grunn for å legge til et medlem direkte.",
+    "priority_reason_required": "Fortrinn krever en grunn.",
+    "join_request_rejected": "Klubben godkjente ikke medlemskapet.",
+    "already_in_group": "Er allerede i gruppen."
   },
   "memberExport": {
     "columns": {
@@ -1453,7 +1462,9 @@
     "deleteTitle": "Slett",
     "deleteHint": "Gruppen har aldri vært brukt (ingen medlemmer, aktiviteter eller arrangementer) og kan slettes.",
     "deleteConfirm": "Ja, slett {group} for godt",
-    "delete": "Slett gruppen"
+    "delete": "Slett gruppen",
+    "waitlistVisiblePublicly": "Vis køen i klubbsøket (personer utenfor klubben kan søke)",
+    "waitlistAutoOffer": "Tilbud går automatisk til neste i køen"
   },
   "timeZones": {
     "other": "Andre"
@@ -1685,8 +1696,26 @@
       "entry": {
         "closed": {
           "title": "En venteplass i {club} er stengt",
-          "body": "{group}: {closedReason, select, group_archived {gruppen er lagt ned, så køen er stengt.} left_club {plassen ble stengt da medlemskapet opphørte.} other {klubben har fjernet plassen.}}"
+          "body": "{group}: {closedReason, select, group_archived {gruppen er lagt ned, så køen er stengt.} left_club {plassen ble stengt da medlemskapet tok slutt.} join_request_rejected {klubben godkjente ikke medlemskapet, så plassen er stengt.} no_longer_eligible {gruppens eiere fjernet plassen: oppfyller ikke lenger gruppens krav.} duplicate {gruppens eiere fjernet plassen: den var et duplikat.} no_reply {gruppens eiere fjernet plassen: intet svar.} other {gruppens eiere har fjernet plassen.}}"
+        },
+        "created": {
+          "title": "I køen til {group}",
+          "body": "{person} står i køen til {group} ({club}). Plassen i køen vises under Køer."
         }
+      },
+      "offer": {
+        "sent": {
+          "title": "En plass i {group} tilbys",
+          "body": "{person} tilbys en plass i {group} ({club}). Svar innen {deadline}."
+        },
+        "expired": {
+          "title": "Den tilbudte plassen i {group} har gått ut",
+          "body": "Tilbudet om en plass i {group} ({club}) for {person} ble ikke besvart i tide."
+        }
+      },
+      "admitted": {
+        "title": "Velkommen til {group}",
+        "body": "{person} er nå med i {group} ({club})."
       }
     }
   },
@@ -2216,7 +2245,11 @@
       "title": "Tittel",
       "valid_from": "Fra",
       "valid_to": "Til",
-      "version": "Versjon"
+      "version": "Versjon",
+      "offered_at": "Tilbudt",
+      "priority_reason": "Grunn til fortrinn",
+      "queue_bypass_reason": "Grunn til å gå forbi køen",
+      "waitlist_auto_offer": "Automatiske tilbud"
     },
     "resources": {
       "person": "Person",
@@ -2285,7 +2318,15 @@
       "removed_by_owner": "Fjernet av gruppen",
       "join_request_rejected": "Medlemskapet ble ikke godkjent",
       "left_club": "Forlot klubben",
-      "group_archived": "Gruppen ble arkivert"
+      "group_archived": "Gruppen ble arkivert",
+      "no_longer_eligible": "Oppfyller ikke lenger kravene",
+      "duplicate": "Duplikat",
+      "no_reply": "Intet svar"
+    },
+    "priorityReasons": {
+      "sibling": "Søsken i gruppen",
+      "returning_member": "Tilbakevendende medlem",
+      "other": "Annen grunn"
     }
   },
   "audit": {
@@ -2380,7 +2421,10 @@
       "activity_invitees_changed": "{actor} endret hvem som er invitert",
       "group_waitlist_withdrawn": "{actor} forlot en kø",
       "person_club_data_purged": "{actor} fjernet opplysningene til et tidligere medlem",
-      "club_settings_decided": "{actor} registrerte et styrevedtak"
+      "club_settings_decided": "{actor} registrerte et styrevedtak",
+      "group_waitlist_priority_changed": "{actor} endret fortrinnet for en køplass",
+      "group_waitlist_offer_withdrawn": "{actor} trakk tilbake en tilbudt plass",
+      "group_waitlist_admitted": "{actor} tok opp noen fra en kø"
     }
   },
   "groupAdmin": {
@@ -2439,5 +2483,104 @@
     "ownersAdmit": "Gruppeeiere tar opp nye klubbmedlemmer fra køene sine",
     "saveSettings": "Lagre",
     "settingsSaved": "Gruppeinnstillingene ble lagret."
+  },
+  "waitlist": {
+    "tab": "Kø",
+    "title": "Kø: {group}",
+    "summary": "{occupied} av {capacity} plasser tatt, {offers, plural, =0 {ingen tilbud ute} one {# tilbud ute} other {# tilbud ute}}, {waiting} i køen",
+    "summaryUnlimited": "{occupied} plasser tatt (ingen grense), {offers, plural, =0 {ingen tilbud ute} one {# tilbud ute} other {# tilbud ute}}, {waiting} i køen",
+    "awaitingClubCount": "{count, plural, one {# akseptert plass venter} other {# aksepterte plasser venter}} på at klubben godkjenner medlemskapet",
+    "autoOfferOn": "Tilbud går automatisk til neste i køen.",
+    "empty": "Ingen står i køen.",
+    "emptyClosed": "Ingen plasser er stengt de siste 12 månedene.",
+    "open": "I køen",
+    "closed": "Stengt (12 måneder)",
+    "filterBirthYear": "Født",
+    "filterFitsGender": "Passer gruppens kategori",
+    "filter": "Filtrer",
+    "position": "Nummer {position} av {count}",
+    "requestedBy": "Påmeldt av {name}",
+    "born": "Født {year}",
+    "outsideBirthYears": "Utenfor gruppens fødselsår",
+    "outsideCategory": "Utenfor gruppens kategori",
+    "waitingSince": "I køen siden {date}",
+    "applicantNote": "Melding fra søkeren",
+    "ownerNote": "Notat for eierne (vises aldri for søkeren)",
+    "priority": "Fortrinn",
+    "priorityReason": "Grunn til fortrinn",
+    "priorityValue": "Fortrinn {priority}: {reason}",
+    "offeredUntil": "Tilbudt, svar innen {date}",
+    "autoOffer": "tilbudt automatisk",
+    "awaitingClub": "Akseptert: venter på at klubben godkjenner medlemskapet",
+    "outOfOrder": "Før sin tur: {reason}",
+    "closedBecause": "{status}: {reason}",
+    "offer": "Tilby plass",
+    "replyDays": "Dager til å svare",
+    "admit": "Ta opp direkte",
+    "remove": "Fjern",
+    "removeReason": "Hvorfor",
+    "withdrawOffer": "Trekk tilbake tilbudet",
+    "save": "Lagre",
+    "skipReason": "Grunn til å gå forbi dem som står foran i køen (klubbens administratorer ser den)",
+    "skipHint": "La stå tomt når dette er neste i køen.",
+    "overCapacity": "Gruppen er full: gjør det likevel",
+    "statuses": {
+      "waiting": "Venter",
+      "offered": "Tilbudt",
+      "accepted": "Akseptert",
+      "declined": "Takket nei",
+      "expired": "Gikk ut",
+      "admitted": "Tatt opp",
+      "withdrawn": "Forlot køen",
+      "removed": "Fjernet"
+    },
+    "removalReasons": {
+      "no_longer_eligible": "Oppfyller ikke lenger kravene",
+      "duplicate": "Duplikat",
+      "no_reply": "Intet svar",
+      "other": "Annet"
+    },
+    "notices": {
+      "offered": "Plassen ble tilbudt.",
+      "admitted": "Plassen er klar.",
+      "removed": "Køplassen ble fjernet.",
+      "offerWithdrawn": "Tilbudet ble trukket tilbake.",
+      "updated": "Lagret.",
+      "applied": "Du står i køen.",
+      "accepted": "Plassen er akseptert.",
+      "declined": "Du takket nei til tilbudet.",
+      "withdrawn": "Du har forlatt køen."
+    },
+    "applyTitle": "Still deg i køen",
+    "applyFor": "For",
+    "note": "Melding til gruppens eiere (ingen helseopplysninger)",
+    "apply": "Still i kø",
+    "join": "Still deg i køen",
+    "openGroups": "Grupper som tar imot søknader",
+    "noOpenGroups": "Ingen grupper tar imot søknader akkurat nå.",
+    "full": "full, {waiting} i køen",
+    "notFull": "{waiting} i køen",
+    "replyBy": "Svar innen {deadline}",
+    "accept": "Takk ja til plassen",
+    "decline": "Takk nei",
+    "leave": "Forlat køen",
+    "myTitle": "Køer",
+    "myEmpty": "Du står ikke i noen kø.",
+    "recentlyClosed": "Nylig stengt",
+    "clubTitle": "Køer",
+    "clubGroups": "Grupper",
+    "free": "{free} ledige",
+    "unlimited": "ingen grense",
+    "decisionsTitle": "Beslutninger før tur",
+    "noDecisions": "Ingen beslutninger før tur.",
+    "decisionKinds": {
+      "offer": "Tilbudt før sin tur",
+      "admission": "Tatt opp før sin tur",
+      "queue_bypass": "Lagt til forbi køen"
+    },
+    "decidedBy": "av {name}",
+    "more": "Flere",
+    "queueBypassReason": "Grunn til å legge til forbi køen ({count} i køen)",
+    "groupWaiting": "{count, plural, =0 {Ingen i køen} one {# person i køen} other {# personer i køen}}"
   }
 }

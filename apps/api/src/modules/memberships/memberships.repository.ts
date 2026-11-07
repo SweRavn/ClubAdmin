@@ -374,3 +374,25 @@ export async function groupCandidates(
     cursorFound: rows[0]?.cursor_found ?? true,
   };
 }
+
+/** Whether the person holds the function in the group now. */
+export async function hasOpenGroupFunction(
+  tx: Tx,
+  groupId: string,
+  personId: string,
+  fn: GroupFunction,
+): Promise<boolean> {
+  const [row] = await tx
+    .select({ id: groupMemberships.id })
+    .from(groupMemberships)
+    .where(
+      and(
+        eq(groupMemberships.groupId, groupId),
+        eq(groupMemberships.personId, personId),
+        eq(groupMemberships.function, fn),
+        isNull(groupMemberships.validTo),
+      ),
+    )
+    .limit(1);
+  return row !== undefined;
+}

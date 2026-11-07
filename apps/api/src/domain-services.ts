@@ -13,7 +13,11 @@ import { ClubsService } from "./modules/clubs/index.ts";
 import { EventsService } from "./modules/events/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
-import { InvitationsService, JoinRequestsService } from "./modules/joining/index.ts";
+import {
+  InvitationsService,
+  JoinRequestsService,
+  WaitlistsService,
+} from "./modules/joining/index.ts";
 import { MemberImportsService, MemberIntakeService } from "./modules/members/index.ts";
 import { MembershipsService } from "./modules/memberships/index.ts";
 import { OnboardingService } from "./modules/onboarding/index.ts";
@@ -43,6 +47,7 @@ export interface CoreServices {
   memberships: MembershipsService;
   guardianships: GuardianshipsService;
   joinRequests: JoinRequestsService;
+  waitlists: WaitlistsService;
   invitations: InvitationsService;
   intake: MemberIntakeService;
   imports: MemberImportsService;
@@ -86,6 +91,7 @@ export function createCoreServices(
     invitationTokenKey: options.invitationTokenKey,
   });
   const joinRequests = new JoinRequestsService(db, { clubs, groups, memberships, accounts });
+  const waitlists = new WaitlistsService(db, { clubs, groups, memberships, accounts });
   const guardianships = new GuardianshipsService(db, {
     people,
     accounts,
@@ -139,6 +145,7 @@ export function createCoreServices(
       defaultCountry,
     }),
     joinRequests,
+    waitlists,
     invitations: new InvitationsService(db, {
       clubs,
       groups,

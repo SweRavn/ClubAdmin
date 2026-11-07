@@ -88,8 +88,12 @@ export const NOTIFICATION_TYPES = {
   "account.deletion.scheduled": { category: "account", mandatoryEmail: true, immediate: true },
   "account.deletion.blocked": { category: "account", mandatoryEmail: true, immediate: true },
   "person.erasure.scheduled": { category: "family", mandatoryEmail: true, immediate: true },
-  // Waiting lists (P1.10a): an entry the club closed (the group was archived).
-  // Not mandatory: the category's email follows the settings (P1.10b's offer will be).
+  // Waiting lists (P1.10a, P1.10b, ADR 0043). The offer's email cannot be
+  // turned off (a deadline); the others follow the category's settings.
+  "waitlist.entry.created": { category: "waitlist" },
+  "waitlist.offer.sent": { category: "waitlist", mandatoryEmail: true, immediate: true },
+  "waitlist.offer.expired": { category: "waitlist", immediate: true },
+  "waitlist.admitted": { category: "waitlist", immediate: true },
   "waitlist.entry.closed": { category: "waitlist", immediate: true },
 } as const satisfies Record<string, NotificationTypeInfo>;
 export type NotificationType = keyof typeof NOTIFICATION_TYPES;

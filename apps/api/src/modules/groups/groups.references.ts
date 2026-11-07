@@ -14,4 +14,16 @@ export const GROUP_PERSON_REFERENCES: readonly PersonReference[] = [
       restore: ["valid_to"],
     },
   },
+  // The waiting list belongs to the groups module (P1.10b).
+  {
+    table: "public.group_waitlist_entries",
+    column: "person_id",
+    clubScoped: true,
+    open: {
+      where: "{a}.status IN ('waiting', 'offered', 'accepted')",
+      key: ["group_id"],
+      end: { status: "'withdrawn'" },
+      restore: ["status"],
+    },
+  },
 ];

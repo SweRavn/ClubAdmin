@@ -839,6 +839,43 @@ describe("permission matrix", () => {
       url: () => `/api/v1/groups/${m.team.id}/archive-preview`,
       expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
     },
+    // Waiting lists (P1.10b): managers and owners of the group (or a parent).
+    "GET /api/v1/groups/:groupId/waitlist": {
+      url: () => `/api/v1/groups/${m.team.id}/waitlist`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+    },
+    "GET /api/v1/groups/:groupId/waitlist/summary": {
+      url: () => `/api/v1/groups/${m.team.id}/waitlist/summary`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+    },
+    "PATCH /api/v1/groups/:groupId/waitlist/:entryId": {
+      url: () => `/api/v1/groups/${m.team.id}/waitlist/${uuidv7()}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404, owner: 404 },
+      body: { ownerNote: "x" },
+    },
+    "POST /api/v1/groups/:groupId/waitlist/:entryId/offer": {
+      url: () => `/api/v1/groups/${m.team.id}/waitlist/${uuidv7()}/offer`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404, owner: 404 },
+      body: {},
+    },
+    "POST /api/v1/groups/:groupId/waitlist/:entryId/withdraw-offer": {
+      url: () => `/api/v1/groups/${m.team.id}/waitlist/${uuidv7()}/withdraw-offer`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404, owner: 404 },
+    },
+    "POST /api/v1/groups/:groupId/waitlist/:entryId/admit": {
+      url: () => `/api/v1/groups/${m.team.id}/waitlist/${uuidv7()}/admit`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404, owner: 404 },
+      body: {},
+    },
+    "POST /api/v1/groups/:groupId/waitlist/:entryId/remove": {
+      url: () => `/api/v1/groups/${m.team.id}/waitlist/${uuidv7()}/remove`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404, owner: 404 },
+      body: { reason: "other" },
+    },
+    "GET /api/v1/clubs/:clubId/waitlists": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/waitlists`,
+      expected: ADMINS(200),
+    },
     "GET /api/v1/groups/:groupId/seasons": {
       url: () => `/api/v1/groups/${m.team.id}/seasons`,
       expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
@@ -1012,6 +1049,7 @@ describe("reads", () => {
       "club.members.export",
       "club.members.add",
       "club.members.import",
+      "club.waitlists.read",
       "club.activities.read",
       "club.events.read",
       "club.guardians.manage",

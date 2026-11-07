@@ -297,8 +297,12 @@ export class MembershipsService {
     groupId: string,
     personId: string,
     fn: GroupFunction = "member",
-    /** The caller just added the person to the club and checked the group (imports, P1.3b). */
-    options: { checked?: boolean } = {},
+    /**
+     * `checked`: the caller just added the person to the club and checked the
+     * group (imports, P1.3b). `queueBypassReason`: why a member is added past
+     * people waiting (P1.10b).
+     */
+    options: { checked?: boolean; queueBypassReason?: string } = {},
   ): Promise<GroupMembership> {
     {
       parseInput(GroupFunctionSchema, fn);
@@ -317,6 +321,7 @@ export class MembershipsService {
           groupId,
           personId,
           function: fn,
+          queueBypassReason: options.queueBypassReason ?? null,
         });
       } catch (error) {
         if (isUniqueViolation(error, "group_memberships_open_unique"))
@@ -327,7 +332,7 @@ export class MembershipsService {
         action: "group.membership.created",
         resourceType: "group_membership",
         resourceId: row.id,
-        changedFields: ["function"],
+        changedFields: ["function", ...(options.queueBypassReason ? ["queue_bypass_reason"] : [])],
       });
       await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
       return row;
@@ -358,25 +363,47 @@ export class MembershipsService {
   /**
    * Adds a club member to a group with a function, by an owner or club
    * manager. A `member` in a full group needs `overCapacity` (audited); the
-   * group row is locked for the count. Archived groups refuse.
+   * group row is locked for the count. A `member` added while people wait
+   * needs `queueBypassReason` (P1.10b; stored, audited and listed for club
+   * managers). Archived groups refuse.
    */
   addGroupMember(
     context: TenantContext,
     groupId: string,
     personId: string,
     fn: GroupFunction,
-    options: { overCapacity?: boolean } = {},
+    options: { overCapacity?: boolean; queueBypassReason?: string } = {},
   ): Promise<GroupMembership> {
     return this.db.withTenant(context, async (tx) => {
       const group = await this.groups.lockGroupInTx(tx, groupId);
       if (group.archivedAt) throw new DomainError("group_archived");
       let over = false;
+      let bypass: string | undefined;
+      let own: Awaited<ReturnType<typeof this.groups.waitlist.openEntryOfInTx>> = null;
       if (fn === "member") {
+        own = await this.groups.waitlist.lockOpenEntryOfInTx(tx, groupId, personId);
+        // An offer or accepted entry of the person already holds their place.
+        const holdsPlace = own !== null && own.status !== "waiting";
         const { capacity, occupied } = await this.groups.capacityInTx(tx, groupId);
-        over = capacity !== null && occupied >= capacity;
+        over = !holdsPlace && capacity !== null && occupied >= capacity;
         if (over && !options.overCapacity) throw new DomainError("group_full");
+        // Someone waiting other than the person themselves: a reason.
+        const waiting = await this.groups.waitlist.waitingCountInTx(tx, groupId);
+        if (waiting - (own?.status === "waiting" ? 1 : 0) > 0) {
+          bypass = options.queueBypassReason?.trim();
+          if (!bypass) throw new DomainError("queue_bypass_reason_required");
+        }
       }
-      const row = await this.addToGroupInTx(tx, context, groupId, personId, fn);
+      const row = await this.addToGroupInTx(tx, context, groupId, personId, fn, {
+        ...(bypass ? { queueBypassReason: bypass } : {}),
+      });
+      // The person's own entry is settled: they are in the group now.
+      if (own) {
+        await this.groups.waitlist.admitInTx(tx, context, own, {
+          outOfOrderReason: null,
+          overCapacity: false,
+        });
+      }
       if (over) {
         await audit.record(tx, {
           action: "group.membership.created",
@@ -519,6 +546,16 @@ export class MembershipsService {
       if (!eligible) throw new DomainError("owner_not_eligible");
       await this.groups.addOwnerInTx(tx, context, groupId, personId, allowedBy);
     });
+  }
+
+  /** Whether the person holds the function in the group now (applying, P1.10b). */
+  hasGroupFunctionInTx(
+    tx: Tx,
+    groupId: string,
+    personId: string,
+    fn: GroupFunction,
+  ): Promise<boolean> {
+    return repo.hasOpenGroupFunction(tx, groupId, personId, fn);
   }
 
   /** Active members of a group with their functions (IDs only; names go through PersonVisibility, P0.7). */

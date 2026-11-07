@@ -174,12 +174,17 @@ export async function withdrawWaitlistEntriesOfPerson(
 ): Promise<string[]> {
   const rows = await tx
     .update(groupWaitlistEntries)
-    .set({ status: "withdrawn", closedReason: "left_club" })
+    .set({
+      status: "withdrawn",
+      closedReason: "left_club",
+      decidedAt: sql`now()`,
+      offerExpiresAt: null,
+    })
     .where(
       and(
         eq(groupWaitlistEntries.clubId, clubId),
         eq(groupWaitlistEntries.personId, personId),
-        inArray(groupWaitlistEntries.status, ["waiting", "offered"]),
+        inArray(groupWaitlistEntries.status, ["waiting", "offered", "accepted"]),
       ),
     )
     .returning({ id: groupWaitlistEntries.id });
@@ -269,126 +274,35 @@ export async function activeGroupNames(
     .where(and(eq(groups.clubId, clubId), isNull(groups.archivedAt)));
 }
 
-// --- My waiting lists (P1.6b) ----------------------------------------------
-
-export interface OwnWaitlistEntry {
-  id: string;
-  clubId: string;
-  groupId: string;
-  personId: string;
-  status: WaitlistStatus;
-  queuedAt: Date;
-  offerExpiresAt: Date | null;
-}
-
-/**
- * The open entries of the given people (the caller and their wards) in every
- * club: own_relationships, uses group_waitlist_entries_person_idx.
- */
-export async function ownOpenWaitlistEntries(
-  tx: Tx,
-  personIds: readonly string[],
-): Promise<OwnWaitlistEntry[]> {
-  if (personIds.length === 0) return [];
-  return tx
-    .select({
-      id: groupWaitlistEntries.id,
-      clubId: groupWaitlistEntries.clubId,
-      groupId: groupWaitlistEntries.groupId,
-      personId: groupWaitlistEntries.personId,
-      status: groupWaitlistEntries.status,
-      queuedAt: groupWaitlistEntries.queuedAt,
-      offerExpiresAt: groupWaitlistEntries.offerExpiresAt,
-    })
-    .from(groupWaitlistEntries)
-    .where(
-      and(
-        inArray(groupWaitlistEntries.personId, [...personIds]),
-        inArray(groupWaitlistEntries.status, ["waiting", "offered"]),
-      ),
-    )
-    .orderBy(groupWaitlistEntries.queuedAt, groupWaitlistEntries.id)
-    .limit(100);
-}
-
-export interface WaitlistQueue {
-  position: number | null;
-  waiting: number;
-  groupName: string;
-  clubName: string;
-}
-
-/**
- * Place in the queue (1 = next; null while an offer is out) and the number
- * waiting, in the transaction's club. Same order as the queue
- * (group_waitlist_entries_order_idx: priority first, then queued_at).
- */
-export async function waitlistPositions(
-  tx: Tx,
-  entryIds: readonly string[],
-): Promise<Map<string, WaitlistQueue>> {
-  if (entryIds.length === 0) return new Map();
-  const { rows } = await tx.execute<{
-    id: string;
-    position: number | null;
-    waiting: number;
-    group_name: string;
-    club_name: string;
-  }>(sql`
-    SELECT e.id, g.name AS group_name, c.name AS club_name,
-      CASE WHEN e.status = 'waiting' THEN (
-        SELECT count(*)::int + 1 FROM public.group_waitlist_entries o
-        WHERE o.group_id = e.group_id AND o.status = 'waiting'
-          AND (o.priority > e.priority
-            OR (o.priority = e.priority AND (o.queued_at, o.id) < (e.queued_at, e.id)))
-      ) END AS position,
-      (SELECT count(*)::int FROM public.group_waitlist_entries w
-       WHERE w.group_id = e.group_id AND w.status = 'waiting') AS waiting
-    FROM public.group_waitlist_entries e
-    JOIN public.groups g ON g.club_id = e.club_id AND g.id = e.group_id
-    JOIN public.clubs c ON c.id = e.club_id
-    WHERE e.id IN (${sql.join(
-      entryIds.map((id) => sql`${id}`),
-      sql`, `,
-    )})`);
-  return new Map(
-    rows.map((r) => [
-      r.id,
-      { position: r.position, waiting: r.waiting, groupName: r.group_name, clubName: r.club_name },
-    ]),
-  );
-}
-
 // --- P1.10a: capacity, seasons, archiving -----------------------------------------------
 
 export interface GroupCapacity {
   /** This season's capacity of the group, else its own; null is unlimited. */
   capacity: number | null;
-  /** Open `member` functions (leaders never count; P1.10b adds offers). */
+  /** Open `member` functions, outstanding offers and accepted entries (leaders never count). */
   occupied: number;
 }
 
 /**
- * The group's places today: the capacity of the season covering today in the
- * club's time zone (seasons of the club, group_seasons_group_season unique),
- * else the group's own; and the open `member` functions
- * (group_memberships_group_idx). One statement.
+ * The group's places today (app.group_places, one statement): the capacity of
+ * the season covering today in the club's time zone, else the group's own;
+ * occupied = open `member` functions, outstanding offers and accepted
+ * waiting-list entries (P1.10b).
  */
 export async function capacityOf(tx: Tx, groupId: string): Promise<GroupCapacity> {
-  const { rows } = await tx.execute<{ capacity: number | null; occupied: number }>(sql`
-    SELECT coalesce((
-        SELECT gs.capacity FROM public.group_seasons gs
-        JOIN public.seasons s ON s.id = gs.season_id
-        WHERE gs.group_id = g.id
-          AND s.starts_on <= (now() AT TIME ZONE c.time_zone)::date
-          AND s.ends_on >= (now() AT TIME ZONE c.time_zone)::date
-        ORDER BY s.starts_on DESC LIMIT 1), g.capacity) AS capacity,
-      (SELECT count(*)::int FROM public.group_memberships gm
-        WHERE gm.group_id = g.id AND gm.valid_to IS NULL AND gm.function = 'member') AS occupied
-    FROM public.groups g JOIN public.clubs c ON c.id = g.club_id
-    WHERE g.id = ${groupId}`);
+  const { rows } = await tx.execute<{ capacity: number | null; occupied: number }>(
+    sql`SELECT capacity, occupied FROM app.group_places(${groupId})`,
+  );
   const row = rows[0];
   return { capacity: row?.capacity ?? null, occupied: row?.occupied ?? 0 };
+}
+
+/** People waiting for the group (the group page shows the number). */
+export async function waitingCountOf(tx: Tx, groupId: string): Promise<number> {
+  const { rows } = await tx.execute<{ n: number }>(sql`
+    SELECT count(*)::int AS n FROM public.group_waitlist_entries
+    WHERE group_id = ${groupId} AND status = 'waiting'`);
+  return rows[0]?.n ?? 0;
 }
 
 /** The club's seasons, newest first. */

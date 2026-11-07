@@ -29,6 +29,7 @@ import type { ClubsService } from "../clubs/index.ts";
 import type { GroupsService } from "../groups/index.ts";
 import type { MembershipsService } from "../memberships/index.ts";
 import * as repo from "./joining.repository.ts";
+import { admitAcceptedEntriesInTx } from "./waitlist-admission.ts";
 
 export type JoinRequest = repo.JoinRequestRow;
 export type ClubListing = repo.ClubListingRow;
@@ -217,6 +218,16 @@ export class JoinRequestsService {
       const approve = decision.decision === "approve";
       if (approve) {
         await this.memberships.addMemberInTx(tx, context, row.personId, decision.membershipType);
+        // Places accepted from waiting lists become group memberships (P1.10b).
+        await admitAcceptedEntriesInTx(
+          tx,
+          context,
+          { clubs: this.clubs, groups: this.groups, memberships: this.memberships },
+          row.personId,
+        );
+      } else {
+        // Rejected: the person's waiting-list entries in the club close.
+        await this.groups.waitlist.closeForRejectedJoinRequestInTx(tx, context, row.personId);
       }
       const status = approve ? "approved" : "rejected";
       await repo.decideJoinRequest(tx, row.id, {

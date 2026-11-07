@@ -69,6 +69,7 @@
       "sport": "volleyball",
       "capacity": 12,
       "admissionMode": "waitlist",
+      "waitlistVisiblePublicly": true,
       "owners": [
         "erik",
         "sara"
@@ -172,6 +173,7 @@
       "sport": "floorball",
       "capacity": 12,
       "admissionMode": "waitlist",
+      "waitlistAutoOffer": true,
       "owners": [],
       "generated": {
         "count": 5,

@@ -14,6 +14,8 @@ import { InvitationsController } from "./invitations.controller.ts";
 import { InvitationsService } from "./invitations.service.ts";
 import { JoinRequestsService } from "./join-requests.service.ts";
 import { JoiningController } from "./joining.controller.ts";
+import { WaitlistsController } from "./waitlists.controller.ts";
+import { WaitlistsService } from "./waitlists.service.ts";
 
 @Module({
   imports: [
@@ -25,7 +27,7 @@ import { JoiningController } from "./joining.controller.ts";
     PeopleModule,
     RolesModule,
   ],
-  controllers: [JoiningController, InvitationsController],
+  controllers: [JoiningController, InvitationsController, WaitlistsController],
   providers: [
     {
       provide: JoinRequestsService,
@@ -37,6 +39,17 @@ import { JoiningController } from "./joining.controller.ts";
         memberships: MembershipsService,
         accounts: AccountsService,
       ) => new JoinRequestsService(requireDatabase(db), { clubs, groups, memberships, accounts }),
+    },
+    {
+      provide: WaitlistsService,
+      inject: [DATABASE, ClubsService, GroupsService, MembershipsService, AccountsService],
+      useFactory: (
+        db: OptionalDatabase,
+        clubs: ClubsService,
+        groups: GroupsService,
+        memberships: MembershipsService,
+        accounts: AccountsService,
+      ) => new WaitlistsService(requireDatabase(db), { clubs, groups, memberships, accounts }),
     },
     {
       provide: InvitationsService,
@@ -72,6 +85,6 @@ import { JoiningController } from "./joining.controller.ts";
         }),
     },
   ],
-  exports: [JoinRequestsService, InvitationsService],
+  exports: [JoinRequestsService, InvitationsService, WaitlistsService],
 })
 export class JoiningModule {}

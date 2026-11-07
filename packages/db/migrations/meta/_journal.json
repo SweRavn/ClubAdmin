@@ -169,6 +169,13 @@
       "when": 1794011898949,
       "tag": "0023_groups_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794028012470,
+      "tag": "0024_waiting_lists",
+      "breakpoints": true
     }
   ]
 }

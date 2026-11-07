@@ -53,6 +53,19 @@ export const DOMAIN_ERRORS = {
   group_has_children: "conflict",
   group_in_use: "conflict",
   already_group_owner: "conflict",
+  // Waiting lists (P1.10b, ADR 0043)
+  /** The group takes no applications (admission_mode = closed, or direct and not full). */
+  admission_closed: "conflict",
+  already_on_waitlist: "conflict",
+  not_on_waitlist: "conflict",
+  /** The entry is closed (or in a status the step does not apply to). */
+  waitlist_entry_closed: "conflict",
+  /** Someone waiting is ahead: offering or admitting needs a reason. */
+  out_of_order_reason_required: "validation",
+  /** People are waiting: adding a member directly needs a reason. */
+  queue_bypass_reason_required: "validation",
+  priority_reason_required: "validation",
+  join_request_rejected: "conflict",
   // memberships
   already_member: "conflict",
   join_not_allowed: "forbidden",

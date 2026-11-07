@@ -19,6 +19,9 @@ export const PERMISSIONS = [
   "group.owners.manage",
   "group.members.read",
   "group.members.manage",
+  // Waiting lists (P1.10b): the group's list; the club-wide view.
+  "group.waitlist.manage",
+  "club.waitlists.read",
   "group.activities.read",
   "group.activities.manage",
   "activity.read",

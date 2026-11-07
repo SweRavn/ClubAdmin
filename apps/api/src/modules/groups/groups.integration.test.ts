@@ -217,9 +217,9 @@ describe("my waiting lists (P1.6b)", () => {
     const queue = async (personId: string, minutesAgo: number, priority = 0) =>
       c.t.db.withTenant(club.ctx, (tx) =>
         tx.execute(sql`
-          INSERT INTO group_waitlist_entries (club_id, group_id, person_id, requested_by_person_id, queued_at, priority)
+          INSERT INTO group_waitlist_entries (club_id, group_id, person_id, requested_by_person_id, queued_at, priority, priority_reason)
           VALUES (${club.id}, ${group.id}, ${personId}, ${personId},
-            now() - make_interval(mins => ${minutesAgo}), ${priority})`),
+            now() - make_interval(mins => ${minutesAgo}), ${priority}, ${priority > 0 ? "sibling" : null})`),
       );
     await queue(first.id, 30);
     await queue(second.id, 20);

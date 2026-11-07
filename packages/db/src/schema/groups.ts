@@ -53,6 +53,8 @@ export const groups = pgTable(
     admissionMode: text().$type<AdmissionMode>().notNull().default("direct"),
     waitlistVisiblePublicly: boolean().notNull().default(false),
     offerReplyDays: smallint().notNull().default(7),
+    /** The worker offers free places to the next in line (P1.10b, `waitlists:offers`). */
+    waitlistAutoOffer: boolean().notNull().default(false),
     archivedAt: timestamp(tz),
     ...timestamps,
   },
@@ -137,6 +139,8 @@ export const groupMemberships = pgTable(
     groupId: uuid().notNull(),
     personId: personRef(),
     function: text().$type<GroupFunction>().notNull().default("member"),
+    /** Why a `member` was added past people waiting (P1.10b; audited, listed for club managers). */
+    queueBypassReason: text(),
     ...validity,
     ...timestamps,
   },
@@ -156,6 +160,10 @@ export const groupMemberships = pgTable(
     index("group_memberships_person_idx")
       .on(t.personId)
       .where(sql`${t.validTo} IS NULL`),
+    // Queue bypasses for the club managers' view (P1.10b).
+    index("group_memberships_queue_bypass_idx")
+      .on(t.clubId, t.createdAt)
+      .where(sql`${t.queueBypassReason} IS NOT NULL`),
   ],
 );
 

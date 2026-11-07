@@ -167,7 +167,10 @@ export class GroupMembersController {
       group.groupId,
       body.personId,
       fn,
-      { overCapacity: body.overCapacity === true },
+      {
+        overCapacity: body.overCapacity === true,
+        ...(body.queueBypassReason ? { queueBypassReason: body.queueBypassReason } : {}),
+      },
     );
     return { id: row.id, personId: row.personId, function: row.function };
   }

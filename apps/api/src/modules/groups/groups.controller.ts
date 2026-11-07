@@ -133,11 +133,8 @@ export class GroupsController {
       viewerPrivileged: this.visibility.privilegedForGroup(authz.actor, resource),
     });
     const canManage = authz.actor.isClubManager(resource.clubId) || authz.actor.ownsGroup(resource);
-    const { group, ownerIds, capacity, deletable } = await this.groups.getGroupWithOwners(
-      context,
-      resource.groupId,
-      { manage: canManage },
-    );
+    const { group, ownerIds, capacity, deletable, waitingCount } =
+      await this.groups.getGroupWithOwners(context, resource.groupId, { manage: canManage });
     const owners = await this.presenter.present(
       authz,
       resource.clubId,
@@ -150,8 +147,17 @@ export class GroupsController {
       canManage,
       canManageMembers: permits(authz.actor, "group.members.manage", resource),
       canManageOwners: permits(authz.actor, "group.owners.manage", resource),
+      canManageWaitlist: permits(authz.actor, "group.waitlist.manage", resource),
+      waitingCount,
       ...(canManage && capacity
-        ? { deletable, effectiveCapacity: capacity.capacity, occupied: capacity.occupied }
+        ? {
+            deletable,
+            effectiveCapacity: capacity.capacity,
+            occupied: capacity.occupied,
+            waitlistVisiblePublicly: group.waitlistVisiblePublicly,
+            offerReplyDays: group.offerReplyDays,
+            waitlistAutoOffer: group.waitlistAutoOffer,
+          }
         : {}),
     };
   }

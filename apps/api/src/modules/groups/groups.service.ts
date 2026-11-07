@@ -28,6 +28,7 @@ import {
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { actorPersonId, definedOnly, parseInput } from "../../platform/domain/run.ts";
 import type { ClubsService } from "../clubs/index.ts";
+import { GroupWaitlist, type OwnEntryRow, type PositionRow } from "./group-waitlist.ts";
 import * as repo from "./groups.repository.ts";
 
 export type Group = repo.GroupRow;
@@ -62,6 +63,8 @@ const SeasonSchema = z.object({
 export class GroupsService {
   private readonly db: Database;
   private readonly clubs: ClubsService;
+  /** Waiting-list entries (P1.10b): status changes with their audit and outbox events. */
+  readonly waitlist = new GroupWaitlist();
 
   constructor(db: Database, clubs: ClubsService) {
     this.db = db;
@@ -107,8 +110,9 @@ export class GroupsService {
   }
 
   /**
-   * A group and the IDs of its current owners, in one transaction; with
-   * `manage` also its places today and whether it can be deleted (P1.10a).
+   * A group, the IDs of its current owners and the number waiting, in one
+   * transaction; with `manage` also its places today and whether it can be
+   * deleted (P1.10a).
    */
   getGroupWithOwners(
     context: TenantContext,
@@ -117,12 +121,14 @@ export class GroupsService {
   ): Promise<{
     group: Group;
     ownerIds: string[];
+    waitingCount: number;
     capacity?: repo.GroupCapacity;
     deletable?: boolean;
   }> {
     return this.db.withTenant(context, async (tx) => ({
       group: await this.getGroupInTx(tx, groupId),
       ownerIds: await repo.activeOwners(tx, groupId),
+      waitingCount: await repo.waitingCountOf(tx, groupId),
       ...(options.manage
         ? {
             capacity: await repo.capacityOf(tx, groupId),
@@ -361,35 +367,27 @@ export class GroupsService {
   }
 
   /**
-   * The open waiting-list entries of the given people (the caller and their
-   * wards) with their place in the queue (P1.6b). The entries are read
-   * through own_relationships; the queue is counted in one tenant
-   * transaction per club, since the applicant may not read the club's other
-   * entries or, before admission, its groups.
+   * The waiting-list entries of the given people (the caller and their
+   * wards), open ones and those closed in the last 12 months, with their
+   * place in the queue (P1.6b, P1.10b). One transaction as the actor: the
+   * entries through own_relationships, the positions and names through
+   * app.waitlist_positions (the applicant cannot read the club's other
+   * entries or, before admission, its groups).
    */
-  async myWaitlistEntries(
+  myWaitlistEntries(
     context: ActorContext,
     personIds: readonly string[],
-  ): Promise<(repo.OwnWaitlistEntry & repo.WaitlistQueue)[]> {
-    const own = await this.db.withActor(context, (tx) =>
-      repo.ownOpenWaitlistEntries(tx, personIds),
-    );
-    const byClub = new Map<string, repo.OwnWaitlistEntry[]>();
-    for (const e of own) byClub.set(e.clubId, [...(byClub.get(e.clubId) ?? []), e]);
-    const queue = new Map<string, repo.WaitlistQueue>();
-    // One club at a time: a person waits in few clubs.
-    for (const [clubId, entries] of byClub) {
-      const found = await this.db.withTenant({ ...context, clubId }, (tx) =>
-        repo.waitlistPositions(
-          tx,
-          entries.map((e) => e.id),
-        ),
+  ): Promise<(OwnEntryRow & PositionRow)[]> {
+    return this.db.withActor(context, async (tx) => {
+      const own = await this.waitlist.ownEntriesInTx(tx, personIds);
+      const queue = await this.waitlist.positionsInTx(
+        tx,
+        own.map((e) => e.id),
       );
-      for (const [id, q] of found) queue.set(id, q);
-    }
-    return own.flatMap((e) => {
-      const q = queue.get(e.id);
-      return q ? [{ ...e, ...q }] : [];
+      return own.flatMap((e) => {
+        const q = queue.get(e.id);
+        return q ? [{ ...e, ...q }] : [];
+      });
     });
   }
 

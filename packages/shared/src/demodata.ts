@@ -19,6 +19,7 @@ import {
   JOIN_POLICIES,
   MEMBERSHIP_TYPES,
   SHAREABLE_PERSON_FIELDS,
+  WAITLIST_PRIORITY_REASONS,
   WAITLIST_STATUSES,
 } from "./domain/core.ts";
 import { MEMBER_EXPORT_COLUMNS } from "./domain/members.ts";
@@ -97,6 +98,9 @@ export const DemoGroupSchema = z.object({
   sport: z.string().nullable().default(null),
   capacity: z.number().int().min(0).nullable().default(null),
   admissionMode: z.enum(ADMISSION_MODES).default("direct"),
+  /** Waiting-list settings (P1.10b). */
+  waitlistVisiblePublicly: z.boolean().default(false),
+  waitlistAutoOffer: z.boolean().default(false),
   owners: z.array(key).default([]),
   generated: DemoGeneratedSchema.nullable().default(null),
 });
@@ -316,6 +320,7 @@ export const DemoWaitlistsFileSchema = z.object({
       priority: z.number().int().default(0),
       offerExpiresIn: RelativeTimeSchema.nullable().default(null),
       outOfOrderReason: z.string().nullable().default(null),
+      priorityReason: z.enum(WAITLIST_PRIORITY_REASONS).nullable().default(null),
       decidedBy: key.nullable().default(null),
       /** Admitted: the generated member of the group (by index) this entry admitted. */
       admittedMember: z.number().int().min(0).nullable().default(null),

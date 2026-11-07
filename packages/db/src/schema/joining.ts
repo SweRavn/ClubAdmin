@@ -17,6 +17,8 @@ import {
   WAITLIST_CLOSED_REASONS,
   WAITLIST_STATUSES,
   type WaitlistClosedReason,
+  WAITLIST_PRIORITY_REASONS,
+  type WaitlistPriorityReason,
   type WaitlistStatus,
 } from "@clubadmin/shared";
 import { sql } from "drizzle-orm";
@@ -61,6 +63,13 @@ export const groupWaitlistEntries = pgTable(
     decidedAt: timestamp(tz),
     /** Why the entry closed (P1.10a): a code, never free text. */
     closedReason: text().$type<WaitlistClosedReason>(),
+    /** When the current offer went out and who sent it (null: an auto-offer, P1.10b). */
+    offeredAt: timestamp(tz),
+    offeredByPersonId: uuid().references(() => people.id),
+    /** The pending join request created with the application of a non-member (P1.10b). */
+    joinRequestId: uuid().references(() => joinRequests.id, { onDelete: "set null" }),
+    /** Required when priority > 0 (P1.10b). */
+    priorityReason: text().$type<WaitlistPriorityReason>(),
     ...timestamps,
   },
   (t) => [
@@ -78,9 +87,28 @@ export const groupWaitlistEntries = pgTable(
       "group_waitlist_entries_offer",
       sql`(${t.status} = 'offered') <= (${t.offerExpiresAt} IS NOT NULL)`,
     ),
+    check(
+      "group_waitlist_entries_priority_reason",
+      sql`(${t.priorityReason} IS NULL OR ${oneOf(t.priorityReason, WAITLIST_PRIORITY_REASONS)}) AND (${t.priority} = 0 OR ${t.priorityReason} IS NOT NULL)`,
+    ),
+    check(
+      "group_waitlist_entries_offered_at",
+      sql`(${t.status} = 'offered') <= (${t.offeredAt} IS NOT NULL)`,
+    ),
+    check(
+      "group_waitlist_entries_closed_reason_status",
+      sql`${t.closedReason} IS NULL OR ${t.status} NOT IN ('waiting', 'offered', 'accepted', 'admitted')`,
+    ),
     uniqueIndex("group_waitlist_entries_open_unique")
       .on(t.groupId, t.personId)
-      .where(sql`${t.status} IN ('waiting', 'offered')`),
+      .where(sql`${t.status} IN ('waiting', 'offered', 'accepted')`),
+    // The expiry job (P1.10b) and the managers' out-of-order decisions.
+    index("group_waitlist_entries_offers_idx")
+      .on(t.clubId, t.status, t.offerExpiresAt)
+      .where(sql`${t.status} = 'offered'`),
+    index("group_waitlist_entries_out_of_order_idx")
+      .on(t.clubId, t.decidedAt)
+      .where(sql`${t.outOfOrderReason} IS NOT NULL`),
     // Waiting-list order (ADR 0019).
     index("group_waitlist_entries_order_idx").on(
       t.groupId,

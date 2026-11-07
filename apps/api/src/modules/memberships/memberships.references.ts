@@ -42,17 +42,6 @@ export const JOINING_PERSON_REFERENCES: readonly PersonReference[] = [
     },
   },
   {
-    table: "public.group_waitlist_entries",
-    column: "person_id",
-    clubScoped: true,
-    open: {
-      where: "{a}.status IN ('waiting', 'offered')",
-      key: ["group_id"],
-      end: { status: "'withdrawn'" },
-      restore: ["status"],
-    },
-  },
-  {
     table: "public.join_requests",
     column: "person_id",
     clubScoped: true,

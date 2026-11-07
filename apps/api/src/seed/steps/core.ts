@@ -435,6 +435,8 @@ class CoreSeeder {
           genderCategory: g.genderCategory,
           capacity: g.capacity,
           admissionMode: g.admissionMode,
+          waitlistVisiblePublicly: g.waitlistVisiblePublicly,
+          waitlistAutoOffer: g.waitlistAutoOffer,
         },
         { id: g.id },
       );
@@ -757,15 +759,23 @@ class CoreSeeder {
           : offerExpiresAt
             ? new Date(offerExpiresAt.getTime() - 7 * 86_400_000)
             : this.env.clock.at("-2mo");
+      const decidedBy = w.decidedBy ? this.id(w.decidedBy) : null;
+      const offered = w.status === "offered";
+      // Entries past their start (P1.10b): an applicant outside the club is
+      // linked to their pending join request, as applying does today.
       await this.env.db.withTenant(ctx, (tx) =>
         tx.execute(sql`
           INSERT INTO group_waitlist_entries (
             club_id, group_id, person_id, requested_by_person_id, status, queued_at, priority,
-            offer_expires_at, out_of_order_reason, decided_by_person_id, decided_at
+            priority_reason, offer_expires_at, offered_at, offered_by_person_id,
+            out_of_order_reason, decided_by_person_id, decided_at, join_request_id
           ) VALUES (
             ${ctx.clubId}, ${g.id}, ${personId}, ${requestedBy}, ${w.status},
-            ${this.env.clock.at(w.queuedAt)}, ${w.priority}, ${offerExpiresAt}, ${w.outOfOrderReason},
-            ${w.decidedBy ? this.id(w.decidedBy) : null}, ${decidedAt}
+            ${this.env.clock.at(w.queuedAt)}, ${w.priority}, ${w.priorityReason},
+            ${offerExpiresAt}, ${offered ? decidedAt : null}, ${offered ? decidedBy : null},
+            ${w.outOfOrderReason}, ${decidedBy}, ${decidedAt},
+            (SELECT jr.id FROM join_requests jr
+             WHERE jr.club_id = ${ctx.clubId} AND jr.person_id = ${personId} AND jr.status = 'pending')
           )`),
       );
     }
@@ -796,7 +806,9 @@ class CoreSeeder {
           { clubId: this.id(g.club), seedTime: this.env.clock.at(h.at) },
           (tx) =>
             tx.execute(sql`
-              UPDATE group_waitlist_entries SET status = 'expired'
+              UPDATE group_waitlist_entries
+              SET status = 'expired', closed_reason = 'expired', decided_at = now(),
+                offer_expires_at = NULL
               WHERE group_id = ${g.id} AND status = 'offered' AND offer_expires_at < now()`),
         );
       }

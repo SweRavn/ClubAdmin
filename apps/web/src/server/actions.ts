@@ -918,6 +918,13 @@ function groupFields(form: FormData) {
     ...numbers,
     ...(admissionMode ? { admissionMode } : {}),
     ...(Number.isInteger(days) && days >= 1 && days <= 60 ? { offerReplyDays: days } : {}),
+    // Checkboxes send nothing when off: the marker says the form had them (P1.10b).
+    ...(text(form, "waitlistFields") === "1"
+      ? {
+          waitlistVisiblePublicly: form.get("waitlistVisiblePublicly") === "on",
+          waitlistAutoOffer: form.get("waitlistAutoOffer") === "on",
+        }
+      : {}),
   };
 }
 

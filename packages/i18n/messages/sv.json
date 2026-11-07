@@ -687,7 +687,16 @@
     "range_too_large": "Välj en kortare period (högst 90 dagar med filter).",
     "history_timeout": "Det tog för lång tid. Välj en kortare period.",
     "owner_not_eligible": "En gruppägare måste vara en myndig medlem i klubben med inloggning.",
-    "group_full": "Gruppen är full. Kryssa i ”Lägg till trots att gruppen är full” för att ändå lägga till."
+    "group_full": "Gruppen är full. Kryssa i ”Lägg till trots att gruppen är full” för att ändå lägga till.",
+    "admission_closed": "Gruppen tar inte emot ansökningar.",
+    "already_on_waitlist": "Står redan i den här kön.",
+    "not_on_waitlist": "Står inte i den här kön.",
+    "waitlist_entry_closed": "Köplatsen är inte längre öppen.",
+    "out_of_order_reason_required": "Någon står före i kön: ange ett skäl.",
+    "queue_bypass_reason_required": "Det finns personer i kön till gruppen: ange ett skäl för att lägga till en medlem direkt.",
+    "priority_reason_required": "Förtur kräver ett skäl.",
+    "join_request_rejected": "Klubben godkände inte medlemskapet.",
+    "already_in_group": "Finns redan i gruppen."
   },
   "memberExport": {
     "columns": {
@@ -1453,7 +1462,9 @@
     "deleteTitle": "Ta bort",
     "deleteHint": "Gruppen har aldrig använts (inga medlemmar, aktiviteter eller evenemang) och kan tas bort helt.",
     "deleteConfirm": "Ja, ta bort {group} för gott",
-    "delete": "Ta bort gruppen"
+    "delete": "Ta bort gruppen",
+    "waitlistVisiblePublicly": "Visa kön i klubbsöket (personer utanför klubben kan söka)",
+    "waitlistAutoOffer": "Erbjudanden går automatiskt till nästa i kön"
   },
   "timeZones": {
     "other": "Övriga"
@@ -1685,8 +1696,26 @@
       "entry": {
         "closed": {
           "title": "En köplats i {club} har stängts",
-          "body": "{group}: {closedReason, select, group_archived {gruppen har lagts ned, så kön har stängts.} left_club {platsen stängdes när medlemskapet upphörde.} other {klubben har tagit bort platsen.}}"
+          "body": "{group}: {closedReason, select, group_archived {gruppen har lagts ner, så kön har stängts.} left_club {platsen stängdes när medlemskapet upphörde.} join_request_rejected {klubben godkände inte medlemskapet, så platsen har stängts.} no_longer_eligible {gruppens ägare tog bort platsen: uppfyller inte längre gruppens krav.} duplicate {gruppens ägare tog bort platsen: den var en dubblett.} no_reply {gruppens ägare tog bort platsen: inget svar.} other {gruppens ägare har tagit bort platsen.}}"
+        },
+        "created": {
+          "title": "I kön till {group}",
+          "body": "{person} står i kön till {group} ({club}). Platsen i kön syns under Köer."
         }
+      },
+      "offer": {
+        "sent": {
+          "title": "En plats i {group} erbjuds",
+          "body": "{person} erbjuds en plats i {group} ({club}). Svara senast {deadline}."
+        },
+        "expired": {
+          "title": "Den erbjudna platsen i {group} har gått ut",
+          "body": "Erbjudandet om en plats i {group} ({club}) för {person} besvarades inte i tid."
+        }
+      },
+      "admitted": {
+        "title": "Välkommen till {group}",
+        "body": "{person} är nu med i {group} ({club})."
       }
     }
   },
@@ -2216,7 +2245,11 @@
       "title": "Titel",
       "valid_from": "Från",
       "valid_to": "Till",
-      "version": "Version"
+      "version": "Version",
+      "offered_at": "Erbjuden",
+      "priority_reason": "Skäl för förtur",
+      "queue_bypass_reason": "Skäl att gå förbi kön",
+      "waitlist_auto_offer": "Automatiska erbjudanden"
     },
     "resources": {
       "person": "Person",
@@ -2285,7 +2318,15 @@
       "removed_by_owner": "Borttagen av gruppen",
       "join_request_rejected": "Medlemskapet godkändes inte",
       "left_club": "Lämnade klubben",
-      "group_archived": "Gruppen arkiverades"
+      "group_archived": "Gruppen arkiverades",
+      "no_longer_eligible": "Uppfyller inte längre kraven",
+      "duplicate": "Dubblett",
+      "no_reply": "Inget svar"
+    },
+    "priorityReasons": {
+      "sibling": "Syskon i gruppen",
+      "returning_member": "Återvändande medlem",
+      "other": "Annat skäl"
     }
   },
   "audit": {
@@ -2380,7 +2421,10 @@
       "activity_invitees_changed": "{actor} ändrade vilka som är inbjudna",
       "group_waitlist_withdrawn": "{actor} lämnade en kö",
       "person_club_data_purged": "{actor} tog bort en tidigare medlems uppgifter",
-      "club_settings_decided": "{actor} registrerade ett styrelsebeslut"
+      "club_settings_decided": "{actor} registrerade ett styrelsebeslut",
+      "group_waitlist_priority_changed": "{actor} ändrade förturen för en köplats",
+      "group_waitlist_offer_withdrawn": "{actor} drog tillbaka en erbjuden plats",
+      "group_waitlist_admitted": "{actor} antog någon från en kö"
     }
   },
   "groupAdmin": {
@@ -2439,5 +2483,104 @@
     "ownersAdmit": "Gruppägare antar nya klubbmedlemmar från sina köer",
     "saveSettings": "Spara",
     "settingsSaved": "Gruppinställningarna sparades."
+  },
+  "waitlist": {
+    "tab": "Kö",
+    "title": "Kö: {group}",
+    "summary": "{occupied} av {capacity} platser tagna, {offers, plural, =0 {inga erbjudanden ute} one {# erbjudande ute} other {# erbjudanden ute}}, {waiting} i kön",
+    "summaryUnlimited": "{occupied} platser tagna (ingen gräns), {offers, plural, =0 {inga erbjudanden ute} one {# erbjudande ute} other {# erbjudanden ute}}, {waiting} i kön",
+    "awaitingClubCount": "{count, plural, one {# accepterad plats väntar} other {# accepterade platser väntar}} på att klubben godkänner medlemskapet",
+    "autoOfferOn": "Erbjudanden går automatiskt till nästa i kön.",
+    "empty": "Ingen står i kön.",
+    "emptyClosed": "Inga platser har stängts de senaste 12 månaderna.",
+    "open": "I kön",
+    "closed": "Stängda (12 månader)",
+    "filterBirthYear": "Född",
+    "filterFitsGender": "Passar gruppens kategori",
+    "filter": "Filtrera",
+    "position": "Nummer {position} av {count}",
+    "requestedBy": "Anmäld av {name}",
+    "born": "Född {year}",
+    "outsideBirthYears": "Utanför gruppens födelseår",
+    "outsideCategory": "Utanför gruppens kategori",
+    "waitingSince": "I kön sedan {date}",
+    "applicantNote": "Meddelande från den sökande",
+    "ownerNote": "Anteckning för ägarna (visas aldrig för den sökande)",
+    "priority": "Förtur",
+    "priorityReason": "Skäl för förtur",
+    "priorityValue": "Förtur {priority}: {reason}",
+    "offeredUntil": "Erbjuden, svar senast {date}",
+    "autoOffer": "erbjuden automatiskt",
+    "awaitingClub": "Accepterad: väntar på att klubben godkänner medlemskapet",
+    "outOfOrder": "Före sin tur: {reason}",
+    "closedBecause": "{status}: {reason}",
+    "offer": "Erbjud plats",
+    "replyDays": "Dagar att svara",
+    "admit": "Anta direkt",
+    "remove": "Ta bort",
+    "removeReason": "Varför",
+    "withdrawOffer": "Dra tillbaka erbjudandet",
+    "save": "Spara",
+    "skipReason": "Skäl att gå förbi dem som står före i kön (klubbens administratörer ser det)",
+    "skipHint": "Lämna tomt när det här är nästa i kön.",
+    "overCapacity": "Gruppen är full: gör det ändå",
+    "statuses": {
+      "waiting": "Väntar",
+      "offered": "Erbjuden",
+      "accepted": "Accepterad",
+      "declined": "Tackade nej",
+      "expired": "Gick ut",
+      "admitted": "Antagen",
+      "withdrawn": "Lämnade kön",
+      "removed": "Borttagen"
+    },
+    "removalReasons": {
+      "no_longer_eligible": "Uppfyller inte längre kraven",
+      "duplicate": "Dubblett",
+      "no_reply": "Inget svar",
+      "other": "Annat"
+    },
+    "notices": {
+      "offered": "Platsen erbjöds.",
+      "admitted": "Platsen är klar.",
+      "removed": "Köplatsen togs bort.",
+      "offerWithdrawn": "Erbjudandet drogs tillbaka.",
+      "updated": "Sparat.",
+      "applied": "Du står i kön.",
+      "accepted": "Platsen är accepterad.",
+      "declined": "Du tackade nej till erbjudandet.",
+      "withdrawn": "Du har lämnat kön."
+    },
+    "applyTitle": "Ställ dig i kön",
+    "applyFor": "För",
+    "note": "Meddelande till gruppens ägare (inga hälsouppgifter)",
+    "apply": "Ställ i kö",
+    "join": "Ställ dig i kön",
+    "openGroups": "Grupper som tar emot ansökningar",
+    "noOpenGroups": "Inga grupper tar emot ansökningar just nu.",
+    "full": "full, {waiting} i kön",
+    "notFull": "{waiting} i kön",
+    "replyBy": "Svara senast {deadline}",
+    "accept": "Tacka ja till platsen",
+    "decline": "Tacka nej",
+    "leave": "Lämna kön",
+    "myTitle": "Köer",
+    "myEmpty": "Du står inte i någon kö.",
+    "recentlyClosed": "Nyligen stängda",
+    "clubTitle": "Köer",
+    "clubGroups": "Grupper",
+    "free": "{free} lediga",
+    "unlimited": "ingen gräns",
+    "decisionsTitle": "Beslut före tur",
+    "noDecisions": "Inga beslut före tur.",
+    "decisionKinds": {
+      "offer": "Erbjuden före sin tur",
+      "admission": "Antagen före sin tur",
+      "queue_bypass": "Tillagd förbi kön"
+    },
+    "decidedBy": "av {name}",
+    "more": "Fler",
+    "queueBypassReason": "Skäl att lägga till förbi kön ({count} i kön)",
+    "groupWaiting": "{count, plural, =0 {Ingen i kön} one {# person i kön} other {# personer i kön}}"
   }
 }

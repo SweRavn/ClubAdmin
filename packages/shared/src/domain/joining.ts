@@ -13,6 +13,7 @@ import {
   JOIN_POLICIES,
   JOIN_REQUEST_STATUSES,
   MEMBERSHIP_TYPES,
+  WAITLIST_CLOSED_REASONS,
   WAITLIST_STATUSES,
 } from "./core.ts";
 import { ClubSchema } from "./responses.ts";
@@ -206,6 +207,13 @@ export const MyWaitlistsSchema = z
         waiting: z.number().int(),
         queuedAt: z.iso.datetime(),
         offerExpiresAt: z.iso.datetime().nullable(),
+        /** Why a closed entry closed (P1.10b; closed entries of the last 12 months). */
+        closedReason: z.enum(WAITLIST_CLOSED_REASONS).nullable().optional(),
+        decidedAt: z.iso.datetime().nullable().optional(),
+        /** The club's time zone, for the offer's deadline (P1.10b). */
+        clubTimeZone: z.string().optional(),
+        /** The caller may accept, decline or withdraw (themselves, or a ward they act for). */
+        canAct: z.boolean().optional(),
       }),
     ),
     joinRequests: z.array(

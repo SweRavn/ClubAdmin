@@ -206,6 +206,9 @@ export const AUDIT_ACTION_SENTENCES: readonly AuditAction[] = [
   "activity.series.split",
   "activity.invitees.changed",
   "group.waitlist.withdrawn",
+  "group.waitlist.priority_changed",
+  "group.waitlist.offer_withdrawn",
+  "group.waitlist.admitted",
   "person.club_data.purged",
   "club.settings.decided",
 ];

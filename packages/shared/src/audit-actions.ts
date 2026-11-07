@@ -39,6 +39,17 @@ export const AUDIT_ACTIONS = [
   "group.waitlist.withdrawn",
   /** An open entry closed by the club (P1.10a: the group was archived). */
   "group.waitlist.closed",
+  // Waiting lists (P1.10b, ADR 0043).
+  "group.waitlist.created",
+  "group.waitlist.updated",
+  "group.waitlist.priority_changed",
+  "group.waitlist.offered",
+  "group.waitlist.offer_withdrawn",
+  "group.waitlist.accepted",
+  "group.waitlist.declined",
+  "group.waitlist.expired",
+  "group.waitlist.admitted",
+  "group.waitlist.removed",
   "club.created",
   "club.creation.requested",
   "club.creation.approved",
@@ -50,6 +61,8 @@ export const AUDIT_ACTIONS = [
   "join_request.approved",
   "join_request.rejected",
   "join_request.withdrawn",
+  /** A group added to a pending request's preferences (applying for a waiting list, P1.10b). */
+  "join_request.updated",
   "invitation.created",
   "invitation.revoked",
   "invitation.accepted",

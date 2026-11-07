@@ -47,7 +47,9 @@
       "queuedAt": "-3mo",
       "outOfOrderReason": "Sibling already plays in the group",
       "decidedBy": "sara",
-      "admittedMember": 0
+      "admittedMember": 0,
+      "priority": 1,
+      "priorityReason": "sibling"
     },
     {
       "group": "ikn-f2015",

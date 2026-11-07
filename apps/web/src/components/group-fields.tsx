@@ -14,17 +14,20 @@ import type { FormDraft } from "../server/form-drafts.ts";
 import { inputClass } from "./action-form.tsx";
 
 export interface GroupFieldValues {
-  name?: string;
-  kind?: string;
-  parentGroupId?: string | null;
-  sport?: string | null;
-  birthYearFrom?: number | null;
-  birthYearTo?: number | null;
-  genderCategory?: string | null;
-  level?: string | null;
-  capacity?: number | null;
-  admissionMode?: string;
-  offerReplyDays?: number;
+  name?: string | undefined;
+  kind?: string | undefined;
+  parentGroupId?: string | null | undefined;
+  sport?: string | null | undefined;
+  birthYearFrom?: number | null | undefined;
+  birthYearTo?: number | null | undefined;
+  genderCategory?: string | null | undefined;
+  level?: string | null | undefined;
+  capacity?: number | null | undefined;
+  admissionMode?: string | undefined;
+  offerReplyDays?: number | undefined;
+  /** Waiting-list settings (P1.10b). */
+  waitlistVisiblePublicly?: boolean | undefined;
+  waitlistAutoOffer?: boolean | undefined;
 }
 
 export async function GroupFields({
@@ -38,6 +41,19 @@ export async function GroupFields({
   draft?: FormDraft | null;
 }) {
   const t = await getTranslations();
+  const checked = (name: "waitlistVisiblePublicly" | "waitlistAutoOffer") =>
+    draft ? draft.get(name)?.[0] === "on" : values[name] === true;
+  const checkbox = (name: "waitlistVisiblePublicly" | "waitlistAutoOffer", label: string) => (
+    <label className="flex items-center gap-2 text-sm sm:col-span-2">
+      <input
+        type="checkbox"
+        name={name}
+        defaultChecked={checked(name)}
+        data-testid={`group-${name}`}
+      />
+      {label}
+    </label>
+  );
   const value = (name: keyof GroupFieldValues) =>
     draft ? (draft.get(name)?.[0] ?? "") : String(values[name] ?? "");
   const input = (
@@ -114,6 +130,9 @@ export async function GroupFields({
         })),
       )}
       {input("offerReplyDays", t("groupForm.offerReplyDays"), { type: "number", min: 1, max: 60 })}
+      <input type="hidden" name="waitlistFields" value="1" />
+      {checkbox("waitlistVisiblePublicly", t("groupForm.waitlistVisiblePublicly"))}
+      {checkbox("waitlistAutoOffer", t("groupForm.waitlistAutoOffer"))}
     </div>
   );
 }

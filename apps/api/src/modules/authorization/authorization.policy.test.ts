@@ -521,6 +521,21 @@ const CASES: Record<Permission, Case[]> = {
     { name: "coach", actor: coach, resource: teamR, allowed: false },
     { name: "teammate", actor: teammate, resource: teamR, allowed: false },
   ],
+  "group.waitlist.manage": [
+    { name: "manager", actor: manager, resource: teamR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: true },
+    { name: "manager, archived group", actor: manager, resource: archivedTeamR, allowed: true },
+    {
+      name: "owner of the parent group, archived group",
+      actor: sectionOwner,
+      resource: archivedTeamR,
+      allowed: false,
+    },
+    { name: "coach who is not an owner", actor: coach, resource: teamR, allowed: false },
+    { name: "registrar", actor: registrar, resource: teamR, allowed: false },
+    { name: "teammate", actor: teammate, resource: teamR, allowed: false },
+    { name: "parent of a teammate", actor: parent, resource: teamR, allowed: false },
+  ],
   "person.profile.read": [
     {
       name: "self without club",
@@ -913,6 +928,14 @@ const CASES: Record<Permission, Case[]> = {
     { name: "registrar", actor: registrar, resource: clubR, allowed: false },
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: false },
+  ],
+  "club.waitlists.read": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "group owner", actor: sectionOwner, resource: clubR, allowed: false },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
   "club.join_requests.manage": [
     { name: "manager", actor: manager, resource: clubR, allowed: true },

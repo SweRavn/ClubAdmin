@@ -94,6 +94,11 @@ export const AddGroupMemberSchema = z
     function: z.enum(GROUP_FUNCTIONS).default("member"),
     /** Add a `member` to a full group anyway (audited). */
     overCapacity: z.boolean().optional(),
+    /**
+     * Why a `member` is added while people wait (P1.10b; required then,
+     * `queue_bypass_reason_required`; audited and listed for club managers).
+     */
+    queueBypassReason: z.string().trim().min(1).max(500).optional(),
   })
   .openapi("AddGroupMember");
 export type AddGroupMemberInput = z.input<typeof AddGroupMemberSchema>;

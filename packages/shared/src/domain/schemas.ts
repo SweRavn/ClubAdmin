@@ -170,6 +170,8 @@ const groupFields = {
   admissionMode: z.enum(ADMISSION_MODES),
   waitlistVisiblePublicly: z.boolean(),
   offerReplyDays: z.number().int().min(1).max(60),
+  /** Free places go to the next in line by the worker (P1.10b). */
+  waitlistAutoOffer: z.boolean(),
 };
 
 export const CreateGroupSchema = z

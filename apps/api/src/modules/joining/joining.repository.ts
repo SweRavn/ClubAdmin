@@ -75,6 +75,14 @@ export async function findPendingJoinRequest(
   return row ?? null;
 }
 
+export async function updatePreferredGroups(
+  tx: Tx,
+  id: string,
+  preferredGroupIds: string[],
+): Promise<void> {
+  await tx.update(joinRequests).set({ preferredGroupIds }).where(eq(joinRequests.id, id));
+}
+
 export async function decideJoinRequest(
   tx: Tx,
   id: string,

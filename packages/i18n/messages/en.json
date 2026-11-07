@@ -687,7 +687,16 @@
     "range_too_large": "Choose a shorter period (at most 90 days with a filter).",
     "history_timeout": "That took too long. Narrow the period.",
     "owner_not_eligible": "A group owner must be an adult member of the club with a login.",
-    "group_full": "The group is full. Tick “Add even though the group is full” to add anyway."
+    "group_full": "The group is full. Tick “Add even though the group is full” to add anyway.",
+    "admission_closed": "This group does not take applications.",
+    "already_on_waitlist": "Already on this waiting list.",
+    "not_on_waitlist": "Not on this waiting list.",
+    "waitlist_entry_closed": "This waiting-list place is no longer open.",
+    "out_of_order_reason_required": "Someone is ahead in the queue: give a reason.",
+    "queue_bypass_reason_required": "People are waiting for this group: give a reason for adding a member directly.",
+    "priority_reason_required": "A priority needs a reason.",
+    "join_request_rejected": "The club did not approve the membership.",
+    "already_in_group": "Already in the group."
   },
   "memberExport": {
     "columns": {
@@ -1453,7 +1462,9 @@
     "deleteTitle": "Delete",
     "deleteHint": "The group was never used (no members, activities or events) and can be deleted.",
     "deleteConfirm": "Yes, delete {group} for good",
-    "delete": "Delete the group"
+    "delete": "Delete the group",
+    "waitlistVisiblePublicly": "Show the waiting list in the club search (people outside the club can apply)",
+    "waitlistAutoOffer": "Offers go out automatically to the next in line"
   },
   "timeZones": {
     "other": "Other"
@@ -1685,8 +1696,26 @@
       "entry": {
         "closed": {
           "title": "A waiting-list place in {club} has closed",
-          "body": "{group}: {closedReason, select, group_archived {the group has been closed down, so the waiting list has closed.} left_club {the place closed when the membership ended.} other {the club has removed the place.}}"
+          "body": "{group}: {closedReason, select, group_archived {the group has been closed down, so the waiting list has closed.} left_club {the place closed when the membership ended.} join_request_rejected {the club did not approve the membership, so the place has closed.} no_longer_eligible {the group's owners removed the place: no longer eligible for the group.} duplicate {the group's owners removed the place: it was a duplicate.} no_reply {the group's owners removed the place: no reply.} other {the group's owners have removed the place.}}"
+        },
+        "created": {
+          "title": "On the waiting list for {group}",
+          "body": "{person} is on the waiting list for {group} ({club}). You can see the place in the queue under Waiting lists."
         }
+      },
+      "offer": {
+        "sent": {
+          "title": "A place in {group} is offered",
+          "body": "{person} is offered a place in {group} ({club}). Answer by {deadline}."
+        },
+        "expired": {
+          "title": "The offered place in {group} has expired",
+          "body": "The offer of a place in {group} ({club}) for {person} was not answered in time."
+        }
+      },
+      "admitted": {
+        "title": "Welcome to {group}",
+        "body": "{person} is now in {group} ({club})."
       }
     }
   },
@@ -2216,7 +2245,11 @@
       "title": "Title",
       "valid_from": "From",
       "valid_to": "Until",
-      "version": "Version"
+      "version": "Version",
+      "offered_at": "Offered",
+      "priority_reason": "Reason for priority",
+      "queue_bypass_reason": "Reason for skipping the waiting list",
+      "waitlist_auto_offer": "Automatic offers"
     },
     "resources": {
       "person": "Person",
@@ -2285,7 +2318,15 @@
       "removed_by_owner": "Removed by the group",
       "join_request_rejected": "Membership not approved",
       "left_club": "Left the club",
-      "group_archived": "The group was archived"
+      "group_archived": "The group was archived",
+      "no_longer_eligible": "No longer eligible",
+      "duplicate": "Duplicate",
+      "no_reply": "No reply"
+    },
+    "priorityReasons": {
+      "sibling": "Sibling in the group",
+      "returning_member": "Returning member",
+      "other": "Other reason"
     }
   },
   "audit": {
@@ -2380,7 +2421,10 @@
       "activity_invitees_changed": "{actor} changed who is invited",
       "group_waitlist_withdrawn": "{actor} withdrew from a waiting list",
       "person_club_data_purged": "{actor} removed a former member's details",
-      "club_settings_decided": "{actor} recorded a board decision"
+      "club_settings_decided": "{actor} recorded a board decision",
+      "group_waitlist_priority_changed": "{actor} changed the priority of a waiting-list place",
+      "group_waitlist_offer_withdrawn": "{actor} withdrew an offered place",
+      "group_waitlist_admitted": "{actor} admitted someone from a waiting list"
     }
   },
   "groupAdmin": {
@@ -2439,5 +2483,104 @@
     "ownersAdmit": "Group owners admit new club members from their waiting lists",
     "saveSettings": "Save",
     "settingsSaved": "The group settings were saved."
+  },
+  "waitlist": {
+    "tab": "Waiting list",
+    "title": "Waiting list: {group}",
+    "summary": "{occupied} of {capacity} places taken, {offers, plural, =0 {no offers out} one {# offer out} other {# offers out}}, {waiting} waiting",
+    "summaryUnlimited": "{occupied} places taken (no limit), {offers, plural, =0 {no offers out} one {# offer out} other {# offers out}}, {waiting} waiting",
+    "awaitingClubCount": "{count, plural, one {# accepted place waits} other {# accepted places wait}} for the club to approve the membership",
+    "autoOfferOn": "Offers go out automatically to the next in line.",
+    "empty": "Nobody is waiting.",
+    "emptyClosed": "No places closed in the last 12 months.",
+    "open": "In the queue",
+    "closed": "Closed (12 months)",
+    "filterBirthYear": "Born",
+    "filterFitsGender": "Fits the group's category",
+    "filter": "Filter",
+    "position": "Number {position} of {count}",
+    "requestedBy": "Applied by {name}",
+    "born": "Born {year}",
+    "outsideBirthYears": "Outside the group's birth years",
+    "outsideCategory": "Outside the group's category",
+    "waitingSince": "In the queue since {date}",
+    "applicantNote": "Note from the applicant",
+    "ownerNote": "Note for the owners (never shown to the applicant)",
+    "priority": "Priority",
+    "priorityReason": "Reason for priority",
+    "priorityValue": "Priority {priority}: {reason}",
+    "offeredUntil": "Offered, reply by {date}",
+    "autoOffer": "offered automatically",
+    "awaitingClub": "Accepted: waits for the club to approve the membership",
+    "outOfOrder": "Out of turn: {reason}",
+    "closedBecause": "{status}: {reason}",
+    "offer": "Offer a place",
+    "replyDays": "Days to answer",
+    "admit": "Admit directly",
+    "remove": "Remove",
+    "removeReason": "Why",
+    "withdrawOffer": "Withdraw the offer",
+    "save": "Save",
+    "skipReason": "Reason for skipping those ahead in the queue (club managers see it)",
+    "skipHint": "Leave empty when this is the next in line.",
+    "overCapacity": "The group is full: do it anyway",
+    "statuses": {
+      "waiting": "Waiting",
+      "offered": "Offered",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "expired": "Expired",
+      "admitted": "Admitted",
+      "withdrawn": "Withdrawn",
+      "removed": "Removed"
+    },
+    "removalReasons": {
+      "no_longer_eligible": "No longer eligible",
+      "duplicate": "Duplicate",
+      "no_reply": "No reply",
+      "other": "Other"
+    },
+    "notices": {
+      "offered": "The place was offered.",
+      "admitted": "The place was settled.",
+      "removed": "The place was removed.",
+      "offerWithdrawn": "The offer was withdrawn.",
+      "updated": "Saved.",
+      "applied": "You are on the waiting list.",
+      "accepted": "The place is accepted.",
+      "declined": "The offer was declined.",
+      "withdrawn": "You have left the waiting list."
+    },
+    "applyTitle": "Apply for the waiting list",
+    "applyFor": "For",
+    "note": "Note for the group's owners (no health information)",
+    "apply": "Apply",
+    "join": "Join the waiting list",
+    "openGroups": "Groups taking applications",
+    "noOpenGroups": "No groups take applications right now.",
+    "full": "full, {waiting} waiting",
+    "notFull": "{waiting} waiting",
+    "replyBy": "Reply by {deadline}",
+    "accept": "Accept place",
+    "decline": "Decline",
+    "leave": "Leave the waiting list",
+    "myTitle": "Waiting lists",
+    "myEmpty": "You are not on any waiting list.",
+    "recentlyClosed": "Closed recently",
+    "clubTitle": "Waiting lists",
+    "clubGroups": "Groups",
+    "free": "{free} free",
+    "unlimited": "no limit",
+    "decisionsTitle": "Out-of-turn decisions",
+    "noDecisions": "No decisions out of turn.",
+    "decisionKinds": {
+      "offer": "Offered out of turn",
+      "admission": "Admitted out of turn",
+      "queue_bypass": "Added past the waiting list"
+    },
+    "decidedBy": "by {name}",
+    "more": "More",
+    "queueBypassReason": "Reason for adding past the waiting list ({count} waiting)",
+    "groupWaiting": "{count, plural, =0 {Nobody is waiting} one {# person waiting} other {# people waiting}}"
   }
 }

@@ -81,7 +81,7 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/groups/${key("svk-f2017")}/seasons`,
     statements: 2,
-    pages: 40,
+    pages: 50,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/seasons",
@@ -90,6 +90,49 @@ const CASES: Case[] = [
     url: () => `/api/v1/clubs/${key("svk")}/seasons`,
     statements: 2,
     pages: 10,
+  },
+  // Waiting lists (P1.10b, web only). Writes that change the queue
+  // (apply, offer, admit, accept) cannot run twice on the same data; their
+  // statements are counted in waitlists.integration.test.ts.
+  {
+    route: "GET /api/v1/groups/{groupId}/waitlist",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/groups/${key("svk-f2017")}/waitlist`,
+    statements: 3,
+    pages: 400,
+  },
+  {
+    route: "GET /api/v1/groups/{groupId}/waitlist/summary",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/groups/${key("svk-f2017")}/waitlist/summary`,
+    statements: 3,
+    pages: 90,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/waitlists",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/waitlists`,
+    statements: 3,
+    pages: 320,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/open-groups",
+    persona: "henrik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/open-groups`,
+    statements: 1,
+    pages: 70,
+  },
+  {
+    route: "GET /api/v1/me/waitlists",
+    persona: "henrik",
+    method: "GET",
+    url: () => "/api/v1/me/waitlists",
+    statements: 6,
+    pages: 80,
   },
   // History panels and the audit log (P1.9, web only; ADR 0042). Read
   // through the history pool: the scope, the club rows' history, the global
@@ -250,9 +293,10 @@ const CASES: Case[] = [
     persona: "erik",
     method: "GET",
     url: () => `/api/v1/groups/${key("svk-f2017")}`,
-    // The group, its owners and (owners: Erik) its places and whether it can be deleted (P1.10a).
-    statements: 6,
-    pages: 100,
+    // The group, its owners, the number waiting (P1.10b) and (owners: Erik) its
+    // places and whether it can be deleted (P1.10a).
+    statements: 7,
+    pages: 110,
   },
   {
     route: "GET /api/v1/groups/{groupId}/members",

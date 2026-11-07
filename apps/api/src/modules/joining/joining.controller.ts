@@ -141,7 +141,7 @@ export class JoiningController {
     method: "GET",
     path: "me/waitlists",
     summary:
-      "My and my children's open waiting-list entries (place in the queue) and pending join requests",
+      "My and my children's waiting-list entries (place in the queue; closed ones of the last 12 months) and pending join requests",
     tags: ["me", "joining"],
     access: { authenticated: true },
     response: MyWaitlistsSchema,
@@ -189,6 +189,12 @@ export class JoiningController {
             waiting: e.waiting,
             queuedAt: e.queuedAt.toISOString(),
             offerExpiresAt: iso(e.offerExpiresAt),
+            closedReason: e.closedReason,
+            decidedAt: iso(e.decidedAt),
+            clubTimeZone: e.clubTimeZone,
+            canAct:
+              authz.actor.isSelf(e.personId) ||
+              authz.actor.isGuardianOf(e.personId, "act_on_behalf"),
           },
         ];
       }),

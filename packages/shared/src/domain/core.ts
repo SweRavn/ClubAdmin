@@ -158,8 +158,28 @@ export const WAITLIST_CLOSED_REASONS = [
   "join_request_rejected",
   "left_club",
   "group_archived",
+  // An owner's removal with its reason (P1.10b); `removed_by_owner` is "other".
+  "no_longer_eligible",
+  "duplicate",
+  "no_reply",
 ] as const;
 export type WaitlistClosedReason = (typeof WAITLIST_CLOSED_REASONS)[number];
+
+/** Open waiting-list entries: they hold a place in the queue or a place in the group. */
+export const OPEN_WAITLIST_STATUSES = ["waiting", "offered", "accepted"] as const;
+
+/** Why an entry is ahead of others (P1.10b): required when priority > 0. May grow. */
+export const WAITLIST_PRIORITY_REASONS = ["sibling", "returning_member", "other"] as const;
+export type WaitlistPriorityReason = (typeof WAITLIST_PRIORITY_REASONS)[number];
+
+/** Why an owner removes an entry (P1.10b); the applicant is told the code, never the note. */
+export const WAITLIST_REMOVAL_REASONS = [
+  "no_longer_eligible",
+  "duplicate",
+  "no_reply",
+  "other",
+] as const;
+export type WaitlistRemovalReason = (typeof WAITLIST_REMOVAL_REASONS)[number];
 
 export const JOIN_REQUEST_STATUSES = ["pending", "approved", "rejected", "withdrawn"] as const;
 export type JoinRequestStatus = (typeof JOIN_REQUEST_STATUSES)[number];
