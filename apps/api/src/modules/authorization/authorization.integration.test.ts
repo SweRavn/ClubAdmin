@@ -26,6 +26,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { Endpoint } from "../../platform/http/endpoint.ts";
 import { EndpointRegistry } from "../../platform/http/endpoint-registry.ts";
+import { subscribeToFeatures } from "../../testing/billing.ts";
 import { actor, buildPerson } from "../../testing/builders.ts";
 import { auditActionsOf } from "../../testing/core.ts";
 import { devToken, TEST_DEV_AUTH_KEY } from "../../testing/oidc.ts";
@@ -114,6 +115,8 @@ beforeAll(async () => {
     [OnBehalfModule],
   );
   m = await buildMatrixScenario(s, t);
+  // Calendar feeds need the entitlement when CI runs with billing on (P1.11).
+  await subscribeToFeatures(t, [m.clubA.id, m.clubB.id], ["calendar_feeds"]);
   await dispatchPending();
 });
 afterAll(async () => {

@@ -8,6 +8,7 @@ import { createTestDatabase, type TestDatabase } from "@clubadmin/db/testing";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { subscribeToFeatures } from "../../testing/billing.ts";
 import {
   buildClub,
   buildFamily,
@@ -50,6 +51,7 @@ beforeAll(async () => {
     ...NO_RATE_LIMITS,
   });
   club = await buildClub(s);
+  await subscribeToFeatures(t, [club.id], ["calendar_feeds"]);
   family = await buildFamily(s, { club });
   coach = await buildPerson(s, { givenName: "Kim", familyName: "Coachsson" });
   outsider = await buildPerson(s);
