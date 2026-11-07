@@ -1,0 +1,28 @@
+# Calendar subscription (P1.11): Anna opens Calendar subscriptions in the
+# settings and sees her demo subscription (docs/seed-data.md). Subscribing
+# opens a webcal:// link in the phone's calendar, outside the app, so the
+# flow does not tap it.
+appId: ${APP_ID}
+name: See my calendar subscriptions
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- tapOn:
+    id: "open-settings"
+- scrollUntilVisible:
+    element:
+      id: "open-calendar"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "open-calendar"
+- extendedWaitUntil:
+    visible:
+      id: "calendar-screen"
+    timeout: 20000
+- assertVisible:
+    id: "calendar-feed-.*"
+- assertVisible:
+    id: "subscribe-calendar"

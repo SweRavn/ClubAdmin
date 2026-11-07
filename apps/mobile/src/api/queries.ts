@@ -184,6 +184,27 @@ export function useSessions() {
   });
 }
 
+// Calendar subscriptions (P1.11): the list (never secrets) and creating one
+// for my schedule and all my children; the app opens its webcal URL once.
+export function useCalendarFeeds() {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["me", personId, "calendar-feeds"],
+    queryFn: async () => data(await api.GET("/api/v1/me/calendar-feeds")),
+    enabled: personId !== null,
+  });
+}
+
+export function useCreateCalendarFeed() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => data(await api.POST("/api/v1/me/calendar-feeds", { body: {} })),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["me", personId, "calendar-feeds"] }),
+  });
+}
+
 export function useRevokeSession() {
   const { api, personId } = useSession();
   const queryClient = useQueryClient();

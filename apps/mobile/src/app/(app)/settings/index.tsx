@@ -194,6 +194,11 @@ export default function Settings() {
             <Body>{t("privacy.title")}</Body>
           </Row>
         ) : null}
+        {hasFeature(info.data, "calendar.feeds") ? (
+          <Row onPress={() => router.push("/settings/calendar")} testID="open-calendar">
+            <Body>{t("calendar.ui.title")}</Body>
+          </Row>
+        ) : null}
         <Row onPress={() => router.push("/settings/family")} testID="open-family">
           <Body>{t("family.title")}</Body>
         </Row>
