@@ -109,6 +109,11 @@ export const groupWaitlistEntries = pgTable(
     index("group_waitlist_entries_out_of_order_idx")
       .on(t.clubId, t.decidedAt)
       .where(sql`${t.outOfOrderReason} IS NOT NULL`),
+    // Closed entries by when they closed: the owners' recent list and
+    // joining:retention (12 months).
+    index("group_waitlist_entries_closed_idx")
+      .on(t.clubId, sql`coalesce(${t.decidedAt}, ${t.updatedAt})`)
+      .where(sql`${t.status} NOT IN ('waiting', 'offered', 'accepted')`),
     // Waiting-list order (ADR 0019).
     index("group_waitlist_entries_order_idx").on(
       t.groupId,

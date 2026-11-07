@@ -2,6 +2,8 @@
 // Retention of joining data (docs/gdpr.md, P1.1): decided join requests and
 // invitations that can no longer be used are deleted 12 months after their
 // last change, club by club (the tables are under tenant row-level security).
+// Closed waiting-list entries go 12 months after they closed (P1.10b;
+// group_waitlist_entries_closed_idx).
 // Guardian and own-login invitations that were never accepted (P1.3) are
 // deleted 12 months after they expired or were revoked. Record history keeps
 // its own retention (ADR 0017).
@@ -16,6 +18,7 @@ export async function deleteExpiredJoiningData(
   months = 12,
 ): Promise<{
   joinRequests: number;
+  waitlistEntries: number;
   invitations: number;
   guardianInvitations: number;
   accountInvitations: number;
@@ -25,6 +28,7 @@ export async function deleteExpiredJoiningData(
   );
   const deleted = {
     joinRequests: 0,
+    waitlistEntries: 0,
     invitations: 0,
     guardianInvitations: 0,
     accountInvitations: 0,
@@ -32,6 +36,11 @@ export async function deleteExpiredJoiningData(
   for (const { id: clubId } of clubs) {
     await db.withSystem(JOB, { clubId }, async (tx) => {
       const cutoff = sql`now() - make_interval(months => ${months})`;
+      const entries = await tx.execute(sql`
+        DELETE FROM public.group_waitlist_entries
+        WHERE club_id = ${clubId} AND status NOT IN ('waiting', 'offered', 'accepted')
+          AND coalesce(decided_at, updated_at) < ${cutoff}`);
+      deleted.waitlistEntries += entries.rowCount ?? 0;
       const requests = await tx.execute(sql`
         DELETE FROM public.join_requests
         WHERE club_id = ${clubId} AND status <> 'pending' AND updated_at < ${cutoff}`);

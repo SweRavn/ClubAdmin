@@ -82,6 +82,10 @@ export const groups = pgTable(
       .on(t.clubId, t.name)
       .where(sql`${t.archivedAt} IS NULL`),
     index("groups_parent_idx").on(t.clubId, t.parentGroupId),
+    // waitlists:offers finds the groups with auto-offers (P1.10b).
+    index("groups_auto_offer_idx")
+      .on(t.clubId)
+      .where(sql`${t.waitlistAutoOffer} AND ${t.archivedAt} IS NULL`),
   ],
 );
 

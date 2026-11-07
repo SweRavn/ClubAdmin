@@ -97,6 +97,15 @@ async function accountTimeZone(tx: Tx, personId: string): Promise<string> {
   return rows[0]?.time_zone ?? "Europe/Stockholm";
 }
 
+/** The waiting-list events that become notices (P1.10a, P1.10b). */
+const WAITLIST_EVENTS = [
+  "waitlist.entry.created",
+  "waitlist.offer.sent",
+  "waitlist.offer.expired",
+  "waitlist.admitted",
+  "waitlist.entry.closed",
+] as const;
+
 export function notificationsHandler(options: NotificationsOptions): OutboxHandler {
   const now = () => options.now?.() ?? new Date();
   const notify = (tx: Tx, notices: Notice[]) =>
@@ -114,7 +123,7 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "account.email.changed",
       "membership.left",
       "assignment.ended",
-      "waitlist.entry.closed",
+      ...WAITLIST_EVENTS,
       "club.privacy_policy.published",
       "privacy.export.ready",
       "privacy.erasure.scheduled",
@@ -375,37 +384,58 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
           );
           return;
         }
-        // Waiting lists (P1.10a): the club closed an entry (the group was
-        // archived). The applicant (if they have a login) and whoever applied
-        // for them are told; the group's name and the reason code only.
+        // Waiting lists (P1.10a, P1.10b; ADR 0043): the applicant (if they
+        // have a login) and whoever applied for them are told; an offer also
+        // reaches the applicant's full guardians. The group's name, the
+        // reason code and the deadline only: never a note.
+        case "waitlist.entry.created":
+        case "waitlist.offer.sent":
+        case "waitlist.offer.expired":
+        case "waitlist.admitted":
         case "waitlist.entry.closed": {
-          const { clubId, entryId } = DOMAIN_EVENTS["waitlist.entry.closed"].parse(event.payload);
+          const type = event.type;
+          const { clubId, entryId } = DOMAIN_EVENTS[type].parse(event.payload);
           await useClub(tx, clubId);
           const { rows } = await tx.execute<{
             person_id: string;
             requested_by_person_id: string;
             closed_reason: string | null;
+            offer_expires_at: Date | null;
             group_name: string;
+            time_zone: string;
           }>(sql`
-            SELECT w.person_id, w.requested_by_person_id, w.closed_reason, g.name AS group_name
-            FROM public.group_waitlist_entries w JOIN public.groups g ON g.id = w.group_id
+            SELECT w.person_id, w.requested_by_person_id, w.closed_reason, w.offer_expires_at,
+              g.name AS group_name, c.time_zone
+            FROM public.group_waitlist_entries w
+            JOIN public.groups g ON g.id = w.group_id
+            JOIN public.clubs c ON c.id = w.club_id
             WHERE w.id = ${entryId}`);
           const entry = rows[0];
           if (!entry) return;
+          const recipients = new Set([entry.person_id, entry.requested_by_person_id]);
+          if (type === "waitlist.offer.sent") {
+            const family = await withGuardians(tx, [entry.person_id], ["act_on_behalf"]);
+            for (const id of family.keys()) recipients.add(id);
+          }
           await notify(
             tx,
-            [...new Set([entry.person_id, entry.requested_by_person_id])].map((recipient) => ({
+            [...recipients].map((recipient) => ({
               recipientPersonId: recipient,
               clubId,
-              type: "waitlist.entry.closed" as const,
+              type,
               subjectType: "group_waitlist_entry",
               subjectId: entryId,
               about: [entry.person_id],
               params: {
                 group: entry.group_name,
-                closedReason: entry.closed_reason ?? "removed_by_owner",
+                ...(type === "waitlist.entry.closed"
+                  ? { closedReason: entry.closed_reason ?? "removed_by_owner" }
+                  : {}),
+                ...(type === "waitlist.offer.sent" && entry.offer_expires_at
+                  ? { deadline: entry.offer_expires_at, timeZone: entry.time_zone }
+                  : {}),
               },
-              dedupeKey: `waitlist.entry.closed:${entryId}`,
+              dedupeKey: `${type}:${entryId}`,
             })),
           );
           return;

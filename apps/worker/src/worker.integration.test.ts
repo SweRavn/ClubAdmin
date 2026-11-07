@@ -35,6 +35,7 @@ import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards, notifyOwnLoginAge } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 import { deleteExpiredJoiningData } from "./tasks/joining.ts";
+import { runWaitlistOffers } from "./tasks/waitlists.ts";
 import { expireMemberExports, purgeMemberImports, runMemberExport } from "./tasks/members.ts";
 
 let t: TestDatabase;
@@ -878,6 +879,18 @@ describe("joining:retention", () => {
         INSERT INTO invitations (club_id, kind, token_hash, expires_at, created_by_person_id)
         VALUES (${club}, 'link', ${`old-${club}`}, now() - interval '1 day', ${person}),
                (${club}, 'link', ${`live-${club}`}, now() + interval '1 day', ${person})`);
+      // Waiting lists (P1.10b): closed 13 months ago (deleted), closed a
+      // month ago and still waiting since long ago (kept).
+      const group = uuidv7();
+      await tx.execute(sql`
+        INSERT INTO groups (id, club_id, kind, name) VALUES (${group}, ${club}, 'team', 'R2016')`);
+      await tx.execute(sql`
+        INSERT INTO group_waitlist_entries
+          (club_id, group_id, person_id, requested_by_person_id, status, closed_reason, decided_at, queued_at)
+        VALUES
+          (${club}, ${group}, ${person}, ${person}, 'withdrawn', 'withdrawn', now() - interval '13 months', now() - interval '2 years'),
+          (${club}, ${group}, ${person}, ${person}, 'declined', 'declined', now() - interval '1 month', now() - interval '2 years'),
+          (${club}, ${group}, ${person}, ${person}, 'waiting', NULL, NULL, now() - interval '2 years')`);
     });
     // Backdate as the owner (updated_at is set by a trigger on every change).
     await t.query("admin", `ALTER TABLE join_requests DISABLE TRIGGER set_updated_at`);
@@ -909,6 +922,7 @@ describe("joining:retention", () => {
     const deleted = await deleteExpiredJoiningData(t.db);
     expect(deleted).toMatchObject({
       joinRequests: 1,
+      waitlistEntries: 1,
       invitations: 1,
       guardianInvitations: 1,
       accountInvitations: 1,
@@ -919,6 +933,79 @@ describe("joining:retention", () => {
       [club],
     );
     expect(rows).toEqual([{ token_hash: `live-${club}` }]);
+  });
+});
+
+describe("waitlists:offers (P1.10b)", () => {
+  it("expires offers, auto-offers free places in order, and is idempotent", async () => {
+    const club = uuidv7();
+    const [group, manual] = [uuidv7(), uuidv7()];
+    const people = [uuidv7(), uuidv7(), uuidv7(), uuidv7(), uuidv7()];
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      for (const p of people) {
+        await session.query(
+          "INSERT INTO people (id, given_name, family_name) VALUES ($1, 'W', 'L')",
+          [p],
+        );
+      }
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Kö IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+        [club, `ko-${club.slice(-8)}`],
+      );
+      await session.query(
+        "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')",
+        [club, people[4]],
+      );
+      // Two places: one member, one offer that expired. Auto-offers on.
+      await session.query(
+        `INSERT INTO groups (id, club_id, kind, name, capacity, admission_mode, waitlist_auto_offer, offer_reply_days)
+         VALUES ($1, $3, 'team', 'K2016', 2, 'waitlist', true, 5),
+                ($2, $3, 'team', 'K2015', 2, 'waitlist', false, 5)`,
+        [group, manual, club],
+      );
+      await session.query(
+        `INSERT INTO group_memberships (club_id, group_id, person_id, function) VALUES ($1, $2, $3, 'member')`,
+        [club, group, people[0]],
+      );
+      await session.query(
+        `INSERT INTO group_waitlist_entries
+           (club_id, group_id, person_id, requested_by_person_id, status, queued_at, offered_at, offer_expires_at, priority, priority_reason)
+         VALUES
+           ($1, $2, $3, $3, 'offered', now() - interval '3 months', now() - interval '6 days', now() - interval '1 minute', 0, NULL),
+           ($1, $2, $4, $4, 'waiting', now() - interval '2 months', NULL, NULL, 0, NULL),
+           ($1, $2, $5, $5, 'waiting', now() - interval '1 month', NULL, NULL, 1, 'sibling'),
+           ($1, $6, $4, $4, 'waiting', now() - interval '1 month', NULL, NULL, 0, NULL)`,
+        [club, group, people[1], people[2], people[3], manual],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    const first = await runWaitlistOffers(t.db);
+    expect(first).toMatchObject({ expired: 1, offered: 1 });
+    const { rows } = await t.query<{ person_id: string; status: string; group_id: string }>(
+      "admin",
+      "SELECT person_id, status, group_id FROM group_waitlist_entries WHERE club_id = $1 ORDER BY queued_at",
+      [club],
+    );
+    const status = (p: string, g = group) =>
+      rows.find((r) => r.person_id === p && r.group_id === g)?.status;
+    expect(status(people[1]!)).toBe("expired");
+    // Priority first: the sibling gets the freed place; the others wait.
+    expect(status(people[3]!)).toBe("offered");
+    expect(status(people[2]!)).toBe("waiting");
+    expect(status(people[2]!, manual)).toBe("waiting");
+    const { rows: events } = await t.query<{ type: string }>(
+      "admin",
+      "SELECT type FROM outbox.events WHERE payload->>'clubId' = $1 ORDER BY type",
+      [club],
+    );
+    expect(events.map((e) => e.type)).toEqual(["waitlist.offer.expired", "waitlist.offer.sent"]);
+    // Again: nothing more to do.
+    expect(await runWaitlistOffers(t.db)).toMatchObject({ expired: 0, offered: 0 });
   });
 });
 

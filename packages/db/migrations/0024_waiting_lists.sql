@@ -18,6 +18,7 @@ ALTER TABLE "group_waitlist_entries" ADD CONSTRAINT "group_waitlist_entries_join
 CREATE INDEX "group_memberships_queue_bypass_idx" ON "group_memberships" USING btree ("club_id","created_at") WHERE "group_memberships"."queue_bypass_reason" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "group_waitlist_entries_offers_idx" ON "group_waitlist_entries" USING btree ("club_id","status","offer_expires_at") WHERE "group_waitlist_entries"."status" = 'offered';--> statement-breakpoint
 CREATE INDEX "group_waitlist_entries_out_of_order_idx" ON "group_waitlist_entries" USING btree ("club_id","decided_at") WHERE "group_waitlist_entries"."out_of_order_reason" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "group_waitlist_entries_closed_idx" ON "group_waitlist_entries" USING btree ("club_id",coalesce("decided_at", "updated_at")) WHERE "group_waitlist_entries"."status" NOT IN ('waiting', 'offered', 'accepted');--> statement-breakpoint
 CREATE UNIQUE INDEX "group_waitlist_entries_open_unique" ON "group_waitlist_entries" USING btree ("group_id","person_id") WHERE "group_waitlist_entries"."status" IN ('waiting', 'offered', 'accepted');--> statement-breakpoint
 DO $$
 DECLARE
@@ -73,9 +74,9 @@ GRANT EXECUTE ON FUNCTION app.group_places(uuid) TO clubadmin_app;
 ALTER POLICY lookup_read ON public.clubs
   USING (app.setting('app.lookup') IN ('club_search', 'invitation', 'waitlist_position', 'open_groups'));
 CREATE POLICY lookup_read ON public.groups FOR SELECT
-  USING (app.setting('app.lookup') IN ('waitlist_position', 'open_groups'));
+  USING (app.setting('app.lookup') IN ('waitlist_position', 'open_groups', 'waitlist_offers'));
 CREATE POLICY lookup_read ON public.group_waitlist_entries FOR SELECT
-  USING (app.setting('app.lookup') IN ('waitlist_position', 'open_groups'));
+  USING (app.setting('app.lookup') IN ('waitlist_position', 'open_groups', 'waitlist_offers'));
 CREATE POLICY lookup_read ON public.group_memberships FOR SELECT
   USING (app.setting('app.lookup') = 'open_groups');
 CREATE POLICY lookup_read ON public.group_seasons FOR SELECT
@@ -191,3 +192,32 @@ BEGIN
 END
 $$;
 GRANT EXECUTE ON FUNCTION app.waitlist_group_club(uuid) TO clubadmin_app;
+--> statement-breakpoint
+
+-- The clubs where waitlists:offers has work (P1.10b): offers past their
+-- expiry, and groups with auto-offers and people waiting (whether places are
+-- free is decided per club). System jobs only; IDs only.
+CREATE INDEX groups_auto_offer_idx ON public.groups (club_id)
+  WHERE waitlist_auto_offer AND archived_at IS NULL;
+CREATE FUNCTION app.waitlist_offer_clubs() RETURNS TABLE (club_id uuid)
+  LANGUAGE plpgsql VOLATILE
+  SET search_path = pg_catalog, pg_temp
+  AS $$
+BEGIN
+  IF NOT app.is_system() THEN
+    RETURN;
+  END IF;
+  PERFORM set_config('app.lookup', 'waitlist_offers', true);
+  RETURN QUERY
+  SELECT e.club_id FROM public.group_waitlist_entries e
+  WHERE e.status = 'offered' AND e.offer_expires_at <= now()
+  UNION
+  SELECT g.club_id FROM public.groups g
+  WHERE g.waitlist_auto_offer AND g.archived_at IS NULL AND g.admission_mode = 'waitlist'
+    AND EXISTS (
+      SELECT 1 FROM public.group_waitlist_entries w WHERE w.group_id = g.id AND w.status = 'waiting'
+    );
+  PERFORM set_config('app.lookup', '', true);
+END
+$$;
+GRANT EXECUTE ON FUNCTION app.waitlist_offer_clubs() TO clubadmin_app;

@@ -904,4 +904,49 @@ describe("waiting-list notices (P1.10a)", () => {
     expect(await noticesOf(ids.mikael)).toEqual([]);
     expect(await noticesOf(ids.coach)).toEqual([]);
   });
+
+  // P1.10b: recipients per type. Anna applied for Elsa; Mikael is the other
+  // full guardian; Gunilla (relative) and Nils (contact person) are not told.
+  async function entry(ids: Awaited<ReturnType<typeof team>>, status = "waiting") {
+    const { rows } = await t.query<{ id: string }>(
+      "admin",
+      `INSERT INTO group_waitlist_entries
+         (club_id, group_id, person_id, requested_by_person_id, status, offered_at, offer_expires_at)
+       VALUES ($1, $2, $3, $4, $5,
+         CASE WHEN $5 = 'offered' THEN now() END,
+         CASE WHEN $5 IN ('offered', 'expired') THEN now() + interval '3 days' END)
+       RETURNING id`,
+      [ids.club, ids.group, ids.elsa, ids.anna, status],
+    );
+    return rows[0]!.id;
+  }
+
+  it.each([
+    ["waitlist.entry.created", "waiting", false],
+    ["waitlist.offer.expired", "expired", false],
+    ["waitlist.admitted", "admitted", false],
+    ["waitlist.offer.sent", "offered", true],
+  ] as const)(
+    "%s reaches the requester (and for offers the full guardians)",
+    async (type, status, guardians) => {
+      const ids = await team();
+      const entryId = await entry(ids, status);
+      const event = await publish(ids.club, type, { clubId: ids.club, entryId });
+      await outbox.dispatch(t.db, event, [handler()]);
+      expect(await noticesOf(ids.anna)).toMatchObject([{ type, about_person_ids: [ids.elsa] }]);
+      expect(await noticesOf(ids.mikael)).toHaveLength(guardians ? 1 : 0);
+      expect(await noticesOf(ids.gunilla)).toEqual([]);
+      expect(await noticesOf(ids.nils)).toEqual([]);
+      expect(await noticesOf(ids.coach)).toEqual([]);
+      if (type === "waitlist.offer.sent") {
+        const { rows } = await t.query<{ params: Record<string, string> }>(
+          "admin",
+          "SELECT params FROM notifications WHERE recipient_person_id = $1",
+          [ids.anna],
+        );
+        expect(rows[0]!.params).toMatchObject({ group: "F2016", timeZone: "Europe/Stockholm" });
+        expect(rows[0]!.params.deadline).toBeTruthy();
+      }
+    },
+  );
 });

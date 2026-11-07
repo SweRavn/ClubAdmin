@@ -1700,22 +1700,22 @@
         },
         "created": {
           "title": "I køen til {group}",
-          "body": "{person} står i køen til {group} ({club}). Plassen i køen vises under Køer."
+          "body": "Plassen i køen til {group} ({club}) vises under Køer."
         }
       },
       "offer": {
         "sent": {
           "title": "En plass i {group} tilbys",
-          "body": "{person} tilbys en plass i {group} ({club}). Svar innen {deadline}."
+          "body": "En plass i {group} ({club}) tilbys. Svar innen {deadline}."
         },
         "expired": {
           "title": "Den tilbudte plassen i {group} har gått ut",
-          "body": "Tilbudet om en plass i {group} ({club}) for {person} ble ikke besvart i tide."
+          "body": "Tilbudet om en plass i {group} ({club}) ble ikke besvart i tide."
         }
       },
       "admitted": {
         "title": "Velkommen til {group}",
-        "body": "{person} er nå med i {group} ({club})."
+        "body": "Plassen i {group} ({club}) er klar."
       }
     }
   },

@@ -4966,6 +4966,22 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "groups_auto_offer_idx": {
+          "name": "groups_auto_offer_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"groups\".\"waitlist_auto_offer\" AND \"groups\".\"archived_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -5639,6 +5655,28 @@
           ],
           "isUnique": false,
           "where": "\"group_waitlist_entries\".\"out_of_order_reason\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "group_waitlist_entries_closed_idx": {
+          "name": "group_waitlist_entries_closed_idx",
+          "columns": [
+            {
+              "expression": "club_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "coalesce(\"decided_at\", \"updated_at\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"group_waitlist_entries\".\"status\" NOT IN ('waiting', 'offered', 'accepted')",
           "concurrently": false,
           "method": "btree",
           "with": {}

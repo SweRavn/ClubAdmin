@@ -1700,22 +1700,22 @@
         },
         "created": {
           "title": "On the waiting list for {group}",
-          "body": "{person} is on the waiting list for {group} ({club}). You can see the place in the queue under Waiting lists."
+          "body": "The place in the queue for {group} ({club}) is shown under Waiting lists."
         }
       },
       "offer": {
         "sent": {
           "title": "A place in {group} is offered",
-          "body": "{person} is offered a place in {group} ({club}). Answer by {deadline}."
+          "body": "A place in {group} ({club}) is offered. Answer by {deadline}."
         },
         "expired": {
           "title": "The offered place in {group} has expired",
-          "body": "The offer of a place in {group} ({club}) for {person} was not answered in time."
+          "body": "The offer of a place in {group} ({club}) was not answered in time."
         }
       },
       "admitted": {
         "title": "Welcome to {group}",
-        "body": "{person} is now in {group} ({club})."
+        "body": "The place in {group} ({club}) is confirmed."
       }
     }
   },
