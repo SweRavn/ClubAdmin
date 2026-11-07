@@ -141,9 +141,10 @@ export class EntitlementsService {
     accessStateSource: "operator" | "billing" | null;
   }> {
     const { rows } = await this.db.withSystem("entitlements:load", { clubId }, (tx) =>
-      tx.execute<{ access_state: ClubAccessState; access_state_source: "operator" | "billing" | null }>(
-        sql`SELECT access_state, access_state_source FROM clubs WHERE id = ${clubId}`,
-      ),
+      tx.execute<{
+        access_state: ClubAccessState;
+        access_state_source: "operator" | "billing" | null;
+      }>(sql`SELECT access_state, access_state_source FROM clubs WHERE id = ${clubId}`),
     );
     return {
       accessState: rows[0]?.access_state ?? "active",

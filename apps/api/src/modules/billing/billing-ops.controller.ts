@@ -150,7 +150,6 @@ export class BillingOpsController {
     request: { query: OperatorInvoicesQuerySchema },
     response: z.string(),
     responseType: "text/csv",
-    bulkRead: true,
   })
   async invoicesCsv(
     @CurrentAuthorization() authorization: RequestAuthorization,
@@ -236,7 +235,6 @@ export class BillingOpsController {
     request: { query: OperatorPaymentsQuerySchema },
     response: z.string(),
     responseType: "text/csv",
-    bulkRead: true,
   })
   async paymentsCsv(
     @CurrentAuthorization() authorization: RequestAuthorization,

@@ -876,7 +876,10 @@ async function billingNotices(tx: Tx, event: OutboxEvent): Promise<Notice[]> {
       event.type === "billing.invoice.overdue"
         ? DOMAIN_EVENTS["billing.invoice.overdue"].parse(event.payload).level
         : 0;
-    type = event.type === "billing.invoice.overdue" ? "billing.invoice.reminder" : "billing.invoice.issued";
+    type =
+      event.type === "billing.invoice.overdue"
+        ? "billing.invoice.reminder"
+        : "billing.invoice.issued";
     params = {
       number: invoice.number,
       kind: invoice.kind,

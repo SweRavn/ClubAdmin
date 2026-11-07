@@ -115,7 +115,8 @@ export class BillingController {
   @Endpoint({
     method: "POST",
     path: "clubs/:clubId/subscription/cancel",
-    summary: "Cancel at the period end (club managers, MFA); the club falls back to the default plan",
+    summary:
+      "Cancel at the period end (club managers, MFA); the club falls back to the default plan",
     tags: ["billing"],
     access: { permission: "billing.subscription.change", resource: "club" },
     request: { params: ClubParamsSchema },

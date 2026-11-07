@@ -102,7 +102,9 @@ export async function activePrices(tx: Tx, planIds: readonly string[]): Promise<
   return tx
     .select()
     .from(billingPlanPrices)
-    .where(and(inArray(billingPlanPrices.planId, [...planIds]), eq(billingPlanPrices.active, true)));
+    .where(
+      and(inArray(billingPlanPrices.planId, [...planIds]), eq(billingPlanPrices.active, true)),
+    );
 }
 
 export async function insertPrice(
@@ -250,7 +252,10 @@ export async function invoiceLines(tx: Tx, invoiceId: string): Promise<InvoiceLi
     .orderBy(asc(billingInvoiceLines.id));
 }
 
-export async function invoicePayments(tx: Tx, invoiceIds: readonly string[]): Promise<PaymentRow[]> {
+export async function invoicePayments(
+  tx: Tx,
+  invoiceIds: readonly string[],
+): Promise<PaymentRow[]> {
   if (invoiceIds.length === 0) return [];
   return tx
     .select()
@@ -306,9 +311,6 @@ export async function operatorSubscriptions(
   const rows = await tx
     .select({
       subscription: billingSubscriptions,
-      clubName: sql<string>`c.name`,
-      country: sql<string>`c.country`,
-      accessState: sql<string>`c.access_state`,
       paymentMethod: billingAccounts.paymentMethod,
       balanceDueMinor: sql<string>`coalesce((
         SELECT sum(i.total_minor
@@ -320,22 +322,27 @@ export async function operatorSubscriptions(
         WHERE i.club_id = ${billingSubscriptions.clubId} AND i.kind = 'invoice' AND i.status = 'open'), 0)`,
     })
     .from(billingSubscriptions)
-    .innerJoin(sql`public.clubs c`, sql`c.id = ${billingSubscriptions.clubId}`)
     .leftJoin(billingAccounts, eq(billingAccounts.clubId, billingSubscriptions.clubId))
     .where(
       and(
-        filter.status ? eq(billingSubscriptions.status, filter.status as SubscriptionRow["status"]) : undefined,
+        filter.status
+          ? eq(billingSubscriptions.status, filter.status as SubscriptionRow["status"])
+          : undefined,
         filter.planId ? eq(billingSubscriptions.planId, filter.planId) : undefined,
         cursor ? sql`${billingSubscriptions.id} > ${cursor}` : undefined,
       ),
     )
     .orderBy(asc(billingSubscriptions.id))
     .limit(limit);
+  const clubs = await clubRefs(
+    tx,
+    rows.map((r) => r.subscription.clubId),
+  );
   return rows.map((r) => ({
     clubId: r.subscription.clubId,
-    clubName: r.clubName,
-    country: r.country,
-    accessState: r.accessState,
+    clubName: clubs.get(r.subscription.clubId)?.name ?? "",
+    country: clubs.get(r.subscription.clubId)?.country ?? "",
+    accessState: clubs.get(r.subscription.clubId)?.accessState ?? "active",
     subscription: r.subscription,
     paymentMethod: r.paymentMethod,
     balanceDueMinor: Number(r.balanceDueMinor),
@@ -348,11 +355,24 @@ export interface ClubRef {
   country: string;
 }
 
-export async function clubRefs(tx: Tx, clubIds: readonly string[]): Promise<Map<string, ClubRef>> {
+/** Club name, country and access state for operators (billing.club_refs, migration 0027). */
+export async function clubRefs(
+  tx: Tx,
+  clubIds: readonly string[],
+): Promise<Map<string, ClubRef & { accessState: string }>> {
   if (clubIds.length === 0) return new Map();
-  const { rows } = await tx.execute<{ id: string; name: string; country: string }>(sql`
-    SELECT id, name, country FROM public.clubs WHERE id = ANY (${`{${[...new Set(clubIds)].join(",")}}`}::uuid[])`);
-  return new Map(rows.map((r) => [r.id, r]));
+  const { rows } = await tx.execute<{
+    id: string;
+    name: string;
+    country: string;
+    access_state: string;
+  }>(sql`SELECT * FROM billing.club_refs(${`{${[...new Set(clubIds)].join(",")}}`}::uuid[])`);
+  return new Map(
+    rows.map((r) => [
+      r.id,
+      { id: r.id, name: r.name, country: r.country, accessState: r.access_state },
+    ]),
+  );
 }
 
 /** Issued invoices and credit notes across clubs (operators), newest first. */
@@ -368,7 +388,9 @@ export async function operatorInvoices(
     .where(
       and(
         sql`${billingInvoices.issuedAt} IS NOT NULL`,
-        filter.status ? eq(billingInvoices.status, filter.status as InvoiceRow["status"]) : undefined,
+        filter.status
+          ? eq(billingInvoices.status, filter.status as InvoiceRow["status"])
+          : undefined,
         filter.from ? sql`${billingInvoices.issuedAt} >= ${filter.from}::date` : undefined,
         filter.to ? sql`${billingInvoices.issuedAt} < ${filter.to}::date + 1` : undefined,
         cursor

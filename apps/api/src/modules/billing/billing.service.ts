@@ -158,7 +158,11 @@ export class BillingService {
       });
       for (const price of input.prices) await repo.insertPrice(tx, { planId, ...price });
       await repo.setPlanEntitlements(tx, planId, input.features ?? {}, input.limits ?? {});
-      await audit.record(tx, { action: "billing.plan.created", resourceType: "plan", resourceId: planId });
+      await audit.record(tx, {
+        action: "billing.plan.created",
+        resourceType: "plan",
+        resourceId: planId,
+      });
       return planId;
     });
     return this.planById(context, id);
@@ -221,7 +225,10 @@ export class BillingService {
           (x) => x.planId === planId && x.currency === facts.currency && x.period === period,
         );
         return p
-          ? { exclVatMinor: p.priceMinor, inclVatMinor: p.priceMinor + vatOf(p.priceMinor, vat.rateBp) }
+          ? {
+              exclVatMinor: p.priceMinor,
+              inclVatMinor: p.priceMinor + vatOf(p.priceMinor, vat.rateBp),
+            }
           : null;
       };
       const offers: PlanOffer[] = plans.map((plan) => {
@@ -381,7 +388,9 @@ export class BillingService {
       await repo.updateSubscription(tx, context.clubId, {
         trialEndsAt,
         // A longer trial reminds again.
-        ...(current.trialEndsAt && trialEndsAt > current.trialEndsAt ? { trialReminderLevel: 0 } : {}),
+        ...(current.trialEndsAt && trialEndsAt > current.trialEndsAt
+          ? { trialReminderLevel: 0 }
+          : {}),
       });
       await audit.record(tx, {
         action: "billing.subscription.trial.changed",
@@ -646,7 +655,8 @@ export class BillingService {
       const credited = credits
         .filter((c) => c.creditedInvoiceId === r.id)
         .reduce((s, c) => s + c.totalMinor, 0);
-      const club = clubs?.get(r.clubId);
+      const ref = clubs?.get(r.clubId);
+      const club = ref ? { id: ref.id, name: ref.name, country: ref.country } : undefined;
       return {
         id: r.id,
         number: r.number,
@@ -656,7 +666,8 @@ export class BillingService {
         subtotalMinor: r.subtotalMinor,
         vatMinor: r.vatMinor,
         totalMinor: r.totalMinor,
-        balanceMinor: r.kind === "invoice" && r.status === "open" ? r.totalMinor - paid + credited : 0,
+        balanceMinor:
+          r.kind === "invoice" && r.status === "open" ? r.totalMinor - paid + credited : 0,
         periodStart: r.periodStart.toISOString(),
         periodEnd: r.periodEnd.toISOString(),
         issuedAt: iso(r.issuedAt),
@@ -901,7 +912,11 @@ export class BillingService {
     const clubId = await this.invoiceClub(context, invoiceId);
     await this.db.withTenant({ ...context, clubId }, async (tx) => {
       await outbox.publish(tx, "billing.invoice.resend_requested", { clubId, invoiceId });
-      await audit.record(tx, { action: "billing.invoice.resent", resourceType: "invoice", resourceId: invoiceId });
+      await audit.record(tx, {
+        action: "billing.invoice.resent",
+        resourceType: "invoice",
+        resourceId: invoiceId,
+      });
     });
   }
 
@@ -973,11 +988,14 @@ export class BillingService {
       scheduledChange: scheduled,
       pastDueSince: iso(row.pastDueSince),
       paymentMethod: account
-        ? { method: account.paymentMethod, cardBrand: account.cardBrand, cardLast4: account.cardLast4 }
+        ? {
+            method: account.paymentMethod,
+            cardBrand: account.cardBrand,
+            cardLast4: account.cardLast4,
+          }
         : null,
       balanceDueMinor,
       selectedAt: iso(row.selectedAt),
     };
   }
 }
-

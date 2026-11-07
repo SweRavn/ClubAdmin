@@ -312,6 +312,113 @@ describe("permission matrix", () => {
       expected: OPERATOR_CLUB,
       body: { status: "active" },
     },
+    // Billing (P1.13): club managers and treasurers; choosing and the
+    // details need a second factor (these tokens have none: 403).
+    "GET /api/v1/clubs/:clubId/billing/plans": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/billing/plans`,
+      expected: { ...OPERATOR_CLUB, manager: 200 },
+    },
+    "PUT /api/v1/clubs/:clubId/subscription/selection": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/subscription/selection`,
+      expected: CLUB_FORBIDDEN,
+      body: { planKey: "standard" },
+    },
+    "POST /api/v1/clubs/:clubId/subscription/cancel": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/subscription/cancel`,
+      expected: CLUB_FORBIDDEN,
+      body: {},
+    },
+    "POST /api/v1/clubs/:clubId/subscription/resume": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/subscription/resume`,
+      expected: CLUB_FORBIDDEN,
+      body: {},
+    },
+    "PUT /api/v1/clubs/:clubId/subscription/trial": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/subscription/trial`,
+      expected: OPERATOR_CLUB,
+      body: { trialEndsAt: new Date(Date.now() + 86_400_000).toISOString() },
+    },
+    "GET /api/v1/clubs/:clubId/billing/account": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/billing/account`,
+      expected: { ...OPERATOR_CLUB, manager: 200 },
+    },
+    "PUT /api/v1/clubs/:clubId/billing/account": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/billing/account`,
+      expected: CLUB_FORBIDDEN,
+      body: {
+        legalName: "Matrix IF",
+        address: { street: "Gatan 1", postalCode: "111 11", city: "Stockholm", country: "SE" },
+        invoiceEmail: "kassor@matrix.invalid",
+      },
+    },
+    "POST /api/v1/clubs/:clubId/billing/payment-method": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/billing/payment-method`,
+      expected: CLUB_FORBIDDEN,
+      body: { method: "invoice" },
+    },
+    "GET /api/v1/clubs/:clubId/invoices": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invoices`,
+      expected: { ...OPERATOR_CLUB, manager: 200 },
+    },
+    "GET /api/v1/clubs/:clubId/invoices/:invoiceId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invoices/${uuidv7()}`,
+      expected: { ...OPERATOR_CLUB, manager: 404 },
+    },
+    "GET /api/v1/clubs/:clubId/invoices/:invoiceId/pdf": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invoices/${uuidv7()}/pdf`,
+      expected: { ...OPERATOR_CLUB, manager: 404 },
+    },
+    // Operators only (platform, with a second factor).
+    "POST /api/v1/billing/plans": {
+      url: () => "/api/v1/billing/plans",
+      expected: ALL_FORBIDDEN,
+      body: {
+        key: "matrix",
+        name: "Matrix",
+        kind: "base",
+        prices: [{ currency: "SEK", period: "month", priceMinor: 0 }],
+      },
+    },
+    "PATCH /api/v1/billing/plans/:planId": {
+      url: () => `/api/v1/billing/plans/${uuidv7()}`,
+      expected: ALL_FORBIDDEN,
+      body: { name: "Matrix" },
+    },
+    "GET /api/v1/billing/subscriptions": {
+      url: () => "/api/v1/billing/subscriptions",
+      expected: ALL_FORBIDDEN,
+    },
+    "GET /api/v1/billing/invoices": {
+      url: () => "/api/v1/billing/invoices",
+      expected: ALL_FORBIDDEN,
+    },
+    "GET /api/v1/billing/invoices.csv": {
+      url: () => "/api/v1/billing/invoices.csv",
+      expected: ALL_FORBIDDEN,
+    },
+    "GET /api/v1/billing/payments": {
+      url: () => "/api/v1/billing/payments",
+      expected: ALL_FORBIDDEN,
+    },
+    "GET /api/v1/billing/payments.csv": {
+      url: () => "/api/v1/billing/payments.csv",
+      expected: ALL_FORBIDDEN,
+    },
+    "POST /api/v1/billing/invoices/:invoiceId/payments": {
+      url: () => `/api/v1/billing/invoices/${uuidv7()}/payments`,
+      expected: ALL_FORBIDDEN,
+      body: { amountMinor: 100, receivedOn: "2026-11-07", reference: "BG-1" },
+    },
+    "POST /api/v1/billing/invoices/:invoiceId/credit-note": {
+      url: () => `/api/v1/billing/invoices/${uuidv7()}/credit-note`,
+      expected: ALL_FORBIDDEN,
+      body: { reason: "goodwill" },
+    },
+    "POST /api/v1/billing/invoices/:invoiceId/resend": {
+      url: () => `/api/v1/billing/invoices/${uuidv7()}/resend`,
+      expected: ALL_FORBIDDEN,
+      body: {},
+    },
     // Joining (P1.1). Writes aimed at IDs that do not exist: allowed callers
     // get the service's 404, the others the policy's 403 (or 404 outside the
     // club). The flows themselves: joining.integration.test.ts.

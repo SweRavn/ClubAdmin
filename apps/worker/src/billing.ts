@@ -30,11 +30,13 @@ import { formatDate, formatMoney, type InvoiceDocument, renderInvoicePdf } from 
 import { type MailProvider, render } from "./mail.ts";
 
 /** The ledger's settings from the configuration (the demo seller outside production). */
-export function billingSettings(config: Parameters<typeof billingSeller>[0] & {
-  BILLING_INVOICE_PREFIX: string;
-  BILLING_PAYMENT_TERMS_DAYS: number;
-  BILLING_DEFAULT_PLAN: string;
-}): LedgerSettings {
+export function billingSettings(
+  config: Parameters<typeof billingSeller>[0] & {
+    BILLING_INVOICE_PREFIX: string;
+    BILLING_PAYMENT_TERMS_DAYS: number;
+    BILLING_DEFAULT_PLAN: string;
+  },
+): LedgerSettings {
   const seller = billingSeller(config);
   if (!seller) throw new Error("BILLING_SELLER_* is not configured");
   return {
@@ -127,12 +129,20 @@ const enqueueSend = (tx: Tx, payload: SendPayload, key: string) =>
 export function billingSendHandler(): OutboxHandler {
   return {
     name: "billing-send",
-    types: ["billing.invoice.issued", "billing.invoice.overdue", "billing.invoice.resend_requested"],
+    types: [
+      "billing.invoice.issued",
+      "billing.invoice.overdue",
+      "billing.invoice.resend_requested",
+    ],
     async handle(event, tx) {
       switch (event.type) {
         case "billing.invoice.issued": {
           const p = DOMAIN_EVENTS["billing.invoice.issued"].parse(event.payload);
-          await enqueueSend(tx, { ...p, purpose: "issued", level: 0 }, `billing:send:${p.invoiceId}`);
+          await enqueueSend(
+            tx,
+            { ...p, purpose: "issued", level: 0 },
+            `billing:send:${p.invoiceId}`,
+          );
           return;
         }
         case "billing.invoice.overdue": {
@@ -372,8 +382,16 @@ export function sendInvoiceTask(deps: SendDependencies): Task {
         return;
       }
       const { doc, locale } = invoice;
-      const kind = doc.kind === "credit_note" ? "creditNote" : p.purpose === "reminder" ? "reminder" : "invoice";
-      const link = new URL(`/clubs/${p.clubId}/billing?invoice=${p.invoiceId}`, deps.webUrl).toString();
+      const kind =
+        doc.kind === "credit_note"
+          ? "creditNote"
+          : p.purpose === "reminder"
+            ? "reminder"
+            : "invoice";
+      const link = new URL(
+        `/clubs/${p.clubId}/billing?invoice=${p.invoiceId}`,
+        deps.webUrl,
+      ).toString();
       const readOnlyOn = doc.dueAt ? new Date(doc.dueAt.getTime() + 30 * 86_400_000) : null;
       const values = {
         club: invoice.clubName,

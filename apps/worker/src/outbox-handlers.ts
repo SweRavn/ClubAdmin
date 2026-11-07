@@ -43,8 +43,7 @@ export function createOutboxHandlers(deps: {
    * club manager's selection applied at once, invoices emailed.
    */
   billing?:
-    | { hosted: boolean; trialPlan: string; trialDays: number; settings: LedgerSettings }
-    | undefined;
+    { hosted: boolean; trialPlan: string; trialDays: number; settings: LedgerSettings } | undefined;
   /** Transactional email (P1.1); without SMTP_URL no email is sent. */
   mail?: MailHandlerOptions | undefined;
   /** Notifications (P1.7): the inbox always, email and push per the channels. */

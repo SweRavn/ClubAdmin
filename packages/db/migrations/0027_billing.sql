@@ -295,6 +295,25 @@ REVOKE ALL ON FUNCTION billing.due_clubs(timestamptz, uuid, integer) FROM PUBLIC
 GRANT EXECUTE ON FUNCTION billing.due_clubs(timestamptz, uuid, integer) TO clubadmin_app;
 --> statement-breakpoint
 
+-- Operators see clubs in billing by name, country and access state only (the
+-- operator console; never member data), through this function.
+CREATE POLICY billing_operator_lookup ON public.clubs FOR SELECT TO clubadmin_app
+  USING (app.is_platform_operator() AND app.setting('app.lookup') = 'billing_clubs');
+CREATE FUNCTION billing.club_refs(p_ids uuid[])
+  RETURNS TABLE (id uuid, name text, country text, access_state text)
+  LANGUAGE plpgsql VOLATILE
+  SET search_path = pg_catalog, pg_temp
+  AS $$
+BEGIN
+  PERFORM set_config('app.lookup', 'billing_clubs', true);
+  RETURN QUERY SELECT c.id, c.name, c.country, c.access_state FROM public.clubs c WHERE c.id = ANY (p_ids);
+  PERFORM set_config('app.lookup', '', true);
+END
+$$;
+REVOKE ALL ON FUNCTION billing.club_refs(uuid[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION billing.club_refs(uuid[]) TO clubadmin_app;
+--> statement-breakpoint
+
 -- One gapless number series per seller (credit notes in the same series):
 -- numbers are taken in the issuing transaction under the row lock.
 CREATE TABLE billing.invoice_number_series (

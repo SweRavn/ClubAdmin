@@ -205,9 +205,7 @@ export function noticeLink(input: NoticeInput): string {
       return "/me";
     // Billing (P1.13): the club's billing page (an invoice opened when given).
     case "club_billing":
-      return input.clubId
-        ? `/clubs/${input.clubId}/billing${id ? `?invoice=${id}` : ""}`
-        : "/";
+      return input.clubId ? `/clubs/${input.clubId}/billing${id ? `?invoice=${id}` : ""}` : "/";
     // Calendar subscriptions (P1.11): the person's subscriptions page.
     case "calendar_feed":
       return "/me/calendar";

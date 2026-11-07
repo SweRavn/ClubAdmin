@@ -120,7 +120,10 @@ async function clubFacts(tx: Tx, clubId: string): Promise<ClubFacts> {
 
 /** The buyer details are complete enough to invoice. */
 export function accountComplete(
-  account: Pick<typeof billingAccounts.$inferSelect, "legalName" | "address" | "invoiceEmail"> | null,
+  account: Pick<
+    typeof billingAccounts.$inferSelect,
+    "legalName" | "address" | "invoiceEmail"
+  > | null,
 ): boolean {
   const a = account?.address;
   return Boolean(
@@ -129,7 +132,10 @@ export function accountComplete(
 }
 
 async function buyerOf(tx: Tx, clubId: string, seller: SellerSnapshot): Promise<BuyerSnapshot> {
-  const [account] = await tx.select().from(billingAccounts).where(eq(billingAccounts.clubId, clubId));
+  const [account] = await tx
+    .select()
+    .from(billingAccounts)
+    .where(eq(billingAccounts.clubId, clubId));
   const club = await clubFacts(tx, clubId);
   const country = account?.address?.country ?? club.country;
   const vat = vatFor(
@@ -209,7 +215,11 @@ async function recurringLines(
 }
 
 /** The draft of the next period's invoice (prorated upgrades wait there). */
-async function draftFor(tx: Tx, subscriptionId: string, periodStart: Date): Promise<Invoice | null> {
+async function draftFor(
+  tx: Tx,
+  subscriptionId: string,
+  periodStart: Date,
+): Promise<Invoice | null> {
   const [row] = await tx
     .select()
     .from(billingInvoices)
@@ -371,7 +381,11 @@ export async function issueInvoice(
       ocrReference: ocrReference(number),
     })
     .where(eq(billingInvoices.id, id));
-  await audit.record(tx, { action: "billing.invoice.issued", resourceType: "invoice", resourceId: id });
+  await audit.record(tx, {
+    action: "billing.invoice.issued",
+    resourceType: "invoice",
+    resourceId: id,
+  });
   await outbox.publish(tx, "billing.invoice.issued", { clubId: sub.clubId, invoiceId: id });
   return { invoiceId: id, number, totalMinor: totals.totalMinor };
 }
@@ -593,7 +607,11 @@ async function lockSubscription(tx: Tx, clubId: string): Promise<Subscription | 
   return row ?? null;
 }
 
-async function update(tx: Tx, sub: Subscription, values: Partial<Subscription>): Promise<Subscription> {
+async function update(
+  tx: Tx,
+  sub: Subscription,
+  values: Partial<Subscription>,
+): Promise<Subscription> {
   const [row] = await tx
     .update(billingSubscriptions)
     .set(values)
@@ -619,7 +637,10 @@ async function setAccess(
   state: "active" | "read_only",
 ): Promise<boolean> {
   if (state === "read_only" && club.accessState !== "active") return false;
-  if (state === "active" && (club.accessState === "active" || club.accessStateSource !== "billing")) {
+  if (
+    state === "active" &&
+    (club.accessState === "active" || club.accessStateSource !== "billing")
+  ) {
     return false;
   }
   await tx.execute(sql`
@@ -739,10 +760,18 @@ async function endTrial(
   club: ClubFacts,
   now: Date,
 ): Promise<Subscription> {
-  const [account] = await tx.select().from(billingAccounts).where(eq(billingAccounts.clubId, sub.clubId));
+  const [account] = await tx
+    .select()
+    .from(billingAccounts)
+    .where(eq(billingAccounts.clubId, sub.clubId));
   const chosen = sub.scheduledPlanId ? selectionOf(sub) : null;
   const paid = chosen
-    ? await isPaid(tx, plansOf(chosen.planId, chosen.addOnPlanIds), sub.currency, chosen.billingPeriod)
+    ? await isPaid(
+        tx,
+        plansOf(chosen.planId, chosen.addOnPlanIds),
+        sub.currency,
+        chosen.billingPeriod,
+      )
     : false;
   const plans =
     chosen && (!paid || accountComplete(account ?? null))
@@ -787,7 +816,8 @@ async function applyUpgrade(
   const end = sub.currentPeriodEnd;
   let next = await update(tx, sub, { ...target, ...CLEARED });
   await entitlementsChanged(tx, sub.clubId);
-  if (!start || !end || end.getTime() <= now.getTime()) return startPeriod(tx, settings, next, club, now, now);
+  if (!start || !end || end.getTime() <= now.getTime())
+    return startPeriod(tx, settings, next, club, now, now);
   const period = { start, end };
   const wasPaid = await isPaid(
     tx,
@@ -796,19 +826,25 @@ async function applyUpgrade(
     sub.billingPeriod,
   );
   if (!wasPaid) return startPeriod(tx, settings, next, club, now, now);
-  // The difference per plan for [now, end).
+  // The difference for [now, end): the base plan's, and every added add-on
+  // (removing an add-on is never an upgrade, see the API).
   const [oldPrices, newPrices] = await Promise.all([
     planPrices(tx, plansOf(sub.planId, sub.addOnPlanIds), sub.currency, sub.billingPeriod),
     planPrices(tx, plansOf(target.planId, target.addOnPlanIds), sub.currency, sub.billingPeriod),
   ]);
+  const diffs: [string, number][] = [
+    [target.planId, (newPrices.get(target.planId) ?? 0) - (oldPrices.get(sub.planId) ?? 0)],
+    ...target.addOnPlanIds
+      .filter((id) => !sub.addOnPlanIds.includes(id))
+      .map((id): [string, number] => [id, newPrices.get(id) ?? 0]),
+  ];
   const lines: Omit<DraftLine, "vatRateBp">[] = [];
-  for (const planId of new Set([...newPrices.keys(), ...oldPrices.keys()])) {
-    const diff = (newPrices.get(planId) ?? 0) - (oldPrices.get(planId) ?? 0);
+  for (const [planId, diff] of diffs) {
     if (diff <= 0) continue;
     const amount = prorate(diff, period, now, club.timeZone);
     if (amount === 0) continue;
     lines.push({
-      descriptionKey: `plan.upgrade`,
+      descriptionKey: "plan.upgrade",
       planId,
       quantity: 1,
       unitMinor: amount,
@@ -857,12 +893,7 @@ async function renew(
 }
 
 /** Reminders and the status steps of overdue invoices (decision 8). */
-async function dun(
-  tx: Tx,
-  sub: Subscription,
-  club: ClubFacts,
-  now: Date,
-): Promise<void> {
+async function dun(tx: Tx, sub: Subscription, club: ClubFacts, now: Date): Promise<void> {
   const overdue = await tx
     .select()
     .from(billingInvoices)

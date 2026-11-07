@@ -56,7 +56,8 @@ export interface TaskDependencies {
   /** Privacy jobs (P1.8a): the retention handle and the installation's periods. */
   privacy?: PrivacyJobOptions | undefined;
   /** Billing on (P1.13): the ledger's settings and the invoice email; without it no billing jobs. */
-  billing?: { settings: LedgerSettings; send: Omit<SendDependencies, "db" | "storage"> } | undefined;
+  billing?:
+    { settings: LedgerSettings; send: Omit<SendDependencies, "db" | "storage"> } | undefined;
 }
 
 /** Does nothing; used to check that jobs are picked up. */
@@ -145,7 +146,10 @@ function billingTasks(deps: TaskDependencies): TaskList {
       storage: deps.storage ?? null,
       ...deps.billing.send,
     }),
-    "billing:retention": billingRetentionTask(deps.privacy?.retentionDb ?? null, deps.storage ?? null),
+    "billing:retention": billingRetentionTask(
+      deps.privacy?.retentionDb ?? null,
+      deps.storage ?? null,
+    ),
   };
 }
 
@@ -234,4 +238,7 @@ export const crontab = [
  * at 04:41 UTC (trials, changes, invoices, dunning) and the retention of
  * accounting records on 2 January at 03:29 UTC.
  */
-export const BILLING_CRONTAB = ["41 4 * * * billing:daily ?fill=2d", "29 3 2 1 * billing:retention ?fill=7d"].join("\n");
+export const BILLING_CRONTAB = [
+  "41 4 * * * billing:daily ?fill=2d",
+  "29 3 2 1 * billing:retention ?fill=7d",
+].join("\n");

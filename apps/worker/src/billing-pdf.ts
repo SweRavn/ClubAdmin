@@ -201,7 +201,11 @@ export function renderInvoicePdf(doc: InvoiceDocument, locale: Locale): Promise<
   y += 10;
   pdf.font("Helvetica").fontSize(10);
   if (b.vatNote !== "none") {
-    pdf.text(label(locale, b.vatNote === "reverse_charge" ? "reverseCharge" : "outsideScope"), left, y);
+    pdf.text(
+      label(locale, b.vatNote === "reverse_charge" ? "reverseCharge" : "outsideScope"),
+      left,
+      y,
+    );
     y += 16;
   }
   if (doc.kind === "invoice" && doc.ocrReference && doc.totalMinor > 0) {
