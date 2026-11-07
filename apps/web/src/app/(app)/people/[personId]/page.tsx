@@ -16,6 +16,7 @@ import { GuardianRow, RightsFields } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
 import { PersonConsents } from "../../../../components/person-consents.tsx";
+import { ClubProtectionPanel, ProtectionControls } from "../../../../components/protection.tsx";
 import {
   getClubGroups,
   getClubGuardians,
@@ -147,6 +148,19 @@ export default async function PersonPage({ params, searchParams }: Props) {
           clubId={profile.club.clubId}
           href={`/people/${personId}/history?clubId=${profile.club.clubId}`}
         />
+      ) : null}
+      {/* Protected identity (P1.12): the viewer is told that views are logged. */}
+      {profile.viewsLogged && !profile.protection?.canChangeGlobal ? (
+        <p className="rounded-md bg-surface px-3 py-2 text-sm" data-testid="views-logged">
+          {t("protection.viewsLogged")}
+        </p>
+      ) : null}
+      {profile.person.protected ? (
+        <p className="text-sm">
+          <a href="/help/protected-identity" className="underline">
+            {t("protection.help")}
+          </a>
+        </p>
       ) : null}
       {rows.length > 0 ? (
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
@@ -429,6 +443,28 @@ export default async function PersonPage({ params, searchParams }: Props) {
         </section>
       ) : null}
       {profile.club ? <PersonConsents personId={personId} clubId={profile.club.clubId} /> : null}
+      {profile.protection?.canChangeGlobal ? (
+        <section aria-labelledby="person-protection" className="space-y-2">
+          <h2 id="person-protection" className="text-lg font-semibold">
+            {t("protection.name")}
+          </h2>
+          <ProtectionControls
+            personId={personId}
+            protection={profile.protection}
+            ward={profile.person.id !== me.personId}
+          />
+          <a href={`/people/${personId}/access-log`} className="text-sm underline">
+            {t("protection.accessLogOf")}
+          </a>
+        </section>
+      ) : null}
+      {profile.club && profile.protection?.canChangeClub ? (
+        <ClubProtectionPanel
+          personId={personId}
+          clubId={profile.club.clubId}
+          protection={profile.protection}
+        />
+      ) : null}
     </div>
   );
 }

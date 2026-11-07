@@ -131,6 +131,12 @@ export async function AppFrame({ children }: { children: ReactNode }) {
     },
     { kind: "link", key: "calendar", label: t("userMenu.calendar"), href: "/me/calendar" },
     { kind: "link", key: "privacy", label: t("userMenu.privacy"), href: "/me/privacy" },
+    {
+      kind: "link",
+      key: "protection",
+      label: t("userMenu.protection"),
+      href: "/me/protection",
+    },
     { kind: "link", key: "sessions", label: t("userMenu.sessions"), href: "/me/sessions" },
     { kind: "separator", key: "sep" },
     { kind: "submit", key: "logout", label: t("userMenu.logout"), form: LOGOUT_FORM },

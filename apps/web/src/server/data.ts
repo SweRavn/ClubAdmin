@@ -18,6 +18,7 @@ import {
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
   ClubPrivacySchema,
+  ClubProfileViewsSchema,
   ClubSearchResultSchema,
   ClubWaitlistsSchema,
   ConsentTextVersionsSchema,
@@ -70,6 +71,7 @@ import {
   PersonConsentsSchema,
   PersonProfileSchema,
   PrivacyPolicySchema,
+  ProfileViewPageSchema,
   PushDeviceListSchema,
   RegisterFacetsSchema,
   RegisterPageSchema,
@@ -277,6 +279,17 @@ export const getPerson = cache((personId: string, clubId: string | null) =>
     `/api/v1/people/${requireId(personId)}${clubId && isUuid(clubId) ? `?clubId=${clubId}` : ""}`,
     PersonProfileSchema,
   ),
+);
+
+// Protected identity (P1.12): who opened a profile, the club's log.
+export const getAccessLog = cache((personId: string, cursor: string | null) =>
+  required(
+    `/api/v1/people/${requireId(personId)}/access-log${cursor && isUuid(cursor) ? `?cursor=${cursor}` : ""}`,
+    ProfileViewPageSchema,
+  ),
+);
+export const getClubProfileViews = cache((clubId: string, query: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/profile-views?${query}`, ClubProfileViewsSchema),
 );
 
 /** All of a club's groups (for the tree; clubs have tens, rarely hundreds). */

@@ -39,6 +39,11 @@ export default async function AccountPage() {
           </a>
         </li>
         <li>
+          <a href="/me/protection" className="text-accent underline" data-testid="me-protection">
+            {t("userMenu.protection")}
+          </a>
+        </li>
+        <li>
           <a href="/me/privacy" className="text-accent underline" data-testid="me-privacy">
             {t("userMenu.privacy")}
           </a>

@@ -114,10 +114,17 @@ const FAMILY_ACTIONS: Record<string, FormAction> = {
         body: addChildInput((name) => text(form, name), {
           kind: text(form, "kind") === "legal_guardian" ? "legal_guardian" : "parent",
           ...(pin ? { personalIdentityNumber: { country: country || "SE", value: pin } } : {}),
+          // P1.12: created protected; the guardian is asked to protect themselves too.
+          ...(text(form, "protectedIdentity") === "1" ? { protectedIdentity: true } : {}),
         }),
       };
     },
-    done: (form) => withParam(back(form, "/me/family"), "added", "1"),
+    done: (form) => {
+      const path = withParam(back(form, "/me/family"), "added", "1");
+      return text(form, "protectedIdentity") === "1"
+        ? withParam(path, "protectedChild", "1")
+        : path;
+    },
   },
   "invite-guardian": {
     call: (form) => {
@@ -1454,6 +1461,42 @@ const PRIVACY_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+/** Protected identity (P1.12): the flags and the club's logging mode. */
+const PROTECTION_ACTIONS: Record<string, FormAction> = {
+  "set-protection": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      const value = text(form, "protected");
+      if (!personId || (value !== "1" && value !== "0")) return null;
+      const clubId = id(form, "clubId");
+      return {
+        path: `/api/v1/people/${personId}/protection${clubId ? `?clubId=${clubId}` : ""}`,
+        method: "PUT",
+        body: { protected: value === "1" },
+      };
+    },
+    done: (form) => {
+      const on = text(form, "protected") === "1";
+      const path = withParam(back(form), "protection", on ? "on" : "off");
+      // A guardian who protected a child is asked to protect themselves too.
+      return on && text(form, "ward") === "1" ? withParam(path, "protectedChild", "1") : path;
+    },
+  },
+  "set-profile-view-logging": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const mode = text(form, "mode");
+      if (!clubId || (mode !== "protected_only" && mode !== "all")) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/profile-view-logging`,
+        method: "PUT",
+        body: { mode },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+};
+
 /** Calendar subscriptions (P1.11): creating and new links go through app/actions/calendar-feed. */
 const CALENDAR_ACTIONS: Record<string, FormAction> = {
   "rename-calendar-feed": {
@@ -1481,6 +1524,7 @@ const CALENDAR_ACTIONS: Record<string, FormAction> = {
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
   ...CALENDAR_ACTIONS,
+  ...PROTECTION_ACTIONS,
   ...PRIVACY_ACTIONS,
   ...NOTIFICATION_ACTIONS,
   ...CLUB_ACTIONS,

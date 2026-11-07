@@ -104,6 +104,24 @@ export default async function ClubPage({ params, searchParams }: Params) {
               {t("audit.title")}
             </a>
           ) : null}
+          {permissions.includes("club.profile_views.read") ? (
+            <>
+              <a
+                href={`/clubs/${club.id}/protected`}
+                className="text-sm text-accent underline"
+                data-testid="club-protected-link"
+              >
+                {t("protection.protectedMembers")}
+              </a>
+              <a
+                href={`/clubs/${club.id}/profile-views`}
+                className="text-sm text-accent underline"
+                data-testid="club-profile-views-link"
+              >
+                {t("protection.profileViews")}
+              </a>
+            </>
+          ) : null}
         </div>
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm">
           <dt className="text-muted">{t("club.timeZone")}</dt>

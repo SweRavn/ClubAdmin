@@ -11,6 +11,7 @@ import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
 import { ActionForm, buttonClass, inputClass } from "../../../../components/action-form.tsx";
+import { DismissibleHint } from "../../../../components/dismissible-hint.tsx";
 import {
   ageOf,
   GuardianRow,
@@ -18,10 +19,12 @@ import {
   PendingInvitations,
 } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
+import { ProtectionControls } from "../../../../components/protection.tsx";
 import {
   getFamilyDuplicates,
   getMe,
   getMyWards,
+  getPerson,
   getTrustedPeople,
   getWardGuardians,
 } from "../../../../server/data.ts";
@@ -57,10 +60,15 @@ export default async function FamilyPage({ searchParams }: Props) {
   const children = mine.wards.filter((w) => isFullGuardianshipKind(w.kind));
   const sharedWithMe = mine.wards.filter((w) => isLinkedGuardianshipKind(w.kind));
   // One read per child (a family has a handful).
-  const [guardians, shared] = await Promise.all([
+  const [guardians, shared, childProfiles, myProfile] = await Promise.all([
     Promise.all(children.map((w) => getWardGuardians(w.person.id))),
     Promise.all(sharedWithMe.map((w) => getWardGuardians(w.person.id))),
+    // The protection state per child (P1.12; a family has a handful).
+    Promise.all(children.map((w) => getPerson(w.person.id, null))),
+    getPerson(me.personId, null),
   ]);
+  const meProtected = myProfile.protection?.global === true;
+  const childProtected = children.some((w) => w.protectedIdentity === true);
   const notice = NOTICES.find((key) => typeof query[key] === "string");
   const protectedLabel = t("protected.tooltip");
   const date = (value: string) => new Date(value);
@@ -75,6 +83,34 @@ export default async function FamilyPage({ searchParams }: Props) {
             ? t("family.notices.acceptedProtected")
             : t(`family.notices.${notice}`)}
         </Notice>
+      ) : null}
+
+      {query.protection === "on" ? <Notice>{t("protection.turnedOn")}</Notice> : null}
+      {query.protection === "off" ? <Notice>{t("protection.turnedOff")}</Notice> : null}
+      {/* Protected identity (P1.12): a guardian's name can reveal the child. */}
+      {childProtected && !meProtected ? (
+        query.protectedChild ? (
+          <div
+            className="space-y-2 rounded-md border border-protected bg-protected-soft p-3"
+            data-testid="protect-yourself"
+          >
+            <p>{t("protection.protectYourself")}</p>
+            <ActionForm action="set-protection">
+              <input type="hidden" name="personId" value={me.personId} />
+              <input type="hidden" name="protected" value="1" />
+              <button type="submit" className={buttonClass} data-testid="protect-yourself-confirm">
+                {t("protection.protectYourselfAction")}
+              </button>
+            </ActionForm>
+          </div>
+        ) : (
+          <DismissibleHint storageKey="protect-yourself-hint" hideLabel={t("protection.hide")}>
+            <p>{t("protection.guardianHint")}</p>
+            <a href="/me/protection" className="underline">
+              {t("protection.protectYourselfAction")}
+            </a>
+          </DismissibleHint>
+        )
       ) : null}
 
       {duplicates.pairs.length > 0 || duplicates.merges.length > 0 ? (
@@ -185,6 +221,14 @@ export default async function FamilyPage({ searchParams }: Props) {
                   rights: ward.rights.map((r) => t(enumKey("guardianRights", r))).join(", "),
                 })}
               </p>
+              {childProfiles[index]?.protection ? (
+                <ProtectionControls
+                  personId={ward.person.id}
+                  protection={childProfiles[index].protection}
+                  ward
+                  testId="ward-protection"
+                />
+              ) : null}
               <h4 className="font-medium">
                 {t("family.guardiansOf", { name: personLabel(ward.person) })}
               </h4>
@@ -363,6 +407,18 @@ export default async function FamilyPage({ searchParams }: Props) {
               <option value="SE">{t("family.addChild.countries.SE")}</option>
               <option value="NO">{t("family.addChild.countries.NO")}</option>
             </select>
+          </label>
+          <label className="flex items-start gap-2 sm:col-span-2">
+            <input
+              type="checkbox"
+              name="protectedIdentity"
+              value="1"
+              data-testid="add-child-protected"
+            />
+            <span>
+              <span className="font-medium">{t("protection.addChild")}</span>
+              <span className="block text-sm text-muted">{t("protection.addChildHint")}</span>
+            </span>
           </label>
           <label className="block space-y-1">
             <span className="text-sm">{t("family.addChild.iAm")}</span>

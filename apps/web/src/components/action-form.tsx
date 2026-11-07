@@ -36,6 +36,8 @@ const NOTICE_PARAMS = [
   "error",
   "removed",
   "created",
+  "protection",
+  "protectedChild",
   "decided",
   "requested",
   "updated",
