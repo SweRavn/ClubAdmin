@@ -39,6 +39,8 @@ import {
   RESPONSE_MODES,
   RESPONSE_STATUSES,
   WAITLIST_MODES,
+  WAITLIST_PRIORITY_REASONS,
+  WAITLIST_REMOVAL_REASONS,
   zonedTime,
 } from "@clubadmin/shared";
 
@@ -990,7 +992,14 @@ const GROUP_ACTIONS: Record<string, FormAction> = {
       return {
         path: `/api/v1/groups/${groupId}/members`,
         method: "POST",
-        body: { personId, function: fn, overCapacity: text(form, "overCapacity") === "on" },
+        body: {
+          personId,
+          function: fn,
+          overCapacity: text(form, "overCapacity") === "on",
+          ...(text(form, "queueBypassReason")
+            ? { queueBypassReason: text(form, "queueBypassReason").slice(0, 500) }
+            : {}),
+        },
       };
     },
     done: (form) => `/groups/${text(form, "groupId")}/manage?member=added`,
@@ -1050,6 +1059,116 @@ const GROUP_ACTIONS: Record<string, FormAction> = {
 // Club settings (P1.6b, club managers with a second factor): time zone,
 // language, contact details; the phone numbers as rows (phone.N.label,
 // phone.N.number, phone.N.order; empty rows are left out).
+/** Waiting lists (P1.10b): applying, answering offers, the owners' decisions. */
+const entryPath = (form: FormData, what = "") => {
+  const groupId = id(form, "groupId");
+  const entryId = id(form, "entryId");
+  return groupId && entryId ? `/api/v1/groups/${groupId}/waitlist/${entryId}${what}` : null;
+};
+const ownerDone = (flag: string) => (form: FormData) =>
+  `/groups/${text(form, "groupId")}/waitlist?updated=${flag}`;
+const turnFields = (form: FormData) => ({
+  ...(text(form, "outOfOrderReason")
+    ? { outOfOrderReason: text(form, "outOfOrderReason").slice(0, 500) }
+    : {}),
+  ...(text(form, "overCapacity") === "on" ? { overCapacity: true } : {}),
+});
+
+const WAITLIST_ACTIONS: Record<string, FormAction> = {
+  "apply-waitlist": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const personId = id(form, "personId");
+      if (!groupId || !personId) return null;
+      const note = text(form, "note").slice(0, 500);
+      return {
+        path: `/api/v1/groups/${groupId}/waitlist`,
+        method: "POST",
+        body: { personId, ...(note ? { note } : {}) },
+      };
+    },
+    done: () => "/me/waitlists?updated=applied",
+  },
+  "withdraw-waitlist": {
+    call: (form) => {
+      const entryId = id(form, "entryId");
+      return entryId ? { path: `/api/v1/me/waitlists/${entryId}/withdraw`, method: "POST" } : null;
+    },
+    done: () => "/me/waitlists?updated=withdrawn",
+  },
+  "accept-offer": {
+    call: (form) => {
+      const entryId = id(form, "entryId");
+      return entryId ? { path: `/api/v1/me/waitlists/${entryId}/accept`, method: "POST" } : null;
+    },
+    done: () => "/me/waitlists?updated=accepted",
+  },
+  "decline-offer": {
+    call: (form) => {
+      const entryId = id(form, "entryId");
+      return entryId ? { path: `/api/v1/me/waitlists/${entryId}/decline`, method: "POST" } : null;
+    },
+    done: () => "/me/waitlists?updated=declined",
+  },
+  "update-waitlist-entry": {
+    call: (form) => {
+      const path = entryPath(form);
+      if (!path) return null;
+      const priority = Number(text(form, "priority") || "0");
+      if (!Number.isInteger(priority) || priority < 0 || priority > 100) return null;
+      return {
+        path,
+        method: "PATCH",
+        body: {
+          priority,
+          priorityReason:
+            priority > 0 ? oneOf(WAITLIST_PRIORITY_REASONS, text(form, "priorityReason")) : null,
+          ownerNote: text(form, "ownerNote").slice(0, 500) || null,
+        },
+      };
+    },
+    done: ownerDone("updated"),
+  },
+  "offer-place": {
+    call: (form) => {
+      const path = entryPath(form, "/offer");
+      if (!path) return null;
+      const days = Number(text(form, "replyDays"));
+      return {
+        path,
+        method: "POST",
+        body: {
+          ...(Number.isInteger(days) && days >= 1 && days <= 60 ? { replyDays: days } : {}),
+          ...turnFields(form),
+        },
+      };
+    },
+    done: ownerDone("offered"),
+  },
+  "withdraw-offer": {
+    call: (form) => {
+      const path = entryPath(form, "/withdraw-offer");
+      return path ? { path, method: "POST" } : null;
+    },
+    done: ownerDone("offerWithdrawn"),
+  },
+  "admit-entry": {
+    call: (form) => {
+      const path = entryPath(form, "/admit");
+      return path ? { path, method: "POST", body: turnFields(form) } : null;
+    },
+    done: ownerDone("admitted"),
+  },
+  "remove-entry": {
+    call: (form) => {
+      const path = entryPath(form, "/remove");
+      const reason = oneOf(WAITLIST_REMOVAL_REASONS, text(form, "reason"));
+      return path && reason ? { path, method: "POST", body: { reason } } : null;
+    },
+    done: ownerDone("removed"),
+  },
+};
+
 const CLUB_ACTIONS: Record<string, FormAction> = {
   "update-club-settings": {
     call: (form) => {
@@ -1341,6 +1460,7 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
   ...NOTIFICATION_ACTIONS,
   ...CLUB_ACTIONS,
   ...GROUP_ACTIONS,
+  ...WAITLIST_ACTIONS,
   ...ACTIVITY_ACTIONS,
   ...EVENT_ACTIONS,
   "complete-profile": {

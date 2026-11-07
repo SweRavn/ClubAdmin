@@ -36,3 +36,10 @@ place. Waiting lists themselves follow in P1.10b (ADR 0043).
 authorization model has `owner_of(group)` and inherits through the group
 hierarchy. Waiting-list positions must be computed efficiently (index on
 `(group_id, status, priority desc, queued_at)`).
+
+**Amendment (P1.10b).** The waiting lists are specified in ADR 0043: the
+status machine, occupied places (members, offers out and accepted entries),
+offers expiring at the end of the reply day in the club's time zone,
+auto-offers by the `waitlists:offers` job, reasons for anyone skipped,
+admission through the club membership and join requests, and the position
+lookup for applicants.

@@ -270,6 +270,18 @@ export default async function ManageGroupPage({ params, searchParams }: Props) {
                             {t("groupAdmin.overCapacity")}
                           </label>
                         ) : null}
+                        {fn === "member" && (group.waitingCount ?? 0) > 0 ? (
+                          <label className="flex flex-col gap-1 text-sm">
+                            {t("waitlist.queueBypassReason", { count: group.waitingCount ?? 0 })}
+                            <input
+                              name="queueBypassReason"
+                              required
+                              maxLength={500}
+                              className={inputClass}
+                              data-testid="queue-bypass-reason"
+                            />
+                          </label>
+                        ) : null}
                         <button
                           type="submit"
                           className={secondaryButtonClass}

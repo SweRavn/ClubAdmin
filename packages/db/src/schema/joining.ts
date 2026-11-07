@@ -15,9 +15,9 @@ import {
   type JoinPolicy,
   type JoinRequestStatus,
   WAITLIST_CLOSED_REASONS,
+  WAITLIST_PRIORITY_REASONS,
   WAITLIST_STATUSES,
   type WaitlistClosedReason,
-  WAITLIST_PRIORITY_REASONS,
   type WaitlistPriorityReason,
   type WaitlistStatus,
 } from "@clubadmin/shared";

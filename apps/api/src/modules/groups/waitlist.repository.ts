@@ -3,7 +3,7 @@
 // (priority DESC, queued_at, id) everywhere (group_waitlist_entries_order_idx);
 // places come from app.group_places (members, offers, accepted entries).
 
-import { and, eq, inArray, schema, sql, type Tx } from "@clubadmin/db";
+import { and, eq, inArray, schema, type SQL, sql, type Tx } from "@clubadmin/db";
 import {
   OPEN_WAITLIST_STATUSES,
   type WaitlistClosedReason,
@@ -152,38 +152,25 @@ export interface OwnerListRow {
   awaitingClub: boolean;
 }
 
-/**
- * A page of the group's waiting list for its owners. Open entries in queue
- * order (keyset on priority DESC, queued_at, id; the order index), the
- * position counted per waiting entry on the same index; closed entries of
- * the last 12 months newest first (keyset on decided time, id). Filters:
- * birth year, fit with the group's gender category.
- */
-export async function ownerList(
-  tx: Tx,
+export type OwnerListAnchor = {
+  priority: number;
+  queued_at: string;
+  closed_at: string;
+  id: string;
+};
+
+/** The owners' list statement (a page; the plan test explains it). */
+export function ownerListQuery(
   groupId: string,
   query: {
     status: "open" | "closed";
     birthYear: number | null;
     fitsGender: boolean;
-    cursor: string | null;
     limit: number;
   },
-): Promise<{ rows: OwnerListRow[]; cursorFound: boolean }> {
+  anchor: OwnerListAnchor | null,
+): SQL {
   const open = query.status === "open";
-  let anchor: { priority: number; queued_at: string; closed_at: string; id: string } | undefined;
-  if (query.cursor) {
-    const { rows } = await tx.execute<{
-      priority: number;
-      queued_at: string;
-      closed_at: string;
-      id: string;
-    }>(sql`
-      SELECT priority, queued_at::text, coalesce(decided_at, updated_at)::text AS closed_at, id
-      FROM public.group_waitlist_entries WHERE id = ${query.cursor} AND group_id = ${groupId}`);
-    anchor = rows[0];
-    if (!anchor) return { rows: [], cursorFound: false };
-  }
   const statusFilter = open
     ? sql`e.status IN ('waiting', 'offered', 'accepted')`
     : sql`e.status NOT IN ('waiting', 'offered', 'accepted')
@@ -200,28 +187,7 @@ export async function ownerList(
       WHEN g.gender_category IS NULL OR g.gender_category IN ('mixed', 'open') THEN true
       WHEN p.gender IS NULL THEN NULL
       ELSE p.gender = g.gender_category END`;
-  const { rows } = await tx.execute<{
-    id: string;
-    person_id: string;
-    requested_by_person_id: string;
-    status: WaitlistStatus;
-    position: number | null;
-    birth_year: number | null;
-    fits_birth_years: boolean | null;
-    fits_gender: boolean | null;
-    queued_at: string;
-    priority: number;
-    priority_reason: WaitlistPriorityReason | null;
-    applicant_note: string | null;
-    owner_note: string | null;
-    offered_at: string | null;
-    offer_expires_at: string | null;
-    auto_offer: boolean;
-    out_of_order_reason: string | null;
-    closed_reason: WaitlistClosedReason | null;
-    decided_at: string | null;
-    awaiting_club: boolean;
-  }>(sql`
+  return sql`
     WITH g AS MATERIALIZED (
       SELECT birth_year_from, birth_year_to, gender_category FROM public.groups WHERE id = ${groupId}
     )
@@ -254,7 +220,62 @@ export async function ownerList(
       ${query.birthYear === null ? sql`` : sql`AND extract(year FROM p.birth_date)::int = ${query.birthYear}`}
       ${query.fitsGender ? sql`AND (${fitsGender}) IS TRUE` : sql``}
     ORDER BY ${order}
-    LIMIT ${query.limit}`);
+    LIMIT ${query.limit}`;
+}
+
+/**
+ * A page of the group's waiting list for its owners. Open entries in queue
+ * order (keyset on priority DESC, queued_at, id; the order index), the
+ * position counted per waiting entry on the same index; closed entries of
+ * the last 12 months newest first (keyset on decided time, id). Filters:
+ * birth year, fit with the group's gender category.
+ */
+export async function ownerList(
+  tx: Tx,
+  groupId: string,
+  query: {
+    status: "open" | "closed";
+    birthYear: number | null;
+    fitsGender: boolean;
+    cursor: string | null;
+    limit: number;
+  },
+): Promise<{ rows: OwnerListRow[]; cursorFound: boolean }> {
+  let anchor: OwnerListAnchor | undefined;
+  if (query.cursor) {
+    const { rows } = await tx.execute<{
+      priority: number;
+      queued_at: string;
+      closed_at: string;
+      id: string;
+    }>(sql`
+      SELECT priority, queued_at::text, coalesce(decided_at, updated_at)::text AS closed_at, id
+      FROM public.group_waitlist_entries WHERE id = ${query.cursor} AND group_id = ${groupId}`);
+    anchor = rows[0];
+    if (!anchor) return { rows: [], cursorFound: false };
+  }
+  const { rows } = await tx.execute<{
+    id: string;
+    person_id: string;
+    requested_by_person_id: string;
+    status: WaitlistStatus;
+    position: number | null;
+    birth_year: number | null;
+    fits_birth_years: boolean | null;
+    fits_gender: boolean | null;
+    queued_at: string;
+    priority: number;
+    priority_reason: WaitlistPriorityReason | null;
+    applicant_note: string | null;
+    owner_note: string | null;
+    offered_at: string | null;
+    offer_expires_at: string | null;
+    auto_offer: boolean;
+    out_of_order_reason: string | null;
+    closed_reason: WaitlistClosedReason | null;
+    decided_at: string | null;
+    awaiting_club: boolean;
+  }>(ownerListQuery(groupId, query, anchor ?? null));
   const date = (v: string | null) => (v === null ? null : new Date(v));
   return {
     cursorFound: true,

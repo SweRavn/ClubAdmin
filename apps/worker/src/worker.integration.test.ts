@@ -35,8 +35,8 @@ import { readBackupMetrics } from "./tasks/backup-metrics.ts";
 import { flagAdultWards, notifyOwnLoginAge } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 import { deleteExpiredJoiningData } from "./tasks/joining.ts";
-import { runWaitlistOffers } from "./tasks/waitlists.ts";
 import { expireMemberExports, purgeMemberImports, runMemberExport } from "./tasks/members.ts";
+import { runWaitlistOffers } from "./tasks/waitlists.ts";
 
 let t: TestDatabase;
 const logger = graphileLogger(

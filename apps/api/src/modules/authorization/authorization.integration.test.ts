@@ -1049,10 +1049,10 @@ describe("reads", () => {
       "club.members.export",
       "club.members.add",
       "club.members.import",
-      "club.waitlists.read",
       "club.activities.read",
       "club.events.read",
       "club.guardians.manage",
+      "club.waitlists.read",
       "club.join_requests.manage",
       "club.invitations.manage",
     ]);

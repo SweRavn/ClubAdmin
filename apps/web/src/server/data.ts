@@ -18,6 +18,7 @@ import {
   ClubGuardiansSchema,
   ClubPrivacySchema,
   ClubSearchResultSchema,
+  ClubWaitlistsSchema,
   ConsentTextVersionsSchema,
   DataExportsPageSchema,
   DecisionsPageSchema,
@@ -34,6 +35,7 @@ import {
   GroupListSchema,
   GroupMemberListSchema,
   GroupSeasonListSchema,
+  GroupWaitlistSchema,
   GuardianInvitationLookupSchema,
   HistoryPageSchema,
   InvitationListSchema,
@@ -63,6 +65,7 @@ import {
   MyWardsSchema,
   NotificationListSchema,
   NotificationSettingsResponseSchema,
+  OpenGroupsSchema,
   PersonConsentsSchema,
   PersonProfileSchema,
   PrivacyPolicySchema,
@@ -82,6 +85,7 @@ import {
   TrustedPeopleSchema,
   UnreadCountSchema,
   VersionResponseSchema,
+  WaitlistSummarySchema,
   WardErasurePreviewSchema,
   WardGuardiansSchema,
   type z,
@@ -617,4 +621,21 @@ export const getGroupSeasons = cache((groupId: string) =>
 );
 export const getClubSeasons = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/seasons`, SeasonListSchema),
+);
+
+// Waiting lists (P1.10b).
+export const getGroupWaitlist = cache((groupId: string, query: string) =>
+  required(`/api/v1/groups/${requireId(groupId)}/waitlist?${query}`, GroupWaitlistSchema),
+);
+export const getWaitlistSummary = cache((groupId: string) =>
+  required(`/api/v1/groups/${requireId(groupId)}/waitlist/summary`, WaitlistSummarySchema),
+);
+export const getClubWaitlists = cache((clubId: string, cursor: string | null) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/waitlists${cursor ? `?cursor=${requireId(cursor)}` : ""}`,
+    ClubWaitlistsSchema,
+  ),
+);
+export const getOpenGroups = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/open-groups`, OpenGroupsSchema),
 );

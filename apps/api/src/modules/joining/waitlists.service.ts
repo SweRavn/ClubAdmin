@@ -25,8 +25,8 @@ import {
 } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
-import { ProblemError } from "../../platform/http/problem-error.ts";
 import { actorPersonId } from "../../platform/domain/run.ts";
+import { ProblemError } from "../../platform/http/problem-error.ts";
 import type { AccountsService } from "../accounts/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import type {

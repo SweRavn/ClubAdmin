@@ -73,6 +73,14 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         current: pathname.startsWith(`/clubs/${club.id}/join-requests`),
       });
     }
+    if (club.mine?.permissions.includes("club.waitlists.read")) {
+      nav.push({
+        key: "waitlists",
+        href: `/clubs/${club.id}/waitlists`,
+        label: t("waitlist.clubTitle"),
+        current: pathname.startsWith(`/clubs/${club.id}/waitlists`),
+      });
+    }
     if (club.mine?.permissions.includes("club.invitations.manage")) {
       nav.push({
         key: "invitations",

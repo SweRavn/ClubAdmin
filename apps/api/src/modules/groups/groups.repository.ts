@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { and, eq, inArray, isNull, schema, sql, type Tx } from "@clubadmin/db";
-import type { WaitlistClosedReason, WaitlistStatus } from "@clubadmin/shared";
+import type { WaitlistClosedReason } from "@clubadmin/shared";
 
 const { groups, groupOwners, seasons, groupSeasons, groupWaitlistEntries } = schema;
 

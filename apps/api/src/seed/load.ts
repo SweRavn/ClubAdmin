@@ -150,6 +150,20 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
       FROM le AS e
       JOIN group_memberships AS gm ON gm.group_id = e.group_id AND gm.function = 'member'
       JOIN guardianships AS gu ON gu.ward_person_id = gm.person_id;
+    -- Waiting lists (P1.10b): every second team has a waiting list of 20
+    -- children of the club (12 places), the first two with offers that
+    -- expired yesterday (for waitlists:offers to close).
+    UPDATE groups SET admission_mode = 'waitlist', capacity = 12
+      WHERE id IN (SELECT id FROM lg WHERE g % 2 = 0);
+    INSERT INTO group_waitlist_entries (club_id, group_id, person_id, requested_by_person_id, status,
+                                        queued_at, offered_at, offer_expires_at)
+      SELECT g.club_id, g.id, p.id, p.id, CASE WHEN k <= 2 THEN 'offered' ELSE 'waiting' END,
+             now() - make_interval(days => 200 - k * 5),
+             CASE WHEN k <= 2 THEN now() - interval '8 days' END,
+             CASE WHEN k <= 2 THEN now() - interval '1 day' END
+      FROM lg AS g CROSS JOIN generate_series(1, 20) AS k
+      JOIN lp AS p ON p.club_id = g.club_id AND p.n = 100 + k
+      WHERE g.g % 2 = 0;
     -- Notifications (P1.7): five per child to its parent, one every 18 days
     -- over the last 90 (IDs follow the time, as the worker's do); the latest
     -- unread; a push and a daily-email delivery for those of the last 30 days.

@@ -23,7 +23,6 @@ import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
-import { waitlistOffersTask } from "./waitlists.ts";
 import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
 import {
   applyDecisionsTask,
@@ -34,6 +33,7 @@ import {
   protectionChangedTask,
   purgeMemberTask,
 } from "./privacy.ts";
+import { waitlistOffersTask } from "./waitlists.ts";
 
 export interface TaskDependencies {
   db: Database;

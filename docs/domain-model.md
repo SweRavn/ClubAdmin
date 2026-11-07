@@ -329,37 +329,59 @@ and functions, run its waiting list, manage its chat rooms and calendar.
 - `group_owners`: `group_id`, `person_id`, `assigned_by_person_id`,
   `valid_from`, `valid_to`.
 
-### Waiting lists (ADR 0019)
+### Waiting lists (ADR 0019, ADR 0043)
 `group_waitlist_entries`: `group_id`, `person_id`, `requested_by_person_id`
 (e.g. guardian), `status` (`waiting`, `offered`, `accepted`, `declined`,
-`expired`, `admitted`, `withdrawn`, `removed`), `queued_at`,
-`priority` (optional: e.g. sibling, returning member), `offer_expires_at`,
-`applicant_note`, `owner_note` (owners only), `out_of_order_reason`,
-`decided_by_person_id`, `decided_at`. (Schema since P0.5; behaviour P1.10.)
-- **Getting on the list:** a member (or guardian for a child) applies to a
-  group that is full or has `admission_mode = waitlist`. Non-members can join a
-  waiting list from the club's public page after signing up; this also creates
-  a club join request.
-- **Order:** priority, then `queued_at`. Applicants see their own position
-  ("you are number 3"); owners see the full list with filters (birth year,
-  gender category, waiting time).
-- **Admitting:** an owner either admits directly or sends an **offer** that the
-  person/guardian accepts or declines within `offer_reply_days`. Expired
-  offers move on automatically to the next person if the owner enabled
-  auto-offers.
-- Admission creates the group membership and, if the person is not yet a club
-  member, the club membership (club setting `group_owners_admit_to_club`,
-  default on; otherwise a manager/registrar approves).
-- **Fairness:** admitting someone out of order requires a reason, which is
-  audited and visible to club managers.
-- A person can be on several waiting lists at once.
-- Closed entries are deleted after 12 months (retention).
-- **My waiting lists** (P1.6b, `GET /me/waitlists`): the caller's and their
-  wards' open entries with the place in the queue (1 = next, none while an
-  offer is out) and the number waiting, and their pending join requests
-  with the preferred groups. The applicant reads only their own entries
-  (`own_relationships`); the queue and the group's name are read in a
-  tenant transaction of each club they wait in.
+`expired`, `admitted`, `withdrawn`, `removed`), `queued_at`, `priority` with
+`priority_reason` (`sibling`, `returning_member`, `other`; required when the
+priority is above 0), `offered_at`, `offered_by_person_id` (null: an
+auto-offer), `offer_expires_at`, `applicant_note` (for the owners, no health
+information), `owner_note` (owners only, never shown to the applicant),
+`out_of_order_reason`, `decided_by_person_id`, `decided_at`, `closed_reason`
+(a code), `join_request_id` (the pending join request made with a
+non-member's application). Groups have `waitlist_auto_offer`; a group
+membership added past people waiting has `queue_bypass_reason` (P1.10b).
+- **Applying:** a member, or a guardian with `act_on_behalf` for a child,
+  applies to a group with `admission_mode = waitlist`, or `direct` when it is
+  full (`closed` refuses). Someone outside the club finds the club's publicly
+  visible waiting lists in the club search (`GET /clubs/{id}/open-groups`)
+  and applies; this also creates (or reuses) a pending join request with the
+  group as preference, in the same transaction. `invite_only` clubs answer
+  404 to outsiders.
+- **Order and places:** priority, then `queued_at`. Occupied places are open
+  `member` functions, offers out and accepted entries; the capacity is this
+  season's, else the group's own. Applicants see only their own position
+  ("Number 2 of 5"); owners see the full list with filters (birth year, fit
+  with the group's gender category) and waiting time.
+- **Deciding:** an owner offers a place (it expires at the end of the reply
+  day in the club's time zone), withdraws an offer (back in line), admits
+  directly or removes with a reason the applicant is told. Skipping anyone
+  waiting ahead needs a reason; so does adding a member directly while people
+  wait. Both are audited and listed for club managers and registrars.
+- **Answering:** the applicant (or a guardian with `act_on_behalf`) accepts
+  or declines an offer before it expires; declining closes the entry
+  (applying again starts at the back). Leaving withdraws the entry; the last
+  open entry made with a join request also withdraws the request.
+- **Admission** creates the group membership. Someone outside the club is
+  admitted to the club too when `group_owners_admit_to_club` is on (default;
+  their join request is approved); otherwise the entry becomes `accepted`,
+  holds its place, and approving the join request admits it, rejecting it
+  closes the person's entries in the club (`join_request_rejected`).
+- **Auto-offers:** with `waitlist_auto_offer`, the `waitlists:offers` job
+  (every five minutes) offers free places to the next in line, never out of
+  order; it also closes expired offers (`expired`).
+- A person can be on several waiting lists at once. Leaving the club closes
+  their open entries there (`left_club`), archiving a group its entries
+  (`group_archived`).
+- **Legal basis:** the application (steps before a membership at the data
+  subject's request). Closed entries are deleted 12 months after they closed
+  (`joining:retention`); erasure clears the notes.
+- **My waiting lists** (`GET /me/waitlists`, `/me/waitlists` on the web):
+  the caller's and their wards' entries, open ones and those closed in the
+  last 12 months, with the place in the queue (1 = next, none while an offer
+  is out), the number waiting and the offer's deadline; and their pending
+  join requests. The entries are read through `own_relationships`, the
+  positions through `app.waitlist_positions`, in one transaction.
 
 ### `club_role_assignments`
 Club-level roles: `chair`, `vice_chair`, `treasurer`, `secretary`,
@@ -783,6 +805,8 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `group.owners.manage` | group | club managers; owners if the club allows co-owners |
 | `group.members.read` | group | managers, registrars, owners; for active groups also everyone in the group, guardians (with `act_on_behalf`) of its members, support access |
 | `group.members.manage` | group | club managers, owners |
+| `group.waitlist.manage` | group | the waiting list (P1.10b): club managers, owners of the group or a parent group (archived groups: club managers only); not leaders who are not owners, registrars, members or guardians |
+| `club.waitlists.read` | club | all waiting lists and the out-of-turn decisions: club managers and registrars; not owners or board roles |
 | `person.profile.read` | person (`?clubId`) | the person and their guardians with `act_on_behalf`; in the club: managers and registrars, owners and leaders of the person's groups, and (unless the person is protected) people in the same group, their guardians, support access |
 | `person.profile.update` | person | the person, guardians with `act_on_behalf` |
 | `person.protection.set` | person | global flag: the person, guardians with `act_on_behalf` (the service requires a parent or legal guardian); club flag (`?clubId`): club managers, with MFA |

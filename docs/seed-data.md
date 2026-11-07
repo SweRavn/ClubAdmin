@@ -34,7 +34,9 @@ This document describes the same data in prose and tables; keep both in step.
   (`app.seed_time`), and their validity is backdated without history rows of
   its own. Only a database in seed mode (`app_meta.seed_mode`, written by
   `db:seed`/`db:reset` as superuser) honours this; production never has it.
-- **Rows written directly** (waiting lists, join requests, club invitations,
+- **Rows written directly** (waiting lists with their past offers and
+  decisions, P1.10b: an entry outside the club is linked to its pending join
+  request as applying does today; join requests, club invitations,
   consents, employments, support grants): rows are inserted in a transaction
   of the acting persona, so history records who did it. Johan's application
   last year goes through the join-request service (requested, then approved
@@ -124,12 +126,12 @@ synthetic organisation number 802000-0009 and two phone numbers ("Kansli",
 | Club | Group (kind) | Owners | Admission | Members |
 |---|---|---|---|---|
 | SVK | Minivolley (training group, ages 7–8) | Sara | `direct` | 6 generated; Elsa played here until half a year ago |
-| SVK | F2017 (team, girls ~9 yrs), capacity 10 | Erik, Sara | `waitlist`, **full**: 5 waiting incl. Viktor (#2), one **offer outstanding** (expires in 3 days), one admitted out of order with a reason (sibling) | Elsa, Maja, Alva, + 7 generated |
+| SVK | F2017 (team, girls ~9 yrs), capacity 10 | Erik, Sara | `waitlist`, **full**, shown in the club search: 5 waiting incl. Viktor (#2), one **offer outstanding** (expires in 3 days), one admitted out of order with a reason (sibling, priority reason `sibling`), one offer expired yesterday | Elsa, Maja, Alva, + 7 generated |
 | SVK | Herr senior (team) | Johan | `direct` | Johan, Lars, + 4 generated (one with **club-level protected identity** set by Anna) |
 | IKN | Fotboll (section) | Karin | — | parent of P2012 |
 | IKN | P2012 (team, boys ~14 yrs) | Ahmed, **Peter** (co-owner appointed by Ahmed: IKN lets owners appoint co-owners, P1.10a) | `direct` | Oskar, Liam, + 6 generated |
 | IKN | Innebandy (section) | — | — | parent of F2015 |
-| IKN | F2015 (training group, girls ~11 yrs) | **none** (managers act) | `waitlist`, not full, 1 waiting | Maja, Nadia, + 5 generated |
+| IKN | F2015 (training group, girls ~11 yrs) | **none** (managers act) | `waitlist`, not full, **auto-offers on**, 1 waiting (the `waitlists:offers` job offers it a place within five minutes) | Maja, Nadia, + 5 generated |
 | IKN | Styrelsen (board) | Karin | `closed` | board members |
 | FIL | J2014 (team, girls ~12 yrs) | Lars | `direct` | Ingrid, + 5 generated (Sofie has applied); a veteran added by Lars as **team manager** (P1.10a) |
 | FIL | Veteran (team, adults) | Lars | `direct` | Lars, + 4 generated |
@@ -186,7 +188,10 @@ Ahmed is Liam's parent; Liam, like Oskar, was created as a child and got his
 own login (half a year ago). The waiting list of F2017 has five waiting, one
 outstanding offer (expires in 3 days), one admitted out of order ("sibling
 already plays in the group") and one offer that a system job expired
-yesterday. Seeded now as data only, for modules that come later: background
+yesterday. Henrik sees "Number 2 of 5" for Viktor on `/me/waitlists`; Erik
+(owner) sees the list in order with the offer out on the group's waiting
+list page; Sara (club manager) sees the out-of-turn admission with its
+reason on the club's waiting lists page (P1.10b). Seeded now as data only, for modules that come later: background
 checks (clearances), billing plans, chat rooms and the anonymisation
 schedule (Ola left two years ago).
 

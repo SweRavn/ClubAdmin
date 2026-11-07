@@ -31,3 +31,9 @@ put people in danger, so the rule must be impossible to forget in new features.
 visibility decision is computed in bulk per request, from the cached
 relationship set and a cached set of protected IDs per club). Every feature
 prompt must include a protected-identity section, and the prompt template has it.
+
+**Amendment (P1.10b, ADR 0043).** Waiting lists: owners of the group or a
+parent group, club managers and registrars may see an applicant on that
+group's waiting list (a protected applicant with the icon), as managers see
+join-request applicants; nobody else sees applicants, and the waiting count
+includes them. Applicants see only their own position and the count.

@@ -128,7 +128,12 @@ export type EnumNamespace =
   | "events.questionTypes"
   | "events.registrationStatus"
   | "groupForm.genderCategories"
-  | "groupForm.admissionModes";
+  | "groupForm.admissionModes"
+  | "history.closedReasons"
+  | "history.priorityReasons"
+  | "waitlist.statuses"
+  | "waitlist.removalReasons"
+  | "waitlist.decisionKinds";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

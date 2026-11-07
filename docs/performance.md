@@ -54,6 +54,7 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 | Calendar feed (`.ics`) request, p95 | < 50 ms (served from precomputed schedule, ETag/`304`) |
 | Backups | No effect on the API budgets above (pgBackRest with 2 processes, zstd); measured under the load scenario: [#14](https://github.com/SweRavn/ClubAdmin/issues/14) |
 | Restore (RTO planning) | < 30 minutes for a 10 GB database (docs/operations/backup-restore.md) |
+| Waiting lists (P1.10b) | The owners' list of a group with 500 entries < 100 ms (order index, keyset); the summary one grouped statement; `/me/waitlists` with positions < 50 ms (one `app.waitlist_positions` call); offer, admit, accept < 200 ms; `waitlists:offers` set-based, one statement to expire and one to offer per club with work, < 1 s on the load scenario; query plans in `waitlist-plans.integration.test.ts`, request budgets for the reads |
 | History panels, first page (P1.9) | < 300 ms p95; club-wide changes and the audit log < 500 ms p95 (volume tests, Nightly; ADR 0042) |
 
 ## Design rules

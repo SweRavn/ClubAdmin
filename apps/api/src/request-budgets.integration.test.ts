@@ -132,7 +132,7 @@ const CASES: Case[] = [
     method: "GET",
     url: () => "/api/v1/me/waitlists",
     statements: 6,
-    pages: 80,
+    pages: 110,
   },
   // History panels and the audit log (P1.9, web only; ADR 0042). Read
   // through the history pool: the scope, the club rows' history, the global

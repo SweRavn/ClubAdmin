@@ -48,3 +48,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0040](0040-responsiveness.md) | Responsiveness: request budgets independent of hardware, one connection per request, cache-first apps | Accepted |
 | [0041](0041-privacy.md) | Privacy: consents per purpose, leaving without open assignments, board-decided settings, retention as its own role | Accepted |
 | [0042](0042-history-views.md) | History views: who reads history, the column policy, isolation from the everyday paths | Accepted |
+| [0043](0043-waiting-lists.md) | Waiting lists: capacity, offers, admission and positions | Accepted |

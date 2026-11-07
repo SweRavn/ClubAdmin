@@ -64,6 +64,13 @@ export default async function FindClubPage({ searchParams }: Props) {
                   {t(enumKey("joinPolicies", club.joinPolicy))}
                 </span>
               </div>
+              <a
+                href={`/clubs/find/${club.id}`}
+                className="mt-2 inline-block text-accent underline"
+                data-testid={`open-groups-${club.id}`}
+              >
+                {t("waitlist.openGroups")}
+              </a>
               <details className="mt-2">
                 <summary className="cursor-pointer text-accent">{t("findClub.ask")}</summary>
                 <ActionForm action="request-join" className="mt-3 space-y-3">

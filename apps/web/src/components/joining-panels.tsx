@@ -93,17 +93,15 @@ export async function InProgress() {
     getMyWaitlists(),
   ]);
   const pending = requests.items.filter((r) => r.status === "pending");
+  // Open places only; closed ones are on /me/waitlists (P1.10b).
+  const entries = waitlists.entries.filter((e) =>
+    ["waiting", "offered", "accepted"].includes(e.status),
+  );
   const pendingCreations = creations.items.filter((r) => r.status === "pending");
   const preferred = new Map(
     waitlists.joinRequests.map((r) => [r.id, r.preferredGroups.map((g) => g.name)]),
   );
-  if (
-    pending.length +
-      pendingCreations.length +
-      handovers.incoming.length +
-      waitlists.entries.length ===
-    0
-  ) {
+  if (pending.length + pendingCreations.length + handovers.incoming.length + entries.length === 0) {
     return null;
   }
   return (
@@ -163,27 +161,32 @@ export async function InProgress() {
             </ActionForm>
           </li>
         ))}
-        {waitlists.entries.map((e) => (
+        {entries.map((e) => (
           <li
             key={e.id}
             className="flex flex-wrap items-center gap-3 px-4 py-3"
             data-testid="waitlist-entry"
           >
             <span>
-              {e.position === null
+              {e.status === "offered"
                 ? t("pending.waitlistOffered", {
                     person: personLabel(e.person),
                     group: e.group.name,
                     club: e.club.name,
                   })
-                : t("pending.waitlist", {
-                    person: personLabel(e.person),
-                    group: e.group.name,
-                    club: e.club.name,
-                    position: e.position,
-                    waiting: e.waiting,
-                  })}
+                : e.position === null
+                  ? `${e.group.name} (${e.club.name}): ${t("waitlist.awaitingClub")}`
+                  : t("pending.waitlist", {
+                      person: personLabel(e.person),
+                      group: e.group.name,
+                      club: e.club.name,
+                      position: e.position,
+                      waiting: e.waiting,
+                    })}
             </span>
+            <a href="/me/waitlists" className="ml-auto underline" data-testid="waitlist-link">
+              {e.status === "offered" ? t("waitlist.accept") : t("waitlist.myTitle")}
+            </a>
           </li>
         ))}
         {pendingCreations.map((r) => (

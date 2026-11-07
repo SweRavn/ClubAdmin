@@ -100,6 +100,33 @@ export default async function GroupPage({ params, searchParams }: Params) {
         {query.saved ? <Notice>{t("groupForm.saved")}</Notice> : null}
         {query.updated ? <Notice>{t("groupForm.updated")}</Notice> : null}
         {query.archived ? <Notice>{t("groupAdmin.archived")}</Notice> : null}
+        {group.canManageWaitlist || (group.admissionMode === "waitlist" && !group.archived) ? (
+          <p className="mt-2 flex flex-wrap items-center gap-2">
+            {group.canManageWaitlist ? (
+              <a
+                href={`/groups/${group.id}/waitlist`}
+                className={secondaryButtonClass}
+                data-testid="group-waitlist-link"
+              >
+                {t("waitlist.tab")}
+              </a>
+            ) : null}
+            {group.admissionMode === "waitlist" && !group.archived ? (
+              <a
+                href={`/clubs/find/${group.clubId}?group=${group.id}`}
+                className={secondaryButtonClass}
+                data-testid="group-join-waitlist"
+              >
+                {t("waitlist.join")}
+              </a>
+            ) : null}
+            {group.waitingCount !== undefined ? (
+              <span className="text-sm text-muted" data-testid="group-waiting-count">
+                {t("waitlist.groupWaiting", { count: group.waitingCount })}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
         {!group.canManage && (group.canManageMembers || group.canManageOwners) ? (
           <p className="mt-2">
             <a
