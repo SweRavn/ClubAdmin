@@ -37,3 +37,27 @@ parent group, club managers and registrars may see an applicant on that
 group's waiting list (a protected applicant with the icon), as managers see
 join-request applicants; nobody else sees applicants, and the waiting count
 includes them. Applicants see only their own position and the count.
+
+**Amendment (2026-11-07, P1.12).**
+- **Flags in the UI.** The person or a full guardian turns the global flag on
+  with one confirmation and off behind a recent login; a guardian may remove
+  a child's flag only if they set it (or the one who did is no longer a full
+  guardian), so the other parent cannot remove it quietly. Club managers set
+  the club flag with a second factor. Every change notifies the affected
+  clubs' managers by email and in the inbox, never naming the person.
+- **Profile view log.** The access log is a table of its own
+  (`profile_views`, one row per club, viewer, viewed person, surface and day
+  with a count), not audit events. Views of protected people are always
+  logged; **a club may log every profile view**, and then every member sees
+  who opened their profile and the profile pages say so. The person and full
+  guardians read their log across clubs; club managers read the club's log
+  with a second factor. Someone who leaves a club stops being named in its
+  log (viewer or viewed), also after a restore (the anonymisation ledger,
+  ADR 0030).
+- **Chat (rules for Phase 2).** A protected person is never added to a room
+  automatically; the room's owner may offer it; the person, or a full
+  guardian for a child below `consent_age`, accepts or declines, optionally
+  with a display name per club; members then see only that name or the real
+  name, as chosen; leaving or withdrawing shows their past messages' author as
+  "a member with protected identity"; removing protection adds them to no
+  rooms. The tables come with chat.

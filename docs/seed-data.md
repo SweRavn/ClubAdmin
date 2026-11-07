@@ -171,8 +171,8 @@ club has roughly 10 named/central users plus generated players.
 | 20 | **Platform Operator** | — | yes | Operator account with **no** club access; one time-limited support grant to IKN |
 | 21 | **Emma Svensson** | 29 | yes | **Signed up without invitation, no club yet** → onboarding screen (find club / create club) |
 | 22 | **Henrik Malm** | 36 | yes | Self-signed-up, added his son **Viktor Malm** (8, no login, no email) via "Add child"; Viktor is **#2 on SVK F2017's waiting list**, which also created a pending club join request |
-| 23 | **Samira Karimi** | 39 | yes | Guardian of Nadia; **protected identity** (global, self-set); accepted the IKN F2015 "Föräldrar" chat room only |
-| 24 | **Nadia Karimi** | 11 | no | IKN F2015; **protected identity** set by Samira → invisible to other members, crossed-camera icon for leaders/managers, not in chats, no photo/stream tagging |
+| 23 | **Samira Karimi** | 39 | yes | Guardian of Nadia; **protected identity** (global, self-set); sees in Nadia's **access log** who opened her profile (P1.12); the chat room acceptance waits for chat (Phase 2) |
+| 24 | **Nadia Karimi** | 11 | no | IKN F2015; **protected identity** set by Samira → invisible to other members, crossed-camera icon for leaders/managers, not in chats, no photo/stream tagging; her **access log** shows Erik twice last week and Karin yesterday |
 | 25 | **Jonas Karimi** | 41 | yes | Second guardian of Nadia, **invited** as guardian by Samira (pending), prompted to enable protection |
 | 26 | **Camilla Dahl** | 40 | yes | Mother of Sofie; applied for her in FIL (join request with J2014 as preferred group) |
 | 27 | **Viktor Malm** | 8 | no | Son of Henrik (see 22): #2 on SVK F2017's waiting list, pending join request |
@@ -301,6 +301,19 @@ schedule (Ola left two years ago).
   and the Streaming add-on; SVK on Standard with Streaming (active), IKN on
   Free (active), FIL in a Standard trial ending in ten days. With billing off
   the demo has no billing data (`apps/api/src/seed/steps/billing.ts`).
+- **Protected identity and the profile view log** (P1.12,
+  `apps/api/src/seed/steps/protection.ts`): Samira's and Nadia's global flags
+  are set by Samira through the service (set by Samira). In IKN, Erik (F2015
+  assistant coach) opened Nadia's profile twice last week and Karin
+  (manager) once yesterday; Karin opened Samira's once: Samira sees them in
+  Nadia's access log, Karin in IKN's log. SVK logs every profile view (set
+  by Anna): Johan (registrar) opened Elsa's and Alva's profiles last week,
+  so Anna and Sara see it in their children's logs; Johan and Sara each
+  opened the generated SVK Herr senior player who is protected in the club
+  (set by Anna). Ola, who left SVK, opened Elsa's profile before leaving and
+  appears only as "a former member" (an anonymisation ledger entry). Anna set
+  and removed club protection on Lars last year (two history rows and audit
+  events; Lars is not protected now). The load scenario has no extra views.
 - **Calendar feeds** (P1.11, `apps/api/src/seed/steps/calendar.ts`): Anna
   has a "My schedule" feed for Elsa and Oskar
   (`/cal/demo-anna-my-schedule.ics`), Erik subscribes to the F2017 group

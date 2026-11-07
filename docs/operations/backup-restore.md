@@ -109,6 +109,11 @@ from the hosted service — the anti-lock-in promise.
   every entry (`privacy.replay_deletion_ledger`); `privacy.unerased_people()`
   must then be empty. `pnpm ops:restore` and `pnpm ops:verify-backup` do this
   themselves; otherwise `pnpm ops:replay-ledger`.
+- The **anonymisation ledger** (P1.12, `privacy.anonymization_ledger`: person,
+  club and scope of each anonymisation, e.g. someone who left a club stops
+  being named in its profile view log) is exported in the same file (entries
+  with `"kind": "anonymization"`) and replayed by the same function after the
+  erasures; the CI drill checks it. Its entries are deleted after 13 months.
 
 ## Implementation (P0.11)
 

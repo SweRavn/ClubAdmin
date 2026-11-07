@@ -56,6 +56,7 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 | Restore (RTO planning) | < 30 minutes for a 10 GB database (docs/operations/backup-restore.md) |
 | Waiting lists (P1.10b) | The owners' list of a group with 500 entries < 100 ms (order index, keyset); the summary one grouped statement; `/me/waitlists` with positions < 50 ms (one `app.waitlist_positions` call); offer, admit, accept < 200 ms; `waitlists:offers` set-based, one statement to expire and one to offer per club with work, < 1 s on the load scenario; query plans in `waitlist-plans.integration.test.ts`, request budgets for the reads |
 | Calendar feeds (P1.11) | A feed (`GET /cal/<secret>.ics`) < 50 ms p95: one lookup by hash, the owner's relationship set from Valkey, one schedule statement for the family (up to 3,000 entries, 30 days back and 370 ahead) or one read of `schedule_entries` by group or club, rendered body cached 60 s in Valkey (`CALENDAR_FEED_CACHE_SECONDS`), `ETag`/`304`; `last_fetched_at` written at most hourly; `calendar:retention` two statements on partial indexes |
+| Protected identity (P1.12) | The flag PUTs < 150 ms (one lock, one update, audit and outbox); a profile view adds one upsert (`app.record_profile_view`); the person's access log < 50 ms for 50 rows (one function call on `profile_views_viewed_idx`, roles and names per club on the page); the club log < 100 ms for 50 rows with 100,000 rows in the club (`profile_views_club_idx`; query plans in `profile-views-plans.integration.test.ts`); anonymising a leaver one statement per role column |
 | History panels, first page (P1.9) | < 300 ms p95; club-wide changes and the audit log < 500 ms p95 (volume tests, Nightly; ADR 0042) |
 
 ## Design rules
@@ -167,6 +168,8 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   | History of a member, group, activity (P1.9) | 8, 6, 7 | 334 → 713, 154 → 193, 95 → 138 |
   | Club-wide changes, audit log (P1.9) | 4, 4 | 40 → 51, 20 → 33 |
   | `GET /me/calendar-feeds` (P1.11) | 2 | 3 → 4 |
+  | `GET /people/:id` (with the view log and the protection state, P1.12) | 7 | 67 → 86 |
+  | `GET /people/:id/access-log`, `GET /clubs/:id/profile-views` (P1.12) | 3, 4 | 15 → 16, 9 → 20 |
   | A "My schedule" feed, a group feed (rendered, no cache; P1.11) | 6, 10 | 138 → 227, 174 → 305 |
 
   History reads go to their own pool (ADR 0042); their pages are mostly one

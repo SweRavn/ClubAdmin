@@ -135,6 +135,8 @@
 | Notification deliveries (which channel, when, provider ticket; no texts or addresses; retention: `notification_deliveries`) | 30 days |
 | Push devices (sealed Expo push token, platform; retention: `push_devices`) | Until logout, Expo reports the token unregistered, or 90 days after last use |
 | People without a login and without any relationship (retention: `orphaned_people`) | Kept `ORPHAN_RETENTION_MONTHS` (an installation setting, default 36, at least 12) after their last relationship ended and every club purged them, in case a club or a guardian links them again; then erased (`privacy.erase_person`, worker `privacy:retention`). A new relationship clears the mark. Accounts with a login are never erased automatically (P1.8a) |
+| Profile view log (P1.12: who opened whose profile, per club, viewer, viewed person and day, with a count; IDs, dates and counts only; retention: `profile_views`) | 24 months after the last view (worker `privacy:profile_views`, daily). Views of protected people are always logged, every view in a club that chose "log every profile view". Legal basis: the club's legitimate interest in securing its register (for protected people also the duty of care); members are told on the profile pages. When someone no longer has any relationship to a club (no membership, also of a ward, role, group function or employment), the club's rows stop naming them, as viewer or viewed (`privacy:anonymize_profile_views` and the daily catch-up); erasure does the same in every club |
+| Anonymisation ledger (P1.12: person and club IDs of anonymisations, applied again after a restore like the deletion ledger and exported next to the backups; retention: `anonymization_ledger`) | 13 months, longer than any backup (worker `privacy:profile_views`) |
 | Calendar subscriptions (P1.11: owner, scope, label, the hash of the secret, last fetch; retention: `calendar_feeds`) | Until the owner removes or replaces them; a feed no calendar app fetched for 12 months is revoked and the owner told; revoked feeds are deleted 30 days later (worker `calendar:retention`). Only the SHA-256 hash of the secret is stored (redacted in the history); feed and answer-link paths are redacted from logs and traces. Feeds carry no attendee names, only the owner's own family by name (protected wards as initials) |
 | Restorable club profiles (retention: `restorable_club_profiles`, planned) | Deferred from P1.8 |
 | Backups (retention: `backups`) | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
@@ -144,6 +146,14 @@
 People with protected personal data are hidden from other members, excluded
 from public pages, photos and streams, have no stored postal address, and every
 view of their profile is logged. See `domain-model.md` and ADR 0022.
+
+The profile view log (P1.12) is personal data about the viewer and the viewed
+person. Legal basis: the club's legitimate interest in securing its register
+(for protected people also the duty of care). Members are told on the profile
+pages when views are logged; the person and their full guardians can read who
+opened their profile. Only IDs, dates and counts are stored, never what was
+shown. Rows naming someone who left the club are anonymised (also again after a
+restore, through the anonymisation ledger); retention in the table above.
 
 ## Children
 

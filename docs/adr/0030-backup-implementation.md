@@ -70,3 +70,12 @@ restores to a point before the erasure, where the production ledger is
 merged when reachable. The ledger export lists erased person IDs next to the
 backups; they are pseudonymous IDs without data. Object lock cannot be
 tested in development (Garage has none); the check reports it.
+
+**Amendment (2026-11-07, P1.12).** The ledger export also carries the
+anonymisation ledger (`privacy.anonymization_ledger`: person, club and scope
+of each anonymisation, entries with `"kind": "anonymization"` and the time in
+`erased_at`); `privacy.replay_deletion_ledger` inserts those entries and
+applies them after the erasures, so someone who left a club is not named in
+its profile view log again after a restore. Old exports without `kind` are
+deletions as before. The CI drill checks an anonymisation made after the
+restore point.

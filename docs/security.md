@@ -169,7 +169,15 @@ later phase. Backup and disaster recovery are in
   (lint rule `clubadmin/person-names-in-presenters`); rosters read
   `app.visible_group_members`, which hides protected persons unless the
   transaction is marked privileged; every view of a protected person's
-  profile by someone else is audited (`person.protected.viewed`).
+  profile by someone else is logged in the profile view log (P1.12,
+  `profile_views`; before P1.12 as the audit event `person.protected.viewed`,
+  copied in by migration 0026). Who reads it: the person and full guardians
+  (all clubs, `app.profile_view_log` refuses anyone else) and club managers
+  with a second factor (their club). Turning protection off needs a login in
+  the last 15 minutes; the club flag needs a second factor both ways.
+  Residual window: other users' apps may show a newly protected person from
+  their persisted cache until their next fetch (on foreground and after
+  login); the web holds no person cache.
 
 ### Data protection
 - TLS 1.3 everywhere (Caddy), HSTS preload, internal traffic on a private

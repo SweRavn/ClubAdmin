@@ -495,8 +495,27 @@ who must not be exposed.
   guardian for a child; applies in all clubs) **or**
   `club_profiles.protected_identity_club` (set by a club manager when the club
   has been informed; applies in that club).
-- Only the person/guardian (global flag) or a club manager (club flag) can
-  remove it; every change is audited and notifies club managers.
+- **Who sets and removes it (P1.12):** the person or a full guardian (parent,
+  legal guardian) sets the global flag (`PUT /people/:id/protection`; no
+  step-up to turn it on, a login in the last 15 minutes to turn it off);
+  `people.protected_identity_set_by_person_id`/`_set_at` record who and when.
+  **Removal rule:** a full guardian may remove a child's flag only if they set
+  it, or the guardian who did is no longer an active full guardian; otherwise
+  `protection_removal_not_allowed` (audited as
+  `person.protection.removal_refused`). The person removes their own flag
+  from the strictest `consent_age` of their clubs' country packs. A club
+  manager with a second factor sets and removes the club flag
+  (`?clubId=`; `club_profiles.protected_identity_club_set_by_person_id`/
+  `_set_at`); setting it stops sharing `address` with the club. "Add child"
+  can create the child protected. Every change is audited
+  (`person.protection.changed`) and every active club manager of the affected
+  clubs is notified without the person's name (`member.protection.changed`:
+  the club; for the global flag every club where the person or a ward of
+  theirs is a member); when a guardian removes a child's flag the other full
+  guardians are notified (`family.protection.removed`). The profile shows
+  the state (`protection`) to the person, full guardians and, with
+  `clubId`, club managers only; the register filters `protected=only` with
+  the source (global, club, both).
 - **Who can see a protected person:** the person, their family (guardians and
   wards), club managers, registrars, and the owners (including owners of parent
   groups) and leaders of groups the person belongs to (they must run
@@ -507,16 +526,35 @@ who must not be exposed.
   attendance/response lists, event participant lists, car pools, search,
   history/audit actor names, chat member lists, photos or streams. Counts may
   include them ("12 attending") without identity.
-- **Chat and other shared spaces:** never added automatically. They (or their
-  guardian) get an invitation and appear only in rooms they explicitly accept,
-  optionally under a chosen display name.
+- **Chat and other shared spaces (rules for Phase 2 chat, ADR 0022):** a
+  protected person is never added to a room automatically, also not by
+  joining a group or when protection is removed later; the room's owner may
+  *offer* the room; the person, or a full guardian for a child below
+  `consent_age`, accepts or declines, optionally with a display name per club
+  (never their real name if they choose one); the room's members then see
+  them only by that name or the real name, as chosen; leaving, or
+  withdrawing the acceptance, shows their past messages' author as "a member
+  with protected identity".
 - **Data minimisation:** no postal address stored; no public profile; never
   in public pages, streams, photo galleries or sponsor material; excluded from
   exports to other members. Federation exports (e.g. LOK-stöd) follow the
   country pack's rules for protected persons.
 - **Guardians of a protected child** are prompted to protect themselves too
   (a parent's name can reveal the child).
-- **Access logging:** every view of a protected person's profile is logged.
+- **Profile view log (P1.12, `profile_views`):** every view of a protected
+  person's profile (or history) by someone else is logged, in every club and
+  outside clubs; a club may choose to log **every** profile view
+  (`clubs.profile_view_logging` `all`; club managers with a second factor),
+  and the profile pages then say so. One row per club, viewer, viewed person,
+  surface (`profile`, `history`) and day with a count; IDs, dates and counts
+  only. The person and full guardians read their log across clubs
+  (`GET /people/:id/access-log`); club managers with a second factor read the
+  club's log (`GET /clubs/:id/profile-views`). Viewers the reader may not see
+  appear as "someone with protected identity". When someone no longer has any
+  relationship to a club (membership, also of a ward; role; group function;
+  employment), the club's rows stop naming them, as viewer or viewed, and
+  `privacy.anonymization_ledger` records it so a restore applies it again;
+  rows go after 24 months.
 
 ### `employments`
 Person employed by a club: `title`, `starts_on`/`ends_on`, `employment_type`
