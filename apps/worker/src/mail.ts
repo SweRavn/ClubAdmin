@@ -36,6 +36,22 @@ export interface MailMessage {
   messageId: string;
   /** Extra headers (List-Unsubscribe, P1.7). */
   headers?: Record<string, string>;
+  /** Files (invoices as PDF, P1.13); together at most MAIL_ATTACHMENTS_MAX_BYTES. */
+  attachments?: readonly MailAttachment[];
+}
+
+export interface MailAttachment {
+  filename: string;
+  contentType: string;
+  content: Buffer;
+}
+
+/** The size limit of a message's attachments (most providers accept 10 MB in all). */
+export const MAIL_ATTACHMENTS_MAX_BYTES = 5 * 1024 * 1024;
+
+export function checkAttachments(attachments: readonly MailAttachment[] | undefined): void {
+  const size = (attachments ?? []).reduce((sum, a) => sum + a.content.length, 0);
+  if (size > MAIL_ATTACHMENTS_MAX_BYTES) throw new Error("mail attachments are too large");
 }
 
 export interface MailProvider {
@@ -48,6 +64,7 @@ export function smtpMailProvider(options: { url: string; from: string }): MailPr
   const domain = options.from.split("@")[1] ?? "clubadmin.invalid";
   return {
     async send(message) {
+      checkAttachments(message.attachments);
       await transport.sendMail({
         from: options.from,
         to: message.to,
@@ -55,6 +72,15 @@ export function smtpMailProvider(options: { url: string; from: string }): MailPr
         text: message.text,
         messageId: `<${message.messageId}@${domain}>`,
         ...(message.headers ? { headers: message.headers } : {}),
+        ...(message.attachments?.length
+          ? {
+              attachments: message.attachments.map((a) => ({
+                filename: a.filename,
+                contentType: a.contentType,
+                content: a.content,
+              })),
+            }
+          : {}),
       });
     },
   };
@@ -66,6 +92,7 @@ export function memoryMailProvider(): MailProvider & { sent: MailMessage[] } {
   return {
     sent,
     send(message) {
+      checkAttachments(message.attachments);
       sent.push(message);
       return Promise.resolve();
     },

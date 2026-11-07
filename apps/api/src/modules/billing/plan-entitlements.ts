@@ -73,6 +73,7 @@ export class PlanEntitlements implements EntitlementSource {
         plan: base ? { key: base.key, name: base.name } : null,
         subscriptionStatus: subscription?.status ?? null,
         trialEndsAt: subscription?.trialEndsAt ?? null,
+        pastDueSince: subscription?.pastDueSince ?? null,
       };
     });
   }

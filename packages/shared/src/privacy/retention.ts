@@ -150,7 +150,14 @@ export const RETENTION_RULES: readonly RetentionRule[] = [
     task: "calendar:retention",
     status: "implemented",
   },
-  { key: "accounting_records", period: { value: 7, unit: "years" }, status: "planned" },
+  {
+    // Billing of the service (P1.13; BILLING_ENABLED only): invoices, credit
+    // notes, lines and payments, 7 years after the end of the invoice's year.
+    key: "accounting_records",
+    period: { value: 7, unit: "years" },
+    task: "billing:retention",
+    status: "implemented",
+  },
   { key: "chat_messages", period: { value: 24, unit: "months" }, status: "planned" },
   { key: "background_checks", period: { value: 12, unit: "months" }, status: "planned" },
   { key: "restorable_club_profiles", period: { value: 60, unit: "months" }, status: "planned" },

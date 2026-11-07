@@ -420,6 +420,21 @@
       "offeredBody": "En plats på {event} ({date}) har blivit ledig och erbjuds {person}.\n\nSvara senast {deadline}, annars går platsen till nästa på väntelistan:\n{url}",
       "confirmedSubject": "{club}: {person} har fått en plats på {event}",
       "confirmedBody": "{person} har en bekräftad plats på {event} ({date}).\n\nSe evenemanget:\n{url}"
+    },
+    "billing": {
+      "invoice": {
+        "subject": "Faktura {number} från {seller}",
+        "body": "Här är faktura {number} till {club}: {amount}, förfaller {due}.\n\nBetala till bankgiro {bankgiro} med OCR-nummer {ocr}.\n\nFakturan är bifogad som PDF.{hasLink, select, yes {\n\nDu ser den också på föreningens faktureringssida (inloggning krävs):\n{url}} other {}}"
+      },
+      "reminder": {
+        "subject": "Påminnelse: faktura {number} från {seller} är förfallen",
+        "body": "Faktura {number} till {club} ({amount}) förföll {due} och är inte betald.{level, select, 2 {\n\nOm den inte betalas blir {club} skrivskyddad den {readOnlyOn}: inget raderas, och en betalning återställer allt direkt.} other {}}\n\nBetala till bankgiro {bankgiro} med OCR-nummer {ocr}. Har ni redan betalat kan ni bortse från påminnelsen.\n\nFakturan är bifogad som PDF.{hasLink, select, yes {\n\nFöreningens faktureringssida (inloggning krävs):\n{url}} other {}}"
+      },
+      "creditNote": {
+        "subject": "Kreditfaktura {number} från {seller}",
+        "body": "Här är kreditfaktura {number} till {club}: {amount}. Den krediterar faktura {credited}.\n\nKreditfakturan är bifogad som PDF.{hasLink, select, yes {\n\nFöreningens faktureringssida (inloggning krävs):\n{url}} other {}}"
+      },
+      "footer": "Det här mejlet skickades av {seller} till fakturaadressen för {club} i ClubAdmin."
     }
   },
   "profileForm": {
@@ -707,7 +722,24 @@
     "answer_link_expired": "Länken har gått ut: aktiviteten är slut eller prenumerationen borttagen.",
     "protection_removal_not_allowed": "Bara vårdnadshavaren som slog på skyddet kan slå av det. Prata med den andra vårdnadshavaren eller med föreningen.",
     "not_a_full_guardian": "Bara personen själv eller en förälder eller vårdnadshavare kan ändra detta.",
-    "recent_auth_required": "Logga in igen (de senaste 15 minuterna) för att göra detta."
+    "recent_auth_required": "Logga in igen (de senaste 15 minuterna) för att göra detta.",
+    "price_not_available": "Abonnemanget har inget pris i föreningens valuta.",
+    "paid_plan_unavailable": "Betalda abonnemang finns ännu inte för föreningar i det här landet.",
+    "billing_details_incomplete": "Fyll i föreningens faktureringsuppgifter först.",
+    "terms_not_accepted": "Godkänn villkoren för att välja ett betalt abonnemang.",
+    "payment_method_unavailable": "Betalsättet finns inte ännu.",
+    "invoice_not_found": "Fakturan finns inte.",
+    "invoice_not_open": "Fakturan är inte öppen.",
+    "payment_exceeds_balance": "Betalningen är större än det som återstår att betala.",
+    "payment_reference_used": "Bankreferensen är redan registrerad på en annan faktura.",
+    "credit_lines_invalid": "Välj vilka fakturarader som ska krediteras.",
+    "credit_exceeds_invoice": "Kreditfakturan skulle bli större än fakturan.",
+    "open_invoices": "Föreningen har öppna fakturor: registrera betalningarna eller kreditera dem först.",
+    "pdf_unavailable": "PDF:en är inte tillgänglig just nu. Försök igen om en minut.",
+    "plan_key_taken": "Det finns redan ett abonnemang med den nyckeln.",
+    "plan_not_found": "Abonnemanget finns inte eller är inte tillgängligt.",
+    "no_subscription": "Föreningen har inget abonnemang.",
+    "subscription_transition_invalid": "Abonnemanget kan inte ändras på det sättet."
   },
   "memberExport": {
     "columns": {
@@ -1749,6 +1781,36 @@
           "title": "Skyddad identitet ändrad i {club}",
           "body": "En medlems skyddade identitet slogs {change, select, on {på} other {av}}. Öppna ClubAdmin för att se vem."
         }
+      }
+    },
+    "billing": {
+      "trial": {
+        "ending": {
+          "title": "{club}: provperioden slutar {date}",
+          "body": "Välj abonnemang på faktureringssidan för att behålla funktionerna efter provperioden. Utan val flyttas föreningen till gratisnivån."
+        }
+      },
+      "invoice": {
+        "issued": {
+          "title": "{club}: {kind, select, credit_note {kreditfaktura} other {faktura}} {number}",
+          "body": "{kind, select, credit_note {En kreditfaktura på {amount} har utfärdats.} other {En faktura på {amount} har utfärdats, förfaller {date}. Den skickades till föreningens fakturaadress.}}"
+        },
+        "reminder": {
+          "title": "{club}: faktura {number} är förfallen",
+          "body": "{level, select, 2 {Fakturan på {amount} är fortfarande obetald. Föreningen blir skrivskyddad den {date} om den inte betalas.} other {Fakturan på {amount} har inte betalats. Betala den för att undvika begränsningar.}}"
+        }
+      },
+      "past_due": {
+        "title": "{club}: betalning försenad",
+        "body": "En faktura är förfallen. Medlemmarna påverkas inte ännu; se faktureringssidan."
+      },
+      "read_only": {
+        "title": "{club} är skrivskyddad",
+        "body": "En faktura är 30 dagar försenad, så föreningen är skrivskyddad. Inget raderas och exporter fungerar. En betalning återställer föreningen direkt."
+      },
+      "restored": {
+        "title": "{club} är aktiv igen",
+        "body": "Tack för betalningen. Föreningen har full åtkomst igen."
       }
     }
   },
@@ -2818,5 +2880,38 @@
     "helpView": "Den som öppnar profilen för en person med skyddad identitet loggas: personen och vårdnadshavarna kan se vem som gjorde det.",
     "openOnWeb": "Öppna på webben",
     "cancel": "Avbryt"
+  },
+  "billing": {
+    "pdf": {
+      "invoice": "Faktura",
+      "creditNote": "Kreditfaktura",
+      "number": "Fakturanummer",
+      "date": "Fakturadatum",
+      "due": "Förfallodatum",
+      "credits": "Krediterar faktura",
+      "reference": "Er referens",
+      "seller": "Från",
+      "buyer": "Till",
+      "orgNumber": "Org.nr",
+      "vatNumber": "Momsreg.nr",
+      "fTax": "Godkänd för F-skatt",
+      "description": "Beskrivning",
+      "period": "Period",
+      "vatRate": "Moms",
+      "amount": "Belopp",
+      "subtotal": "Summa exkl. moms",
+      "vat": "Moms {rate} %",
+      "total": "Att betala",
+      "reverseCharge": "Omvänd skattskyldighet.",
+      "outsideScope": "Undantaget från svensk moms (tjänsten omsätts utomlands).",
+      "proration": "del av period",
+      "payment": "Betalning",
+      "pay": "Betala {amount} till bankgiro {bankgiro} senast {due}. OCR-nummer: {ocr}",
+      "lines": {
+        "plan_month": "{plan}, månadsvis",
+        "plan_year": "{plan}, årsvis",
+        "plan_upgrade": "{plan}, uppgradering"
+      }
+    }
   }
 }

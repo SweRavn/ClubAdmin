@@ -420,6 +420,21 @@
       "offeredBody": "A place at {event} ({date}) has become free and is offered to {person}.\n\nAnswer by {deadline}, or the place goes to the next one on the waiting list:\n{url}",
       "confirmedSubject": "{club}: {person} has a place at {event}",
       "confirmedBody": "{person} has a confirmed place at {event} ({date}).\n\nSee the event:\n{url}"
+    },
+    "billing": {
+      "invoice": {
+        "subject": "Invoice {number} from {seller}",
+        "body": "Here is invoice {number} for {club}: {amount}, due {due}.\n\nPay to bankgiro {bankgiro} with the OCR reference {ocr}.\n\nThe invoice is attached as a PDF.{hasLink, select, yes {\n\nYou can also see it on the club's billing page (login required):\n{url}} other {}}"
+      },
+      "reminder": {
+        "subject": "Reminder: invoice {number} from {seller} is overdue",
+        "body": "Invoice {number} for {club} ({amount}) was due {due} and has not been paid.{level, select, 2 {\n\nIf it is not paid, {club} becomes read-only on {readOnlyOn}: nothing is deleted, and paying restores it at once.} other {}}\n\nPay to bankgiro {bankgiro} with the OCR reference {ocr}. If you have already paid, you can ignore this reminder.\n\nThe invoice is attached as a PDF.{hasLink, select, yes {\n\nThe club's billing page (login required):\n{url}} other {}}"
+      },
+      "creditNote": {
+        "subject": "Credit note {number} from {seller}",
+        "body": "Here is credit note {number} for {club}: {amount}. It corrects invoice {credited}.\n\nThe credit note is attached as a PDF.{hasLink, select, yes {\n\nThe club's billing page (login required):\n{url}} other {}}"
+      },
+      "footer": "This email was sent by {seller} to the invoice address of {club} in ClubAdmin."
     }
   },
   "profileForm": {
@@ -707,7 +722,24 @@
     "answer_link_expired": "This link has expired: the activity has ended or the subscription was removed.",
     "protection_removal_not_allowed": "Only the guardian who turned protection on can turn it off. Talk to the other guardian or to the club.",
     "not_a_full_guardian": "Only the person or a parent or legal guardian can change this.",
-    "recent_auth_required": "Log in again (within the last 15 minutes) to do this."
+    "recent_auth_required": "Log in again (within the last 15 minutes) to do this.",
+    "price_not_available": "This plan has no price in the club's currency.",
+    "paid_plan_unavailable": "Paid plans are not available for clubs in this country yet.",
+    "billing_details_incomplete": "Enter the club's billing details first.",
+    "terms_not_accepted": "Accept the terms of service to choose a paid plan.",
+    "payment_method_unavailable": "This payment method is not available yet.",
+    "invoice_not_found": "The invoice does not exist.",
+    "invoice_not_open": "The invoice is not open.",
+    "payment_exceeds_balance": "The payment is more than what is left to pay.",
+    "payment_reference_used": "This bank reference is already recorded for another invoice.",
+    "credit_lines_invalid": "Choose lines of the invoice to credit.",
+    "credit_exceeds_invoice": "The credit note would be more than the invoice.",
+    "open_invoices": "The club has open invoices: record the payments or credit them first.",
+    "pdf_unavailable": "The PDF is not available right now. Try again in a minute.",
+    "plan_key_taken": "A plan with this key exists already.",
+    "plan_not_found": "The plan does not exist or is not available.",
+    "no_subscription": "The club has no subscription.",
+    "subscription_transition_invalid": "The subscription cannot change like that."
   },
   "memberExport": {
     "columns": {
@@ -1749,6 +1781,36 @@
           "title": "Protected identity changed in {club}",
           "body": "A member's protected identity was turned {change, select, on {on} other {off}}. Open ClubAdmin to see who."
         }
+      }
+    },
+    "billing": {
+      "trial": {
+        "ending": {
+          "title": "{club}: the trial ends {date}",
+          "body": "Choose a plan on the billing page to keep the features after the trial. Without a choice the club moves to the free plan."
+        }
+      },
+      "invoice": {
+        "issued": {
+          "title": "{club}: {kind, select, credit_note {credit note} other {invoice}} {number}",
+          "body": "{kind, select, credit_note {A credit note of {amount} was issued.} other {An invoice of {amount} was issued, due {date}. It was sent to the club's invoice address.}}"
+        },
+        "reminder": {
+          "title": "{club}: invoice {number} is overdue",
+          "body": "{level, select, 2 {The invoice of {amount} is still unpaid. The club becomes read-only on {date} unless it is paid.} other {The invoice of {amount} has not been paid. Pay it to avoid restrictions.}}"
+        }
+      },
+      "past_due": {
+        "title": "{club}: payment overdue",
+        "body": "An invoice is overdue. Members are not affected yet; see the billing page."
+      },
+      "read_only": {
+        "title": "{club} is read-only",
+        "body": "An invoice is 30 days overdue, so the club is read-only. Nothing is deleted and exports still work. Paying restores the club at once."
+      },
+      "restored": {
+        "title": "{club} is active again",
+        "body": "Thank you for the payment. The club has full access again."
       }
     }
   },
@@ -2818,5 +2880,38 @@
     "helpView": "Opening the profile of a person with protected identity is logged: the person and their guardians can see who did.",
     "openOnWeb": "Open on the web",
     "cancel": "Cancel"
+  },
+  "billing": {
+    "pdf": {
+      "invoice": "Invoice",
+      "creditNote": "Credit note",
+      "number": "Number",
+      "date": "Date of issue",
+      "due": "Due date",
+      "credits": "Corrects invoice",
+      "reference": "Your reference",
+      "seller": "From",
+      "buyer": "Bill to",
+      "orgNumber": "Org. no.",
+      "vatNumber": "VAT no.",
+      "fTax": "Approved for F-tax",
+      "description": "Description",
+      "period": "Period",
+      "vatRate": "VAT",
+      "amount": "Amount",
+      "subtotal": "Total excl. VAT",
+      "vat": "VAT {rate} %",
+      "total": "Total",
+      "reverseCharge": "Reverse charge: the buyer accounts for the VAT.",
+      "outsideScope": "Outside the scope of Swedish VAT.",
+      "proration": "prorated",
+      "payment": "Payment",
+      "pay": "Pay {amount} to bankgiro {bankgiro} by {due}. OCR reference: {ocr}",
+      "lines": {
+        "plan_month": "{plan}, monthly",
+        "plan_year": "{plan}, yearly",
+        "plan_upgrade": "{plan}, upgrade"
+      }
+    }
   }
 }

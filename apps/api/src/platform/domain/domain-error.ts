@@ -206,6 +206,21 @@ export const DOMAIN_ERRORS = {
   plan_not_found: "not-found",
   no_subscription: "not-found",
   subscription_transition_invalid: "conflict",
+  // Billing (P1.13)
+  price_not_available: "conflict",
+  paid_plan_unavailable: "conflict",
+  billing_details_incomplete: "conflict",
+  terms_not_accepted: "validation",
+  payment_method_unavailable: "conflict",
+  invoice_not_found: "not-found",
+  invoice_not_open: "conflict",
+  payment_exceeds_balance: "conflict",
+  payment_reference_used: "conflict",
+  credit_lines_invalid: "validation",
+  credit_exceeds_invoice: "conflict",
+  open_invoices: "conflict",
+  pdf_unavailable: "unavailable",
+  plan_key_taken: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

@@ -9,6 +9,7 @@ import {
 import { run } from "graphile-worker";
 import { Redis } from "ioredis";
 
+import { billingSettings } from "./billing.ts";
 import { loadWorkerConfig } from "./config.ts";
 import { graphileLogger } from "./graphile-logger.ts";
 import { smtpMailProvider } from "./mail.ts";
@@ -51,6 +52,9 @@ const pushProvider =
     : config.PUSH_PROVIDER === "fake"
       ? fakePushProvider()
       : null;
+// Billing (P1.13): the ledger's settings; the configuration requires the seller in production.
+const billing = config.BILLING_ENABLED ? billingSettings(config) : null;
+
 const emailCode = {
   webUrl: config.PUBLIC_WEB_URL,
   invitationTokenKey: config.INVITATION_TOKEN_KEY,
@@ -67,11 +71,12 @@ const runner = await run({
     db,
     outboxHandlers: createOutboxHandlers({
       valkey,
-      billing: config.BILLING_ENABLED
+      billing: billing
         ? {
             hosted: config.DEPLOYMENT_MODE === "hosted",
-            defaultPlan: config.BILLING_DEFAULT_PLAN,
+            trialPlan: config.BILLING_TRIAL_PLAN ?? config.BILLING_DEFAULT_PLAN,
             trialDays: config.BILLING_TRIAL_DAYS,
+            settings: billing,
           }
         : undefined,
       mail: mailProvider ? { provider: mailProvider, ...emailCode } : undefined,
@@ -91,6 +96,16 @@ const runner = await run({
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
     storage,
+    billing: billing
+      ? {
+          settings: billing,
+          send: {
+            mail: mailProvider,
+            webUrl: config.PUBLIC_WEB_URL,
+            emailLink: config.BILLING_INVOICE_EMAIL_LINK,
+          },
+        }
+      : undefined,
     defaultCountry: config.DEFAULT_COUNTRY,
     privacy: {
       retentionDb,

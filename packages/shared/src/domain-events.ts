@@ -18,10 +18,21 @@ export const DOMAIN_EVENTS = {
   "billing.invoice.issued": z.object({ clubId: id, invoiceId: id }),
   "billing.invoice.paid": z.object({ clubId: id, invoiceId: id }),
   "billing.invoice.overdue": z.object({ clubId: id, invoiceId: id, level: z.number().int() }),
+  /** A club manager chose a plan ("selected", applied by the worker) or the ledger moved it. */
   "billing.subscription.changed": z.object({
     clubId: id,
-    change: z.enum(["trial_ending", "trial_ended", "past_due", "read_only", "restored", "renewed"]),
+    change: z.enum([
+      "selected",
+      "trial_ending",
+      "trial_ended",
+      "past_due",
+      "read_only",
+      "restored",
+      "renewed",
+    ]),
   }),
+  /** An operator asked to email an invoice again. */
+  "billing.invoice.resend_requested": z.object({ clubId: id, invoiceId: id }),
   "role.changed": z.object({ clubId: id, personId: id }),
   /** The person left the club themselves (P1.8a): tell the managers and registrars. */
   "membership.left": z.object({ clubId: id, personId: id }),

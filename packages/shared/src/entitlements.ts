@@ -124,6 +124,16 @@ export const PlanSchema = z
     active: z.boolean(),
     features: z.record(z.string(), z.boolean()),
     limits: z.record(z.string(), z.number().int().nullable()),
+    /** Active prices per currency and period (P1.13), excluding VAT. */
+    prices: z
+      .array(
+        z.object({
+          currency: z.string(),
+          period: z.enum(["month", "year"]),
+          priceMinor: z.number().int(),
+        }),
+      )
+      .optional(),
   })
   .openapi("Plan");
 export type Plan = z.infer<typeof PlanSchema>;

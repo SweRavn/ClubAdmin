@@ -317,7 +317,7 @@ describe("billing trial (club.created, hosted with billing on)", () => {
     const eventId = await t.db.withSystem("test", { clubId: club }, (tx) =>
       outbox.publish(tx, "club.created", { clubId: club }),
     );
-    const handler = billingTrialHandler({ defaultPlan: "free", trialDays: 30 });
+    const handler = billingTrialHandler({ trialPlan: "free", trialDays: 30 });
     await outbox.dispatch(t.db, eventId, [handler]);
     const { rows } = await t.query<{ status: string; days: number }>(
       "admin",

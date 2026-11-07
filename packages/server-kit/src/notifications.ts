@@ -136,6 +136,21 @@ const str = (value: unknown) =>
       : "";
 
 /** A time in the club's time zone, e.g. "tis 4 nov. 17:30". */
+/** An amount in minor units (billing notices). */
+export function formatAmount(locale: Locale, minor: unknown, currency: unknown): string {
+  if (typeof minor !== "number" || typeof currency !== "string") return "";
+  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(minor / 100);
+}
+
+/** A calendar day (billing notices: due dates, the trial's end). */
+export function formatDay(locale: Locale, iso: unknown, timeZone: unknown): string {
+  if (typeof iso !== "string" || !iso) return "";
+  const zone = typeof timeZone === "string" && timeZone ? timeZone : "Europe/Stockholm";
+  return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: zone }).format(
+    new Date(iso),
+  );
+}
+
 export function formatWhen(locale: Locale, iso: unknown, timeZone: unknown): string {
   if (typeof iso !== "string" || !iso) return "";
   const zone = typeof timeZone === "string" && timeZone ? timeZone : "Europe/Stockholm";
@@ -188,6 +203,11 @@ export function noticeLink(input: NoticeInput): string {
       return "/me/waitlists";
     case "account":
       return "/me";
+    // Billing (P1.13): the club's billing page (an invoice opened when given).
+    case "club_billing":
+      return input.clubId
+        ? `/clubs/${input.clubId}/billing${id ? `?invoice=${id}` : ""}`
+        : "/";
     // Calendar subscriptions (P1.11): the person's subscriptions page.
     case "calendar_feed":
       return "/me/calendar";
@@ -223,6 +243,11 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     closedReason: str(p.closedReason),
     /** Why a calendar subscription was revoked (P1.11): a code. */
     feedReason: str(p.feedReason),
+    /** Billing (P1.13): an invoice's number, amount and a date (due, trial end, read-only). */
+    number: str(p.number),
+    amount: formatAmount(locale, p.amountMinor, p.currency),
+    date: formatDay(locale, p.date, p.timeZone),
+    level: str(p.level ?? ""),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

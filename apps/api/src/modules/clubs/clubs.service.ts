@@ -197,17 +197,19 @@ export class ClubsService {
   /**
    * Read-only or suspended clubs keep all their data (ADR 0013). Only operators
    * (actor kind "operator") and jobs may change it; the database refuses
-   * anyone else. `tx` must be a tenant transaction for the club.
+   * anyone else. `tx` must be a tenant transaction for the club. A
+   * restriction set here is the operator's (P1.13): a payment never lifts it.
    */
   async setAccessStateInTx(tx: Tx, clubId: string, accessState: ClubAccessState): Promise<boolean> {
     const current = await this.lockClubInTx(tx, clubId);
-    if (current.accessState === accessState) return false;
-    await repo.updateClub(tx, clubId, { accessState });
+    const source = accessState === "active" ? null : "operator";
+    if (current.accessState === accessState && current.accessStateSource === source) return false;
+    await repo.updateClub(tx, clubId, { accessState, accessStateSource: source });
     await audit.record(tx, {
       action: "club.access_state.changed",
       resourceType: "club",
       resourceId: clubId,
-      changedFields: ["access_state"],
+      changedFields: ["access_state", "access_state_source"],
     });
     await outbox.publish(tx, "club.entitlements.changed", { clubId });
     return true;

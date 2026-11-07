@@ -130,6 +130,10 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "privacy.erasure.blocked",
       "calendar.feed.revoked",
       "person.protection.changed",
+      // Billing (P1.13; published only with billing on).
+      "billing.invoice.issued",
+      "billing.invoice.overdue",
+      "billing.subscription.changed",
       ...MOVED_EVENTS,
     ],
     async handle(event, tx) {
@@ -554,6 +558,16 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
         // Calendar subscriptions (P1.11): the owner is told when the system
         // revoked a feed (unused for a year, access lost); not when they
         // removed or replaced it themselves.
+        // Billing (P1.13, ADR 0045): club managers and treasurers (the trial's
+        // end: club managers) get a catalogue notice with the invoice number,
+        // amount and dates; the invoice itself goes to the invoice address.
+        case "billing.invoice.issued":
+        case "billing.invoice.overdue":
+        case "billing.subscription.changed": {
+          const notices = await billingNotices(tx, event);
+          await notify(tx, notices);
+          return;
+        }
         case "calendar.feed.revoked": {
           const { feedId, personId } = DOMAIN_EVENTS["calendar.feed.revoked"].parse(event.payload);
           const { rows } = await tx.execute<{ revoked_reason: string | null }>(sql`
@@ -821,4 +835,94 @@ async function movedShape(tx: Tx, origin: MovedOrigin): Promise<MovedShape | nul
     default:
       return null;
   }
+}
+
+/** Who gets billing notices: the club's managers, and its treasurers unless only managers. */
+async function billingRecipients(tx: Tx, clubId: string, managersOnly: boolean): Promise<string[]> {
+  const roles = managersOnly ? ["club_manager"] : ["club_manager", "treasurer"];
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT DISTINCT person_id FROM public.club_role_assignments
+    WHERE club_id = ${clubId} AND role = ANY (${`{${roles.join(",")}}`}::text[]) AND valid_to IS NULL`);
+  return rows.map((r) => r.person_id);
+}
+
+/** The notices of a billing event (none for changes nobody needs to hear about). */
+async function billingNotices(tx: Tx, event: OutboxEvent): Promise<Notice[]> {
+  const DAY = 86_400_000;
+  let clubId: string;
+  let type: NotificationType;
+  let subjectId: string | null = null;
+  let params: Record<string, unknown> = {};
+  let managersOnly = false;
+  if (event.type === "billing.invoice.issued" || event.type === "billing.invoice.overdue") {
+    const p = DOMAIN_EVENTS["billing.invoice.issued"].parse(event.payload);
+    clubId = p.clubId;
+    await useClub(tx, clubId);
+    const { rows } = await tx.execute<{
+      number: string | null;
+      kind: string;
+      total_minor: string;
+      currency: string;
+      due_at: Date | null;
+      time_zone: string;
+    }>(sql`
+      SELECT i.number, i.kind, i.total_minor, i.currency, i.due_at, c.time_zone
+      FROM billing.invoices i JOIN public.clubs c ON c.id = i.club_id
+      WHERE i.id = ${p.invoiceId}`);
+    const invoice = rows[0];
+    if (!invoice?.number) return [];
+    subjectId = p.invoiceId;
+    const level =
+      event.type === "billing.invoice.overdue"
+        ? DOMAIN_EVENTS["billing.invoice.overdue"].parse(event.payload).level
+        : 0;
+    type = event.type === "billing.invoice.overdue" ? "billing.invoice.reminder" : "billing.invoice.issued";
+    params = {
+      number: invoice.number,
+      kind: invoice.kind,
+      amountMinor: Number(invoice.total_minor),
+      currency: invoice.currency,
+      level,
+      // The due date; for the second reminder the day the club becomes read-only.
+      date: invoice.due_at
+        ? new Date(new Date(invoice.due_at).getTime() + (level >= 2 ? 30 * DAY : 0)).toISOString()
+        : null,
+      timeZone: invoice.time_zone,
+    };
+  } else {
+    const p = DOMAIN_EVENTS["billing.subscription.changed"].parse(event.payload);
+    clubId = p.clubId;
+    const types: Partial<Record<typeof p.change, NotificationType>> = {
+      trial_ending: "billing.trial.ending",
+      past_due: "billing.past_due",
+      read_only: "billing.read_only",
+      restored: "billing.restored",
+    };
+    const mapped = types[p.change];
+    if (!mapped) return [];
+    type = mapped;
+    managersOnly = p.change === "trial_ending";
+    await useClub(tx, clubId);
+    const { rows } = await tx.execute<{ trial_ends_at: Date | null; time_zone: string }>(sql`
+      SELECT s.trial_ends_at, c.time_zone FROM billing.subscriptions s
+      JOIN public.clubs c ON c.id = s.club_id WHERE s.club_id = ${clubId}`);
+    params = {
+      date:
+        p.change === "trial_ending" && rows[0]?.trial_ends_at
+          ? new Date(rows[0].trial_ends_at).toISOString()
+          : null,
+      timeZone: rows[0]?.time_zone ?? null,
+    };
+  }
+  const recipients = await billingRecipients(tx, clubId, managersOnly);
+  return recipients.map((recipientPersonId) => ({
+    recipientPersonId,
+    clubId,
+    type,
+    subjectType: "club_billing",
+    subjectId,
+    about: [],
+    params,
+    dedupeKey: `${type}:${event.idempotencyKey}:${clubId}`,
+  }));
 }

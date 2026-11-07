@@ -252,9 +252,47 @@ BEGIN
 END $$;
 CREATE TRIGGER guard_selection BEFORE UPDATE ON billing.subscriptions
   FOR EACH ROW EXECUTE FUNCTION billing.guard_subscription_selection();
--- Retention (accounting records, 7 years) deletes through the retention role.
-GRANT DELETE ON billing.invoices, billing.invoice_lines TO clubadmin_retention;
-GRANT SELECT, UPDATE ON billing.invoices, billing.invoice_lines, billing.subscriptions TO clubadmin_retention;
+-- Retention (accounting records, 7 years; billing:retention) deletes through
+-- the retention role, which sees every club (retention_access).
+GRANT SELECT, DELETE ON billing.invoices, billing.invoice_lines, billing.payments TO clubadmin_retention;
+GRANT SELECT, UPDATE ON billing.accounts TO clubadmin_retention;
+--> statement-breakpoint
+
+-- The daily billing job finds the clubs with work across clubs (a system job
+-- only, through this function), then works club by club in the club's tenant.
+CREATE POLICY billing_due_lookup ON billing.subscriptions FOR SELECT TO clubadmin_app
+  USING (app.is_system() AND app.setting('app.lookup') = 'billing_due');
+CREATE POLICY billing_due_lookup ON billing.invoices FOR SELECT TO clubadmin_app
+  USING (app.is_system() AND app.setting('app.lookup') = 'billing_due');
+CREATE FUNCTION billing.due_clubs(p_now timestamptz, p_after uuid, p_limit integer)
+  RETURNS SETOF uuid
+  LANGUAGE plpgsql VOLATILE
+  SET search_path = pg_catalog, pg_temp
+  AS $$
+BEGIN
+  PERFORM set_config('app.lookup', 'billing_due', true);
+  RETURN QUERY
+  SELECT d.club_id FROM (
+    SELECT s.club_id FROM billing.subscriptions s
+    WHERE s.status = 'trial' AND s.trial_ends_at <= p_now + interval '7 days'
+    UNION
+    SELECT s.club_id FROM billing.subscriptions s WHERE s.scheduled_effective_at <= p_now
+    UNION
+    SELECT s.club_id FROM billing.subscriptions s
+    WHERE s.status IN ('active', 'past_due', 'read_only')
+      AND (s.current_period_end IS NULL OR s.current_period_end <= p_now)
+    UNION
+    SELECT i.club_id FROM billing.invoices i
+    WHERE i.status = 'open' AND i.kind = 'invoice' AND i.due_at < p_now
+  ) d
+  WHERE p_after IS NULL OR d.club_id > p_after
+  ORDER BY d.club_id
+  LIMIT p_limit;
+  PERFORM set_config('app.lookup', '', true);
+END
+$$;
+REVOKE ALL ON FUNCTION billing.due_clubs(timestamptz, uuid, integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION billing.due_clubs(timestamptz, uuid, integer) TO clubadmin_app;
 --> statement-breakpoint
 
 -- One gapless number series per seller (credit notes in the same series):

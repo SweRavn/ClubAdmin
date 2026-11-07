@@ -21,6 +21,8 @@ import { ProblemError } from "../../platform/http/problem-error.ts";
 
 export interface ClubEntitlements extends ClubEntitlementsBase {
   accessState: ClubAccessState;
+  /** Who restricted the club (P1.13): an operator or billing (non-payment). */
+  accessStateSource: "operator" | "billing" | null;
 }
 
 /** How an endpoint treats restricted clubs (EndpointOptions.clubAccess). */
@@ -55,7 +57,7 @@ export class EntitlementsService {
 
   snapshot(clubId: string): Promise<ClubEntitlements> {
     return this.cache.get(clubId, async () => {
-      const [base, accessState] = await Promise.all([
+      const [base, { accessState, accessStateSource }] = await Promise.all([
         this.source.load(clubId),
         this.loadAccessState(clubId),
       ]);
@@ -63,7 +65,7 @@ export class EntitlementsService {
       for (const feature of Object.keys(features) as EntitlementFeature[]) {
         features[feature] = features[feature] && this.enabled[feature];
       }
-      return { ...base, features, accessState };
+      return { ...base, features, accessState, accessStateSource };
     });
   }
 
@@ -125,15 +127,27 @@ export class EntitlementsService {
       plan: club.plan,
       subscriptionStatus: club.subscriptionStatus,
       trialEndsAt: club.trialEndsAt?.toISOString() ?? null,
+      ...(this.billingEnabled
+        ? {
+            pastDueSince: club.pastDueSince?.toISOString() ?? null,
+            accessStateSource: club.accessStateSource,
+          }
+        : {}),
     };
   }
 
-  private async loadAccessState(clubId: string): Promise<ClubAccessState> {
+  private async loadAccessState(clubId: string): Promise<{
+    accessState: ClubAccessState;
+    accessStateSource: "operator" | "billing" | null;
+  }> {
     const { rows } = await this.db.withSystem("entitlements:load", { clubId }, (tx) =>
-      tx.execute<{ access_state: ClubAccessState }>(
-        sql`SELECT access_state FROM clubs WHERE id = ${clubId}`,
+      tx.execute<{ access_state: ClubAccessState; access_state_source: "operator" | "billing" | null }>(
+        sql`SELECT access_state, access_state_source FROM clubs WHERE id = ${clubId}`,
       ),
     );
-    return rows[0]?.access_state ?? "active";
+    return {
+      accessState: rows[0]?.access_state ?? "active",
+      accessStateSource: rows[0]?.access_state_source ?? null,
+    };
   }
 }

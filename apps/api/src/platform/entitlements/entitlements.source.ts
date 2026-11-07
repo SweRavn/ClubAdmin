@@ -18,6 +18,8 @@ export interface ClubEntitlementsBase {
   plan: { key: string; name: string } | null;
   subscriptionStatus: SubscriptionStatus | null;
   trialEndsAt: Date | null;
+  /** Billing (P1.13): since when an invoice is overdue. */
+  pastDueSince?: Date | null;
 }
 
 export interface EntitlementSource {

@@ -37,6 +37,8 @@ describe("retention registry", () => {
       outboxHandlers: [],
       historyRetentionMonths: 24,
       historyPartitionsAhead: 3,
+      // Billing jobs exist only with billing on (accounting_records).
+      billing: { settings: {} as never, send: { mail: null, webUrl: "", emailLink: false } },
     });
     for (const rule of RETENTION_RULES.filter((r) => r.task)) {
       expect(tasks[rule.task!], `${rule.key}: ${rule.task}`).toBeTypeOf("function");

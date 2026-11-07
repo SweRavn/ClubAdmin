@@ -2,12 +2,17 @@
 // Task handlers. Payloads contain IDs only, never personal data, because job
 // rows are stored in the database and may appear in logs.
 
-import { type Database, outbox, type OutboxHandler, sql } from "@clubadmin/db";
+import { type Database, type LedgerSettings, outbox, type OutboxHandler, sql } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 
-import { generateInvoicesTask } from "../billing.ts";
+import {
+  billingDailyTask,
+  billingRetentionTask,
+  type SendDependencies,
+  sendInvoiceTask,
+} from "../billing.ts";
 import {
   deliverTask,
   type DeliveryDependencies,
@@ -50,6 +55,8 @@ export interface TaskDependencies {
   delivery?: Omit<DeliveryDependencies, "db"> | undefined;
   /** Privacy jobs (P1.8a): the retention handle and the installation's periods. */
   privacy?: PrivacyJobOptions | undefined;
+  /** Billing on (P1.13): the ledger's settings and the invoice email; without it no billing jobs. */
+  billing?: { settings: LedgerSettings; send: Omit<SendDependencies, "db" | "storage"> } | undefined;
 }
 
 /** Does nothing; used to check that jobs are picked up. */
@@ -122,9 +129,23 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
     "members:purge_imports": purgeMemberImportsTask(deps.db, deps.storage ?? null),
-    "billing:generate_invoices": generateInvoicesTask,
+    ...billingTasks(deps),
     ...notificationTasks(deps),
     ...privacyTasks(deps),
+  };
+}
+
+/** Billing (P1.13): registered only with BILLING_ENABLED=true. */
+function billingTasks(deps: TaskDependencies): TaskList {
+  if (!deps.billing) return {};
+  return {
+    "billing:daily": billingDailyTask(deps.db, deps.billing.settings),
+    "billing:send_invoice": sendInvoiceTask({
+      db: deps.db,
+      storage: deps.storage ?? null,
+      ...deps.billing.send,
+    }),
+    "billing:retention": billingRetentionTask(deps.privacy?.retentionDb ?? null, deps.storage ?? null),
   };
 }
 
@@ -208,5 +229,9 @@ export const crontab = [
   "19 5 * * * privacy:profile_views ?fill=2d",
 ].join("\n");
 
-/** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */
-export const BILLING_CRONTAB = "41 4 1 * * billing:generate_invoices ?fill=2d";
+/**
+ * Added to the crontab only with BILLING_ENABLED=true (P1.13): billing:daily
+ * at 04:41 UTC (trials, changes, invoices, dunning) and the retention of
+ * accounting records on 2 January at 03:29 UTC.
+ */
+export const BILLING_CRONTAB = ["41 4 * * * billing:daily ?fill=2d", "29 3 2 1 * billing:retention ?fill=7d"].join("\n");

@@ -47,6 +47,15 @@ export { DEFAULT_REGISTER_STATUSES, registerConditions, registerSortKey } from "
 export * as schema from "./schema/index.ts";
 // Query operators for repositories (only packages/db depends on drizzle-orm).
 export {
+  type BuyerSnapshot,
+  DUNNING_DAYS,
+  ledger,
+  LedgerError,
+  type LedgerSettings,
+  type SellerSnapshot,
+  TRIAL_REMINDER_DAYS,
+} from "./billing.ts";
+export {
   and,
   asc,
   desc,
