@@ -14,6 +14,7 @@ import { Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
 import { LazyGroupRoster } from "../../../../components/lazy-group-roster.tsx";
 import { RosterEntry } from "../../../../components/roster-entry.tsx";
+import { SubscribeCalendar } from "../../../../components/subscribe-calendar.tsx";
 import {
   getClub,
   getClubGroups,
@@ -279,6 +280,7 @@ export default async function GroupPage({ params, searchParams }: Params) {
             emptyText={t("activities.noneInRange")}
             testId="group-calendar"
           />
+          <SubscribeCalendar target="group" targetId={group.id} />
           <nav className="flex justify-between text-sm" aria-label={t("schedule.weeks")}>
             <a href={`/groups/${group.id}?week=${week - CALENDAR_WEEKS}`} className="underline">
               {t("schedule.earlier")}

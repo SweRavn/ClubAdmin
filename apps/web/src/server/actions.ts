@@ -1454,8 +1454,33 @@ const PRIVACY_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+/** Calendar subscriptions (P1.11): creating and new links go through app/actions/calendar-feed. */
+const CALENDAR_ACTIONS: Record<string, FormAction> = {
+  "rename-calendar-feed": {
+    call: (form) => {
+      const feedId = id(form, "feedId");
+      const label = text(form, "label");
+      if (!feedId || label.length > 60) return null;
+      return {
+        path: `/api/v1/me/calendar-feeds/${feedId}`,
+        method: "PATCH",
+        body: { label: label || null },
+      };
+    },
+    done: () => "/me/calendar?updated=1",
+  },
+  "remove-calendar-feed": {
+    call: (form) => {
+      const feedId = id(form, "feedId");
+      return feedId ? { path: `/api/v1/me/calendar-feeds/${feedId}`, method: "DELETE" } : null;
+    },
+    done: () => "/me/calendar?removed=1",
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
+  ...CALENDAR_ACTIONS,
   ...PRIVACY_ACTIONS,
   ...NOTIFICATION_ACTIONS,
   ...CLUB_ACTIONS,

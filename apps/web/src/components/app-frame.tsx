@@ -129,6 +129,7 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       label: t("userMenu.notifications"),
       href: "/me/notifications/settings",
     },
+    { kind: "link", key: "calendar", label: t("userMenu.calendar"), href: "/me/calendar" },
     { kind: "link", key: "privacy", label: t("userMenu.privacy"), href: "/me/privacy" },
     { kind: "link", key: "sessions", label: t("userMenu.sessions"), href: "/me/sessions" },
     { kind: "separator", key: "sep" },

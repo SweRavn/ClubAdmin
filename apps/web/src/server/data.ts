@@ -13,6 +13,7 @@ import {
   AssignmentsSchema,
   AttendanceSchema,
   AuditPageSchema,
+  CalendarFeedListSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
@@ -299,6 +300,10 @@ export const getMyJoinRequests = cache(() =>
   required("/api/v1/me/join-requests", MyJoinRequestsSchema),
 );
 /** My and my wards' places on waiting lists and pending join requests (P1.6b). */
+// Calendar subscriptions (P1.11): never their secrets.
+export const getCalendarFeeds = cache(() =>
+  required("/api/v1/me/calendar-feeds", CalendarFeedListSchema),
+);
 export const getMyWaitlists = cache(() => required("/api/v1/me/waitlists", MyWaitlistsSchema));
 export const getMyCreationRequests = cache(() =>
   required("/api/v1/me/club-creation-requests", MyClubCreationRequestsSchema),

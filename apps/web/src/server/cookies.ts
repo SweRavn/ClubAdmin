@@ -9,6 +9,8 @@ export const CSRF_COOKIE = "__Host-csrf";
 export const FLOW_COOKIE = "__Host-auth-flow";
 /** The one-time link or code of a new invitation, for its page (2 minutes, that path only). */
 export const INVITATION_SECRET_COOKIE = "ca-invitation";
+/** The URL of a new or regenerated calendar subscription, for /me/calendar (2 minutes, that path only). */
+export const CALENDAR_URL_COOKIE = "ca-calendar-feed";
 
 export const sessionCookieOptions = {
   httpOnly: true,

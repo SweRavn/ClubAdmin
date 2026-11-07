@@ -77,6 +77,11 @@ export default async function PreferencesPage({ searchParams }: Props) {
           {t("common.save")}
         </button>
       </form>
+      <p>
+        <a href="/me/calendar" className="underline">
+          {t("calendar.ui.subscribe")}
+        </a>
+      </p>
     </div>
   );
 }

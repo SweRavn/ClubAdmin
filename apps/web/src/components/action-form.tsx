@@ -34,6 +34,8 @@ export async function ActionForm({
 /** Result flags the actions add to the return path (shown once as a notice). */
 const NOTICE_PARAMS = [
   "error",
+  "removed",
+  "created",
   "decided",
   "requested",
   "updated",

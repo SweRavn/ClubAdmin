@@ -8,6 +8,7 @@ import { getTranslations } from "next-intl/server";
 
 import { inputClass, secondaryButtonClass } from "../../../../../components/action-form.tsx";
 import { Agenda, agendaItemOf, weekOffset, weekRange } from "../../../../../components/agenda.tsx";
+import { SubscribeCalendar } from "../../../../../components/subscribe-calendar.tsx";
 import {
   getClub,
   getClubCalendar,
@@ -49,7 +50,10 @@ export default async function ClubCalendarPage({ params, searchParams }: Props) 
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">{t("clubCalendar.title")}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">{t("clubCalendar.title")}</h1>
+        <SubscribeCalendar target="club" targetId={club.id} />
+      </div>
       <form
         method="get"
         className="flex flex-wrap items-end gap-3"

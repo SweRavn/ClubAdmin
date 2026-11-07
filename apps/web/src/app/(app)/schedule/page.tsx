@@ -48,7 +48,12 @@ export default async function SchedulePage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">{t("schedule.title")}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold">{t("schedule.title")}</h1>
+        <a href="/me/calendar" className="text-sm underline" data-testid="schedule-subscribe">
+          {t("calendar.ui.subscribe")}
+        </a>
+      </div>
       {params.answered ? <Notice>{t("responses.saved")}</Notice> : null}
       <FormError code={typeof params.error === "string" ? params.error : undefined} />
       {schedule.people.length > 1 ? (
