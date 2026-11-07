@@ -21,6 +21,7 @@ import {
 } from "../notifications/tasks.ts";
 import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
+import { calendarRetentionTask } from "./calendar.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
 import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
@@ -113,6 +114,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "ops:backup_metrics": backupMetricsTask(deps.db),
     "joining:retention": joiningRetentionTask(deps.db),
     "waitlists:offers": waitlistOffersTask(deps.db),
+    "calendar:retention": calendarRetentionTask(deps.db),
     "attendance:retention": attendanceRetentionTask(deps.db),
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
@@ -174,7 +176,9 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * at 05:37 UTC; privacy (P1.8a): board decisions taking effect at 00:17
  * UTC, former members and orphaned people at 05:31 UTC, the audit log at
  * 05:43 UTC; "download my data" files past seven days hourly at :07 (P1.8b);
- * waiting-list offers (expiry, auto-offers) every five minutes (P1.10b).
+ * waiting-list offers (expiry, auto-offers) every five minutes (P1.10b);
+ * calendar subscriptions unused for 12 months or revoked 30 days ago daily
+ * at 05:13 UTC (P1.11).
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -195,6 +199,7 @@ export const crontab = [
   "7 * * * * privacy:expire_exports ?max=1",
   "43 5 * * * audit:retention ?fill=2d",
   "*/5 * * * * waitlists:offers ?max=1",
+  "13 5 * * * calendar:retention ?fill=2d",
 ].join("\n");
 
 /** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */

@@ -157,7 +157,8 @@ export class AttendanceService {
     activityId: string,
     personId: string,
     input: SetResponseInput,
-    options: { byLeader?: boolean } = {},
+    /** `via`: answered from a calendar's answer link (P1.11; audited with it). */
+    options: { byLeader?: boolean; via?: "calendar_link" } = {},
   ): Promise<ResponseRow> {
     const txContext = options.byLeader ? context : onBehalf(context, personId);
     return this.db.withTenant(txContext, async (tx) => {
@@ -189,6 +190,14 @@ export class AttendanceService {
             ]
           : ["status", ...(note ? ["note"] : [])],
       });
+      if (options.via) {
+        await audit.record(tx, {
+          action: "activity.response.set",
+          resourceType: "activity_response",
+          resourceId: response.id,
+          changedFields: ["via_calendar_link"],
+        });
+      }
       await outbox.publish(tx, "activity.response.changed", {
         clubId: context.clubId,
         activityId,

@@ -63,6 +63,11 @@ export const AUDIT_ACTIONS = [
   "join_request.withdrawn",
   /** A group added to a pending request's preferences (applying for a waiting list, P1.10b). */
   "join_request.updated",
+  // Calendar subscriptions (P1.11).
+  "calendar_feed.created",
+  "calendar_feed.updated",
+  "calendar_feed.regenerated",
+  "calendar_feed.revoked",
   "invitation.created",
   "invitation.revoked",
   "invitation.accepted",

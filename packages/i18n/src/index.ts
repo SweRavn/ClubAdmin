@@ -133,7 +133,8 @@ export type EnumNamespace =
   | "history.priorityReasons"
   | "waitlist.statuses"
   | "waitlist.removalReasons"
-  | "waitlist.decisionKinds";
+  | "waitlist.decisionKinds"
+  | "calendar.ui.scopes";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

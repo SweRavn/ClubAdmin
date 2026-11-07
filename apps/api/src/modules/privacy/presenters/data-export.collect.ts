@@ -183,6 +183,18 @@ async function platformPart(
             WHERE a.person_id = ${subjectId} ORDER BY d.created_at`,
         ),
       },
+      // Calendar subscriptions (P1.11): never the secret or its hash.
+      {
+        key: "calendarFeeds",
+        rows: await rows(
+          tx,
+          sql`
+            SELECT f.id, f.scope, f.club_id, f.group_id, f.person_ids, f.label,
+              f.last_fetched_at, f.access_lost_at, f.revoked_at, f.revoked_reason, f.created_at
+            FROM public.calendar_feeds f
+            WHERE f.person_id = ${subjectId} ORDER BY f.created_at`,
+        ),
+      },
       {
         key: "guardianships",
         rows: await rows(

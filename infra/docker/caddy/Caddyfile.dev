@@ -9,6 +9,13 @@
 {$APP_DOMAIN} {
 	encode zstd gzip
 
+	# Calendar subscriptions (P1.11): calendar apps fetch /cal/<secret>.ics
+	# from the API directly, on the main host (the URL people paste). The API
+	# redacts the path in its logs; Caddy writes no access log here.
+	handle /cal/* {
+		reverse_proxy {$API_UPSTREAM}
+	}
+
 	# The web app (Next.js) is also the backend-for-frontend: browser calls to
 	# /api/* go through it, which adds the access token from the session.
 	handle {

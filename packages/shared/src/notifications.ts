@@ -88,6 +88,8 @@ export const NOTIFICATION_TYPES = {
   "account.deletion.scheduled": { category: "account", mandatoryEmail: true, immediate: true },
   "account.deletion.blocked": { category: "account", mandatoryEmail: true, immediate: true },
   "person.erasure.scheduled": { category: "family", mandatoryEmail: true, immediate: true },
+  // Calendar subscriptions (P1.11, decision 10): the system revoked a feed.
+  "calendar.feed.revoked": { category: "account", mandatoryEmail: true, immediate: true },
   // Waiting lists (P1.10a, P1.10b, ADR 0043). The offer's email cannot be
   // turned off (a deadline); the others follow the category's settings.
   "waitlist.entry.created": { category: "waitlist" },

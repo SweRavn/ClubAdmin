@@ -23,16 +23,11 @@ import { PeopleService } from "../people/index.ts";
 import { ActivitiesService } from "./activities.service.ts";
 import { respondablePeople } from "./attendance.controller.ts";
 import { answerState } from "./attendance.service.ts";
+import { schedulePeopleOf } from "./people-scope.ts";
 
 /** Me, and the wards whose schedule I may see (none when acting on behalf). */
 export function schedulePeople(authz: RequestAuthorization): string[] {
-  const actor = authz.actor;
-  return [
-    actor.personId,
-    ...actor.relationships.wards
-      .filter((w) => w.rights.includes("view_schedule"))
-      .map((w) => w.personId),
-  ].filter((id, i, all) => all.indexOf(id) === i);
+  return schedulePeopleOf(authz.actor);
 }
 
 @Controller()

@@ -150,6 +150,8 @@ async function main(command: string | undefined, argv: string[]): Promise<number
         admin: (sql) => asAdmin(async (query) => void (await query(sql))),
         billingEnabled: ["true", "1"].includes((process.env.BILLING_ENABLED ?? "").toLowerCase()),
         invitationTokenKey: process.env.INVITATION_TOKEN_KEY,
+        calendarTokenKey: process.env.CALENDAR_TOKEN_KEY,
+        log: (m) => console.log(m),
       },
       {
         scenario: args.scenario,

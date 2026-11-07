@@ -176,6 +176,13 @@
       "when": 1794028012470,
       "tag": "0024_waiting_lists",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794038626696,
+      "tag": "0025_calendar_feeds",
+      "breakpoints": true
     }
   ]
 }

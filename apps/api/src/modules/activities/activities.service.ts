@@ -781,6 +781,67 @@ export class ActivitiesService {
     });
   }
 
+  // --- Calendar feeds (P1.11) --------------------------------------------------------
+
+  /**
+   * "My schedule" for a feed: the same statement as the schedule, without
+   * names or pages (at most `limit` rows), as the feed's owner.
+   */
+  scheduleForFeed(
+    context: ActorContext,
+    input: { personIds: readonly string[]; from: Date; to: Date; limit: number },
+  ): Promise<{
+    items: ScheduleRow[];
+    groups: Map<string, string>;
+    clubs: Map<string, { name: string; timeZone: string }>;
+  }> {
+    return this.db.withActor(context, async (tx) => {
+      const items = await repo.schedule(tx, { ...input, clubId: null, cursor: null });
+      const groups = await repo.groupNames(tx, [...new Set(items.flatMap((r) => r.groupIds))]);
+      const clubs = await this.clubs.findClubsInTx(tx, [...new Set(items.map((r) => r.clubId))]);
+      return {
+        items,
+        groups,
+        clubs: new Map(clubs.map((c) => [c.id, { name: c.name, timeZone: c.timeZone }])),
+      };
+    });
+  }
+
+  /** One activity of these people's schedule (an answer link), or null if it is not theirs. */
+  scheduleEntryFor(
+    context: ActorContext,
+    personIds: readonly string[],
+    activityId: string,
+  ): Promise<{ row: ScheduleRow; club: { name: string; timeZone: string } } | null> {
+    return this.db.withActor(context, async (tx) => {
+      const [row] = await repo.schedule(tx, {
+        personIds,
+        from: new Date(0),
+        to: new Date("9999-01-01T00:00:00Z"),
+        clubId: null,
+        cursor: null,
+        limit: 1,
+        activityId,
+      });
+      if (!row) return null;
+      const [club] = await this.clubs.findClubsInTx(tx, [row.clubId]);
+      return { row, club: { name: club?.name ?? "", timeZone: club?.timeZone ?? "UTC" } };
+    });
+  }
+
+  /** A group's or a club's activities for a feed, with the group names (one transaction). */
+  feedEntries(
+    context: TenantContext,
+    target: { groupId: string } | { clubId: string },
+    range: { from: Date; to: Date; limit: number },
+  ): Promise<{ items: ScheduleRow[]; groups: Map<string, string> }> {
+    return this.db.withTenant(context, async (tx) => {
+      const items = await repo.feedEntries(tx, target, range);
+      const groups = await repo.groupNames(tx, [...new Set(items.flatMap((r) => r.groupIds))]);
+      return { items, groups };
+    });
+  }
+
   // --- Internals ----------------------------------------------------------------------
 
   private expand(

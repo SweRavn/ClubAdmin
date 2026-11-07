@@ -17,7 +17,8 @@
     "unavailable": "The service is temporarily unavailable",
     "entitlement-required": "Your club's plan does not include this",
     "club-read-only": "The club is read-only: you can view and export its data, but not change it",
-    "club-suspended": "The club is suspended: only exporting its data is possible"
+    "club-suspended": "The club is suspended: only exporting its data is possible",
+    "gone": "No longer available"
   },
   "common": {
     "appName": "ClubAdmin",
@@ -58,7 +59,8 @@
     "sessions": "Where I am logged in",
     "logout": "Log out",
     "notifications": "Notifications",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "calendar": "Calendar subscriptions"
   },
   "viewingAs": {
     "label": "Viewing as",
@@ -696,7 +698,12 @@
     "queue_bypass_reason_required": "People are waiting for this group: give a reason for adding a member directly.",
     "priority_reason_required": "A priority needs a reason.",
     "join_request_rejected": "The club did not approve the membership.",
-    "already_in_group": "Already in the group."
+    "already_in_group": "Already in the group.",
+    "too_many_feeds": "You have the most calendar subscriptions allowed. Remove one first.",
+    "feed_scope_invalid": "That cannot be changed for this subscription.",
+    "calendar_feeds_unavailable": "Calendar subscriptions are not available here.",
+    "answer_link_invalid": "This link does not work (any more).",
+    "answer_link_expired": "This link has expired: the activity has ended or the subscription was removed."
   },
   "memberExport": {
     "columns": {
@@ -1717,6 +1724,14 @@
         "title": "Welcome to {group}",
         "body": "The place in {group} ({club}) is confirmed."
       }
+    },
+    "calendar": {
+      "feed": {
+        "revoked": {
+          "title": "A calendar subscription was removed",
+          "body": "{feedReason, select, unused {It had not been used for a year.} access_lost {It no longer had access to the calendar.} other {It was removed.}} You can create a new one under Calendar subscriptions."
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2020,6 +2035,7 @@
       "person": "Person",
       "account": "Login and settings",
       "pushDevices": "Phones with notifications",
+      "calendarFeeds": "Calendar subscriptions",
       "guardianships": "Family links",
       "guardianInvitations": "Family invitations sent",
       "notifications": "Notifications (last 90 days)",
@@ -2205,7 +2221,7 @@
       "include_protected": "Includes protected members",
       "join_policy": "How to join",
       "kind": "Kind",
-      "label": "Label",
+      "label": "Name",
       "location_id": "Place",
       "location_text": "Place (text)",
       "meet_at": "Meeting time",
@@ -2229,8 +2245,8 @@
       "registration_closes_at": "Registration closes",
       "registration_opens_at": "Registration opens",
       "response_mode": "Answers",
-      "revoked_at": "Withdrawn",
-      "revoked_reason": "Reason for withdrawing",
+      "revoked_at": "Removed",
+      "revoked_reason": "Removed because",
       "rights": "Rights",
       "role_preset": "Role",
       "row_count": "Rows",
@@ -2249,7 +2265,13 @@
       "offered_at": "Offered",
       "priority_reason": "Reason for priority",
       "queue_bypass_reason": "Reason for skipping the waiting list",
-      "waitlist_auto_offer": "Automatic offers"
+      "waitlist_auto_offer": "Automatic offers",
+      "scope": "Kind",
+      "person_ids": "People",
+      "access_lost_at": "No access since",
+      "sequence": "Version",
+      "meet_place": "Meeting place",
+      "address": "Address"
     },
     "resources": {
       "person": "Person",
@@ -2291,7 +2313,8 @@
       "club_manager_handover": "Club manager hand-over",
       "club_manager_reassignment": "New club manager by the operator",
       "guardian_invitation": "Guardian invitation",
-      "subscription": "Subscription"
+      "subscription": "Subscription",
+      "calendar_feed": "Calendar subscription"
     },
     "statuses": {
       "scheduled": "Scheduled",
@@ -2327,6 +2350,13 @@
       "sibling": "Sibling in the group",
       "returning_member": "Returning member",
       "other": "Other reason"
+    },
+    "feedReasons": {
+      "owner": "By the owner",
+      "regenerated": "New link",
+      "access_lost": "No access",
+      "unused": "Unused",
+      "erased": "Erased"
     }
   },
   "audit": {
@@ -2424,7 +2454,8 @@
       "club_settings_decided": "{actor} recorded a board decision",
       "group_waitlist_priority_changed": "{actor} changed the priority of a waiting-list place",
       "group_waitlist_offer_withdrawn": "{actor} withdrew an offered place",
-      "group_waitlist_admitted": "{actor} admitted someone from a waiting list"
+      "group_waitlist_admitted": "{actor} admitted someone from a waiting list",
+      "calendar_feed_regenerated": "{actor} made a new link for a calendar subscription"
     }
   },
   "groupAdmin": {
@@ -2582,5 +2613,84 @@
     "more": "More",
     "queueBypassReason": "Reason for adding past the waiting list ({count} waiting)",
     "groupWaiting": "{count, plural, =0 {Nobody is waiting} one {# person waiting} other {# people waiting}}"
+  },
+  "calendar": {
+    "feed": {
+      "mySchedule": "My schedule",
+      "cancelledPrefix": "Cancelled: ",
+      "groups": "Groups: {groups}",
+      "meetAt": "Meet at {time}, {place}",
+      "meet": "Meet at {time}",
+      "cancelledReason": "Reason: {reason}",
+      "calloutOnly": "Only those called up",
+      "isComing": "{name}: coming",
+      "isNotComing": "{name}: not coming",
+      "noAnswer": "{name}: no answer yet",
+      "linkComing": "{name} is coming: {url}",
+      "linkNotComing": "{name} is not coming: {url}",
+      "answerBy": "Answer by {deadline}",
+      "footer": "Subscribed via ClubAdmin – manage at {url}",
+      "noAccess": "This subscription no longer has access."
+    },
+    "ui": {
+      "title": "Calendar subscriptions",
+      "intro": "Get your activities in your phone's or computer's calendar. The calendar updates itself.",
+      "subscribe": "Subscribe in my calendar",
+      "subscribeThis": "Subscribe to this calendar",
+      "people": "Whose activities",
+      "everyone": "Me and all my children (also later ones)",
+      "label": "Name (optional)",
+      "create": "Create subscription",
+      "created": "The subscription is ready. Copy the link now: it is shown only once.",
+      "warning": "Anyone with this link sees these activities and can answer for your children. Do not share it.",
+      "protectedWarning": "{names} has protected identity: the link reveals where and when. In the calendar they are shown by initials only.",
+      "copy": "Copy",
+      "openInCalendar": "Open in calendar",
+      "webcal": "Apple Calendar and Outlook",
+      "https": "Google Calendar and others",
+      "helpApple": "iPhone, iPad and Mac: “Open in calendar” subscribes directly.",
+      "helpGoogle": "Google Calendar: on a computer, “Other calendars” → “From URL”, paste the https link. Google refreshes only every few hours.",
+      "helpOutlook": "Outlook: “Add calendar” → “Subscribe from web”, paste the link.",
+      "helpAndroid": "Android: use Google Calendar as above, or an app such as ICSx⁵ or DAVx⁵ with the link.",
+      "empty": "No subscriptions yet.",
+      "lastFetched": "Last fetched {date}",
+      "neverFetched": "Not fetched yet",
+      "scopes": {
+        "my_schedule": "My schedule",
+        "group": "Group",
+        "club": "Club calendar"
+      },
+      "rename": "Rename",
+      "regenerate": "New link",
+      "regenerateHint": "The old link stops working at once.",
+      "remove": "Remove",
+      "removed": "The subscription was removed. Its link no longer works.",
+      "updated": "Saved.",
+      "max": "At most {max} subscriptions.",
+      "copied": "Copied",
+      "list": "My subscriptions",
+      "everyoneShort": "Me and all my children",
+      "manageOnWeb": "Manage on the web"
+    },
+    "answer": {
+      "title": "Answer",
+      "coming": "{name} is coming to {title}",
+      "notComing": "{name} is not coming to {title}",
+      "when": "{when}, {place}",
+      "confirm": "Confirm",
+      "saved": "Saved: {answer}.",
+      "current": "Current answer: {answer}",
+      "answers": {
+        "attending": "coming",
+        "not_attending": "not coming"
+      },
+      "closed": "Answers are closed for this activity.",
+      "deadlinePassed": "The deadline has passed; you can still say not coming.",
+      "sayNotComing": "Say not coming",
+      "cancelled": "The activity is cancelled.",
+      "invalid": "This link does not work (any more).",
+      "expired": "This link has expired.",
+      "toSchedule": "Go to my schedule"
+    }
   }
 }

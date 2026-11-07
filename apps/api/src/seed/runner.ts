@@ -13,6 +13,7 @@ import { seedMinimal } from "./minimal.ts";
 import { activitiesDemoStep } from "./steps/activities.ts";
 import { attendanceDemoStep } from "./steps/attendance.ts";
 import { billingDemoStep } from "./steps/billing.ts";
+import { calendarDemoStep } from "./steps/calendar.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
 import { eventsDemoStep } from "./steps/events.ts";
 import { importsDemoStep } from "./steps/imports.ts";
@@ -31,6 +32,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   eventsDemoStep,
   privacyDemoStep,
   notificationsDemoStep,
+  calendarDemoStep,
 ];
 
 export interface SeedOptions {
@@ -47,6 +49,7 @@ export async function seed(
 ): Promise<DemoResult | null> {
   const full: SeedEnvironment = {
     ...env,
+    ...(options.log ? { log: options.log } : {}),
     clock: env.clock ?? new SeedClock(),
     // Fixed seeds: the same scenario gives the same generated people.
     generator: new Generator(

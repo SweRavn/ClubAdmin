@@ -45,6 +45,8 @@ export const DOMAIN_EVENTS = {
   /** A new version of the club's privacy policy took effect (P1.8a): tell the members. */
   "club.privacy_policy.published": z.object({ clubId: id, policyId: id }),
   "group.owner.changed": z.object({ clubId: id, groupId: id, personId: id }),
+  /** The system revoked a calendar feed (P1.11: unused, access lost): tell its owner. */
+  "calendar.feed.revoked": z.object({ feedId: id, personId: id }),
   "group.parent.changed": z.object({ clubId: id, groupId: id }),
   "guardianship.changed": z.object({ guardianPersonId: id, wardPersonId: id }),
   "person.protection.changed": z.object({ personId: id, clubId: id.optional() }),

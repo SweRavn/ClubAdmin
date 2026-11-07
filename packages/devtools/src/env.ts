@@ -249,6 +249,16 @@ export const ENV_TEMPLATE: EnvSection[] = [
     ],
   },
   {
+    title: "Calendar subscriptions (P1.11, ADR 0044)",
+    variables: [
+      {
+        key: "CALENDAR_TOKEN_KEY",
+        value: () => hex(32),
+        comment: "Signs the answer links in calendar feeds (API)",
+      },
+    ],
+  },
+  {
     title: "Notifications (P1.7, ADR 0039)",
     variables: [
       {

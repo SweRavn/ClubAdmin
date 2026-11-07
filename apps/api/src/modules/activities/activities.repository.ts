@@ -182,10 +182,12 @@ export async function syncScheduleEntries(
   await tx.execute(sql`
     INSERT INTO public.schedule_entries (club_id, activity_id, group_id, kind, kind_label, title,
       status, cancelled_reason, starts_at, ends_at, all_day, meet_at, place, changed_at,
-      response_mode, respond_by, invitees_only)
+      response_mode, respond_by, invitees_only, sequence, meet_place, address, latitude, longitude)
     SELECT a.club_id, a.id, ag.group_id, a.kind, a.kind_label, a.title, a.status, a.cancelled_reason,
       a.starts_at, a.ends_at, a.all_day, a.meet_at, coalesce(l.name, a.location_text), a.changed_at,
-      a.response_mode, a.respond_by, a.invitees_only
+      a.response_mode, a.respond_by, a.invitees_only, a.sequence, a.meet_place,
+      nullif(concat_ws(', ', l.street, nullif(concat_ws(' ', l.postal_code, l.city), '')), ''),
+      l.latitude, l.longitude
     FROM public.activities a
     JOIN public.activity_groups ag ON ag.activity_id = a.id
     LEFT JOIN public.locations l ON l.id = a.location_id
@@ -451,6 +453,14 @@ export interface ScheduleRow {
   answers: Record<string, string>;
   /** The event the activity belongs to (P1.6), if any. */
   eventId: string | null;
+  /** For calendar feeds (P1.11). */
+  sequence: number;
+  meetPlace: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  /** Only those called up take part (feeds of a group say so). */
+  inviteesOnly: boolean;
 }
 
 /**
@@ -466,6 +476,8 @@ export interface ScheduleInput {
   clubId: string | null;
   cursor: string | null;
   limit: number;
+  /** Only this activity (an answer link, P1.11). */
+  activityId?: string | null;
 }
 
 /** The schedule's statement: open group memberships, then each group's entries in the range. */
@@ -480,6 +492,7 @@ export function scheduleQuery(input: ScheduleInput): SQL {
       SELECT se.*, m.person_id, m.function FROM mine m
       JOIN public.schedule_entries se ON se.group_id = m.group_id
       WHERE se.starts_at >= ${input.from} AND se.starts_at < ${input.to}
+        ${input.activityId ? sql`AND se.activity_id = ${input.activityId}` : sql``}
         -- A call-up (#19): members who are not called up do not have it in their schedule.
         AND (m.function <> 'member' OR NOT se.invitees_only OR EXISTS (
           SELECT 1 FROM public.activity_invitees i
@@ -487,7 +500,8 @@ export function scheduleQuery(input: ScheduleInput): SQL {
     )
     SELECT h.activity_id, h.club_id, h.kind, h.kind_label, h.title, h.status, h.cancelled_reason,
       h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode,
-      h.respond_by, array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids,
+      h.respond_by, h.sequence, h.meet_place, h.address, h.latitude, h.longitude,
+      array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids,
       coalesce(array_agg(DISTINCT h.person_id) FILTER (WHERE h.function = 'member'), '{}') AS member_ids,
       (SELECT coalesce(jsonb_object_agg(r.person_id, r.status), '{}') FROM public.activity_responses r
        WHERE r.person_id = ANY (array_agg(DISTINCT h.person_id)) AND r.activity_id = h.activity_id) AS answers,
@@ -501,57 +515,103 @@ export function scheduleQuery(input: ScheduleInput): SQL {
     }
     GROUP BY h.activity_id, h.club_id, h.kind, h.kind_label, h.title, h.status, h.cancelled_reason,
       h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode,
-      h.respond_by
+      h.respond_by, h.sequence, h.meet_place, h.address, h.latitude, h.longitude
     ORDER BY h.starts_at, h.activity_id
     LIMIT ${input.limit}`;
 }
 
+type ScheduleDbRow = {
+  activity_id: string;
+  club_id: string;
+  kind: string;
+  kind_label: string | null;
+  title: string;
+  status: string;
+  cancelled_reason: string | null;
+  starts_at: string;
+  ends_at: string;
+  all_day: boolean;
+  meet_at: string | null;
+  place: string | null;
+  changed_at: string;
+  response_mode: string;
+  respond_by: string | null;
+  group_ids: string[];
+  person_ids: string[];
+  member_ids: string[];
+  answers: Record<string, string>;
+  event_id: string | null;
+  sequence: number;
+  meet_place: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  invitees_only?: boolean;
+};
+
+const toScheduleRow = (r: ScheduleDbRow): ScheduleRow => ({
+  activityId: r.activity_id,
+  clubId: r.club_id,
+  kind: r.kind,
+  kindLabel: r.kind_label,
+  title: r.title,
+  status: r.status,
+  cancelledReason: r.cancelled_reason,
+  startsAt: new Date(r.starts_at),
+  endsAt: new Date(r.ends_at),
+  allDay: r.all_day,
+  meetAt: r.meet_at ? new Date(r.meet_at) : null,
+  place: r.place,
+  changedAt: new Date(r.changed_at),
+  responseMode: r.response_mode,
+  respondBy: r.respond_by ? new Date(r.respond_by) : null,
+  groupIds: r.group_ids,
+  personIds: r.person_ids,
+  memberIds: r.member_ids,
+  answers: r.answers,
+  eventId: r.event_id,
+  sequence: r.sequence,
+  meetPlace: r.meet_place,
+  address: r.address,
+  latitude: r.latitude,
+  longitude: r.longitude,
+  inviteesOnly: r.invitees_only === true,
+});
+
+/**
+ * A group's or a club's calendar for a feed (P1.11): one row per activity in
+ * the range, from the read model only (schedule_entries_group_idx or
+ * schedule_entries_club_idx), without people or answers.
+ */
+export async function feedEntries(
+  tx: Tx,
+  target: { groupId: string } | { clubId: string },
+  range: { from: Date; to: Date; limit: number },
+): Promise<ScheduleRow[]> {
+  const where =
+    "groupId" in target ? sql`se.group_id = ${target.groupId}` : sql`se.club_id = ${target.clubId}`;
+  const { rows } = await tx.execute<ScheduleDbRow>(sql`
+    SELECT se.activity_id, se.club_id, se.kind, se.kind_label, se.title, se.status,
+      se.cancelled_reason, se.starts_at, se.ends_at, se.all_day, se.meet_at, se.place,
+      se.changed_at, se.response_mode, se.respond_by, se.sequence, se.meet_place, se.address,
+      se.latitude, se.longitude, array_agg(se.group_id) AS group_ids,
+      '{}'::uuid[] AS person_ids, '{}'::uuid[] AS member_ids, '{}'::jsonb AS answers,
+      NULL::uuid AS event_id, bool_or(se.invitees_only) AS invitees_only
+    FROM public.schedule_entries se
+    WHERE ${where} AND se.starts_at >= ${range.from} AND se.starts_at < ${range.to}
+    GROUP BY se.activity_id, se.club_id, se.kind, se.kind_label, se.title, se.status,
+      se.cancelled_reason, se.starts_at, se.ends_at, se.all_day, se.meet_at, se.place,
+      se.changed_at, se.response_mode, se.respond_by, se.sequence, se.meet_place, se.address,
+      se.latitude, se.longitude
+    ORDER BY se.starts_at, se.activity_id
+    LIMIT ${range.limit}`);
+  return rows.map(toScheduleRow);
+}
+
 export async function schedule(tx: Tx, input: ScheduleInput): Promise<ScheduleRow[]> {
   if (input.personIds.length === 0) return [];
-  const { rows } = await tx.execute<{
-    activity_id: string;
-    club_id: string;
-    kind: string;
-    kind_label: string | null;
-    title: string;
-    status: string;
-    cancelled_reason: string | null;
-    starts_at: string;
-    ends_at: string;
-    all_day: boolean;
-    meet_at: string | null;
-    place: string | null;
-    changed_at: string;
-    response_mode: string;
-    respond_by: string | null;
-    group_ids: string[];
-    person_ids: string[];
-    member_ids: string[];
-    answers: Record<string, string>;
-    event_id: string | null;
-  }>(scheduleQuery(input));
-  return rows.map((r) => ({
-    activityId: r.activity_id,
-    clubId: r.club_id,
-    kind: r.kind,
-    kindLabel: r.kind_label,
-    title: r.title,
-    status: r.status,
-    cancelledReason: r.cancelled_reason,
-    startsAt: new Date(r.starts_at),
-    endsAt: new Date(r.ends_at),
-    allDay: r.all_day,
-    meetAt: r.meet_at ? new Date(r.meet_at) : null,
-    place: r.place,
-    changedAt: new Date(r.changed_at),
-    responseMode: r.response_mode,
-    respondBy: r.respond_by ? new Date(r.respond_by) : null,
-    groupIds: r.group_ids,
-    personIds: r.person_ids,
-    memberIds: r.member_ids,
-    answers: r.answers,
-    eventId: r.event_id,
-  }));
+  const { rows } = await tx.execute<ScheduleDbRow>(scheduleQuery(input));
+  return rows.map(toScheduleRow);
 }
 
 /** Group names readable by the actor (own and wards' groups, ADR 0023). */

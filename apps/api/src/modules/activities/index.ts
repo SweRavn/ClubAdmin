@@ -9,4 +9,7 @@ export {
   type Location,
   type SeriesView,
 } from "./activities.service.ts";
+export { type ScheduleRow } from "./activities.service.ts";
 export { AttendanceService } from "./attendance.service.ts";
+export { answerState } from "./attendance.service.ts";
+export { respondablePeopleOf, schedulePeopleOf } from "./people-scope.ts";

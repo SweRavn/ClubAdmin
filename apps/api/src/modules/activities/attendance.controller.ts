@@ -61,23 +61,13 @@ import {
   type InviteesView,
   type ResponseRow,
 } from "./attendance.service.ts";
+import { respondablePeopleOf } from "./people-scope.ts";
 
 const iso = (date: Date) => date.toISOString();
 
-/**
- * Whom the caller may answer for: the actor (the ward when acting on their
- * behalf), and otherwise the wards whose guardian holds sign_up (full
- * guardians hold every right).
- */
+/** Whom the caller may answer for (see respondablePeopleOf). */
 export function respondablePeople(authz: RequestAuthorization): string[] {
-  const actor = authz.actor;
-  if (actor.onBehalfOf) return [actor.personId];
-  return [
-    actor.personId,
-    ...actor.relationships.wards
-      .filter((w) => w.rights.includes("sign_up") || actor.isFullGuardianOf(w.personId))
-      .map((w) => w.personId),
-  ].filter((id, i, all) => all.indexOf(id) === i);
+  return respondablePeopleOf(authz.actor);
 }
 
 const leads = (actor: Actor, groups: readonly GroupRef[]) =>

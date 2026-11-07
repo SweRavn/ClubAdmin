@@ -14,7 +14,8 @@
     "./dev-tokens": "./src/dev-tokens.ts",
     "./invitations": "./src/invitations.ts",
     "./object-storage": "./src/object-storage.ts",
-    "./notifications": "./src/notifications.ts"
+    "./notifications": "./src/notifications.ts",
+    "./calendar": "./src/calendar.ts"
   },
   "scripts": {
     "lint": "eslint .",

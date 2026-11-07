@@ -33,6 +33,8 @@ export const SERVER_FEATURES = [
   "notifications.push",
   /** P1.8a: consents, leaving a club, the clubs' privacy policies. */
   "privacy.consents",
+  /** P1.11: calendar subscriptions (off with FEATURE_CALENDAR_FEEDS=false). */
+  "calendar.feeds",
 ] as const;
 
 /** Dotted numeric version, e.g. "1.4.0". */

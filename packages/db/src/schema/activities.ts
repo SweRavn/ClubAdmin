@@ -269,6 +269,12 @@ export const scheduleEntries = pgTable(
     responseMode: text().$type<ResponseMode>().notNull().default("optional"),
     respondBy: timestamp(tz),
     inviteesOnly: boolean().notNull().default(false),
+    /** For calendar feeds (P1.11): the activity's sequence, meeting place, the location's address and position. */
+    sequence: integer().notNull().default(0),
+    meetPlace: text(),
+    address: text(),
+    latitude: doublePrecision(),
+    longitude: doublePrecision(),
     ...timestamps,
   },
   (t) => [

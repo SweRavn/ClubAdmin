@@ -107,6 +107,7 @@ beforeAll(async () => {
       VALKEY_URL,
       DEV_AUTH: "true",
       DEV_AUTH_KEY: TEST_DEV_AUTH_KEY,
+      CALENDAR_TOKEN_KEY: "calendar-token-key-for-tests-0123456789",
       // The matrix and the benchmark send many requests from one address.
       ...NO_RATE_LIMITS,
     },
@@ -554,6 +555,19 @@ describe("permission matrix", () => {
     "GET /api/v1/groups/:groupId/activities": {
       url: () => `/api/v1/groups/${m.team.id}/activities?${RANGE}`,
       expected: INSIDERS,
+    },
+    // Calendar subscriptions (P1.11): readers of the group's or club's calendar.
+    "POST /api/v1/groups/:groupId/calendar-feeds": {
+      url: () => `/api/v1/groups/${m.team.id}/calendar-feeds`,
+      expected: Object.fromEntries(
+        Object.entries(INSIDERS).map(([p, status]) => [p, status === 200 ? 201 : status]),
+      ) as Record<MatrixPersona, number>,
+      body: {},
+    },
+    "POST /api/v1/clubs/:clubId/calendar-feeds": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/calendar-feeds`,
+      expected: ADMINS(201),
+      body: {},
     },
     "POST /api/v1/groups/:groupId/activities": {
       url: () => `/api/v1/groups/${m.team.id}/activities`,

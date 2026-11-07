@@ -128,6 +128,7 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "privacy.export.ready",
       "privacy.erasure.scheduled",
       "privacy.erasure.blocked",
+      "calendar.feed.revoked",
       ...MOVED_EVENTS,
     ],
     async handle(event, tx) {
@@ -484,6 +485,29 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               about: [],
               params: {},
               dedupeKey: `privacy.export.ready:${exportId}`,
+            },
+          ]);
+          return;
+        }
+        // Calendar subscriptions (P1.11): the owner is told when the system
+        // revoked a feed (unused for a year, access lost); not when they
+        // removed or replaced it themselves.
+        case "calendar.feed.revoked": {
+          const { feedId, personId } = DOMAIN_EVENTS["calendar.feed.revoked"].parse(event.payload);
+          const { rows } = await tx.execute<{ revoked_reason: string | null }>(sql`
+            SELECT revoked_reason FROM public.calendar_feeds WHERE id = ${feedId}`);
+          const reason = rows[0]?.revoked_reason;
+          if (reason !== "unused" && reason !== "access_lost") return;
+          await notify(tx, [
+            {
+              recipientPersonId: personId,
+              clubId: null,
+              type: "calendar.feed.revoked",
+              subjectType: "calendar_feed",
+              subjectId: feedId,
+              about: [],
+              params: { feedReason: reason },
+              dedupeKey: `calendar.feed.revoked:${feedId}`,
             },
           ]);
           return;

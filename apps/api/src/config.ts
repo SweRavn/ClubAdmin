@@ -15,6 +15,15 @@ export const apiConfigSchema = z
     API_HOST: z.string().default("0.0.0.0"),
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     PUBLIC_WEB_URL: z.url().default("https://clubadmin.localhost"),
+    /**
+     * Signs the answer links in calendar feeds (P1.11, at least 32
+     * characters). Without it feeds are not offered; production refuses to
+     * start with FEATURE_CALENDAR_FEEDS on and no key. Rotating it ends all
+     * answer links (feeds carry new ones at their next fetch).
+     */
+    CALENDAR_TOKEN_KEY: z.string().min(32).optional(),
+    /** Seconds a rendered feed is kept in Valkey (decision 9); 0 renders every fetch. */
+    CALENDAR_FEED_CACHE_SECONDS: z.coerce.number().int().min(0).max(3600).default(60),
     /** Origins allowed to call the API from a browser (comma-separated). Defaults to PUBLIC_WEB_URL. */
     CORS_ORIGINS: envList(),
     /** Fastify trustProxy: which proxies may set X-Forwarded-For (Caddy). */
@@ -138,6 +147,17 @@ export const apiConfigSchema = z
         code: "custom",
         path: ["NOTIFICATION_TOKEN_KEY"],
         message: "required with PUSH_PROVIDER",
+      });
+    }
+    if (
+      config.NODE_ENV === "production" &&
+      config.FEATURE_CALENDAR_FEEDS !== false &&
+      !config.CALENDAR_TOKEN_KEY
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["CALENDAR_TOKEN_KEY"],
+        message: "required while FEATURE_CALENDAR_FEEDS is on",
       });
     }
     if (config.DEV_AUTH && !config.DEV_AUTH_KEY) {

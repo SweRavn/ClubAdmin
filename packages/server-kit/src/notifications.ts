@@ -185,6 +185,9 @@ export function noticeLink(input: NoticeInput): string {
       return "/me/waitlists";
     case "account":
       return "/me";
+    // Calendar subscriptions (P1.11): the person's subscriptions page.
+    case "calendar_feed":
+      return "/me/calendar";
     default:
       return "/";
   }
@@ -215,6 +218,8 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     reason: "",
     /** A waiting-list closed reason: a code (P1.10a), never free text. */
     closedReason: str(p.closedReason),
+    /** Why a calendar subscription was revoked (P1.11): a code. */
+    feedReason: str(p.feedReason),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

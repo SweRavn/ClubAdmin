@@ -53,6 +53,14 @@ export const DOMAIN_ERRORS = {
   group_has_children: "conflict",
   group_in_use: "conflict",
   already_group_owner: "conflict",
+  // Calendar subscriptions (P1.11, ADR 0044)
+  too_many_feeds: "conflict",
+  feed_scope_invalid: "validation",
+  /** The installation has calendar feeds off (or no key to sign answer links). */
+  calendar_feeds_unavailable: "not-found",
+  answer_link_invalid: "not-found",
+  /** The activity ended or the feed was revoked. */
+  answer_link_expired: "gone",
   // Waiting lists (P1.10b, ADR 0043)
   /** The group takes no applications (admission_mode = closed, or direct and not full). */
   admission_closed: "conflict",

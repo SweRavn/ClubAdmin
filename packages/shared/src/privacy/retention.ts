@@ -132,6 +132,12 @@ export const RETENTION_RULES: readonly RetentionRule[] = [
     status: "implemented",
   },
   { key: "backups", period: { value: 12, unit: "months" }, status: "implemented" },
+  {
+    key: "calendar_feeds",
+    period: { value: 30, unit: "days" },
+    task: "calendar:retention",
+    status: "implemented",
+  },
   { key: "accounting_records", period: { value: 7, unit: "years" }, status: "planned" },
   { key: "chat_messages", period: { value: 24, unit: "months" }, status: "planned" },
   { key: "background_checks", period: { value: 12, unit: "months" }, status: "planned" },

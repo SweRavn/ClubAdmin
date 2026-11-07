@@ -92,8 +92,13 @@ export class MetaController {
       serverVersion: this.config.APP_VERSION,
       apps: { ios: appSupport(this.config, "IOS"), android: appSupport(this.config, "ANDROID") },
       // Push only with a push provider (P1.7); the app then asks for permission.
-      features: SERVER_FEATURES.filter(
-        (f) => f !== "notifications.push" || this.config.PUSH_PROVIDER !== undefined,
+      // Calendar subscriptions unless turned off (P1.11).
+      features: SERVER_FEATURES.filter((f) =>
+        f === "notifications.push"
+          ? this.config.PUSH_PROVIDER !== undefined
+          : f === "calendar.feeds"
+            ? this.config.FEATURE_CALENDAR_FEEDS !== false
+            : true,
       ),
       flags: parseFeatureFlags(this.config.FEATURE_FLAGS),
     };

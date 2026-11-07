@@ -45,7 +45,7 @@ export interface EndpointOptions {
   /** Successful response body. Output is validated and unknown fields are stripped. */
   response: z.ZodType;
   /** The response's media type when it is not JSON (a CSV export: the handler sets the header). */
-  responseType?: "text/csv";
+  responseType?: "text/csv" | "text/calendar";
   status?: number;
   /** Override the global per-IP rate limit for this route. */
   rateLimit?: { max: number; timeWindowMs: number };

@@ -91,6 +91,36 @@ const CASES: Case[] = [
     statements: 2,
     pages: 10,
   },
+  // Calendar subscriptions (P1.11): the list (web and app) and the feeds
+  // calendar apps fetch: Anna's "My schedule" for two children in two clubs,
+  // Erik's F2017 group calendar (demo secrets, docs/seed-data.md). Both feeds
+  // run the schedule query of the owner's family (answer links), as
+  // GET /api/v1/me/schedule does. The answer links (GET/POST
+  // /api/v1/calendar-answers/{token}) read one schedule entry and are left out.
+  {
+    route: "GET /api/v1/me/calendar-feeds",
+    persona: "anna",
+    method: "GET",
+    url: () => "/api/v1/me/calendar-feeds",
+    statements: 2,
+    pages: 8,
+  },
+  {
+    route: "GET /cal/{secret}.ics (my schedule)",
+    persona: "anna",
+    method: "GET",
+    url: () => "/cal/demo-anna-my-schedule.ics",
+    statements: 6,
+    pages: 240,
+  },
+  {
+    route: "GET /cal/{secret}.ics (group)",
+    persona: "erik",
+    method: "GET",
+    url: () => "/cal/demo-erik-f2017.ics",
+    statements: 10,
+    pages: 320,
+  },
   // Waiting lists (P1.10b, web only). Writes that change the queue
   // (apply, offer, admit, accept) cannot run twice on the same data; their
   // statements are counted in waitlists.integration.test.ts.
@@ -513,6 +543,8 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  "POST /api/v1/me/calendar-feeds":
+    "once per subscription; the people check and one insert (calendar tests)",
   "POST /api/v1/me/account/deletion":
     "needs a recent login; the preview's statements and one insert (privacy tests)",
   "DELETE /api/v1/me/account/deletion": "one update by key, plus an audit row",
@@ -675,6 +707,9 @@ beforeAll(async () => {
     // One connection, warm after the first requests: a new connection reads the
     // catalogue first (hundreds of pages once), which says nothing about a request.
     DATABASE_POOL_MAX: "1",
+    // Calendar feeds (P1.11) are measured as rendered, not from the cache.
+    CALENDAR_TOKEN_KEY: "calendar-token-key-for-tests-0123456789",
+    CALENDAR_FEED_CACHE_SECONDS: "0",
     ...NO_RATE_LIMITS,
   });
   for (const c of CASES) before.set(c.route, await measure(c));

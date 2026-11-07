@@ -153,6 +153,7 @@ const CATEGORY_RULES: readonly [AuditCategory, readonly string[]][] = [
       "club.access_state.",
       "account.",
       "push_device.",
+      "calendar_feed.",
       "notifications.",
       "backup.",
     ],
@@ -209,6 +210,7 @@ export const AUDIT_ACTION_SENTENCES: readonly AuditAction[] = [
   "group.waitlist.priority_changed",
   "group.waitlist.offer_withdrawn",
   "group.waitlist.admitted",
+  "calendar_feed.regenerated",
   "person.club_data.purged",
   "club.settings.decided",
 ];

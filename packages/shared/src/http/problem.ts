@@ -18,6 +18,8 @@ export const PROBLEM_TYPES = {
   "not-found": 404,
   "method-not-allowed": 405,
   conflict: 409,
+  /** The link or resource existed but is no longer usable (an expired answer link, P1.11). */
+  gone: 410,
   "payload-too-large": 413,
   "unsupported-media-type": 415,
   "rate-limited": 429,

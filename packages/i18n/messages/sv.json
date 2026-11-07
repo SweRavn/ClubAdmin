@@ -17,7 +17,8 @@
     "unavailable": "Tjänsten är tillfälligt otillgänglig",
     "entitlement-required": "Föreningens abonnemang innehåller inte detta",
     "club-read-only": "Föreningen är skrivskyddad: du kan se och exportera uppgifterna men inte ändra dem",
-    "club-suspended": "Föreningen är avstängd: endast export av uppgifterna är möjlig"
+    "club-suspended": "Föreningen är avstängd: endast export av uppgifterna är möjlig",
+    "gone": "Finns inte längre"
   },
   "common": {
     "appName": "ClubAdmin",
@@ -58,7 +59,8 @@
     "sessions": "Där jag är inloggad",
     "logout": "Logga ut",
     "notifications": "Notiser",
-    "privacy": "Integritet"
+    "privacy": "Integritet",
+    "calendar": "Kalenderprenumerationer"
   },
   "viewingAs": {
     "label": "Visar som",
@@ -696,7 +698,12 @@
     "queue_bypass_reason_required": "Det finns personer i kön till gruppen: ange ett skäl för att lägga till en medlem direkt.",
     "priority_reason_required": "Förtur kräver ett skäl.",
     "join_request_rejected": "Klubben godkände inte medlemskapet.",
-    "already_in_group": "Finns redan i gruppen."
+    "already_in_group": "Finns redan i gruppen.",
+    "too_many_feeds": "Du har så många kalenderprenumerationer som går. Ta bort en först.",
+    "feed_scope_invalid": "Det går inte att ändra för den här prenumerationen.",
+    "calendar_feeds_unavailable": "Kalenderprenumerationer finns inte här.",
+    "answer_link_invalid": "Länken fungerar inte (längre).",
+    "answer_link_expired": "Länken har gått ut: aktiviteten är slut eller prenumerationen borttagen."
   },
   "memberExport": {
     "columns": {
@@ -1717,6 +1724,14 @@
         "title": "Välkommen till {group}",
         "body": "Platsen i {group} ({club}) är klar."
       }
+    },
+    "calendar": {
+      "feed": {
+        "revoked": {
+          "title": "En kalenderprenumeration togs bort",
+          "body": "{feedReason, select, unused {Den hade inte använts på ett år.} access_lost {Den hade inte längre åtkomst till kalendern.} other {Den togs bort.}} Du kan skapa en ny under Kalenderprenumerationer."
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2020,6 +2035,7 @@
       "person": "Person",
       "account": "Inloggning och inställningar",
       "pushDevices": "Telefoner med aviseringar",
+      "calendarFeeds": "Kalenderprenumerationer",
       "guardianships": "Familjekopplingar",
       "guardianInvitations": "Skickade familjeinbjudningar",
       "notifications": "Aviseringar (senaste 90 dagarna)",
@@ -2205,7 +2221,7 @@
       "include_protected": "Med skyddade medlemmar",
       "join_policy": "Hur man blir medlem",
       "kind": "Typ",
-      "label": "Etikett",
+      "label": "Namn",
       "location_id": "Plats",
       "location_text": "Plats (text)",
       "meet_at": "Samling",
@@ -2229,8 +2245,8 @@
       "registration_closes_at": "Anmälan stänger",
       "registration_opens_at": "Anmälan öppnar",
       "response_mode": "Svar",
-      "revoked_at": "Återkallad",
-      "revoked_reason": "Orsak till återkallelsen",
+      "revoked_at": "Borttagen",
+      "revoked_reason": "Borttagen för att",
       "rights": "Rättigheter",
       "role_preset": "Roll",
       "row_count": "Rader",
@@ -2249,7 +2265,13 @@
       "offered_at": "Erbjuden",
       "priority_reason": "Skäl för förtur",
       "queue_bypass_reason": "Skäl att gå förbi kön",
-      "waitlist_auto_offer": "Automatiska erbjudanden"
+      "waitlist_auto_offer": "Automatiska erbjudanden",
+      "scope": "Typ",
+      "person_ids": "Personer",
+      "access_lost_at": "Utan åtkomst sedan",
+      "sequence": "Version",
+      "meet_place": "Samlingsplats",
+      "address": "Adress"
     },
     "resources": {
       "person": "Person",
@@ -2291,7 +2313,8 @@
       "club_manager_handover": "Överlämning av klubbansvar",
       "club_manager_reassignment": "Ny klubbansvarig via operatören",
       "guardian_invitation": "Inbjudan av vårdnadshavare",
-      "subscription": "Abonnemang"
+      "subscription": "Abonnemang",
+      "calendar_feed": "Kalenderprenumeration"
     },
     "statuses": {
       "scheduled": "Planerad",
@@ -2327,6 +2350,13 @@
       "sibling": "Syskon i gruppen",
       "returning_member": "Återvändande medlem",
       "other": "Annat skäl"
+    },
+    "feedReasons": {
+      "owner": "Av ägaren",
+      "regenerated": "Ny länk",
+      "access_lost": "Ingen åtkomst",
+      "unused": "Oanvänd",
+      "erased": "Raderad"
     }
   },
   "audit": {
@@ -2424,7 +2454,8 @@
       "club_settings_decided": "{actor} registrerade ett styrelsebeslut",
       "group_waitlist_priority_changed": "{actor} ändrade förturen för en köplats",
       "group_waitlist_offer_withdrawn": "{actor} drog tillbaka en erbjuden plats",
-      "group_waitlist_admitted": "{actor} antog någon från en kö"
+      "group_waitlist_admitted": "{actor} antog någon från en kö",
+      "calendar_feed_regenerated": "{actor} skapade en ny länk för en kalenderprenumeration"
     }
   },
   "groupAdmin": {
@@ -2582,5 +2613,84 @@
     "more": "Fler",
     "queueBypassReason": "Skäl att lägga till förbi kön ({count} i kön)",
     "groupWaiting": "{count, plural, =0 {Ingen i kön} one {# person i kön} other {# personer i kön}}"
+  },
+  "calendar": {
+    "feed": {
+      "mySchedule": "Mitt schema",
+      "cancelledPrefix": "Inställt: ",
+      "groups": "Grupper: {groups}",
+      "meetAt": "Samling {time}, {place}",
+      "meet": "Samling {time}",
+      "cancelledReason": "Anledning: {reason}",
+      "calloutOnly": "Endast kallade",
+      "isComing": "{name}: kommer",
+      "isNotComing": "{name}: kommer inte",
+      "noAnswer": "{name}: inte svarat än",
+      "linkComing": "{name} kommer: {url}",
+      "linkNotComing": "{name} kommer inte: {url}",
+      "answerBy": "Svara senast {deadline}",
+      "footer": "Prenumeration via ClubAdmin – hantera på {url}",
+      "noAccess": "Prenumerationen har inte längre åtkomst."
+    },
+    "ui": {
+      "title": "Kalenderprenumerationer",
+      "intro": "Få dina aktiviteter i mobilens eller datorns kalender. Kalendern uppdateras av sig själv.",
+      "subscribe": "Prenumerera i min kalender",
+      "subscribeThis": "Prenumerera på den här kalendern",
+      "people": "Vems aktiviteter",
+      "everyone": "Jag och alla mina barn (även senare)",
+      "label": "Namn (valfritt)",
+      "create": "Skapa prenumeration",
+      "created": "Prenumerationen är klar. Kopiera länken nu: den visas bara en gång.",
+      "warning": "Den som har länken ser de här aktiviteterna och kan svara för dina barn. Dela den inte.",
+      "protectedWarning": "{names} har skyddad identitet: länken visar var och när. I kalendern visas bara initialer.",
+      "copy": "Kopiera",
+      "openInCalendar": "Öppna i kalendern",
+      "webcal": "Apple Kalender och Outlook",
+      "https": "Google Kalender och andra",
+      "helpApple": "iPhone, iPad och Mac: “Öppna i kalendern” prenumererar direkt.",
+      "helpGoogle": "Google Kalender: på en dator, “Andra kalendrar” → “Från webbadress”, klistra in https-länken. Google uppdaterar bara med några timmars mellanrum.",
+      "helpOutlook": "Outlook: “Lägg till kalender” → “Prenumerera från webben”, klistra in länken.",
+      "helpAndroid": "Android: använd Google Kalender som ovan, eller en app som ICSx⁵ eller DAVx⁵ med länken.",
+      "empty": "Inga prenumerationer än.",
+      "lastFetched": "Senast hämtad {date}",
+      "neverFetched": "Inte hämtad än",
+      "scopes": {
+        "my_schedule": "Mitt schema",
+        "group": "Grupp",
+        "club": "Klubbkalender"
+      },
+      "rename": "Byt namn",
+      "regenerate": "Ny länk",
+      "regenerateHint": "Den gamla länken slutar fungera direkt.",
+      "remove": "Ta bort",
+      "removed": "Prenumerationen togs bort. Länken fungerar inte längre.",
+      "updated": "Sparat.",
+      "max": "Högst {max} prenumerationer.",
+      "copied": "Kopierad",
+      "list": "Mina prenumerationer",
+      "everyoneShort": "Jag och alla mina barn",
+      "manageOnWeb": "Hantera på webben"
+    },
+    "answer": {
+      "title": "Svara",
+      "coming": "{name} kommer på {title}",
+      "notComing": "{name} kommer inte på {title}",
+      "when": "{when}, {place}",
+      "confirm": "Bekräfta",
+      "saved": "Sparat: {answer}.",
+      "current": "Nuvarande svar: {answer}",
+      "answers": {
+        "attending": "kommer",
+        "not_attending": "kommer inte"
+      },
+      "closed": "Svaren är stängda för aktiviteten.",
+      "deadlinePassed": "Sista svarsdag har passerat; du kan fortfarande säga att du inte kommer.",
+      "sayNotComing": "Säg att du inte kommer",
+      "cancelled": "Aktiviteten är inställd.",
+      "invalid": "Länken fungerar inte (längre).",
+      "expired": "Länken har gått ut.",
+      "toSchedule": "Till mitt schema"
+    }
   }
 }

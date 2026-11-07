@@ -22,6 +22,10 @@ export interface SeedEnvironment {
   billingEnabled?: boolean;
   /** INVITATION_TOKEN_KEY: the demo's email invitations get tokens the worker can mail (ADR 0032). */
   invitationTokenKey?: string | undefined;
+  /** CALENDAR_TOKEN_KEY: the demo answer link is printed with it (P1.11). */
+  calendarTokenKey?: string | undefined;
+  /** Where the seed prints what can be tried (demo secrets). */
+  log?: (message: string) => void;
 }
 
 /** A step of the demo scenario; modules add theirs after "core" (ADR 0026). */

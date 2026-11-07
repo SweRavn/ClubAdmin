@@ -17,7 +17,8 @@
     "unavailable": "Tjenesten er midlertidig utilgjengelig",
     "entitlement-required": "Klubbens abonnement inkluderer ikke dette",
     "club-read-only": "Klubben er skrivebeskyttet: du kan se og eksportere dataene, men ikke endre dem",
-    "club-suspended": "Klubben er suspendert: bare eksport av dataene er mulig"
+    "club-suspended": "Klubben er suspendert: bare eksport av dataene er mulig",
+    "gone": "Finnes ikke lenger"
   },
   "common": {
     "appName": "ClubAdmin",
@@ -58,7 +59,8 @@
     "sessions": "Hvor jeg er logget inn",
     "logout": "Logg ut",
     "notifications": "Varsler",
-    "privacy": "Personvern"
+    "privacy": "Personvern",
+    "calendar": "Kalenderabonnementer"
   },
   "viewingAs": {
     "label": "Viser som",
@@ -696,7 +698,12 @@
     "queue_bypass_reason_required": "Det står personer i køen til gruppen: oppgi en grunn for å legge til et medlem direkte.",
     "priority_reason_required": "Fortrinn krever en grunn.",
     "join_request_rejected": "Klubben godkjente ikke medlemskapet.",
-    "already_in_group": "Er allerede i gruppen."
+    "already_in_group": "Er allerede i gruppen.",
+    "too_many_feeds": "Du har så mange kalenderabonnementer som er tillatt. Fjern ett først.",
+    "feed_scope_invalid": "Det kan ikke endres for dette abonnementet.",
+    "calendar_feeds_unavailable": "Kalenderabonnementer er ikke tilgjengelige her.",
+    "answer_link_invalid": "Lenken virker ikke (lenger).",
+    "answer_link_expired": "Lenken har gått ut: aktiviteten er over eller abonnementet er fjernet."
   },
   "memberExport": {
     "columns": {
@@ -1717,6 +1724,14 @@
         "title": "Velkommen til {group}",
         "body": "Plassen i {group} ({club}) er klar."
       }
+    },
+    "calendar": {
+      "feed": {
+        "revoked": {
+          "title": "Et kalenderabonnement ble fjernet",
+          "body": "{feedReason, select, unused {Det hadde ikke vært brukt på et år.} access_lost {Det hadde ikke lenger tilgang til kalenderen.} other {Det ble fjernet.}} Du kan opprette et nytt under Kalenderabonnementer."
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2020,6 +2035,7 @@
       "person": "Person",
       "account": "Innlogging og innstillinger",
       "pushDevices": "Telefoner med varsler",
+      "calendarFeeds": "Kalenderabonnementer",
       "guardianships": "Familiekoblinger",
       "guardianInvitations": "Sendte familieinvitasjoner",
       "notifications": "Varsler (siste 90 dager)",
@@ -2205,7 +2221,7 @@
       "include_protected": "Med skjermede medlemmer",
       "join_policy": "Hvordan bli medlem",
       "kind": "Type",
-      "label": "Etikett",
+      "label": "Navn",
       "location_id": "Sted",
       "location_text": "Sted (tekst)",
       "meet_at": "Oppmøte",
@@ -2229,8 +2245,8 @@
       "registration_closes_at": "Påmelding stenger",
       "registration_opens_at": "Påmelding åpner",
       "response_mode": "Svar",
-      "revoked_at": "Trukket tilbake",
-      "revoked_reason": "Årsak til tilbaketrekking",
+      "revoked_at": "Fjernet",
+      "revoked_reason": "Fjernet fordi",
       "rights": "Rettigheter",
       "role_preset": "Rolle",
       "row_count": "Rader",
@@ -2249,7 +2265,13 @@
       "offered_at": "Tilbudt",
       "priority_reason": "Grunn til fortrinn",
       "queue_bypass_reason": "Grunn til å gå forbi køen",
-      "waitlist_auto_offer": "Automatiske tilbud"
+      "waitlist_auto_offer": "Automatiske tilbud",
+      "scope": "Type",
+      "person_ids": "Personer",
+      "access_lost_at": "Uten tilgang siden",
+      "sequence": "Versjon",
+      "meet_place": "Oppmøtested",
+      "address": "Adresse"
     },
     "resources": {
       "person": "Person",
@@ -2291,7 +2313,8 @@
       "club_manager_handover": "Overlevering av klubbansvar",
       "club_manager_reassignment": "Ny klubbansvarlig via operatøren",
       "guardian_invitation": "Invitasjon av foresatt",
-      "subscription": "Abonnement"
+      "subscription": "Abonnement",
+      "calendar_feed": "Kalenderabonnement"
     },
     "statuses": {
       "scheduled": "Planlagt",
@@ -2327,6 +2350,13 @@
       "sibling": "Søsken i gruppen",
       "returning_member": "Tilbakevendende medlem",
       "other": "Annen grunn"
+    },
+    "feedReasons": {
+      "owner": "Av eieren",
+      "regenerated": "Ny lenke",
+      "access_lost": "Ingen tilgang",
+      "unused": "Ubrukt",
+      "erased": "Slettet"
     }
   },
   "audit": {
@@ -2424,7 +2454,8 @@
       "club_settings_decided": "{actor} registrerte et styrevedtak",
       "group_waitlist_priority_changed": "{actor} endret fortrinnet for en køplass",
       "group_waitlist_offer_withdrawn": "{actor} trakk tilbake en tilbudt plass",
-      "group_waitlist_admitted": "{actor} tok opp noen fra en kø"
+      "group_waitlist_admitted": "{actor} tok opp noen fra en kø",
+      "calendar_feed_regenerated": "{actor} lagde en ny lenke for et kalenderabonnement"
     }
   },
   "groupAdmin": {
@@ -2582,5 +2613,84 @@
     "more": "Flere",
     "queueBypassReason": "Grunn til å legge til forbi køen ({count} i køen)",
     "groupWaiting": "{count, plural, =0 {Ingen i køen} one {# person i køen} other {# personer i køen}}"
+  },
+  "calendar": {
+    "feed": {
+      "mySchedule": "Min timeplan",
+      "cancelledPrefix": "Avlyst: ",
+      "groups": "Grupper: {groups}",
+      "meetAt": "Oppmøte {time}, {place}",
+      "meet": "Oppmøte {time}",
+      "cancelledReason": "Årsak: {reason}",
+      "calloutOnly": "Kun innkalte",
+      "isComing": "{name}: kommer",
+      "isNotComing": "{name}: kommer ikke",
+      "noAnswer": "{name}: ikke svart ennå",
+      "linkComing": "{name} kommer: {url}",
+      "linkNotComing": "{name} kommer ikke: {url}",
+      "answerBy": "Svar innen {deadline}",
+      "footer": "Abonnement via ClubAdmin – administrer på {url}",
+      "noAccess": "Abonnementet har ikke lenger tilgang."
+    },
+    "ui": {
+      "title": "Kalenderabonnementer",
+      "intro": "Få aktivitetene dine i kalenderen på mobilen eller datamaskinen. Kalenderen oppdaterer seg selv.",
+      "subscribe": "Abonner i min kalender",
+      "subscribeThis": "Abonner på denne kalenderen",
+      "people": "Hvem sine aktiviteter",
+      "everyone": "Meg og alle barna mine (også senere)",
+      "label": "Navn (valgfritt)",
+      "create": "Opprett abonnement",
+      "created": "Abonnementet er klart. Kopier lenken nå: den vises bare én gang.",
+      "warning": "Den som har lenken ser disse aktivitetene og kan svare for barna dine. Ikke del den.",
+      "protectedWarning": "{names} har beskyttet identitet: lenken viser hvor og når. I kalenderen vises bare initialer.",
+      "copy": "Kopier",
+      "openInCalendar": "Åpne i kalenderen",
+      "webcal": "Apple Kalender og Outlook",
+      "https": "Google Kalender og andre",
+      "helpApple": "iPhone, iPad og Mac: “Åpne i kalenderen” abonnerer direkte.",
+      "helpGoogle": "Google Kalender: på en datamaskin, “Andre kalendere” → “Fra nettadresse”, lim inn https-lenken. Google oppdaterer bare med noen timers mellomrom.",
+      "helpOutlook": "Outlook: “Legg til kalender” → “Abonner fra nettet”, lim inn lenken.",
+      "helpAndroid": "Android: bruk Google Kalender som over, eller en app som ICSx⁵ eller DAVx⁵ med lenken.",
+      "empty": "Ingen abonnementer ennå.",
+      "lastFetched": "Sist hentet {date}",
+      "neverFetched": "Ikke hentet ennå",
+      "scopes": {
+        "my_schedule": "Min timeplan",
+        "group": "Gruppe",
+        "club": "Klubbkalender"
+      },
+      "rename": "Gi nytt navn",
+      "regenerate": "Ny lenke",
+      "regenerateHint": "Den gamle lenken slutter å virke med en gang.",
+      "remove": "Fjern",
+      "removed": "Abonnementet ble fjernet. Lenken virker ikke lenger.",
+      "updated": "Lagret.",
+      "max": "Høyst {max} abonnementer.",
+      "copied": "Kopiert",
+      "list": "Mine abonnementer",
+      "everyoneShort": "Meg og alle barna mine",
+      "manageOnWeb": "Administrer på nettet"
+    },
+    "answer": {
+      "title": "Svar",
+      "coming": "{name} kommer på {title}",
+      "notComing": "{name} kommer ikke på {title}",
+      "when": "{when}, {place}",
+      "confirm": "Bekreft",
+      "saved": "Lagret: {answer}.",
+      "current": "Nåværende svar: {answer}",
+      "answers": {
+        "attending": "kommer",
+        "not_attending": "kommer ikke"
+      },
+      "closed": "Svarene er stengt for aktiviteten.",
+      "deadlinePassed": "Svarfristen er passert; du kan fortsatt si at du ikke kommer.",
+      "sayNotComing": "Si at du ikke kommer",
+      "cancelled": "Aktiviteten er avlyst.",
+      "invalid": "Lenken virker ikke (lenger).",
+      "expired": "Lenken har gått ut.",
+      "toSchedule": "Til min timeplan"
+    }
   }
 }

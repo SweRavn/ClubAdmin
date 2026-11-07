@@ -252,3 +252,20 @@ export type ShareablePersonField = (typeof SHAREABLE_PERSON_FIELDS)[number];
 
 export const EMPLOYMENT_TYPES = ["permanent", "fixed_term", "hourly", "volunteer_stipend"] as const;
 export type EmploymentType = (typeof EMPLOYMENT_TYPES)[number];
+
+/** Calendar subscriptions (P1.11, ADR 0044). `club_public` is reserved for public clubs (Phase 3). */
+export const CALENDAR_FEED_SCOPES = ["my_schedule", "group", "club"] as const;
+export type CalendarFeedScope = (typeof CALENDAR_FEED_SCOPES)[number];
+
+/** Why a feed was revoked: a code, never free text. */
+export const CALENDAR_FEED_REVOKED_REASONS = [
+  "owner",
+  "regenerated",
+  "access_lost",
+  "unused",
+  "erased",
+] as const;
+export type CalendarFeedRevokedReason = (typeof CALENDAR_FEED_REVOKED_REASONS)[number];
+
+/** Open feeds per person. */
+export const CALENDAR_FEEDS_MAX = 10;

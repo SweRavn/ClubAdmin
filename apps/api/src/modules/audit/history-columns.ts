@@ -743,6 +743,8 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
   "public.notifications": "a person's inbox (inserts are not recorded); never shown to clubs",
   "public.data_exports": "a person's own requests for their data (global, ADR 0041)",
   "public.erasure_requests": "a person's own deletion requests (global, ADR 0041)",
+  "public.calendar_feeds":
+    "a person's own calendar subscriptions (global, P1.11); never shown to clubs",
 };
 
 const byTable = new Map(HISTORY_POLICY.map((p) => [p.table, p]));

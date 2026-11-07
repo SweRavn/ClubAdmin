@@ -8,7 +8,7 @@
 // the resource's club, the resource does not exist, or it is a person (a
 // person's existence is itself information); 403 otherwise.
 
-import type { Database } from "@clubadmin/db";
+import type { ActorContext, Database } from "@clubadmin/db";
 import { isUuid, ON_BEHALF_OF_HEADER, type Permission } from "@clubadmin/shared";
 import type { FastifyRequest } from "fastify";
 
@@ -284,6 +284,15 @@ export class AuthorizationService {
     const clubId = param(request, "clubId");
     if (!clubId || !isUuid(clubId)) throw new ProblemError("not-found");
     return { kind: "club", clubId };
+  }
+
+  /**
+   * A group as a resource outside a request (calendar feeds act as their
+   * owner, P1.11); null when the context cannot see it.
+   */
+  async groupResourceOf(context: ActorContext, groupId: string): Promise<GroupResource | null> {
+    const scope = await this.db.withActor(context, (tx) => loadGroupScope(tx, groupId));
+    return scope ? { kind: "group", groupId, ...scope } : null;
   }
 
   private async groupResource(
