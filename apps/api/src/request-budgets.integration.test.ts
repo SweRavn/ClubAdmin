@@ -91,6 +91,25 @@ const CASES: Case[] = [
     statements: 2,
     pages: 10,
   },
+  // Protected identity (P1.12): Samira reads who opened Nadia's profile
+  // (demo views in IKN); Anna, with a second factor, reads SVK's log.
+  {
+    route: "GET /api/v1/people/{personId}/access-log",
+    persona: "samira",
+    method: "GET",
+    url: () => `/api/v1/people/${key("nadia")}/access-log`,
+    statements: 3,
+    pages: 30,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/profile-views",
+    persona: "anna",
+    method: "GET",
+    mfa: true,
+    url: () => `/api/v1/clubs/${key("svk")}/profile-views`,
+    statements: 4,
+    pages: 40,
+  },
   // Calendar subscriptions (P1.11): the list (web and app) and the feeds
   // calendar apps fetch: Anna's "My schedule" for two children in two clubs,
   // Erik's F2017 group calendar (demo secrets, docs/seed-data.md). Both feeds
@@ -176,7 +195,7 @@ const CASES: Case[] = [
     persona: "sara",
     method: "GET",
     url: () => `/api/v1/people/${key("elsa")}/history?clubId=${key("svk")}`,
-    statements: 8,
+    statements: 9,
     pages: 900,
   },
   {
@@ -341,8 +360,8 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => `/api/v1/people/${key("elsa")}?clubId=${key("svk")}`,
-    statements: 5,
-    pages: 80,
+    statements: 7,
+    pages: 110,
   },
   {
     route: "GET /api/v1/activities/{activityId}",
@@ -543,6 +562,8 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  "PUT /api/v1/people/{personId}/protection":
+    "a rare write: one lock, one update, audit and outbox (protection tests)",
   "POST /api/v1/me/calendar-feeds":
     "once per subscription; the people check and one insert (calendar tests)",
   "POST /api/v1/me/account/deletion":

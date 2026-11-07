@@ -57,6 +57,8 @@ export const DOMAIN_ERRORS = {
   too_many_feeds: "conflict",
   feed_scope_invalid: "validation",
   /** The installation has calendar feeds off (or no key to sign answer links). */
+  protection_removal_not_allowed: "forbidden",
+  not_a_full_guardian: "forbidden",
   calendar_feeds_unavailable: "not-found",
   answer_link_invalid: "not-found",
   /** The activity ended or the feed was revoked. */

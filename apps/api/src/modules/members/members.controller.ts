@@ -67,6 +67,9 @@ export function registerFilterOf(query: RegisterQuery, access: RegisterAccess): 
   if (access === "limited" && query.sort === "joined") {
     throw new DomainError("register_filter_not_allowed");
   }
+  // Protected members (P1.12): the full view only; the limited view never
+  // contains them, so the filter is ignored there.
+  if (query.protected === "only" && access === "full") filter.protected = "only";
   return filter;
 }
 

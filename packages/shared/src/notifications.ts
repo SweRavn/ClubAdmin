@@ -77,6 +77,8 @@ export const NOTIFICATION_TYPES = {
   "members.exported": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "members.import.finished": { category: "club_admin", immediate: true },
   "membership.left": { category: "club_admin" },
+  // Protected identity (P1.12): the club's managers, never naming the person.
+  "member.protection.changed": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "assignment.ended": { category: "club_admin" },
   "club.privacy_policy.updated": { category: "membership" },
   "family.accepted": { category: "family" },
@@ -88,6 +90,8 @@ export const NOTIFICATION_TYPES = {
   "account.deletion.scheduled": { category: "account", mandatoryEmail: true, immediate: true },
   "account.deletion.blocked": { category: "account", mandatoryEmail: true, immediate: true },
   "person.erasure.scheduled": { category: "family", mandatoryEmail: true, immediate: true },
+  // Another full guardian turned a child's protection off (P1.12).
+  "family.protection.removed": { category: "family", mandatoryEmail: true, immediate: true },
   // Calendar subscriptions (P1.11, decision 10): the system revoked a feed.
   "calendar.feed.revoked": { category: "account", mandatoryEmail: true, immediate: true },
   // Waiting lists (P1.10a, P1.10b, ADR 0043). The offer's email cannot be

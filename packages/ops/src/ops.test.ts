@@ -84,6 +84,26 @@ describe("restore verification", () => {
     ]);
   });
 
+  it("keeps erasures and anonymisations of the same person apart (P1.12)", () => {
+    const anonymized = (club: string) => ({
+      kind: "anonymization" as const,
+      person_id: "b",
+      club_id: club,
+      scope: "profile_views",
+      erased_at: "2026-03-01T00:00:00Z",
+      reason: "profile_views",
+    });
+    const merged = mergeLedgers(
+      [{ person_id: "b", erased_at: "2026-02-01T00:00:00Z", reason: "export" }, anonymized("x")],
+      [anonymized("x"), anonymized("y")],
+    );
+    expect(merged.map((e) => [e.kind ?? "deletion", e.club_id ?? null])).toEqual([
+      ["deletion", null],
+      ["anonymization", "x"],
+      ["anonymization", "y"],
+    ]);
+  });
+
   it("formats one line per check", () => {
     expect(
       formatChecks([

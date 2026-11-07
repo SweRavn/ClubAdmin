@@ -34,6 +34,7 @@ import {
   protectionChangedTask,
   purgeMemberTask,
 } from "./privacy.ts";
+import { anonymizeProfileViewsTask, profileViewsRetentionTask } from "./profile-views.ts";
 import { waitlistOffersTask } from "./waitlists.ts";
 
 export interface TaskDependencies {
@@ -115,6 +116,8 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "joining:retention": joiningRetentionTask(deps.db),
     "waitlists:offers": waitlistOffersTask(deps.db),
     "calendar:retention": calendarRetentionTask(deps.db),
+    "privacy:anonymize_profile_views": anonymizeProfileViewsTask(deps.db),
+    "privacy:profile_views": profileViewsRetentionTask(deps.db),
     "attendance:retention": attendanceRetentionTask(deps.db),
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
@@ -178,7 +181,9 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * 05:43 UTC; "download my data" files past seven days hourly at :07 (P1.8b);
  * waiting-list offers (expiry, auto-offers) every five minutes (P1.10b);
  * calendar subscriptions unused for 12 months or revoked 30 days ago daily
- * at 05:13 UTC (P1.11).
+ * at 05:13 UTC (P1.11); the profile view log (anonymising people who left
+ * a club, rows after 24 months, the anonymisation ledger after 13) daily at
+ * 05:19 UTC (P1.12).
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -200,6 +205,7 @@ export const crontab = [
   "43 5 * * * audit:retention ?fill=2d",
   "*/5 * * * * waitlists:offers ?max=1",
   "13 5 * * * calendar:retention ?fill=2d",
+  "19 5 * * * privacy:profile_views ?fill=2d",
 ].join("\n");
 
 /** Added to the crontab only with BILLING_ENABLED=true: invoicing on the 1st at 04:41 UTC. */

@@ -421,9 +421,19 @@ export const POLICIES: readonly Policy[] = [
     "person",
     ({ actor, resource }) =>
       resource.clubId
-        ? resource.inClub !== null && actor.isClubManager(resource.clubId)
+        ? actor.onBehalfOf === null &&
+          resource.inClub !== null &&
+          actor.isClubManager(resource.clubId)
         : actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId, "act_on_behalf"),
     { mfa: ({ resource }) => resource.clubId !== null },
+  ),
+  // The person's profile view log (P1.12): the person and guardians who act
+  // on their behalf (the database function requires a full guardian).
+  definePolicy(
+    "person.access_log.read",
+    "person",
+    ({ actor, resource }) =>
+      actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId, "act_on_behalf"),
   ),
   // Families (P1.3). The ward and every active guardian see the ward's
   // guardians (the presenter shows relatives names only).
@@ -543,6 +553,20 @@ export const POLICIES: readonly Policy[] = [
   ),
   definePolicy(
     "club.audit.read",
+    "club",
+    ({ actor, resource }) => actor.isClubManager(resource.clubId),
+    { mfa: true },
+  ),
+  // The club's profile view log and its setting (P1.12): club managers, with
+  // a second factor.
+  definePolicy(
+    "club.profile_views.read",
+    "club",
+    ({ actor, resource }) => actor.isClubManager(resource.clubId),
+    { mfa: true },
+  ),
+  definePolicy(
+    "club.profile_views.configure",
     "club",
     ({ actor, resource }) => actor.isClubManager(resource.clubId),
     { mfa: true },

@@ -180,6 +180,9 @@ export function noticeLink(input: NoticeInput): string {
       return "/me/privacy";
     case "guardianship":
       return "/me/family";
+    // Protected identity (P1.12): the club's protected members, the family page.
+    case "club_protected":
+      return input.clubId ? `/clubs/${input.clubId}/protected` : "/";
     // Waiting lists (P1.10a): the applicant's waiting-list page.
     case "group_waitlist_entry":
       return "/me/waitlists";

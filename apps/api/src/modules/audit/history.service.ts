@@ -219,12 +219,14 @@ export class HistoryService {
         (panel.activity !== undefined &&
           permits(authz.actor, "activity.responses.read", panel.activity)),
     });
-    if (panel.kind === "person" && panel.protectedPerson) {
-      // Until P1.12 (profile_views): reading a protected person's history is
-      // logged like a profile view, on the primary database (ADR 0042).
-      await this.people.recordProtectedView(tenantContext(authz, panel.clubId), panel.id, [
-        "history",
-      ]);
+    if (panel.kind === "person") {
+      // Reading a person's history is a view of their profile (P1.12,
+      // surface "history"), logged on the primary database (ADR 0042).
+      await this.people.recordProfileView(tenantContext(authz, panel.clubId), panel.id, {
+        clubId: panel.clubId,
+        surface: "history",
+        protected: panel.protectedPerson === true,
+      });
     }
     return page;
   }

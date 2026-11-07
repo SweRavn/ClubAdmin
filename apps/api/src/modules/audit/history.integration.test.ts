@@ -279,13 +279,14 @@ describe("field visibility and people", () => {
     const protectedId = rows[0]!.person_id;
     const response = await get("johan", `/api/v1/people/${protectedId}/history?clubId=${svk()}`);
     expect(response.statusCode).toBe(200);
-    const { rows: logged } = await t.query<{ changed_fields: string[] }>(
+    // The profile view log (P1.12), surface "history".
+    const { rows: logged } = await t.query<{ surface: string; protected: boolean }>(
       "admin",
-      `SELECT changed_fields FROM audit.events WHERE action = 'person.protected.viewed'
-       AND resource_id = $1 AND actor_person_id = $2`,
-      [protectedId, key("johan")],
+      `SELECT surface, protected FROM profile_views
+       WHERE club_id = $1 AND viewed_person_id = $2 AND viewer_person_id = $3`,
+      [svk(), protectedId, key("johan")],
     );
-    expect(logged.map((r) => r.changed_fields)).toContainEqual(["history"]);
+    expect(logged).toContainEqual({ surface: "history", protected: true });
   });
 
   it("shows an erased person as a deleted user, never their values", async () => {

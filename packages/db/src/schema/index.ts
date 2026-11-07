@@ -15,3 +15,4 @@ export * from "./members.ts";
 export * from "./notifications.ts";
 export * from "./people.ts";
 export * from "./platform.ts";
+export * from "./profile-views.ts";

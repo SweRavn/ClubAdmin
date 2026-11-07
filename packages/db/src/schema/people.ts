@@ -62,6 +62,9 @@ export const people = pgTable(
     personalIdentityNumberHash: text(),
     /** Global protected identity (ADR 0022), set by the person or a guardian. */
     protectedIdentity: boolean().notNull().default(false),
+    /** Who turned the global flag on last, and when (P1.12; the removal rule). Cleared when off. */
+    protectedIdentitySetByPersonId: uuid().references((): AnyPgColumn => people.id),
+    protectedIdentitySetAt: timestamp(tz),
     phone: text(),
     address: jsonb().$type<PostalAddress>(),
     deceasedAt: timestamp(tz),

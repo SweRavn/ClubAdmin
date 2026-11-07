@@ -641,6 +641,20 @@ const CASES: Record<Permission, Case[]> = {
       allowed: false,
     },
   ],
+  "person.access_log.read": [
+    {
+      name: "self",
+      actor: as({ personId: player }),
+      resource: personResource(player, null),
+      allowed: true,
+    },
+    { name: "a parent", actor: parent, resource: personResource(ward, null), allowed: true },
+    { name: "a relative", actor: relative, resource: personResource(ward, null), allowed: false },
+    { name: "the club's manager", actor: manager, resource: playerInTeam(), allowed: false },
+    { name: "a registrar", actor: registrar, resource: playerInTeam(), allowed: false },
+    { name: "a coach", actor: coach, resource: playerInTeam(), allowed: false },
+    { name: "a stranger", actor: outsider, resource: personResource(ward, null), allowed: false },
+  ],
   "person.guardians.read": [
     {
       name: "the ward",
@@ -929,6 +943,22 @@ const CASES: Record<Permission, Case[]> = {
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: false },
   ],
+  "club.profile_views.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.profile_views.configure": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
   "club.waitlists.read": [
     { name: "manager", actor: manager, resource: clubR, allowed: true },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
@@ -1031,7 +1061,12 @@ describe("policies", () => {
     expect(policyFor("club.read")!.requiresMfa({ actor: plainMember, resource: clubR })).toBe(
       false,
     );
-    for (const permission of ["club.history.read", "club.audit.read"] as const) {
+    for (const permission of [
+      "club.history.read",
+      "club.audit.read",
+      "club.profile_views.read",
+      "club.profile_views.configure",
+    ] as const) {
       expect(
         policyFor(permission)!.requiresMfa({ actor: managerWithoutMfa, resource: clubR }),
       ).toBe(true);

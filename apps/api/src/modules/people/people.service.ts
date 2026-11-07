@@ -8,6 +8,7 @@ import { audit, type Database, outbox, type TenantContext, type Tx } from "@club
 import {
   type CreatePersonInput,
   CreatePersonSchema,
+  type ProfileViewSurface,
   type SignUpPersonInput,
   SignUpPersonSchema,
   type UpdatePersonInput,
@@ -33,6 +34,8 @@ export interface Person {
   birthDate: string | null;
   gender: string | null;
   protectedIdentity: boolean;
+  /** When the global flag was turned on (P1.12). */
+  protectedIdentitySetAt: Date | null;
   phone: string | null;
   address: repo.PersonRow["address"];
   hasPersonalIdentityNumber: boolean;
@@ -53,6 +56,7 @@ function toPerson(row: repo.PersonRow): Person {
     birthDate: row.birthDate,
     gender: row.gender,
     protectedIdentity: row.protectedIdentity,
+    protectedIdentitySetAt: row.protectedIdentitySetAt,
     phone: row.phone,
     address: row.address,
     hasPersonalIdentityNumber: row.personalIdentityNumber !== null,
@@ -125,6 +129,14 @@ export class PeopleService {
       phone: data.phone ?? null,
       address: data.address ?? null,
       protectedIdentity: data.protectedIdentity,
+      // Created protected (P1.12: "Add child" with protection, the import):
+      // whoever created the person set it.
+      ...(data.protectedIdentity
+        ? {
+            protectedIdentitySetByPersonId: context.personId ?? null,
+            protectedIdentitySetAt: new Date(),
+          }
+        : {}),
       ...pin,
       // Self sign-up creates the actor's own person; otherwise the actor created it.
       createdByPersonId: context.personId && context.personId !== id ? context.personId : null,
@@ -218,19 +230,19 @@ export class PeopleService {
     return this.db.withTenant(context, (tx) => repo.clubDuplicates(tx, context.clubId, options));
   }
 
-  /** Access log: someone other than the person viewed a protected person's profile (ADR 0022). */
-  recordProtectedView(
+  /**
+   * The profile view log (P1.12, ADR 0022): someone other than the person
+   * opened the profile (or its history). Logged when the person is protected,
+   * or in a club that logs every view; one upsert per club, viewer, person
+   * and day. Returns whether views of this profile are logged.
+   */
+  recordProfileView(
     context: Context,
     personId: string,
-    changedFields: readonly string[] = [],
-  ): Promise<void> {
+    view: { clubId: string | null; surface: ProfileViewSurface; protected: boolean },
+  ): Promise<boolean> {
     return runAs(this.db, context, (tx) =>
-      audit.record(tx, {
-        action: "person.protected.viewed",
-        resourceType: "person",
-        resourceId: personId,
-        ...(changedFields.length > 0 ? { changedFields: [...changedFields] } : {}),
-      }),
+      repo.recordProfileView(tx, personId, view.clubId, view.surface, view.protected),
     );
   }
 
@@ -403,34 +415,72 @@ export class PeopleService {
   }
 
   /**
-   * Sets or clears the global protected identity flag (ADR 0022). Only the
-   * person themselves or a parent/legal guardian may change it. Turning it on
-   * removes the stored address.
+   * Sets or clears the global protected identity flag (ADR 0022, P1.12). Only
+   * the person themselves or a full guardian may change it. Turning it on
+   * removes the stored address and records who did it. Turning a ward's flag
+   * off is refused (audited, `protection_removal_not_allowed`) unless the
+   * caller set it or whoever set it is no longer a full guardian; the person
+   * may remove their own flag only when `selfMayRemove` (consent age, the
+   * caller checks it).
    */
-  setProtectedIdentity(context: Context, personId: string, value: boolean): Promise<Person> {
-    return runAs(this.db, context, async (tx) => {
+  async setProtectedIdentity(
+    context: Context,
+    personId: string,
+    value: boolean,
+    options: { selfMayRemove?: boolean } = {},
+  ): Promise<Person> {
+    const result = await runAs(this.db, context, async (tx) => {
       const actor = actorPersonId(context);
       const current = await repo.lockPerson(tx, personId);
       if (!current) throw new DomainError("not_found");
       if (actor !== personId && !(await repo.actorIsFullGuardianOf(tx, personId))) {
-        throw new DomainError("not_allowed");
+        throw new DomainError("not_a_full_guardian");
       }
-      if (current.protectedIdentity !== value) {
-        await repo.updatePerson(tx, personId, {
-          protectedIdentity: value,
-          ...(value ? { address: null } : {}),
-        });
-        await audit.record(tx, {
-          action: "person.protection.changed",
-          resourceType: "person",
-          resourceId: personId,
-          changedFields:
-            value && current.address ? ["protected_identity", "address"] : ["protected_identity"],
-        });
-        await outbox.publish(tx, "person.protection.changed", { personId });
+      if (current.protectedIdentity === value) return { refused: false };
+      if (!value) {
+        const allowed =
+          actor === personId
+            ? options.selfMayRemove !== false
+            : current.protectedIdentitySetByPersonId === null ||
+              current.protectedIdentitySetByPersonId === actor ||
+              !(await repo.isActiveFullGuardian(
+                tx,
+                current.protectedIdentitySetByPersonId,
+                personId,
+              ));
+        if (!allowed) {
+          await audit.record(tx, {
+            action: "person.protection.removal_refused",
+            resourceType: "person",
+            resourceId: personId,
+          });
+          return { refused: true };
+        }
       }
-      return this.getPersonInTx(tx, personId);
+      await repo.updatePerson(tx, personId, {
+        protectedIdentity: value,
+        protectedIdentitySetByPersonId: value ? actor : null,
+        protectedIdentitySetAt: value ? new Date() : null,
+        ...(value ? { address: null } : {}),
+      });
+      await audit.record(tx, {
+        action: "person.protection.changed",
+        resourceType: "person",
+        resourceId: personId,
+        changedFields:
+          value && current.address ? ["protected_identity", "address"] : ["protected_identity"],
+      });
+      await outbox.publish(tx, "person.protection.changed", {
+        personId,
+        enabled: value,
+        scope: "global",
+        ...(actor ? { byPersonId: actor } : {}),
+      });
+      return { refused: false };
     });
+    // The refusal is audited in its own committed transaction above.
+    if (result.refused) throw new DomainError("protection_removal_not_allowed");
+    return this.getPerson(context, personId);
   }
 
   private async sealPersonalIdentityNumber(

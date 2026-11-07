@@ -20,6 +20,7 @@ import {
 import { GuardianshipsService } from "../guardianships/index.ts";
 import { PeopleService } from "../people/index.ts";
 import { ConsentsService } from "../privacy/index.ts";
+import { ProtectionService } from "../protection/index.ts";
 
 @Controller("people")
 export class PersonProfilesController {
@@ -27,17 +28,20 @@ export class PersonProfilesController {
   private readonly guardianships: GuardianshipsService;
   private readonly presenter: PersonProfilePresenter;
   private readonly consents: ConsentsService;
+  private readonly protection: ProtectionService;
 
   constructor(
     people: PeopleService,
     guardianships: GuardianshipsService,
     presenter: PersonProfilePresenter,
     consents: ConsentsService,
+    protection: ProtectionService,
   ) {
     this.people = people;
     this.guardianships = guardianships;
     this.presenter = presenter;
     this.consents = consents;
+    this.protection = protection;
   }
 
   @Endpoint({
@@ -95,13 +99,21 @@ export class PersonProfilesController {
       return p ? [{ kind: g.kind, person: p }] : [];
     });
 
-    // Access log (ADR 0022): every view of a protected person by someone else.
+    // The profile view log (P1.12, ADR 0022): views of protected people, and
+    // every view in a club that logs them all; the viewer is told.
     const isProtected = person.protectedIdentity || resource.inClub?.protected === true;
-    if (isProtected && !authz.actor.isSelf(resource.personId)) {
-      await this.people.recordProtectedView(context, resource.personId);
-    }
+    const viewsLogged = await this.people.recordProfileView(context, resource.personId, {
+      clubId: resource.clubId,
+      surface: "profile",
+      protected: isProtected,
+    });
     const profile = await this.presenter.present(authz, access, resource, person, guardians);
     if (!profile) throw new ProblemError("not-found");
-    return profile;
+    const protection = await this.protection.state(authz, resource, person);
+    return {
+      ...profile,
+      ...(protection ? { protection } : {}),
+      ...(viewsLogged ? { viewsLogged: true } : {}),
+    };
   }
 }

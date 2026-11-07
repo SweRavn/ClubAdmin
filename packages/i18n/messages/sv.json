@@ -60,7 +60,8 @@
     "logout": "Logga ut",
     "notifications": "Notiser",
     "privacy": "Integritet",
-    "calendar": "Kalenderprenumerationer"
+    "calendar": "Kalenderprenumerationer",
+    "protection": "Integritet och skydd"
   },
   "viewingAs": {
     "label": "Visar som",
@@ -703,7 +704,10 @@
     "feed_scope_invalid": "Det går inte att ändra för den här prenumerationen.",
     "calendar_feeds_unavailable": "Kalenderprenumerationer finns inte här.",
     "answer_link_invalid": "Länken fungerar inte (längre).",
-    "answer_link_expired": "Länken har gått ut: aktiviteten är slut eller prenumerationen borttagen."
+    "answer_link_expired": "Länken har gått ut: aktiviteten är slut eller prenumerationen borttagen.",
+    "protection_removal_not_allowed": "Bara vårdnadshavaren som slog på skyddet kan slå av det. Prata med den andra vårdnadshavaren eller med föreningen.",
+    "not_a_full_guardian": "Bara personen själv eller en förälder eller vårdnadshavare kan ändra detta.",
+    "recent_auth_required": "Logga in igen (de senaste 15 minuterna) för att göra detta."
   },
   "memberExport": {
     "columns": {
@@ -1633,6 +1637,12 @@
       },
       "adult_ended": {
         "title": "En koppling i familjen har avslutats"
+      },
+      "protection": {
+        "removed": {
+          "title": "Ett barns skyddade identitet slogs av",
+          "body": "En annan vårdnadshavare slog av skyddad identitet för ditt barn. Öppna familjesidan i ClubAdmin för att se det."
+        }
       }
     },
     "account": {
@@ -1730,6 +1740,14 @@
         "revoked": {
           "title": "En kalenderprenumeration togs bort",
           "body": "{feedReason, select, unused {Den hade inte använts på ett år.} access_lost {Den hade inte längre åtkomst till kalendern.} other {Den togs bort.}} Du kan skapa en ny under Kalenderprenumerationer."
+        }
+      }
+    },
+    "member": {
+      "protection": {
+        "changed": {
+          "title": "Skyddad identitet ändrad i {club}",
+          "body": "En medlems skyddade identitet slogs {change, select, on {på} other {av}}. Öppna ClubAdmin för att se vem."
         }
       }
     }
@@ -2455,7 +2473,8 @@
       "group_waitlist_priority_changed": "{actor} ändrade förturen för en köplats",
       "group_waitlist_offer_withdrawn": "{actor} drog tillbaka en erbjuden plats",
       "group_waitlist_admitted": "{actor} antog någon från en kö",
-      "calendar_feed_regenerated": "{actor} skapade en ny länk för en kalenderprenumeration"
+      "calendar_feed_regenerated": "{actor} skapade en ny länk för en kalenderprenumeration",
+      "person_protection_removal_refused": "{actor} försökte slå av skyddad identitet som någon annan satt (nekades)"
     }
   },
   "groupAdmin": {
@@ -2692,5 +2711,98 @@
       "expired": "Länken har gått ut.",
       "toSchedule": "Till mitt schema"
     }
+  },
+  "protection": {
+    "title": "Integritet och skydd",
+    "name": "Skyddad identitet",
+    "stateOn": "Skyddad identitet är på.",
+    "stateOff": "Skyddad identitet är av.",
+    "setAt": "Påslagen {date}",
+    "explain": "Om du har skyddade personuppgifter (sekretessmarkering eller skyddad folkbokföring hos Skatteverket), eller av annat goda skäl, slå på skyddad identitet.",
+    "othersDont": "Andra medlemmar ser dig inte längre någonstans: inte i trupper, registret, aktiviteter eller svar.",
+    "whoSees": "Din familj, föreningens administratörer och registeransvariga och dina egna ledare ser dig fortfarande, med en överstruken kamera: de får inte fotografera, filma, publicera eller dela något om dig.",
+    "addressDeleted": "En sparad adress tas bort och ingen adress kan sparas.",
+    "turnOn": "Slå på skyddad identitet",
+    "turnOnConfirm": "Ja, slå på",
+    "turnOff": "Slå av skyddad identitet",
+    "turnOffConsequences": "Andra medlemmar ser dig igen i trupper, registret och aktiviteter. Du behöver ha loggat in de senaste 15 minuterna.",
+    "turnOffConfirm": "Ja, slå av",
+    "turnedOn": "Skyddad identitet är nu på.",
+    "turnedOff": "Skyddad identitet är nu av.",
+    "removalRefused": "Bara vårdnadshavaren som slog på skyddet kan slå av det. Prata med den andra vårdnadshavaren eller med föreningen.",
+    "childState": "{name}: skyddad identitet {state, select, on {på} other {av}}",
+    "protectYourself": "Skydda dig själv också? Ditt namn kan avslöja ditt barn.",
+    "protectYourselfAction": "Skydda mig också",
+    "guardianHint": "Ditt barn har skyddad identitet, men inte du. Ditt namn kan avslöja ditt barn.",
+    "hide": "Dölj",
+    "addChild": "Skyddad identitet",
+    "addChildHint": "Andra medlemmar ser inte barnet, och ingen adress sparas.",
+    "accessLog": "Vem har tittat på min profil",
+    "accessLogOf": "Vem har tittat på profilen",
+    "accessLogIntro": "Varje gång någon annan öppnar profilen för en person med skyddad identitet, eller vilken profil som helst i en förening som loggar alla visningar, noteras det här: när, i vilken förening och vem.",
+    "logEmpty": "Ingen annan har öppnat den här profilen.",
+    "when": "När",
+    "club": "Förening",
+    "who": "Vem",
+    "role": "Roll",
+    "onBehalfOf": "För {name}",
+    "times": "{count, plural, one {en gång} other {# gånger}}",
+    "noClub": "Utanför en förening",
+    "viewers": {
+      "protected": "Någon med skyddad identitet",
+      "operator": "ClubAdmins support",
+      "former_member": "En tidigare medlem"
+    },
+    "surfaces": {
+      "profile": "Profil",
+      "history": "Historik"
+    },
+    "viewerRoles": {
+      "group_leader": "Ledare",
+      "guardian": "Vårdnadshavare",
+      "member": "Medlem"
+    },
+    "showMore": "Visa fler",
+    "panelTitle": "Skydd i föreningen",
+    "sources": {
+      "global": "Skyddad av personen eller familjen",
+      "club": "Skyddad i föreningen",
+      "both": "Skyddad av familjen och i föreningen",
+      "none": "Inte skyddad"
+    },
+    "clubSetBy": "Satt i föreningen av {name}, {date}",
+    "protectInClub": "Skydda i föreningen",
+    "removeClubProtection": "Ta bort föreningens skydd",
+    "clubTurnedOn": "Medlemmen är nu skyddad i föreningen.",
+    "clubTurnedOff": "Föreningens skydd är borttaget.",
+    "clubHint": "Använd när familjen har berättat för föreningen. Det kräver en andra faktor; alla administratörer får veta det (utan namnet).",
+    "memberViews": "Vem har öppnat profilen",
+    "protectedMembers": "Skyddade medlemmar",
+    "protectedMembersIntro": "Medlemmar med skyddad identitet, från personen eller familjen eller satt i föreningen. Informera ledarna: inga foton, filmer, publiceringar eller delningar.",
+    "protectedEmpty": "Inga medlemmar med skyddad identitet.",
+    "source": "Källa",
+    "since": "Satt i föreningen",
+    "profileViews": "Profilvisningar",
+    "mode": "Vad som loggas",
+    "modes": {
+      "protected_only": "Bara visningar av skyddade medlemmar",
+      "all": "Alla profilvisningar"
+    },
+    "modeHint": "När alla visningar loggas kan varje medlem se vem som öppnat deras profil, och profilsidorna säger det. Visningar av skyddade medlemmar loggas alltid.",
+    "saveMode": "Spara",
+    "modeSaved": "Sparat.",
+    "person": "Vems profil",
+    "viewer": "Öppnad av",
+    "protectedOnly": "Bara skyddade medlemmar",
+    "filter": "Filtrera",
+    "viewsLogged": "Profilvisningar loggas: personen kan se vem som öppnat profilen.",
+    "help": "Vad betyder det?",
+    "helpTitle": "Skyddad identitet",
+    "helpWhat": "En överstruken kamera bredvid ett namn betyder att personen har skyddad identitet. En del familjer har skyddade personuppgifter, till exempel för att någon är hotad: då får det inte spridas var de är och vilka de är med.",
+    "helpRules": "Fotografera eller filma inte personen, publicera eller dela inte bilder, namn eller resultat, och berätta inte för andra var och när personen tränar eller spelar.",
+    "helpLeaders": "Som ledare ser du personen så att du kan leda din grupp. Andra i föreningen ser personen inte. Fråga föreningens administratörer om du är osäker.",
+    "helpView": "Den som öppnar profilen för en person med skyddad identitet loggas: personen och vårdnadshavarna kan se vem som gjorde det.",
+    "openOnWeb": "Öppna på webben",
+    "cancel": "Avbryt"
   }
 }

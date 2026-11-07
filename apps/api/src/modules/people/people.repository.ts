@@ -91,6 +91,32 @@ export async function updatePerson(
   await tx.update(people).set(values).where(eq(people.id, id));
 }
 
+/** One profile view (app.record_profile_view); whether the profile's views are logged. */
+export async function recordProfileView(
+  tx: Tx,
+  personId: string,
+  clubId: string | null,
+  surface: string,
+  isProtected: boolean,
+): Promise<boolean> {
+  const { rows } = await tx.execute<{ logged: boolean }>(
+    sql`SELECT app.record_profile_view(${clubId}::uuid, ${personId}::uuid, ${surface}, ${isProtected}) AS logged`,
+  );
+  return rows[0]?.logged === true;
+}
+
+/** Whether someone is still an active full guardian (parent or legal guardian) of the ward. */
+export async function isActiveFullGuardian(
+  tx: Tx,
+  guardianPersonId: string,
+  wardPersonId: string,
+): Promise<boolean> {
+  const { rows } = await tx.execute<{ ok: boolean }>(
+    sql`SELECT privacy.is_active_full_guardian(${guardianPersonId}, ${wardPersonId}) AS ok`,
+  );
+  return rows[0]?.ok === true;
+}
+
 /** The current actor is a parent or legal guardian of the person (database helper). */
 export async function actorIsFullGuardianOf(tx: Tx, personId: string): Promise<boolean> {
   const { rows } = await tx.execute<{ ok: boolean }>(

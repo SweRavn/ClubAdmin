@@ -40,6 +40,8 @@ export const AddChildSchema = z
     gender: z.enum(GENDERS).nullish(),
     personalIdentityNumber: PersonalIdentityNumberInputSchema.nullish(),
     kind: z.enum(FULL_GUARDIANSHIP_KINDS).default("parent"),
+    /** P1.12: the child is created protected (ADR 0022); no address is ever stored. */
+    protectedIdentity: z.boolean().optional(),
   })
   .strict();
 export type AddChildInput = z.input<typeof AddChildSchema>;
@@ -346,7 +348,7 @@ export function newLinkedPerson(given: string, family: string, phone: string | n
 /** "Add child" from form fields (validated by AddChildSchema in the API). */
 export function addChildInput(
   field: (name: PersonFormField) => string,
-  extra: Pick<AddChildInput, "kind" | "personalIdentityNumber">,
+  extra: Pick<AddChildInput, "kind" | "personalIdentityNumber" | "protectedIdentity">,
 ): AddChildInput {
   return {
     givenName: field("givenName"),

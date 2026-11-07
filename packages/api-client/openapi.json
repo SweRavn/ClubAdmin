@@ -4907,6 +4907,12 @@
                   "contacts_group",
                   "contacts_club"
                 ]
+              },
+              "protected": {
+                "type": "string",
+                "enum": [
+                  "only"
+                ]
               }
             },
             "default": {},
@@ -5738,6 +5744,30 @@
                 "contacts_club"
               ]
             }
+          },
+          "protection": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "global",
+                  "club",
+                  "both"
+                ]
+              },
+              "clubSetAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "source",
+              "clubSetAt"
+            ]
           }
         },
         "required": [
@@ -6707,6 +6737,240 @@
           "sections",
           "decisions",
           "versions"
+        ]
+      },
+      "ProfileViewLogging": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "protected_only",
+              "all"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "ClubProfileViews": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProfileViewPage"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "protected_only",
+                  "all"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          }
+        ]
+      },
+      "ProfileViewEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "firstViewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastViewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "profile",
+              "history"
+            ]
+          },
+          "protected": {
+            "type": "boolean"
+          },
+          "club": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/ProfileViewer"
+          },
+          "onBehalfOf": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "viewerRole": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "chair",
+              "vice_chair",
+              "treasurer",
+              "secretary",
+              "board_member",
+              "deputy_board_member",
+              "auditor",
+              "nomination_committee",
+              "club_manager",
+              "registrar",
+              "safeguarding_officer",
+              "communications",
+              "staff",
+              "group_leader",
+              "guardian",
+              "member",
+              null
+            ]
+          },
+          "person": {
+            "$ref": "#/components/schemas/ProfileViewer"
+          }
+        },
+        "required": [
+          "id",
+          "day",
+          "firstViewedAt",
+          "lastViewedAt",
+          "count",
+          "surface",
+          "protected",
+          "club",
+          "viewer",
+          "onBehalfOf",
+          "viewerRole"
+        ]
+      },
+      "ProfileViewer": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "person"
+                ]
+              },
+              "person": {
+                "$ref": "#/components/schemas/PersonSummary"
+              }
+            },
+            "required": [
+              "kind",
+              "person"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "protected"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "operator"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "former_member"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          }
+        ]
+      },
+      "ProfileViewPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileViewEntry"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "SeasonList": {
@@ -9683,6 +9947,7 @@
                       "person.profile.read",
                       "person.profile.update",
                       "person.protection.set",
+                      "person.access_log.read",
                       "person.guardians.read",
                       "person.guardians.manage",
                       "person.merge",
@@ -9708,7 +9973,9 @@
                       "activity.history.read",
                       "event.history.read",
                       "club.history.read",
-                      "club.audit.read"
+                      "club.audit.read",
+                      "club.profile_views.read",
+                      "club.profile_views.configure"
                     ]
                   }
                 }
@@ -11738,6 +12005,9 @@
                 "hasLogin": {
                   "type": "boolean"
                 },
+                "protectedIdentity": {
+                  "type": "boolean"
+                },
                 "ownLoginFromAge": {
                   "type": "integer"
                 }
@@ -12518,10 +12788,76 @@
                 "kind"
               ]
             }
+          },
+          "protection": {
+            "$ref": "#/components/schemas/ProtectionState"
+          },
+          "viewsLogged": {
+            "type": "boolean"
           }
         },
         "required": [
           "person"
+        ]
+      },
+      "ProtectionState": {
+        "type": "object",
+        "properties": {
+          "global": {
+            "type": "boolean"
+          },
+          "globalSetAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "club": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "clubSetAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "clubSetBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "canChangeGlobal": {
+            "type": "boolean"
+          },
+          "canRemoveGlobal": {
+            "type": "boolean"
+          },
+          "canChangeClub": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "global",
+          "globalSetAt",
+          "club",
+          "clubSetAt",
+          "clubSetBy",
+          "canChangeGlobal",
+          "canRemoveGlobal",
+          "canChangeClub"
         ]
       },
       "PersonConsents": {
@@ -12696,6 +13032,18 @@
           "invitationId",
           "expiresAt"
         ]
+      },
+      "SetProtection": {
+        "type": "object",
+        "properties": {
+          "protected": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "protected"
+        ],
+        "additionalProperties": false
       },
       "HealthResponse": {
         "type": "object",
@@ -20236,6 +20584,17 @@
             "schema": {
               "type": "string",
               "enum": [
+                "only"
+              ]
+            },
+            "required": false,
+            "name": "protected",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
                 "name",
                 "family_name",
                 "member_number",
@@ -21322,6 +21681,252 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PrivacyPolicy"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/profile-view-logging": {
+      "put": {
+        "operationId": "Protection_setLogging",
+        "summary": "Log views of protected members only, or every profile view (club managers)",
+        "tags": [
+          "clubs",
+          "protection"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.profile_views.configure` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileViewLogging"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/profile-views": {
+      "get": {
+        "operationId": "Protection_clubLog",
+        "summary": "The club's profile view log (club managers, second factor)",
+        "tags": [
+          "clubs",
+          "protection"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.profile_views.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "personId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "viewerId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "only"
+              ]
+            },
+            "required": false,
+            "name": "protected",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubProfileViews"
                 }
               }
             }
@@ -32912,6 +33517,9 @@
                       "legal_guardian"
                     ],
                     "default": "parent"
+                  },
+                  "protectedIdentity": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -34370,6 +34978,114 @@
         }
       }
     },
+    "/api/v1/people/{personId}/access-log": {
+      "get": {
+        "operationId": "Protection_accessLog",
+        "summary": "Who has opened this profile, in every club (the person and full guardians)",
+        "tags": [
+          "people",
+          "protection"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `person.access_log.read` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileViewPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/people/{personId}/consents": {
       "get": {
         "operationId": "Consents_personConsents",
@@ -35047,6 +35763,124 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OwnLoginInvitationCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/{personId}/protection": {
+      "put": {
+        "operationId": "Protection_set",
+        "summary": "Turn protected identity on or off: globally (the person or a full guardian; off needs a recent login) or with clubId in the club (club managers, second factor)",
+        "tags": [
+          "people",
+          "protection"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `person.protection.set` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "clubId",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetProtection"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
                 }
               }
             }

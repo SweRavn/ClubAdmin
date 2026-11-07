@@ -10,4 +10,10 @@ export const CLUB_PROFILE_PERSON_REFERENCES: readonly PersonReference[] = [
     clubScoped: true,
     open: { where: "true", key: ["club_id"], end: null, restore: [] },
   },
+  // Who set the club flag (P1.12).
+  {
+    table: "public.club_profiles",
+    column: "protected_identity_club_set_by_person_id",
+    clubScoped: true,
+  },
 ];

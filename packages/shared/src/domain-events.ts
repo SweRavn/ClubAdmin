@@ -49,7 +49,14 @@ export const DOMAIN_EVENTS = {
   "calendar.feed.revoked": z.object({ feedId: id, personId: id }),
   "group.parent.changed": z.object({ clubId: id, groupId: id }),
   "guardianship.changed": z.object({ guardianPersonId: id, wardPersonId: id }),
-  "person.protection.changed": z.object({ personId: id, clubId: id.optional() }),
+  /** P1.12: `enabled`, `scope` and who changed it (optional: older events lack them). */
+  "person.protection.changed": z.object({
+    personId: id,
+    clubId: id.optional(),
+    enabled: z.boolean().optional(),
+    scope: z.enum(["global", "club"]).optional(),
+    byPersonId: id.optional(),
+  }),
   /** Relationships of mergedPersonId now belong to keptPersonId (or back, when undone). */
   "person.merged": z.object({ keptPersonId: id, mergedPersonId: id, undone: z.boolean() }),
   /** Notify the old address (P1.7). */

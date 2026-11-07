@@ -60,7 +60,8 @@
     "logout": "Logg ut",
     "notifications": "Varsler",
     "privacy": "Personvern",
-    "calendar": "Kalenderabonnementer"
+    "calendar": "Kalenderabonnementer",
+    "protection": "Personvern og beskyttelse"
   },
   "viewingAs": {
     "label": "Viser som",
@@ -703,7 +704,10 @@
     "feed_scope_invalid": "Det kan ikke endres for dette abonnementet.",
     "calendar_feeds_unavailable": "Kalenderabonnementer er ikke tilgjengelige her.",
     "answer_link_invalid": "Lenken virker ikke (lenger).",
-    "answer_link_expired": "Lenken har gått ut: aktiviteten er over eller abonnementet er fjernet."
+    "answer_link_expired": "Lenken har gått ut: aktiviteten er over eller abonnementet er fjernet.",
+    "protection_removal_not_allowed": "Bare foresatt som slo på beskyttelsen kan slå den av. Snakk med den andre foresatte eller med klubben.",
+    "not_a_full_guardian": "Bare personen selv eller en forelder eller verge kan endre dette.",
+    "recent_auth_required": "Logg inn igjen (de siste 15 minuttene) for å gjøre dette."
   },
   "memberExport": {
     "columns": {
@@ -1633,6 +1637,12 @@
       },
       "adult_ended": {
         "title": "En kobling i familien er avsluttet"
+      },
+      "protection": {
+        "removed": {
+          "title": "Et barns beskyttede identitet ble slått av",
+          "body": "En annen foresatt slo av beskyttet identitet for barnet ditt. Åpne familiesiden i ClubAdmin for å se det."
+        }
       }
     },
     "account": {
@@ -1730,6 +1740,14 @@
         "revoked": {
           "title": "Et kalenderabonnement ble fjernet",
           "body": "{feedReason, select, unused {Det hadde ikke vært brukt på et år.} access_lost {Det hadde ikke lenger tilgang til kalenderen.} other {Det ble fjernet.}} Du kan opprette et nytt under Kalenderabonnementer."
+        }
+      }
+    },
+    "member": {
+      "protection": {
+        "changed": {
+          "title": "Beskyttet identitet endret i {club}",
+          "body": "Et medlems beskyttede identitet ble slått {change, select, on {på} other {av}}. Åpne ClubAdmin for å se hvem."
         }
       }
     }
@@ -2455,7 +2473,8 @@
       "group_waitlist_priority_changed": "{actor} endret fortrinnet for en køplass",
       "group_waitlist_offer_withdrawn": "{actor} trakk tilbake en tilbudt plass",
       "group_waitlist_admitted": "{actor} tok opp noen fra en kø",
-      "calendar_feed_regenerated": "{actor} lagde en ny lenke for et kalenderabonnement"
+      "calendar_feed_regenerated": "{actor} lagde en ny lenke for et kalenderabonnement",
+      "person_protection_removal_refused": "{actor} prøvde å slå av beskyttet identitet som noen andre satte (avvist)"
     }
   },
   "groupAdmin": {
@@ -2692,5 +2711,98 @@
       "expired": "Lenken har gått ut.",
       "toSchedule": "Til min timeplan"
     }
+  },
+  "protection": {
+    "title": "Personvern og beskyttelse",
+    "name": "Beskyttet identitet",
+    "stateOn": "Beskyttet identitet er på.",
+    "stateOff": "Beskyttet identitet er av.",
+    "setAt": "Slått på {date}",
+    "explain": "Hvis du har beskyttede personopplysninger (strengt fortrolig eller fortrolig adresse), eller av en annen god grunn, slå på beskyttet identitet.",
+    "othersDont": "Andre medlemmer ser deg ikke lenger noe sted: ikke i tropper, registeret, aktiviteter eller svar.",
+    "whoSees": "Familien din, klubbens administratorer og registeransvarlige og dine egne ledere ser deg fortsatt, med et overstrøket kamera: de må ikke fotografere, filme, publisere eller dele noe om deg.",
+    "addressDeleted": "En lagret adresse slettes, og ingen adresse kan lagres.",
+    "turnOn": "Slå på beskyttet identitet",
+    "turnOnConfirm": "Ja, slå på",
+    "turnOff": "Slå av beskyttet identitet",
+    "turnOffConsequences": "Andre medlemmer ser deg igjen i tropper, registeret og aktiviteter. Du må ha logget inn de siste 15 minuttene.",
+    "turnOffConfirm": "Ja, slå av",
+    "turnedOn": "Beskyttet identitet er nå på.",
+    "turnedOff": "Beskyttet identitet er nå av.",
+    "removalRefused": "Bare foresatt som slo på beskyttelsen kan slå den av. Snakk med den andre foresatte eller med klubben.",
+    "childState": "{name}: beskyttet identitet {state, select, on {på} other {av}}",
+    "protectYourself": "Beskytte deg selv også? Navnet ditt kan avsløre barnet ditt.",
+    "protectYourselfAction": "Beskytt meg også",
+    "guardianHint": "Barnet ditt har beskyttet identitet, men ikke du. Navnet ditt kan avsløre barnet ditt.",
+    "hide": "Skjul",
+    "addChild": "Beskyttet identitet",
+    "addChildHint": "Andre medlemmer ser ikke barnet, og ingen adresse lagres.",
+    "accessLog": "Hvem har sett profilen min",
+    "accessLogOf": "Hvem har sett profilen",
+    "accessLogIntro": "Hver gang noen andre åpner profilen til en person med beskyttet identitet, eller en hvilken som helst profil i en klubb som logger alle visninger, noteres det her: når, i hvilken klubb og hvem.",
+    "logEmpty": "Ingen andre har åpnet denne profilen.",
+    "when": "Når",
+    "club": "Klubb",
+    "who": "Hvem",
+    "role": "Rolle",
+    "onBehalfOf": "For {name}",
+    "times": "{count, plural, one {én gang} other {# ganger}}",
+    "noClub": "Utenfor en klubb",
+    "viewers": {
+      "protected": "Noen med beskyttet identitet",
+      "operator": "ClubAdmins brukerstøtte",
+      "former_member": "Et tidligere medlem"
+    },
+    "surfaces": {
+      "profile": "Profil",
+      "history": "Historikk"
+    },
+    "viewerRoles": {
+      "group_leader": "Leder",
+      "guardian": "Foresatt",
+      "member": "Medlem"
+    },
+    "showMore": "Vis flere",
+    "panelTitle": "Beskyttelse i klubben",
+    "sources": {
+      "global": "Beskyttet av personen eller familien",
+      "club": "Beskyttet i klubben",
+      "both": "Beskyttet av familien og i klubben",
+      "none": "Ikke beskyttet"
+    },
+    "clubSetBy": "Satt i klubben av {name}, {date}",
+    "protectInClub": "Beskytt i klubben",
+    "removeClubProtection": "Fjern klubbens beskyttelse",
+    "clubTurnedOn": "Medlemmet er nå beskyttet i klubben.",
+    "clubTurnedOff": "Klubbens beskyttelse er fjernet.",
+    "clubHint": "Bruk dette når familien har fortalt klubben det. Det krever en ekstra faktor; alle administratorer får beskjed (uten navnet).",
+    "memberViews": "Hvem har åpnet profilen",
+    "protectedMembers": "Beskyttede medlemmer",
+    "protectedMembersIntro": "Medlemmer med beskyttet identitet, fra personen eller familien eller satt i klubben. Informer lederne: ingen bilder, filmer, publisering eller deling.",
+    "protectedEmpty": "Ingen medlemmer med beskyttet identitet.",
+    "source": "Kilde",
+    "since": "Satt i klubben",
+    "profileViews": "Profilvisninger",
+    "mode": "Hva som logges",
+    "modes": {
+      "protected_only": "Bare visninger av beskyttede medlemmer",
+      "all": "Alle profilvisninger"
+    },
+    "modeHint": "Når alle visninger logges, kan hvert medlem se hvem som har åpnet profilen deres, og profilsidene sier det. Visninger av beskyttede medlemmer logges alltid.",
+    "saveMode": "Lagre",
+    "modeSaved": "Lagret.",
+    "person": "Hvem sin profil",
+    "viewer": "Åpnet av",
+    "protectedOnly": "Bare beskyttede medlemmer",
+    "filter": "Filtrer",
+    "viewsLogged": "Profilvisninger logges: personen kan se hvem som har åpnet profilen.",
+    "help": "Hva betyr dette?",
+    "helpTitle": "Beskyttet identitet",
+    "helpWhat": "Et overstrøket kamera ved et navn betyr at personen har beskyttet identitet. Noen familier har beskyttede personopplysninger, for eksempel fordi noen er truet: da må det ikke spres hvor de er og hvem de er sammen med.",
+    "helpRules": "Ikke fotografer eller film personen, ikke publiser eller del bilder, navn eller resultater, og ikke fortell andre hvor og når personen trener eller spiller.",
+    "helpLeaders": "Som leder ser du personen så du kan lede gruppen din. Andre i klubben ser ikke personen. Spør klubbens administratorer hvis du er usikker.",
+    "helpView": "Den som åpner profilen til en person med beskyttet identitet logges: personen og de foresatte kan se hvem som gjorde det.",
+    "openOnWeb": "Åpne på nettet",
+    "cancel": "Avbryt"
   }
 }

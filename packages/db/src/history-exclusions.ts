@@ -16,6 +16,10 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
     "the calendars' read model, derived from activities and activity_groups (which have history) in the same transaction",
   "public.notification_deliveries":
     "delivery log of notifications (status, attempts, provider IDs; no personal values), high volume, deleted after 30 days (P1.7)",
+  "public.profile_views":
+    "the profile view log (P1.12) is itself a log, rewritten by the daily upsert; IDs, dates and counts only",
+  "privacy.anonymization_ledger":
+    "append-only list of (person, club) anonymisations; must survive restores unchanged (P1.12)",
   "public.member_import_rows":
     "staging rows of a member import (the file's values), deleted seven days after the import ends; the people created from them have history",
 };

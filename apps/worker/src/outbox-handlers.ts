@@ -11,6 +11,7 @@ import { billingTrialHandler, entitlementsCacheHandler } from "./billing.ts";
 import { mailHandler, type MailHandlerOptions } from "./mail.ts";
 import { notificationsHandler, type NotificationsOptions } from "./notifications/handler.ts";
 import { privacyHandler } from "./tasks/privacy.ts";
+import { profileViewsHandler } from "./tasks/profile-views.ts";
 
 /** Version counters in Valkey (INCR is safe to repeat: a newer version only forces a reload). */
 export function valkeyCacheVersions(valkey: Redis): CacheVersions {
@@ -34,7 +35,7 @@ export function createOutboxHandlers(deps: {
   /** Notifications (P1.7): the inbox always, email and push per the channels. */
   notifications?: NotificationsOptions | undefined;
 }): OutboxHandler[] {
-  const handlers: OutboxHandler[] = [privacyHandler()];
+  const handlers: OutboxHandler[] = [privacyHandler(), profileViewsHandler()];
   if (deps.mail) handlers.push(mailHandler(deps.mail));
   if (deps.notifications) handlers.push(notificationsHandler(deps.notifications));
   // Without Valkey the API caches nothing across requests, so there is nothing to invalidate.

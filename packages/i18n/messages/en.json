@@ -60,7 +60,8 @@
     "logout": "Log out",
     "notifications": "Notifications",
     "privacy": "Privacy",
-    "calendar": "Calendar subscriptions"
+    "calendar": "Calendar subscriptions",
+    "protection": "Privacy and protection"
   },
   "viewingAs": {
     "label": "Viewing as",
@@ -703,7 +704,10 @@
     "feed_scope_invalid": "That cannot be changed for this subscription.",
     "calendar_feeds_unavailable": "Calendar subscriptions are not available here.",
     "answer_link_invalid": "This link does not work (any more).",
-    "answer_link_expired": "This link has expired: the activity has ended or the subscription was removed."
+    "answer_link_expired": "This link has expired: the activity has ended or the subscription was removed.",
+    "protection_removal_not_allowed": "Only the guardian who turned protection on can turn it off. Talk to the other guardian or to the club.",
+    "not_a_full_guardian": "Only the person or a parent or legal guardian can change this.",
+    "recent_auth_required": "Log in again (within the last 15 minutes) to do this."
   },
   "memberExport": {
     "columns": {
@@ -1633,6 +1637,12 @@
       },
       "adult_ended": {
         "title": "A family link ended"
+      },
+      "protection": {
+        "removed": {
+          "title": "A child's protected identity was turned off",
+          "body": "Another guardian turned off protected identity for your child. Open the family page in ClubAdmin to see it."
+        }
       }
     },
     "account": {
@@ -1730,6 +1740,14 @@
         "revoked": {
           "title": "A calendar subscription was removed",
           "body": "{feedReason, select, unused {It had not been used for a year.} access_lost {It no longer had access to the calendar.} other {It was removed.}} You can create a new one under Calendar subscriptions."
+        }
+      }
+    },
+    "member": {
+      "protection": {
+        "changed": {
+          "title": "Protected identity changed in {club}",
+          "body": "A member's protected identity was turned {change, select, on {on} other {off}}. Open ClubAdmin to see who."
         }
       }
     }
@@ -2455,7 +2473,8 @@
       "group_waitlist_priority_changed": "{actor} changed the priority of a waiting-list place",
       "group_waitlist_offer_withdrawn": "{actor} withdrew an offered place",
       "group_waitlist_admitted": "{actor} admitted someone from a waiting list",
-      "calendar_feed_regenerated": "{actor} made a new link for a calendar subscription"
+      "calendar_feed_regenerated": "{actor} made a new link for a calendar subscription",
+      "person_protection_removal_refused": "{actor} tried to turn off protected identity set by someone else (refused)"
     }
   },
   "groupAdmin": {
@@ -2692,5 +2711,98 @@
       "expired": "This link has expired.",
       "toSchedule": "Go to my schedule"
     }
+  },
+  "protection": {
+    "title": "Privacy and protection",
+    "name": "Protected identity",
+    "stateOn": "Protected identity is on.",
+    "stateOff": "Protected identity is off.",
+    "setAt": "Turned on {date}",
+    "explain": "If you have protected personal data (in Sweden: skyddade personuppgifter, sekretessmarkering or skyddad folkbokföring), or for another good reason, turn on protected identity.",
+    "othersDont": "Other members no longer see you anywhere: not in rosters, the register, activities or answers.",
+    "whoSees": "Your family, the club's managers and registrars and your own leaders still see you, with a crossed-out camera: they must not photograph, film, publish or share anything about you.",
+    "addressDeleted": "Any address stored about you is deleted and none can be stored.",
+    "turnOn": "Turn on protected identity",
+    "turnOnConfirm": "Yes, turn it on",
+    "turnOff": "Turn off protected identity",
+    "turnOffConsequences": "Other members will see you again in rosters, the register and activities. You need to have logged in in the last 15 minutes.",
+    "turnOffConfirm": "Yes, turn it off",
+    "turnedOn": "Protected identity is now on.",
+    "turnedOff": "Protected identity is now off.",
+    "removalRefused": "Only the guardian who turned it on can turn it off. Talk to the other guardian or to the club.",
+    "childState": "{name}: protected identity {state, select, on {on} other {off}}",
+    "protectYourself": "Protect yourself too? Your name can reveal your child.",
+    "protectYourselfAction": "Protect me too",
+    "guardianHint": "Your child has protected identity, but you do not. Your name can reveal your child.",
+    "hide": "Hide",
+    "addChild": "Protected identity",
+    "addChildHint": "Other members will not see the child, and no address is stored.",
+    "accessLog": "Who has viewed my profile",
+    "accessLogOf": "Who has viewed the profile",
+    "accessLogIntro": "Every time someone else opens the profile of a person with protected identity, or any profile in a club that logs every view, it is noted here: when, in which club and who.",
+    "logEmpty": "Nobody else has opened this profile.",
+    "when": "When",
+    "club": "Club",
+    "who": "Who",
+    "role": "Role",
+    "onBehalfOf": "On behalf of {name}",
+    "times": "{count, plural, one {once} other {# times}}",
+    "noClub": "Outside a club",
+    "viewers": {
+      "protected": "Someone with protected identity",
+      "operator": "ClubAdmin support",
+      "former_member": "A former member"
+    },
+    "surfaces": {
+      "profile": "Profile",
+      "history": "History"
+    },
+    "viewerRoles": {
+      "group_leader": "Leader",
+      "guardian": "Guardian",
+      "member": "Member"
+    },
+    "showMore": "Show more",
+    "panelTitle": "Protection in the club",
+    "sources": {
+      "global": "Protected by the person or their family",
+      "club": "Protected in the club",
+      "both": "Protected by the family and in the club",
+      "none": "Not protected"
+    },
+    "clubSetBy": "Set in the club by {name}, {date}",
+    "protectInClub": "Protect in the club",
+    "removeClubProtection": "Remove club protection",
+    "clubTurnedOn": "The member is now protected in the club.",
+    "clubTurnedOff": "The club's protection is removed.",
+    "clubHint": "Use this when the family has told the club. A second factor is needed; every club manager is told (without the name).",
+    "memberViews": "Who has opened this profile",
+    "protectedMembers": "Protected members",
+    "protectedMembersIntro": "Members with protected identity, from the person or family or set in the club. Brief the leaders: no photos, films, publishing or sharing.",
+    "protectedEmpty": "No members with protected identity.",
+    "source": "Source",
+    "since": "Set in the club",
+    "profileViews": "Profile views",
+    "mode": "What is logged",
+    "modes": {
+      "protected_only": "Views of protected members only",
+      "all": "Every profile view"
+    },
+    "modeHint": "When every view is logged, each member can see who opened their profile, and the profile pages say so. Views of protected members are always logged.",
+    "saveMode": "Save",
+    "modeSaved": "Saved.",
+    "person": "Whose profile",
+    "viewer": "Opened by",
+    "protectedOnly": "Protected members only",
+    "filter": "Filter",
+    "viewsLogged": "Views of profiles are logged: the person can see who opened their profile.",
+    "help": "What does this mean?",
+    "helpTitle": "Protected identity",
+    "helpWhat": "A crossed-out camera next to a name means that the person has protected identity. Some families have protected personal data, for example because someone is at risk: then where they are and who they are with must not spread.",
+    "helpRules": "Do not photograph or film the person, do not publish or share pictures, names or results, and do not tell others where and when they train or play.",
+    "helpLeaders": "As a leader you see the person so you can run your group. Others in the club do not see them. If you are unsure, ask the club's managers.",
+    "helpView": "Opening the profile of a person with protected identity is logged: the person and their guardians can see who did.",
+    "openOnWeb": "Open on the web",
+    "cancel": "Cancel"
   }
 }

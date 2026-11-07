@@ -101,7 +101,11 @@ export class ClubProfilesService {
     });
   }
 
-  /** Club-level protected identity (ADR 0022): club managers only, audited. */
+  /**
+   * Club-level protected identity (ADR 0022, P1.12): club managers only,
+   * audited. Setting it records who did it and stops sharing the address
+   * with the club.
+   */
   setClubProtection(
     context: TenantContext,
     personId: string,
@@ -110,18 +114,35 @@ export class ClubProfilesService {
     return this.db.withTenant(context, async (tx) => {
       if (!(await repo.actorIsClubManager(tx))) throw new DomainError("not_a_club_manager");
       const profile = await repo.findProfile(tx, context.clubId, personId);
-      if (!profile) throw new DomainError("not_found");
-      if (profile.protectedIdentityClub !== value) {
-        await repo.updateProfile(tx, profile.id, { protectedIdentityClub: value });
-        await audit.record(tx, {
-          action: "person.protection.changed",
-          resourceType: "club_profile",
-          resourceId: profile.id,
-          changedFields: ["protected_identity_club"],
-        });
-        await outbox.publish(tx, "person.protection.changed", { personId, clubId: context.clubId });
-      }
-      return { ...profile, protectedIdentityClub: value };
+      if (!profile) throw new DomainError("not_a_club_member");
+      if (profile.protectedIdentityClub === value) return profile;
+      const sharedFields = value
+        ? profile.sharedFields.filter((f) => f !== "address")
+        : profile.sharedFields;
+      const changes = {
+        protectedIdentityClub: value,
+        protectedIdentityClubSetByPersonId: value ? (context.personId ?? null) : null,
+        protectedIdentityClubSetAt: value ? new Date() : null,
+        ...(sharedFields.length !== profile.sharedFields.length ? { sharedFields } : {}),
+      };
+      await repo.updateProfile(tx, profile.id, changes);
+      await audit.record(tx, {
+        action: "person.protection.changed",
+        resourceType: "club_profile",
+        resourceId: profile.id,
+        changedFields:
+          "sharedFields" in changes
+            ? ["protected_identity_club", "shared_fields"]
+            : ["protected_identity_club"],
+      });
+      await outbox.publish(tx, "person.protection.changed", {
+        personId,
+        clubId: context.clubId,
+        enabled: value,
+        scope: "club",
+        ...(context.personId ? { byPersonId: context.personId } : {}),
+      });
+      return { ...profile, ...changes };
     });
   }
 }

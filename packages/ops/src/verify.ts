@@ -42,11 +42,16 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Merges ledger entries from several sources (IDs only), oldest first. */
 export function mergeLedgers(...sources: readonly (readonly LedgerEntry[])[]): LedgerEntry[] {
-  const byPerson = new Map<string, LedgerEntry>();
+  // One erasure per person; one anonymisation per person, club and scope (P1.12).
+  const byKey = new Map<string, LedgerEntry>();
   for (const entry of sources.flat()) {
-    if (!byPerson.has(entry.person_id)) byPerson.set(entry.person_id, entry);
+    const key =
+      entry.kind === "anonymization"
+        ? `a:${entry.person_id}:${entry.club_id ?? ""}:${entry.scope ?? ""}`
+        : `d:${entry.person_id}`;
+    if (!byKey.has(key)) byKey.set(key, entry);
   }
-  return [...byPerson.values()].sort((a, b) => a.erased_at.localeCompare(b.erased_at));
+  return [...byKey.values()].sort((a, b) => a.erased_at.localeCompare(b.erased_at));
 }
 
 /** Runs a command of the backup image in a one-off container with the backup settings. */

@@ -265,6 +265,7 @@ export class MeController {
               ? {
                   birthDate: people.get(w.personId)?.birthDate ?? null,
                   hasLogin: withLogin.has(w.personId),
+                  protectedIdentity: people.get(w.personId)?.protectedIdentity ?? false,
                   ownLoginFromAge: this.accounts.ageRulesFor(wardClubs.map((c) => c.country))
                     .ownAccountMinAge,
                 }

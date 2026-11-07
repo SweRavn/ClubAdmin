@@ -38,6 +38,7 @@ export interface PresentableRegisterRow {
   roles: ClubRole[];
   consents: ConsentPurpose[];
   guardians: { personId: string; kind: GuardianshipKind }[];
+  protection?: { global: boolean; club: boolean; clubSetAt: string | null };
 }
 
 /** People of the page (members and their guardians); contact fields only for full access. */
@@ -110,6 +111,17 @@ export class RegisterPresenter {
           : [];
       });
       member.missingConsents = CONSENT_PURPOSES.filter((p) => !row.consents.includes(p));
+      if (row.protection && (row.protection.global || row.protection.club)) {
+        member.protection = {
+          source:
+            row.protection.global && row.protection.club
+              ? "both"
+              : row.protection.global
+                ? "global"
+                : "club",
+          clubSetAt: row.protection.clubSetAt ? iso(row.protection.clubSetAt) : null,
+        };
+      }
       return [member];
     });
   }

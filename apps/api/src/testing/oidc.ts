@@ -133,11 +133,18 @@ export const TEST_DEV_AUTH_KEY = "test-dev-auth-key-0123456789abcdef";
 /** A DEV_AUTH token as the web app mints it. */
 export function devToken(
   personId: string,
-  options: { mfa?: boolean; key?: string; sid?: string; expiresIn?: string } = {},
+  options: {
+    mfa?: boolean;
+    key?: string;
+    sid?: string;
+    expiresIn?: string;
+    /** How long ago the person logged in (step-up tests); default now. */
+    authAgeSeconds?: number;
+  } = {},
 ): Promise<string> {
   return new SignJWT({
     amr: options.mfa ? ["pwd", "mfa", "otp"] : ["pwd"],
-    auth_time: Math.floor(Date.now() / 1000),
+    auth_time: Math.floor(Date.now() / 1000) - (options.authAgeSeconds ?? 0),
     sid: options.sid ?? uuidv7(),
   })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })

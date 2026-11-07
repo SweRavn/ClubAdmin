@@ -20,10 +20,18 @@ export interface VerificationCheck {
 }
 
 /** One entry of the deletion ledger (IDs only). */
+/**
+ * An entry of the exported ledger: an erasure, or (P1.12) with `kind`
+ * "anonymization" a person taken out of a club's profile view log
+ * (`erased_at` is then when).
+ */
 export interface LedgerEntry {
   person_id: string;
   erased_at: string;
   reason: string;
+  kind?: "anonymization";
+  club_id?: string;
+  scope?: string;
 }
 
 /**
@@ -71,7 +79,12 @@ export function readLedger(url: string): Promise<LedgerEntry[]> {
       `SELECT person_id, to_char(erased_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS erased_at, reason
        FROM privacy.deletion_ledger ORDER BY erased_at, person_id`,
     );
-    return rows;
+    const { rows: anonymized } = await client.query<LedgerEntry>(
+      `SELECT 'anonymization' AS kind, person_id, club_id, scope, scope AS reason,
+         to_char(anonymized_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS erased_at
+       FROM privacy.anonymization_ledger ORDER BY anonymized_at, person_id`,
+    );
+    return [...rows, ...anonymized];
   });
 }
 

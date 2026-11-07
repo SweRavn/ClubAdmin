@@ -3,11 +3,13 @@
 # Backup drill (CI job "backup"; also runnable locally after
 # `pnpm dev:services --backup` and `pnpm db:reset --scenario minimal`):
 #
-#   full backup → write row A → archive WAL → note time T → erase a person and
-#   write row B → export the deletion ledger → archive WAL → destroy the
+#   full backup → write row A and a profile view → archive WAL → note time T
+#   → erase a person, anonymise the viewer in the club's profile view log
+#   (P1.12) and write row B → export the ledgers → archive WAL → destroy the
 #   PostgreSQL volume → restore to T (point in time) → A present, B absent,
-#   the erased person erased again by the ledger replay → full backup →
-#   pnpm ops:verify-backup (latest backup and WAL into a temporary container)
+#   the erased person erased again and the viewer anonymised again by the
+#   ledger replay → full backup → pnpm ops:verify-backup (latest backup and
+#   WAL into a temporary container)
 #
 # DRILL_COMPOSE overrides the docker compose command (another project).
 set -euo pipefail
@@ -36,6 +38,9 @@ step "Write after the full backup, archive the WAL, note the restore point"
 row_a=$(sql "SELECT uuidv7()")
 row_b=$(sql "SELECT uuidv7()")
 sql "INSERT INTO people (id, given_name, family_name) VALUES ('$row_a', 'Drill', 'Written after the full backup')"
+view_club=$(sql "SELECT id FROM clubs ORDER BY id LIMIT 1")
+viewer=$(sql "SELECT id FROM people WHERE anonymized_at IS NULL AND given_name <> '' AND id <> '$row_a' ORDER BY id DESC LIMIT 1")
+view=$(sql "INSERT INTO profile_views (club_id, viewed_person_id, viewer_person_id, viewer_kind, surface, protected, day, first_viewed_at, last_viewed_at) VALUES ('$view_club', '$row_a', '$viewer', 'person', 'profile', true, current_date, now(), now()) RETURNING id")
 "${dc[@]}" exec -T backup clubadmin-backup check
 sleep 2
 target=$(sql "SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')")
@@ -47,6 +52,7 @@ step "Erase a person and write more after the restore point"
 person=$(sql "SELECT id FROM people WHERE anonymized_at IS NULL AND given_name <> '' AND id <> '$row_a' ORDER BY id LIMIT 1")
 [ -n "$person" ] || fail "no person to erase in the seeded data"
 sql "SELECT privacy.erase_person('$person', 'drill')" >/dev/null
+sql "SELECT privacy.anonymize_profile_views('$viewer', '$view_club', true)" >/dev/null
 sql "INSERT INTO people (id, given_name, family_name) VALUES ('$row_b', 'Drill', 'Written after the restore point')"
 "${dc[@]}" exec -T backup clubadmin-backup ledger-export
 "${dc[@]}" exec -T backup clubadmin-backup check
@@ -72,7 +78,11 @@ step "Check the restored data"
 [ "$(sql "SELECT count(*) FROM audit.events WHERE resource_id = '$person' AND action = 'person.erased' AND request_id = 'privacy:ledger-replay'")" = "1" ] \
   || fail "the person was not erased by the ledger replay"
 [ "$(sql "SELECT count(*) FROM privacy.unerased_people()")" = "0" ] || fail "erased people with personal data"
-echo "A present, B absent, erased person erased again by the ledger replay."
+[ "$(sql "SELECT viewer_person_id IS NULL AND anonymized_at IS NOT NULL FROM profile_views WHERE id = '$view'")" = "t" ] \
+  || fail "the viewer is named again in the club's profile view log"
+[ "$(sql "SELECT count(*) FROM privacy.anonymization_ledger WHERE person_id = '$viewer' AND club_id = '$view_club'")" = "1" ] \
+  || fail "the anonymisation is not in the restored anonymisation ledger"
+echo "A present, B absent, erased person erased again and the viewer anonymised again by the ledger replay."
 echo "::endgroup::"
 
 step "Runbook 1: extract one club's rows"

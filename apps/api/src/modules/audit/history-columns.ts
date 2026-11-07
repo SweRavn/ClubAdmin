@@ -92,6 +92,9 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
       personal_identity_number: "name_only",
       personal_identity_number_hash: "hidden",
       protected_identity: bool("protected_identity"),
+      // Who set the flag (P1.12): shown to club managers on the profile, not here.
+      protected_identity_set_by_person_id: "hidden",
+      protected_identity_set_at: "hidden",
       deceased_at: "name_only",
       anonymized_at: "name_only",
       merged_into_person_id: "hidden",
@@ -139,6 +142,8 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
       emergency_contacts: "name_only",
       notes: "name_only",
       protected_identity_club: bool("protected_identity_club"),
+      protected_identity_club_set_by_person_id: "hidden",
+      protected_identity_club_set_at: "hidden",
       club_data_purged_at: "name_only",
     },
   },
@@ -548,6 +553,7 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
       consent_reconfirm_on_new_version: "name_only",
       former_member_retention_months: num("former_member_retention_months"),
       privacy_contact_email: "name_only",
+      profile_view_logging: "name_only",
     },
   },
   {

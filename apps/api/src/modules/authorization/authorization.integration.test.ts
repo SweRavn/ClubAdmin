@@ -28,7 +28,6 @@ import { Endpoint } from "../../platform/http/endpoint.ts";
 import { EndpointRegistry } from "../../platform/http/endpoint-registry.ts";
 import { subscribeToFeatures } from "../../testing/billing.ts";
 import { actor, buildPerson } from "../../testing/builders.ts";
-import { auditActionsOf } from "../../testing/core.ts";
 import { devToken, TEST_DEV_AUTH_KEY } from "../../testing/oidc.ts";
 import {
   buildMatrixScenario,
@@ -943,6 +942,26 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/audit-events`,
       expected: CLUB_FORBIDDEN,
     },
+    // Protected identity (P1.12). Turning the flag off while it is off is a
+    // no-op, so the matrix leaves the child unprotected for the other rows.
+    "PUT /api/v1/people/:personId/protection": {
+      url: () => `/api/v1/people/${m.child.id}/protection`,
+      expected: { ...ALL_NOT_FOUND, parent: 200 },
+      body: { protected: false },
+    },
+    "GET /api/v1/people/:personId/access-log": {
+      url: () => `/api/v1/people/${m.child.id}/access-log`,
+      expected: { ...ALL_NOT_FOUND, parent: 200 },
+    },
+    "GET /api/v1/clubs/:clubId/profile-views": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/profile-views`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "PUT /api/v1/clubs/:clubId/profile-view-logging": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/profile-view-logging`,
+      expected: CLUB_FORBIDDEN,
+      body: { mode: "all" },
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -1347,24 +1366,21 @@ describe("protected identity", () => {
   });
 
   it("logs every view of a protected person's profile", async () => {
-    const before = (await auditActionsOf(t, m.protectedMember.id)).length;
     const res = await get(
       m.coach.id,
       `/api/v1/people/${m.protectedMember.id}?clubId=${m.clubA.id}`,
     );
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ person: { protected: true } });
+    expect(res.json()).toMatchObject({ person: { protected: true }, viewsLogged: true });
     // Their own view is not logged.
     await get(m.protectedMember.id, `/api/v1/people/${m.protectedMember.id}?clubId=${m.clubA.id}`);
-    const actions = await auditActionsOf(t, m.protectedMember.id);
-    expect(actions.slice(before)).toEqual(["person.protected.viewed"]);
-    const { rows } = await t.query<{ actor_person_id: string; club_id: string }>(
+    // The profile view log (P1.12) replaces the audit event.
+    const { rows } = await t.query<{ viewer_person_id: string; club_id: string }>(
       "admin",
-      `SELECT actor_person_id, club_id FROM audit.events
-       WHERE resource_id = $1 AND action = 'person.protected.viewed'`,
+      `SELECT viewer_person_id, club_id FROM profile_views WHERE viewed_person_id = $1`,
       [m.protectedMember.id],
     );
-    expect(rows).toEqual([{ actor_person_id: m.coach.id, club_id: m.clubA.id }]);
+    expect(rows).toEqual([{ viewer_person_id: m.coach.id, club_id: m.clubA.id }]);
   });
 
   it("is hidden from an operator with support access", async () => {

@@ -43,6 +43,7 @@ export const PERMISSIONS = [
   "person.profile.read",
   "person.profile.update",
   "person.protection.set",
+  "person.access_log.read",
   "person.guardians.read",
   "person.guardians.manage",
   "person.merge",
@@ -70,6 +71,8 @@ export const PERMISSIONS = [
   "event.history.read",
   "club.history.read",
   "club.audit.read",
+  "club.profile_views.read",
+  "club.profile_views.configure",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

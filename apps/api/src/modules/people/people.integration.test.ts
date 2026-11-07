@@ -100,7 +100,9 @@ describe("people", () => {
     for (const someone of [relative, await buildPerson(c.s)]) {
       await expect(
         c.s.people.setProtectedIdentity(actor(someone.id), child.id, true),
-      ).rejects.toSatisfy((e) => isDomainError(e, "not_allowed") || isDomainError(e, "not_found"));
+      ).rejects.toSatisfy(
+        (e) => isDomainError(e, "not_a_full_guardian") || isDomainError(e, "not_found"),
+      );
     }
 
     const protectedChild = await c.s.people.setProtectedIdentity(

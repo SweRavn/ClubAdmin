@@ -269,3 +269,19 @@ export type CalendarFeedRevokedReason = (typeof CALENDAR_FEED_REVOKED_REASONS)[n
 
 /** Open feeds per person. */
 export const CALENDAR_FEEDS_MAX = 10;
+
+// Protected identity UI and the profile view log (P1.12, ADR 0022).
+/** Which profile views a club logs: views of protected people only, or every view. */
+export const PROFILE_VIEW_LOGGING_MODES = ["protected_only", "all"] as const;
+export type ProfileViewLoggingMode = (typeof PROFILE_VIEW_LOGGING_MODES)[number];
+/** Where a profile was viewed: the person page, or its history (P1.9). */
+export const PROFILE_VIEW_SURFACES = ["profile", "history"] as const;
+export type ProfileViewSurface = (typeof PROFILE_VIEW_SURFACES)[number];
+export const PROFILE_VIEWER_KINDS = ["person", "operator"] as const;
+export type ProfileViewerKind = (typeof PROFILE_VIEWER_KINDS)[number];
+/** Scopes of the anonymisation ledger (P1.12; restorable club profiles would add one). */
+export const ANONYMIZATION_SCOPES = ["profile_views"] as const;
+export type AnonymizationScope = (typeof ANONYMIZATION_SCOPES)[number];
+/** Where a member's effective protection comes from (the register's protected filter). */
+export const PROTECTION_SOURCES = ["global", "club", "both"] as const;
+export type ProtectionSource = (typeof PROTECTION_SOURCES)[number];

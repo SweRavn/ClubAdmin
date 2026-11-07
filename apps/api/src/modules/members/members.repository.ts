@@ -44,6 +44,8 @@ export interface RegisterRow {
   roles: ClubRole[];
   consents: ConsentPurpose[];
   guardians: { personId: string; kind: GuardianshipKind }[];
+  /** With `protected=only` (P1.12). */
+  protection?: { global: boolean; club: boolean; clubSetAt: string | null };
 }
 
 export interface RegisterPageRows {
@@ -146,7 +148,18 @@ export function registerPageQuery(clubId: string, page: RegisterPageInput) {
         'guardians', coalesce((
           SELECT jsonb_agg(jsonb_build_object('personId', gs.guardian_person_id, 'kind', gs.kind) ORDER BY gs.created_at)
           FROM public.guardianships gs
-          WHERE gs.ward_person_id = p.person_id AND gs.status = 'active' AND gs.valid_to IS NULL), '[]')
+          WHERE gs.ward_person_id = p.person_id AND gs.status = 'active' AND gs.valid_to IS NULL), '[]')${
+            page.filter.protected === "only"
+              ? sql`,
+        'protection', (
+          SELECT jsonb_build_object('global', pp.protected_identity,
+            'club', coalesce(cp.protected_identity_club, false),
+            'clubSetAt', cp.protected_identity_club_set_at)
+          FROM public.people pp
+          LEFT JOIN public.club_profiles cp ON cp.club_id = ${clubId} AND cp.person_id = pp.id
+          WHERE pp.id = p.person_id)`
+              : sql``
+          }
       ) ORDER BY p.ord) FROM page p), '[]') AS items`;
 }
 

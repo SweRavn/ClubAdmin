@@ -52,6 +52,7 @@ export function registerConditions(clubId: string, filter: RegisterFilter): SQL 
       WHERE c.club_id = e.club_id AND c.person_id = e.person_id
         AND c.purpose = ${filter.missingConsent} AND c.revoked_at IS NULL)`);
   }
+  if (filter.protected === "only") conditions.push(sql`e.is_protected`);
   return sql.join(conditions, sql` AND `);
 }
 

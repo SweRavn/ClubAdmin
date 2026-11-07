@@ -134,7 +134,10 @@ export type EnumNamespace =
   | "waitlist.statuses"
   | "waitlist.removalReasons"
   | "waitlist.decisionKinds"
-  | "calendar.ui.scopes";
+  | "calendar.ui.scopes"
+  | "protection.sources"
+  | "protection.viewers"
+  | "protection.viewerRoles";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

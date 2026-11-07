@@ -27,6 +27,8 @@ import {
   MEMBERSHIP_TYPES,
   type MembershipStatus,
   type MembershipType,
+  PROFILE_VIEW_LOGGING_MODES,
+  type ProfileViewLoggingMode,
   SHAREABLE_PERSON_FIELDS,
   type ShareablePersonField,
 } from "@clubadmin/shared";
@@ -98,6 +100,8 @@ export const clubs = pgTable(
     formerMemberRetentionMonths: integer().notNull().default(24),
     /** Where members send privacy questions (a function address; P1.8a). */
     privacyContactEmail: text(),
+    /** Which profile views the club logs (P1.12): protected people only, or every view. */
+    profileViewLogging: text().$type<ProfileViewLoggingMode>().notNull().default("protected_only"),
     ...timestamps,
   },
   (t) => [
@@ -119,6 +123,7 @@ export const clubs = pgTable(
       "clubs_privacy_contact_email",
       sql`${t.privacyContactEmail} IS NULL OR (length(${t.privacyContactEmail}) <= 254 AND ${t.privacyContactEmail} ~ '^[^@\\s]+@[^@\\s]+$')`,
     ),
+    check("clubs_profile_view_logging", oneOf(t.profileViewLogging, PROFILE_VIEW_LOGGING_MODES)),
     check("clubs_country", sql`${t.country} ~ '^[A-Z]{2}$'`),
     check("clubs_currency", sql`${t.currency} ~ '^[A-Z]{3}$'`),
     check("clubs_slug_shape", sql`${t.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
@@ -182,6 +187,9 @@ export const clubProfiles = pgTable(
     notes: text(),
     /** Club-level protected identity (ADR 0022), set by a club manager. */
     protectedIdentityClub: boolean().notNull().default(false),
+    /** Who set the club flag, and when (P1.12; shown to club managers). Cleared when off. */
+    protectedIdentityClubSetByPersonId: uuid().references(() => people.id),
+    protectedIdentityClubSetAt: timestamp(tz),
     /** The former-member purge ran for this person and club (P1.8a). */
     clubDataPurgedAt: timestamp(tz),
     ...timestamps,

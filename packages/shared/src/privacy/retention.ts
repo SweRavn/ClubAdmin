@@ -133,6 +133,18 @@ export const RETENTION_RULES: readonly RetentionRule[] = [
   },
   { key: "backups", period: { value: 12, unit: "months" }, status: "implemented" },
   {
+    key: "profile_views",
+    period: { value: 24, unit: "months" },
+    task: "privacy:profile_views",
+    status: "implemented",
+  },
+  {
+    key: "anonymization_ledger",
+    period: { value: 13, unit: "months" },
+    task: "privacy:profile_views",
+    status: "implemented",
+  },
+  {
     key: "calendar_feeds",
     period: { value: 30, unit: "days" },
     task: "calendar:retention",

@@ -20,6 +20,7 @@ import {
   MEMBERSHIP_STATUSES,
   MEMBERSHIP_TYPES,
 } from "./core.ts";
+import { ProtectionStateSchema } from "./protection.ts";
 import { PostalAddressSchema } from "./schemas.ts";
 
 export const ClubParamsSchema = z.object({ clubId: z.uuid() });
@@ -130,6 +131,8 @@ export const MyWardsSchema = z
         clubs: z.array(z.object({ id: z.uuid(), name: z.string() })).optional(),
         /** Full guardians only: the ward has their own login. */
         hasLogin: z.boolean().optional(),
+        /** Full guardians only (P1.12): the ward's global protected identity flag. */
+        protectedIdentity: z.boolean().optional(),
         /** Full guardians only: from which age "Give own login" is possible (the strictest country pack). */
         ownLoginFromAge: z.number().int().optional(),
       }),
@@ -262,6 +265,13 @@ export const PersonProfileSchema = z
         }),
       )
       .optional(),
+    /**
+     * P1.12: the protection state, for the person, full guardians and (with
+     * `clubId`) club managers; absent for everyone else.
+     */
+    protection: ProtectionStateSchema.optional(),
+    /** Present (true) when views of this profile are logged: the person can see who opened it. */
+    viewsLogged: z.boolean().optional(),
   })
   .openapi("PersonProfile");
 export type PersonProfile = z.infer<typeof PersonProfileSchema>;

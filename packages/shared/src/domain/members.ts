@@ -12,6 +12,7 @@ import {
   GROUP_FUNCTIONS,
   GUARDIANSHIP_KINDS,
   MEMBERSHIP_TYPES,
+  PROTECTION_SOURCES,
 } from "./core.ts";
 import { PostalAddressSchema } from "./schemas.ts";
 
@@ -78,6 +79,8 @@ export const RegisterFilterSchema = z.object({
   gender: z.enum(GENDERS).optional(),
   /** Members without an active consent for this purpose. */
   missingConsent: z.enum(CONSENT_PURPOSES).optional(),
+  /** P1.12: only members with protected identity (global or in the club); full view only. */
+  protected: z.enum(["only"]).optional(),
 });
 export type RegisterFilter = z.infer<typeof RegisterFilterSchema>;
 
@@ -130,6 +133,13 @@ export const RegisterMemberSchema = z
       )
       .optional(),
     missingConsents: z.array(z.enum(CONSENT_PURPOSES)).optional(),
+    /** With `protected=only` (P1.12): where the protection comes from, and when the club set it. */
+    protection: z
+      .object({
+        source: z.enum(PROTECTION_SOURCES),
+        clubSetAt: z.iso.datetime({ offset: true }).nullable(),
+      })
+      .optional(),
   })
   .openapi("RegisterMember");
 export type RegisterMember = z.infer<typeof RegisterMemberSchema>;

@@ -129,6 +129,7 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "privacy.erasure.scheduled",
       "privacy.erasure.blocked",
       "calendar.feed.revoked",
+      "person.protection.changed",
       ...MOVED_EVENTS,
     ],
     async handle(event, tx) {
@@ -487,6 +488,67 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `privacy.export.ready:${exportId}`,
             },
           ]);
+          return;
+        }
+        // Protected identity (P1.12): every club manager of the affected clubs
+        // (the club; for the global flag every club where the person or a ward
+        // of theirs is a member), never naming the person; when a guardian
+        // turns a child's flag off, the other full guardians too.
+        case "person.protection.changed": {
+          const payload = DOMAIN_EVENTS["person.protection.changed"].parse(event.payload);
+          if (payload.enabled === undefined) return;
+          const by = payload.byPersonId ?? null;
+          let clubIds: string[];
+          if (payload.clubId) {
+            clubIds = [payload.clubId];
+          } else {
+            const { rows } = await tx.execute<{ id: string }>(
+              sql`SELECT privacy.person_club_ids(${payload.personId}) AS id`,
+            );
+            clubIds = rows.map((r) => r.id);
+          }
+          const notices: Notice[] = [];
+          for (const clubId of clubIds) {
+            await useClub(tx, clubId);
+            const { rows } = await tx.execute<{ person_id: string }>(sql`
+              SELECT DISTINCT person_id FROM public.club_role_assignments
+              WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL
+                AND person_id <> ${payload.personId}
+                AND person_id IS DISTINCT FROM ${by}::uuid`);
+            for (const r of rows) {
+              notices.push({
+                recipientPersonId: r.person_id,
+                clubId,
+                type: "member.protection.changed",
+                subjectType: "club_protected",
+                subjectId: null,
+                about: [],
+                params: { change: payload.enabled ? "on" : "off" },
+                dedupeKey: `member.protection.changed:${event.idempotencyKey}:${clubId}`,
+              });
+            }
+          }
+          await tx.execute(sql`SELECT set_config('app.club_id', '', true)`);
+          if (!payload.enabled && !payload.clubId && by && by !== payload.personId) {
+            const { rows } = await tx.execute<{ guardian_person_id: string }>(sql`
+              SELECT guardian_person_id FROM public.guardianships
+              WHERE ward_person_id = ${payload.personId} AND guardian_person_id <> ${by}
+                AND kind IN ('parent', 'legal_guardian') AND status = 'active'
+                AND valid_to IS NULL`);
+            for (const g of rows) {
+              notices.push({
+                recipientPersonId: g.guardian_person_id,
+                clubId: null,
+                type: "family.protection.removed",
+                subjectType: "guardianship",
+                subjectId: null,
+                about: [],
+                params: {},
+                dedupeKey: `family.protection.removed:${event.idempotencyKey}`,
+              });
+            }
+          }
+          await notify(tx, notices);
           return;
         }
         // Calendar subscriptions (P1.11): the owner is told when the system

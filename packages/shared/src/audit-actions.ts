@@ -18,6 +18,7 @@ export const AUDIT_ACTIONS = [
   "person.updated",
   "person.profile.completed",
   "person.protection.changed",
+  "person.protection.removal_refused",
   "person.protected.viewed",
   "person.merged",
   "person.merge.undone",

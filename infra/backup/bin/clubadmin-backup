@@ -202,7 +202,9 @@ cmd_files() {
 cmd_ledger_export() {
   rclone_env
   id=$(run_start ledger no)
-  ledger=$(sql -c "SELECT coalesce(json_agg(json_build_object('person_id', person_id, 'erased_at', erased_at, 'reason', reason) ORDER BY erased_at, person_id), '[]') FROM privacy.deletion_ledger") || {
+  # Deletions, and since P1.12 the anonymisations ("kind": "anonymization"),
+  # replayed together by privacy.replay_deletion_ledger.
+  ledger=$(sql -c "SELECT coalesce(json_agg(e ORDER BY e->>'erased_at', e->>'person_id'), '[]') FROM (SELECT json_build_object('person_id', person_id, 'erased_at', erased_at, 'reason', reason)::jsonb AS e FROM privacy.deletion_ledger UNION ALL SELECT json_build_object('kind', 'anonymization', 'person_id', person_id, 'club_id', club_id, 'scope', scope, 'erased_at', anonymized_at, 'reason', scope)::jsonb FROM privacy.anonymization_ledger) x") || {
     run_finish "$id" failed "" "" "could not read privacy.deletion_ledger"
     die "could not read the deletion ledger"
   }

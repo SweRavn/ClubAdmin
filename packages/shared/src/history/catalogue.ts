@@ -211,6 +211,7 @@ export const AUDIT_ACTION_SENTENCES: readonly AuditAction[] = [
   "group.waitlist.offer_withdrawn",
   "group.waitlist.admitted",
   "calendar_feed.regenerated",
+  "person.protection.removal_refused",
   "person.club_data.purged",
   "club.settings.decided",
 ];
