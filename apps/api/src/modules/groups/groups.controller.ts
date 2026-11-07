@@ -3,26 +3,41 @@ import {
   ClubParamsSchema,
   type CreateGroupInput,
   CreateGroupSchema,
+  type CreateSeasonInput,
+  CreateSeasonSchema,
   type GroupDetail,
   GroupDetailSchema,
   type GroupList,
   GroupListSchema,
+  GroupOwnerParamsSchema,
   GroupParamsSchema,
   type GroupResponse,
   GroupSchema,
+  type GroupSeasonList,
+  GroupSeasonListSchema,
+  GroupSeasonParamsSchema,
+  type GroupSeasonResponse,
+  GroupSeasonSchema,
   type PageQuery,
   PageQuerySchema,
+  type PutGroupSeasonInput,
+  PutGroupSeasonSchema,
+  type SeasonList,
+  SeasonListSchema,
+  type SeasonResponse,
+  SeasonSchema,
   type UpdateGroupInput,
   UpdateGroupSchema,
   z,
 } from "@clubadmin/shared";
-import { Body, Controller, Query } from "@nestjs/common";
+import { Body, Controller, Param, Query } from "@nestjs/common";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { Endpoint } from "../../platform/http/endpoint.ts";
 import {
   AuthorizationService,
   CurrentAuthorization,
+  permits,
   PersonPresenter,
   PersonVisibility,
   type RequestAuthorization,
@@ -30,7 +45,16 @@ import {
   tenantContext,
 } from "../authorization/index.ts";
 import { PeopleService } from "../people/index.ts";
-import { type Group, GroupsService } from "./groups.service.ts";
+import { type Group, GroupsService, type Season } from "./groups.service.ts";
+
+function toSeasonResponse(season: Season): SeasonResponse {
+  return {
+    id: season.id,
+    name: season.name,
+    startsOn: season.startsOn,
+    endsOn: season.endsOn,
+  };
+}
 
 export function toGroupResponse(group: Group): GroupResponse {
   return {
@@ -108,19 +132,27 @@ export class GroupsController {
     const context = tenantContext(authz, resource.clubId, {
       viewerPrivileged: this.visibility.privilegedForGroup(authz.actor, resource),
     });
-    const { group, ownerIds } = await this.groups.getGroupWithOwners(context, resource.groupId);
+    const canManage = authz.actor.isClubManager(resource.clubId) || authz.actor.ownsGroup(resource);
+    const { group, ownerIds, capacity, deletable } = await this.groups.getGroupWithOwners(
+      context,
+      resource.groupId,
+      { manage: canManage },
+    );
     const owners = await this.presenter.present(
       authz,
       resource.clubId,
       await this.people.summaries(context, ownerIds),
       { group: resource },
     );
-    const canManage = authz.actor.isClubManager(resource.clubId) || authz.actor.ownsGroup(resource);
     return {
       ...toGroupResponse(group),
       owners,
       canManage,
-      ...(canManage ? { deletable: await this.groups.isDeletable(context, resource.groupId) } : {}),
+      canManageMembers: permits(authz.actor, "group.members.manage", resource),
+      canManageOwners: permits(authz.actor, "group.owners.manage", resource),
+      ...(canManage && capacity
+        ? { deletable, effectiveCapacity: capacity.capacity, occupied: capacity.occupied }
+        : {}),
     };
   }
 
@@ -168,23 +200,6 @@ export class GroupsController {
 
   @Endpoint({
     method: "POST",
-    path: "groups/:groupId/archive",
-    summary: "Archive a group (refused while it has child groups that are not archived)",
-    tags: ["groups"],
-    access: { permission: "group.update", resource: "group" },
-    request: { params: GroupParamsSchema },
-    response: GroupSchema,
-    status: 200,
-  })
-  async archiveGroup(@CurrentAuthorization() authz: RequestAuthorization): Promise<GroupResponse> {
-    const resource = resourceOf(authz, "group");
-    const context = tenantContext(authz, resource.clubId);
-    await this.groups.archiveGroup(context, resource.groupId);
-    return toGroupResponse(await this.groups.getGroup(context, resource.groupId));
-  }
-
-  @Endpoint({
-    method: "POST",
     path: "groups/:groupId/restore",
     summary: "Restore an archived group (club managers)",
     tags: ["groups"],
@@ -215,6 +230,111 @@ export class GroupsController {
     const resource = resourceOf(authz, "group");
     await this.groups.deleteGroup(tenantContext(authz, resource.clubId), resource.groupId);
     return null;
+  }
+
+  // --- Owners and seasons (P1.10a) -----------------------------------------------------
+
+  @Endpoint({
+    method: "DELETE",
+    path: "groups/:groupId/owners/:personId",
+    summary: "End a group ownership (club managers; owners where the club allows co-owners)",
+    tags: ["groups"],
+    access: { permission: "group.owners.manage", resource: "group" },
+    request: { params: GroupOwnerParamsSchema },
+    response: z.null(),
+    status: 204,
+  })
+  async removeOwner(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof GroupOwnerParamsSchema>,
+  ): Promise<null> {
+    const resource = resourceOf(authz, "group");
+    await this.groups.removeOwner(
+      tenantContext(authz, resource.clubId),
+      resource.groupId,
+      params.personId,
+      authz.actor.isClubManager(resource.clubId) ? "club_manager" : "group_owner",
+    );
+    return null;
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "clubs/:clubId/seasons",
+    summary: "The club's seasons, newest first",
+    tags: ["groups"],
+    access: { permission: "club.read", resource: "club" },
+    request: { params: ClubParamsSchema },
+    response: SeasonListSchema,
+  })
+  async listSeasons(@CurrentAuthorization() authz: RequestAuthorization): Promise<SeasonList> {
+    const { clubId } = resourceOf(authz, "club");
+    const items = await this.groups.listSeasons(tenantContext(authz, clubId));
+    return { items: items.map(toSeasonResponse) };
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "clubs/:clubId/seasons",
+    summary: "Add a season (club managers, with a second factor)",
+    tags: ["groups"],
+    access: { permission: "club.settings.update", resource: "club" },
+    request: { params: ClubParamsSchema, body: CreateSeasonSchema },
+    response: SeasonSchema,
+    status: 201,
+  })
+  async createSeason(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Body() body: CreateSeasonInput,
+  ): Promise<SeasonResponse> {
+    const { clubId } = resourceOf(authz, "club");
+    return toSeasonResponse(await this.groups.createSeason(tenantContext(authz, clubId), body));
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "groups/:groupId/seasons",
+    summary: "The group's places and notes per season (those who edit the group)",
+    tags: ["groups"],
+    access: { permission: "group.update", resource: "group" },
+    request: { params: GroupParamsSchema },
+    response: GroupSeasonListSchema,
+  })
+  async groupSeasons(
+    @CurrentAuthorization() authz: RequestAuthorization,
+  ): Promise<GroupSeasonList> {
+    const resource = resourceOf(authz, "group");
+    return {
+      items: await this.groups.groupSeasons(
+        tenantContext(authz, resource.clubId),
+        resource.groupId,
+      ),
+    };
+  }
+
+  @Endpoint({
+    method: "PUT",
+    path: "groups/:groupId/seasons/:seasonId",
+    summary: "Set the group's places and notes for a season (idempotent)",
+    tags: ["groups"],
+    access: { permission: "group.update", resource: "group" },
+    request: { params: GroupSeasonParamsSchema, body: PutGroupSeasonSchema },
+    response: GroupSeasonSchema,
+  })
+  async putGroupSeason(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof GroupSeasonParamsSchema>,
+    @Body() body: PutGroupSeasonInput,
+  ): Promise<GroupSeasonResponse> {
+    const resource = resourceOf(authz, "group");
+    const settings = { capacity: body.capacity, notes: body.notes ?? null };
+    await this.groups.setGroupSeason(
+      tenantContext(authz, resource.clubId),
+      resource.groupId,
+      params.seasonId,
+      settings,
+    );
+    return { seasonId: params.seasonId, ...settings };
   }
 
   /**

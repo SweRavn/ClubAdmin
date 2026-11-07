@@ -14,7 +14,9 @@ import {
   JOIN_REQUEST_STATUSES,
   type JoinPolicy,
   type JoinRequestStatus,
+  WAITLIST_CLOSED_REASONS,
   WAITLIST_STATUSES,
+  type WaitlistClosedReason,
   type WaitlistStatus,
 } from "@clubadmin/shared";
 import { sql } from "drizzle-orm";
@@ -57,6 +59,8 @@ export const groupWaitlistEntries = pgTable(
     outOfOrderReason: text(),
     decidedByPersonId: uuid().references(() => people.id),
     decidedAt: timestamp(tz),
+    /** Why the entry closed (P1.10a): a code, never free text. */
+    closedReason: text().$type<WaitlistClosedReason>(),
     ...timestamps,
   },
   (t) => [
@@ -66,6 +70,10 @@ export const groupWaitlistEntries = pgTable(
       foreignColumns: [groups.clubId, groups.id],
     }),
     check("group_waitlist_entries_status", oneOf(t.status, WAITLIST_STATUSES)),
+    check(
+      "group_waitlist_entries_closed_reason",
+      sql`${t.closedReason} IS NULL OR ${oneOf(t.closedReason, WAITLIST_CLOSED_REASONS)}`,
+    ),
     check(
       "group_waitlist_entries_offer",
       sql`(${t.status} = 'offered') <= (${t.offerExpiresAt} IS NOT NULL)`,

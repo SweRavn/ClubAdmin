@@ -127,12 +127,18 @@ synthetic organisation number 802000-0009 and two phone numbers ("Kansli",
 | SVK | F2017 (team, girls ~9 yrs), capacity 10 | Erik, Sara | `waitlist`, **full**: 5 waiting incl. Viktor (#2), one **offer outstanding** (expires in 3 days), one admitted out of order with a reason (sibling) | Elsa, Maja, Alva, + 7 generated |
 | SVK | Herr senior (team) | Johan | `direct` | Johan, Lars, + 4 generated (one with **club-level protected identity** set by Anna) |
 | IKN | Fotboll (section) | Karin | — | parent of P2012 |
-| IKN | P2012 (team, boys ~14 yrs) | Ahmed | `direct` | Oskar, Liam, + 6 generated |
+| IKN | P2012 (team, boys ~14 yrs) | Ahmed, **Peter** (co-owner appointed by Ahmed: IKN lets owners appoint co-owners, P1.10a) | `direct` | Oskar, Liam, + 6 generated |
 | IKN | Innebandy (section) | — | — | parent of F2015 |
 | IKN | F2015 (training group, girls ~11 yrs) | **none** (managers act) | `waitlist`, not full, 1 waiting | Maja, Nadia, + 5 generated |
 | IKN | Styrelsen (board) | Karin | `closed` | board members |
-| FIL | J2014 (team, girls ~12 yrs) | Lars | `direct` | Ingrid, + 5 generated (Sofie has applied) |
+| FIL | J2014 (team, girls ~12 yrs) | Lars | `direct` | Ingrid, + 5 generated (Sofie has applied); a veteran added by Lars as **team manager** (P1.10a) |
 | FIL | Veteran (team, adults) | Lars | `direct` | Lars, + 4 generated |
+| SVK | Damer B (team), **archived** | Sara | `direct` | none: archived with Johan (head coach) and Sara (player) in it, so their memberships ended (P1.10a) |
+
+Group administration (P1.10a): SVK keeps `owners_can_appoint_co_owners`
+off (Erik, F2017's owner, cannot appoint owners), IKN turns it on. SVK has
+the season of this year (August to July) with F2017's 10 places set per
+season, so the group page shows "10 of 10 places".
 
 ## Demo scenario: named personas
 

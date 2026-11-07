@@ -875,3 +875,33 @@ describe("privacy notices (P1.8a)", () => {
     expect(await noticesOf(ids.nils)).toEqual([]);
   });
 });
+
+describe("waiting-list notices (P1.10a)", () => {
+  it("waitlist.entry.closed reaches whoever applied, about the applicant, with the reason", async () => {
+    const ids = await team();
+    // Anna applied for Elsa (no login of her own).
+    const { rows } = await t.query<{ id: string }>(
+      "admin",
+      `INSERT INTO group_waitlist_entries
+         (club_id, group_id, person_id, requested_by_person_id, status, closed_reason)
+       VALUES ($1, $2, $3, $4, 'removed', 'group_archived') RETURNING id`,
+      [ids.club, ids.group, ids.elsa, ids.anna],
+    );
+    const event = await publish(ids.club, "waitlist.entry.closed", {
+      clubId: ids.club,
+      entryId: rows[0]!.id,
+    });
+    await outbox.dispatch(t.db, event, [handler()]);
+    expect(await noticesOf(ids.anna)).toMatchObject([
+      { type: "waitlist.entry.closed", about_person_ids: [ids.elsa] },
+    ]);
+    const { rows: params } = await t.query<{ params: Record<string, string> }>(
+      "admin",
+      "SELECT params FROM notifications WHERE recipient_person_id = $1",
+      [ids.anna],
+    );
+    expect(params[0]!.params).toEqual({ group: "F2016", closedReason: "group_archived" });
+    expect(await noticesOf(ids.mikael)).toEqual([]);
+    expect(await noticesOf(ids.coach)).toEqual([]);
+  });
+});

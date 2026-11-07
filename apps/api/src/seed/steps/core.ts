@@ -133,6 +133,60 @@ class CoreSeeder {
     await this.clubData();
     await this.waitlists();
     await this.laterHistory();
+    await this.groupAdmin();
+  }
+
+  /**
+   * Group administration (P1.10a), through the services: IKN lets owners
+   * appoint co-owners and Ahmed appoints Peter for P2012 (SVK keeps it off);
+   * Lars adds a veteran as team manager of J2014; SVK's season 2026/27 gives
+   * F2017 its ten places; and an old SVK team was archived with the people in
+   * it (their memberships ended, its owner kept).
+   */
+  private async groupAdmin(): Promise<void> {
+    await this.s.clubs.updateSettings(this.as("karin", "ikn"), { ownersCanAppointCoOwners: true });
+    await this.s.memberships.addGroupOwner(
+      this.as("ahmed", "ikn"),
+      this.group("ikn-p2012").id,
+      this.id("peter"),
+      "group_owner",
+    );
+
+    const j2014 = this.group("fil-j2014");
+    const veteran = this.group("fil-veteran");
+    const { rows } = await this.env.db.withSystem("seed:demo", { clubId: this.id("fil") }, (tx) =>
+      tx.execute<{ person_id: string }>(sql`
+        SELECT gm.person_id FROM group_memberships gm
+        WHERE gm.group_id = ${veteran.id} AND gm.valid_to IS NULL AND gm.person_id <> ${this.id("lars")}
+        ORDER BY gm.person_id LIMIT 1`),
+    );
+    if (rows[0]) {
+      await this.s.memberships.addGroupMember(
+        this.as("lars", "fil"),
+        j2014.id,
+        rows[0].person_id,
+        "team_manager",
+      );
+    }
+
+    const svk = this.as("sara", "svk");
+    const year = Number(this.env.clock.day("now").slice(0, 4));
+    const autumn = this.env.clock.day("now").slice(5, 7) >= "08";
+    const start = autumn ? year : year - 1;
+    const season = await this.s.groups.createSeason(svk, {
+      name: `${start}/${String(start + 1).slice(2)}`,
+      startsOn: `${start}-08-01`,
+      endsOn: `${start + 1}-07-31`,
+    });
+    await this.s.groups.setGroupSeason(svk, this.group("svk-f2017").id, season.id, {
+      capacity: 10,
+    });
+
+    const old = await this.s.groups.createGroup(svk, { name: "Damer B", kind: "team" });
+    await this.s.memberships.addGroupOwner(svk, old.id, this.id("sara"), "club_manager");
+    await this.s.memberships.addGroupMember(svk, old.id, this.id("johan"), "head_coach");
+    await this.s.memberships.addGroupMember(svk, old.id, this.id("sara"), "member");
+    await this.s.memberships.archiveGroup(svk, old.id);
   }
 
   private birthDate(p: DemoPersona): string | null {

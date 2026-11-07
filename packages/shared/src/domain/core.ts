@@ -146,6 +146,21 @@ export const WAITLIST_STATUSES = [
 ] as const;
 export type WaitlistStatus = (typeof WAITLIST_STATUSES)[number];
 
+/**
+ * Why a waiting-list entry closed (P1.10a): a code, never free text. The
+ * list may grow (ADR 0029).
+ */
+export const WAITLIST_CLOSED_REASONS = [
+  "declined",
+  "expired",
+  "withdrawn",
+  "removed_by_owner",
+  "join_request_rejected",
+  "left_club",
+  "group_archived",
+] as const;
+export type WaitlistClosedReason = (typeof WAITLIST_CLOSED_REASONS)[number];
+
 export const JOIN_REQUEST_STATUSES = ["pending", "approved", "rejected", "withdrawn"] as const;
 export type JoinRequestStatus = (typeof JOIN_REQUEST_STATUSES)[number];
 

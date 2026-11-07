@@ -85,6 +85,10 @@ export const ClubDetailSchema = ClubSchema.extend({
   phoneNumbers: z
     .array(z.object({ id: z.uuid(), label: z.string(), number: z.string() }))
     .optional(),
+  /** How groups are run (P1.10a): owners appoint co-owners; owners admit new club members (P1.10b). */
+  groupSettings: z
+    .object({ ownersCanAppointCoOwners: z.boolean(), groupOwnersAdmitToClub: z.boolean() })
+    .optional(),
 }).openapi("ClubDetail");
 export type ClubDetail = z.infer<typeof ClubDetailSchema>;
 
@@ -160,6 +164,17 @@ export const GroupDetailSchema = GroupSchema.extend({
   canManage: z.boolean().optional(),
   /** Never used (no memberships, activities, events or waiting-list entries): it can be deleted. */
   deletable: z.boolean().optional(),
+  /**
+   * The places today (P1.10a): this season's capacity of the group, else its
+   * own; null is unlimited. For those who may edit the group.
+   */
+  effectiveCapacity: z.number().int().nullable().optional(),
+  /** Places taken: open `member` functions (leaders never count). For those who may edit the group. */
+  occupied: z.number().int().optional(),
+  /** The viewer adds and ends members (group.members.manage, P1.10a). */
+  canManageMembers: z.boolean().optional(),
+  /** The viewer appoints and removes owners (group.owners.manage, P1.10a). */
+  canManageOwners: z.boolean().optional(),
 }).openapi("GroupDetail");
 export type GroupDetail = z.infer<typeof GroupDetailSchema>;
 
@@ -187,7 +202,14 @@ export type GroupList = z.infer<typeof GroupListSchema>;
 export const GroupMemberListSchema = z
   .object({
     items: z.array(
-      z.object({ person: PersonSummarySchema, functions: z.array(z.enum(GROUP_FUNCTIONS)) }),
+      z.object({
+        person: PersonSummarySchema,
+        functions: z.array(z.enum(GROUP_FUNCTIONS)),
+        /** Each open function with its ID, for those who end them (group.members.manage, P1.10a). */
+        memberships: z
+          .array(z.object({ id: z.uuid(), function: z.enum(GROUP_FUNCTIONS) }))
+          .optional(),
+      }),
     ),
     nextCursor: z.uuid().nullable(),
     /** All active members, including those the viewer does not see (an aggregate, ADR 0022). */

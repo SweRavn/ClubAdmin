@@ -3,6 +3,7 @@
 // setting valid_to; they are never deleted (needed for LOK-stöd, annual
 // reports and history).
 
+import { ageOn, getCountryPack } from "@clubadmin/country-packs";
 import {
   type ActorContext,
   audit,
@@ -26,7 +27,7 @@ import { DomainError } from "../../platform/domain/domain-error.ts";
 import { parseInput } from "../../platform/domain/run.ts";
 import type { ClubProfilesService, ProfileInit } from "../club-profiles/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
-import type { GroupsService } from "../groups/index.ts";
+import type { GroupsService, OwnerChangeAllowedBy } from "../groups/index.ts";
 import type { RolesService } from "../roles/index.ts";
 import * as repo from "./memberships.repository.ts";
 
@@ -352,6 +353,174 @@ export class MembershipsService {
     });
   }
 
+  // --- Group administration (P1.10a) --------------------------------------------------
+
+  /**
+   * Adds a club member to a group with a function, by an owner or club
+   * manager. A `member` in a full group needs `overCapacity` (audited); the
+   * group row is locked for the count. Archived groups refuse.
+   */
+  addGroupMember(
+    context: TenantContext,
+    groupId: string,
+    personId: string,
+    fn: GroupFunction,
+    options: { overCapacity?: boolean } = {},
+  ): Promise<GroupMembership> {
+    return this.db.withTenant(context, async (tx) => {
+      const group = await this.groups.lockGroupInTx(tx, groupId);
+      if (group.archivedAt) throw new DomainError("group_archived");
+      let over = false;
+      if (fn === "member") {
+        const { capacity, occupied } = await this.groups.capacityInTx(tx, groupId);
+        over = capacity !== null && occupied >= capacity;
+        if (over && !options.overCapacity) throw new DomainError("group_full");
+      }
+      const row = await this.addToGroupInTx(tx, context, groupId, personId, fn);
+      if (over) {
+        await audit.record(tx, {
+          action: "group.membership.created",
+          resourceType: "group_membership",
+          resourceId: row.id,
+          changedFields: ["over_capacity"],
+        });
+      }
+      return row;
+    });
+  }
+
+  /** Ends one function in the group (the membership must belong to it). */
+  endMembershipInGroup(
+    context: TenantContext,
+    groupId: string,
+    membershipId: string,
+  ): Promise<void> {
+    return this.db.withTenant(context, async (tx) => {
+      const row = await repo.findGroupMembership(tx, membershipId);
+      if (!row || row.groupId !== groupId) throw new DomainError("not_found");
+      if (row.validTo) return;
+      await repo.endGroupMembership(tx, row.id);
+      await audit.record(tx, {
+        action: "group.membership.ended",
+        resourceType: "group_membership",
+        resourceId: row.id,
+        changedFields: ["valid_to"],
+      });
+      await outbox.publish(tx, "membership.changed", {
+        clubId: context.clubId,
+        personId: row.personId,
+      });
+    });
+  }
+
+  /**
+   * Club members an owner may add (P1.10a): active or paused, matching a
+   * name or member number, not holding the function in the group. Protected
+   * members only when the transaction is privileged (club managers and
+   * registrars).
+   */
+  groupCandidates(
+    context: TenantContext,
+    groupId: string,
+    query: {
+      q: string;
+      function?: GroupFunction | undefined;
+      cursor?: string | undefined;
+      limit: number;
+    },
+  ): Promise<{ items: repo.CandidateRow[]; nextCursor: string | null }> {
+    return this.db.withTenant(context, async (tx) => {
+      const { rows, cursorFound } = await repo.groupCandidates(tx, context.clubId, groupId, {
+        q: query.q,
+        function: query.function ?? null,
+        cursor: query.cursor ?? null,
+        limit: query.limit + 1,
+      });
+      if (!cursorFound) throw new DomainError("invalid_cursor");
+      const items = rows.slice(0, query.limit);
+      return { items, nextCursor: rows.length > query.limit ? items.at(-1)!.personId : null };
+    });
+  }
+
+  /** What archiving the group ends and closes (the confirmation dialog). */
+  archivePreview(
+    context: TenantContext,
+    groupId: string,
+  ): Promise<{ members: number; leaders: number; waitlist: number; activeChildren: number }> {
+    return this.db.withTenant(context, async (tx) => ({
+      ...(await repo.openMembershipCounts(tx, groupId)),
+      ...(await this.groups.archiveFactsInTx(tx, groupId)),
+    }));
+  }
+
+  /**
+   * Archives a group with the people in it (P1.10a, decision 3): in one
+   * transaction the group is archived (refused with active child groups),
+   * every open membership of it ends (players and leaders; they stay club
+   * members) and its waiting list closes (`group_archived`, the applicants
+   * are told). Ownerships stay, so owners still see the archived group.
+   */
+  archiveGroup(
+    context: TenantContext,
+    groupId: string,
+  ): Promise<{ members: number; leaders: number; waitlist: number }> {
+    return this.db.withTenant(context, async (tx) => {
+      if (!(await this.groups.archiveGroupInTx(tx, groupId))) {
+        return { members: 0, leaders: 0, waitlist: 0 };
+      }
+      const ended = await repo.endOpenMembershipsOfGroup(tx, groupId);
+      for (const row of ended) {
+        await audit.record(tx, {
+          action: "group.membership.ended",
+          resourceType: "group_membership",
+          resourceId: row.id,
+          changedFields: ["valid_to"],
+        });
+      }
+      for (const personId of new Set(ended.map((r) => r.personId))) {
+        await outbox.publish(tx, "membership.changed", { clubId: context.clubId, personId });
+      }
+      const waitlist = await this.groups.closeWaitlistOfGroupInTx(
+        tx,
+        context,
+        groupId,
+        "group_archived",
+      );
+      return {
+        members: ended.filter((r) => r.function === "member").length,
+        leaders: ended.filter((r) => r.function !== "member").length,
+        waitlist,
+      };
+    });
+  }
+
+  /**
+   * Appoints a group owner (P1.10a, decision 4): an active or paused member
+   * of the club who has reached the country pack's adult age and has a login
+   * (`owner_not_eligible` otherwise). The groups service checks who may
+   * appoint (club managers; owners with the co-owner setting).
+   */
+  addGroupOwner(
+    context: TenantContext,
+    groupId: string,
+    personId: string,
+    allowedBy: OwnerChangeAllowedBy,
+  ): Promise<void> {
+    return this.db.withTenant(context, async (tx) => {
+      const facts = await repo.ownerFacts(tx, context.clubId, personId);
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      const adultAge = getCountryPack(club.country).ageRules.adultAge;
+      const eligible =
+        facts !== null &&
+        (facts.status === "active" || facts.status === "paused") &&
+        facts.hasLogin &&
+        facts.birthDate !== null &&
+        ageOn(facts.birthDate) >= adultAge;
+      if (!eligible) throw new DomainError("owner_not_eligible");
+      await this.groups.addOwnerInTx(tx, context, groupId, personId, allowedBy);
+    });
+  }
+
   /** Active members of a group with their functions (IDs only; names go through PersonVisibility, P0.7). */
   groupMembers(context: TenantContext, groupId: string): Promise<repo.GroupMember[]> {
     return this.db.withTenant(context, (tx) => repo.groupMembersQuery(tx, context.clubId, groupId));
@@ -367,7 +536,11 @@ export class MembershipsService {
     groupId: string,
     page: { cursor?: string | undefined; limit: number },
   ): Promise<{
-    items: { personId: string; functions: GroupFunction[] }[];
+    items: {
+      personId: string;
+      functions: GroupFunction[];
+      memberships: { id: string; function: GroupFunction }[];
+    }[];
     nextCursor: string | null;
     totalCount: number;
   }> {

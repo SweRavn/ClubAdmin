@@ -251,6 +251,7 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
       out_of_order_reason: text("out_of_order_reason"),
       decided_by_person_id: "hidden",
       decided_at: "name_only",
+      closed_reason: enumOf("closed_reason", "history.closedReasons"),
     },
   },
   // Groups.

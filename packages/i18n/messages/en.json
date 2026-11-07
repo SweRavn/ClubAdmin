@@ -685,7 +685,9 @@
     "erasure_unavailable": "Deletion is not available right now. Try again later.",
     "history_scope_too_large": "This record has too much history for its panel; use the club's changes.",
     "range_too_large": "Choose a shorter period (at most 90 days with a filter).",
-    "history_timeout": "That took too long. Narrow the period."
+    "history_timeout": "That took too long. Narrow the period.",
+    "owner_not_eligible": "A group owner must be an adult member of the club with a login.",
+    "group_full": "The group is full. Tick “Add even though the group is full” to add anyway."
   },
   "memberExport": {
     "columns": {
@@ -1678,6 +1680,14 @@
           "body": "On {scheduledFor}, at another parent's request. You can cancel it on the family page."
         }
       }
+    },
+    "waitlist": {
+      "entry": {
+        "closed": {
+          "title": "A waiting-list place in {club} has closed",
+          "body": "{group}: {closedReason, select, group_archived {the group has been closed down, so the waiting list has closed.} left_club {the place closed when the membership ended.} other {the club has removed the place.}}"
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2147,6 +2157,7 @@
       "cancelled_reason": "Reason for cancelling",
       "capacity": "Places",
       "city": "City",
+      "closed_reason": "Closed because",
       "confirmed_at": "Confirmed",
       "consent_purposes": "Consent purposes",
       "corrected_reason": "Reason for the correction",
@@ -2266,6 +2277,15 @@
       "active": "Active",
       "ended": "Ended",
       "proposed": "Proposed"
+    },
+    "closedReasons": {
+      "declined": "Declined the offer",
+      "expired": "Offer expired",
+      "withdrawn": "Withdrawn",
+      "removed_by_owner": "Removed by the group",
+      "join_request_rejected": "Membership not approved",
+      "left_club": "Left the club",
+      "group_archived": "The group was archived"
     }
   },
   "audit": {
@@ -2301,6 +2321,7 @@
       "cancelled": "cancelled",
       "changed": "changed",
       "claimed": "claimed",
+      "closed": "closed",
       "completed": "completed",
       "confirmed": "confirmed",
       "corrected": "corrected",
@@ -2361,5 +2382,62 @@
       "person_club_data_purged": "{actor} removed a former member's details",
       "club_settings_decided": "{actor} recorded a board decision"
     }
+  },
+  "groupAdmin": {
+    "manageLink": "Members and owners",
+    "title": "Members and owners",
+    "places": "{occupied} of {capacity} places taken",
+    "placesUnlimited": "{occupied} players, no limit on places",
+    "full": "The group is full.",
+    "ownersTitle": "Owners",
+    "ownersEmpty": "No owners: the club managers run the group.",
+    "removeOwner": "Remove",
+    "addOwnerTitle": "Add an owner",
+    "ownerHint": "An owner must be an adult member of the club with a login.",
+    "search": "Name or member number",
+    "searchButton": "Search",
+    "noMatches": "Nobody matches.",
+    "makeOwner": "Make owner",
+    "ownerAdded": "The owner was added.",
+    "ownerRemoved": "The owner was removed.",
+    "membersTitle": "Members and leaders",
+    "membersEmpty": "Nobody in the group yet.",
+    "end": "End",
+    "addMemberTitle": "Add to the group",
+    "function": "As",
+    "add": "Add",
+    "overCapacity": "Add even though the group is full",
+    "memberAdded": "Added to the group.",
+    "membershipEnded": "The function has ended.",
+    "born": "born {year}",
+    "memberNumber": "no. {number}",
+    "seasonsTitle": "Places per season",
+    "seasonsEmpty": "The club has no seasons yet.",
+    "seasonCapacity": "Places",
+    "seasonCapacityHint": "Empty: the group's own number of places.",
+    "saveSeason": "Save",
+    "seasonSaved": "The season's places were saved.",
+    "newSeason": "New season",
+    "seasonName": "Name",
+    "seasonStart": "First day",
+    "seasonEnd": "Last day",
+    "createSeason": "Add season",
+    "seasonCreated": "The season was added.",
+    "archiveTitle": "Archive {group}",
+    "archiveIntro": "Archiving the group:",
+    "archiveMembers": "{count, plural, =0 {no players leave it} one {# player leaves it} other {# players leave it}}",
+    "archiveLeaders": "{count, plural, =0 {no leaders leave it} one {# leader leaves it} other {# leaders leave it}}",
+    "archiveWaitlist": "{count, plural, =0 {nobody is on its waiting list} one {# person on its waiting list is told the place has closed} other {# people on its waiting list are told their places have closed}}",
+    "archiveStay": "They stay members of the club. The owners keep read access; activities and history are kept.",
+    "archiveRestoreNote": "Restoring the group later brings back only the group, not its members or waiting list.",
+    "archiveChildren": "Archive its {count, plural, one {subgroup} other {# subgroups}} first.",
+    "archiveConfirm": "Archive the group",
+    "archiveLink": "Archive…",
+    "archived": "The group was archived.",
+    "settingsTitle": "Groups",
+    "coOwners": "Group owners may appoint co-owners",
+    "ownersAdmit": "Group owners admit new club members from their waiting lists",
+    "saveSettings": "Save",
+    "settingsSaved": "The group settings were saved."
   }
 }

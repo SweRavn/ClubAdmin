@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { and, eq, inArray, isNull, schema, sql, type Tx } from "@clubadmin/db";
-import type { WaitlistStatus } from "@clubadmin/shared";
+import type { WaitlistClosedReason, WaitlistStatus } from "@clubadmin/shared";
 
 const { groups, groupOwners, seasons, groupSeasons, groupWaitlistEntries } = schema;
 
@@ -174,7 +174,7 @@ export async function withdrawWaitlistEntriesOfPerson(
 ): Promise<string[]> {
   const rows = await tx
     .update(groupWaitlistEntries)
-    .set({ status: "withdrawn" })
+    .set({ status: "withdrawn", closedReason: "left_club" })
     .where(
       and(
         eq(groupWaitlistEntries.clubId, clubId),
@@ -357,4 +357,110 @@ export async function waitlistPositions(
       { position: r.position, waiting: r.waiting, groupName: r.group_name, clubName: r.club_name },
     ]),
   );
+}
+
+// --- P1.10a: capacity, seasons, archiving -----------------------------------------------
+
+export interface GroupCapacity {
+  /** This season's capacity of the group, else its own; null is unlimited. */
+  capacity: number | null;
+  /** Open `member` functions (leaders never count; P1.10b adds offers). */
+  occupied: number;
+}
+
+/**
+ * The group's places today: the capacity of the season covering today in the
+ * club's time zone (seasons of the club, group_seasons_group_season unique),
+ * else the group's own; and the open `member` functions
+ * (group_memberships_group_idx). One statement.
+ */
+export async function capacityOf(tx: Tx, groupId: string): Promise<GroupCapacity> {
+  const { rows } = await tx.execute<{ capacity: number | null; occupied: number }>(sql`
+    SELECT coalesce((
+        SELECT gs.capacity FROM public.group_seasons gs
+        JOIN public.seasons s ON s.id = gs.season_id
+        WHERE gs.group_id = g.id
+          AND s.starts_on <= (now() AT TIME ZONE c.time_zone)::date
+          AND s.ends_on >= (now() AT TIME ZONE c.time_zone)::date
+        ORDER BY s.starts_on DESC LIMIT 1), g.capacity) AS capacity,
+      (SELECT count(*)::int FROM public.group_memberships gm
+        WHERE gm.group_id = g.id AND gm.valid_to IS NULL AND gm.function = 'member') AS occupied
+    FROM public.groups g JOIN public.clubs c ON c.id = g.club_id
+    WHERE g.id = ${groupId}`);
+  const row = rows[0];
+  return { capacity: row?.capacity ?? null, occupied: row?.occupied ?? 0 };
+}
+
+/** The club's seasons, newest first. */
+export async function listSeasons(tx: Tx, clubId: string): Promise<SeasonRow[]> {
+  return tx
+    .select()
+    .from(seasons)
+    .where(eq(seasons.clubId, clubId))
+    .orderBy(sql`${seasons.startsOn} DESC`, seasons.id)
+    .limit(100);
+}
+
+export async function findSeason(tx: Tx, id: string): Promise<SeasonRow | null> {
+  const [row] = await tx.select().from(seasons).where(eq(seasons.id, id));
+  return row ?? null;
+}
+
+/** The group's per-season settings. */
+export async function groupSeasonsOf(
+  tx: Tx,
+  groupId: string,
+): Promise<{ seasonId: string; capacity: number | null; notes: string | null }[]> {
+  return tx
+    .select({
+      seasonId: groupSeasons.seasonId,
+      capacity: groupSeasons.capacity,
+      notes: groupSeasons.notes,
+    })
+    .from(groupSeasons)
+    .where(eq(groupSeasons.groupId, groupId));
+}
+
+export async function activeChildrenCount(tx: Tx, id: string): Promise<number> {
+  const { rows } = await tx.execute<{ n: number }>(sql`
+    SELECT count(*)::int AS n FROM public.groups WHERE parent_group_id = ${id} AND archived_at IS NULL`);
+  return rows[0]?.n ?? 0;
+}
+
+const OPEN_WAITLIST = ["waiting", "offered", "accepted"] as const;
+
+export async function openWaitlistCount(tx: Tx, groupId: string): Promise<number> {
+  const { rows } = await tx.execute<{ n: number }>(sql`
+    SELECT count(*)::int AS n FROM public.group_waitlist_entries
+    WHERE group_id = ${groupId} AND status IN ('waiting', 'offered', 'accepted')`);
+  return rows[0]?.n ?? 0;
+}
+
+/**
+ * Closes the group's open waiting-list entries by the club (archiving):
+ * `removed` with the reason, decided now by the actor. Their IDs.
+ */
+export async function closeOpenWaitlistEntries(
+  tx: Tx,
+  groupId: string,
+  reason: WaitlistClosedReason,
+  decidedBy: string | null,
+): Promise<string[]> {
+  const rows = await tx
+    .update(groupWaitlistEntries)
+    .set({
+      status: "removed",
+      closedReason: reason,
+      decidedAt: sql`now()`,
+      decidedByPersonId: decidedBy,
+      offerExpiresAt: null,
+    })
+    .where(
+      and(
+        eq(groupWaitlistEntries.groupId, groupId),
+        inArray(groupWaitlistEntries.status, [...OPEN_WAITLIST]),
+      ),
+    )
+    .returning({ id: groupWaitlistEntries.id });
+  return rows.map((r) => r.id);
 }

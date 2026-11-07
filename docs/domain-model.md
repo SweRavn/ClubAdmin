@@ -290,6 +290,25 @@ owners, seasons, subgroups, waiting-list entries, invitations, activities,
 series or events: the foreign keys to `groups`, none of which cascades) can
 be deleted (P1.6b, `group_in_use` otherwise); history keeps the row. Club
 managers create groups anywhere, owners under the groups they own.
+
+**Administration (P1.10a).** Owners are appointed by club managers, and by
+owners where the club allows co-owners (`owners_can_appoint_co_owners`); an
+owner must be an active or paused member who has reached the country pack's
+adult age and has a login (`owner_not_eligible`). Owners and club managers
+add club members to a group with a function and end functions; the
+candidate search covers active and paused members (protected ones only for
+club managers and registrars). **Effective capacity**: the capacity of the
+group's season covering today (club time zone), else the group's own; null
+is unlimited. **Occupied places**: open `member` functions (leaders never
+count; P1.10b adds offers and accepted entries). Adding a `member` to a full
+group needs `overCapacity` (audited). **Archiving a group with people in
+it** ends all its open memberships (players and leaders stay club members),
+closes its waiting list (`removed`, `closed_reason = group_archived`, the
+applicants are told) and keeps the ownerships, so owners still see the
+archived group; restoring brings back only the group. Waiting-list entries
+record why they closed (`closed_reason`: `declined`, `expired`,
+`withdrawn`, `removed_by_owner`, `join_request_rejected`, `left_club`,
+`group_archived`); leaving a club closes entries with `left_club`.
 Multi-sport sections are groups of kind `section`; the earlier
 `section_admin` role is simply an owner of a section group.
 

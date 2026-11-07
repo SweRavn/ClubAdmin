@@ -72,12 +72,23 @@ export default async function EditGroupPage({ params, searchParams }: Props) {
         <p className="text-sm text-muted">
           {group.archived ? t("groupForm.restoreHint") : t("groupForm.archiveHint")}
         </p>
-        {!group.archived || isManager ? (
+        {group.archived ? (
+          <p className="text-sm text-muted">{t("groupAdmin.archiveRestoreNote")}</p>
+        ) : null}
+        {!group.archived ? (
+          <a
+            href={`/groups/${group.id}/archive`}
+            className={secondaryButtonClass}
+            data-testid="group-archive"
+          >
+            {t("groupAdmin.archiveLink")}
+          </a>
+        ) : isManager ? (
           <ActionForm action="archive-group">
             <input type="hidden" name="groupId" value={group.id} />
-            <input type="hidden" name="what" value={group.archived ? "restore" : "archive"} />
-            <button type="submit" className={secondaryButtonClass} data-testid="group-archive">
-              {group.archived ? t("groupForm.restore") : t("groupForm.archive")}
+            <input type="hidden" name="what" value="restore" />
+            <button type="submit" className={secondaryButtonClass} data-testid="group-restore">
+              {t("groupForm.restore")}
             </button>
           </ActionForm>
         ) : null}

@@ -43,6 +43,10 @@ export const DOMAIN_ERRORS = {
   not_a_club_manager: "forbidden",
   handover_invalid: "conflict",
   // groups
+  /** A full group: adding a member needs overCapacity (P1.10a). */
+  group_full: "conflict",
+  /** A group owner must be an adult member of the club with a login (P1.10a). */
+  owner_not_eligible: "conflict",
   group_cycle: "conflict",
   group_parent_invalid: "validation",
   group_archived: "conflict",

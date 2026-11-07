@@ -55,6 +55,10 @@ const NOTICE_PARAMS = [
   "qrows",
   "srows",
   "prows",
+  "owner",
+  "member",
+  "season",
+  "archived",
 ];
 
 export const buttonClass = "rounded-md bg-accent px-4 py-2 text-sm text-accent-fg";

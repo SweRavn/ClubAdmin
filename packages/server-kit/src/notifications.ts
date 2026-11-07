@@ -180,6 +180,9 @@ export function noticeLink(input: NoticeInput): string {
       return "/me/privacy";
     case "guardianship":
       return "/me/family";
+    // Waiting lists (P1.10a): the applicant's waiting-list page.
+    case "group_waitlist_entry":
+      return "/me/waitlists";
     case "account":
       return "/me";
     default:
@@ -210,6 +213,8 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     count: str(p.count ?? ""),
     imported: str(p.imported ?? ""),
     reason: "",
+    /** A waiting-list closed reason: a code (P1.10a), never free text. */
+    closedReason: str(p.closedReason),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

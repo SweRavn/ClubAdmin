@@ -17,6 +17,8 @@ export const DOMAIN_EVENTS = {
   "role.changed": z.object({ clubId: id, personId: id }),
   /** The person left the club themselves (P1.8a): tell the managers and registrars. */
   "membership.left": z.object({ clubId: id, personId: id }),
+  /** A waiting-list entry was closed by the club (P1.10a: group archived); the applicant is told. */
+  "waitlist.entry.closed": z.object({ clubId: id, entryId: id }),
   /** The person stepped down from a role, leader function or ownership (P1.8a). */
   "assignment.ended": z.object({
     clubId: id,

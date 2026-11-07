@@ -99,6 +99,18 @@ export default async function GroupPage({ params, searchParams }: Params) {
         <HistoryLink clubId={group.clubId} href={`/groups/${group.id}/history`} />
         {query.saved ? <Notice>{t("groupForm.saved")}</Notice> : null}
         {query.updated ? <Notice>{t("groupForm.updated")}</Notice> : null}
+        {query.archived ? <Notice>{t("groupAdmin.archived")}</Notice> : null}
+        {!group.canManage && (group.canManageMembers || group.canManageOwners) ? (
+          <p className="mt-2">
+            <a
+              href={`/groups/${group.id}/manage`}
+              className={secondaryButtonClass}
+              data-testid="group-manage-link"
+            >
+              {t("groupAdmin.manageLink")}
+            </a>
+          </p>
+        ) : null}
         {group.canManage ? (
           <p className="mt-2 flex flex-wrap gap-2">
             <a
@@ -107,6 +119,13 @@ export default async function GroupPage({ params, searchParams }: Params) {
               data-testid="group-edit"
             >
               {t("groupForm.editTitle")}
+            </a>
+            <a
+              href={`/groups/${group.id}/manage`}
+              className={secondaryButtonClass}
+              data-testid="group-manage-link"
+            >
+              {t("groupAdmin.manageLink")}
             </a>
             {!group.archived ? (
               <a

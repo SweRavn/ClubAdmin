@@ -21,6 +21,7 @@ import {
   EVENT_QUESTIONS_MAX,
   type EventQuestion,
   GENDER_CATEGORIES,
+  GROUP_FUNCTIONS,
   GROUP_KINDS,
   GUARDIANSHIP_KINDS,
   GUARDIANSHIP_RIGHTS,
@@ -953,6 +954,82 @@ const GROUP_ACTIONS: Record<string, FormAction> = {
     },
     done: (form) => `/groups/${text(form, "groupId")}?updated=1`,
   },
+  // Group administration (P1.10a): owners, members, seasons, archiving.
+  "add-group-owner": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const personId = id(form, "personId");
+      if (!groupId || !personId) return null;
+      return { path: `/api/v1/groups/${groupId}/owners`, method: "POST", body: { personId } };
+    },
+    done: (form) => `/groups/${text(form, "groupId")}/manage?owner=added`,
+  },
+  "remove-group-owner": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const personId = id(form, "personId");
+      if (!groupId || !personId) return null;
+      return { path: `/api/v1/groups/${groupId}/owners/${personId}`, method: "DELETE" };
+    },
+    done: (form) => `/groups/${text(form, "groupId")}/manage?owner=removed`,
+  },
+  "add-group-member": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const personId = id(form, "personId");
+      const fn = text(form, "function");
+      if (!groupId || !personId || !(GROUP_FUNCTIONS as readonly string[]).includes(fn))
+        return null;
+      return {
+        path: `/api/v1/groups/${groupId}/members`,
+        method: "POST",
+        body: { personId, function: fn, overCapacity: text(form, "overCapacity") === "on" },
+      };
+    },
+    done: (form) => `/groups/${text(form, "groupId")}/manage?member=added`,
+  },
+  "end-group-membership": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const membershipId = id(form, "membershipId");
+      if (!groupId || !membershipId) return null;
+      return {
+        path: `/api/v1/groups/${groupId}/memberships/${membershipId}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => `/groups/${text(form, "groupId")}/manage?member=ended`,
+  },
+  "set-group-season": {
+    call: (form) => {
+      const groupId = id(form, "groupId");
+      const seasonId = id(form, "seasonId");
+      const raw = text(form, "capacity");
+      const capacity = raw === "" ? null : Number(raw);
+      if (!groupId || !seasonId || (capacity !== null && !Number.isInteger(capacity))) return null;
+      return {
+        path: `/api/v1/groups/${groupId}/seasons/${seasonId}`,
+        method: "PUT",
+        body: { capacity },
+      };
+    },
+    done: (form) => `/groups/${text(form, "groupId")}/manage?season=saved`,
+  },
+  "create-season": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const name = text(form, "name");
+      const startsOn = text(form, "startsOn");
+      const endsOn = text(form, "endsOn");
+      if (!clubId || !name || !startsOn || !endsOn) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/seasons`,
+        method: "POST",
+        body: { name, startsOn, endsOn },
+      };
+    },
+    done: (form) => withParam(back(form), "season", "created"),
+  },
   "delete-group": {
     call: (form) => {
       const groupId = id(form, "groupId");
@@ -988,6 +1065,21 @@ const CLUB_ACTIONS: Record<string, FormAction> = {
           email: text(form, "email") || null,
           organizationNumber: text(form, "organizationNumber") || null,
           address: anyAddress ? { ...address, country: text(form, "country") } : null,
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "updated", "1"),
+  },
+  "update-club-group-settings": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/settings`,
+        method: "PATCH",
+        body: {
+          ownersCanAppointCoOwners: text(form, "ownersCanAppointCoOwners") === "on",
+          groupOwnersAdmitToClub: text(form, "groupOwnersAdmitToClub") === "on",
         },
       };
     },

@@ -185,6 +185,35 @@ export default async function ClubSettingsPage({ params, searchParams }: Props) 
           </button>
         </ActionForm>
       </section>
+
+      {/* P1.10a: how groups are run. */}
+      <section className="space-y-3" data-testid="club-group-settings">
+        <h2 className="text-lg font-semibold">{t("groupAdmin.settingsTitle")}</h2>
+        <ActionForm action="update-club-group-settings" className="space-y-2">
+          <input type="hidden" name="clubId" value={club.id} />
+          <input type="hidden" name="back" value={`/clubs/${club.id}/settings`} />
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="ownersCanAppointCoOwners"
+              defaultChecked={club.groupSettings?.ownersCanAppointCoOwners ?? false}
+              data-testid="club-co-owners"
+            />
+            {t("groupAdmin.coOwners")}
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="groupOwnersAdmitToClub"
+              defaultChecked={club.groupSettings?.groupOwnersAdmitToClub ?? true}
+            />
+            {t("groupAdmin.ownersAdmit")}
+          </label>
+          <button type="submit" className={buttonClass} data-testid="club-group-settings-save">
+            {t("groupAdmin.saveSettings")}
+          </button>
+        </ActionForm>
+      </section>
     </div>
   );
 }

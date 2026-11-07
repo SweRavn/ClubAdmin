@@ -685,7 +685,9 @@
     "erasure_unavailable": "Sletting er ikke mulig akkurat nå. Prøv igjen senere.",
     "history_scope_too_large": "Posten har for mye historikk for panelet; bruk klubbens endringer.",
     "range_too_large": "Velg en kortere periode (høyst 90 dager med filter).",
-    "history_timeout": "Det tok for lang tid. Velg en kortere periode."
+    "history_timeout": "Det tok for lang tid. Velg en kortere periode.",
+    "owner_not_eligible": "En gruppeeier må være et myndig medlem av klubben med innlogging.",
+    "group_full": "Gruppen er full. Kryss av for «Legg til selv om gruppen er full» for å legge til likevel."
   },
   "memberExport": {
     "columns": {
@@ -1678,6 +1680,14 @@
           "body": "Den {scheduledFor}, etter ønske fra en annen forelder. Du kan avbryte på familiesiden."
         }
       }
+    },
+    "waitlist": {
+      "entry": {
+        "closed": {
+          "title": "En venteplass i {club} er stengt",
+          "body": "{group}: {closedReason, select, group_archived {gruppen er lagt ned, så køen er stengt.} left_club {plassen ble stengt da medlemskapet opphørte.} other {klubben har fjernet plassen.}}"
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2147,6 +2157,7 @@
       "cancelled_reason": "Årsak til avlysning",
       "capacity": "Plasser",
       "city": "Sted",
+      "closed_reason": "Stengt fordi",
       "confirmed_at": "Bekreftet",
       "consent_purposes": "Samtykkeformål",
       "corrected_reason": "Årsak til rettelsen",
@@ -2266,6 +2277,15 @@
       "active": "Aktiv",
       "ended": "Avsluttet",
       "proposed": "Foreslått"
+    },
+    "closedReasons": {
+      "declined": "Takket nei til tilbudet",
+      "expired": "Tilbudet utløp",
+      "withdrawn": "Trukket",
+      "removed_by_owner": "Fjernet av gruppen",
+      "join_request_rejected": "Medlemskapet ble ikke godkjent",
+      "left_club": "Forlot klubben",
+      "group_archived": "Gruppen ble arkivert"
     }
   },
   "audit": {
@@ -2301,6 +2321,7 @@
       "cancelled": "avlyste",
       "changed": "endret",
       "claimed": "tok over",
+      "closed": "stengte",
       "completed": "fullførte",
       "confirmed": "bekreftet",
       "corrected": "rettet",
@@ -2361,5 +2382,62 @@
       "person_club_data_purged": "{actor} fjernet opplysningene til et tidligere medlem",
       "club_settings_decided": "{actor} registrerte et styrevedtak"
     }
+  },
+  "groupAdmin": {
+    "manageLink": "Medlemmer og eiere",
+    "title": "Medlemmer og eiere",
+    "places": "{occupied} av {capacity} plasser tatt",
+    "placesUnlimited": "{occupied} spillere, ingen grense for antall plasser",
+    "full": "Gruppen er full.",
+    "ownersTitle": "Eiere",
+    "ownersEmpty": "Ingen eiere: klubbansvarlige styrer gruppen.",
+    "removeOwner": "Fjern",
+    "addOwnerTitle": "Legg til eier",
+    "ownerHint": "En eier må være et myndig medlem av klubben med innlogging.",
+    "search": "Navn eller medlemsnummer",
+    "searchButton": "Søk",
+    "noMatches": "Ingen treff.",
+    "makeOwner": "Gjør til eier",
+    "ownerAdded": "Eieren ble lagt til.",
+    "ownerRemoved": "Eieren ble fjernet.",
+    "membersTitle": "Medlemmer og ledere",
+    "membersEmpty": "Ingen i gruppen ennå.",
+    "end": "Avslutt",
+    "addMemberTitle": "Legg til i gruppen",
+    "function": "Som",
+    "add": "Legg til",
+    "overCapacity": "Legg til selv om gruppen er full",
+    "memberAdded": "Lagt til i gruppen.",
+    "membershipEnded": "Funksjonen er avsluttet.",
+    "born": "født {year}",
+    "memberNumber": "nr. {number}",
+    "seasonsTitle": "Plasser per sesong",
+    "seasonsEmpty": "Klubben har ingen sesonger ennå.",
+    "seasonCapacity": "Plasser",
+    "seasonCapacityHint": "Tomt: gruppens eget antall plasser.",
+    "saveSeason": "Lagre",
+    "seasonSaved": "Sesongens plasser ble lagret.",
+    "newSeason": "Ny sesong",
+    "seasonName": "Navn",
+    "seasonStart": "Første dag",
+    "seasonEnd": "Siste dag",
+    "createSeason": "Legg til sesong",
+    "seasonCreated": "Sesongen ble lagt til.",
+    "archiveTitle": "Arkiver {group}",
+    "archiveIntro": "Når gruppen arkiveres:",
+    "archiveMembers": "{count, plural, =0 {ingen spillere forlater den} one {# spiller forlater den} other {# spillere forlater den}}",
+    "archiveLeaders": "{count, plural, =0 {ingen ledere forlater den} one {# leder forlater den} other {# ledere forlater den}}",
+    "archiveWaitlist": "{count, plural, =0 {ingen står i køen} one {# person i køen får vite at plassen er stengt} other {# personer i køen får vite at plassene er stengt}}",
+    "archiveStay": "De forblir medlemmer av klubben. Eierne kan fortsatt lese gruppen; aktiviteter og historikk beholdes.",
+    "archiveRestoreNote": "Hvis gruppen gjenopprettes senere, kommer bare gruppen tilbake, ikke medlemmene eller køen.",
+    "archiveChildren": "Arkiver {count, plural, one {undergruppen} other {de # undergruppene}} først.",
+    "archiveConfirm": "Arkiver gruppen",
+    "archiveLink": "Arkiver…",
+    "archived": "Gruppen ble arkivert.",
+    "settingsTitle": "Grupper",
+    "coOwners": "Gruppeeiere kan utnevne medeiere",
+    "ownersAdmit": "Gruppeeiere tar opp nye klubbmedlemmer fra køene sine",
+    "saveSettings": "Lagre",
+    "settingsSaved": "Gruppeinnstillingene ble lagret."
   }
 }

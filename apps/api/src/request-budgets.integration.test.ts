@@ -58,6 +58,39 @@ const range = () => {
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // Group administration (P1.10a, web only).
+  {
+    route: "GET /api/v1/groups/{groupId}/candidates",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/groups/${key("svk-f2017")}/candidates?q=an&function=member`,
+    statements: 3,
+    pages: 130,
+  },
+  {
+    route: "GET /api/v1/groups/{groupId}/archive-preview",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/groups/${key("svk-f2017")}/archive-preview`,
+    statements: 4,
+    pages: 60,
+  },
+  {
+    route: "GET /api/v1/groups/{groupId}/seasons",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/groups/${key("svk-f2017")}/seasons`,
+    statements: 2,
+    pages: 40,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/seasons",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/seasons`,
+    statements: 2,
+    pages: 10,
+  },
   // History panels and the audit log (P1.9, web only; ADR 0042). Read
   // through the history pool: the scope, the club rows' history, the global
   // rows' history, the current rows behind the page and the names it
@@ -217,8 +250,9 @@ const CASES: Case[] = [
     persona: "erik",
     method: "GET",
     url: () => `/api/v1/groups/${key("svk-f2017")}`,
-    statements: 5,
-    pages: 70,
+    // The group, its owners and (owners: Erik) its places and whether it can be deleted (P1.10a).
+    statements: 6,
+    pages: 100,
   },
   {
     route: "GET /api/v1/groups/{groupId}/members",

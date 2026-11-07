@@ -809,6 +809,55 @@ describe("permission matrix", () => {
       expected: CLUB_FORBIDDEN,
       body: { purpose: "photo_publication", texts: { sv: "En text som är lång nog." } },
     },
+    // Group administration (P1.10a): club managers and owners (the matrix
+    // owner owns the team's parent section). Writes aimed at IDs that do not
+    // exist: allowed callers get the service's answer (409/404). Appointing
+    // owners: owners only with the co-owner setting (off here).
+    "GET /api/v1/groups/:groupId/candidates": {
+      url: () => `/api/v1/groups/${m.team.id}/candidates?q=zz`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+    },
+    "POST /api/v1/groups/:groupId/members": {
+      url: () => `/api/v1/groups/${m.team.id}/members`,
+      expected: { ...CLUB_FORBIDDEN, manager: 409, owner: 409 },
+      body: () => ({ personId: uuidv7(), function: "member" }),
+    },
+    "DELETE /api/v1/groups/:groupId/memberships/:membershipId": {
+      url: () => `/api/v1/groups/${m.team.id}/memberships/${uuidv7()}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404, owner: 404 },
+    },
+    "POST /api/v1/groups/:groupId/owners": {
+      url: () => `/api/v1/groups/${m.team.id}/owners`,
+      expected: { ...CLUB_FORBIDDEN, manager: 409 },
+      body: () => ({ personId: uuidv7() }),
+    },
+    "DELETE /api/v1/groups/:groupId/owners/:personId": {
+      url: () => `/api/v1/groups/${m.team.id}/owners/${uuidv7()}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+    },
+    "GET /api/v1/groups/:groupId/archive-preview": {
+      url: () => `/api/v1/groups/${m.team.id}/archive-preview`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+    },
+    "GET /api/v1/groups/:groupId/seasons": {
+      url: () => `/api/v1/groups/${m.team.id}/seasons`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+    },
+    "PUT /api/v1/groups/:groupId/seasons/:seasonId": {
+      url: () => `/api/v1/groups/${m.team.id}/seasons/${uuidv7()}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404, owner: 404 },
+      body: { capacity: 12 },
+    },
+    "GET /api/v1/clubs/:clubId/seasons": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/seasons`,
+      expected: INSIDERS,
+    },
+    // club.settings.update needs a second factor: even the manager gets 403 here.
+    "POST /api/v1/clubs/:clubId/seasons": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/seasons`,
+      expected: CLUB_FORBIDDEN,
+      body: { name: "2027", startsOn: "2027-01-01", endsOn: "2027-12-31" },
+    },
     // History and audit (P1.9): club managers and registrars; the audit log
     // and the club-wide changes need a second factor (these tokens have
     // none: the manager gets 403 mfa-required). Person routes deny with 404.
@@ -1067,7 +1116,7 @@ describe("reads", () => {
 
   it("GET /clubs/:clubId/groups pages by name; archived groups only for managers", async () => {
     const archived = await s.groups.createGroup(m.clubA.ctx, { name: "Old", kind: "team" });
-    await s.groups.archiveGroup(m.clubA.ctx, archived.id);
+    await s.memberships.archiveGroup(m.clubA.ctx, archived.id);
     const names = async (personId: string, query = "") =>
       (await get(personId, `/api/v1/clubs/${m.clubA.id}/groups${query}`)).json<{
         items: { name: string; id: string }[];
@@ -1335,7 +1384,7 @@ describe("cache invalidation", () => {
     const url = `/api/v1/clubs/${m.clubA.id}/groups`;
     // Warm the cache: members do not see archived groups.
     const archived = await s.groups.createGroup(m.clubA.ctx, { name: "Archived", kind: "team" });
-    await s.groups.archiveGroup(m.clubA.ctx, archived.id);
+    await s.memberships.archiveGroup(m.clubA.ctx, archived.id);
     const names = async () =>
       (await get(person.id, url)).json<{ items: { name: string }[] }>().items.map((g) => g.name);
     expect(await names()).not.toContain("Archived");

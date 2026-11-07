@@ -37,6 +37,8 @@ export const AUDIT_ACTIONS = [
   "club.settings.decided",
   "club.privacy_policy.published",
   "group.waitlist.withdrawn",
+  /** An open entry closed by the club (P1.10a: the group was archived). */
+  "group.waitlist.closed",
   "club.created",
   "club.creation.requested",
   "club.creation.approved",

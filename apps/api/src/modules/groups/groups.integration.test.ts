@@ -85,15 +85,15 @@ describe("group hierarchy", () => {
       kind: "team",
       parentGroupId: section.id,
     });
-    await expect(c.s.groups.archiveGroup(club.ctx, section.id)).rejects.toSatisfy((e) =>
+    await expect(c.s.memberships.archiveGroup(club.ctx, section.id)).rejects.toSatisfy((e) =>
       isDomainError(e, "group_has_children"),
     );
-    await c.s.groups.archiveGroup(club.ctx, team.id);
+    await c.s.memberships.archiveGroup(club.ctx, team.id);
     expect((await c.s.groups.getGroup(club.ctx, team.id)).archivedAt).not.toBeNull();
     await expect(c.s.groups.updateGroup(club.ctx, team.id, { name: "New" })).rejects.toSatisfy(
       (e) => isDomainError(e, "group_archived"),
     );
-    await c.s.groups.archiveGroup(club.ctx, section.id);
+    await c.s.memberships.archiveGroup(club.ctx, section.id);
     const restored = await c.s.groups.restoreGroup(club.ctx, team.id);
     expect(restored.archivedAt).toBeNull();
     expect(await auditActionsOf(c.t, team.id)).toEqual(

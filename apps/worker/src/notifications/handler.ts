@@ -114,6 +114,7 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "account.email.changed",
       "membership.left",
       "assignment.ended",
+      "waitlist.entry.closed",
       "club.privacy_policy.published",
       "privacy.export.ready",
       "privacy.erasure.scheduled",
@@ -371,6 +372,41 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
                 params: { kind },
                 dedupeKey: `assignment.ended:${event.idempotencyKey}`,
               })),
+          );
+          return;
+        }
+        // Waiting lists (P1.10a): the club closed an entry (the group was
+        // archived). The applicant (if they have a login) and whoever applied
+        // for them are told; the group's name and the reason code only.
+        case "waitlist.entry.closed": {
+          const { clubId, entryId } = DOMAIN_EVENTS["waitlist.entry.closed"].parse(event.payload);
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{
+            person_id: string;
+            requested_by_person_id: string;
+            closed_reason: string | null;
+            group_name: string;
+          }>(sql`
+            SELECT w.person_id, w.requested_by_person_id, w.closed_reason, g.name AS group_name
+            FROM public.group_waitlist_entries w JOIN public.groups g ON g.id = w.group_id
+            WHERE w.id = ${entryId}`);
+          const entry = rows[0];
+          if (!entry) return;
+          await notify(
+            tx,
+            [...new Set([entry.person_id, entry.requested_by_person_id])].map((recipient) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type: "waitlist.entry.closed" as const,
+              subjectType: "group_waitlist_entry",
+              subjectId: entryId,
+              about: [entry.person_id],
+              params: {
+                group: entry.group_name,
+                closedReason: entry.closed_reason ?? "removed_by_owner",
+              },
+              dedupeKey: `waitlist.entry.closed:${entryId}`,
+            })),
           );
           return;
         }

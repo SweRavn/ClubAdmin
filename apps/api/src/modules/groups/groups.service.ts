@@ -21,6 +21,7 @@ import {
   type UpdateGroupInput,
   UpdateGroupSchema,
   uuidv7,
+  type WaitlistClosedReason,
   z,
 } from "@clubadmin/shared";
 
@@ -105,14 +106,29 @@ export class GroupsService {
     return this.db.withTenant(context, (tx) => this.getGroupInTx(tx, groupId));
   }
 
-  /** A group and the IDs of its current owners, in one transaction. */
+  /**
+   * A group and the IDs of its current owners, in one transaction; with
+   * `manage` also its places today and whether it can be deleted (P1.10a).
+   */
   getGroupWithOwners(
     context: TenantContext,
     groupId: string,
-  ): Promise<{ group: Group; ownerIds: string[] }> {
+    options: { manage?: boolean } = {},
+  ): Promise<{
+    group: Group;
+    ownerIds: string[];
+    capacity?: repo.GroupCapacity;
+    deletable?: boolean;
+  }> {
     return this.db.withTenant(context, async (tx) => ({
       group: await this.getGroupInTx(tx, groupId),
       ownerIds: await repo.activeOwners(tx, groupId),
+      ...(options.manage
+        ? {
+            capacity: await repo.capacityOf(tx, groupId),
+            deletable: !(await repo.isInUse(tx, groupId)),
+          }
+        : {}),
     }));
   }
 
@@ -239,20 +255,71 @@ export class GroupsService {
     });
   }
 
-  /** Archives the group; refused while it has child groups that are not archived. */
-  archiveGroup(context: TenantContext, groupId: string): Promise<void> {
-    return this.db.withTenant(context, async (tx) => {
-      const current = await repo.lockGroup(tx, groupId);
-      if (!current) throw new DomainError("not_found");
-      if (current.archivedAt) return;
-      if (await repo.hasActiveChildren(tx, groupId)) throw new DomainError("group_has_children");
-      await repo.updateGroup(tx, groupId, { archivedAt: new Date() });
-      await audit.record(tx, {
-        action: "group.archived",
-        resourceType: "group",
-        resourceId: groupId,
-      });
+  /**
+   * Archives the group in the caller's transaction (P1.10a; the memberships
+   * module ends the memberships in the same transaction); refused while it
+   * has child groups that are not archived. False if it was archived already.
+   */
+  async archiveGroupInTx(tx: Tx, groupId: string): Promise<boolean> {
+    const current = await repo.lockGroup(tx, groupId);
+    if (!current) throw new DomainError("not_found");
+    if (current.archivedAt) return false;
+    if (await repo.hasActiveChildren(tx, groupId)) throw new DomainError("group_has_children");
+    await repo.updateGroup(tx, groupId, { archivedAt: new Date() });
+    await audit.record(tx, {
+      action: "group.archived",
+      resourceType: "group",
+      resourceId: groupId,
+      changedFields: ["archived_at"],
     });
+    return true;
+  }
+
+  /**
+   * Closes the group's open waiting-list entries (archiving, P1.10a): each
+   * becomes `removed` with the reason, is audited, and the applicant is told
+   * (`waitlist.entry.closed`). The number closed.
+   */
+  async closeWaitlistOfGroupInTx(
+    tx: Tx,
+    context: TenantContext,
+    groupId: string,
+    reason: WaitlistClosedReason,
+  ): Promise<number> {
+    const ids = await repo.closeOpenWaitlistEntries(tx, groupId, reason, context.personId ?? null);
+    for (const entryId of ids) {
+      await audit.record(tx, {
+        action: "group.waitlist.closed",
+        resourceType: "group_waitlist_entry",
+        resourceId: entryId,
+        changedFields: ["status", "closed_reason"],
+      });
+      await outbox.publish(tx, "waitlist.entry.closed", { clubId: context.clubId, entryId });
+    }
+    return ids.length;
+  }
+
+  /** What archiving would close here: open waiting-list entries and active child groups. */
+  async archiveFactsInTx(
+    tx: Tx,
+    groupId: string,
+  ): Promise<{ waitlist: number; activeChildren: number }> {
+    return {
+      waitlist: await repo.openWaitlistCount(tx, groupId),
+      activeChildren: await repo.activeChildrenCount(tx, groupId),
+    };
+  }
+
+  /** The group locked for a capacity check (adding a member, P1.10a). */
+  async lockGroupInTx(tx: Tx, groupId: string): Promise<Group> {
+    const group = await repo.lockGroup(tx, groupId);
+    if (!group) throw new DomainError("not_found");
+    return group;
+  }
+
+  /** The group's places today and how many are taken (P1.10a). */
+  capacityInTx(tx: Tx, groupId: string): Promise<repo.GroupCapacity> {
+    return repo.capacityOf(tx, groupId);
   }
 
   /** Restores an archived group (the caller checked that a club manager asks). */
@@ -351,7 +418,20 @@ export class GroupsService {
     personId: string,
     allowedBy: OwnerChangeAllowedBy,
   ): Promise<void> {
-    return this.db.withTenant(context, async (tx) => {
+    return this.db.withTenant(context, (tx) =>
+      this.addOwnerInTx(tx, context, groupId, personId, allowedBy),
+    );
+  }
+
+  /** Adds an owner in the caller's transaction (the caller checked eligibility, P1.10a). */
+  async addOwnerInTx(
+    tx: Tx,
+    context: TenantContext,
+    groupId: string,
+    personId: string,
+    allowedBy: OwnerChangeAllowedBy,
+  ): Promise<void> {
+    {
       const group = await this.requireVisibleGroup(tx, groupId);
       if (group.archivedAt) throw new DomainError("group_archived");
       await this.checkOwnerChange(tx, context, groupId, allowedBy);
@@ -378,7 +458,7 @@ export class GroupsService {
         groupId,
         personId,
       });
-    });
+    }
   }
 
   removeOwner(
@@ -405,6 +485,19 @@ export class GroupsService {
     });
   }
 
+  /** The club's seasons, newest first (P1.10a). */
+  listSeasons(context: TenantContext): Promise<Season[]> {
+    return this.db.withTenant(context, (tx) => repo.listSeasons(tx, context.clubId));
+  }
+
+  /** The group's per-season settings (P1.10a). */
+  groupSeasons(
+    context: TenantContext,
+    groupId: string,
+  ): Promise<{ seasonId: string; capacity: number | null; notes: string | null }[]> {
+    return this.db.withTenant(context, (tx) => repo.groupSeasonsOf(tx, groupId));
+  }
+
   createSeason(context: TenantContext, input: z.input<typeof SeasonSchema>): Promise<Season> {
     return this.db.withTenant(context, async (tx) => {
       const data = parseInput(SeasonSchema, input);
@@ -427,7 +520,10 @@ export class GroupsService {
     settings: { capacity?: number | null; notes?: string | null },
   ): Promise<string> {
     return this.db.withTenant(context, async (tx) => {
-      await this.requireVisibleGroup(tx, groupId);
+      const group = await this.requireVisibleGroup(tx, groupId);
+      if (group.archivedAt) throw new DomainError("group_archived");
+      // Seasons of other clubs are invisible (RLS).
+      if (!(await repo.findSeason(tx, seasonId))) throw new DomainError("not_found");
       const id = await repo.upsertGroupSeason(tx, {
         clubId: context.clubId,
         groupId,

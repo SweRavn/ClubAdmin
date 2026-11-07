@@ -685,7 +685,9 @@
     "erasure_unavailable": "Radering går inte just nu. Försök igen senare.",
     "history_scope_too_large": "Posten har för mycket historik för panelen; använd klubbens ändringar.",
     "range_too_large": "Välj en kortare period (högst 90 dagar med filter).",
-    "history_timeout": "Det tog för lång tid. Välj en kortare period."
+    "history_timeout": "Det tog för lång tid. Välj en kortare period.",
+    "owner_not_eligible": "En gruppägare måste vara en myndig medlem i klubben med inloggning.",
+    "group_full": "Gruppen är full. Kryssa i ”Lägg till trots att gruppen är full” för att ändå lägga till."
   },
   "memberExport": {
     "columns": {
@@ -1678,6 +1680,14 @@
           "body": "Den {scheduledFor}, på en annan förälders begäran. Du kan avbryta på familjesidan."
         }
       }
+    },
+    "waitlist": {
+      "entry": {
+        "closed": {
+          "title": "En köplats i {club} har stängts",
+          "body": "{group}: {closedReason, select, group_archived {gruppen har lagts ned, så kön har stängts.} left_club {platsen stängdes när medlemskapet upphörde.} other {klubben har tagit bort platsen.}}"
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2147,6 +2157,7 @@
       "cancelled_reason": "Orsak till inställt",
       "capacity": "Platser",
       "city": "Ort",
+      "closed_reason": "Stängd för att",
       "confirmed_at": "Bekräftad",
       "consent_purposes": "Samtyckesändamål",
       "corrected_reason": "Orsak till rättelsen",
@@ -2266,6 +2277,15 @@
       "active": "Aktiv",
       "ended": "Avslutad",
       "proposed": "Föreslagen"
+    },
+    "closedReasons": {
+      "declined": "Tackade nej till erbjudandet",
+      "expired": "Erbjudandet gick ut",
+      "withdrawn": "Återtagen",
+      "removed_by_owner": "Borttagen av gruppen",
+      "join_request_rejected": "Medlemskapet godkändes inte",
+      "left_club": "Lämnade klubben",
+      "group_archived": "Gruppen arkiverades"
     }
   },
   "audit": {
@@ -2301,6 +2321,7 @@
       "cancelled": "ställde in",
       "changed": "ändrade",
       "claimed": "tog över",
+      "closed": "stängde",
       "completed": "slutförde",
       "confirmed": "bekräftade",
       "corrected": "rättade",
@@ -2361,5 +2382,62 @@
       "person_club_data_purged": "{actor} tog bort en tidigare medlems uppgifter",
       "club_settings_decided": "{actor} registrerade ett styrelsebeslut"
     }
+  },
+  "groupAdmin": {
+    "manageLink": "Medlemmar och ägare",
+    "title": "Medlemmar och ägare",
+    "places": "{occupied} av {capacity} platser tagna",
+    "placesUnlimited": "{occupied} spelare, ingen gräns för antal platser",
+    "full": "Gruppen är full.",
+    "ownersTitle": "Ägare",
+    "ownersEmpty": "Inga ägare: klubbansvariga sköter gruppen.",
+    "removeOwner": "Ta bort",
+    "addOwnerTitle": "Lägg till ägare",
+    "ownerHint": "En ägare måste vara en myndig medlem i klubben med inloggning.",
+    "search": "Namn eller medlemsnummer",
+    "searchButton": "Sök",
+    "noMatches": "Ingen matchar.",
+    "makeOwner": "Gör till ägare",
+    "ownerAdded": "Ägaren lades till.",
+    "ownerRemoved": "Ägaren togs bort.",
+    "membersTitle": "Medlemmar och ledare",
+    "membersEmpty": "Ingen i gruppen än.",
+    "end": "Avsluta",
+    "addMemberTitle": "Lägg till i gruppen",
+    "function": "Som",
+    "add": "Lägg till",
+    "overCapacity": "Lägg till trots att gruppen är full",
+    "memberAdded": "Tillagd i gruppen.",
+    "membershipEnded": "Funktionen har avslutats.",
+    "born": "född {year}",
+    "memberNumber": "nr {number}",
+    "seasonsTitle": "Platser per säsong",
+    "seasonsEmpty": "Klubben har inga säsonger än.",
+    "seasonCapacity": "Platser",
+    "seasonCapacityHint": "Tomt: gruppens eget antal platser.",
+    "saveSeason": "Spara",
+    "seasonSaved": "Säsongens platser sparades.",
+    "newSeason": "Ny säsong",
+    "seasonName": "Namn",
+    "seasonStart": "Första dag",
+    "seasonEnd": "Sista dag",
+    "createSeason": "Lägg till säsong",
+    "seasonCreated": "Säsongen lades till.",
+    "archiveTitle": "Arkivera {group}",
+    "archiveIntro": "När gruppen arkiveras:",
+    "archiveMembers": "{count, plural, =0 {inga spelare lämnar den} one {# spelare lämnar den} other {# spelare lämnar den}}",
+    "archiveLeaders": "{count, plural, =0 {inga ledare lämnar den} one {# ledare lämnar den} other {# ledare lämnar den}}",
+    "archiveWaitlist": "{count, plural, =0 {ingen står i dess kö} one {# person i kön får veta att platsen har stängts} other {# personer i kön får veta att platserna har stängts}}",
+    "archiveStay": "De förblir medlemmar i klubben. Ägarna kan fortfarande läsa gruppen; aktiviteter och historik finns kvar.",
+    "archiveRestoreNote": "Om gruppen återställs senare kommer bara gruppen tillbaka, inte dess medlemmar eller kö.",
+    "archiveChildren": "Arkivera {count, plural, one {undergruppen} other {de # undergrupperna}} först.",
+    "archiveConfirm": "Arkivera gruppen",
+    "archiveLink": "Arkivera…",
+    "archived": "Gruppen arkiverades.",
+    "settingsTitle": "Grupper",
+    "coOwners": "Gruppägare får utse fler ägare",
+    "ownersAdmit": "Gruppägare antar nya klubbmedlemmar från sina köer",
+    "saveSettings": "Spara",
+    "settingsSaved": "Gruppinställningarna sparades."
   }
 }

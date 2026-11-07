@@ -74,8 +74,8 @@ Built so far (P0.5, `apps/api/src/modules/`, no HTTP endpoints yet; wired in
 | `joining` | `join_requests`, `invitations`, `invitation_acceptances` | Club search, join requests (the only record of an application), email/link/code invitations with presets (P1.1, ADR 0032) |
 | `roles` | `club_role_assignments`, `club_manager_handovers`, `club_manager_reassignments` | Roles, last-manager rule, hand-over (propose, accept, decline, cancel) |
 | `club-profiles` | `club_profiles` | Member number, shared fields, club-level protected identity (managers only) |
-| `groups` | `groups`, `group_owners`, `seasons`, `group_seasons` | Hierarchy, archive, owners (`allowedBy: club_manager \| group_owner`) |
-| `memberships` | `club_memberships`, `group_memberships` | Join an open club, add, leave, group functions, "my clubs and groups" |
+| `groups` | `groups`, `group_owners`, `seasons`, `group_seasons` | Hierarchy, archive, owners (`allowedBy: club_manager \| group_owner`), seasons and effective capacity (P1.10a) |
+| `memberships` | `club_memberships`, `group_memberships` | Join an open club, add, leave, group functions, "my clubs and groups"; group administration (P1.10a): adding and ending members with the capacity check, the candidate search (`app.register_entries`), owner eligibility, and archiving a group with its people in one transaction (through the groups service's `…InTx` methods) |
 | `guardianships` | `guardianships`, `guardian_invitations` | Add child, invite and accept co-guardian, rights, ending rules |
 | `authorization` | `platform_operators`, `support_access_grants` (reads all relationship tables) | Relationship sets, policies, resource loaders, `PersonVisibility`, `PersonPresenter`, profile field filtering (P0.7, ADR 0025) |
 | `person-profiles` | — | `GET /people/:personId`: person, club profile and guardians, filtered per relationship |

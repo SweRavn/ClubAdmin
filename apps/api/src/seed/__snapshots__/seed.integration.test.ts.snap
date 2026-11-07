@@ -163,7 +163,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
     "fil-j2014": {
       "admission": "direct",
       "capacity": null,
-      "generated": 8,
+      "generated": 9,
       "kind": "team",
       "named": [
         "ingrid",
@@ -186,6 +186,19 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "owners": [
         "lars",
+      ],
+      "parent": null,
+      "queue": [],
+      "waitlist": {},
+    },
+    "generated": {
+      "admission": "direct",
+      "capacity": null,
+      "generated": 0,
+      "kind": "team",
+      "named": [],
+      "owners": [
+        "sara",
       ],
       "parent": null,
       "queue": [],
@@ -246,6 +259,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "owners": [
         "ahmed",
+        "peter",
       ],
       "parent": "ikn-fotboll",
       "queue": [],
@@ -534,6 +548,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "groups": [
         "svk-f2017: assistant_coach",
         "svk-herr: member",
+        "generated: head_coach (ended)",
       ],
       "guardians": [],
       "hasBirthDate": true,
@@ -813,6 +828,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "clubProtected": [],
       "groups": [
         "svk-f2017: team_manager",
+        "generated: member (ended)",
       ],
       "guardians": [],
       "hasBirthDate": true,

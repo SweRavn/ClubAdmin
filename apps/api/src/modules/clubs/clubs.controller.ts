@@ -115,5 +115,9 @@ function contactOf(club: Club, phoneNumbers: readonly ClubPhoneNumber[]) {
     organizationNumber: club.organizationNumber,
     address: club.address ?? null,
     phoneNumbers: phoneNumbers.map((p) => ({ id: p.id, label: p.label, number: p.number })),
+    groupSettings: {
+      ownersCanAppointCoOwners: club.ownersCanAppointCoOwners,
+      groupOwnersAdmitToClub: club.groupOwnersAdmitToClub,
+    },
   };
 }

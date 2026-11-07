@@ -23,6 +23,15 @@ manage without involving the board.
 - Event capacity waiting lists (events module) are a separate, simpler
   mechanism and do not reuse this table.
 
+**Amendment (P1.10a, 2026-11-06).** Owners must be active or paused
+members of the club who have reached the country pack's adult age and have
+a login; teenage assistants are leaders, not owners. Archiving a group
+ends all its open memberships (players and leaders), closes its waiting
+list (`group_archived`, the applicants are told) and keeps the ownerships;
+restoring brings back only the group. The effective capacity is the
+group's season capacity for today, else its own; leaders never take a
+place. Waiting lists themselves follow in P1.10b (ADR 0043).
+
 **Consequences.** Permissions are expressed against groups, so the
 authorization model has `owner_of(group)` and inherits through the group
 hierarchy. Waiting-list positions must be computed efficiently (index on

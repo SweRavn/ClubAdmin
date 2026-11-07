@@ -24,13 +24,16 @@ import {
   EventDetailSchema,
   EventPageSchema,
   FamilyDuplicatesSchema,
+  GroupArchivePreviewSchema,
   GroupAttendanceSchema,
   GroupCalendarSchema,
+  GroupCandidateListSchema,
   GroupConsentsSchema,
   GroupDetailSchema,
   type GroupList,
   GroupListSchema,
   GroupMemberListSchema,
+  GroupSeasonListSchema,
   GuardianInvitationLookupSchema,
   HistoryPageSchema,
   InvitationListSchema,
@@ -70,6 +73,7 @@ import {
   ResponseListSchema,
   ResponseSummarySchema,
   SchedulePageSchema,
+  SeasonListSchema,
   type SeriesPreviewInput,
   SeriesPreviewResultSchema,
   SeriesSchema,
@@ -593,4 +597,24 @@ export const getHistory = cache((path: string, query: string) =>
 );
 export const getAuditEvents = cache((clubId: string, query: string) =>
   historyGet(`/api/v1/clubs/${requireId(clubId)}/audit-events?${query}`, AuditPageSchema),
+);
+
+// Group administration (P1.10a).
+/** Club members an owner or manager may add (or appoint as owner without `fn`). */
+export const getGroupCandidates = cache((groupId: string, q: string, fn: string | null) => {
+  const query = new URLSearchParams({ q });
+  if (fn) query.set("function", fn);
+  return required(
+    `/api/v1/groups/${requireId(groupId)}/candidates?${query}`,
+    GroupCandidateListSchema,
+  );
+});
+export const getGroupArchivePreview = cache((groupId: string) =>
+  required(`/api/v1/groups/${requireId(groupId)}/archive-preview`, GroupArchivePreviewSchema),
+);
+export const getGroupSeasons = cache((groupId: string) =>
+  required(`/api/v1/groups/${requireId(groupId)}/seasons`, GroupSeasonListSchema),
+);
+export const getClubSeasons = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/seasons`, SeasonListSchema),
 );
