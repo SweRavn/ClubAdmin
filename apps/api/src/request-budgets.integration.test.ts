@@ -590,8 +590,20 @@ async function measure(c: Case): Promise<Measure> {
   await request();
   // The steady state: the cheapest of three requests. A cache that expires
   // during one of them (slower CI machines) is not the request's own cost.
+  // pg_stat_statements is shared by every test database on the server: when
+  // other test files fill it, it evicts entries (dealloc), possibly this
+  // request's. Such a run measures nothing and is repeated.
+  const dealloc = async () =>
+    (
+      await t.query<{ n: string }>(
+        "admin",
+        "SELECT dealloc::text AS n FROM pg_stat_statements_info",
+      )
+    ).rows[0]!.n;
   let best: Measure | null = null;
-  for (let run = 0; run < 3; run++) {
+  for (let run = 0, valid = 0; valid < 3; run++) {
+    if (run >= 20) throw new Error(`${c.route}: pg_stat_statements kept evicting entries`);
+    const before = await dealloc();
     await t.query(
       "admin",
       "SELECT pg_stat_statements_reset(0, (SELECT oid FROM pg_database WHERE datname = current_database()), 0)",
@@ -606,6 +618,8 @@ async function measure(c: Case): Promise<Measure> {
          AND query !~* '^\\s*(BEGIN|COMMIT|ROLLBACK|SELECT set_config)' AND query !~* 'pg_stat_statements'`,
     );
     const m = rows[0]!;
+    if ((await dealloc()) !== before) continue;
+    valid++;
     if (
       !best ||
       m.statements < best.statements ||
