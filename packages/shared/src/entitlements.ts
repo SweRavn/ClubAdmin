@@ -6,6 +6,7 @@
 // add-ons) decides. Keys are strings in responses: clients ignore keys they
 // do not know (ADR 0029).
 
+import { SubscriptionDetailsSchema } from "./domain/billing.ts";
 import { z } from "./zod.ts";
 
 export const ENTITLEMENT_FEATURES = [
@@ -91,6 +92,10 @@ export const EntitlementsResponseSchema = z
     plan: z.object({ key: z.string(), name: z.string() }).nullable(),
     subscriptionStatus: z.string().nullable().openapi({ example: "trial" }),
     trialEndsAt: z.iso.datetime().nullable(),
+    /** P1.13: overdue since (past_due; managers and treasurers see a banner). */
+    pastDueSince: z.iso.datetime().nullable().optional(),
+    /** P1.13: why the club is restricted (billing: non-payment; operator: by hand). */
+    accessStateSource: z.enum(["operator", "billing"]).nullable().optional(),
   })
   .openapi("Entitlements");
 export type EntitlementsResponse = z.infer<typeof EntitlementsResponseSchema>;
@@ -137,6 +142,8 @@ export const SubscriptionSchema = z
     currentPeriodEnd: z.iso.datetime().nullable(),
     cancelledAt: z.iso.datetime().nullable(),
   })
+  // P1.13: billing period, scheduled changes, payment method, balance due.
+  .extend(SubscriptionDetailsSchema.shape)
   .openapi("Subscription");
 export type Subscription = z.infer<typeof SubscriptionSchema>;
 

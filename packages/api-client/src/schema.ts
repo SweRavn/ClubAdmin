@@ -4327,6 +4327,10 @@ export interface components {
       subscriptionStatus: string | null;
       /** Format: date-time */
       trialEndsAt: string | null;
+      /** Format: date-time */
+      pastDueSince?: string | null;
+      /** @enum {string|null} */
+      accessStateSource?: "operator" | "billing" | null;
     };
     EventPage: {
       items: components["schemas"]["Event"][];
@@ -5469,6 +5473,30 @@ export interface components {
       currentPeriodEnd: string | null;
       /** Format: date-time */
       cancelledAt: string | null;
+      /** @enum {string} */
+      billingPeriod?: "month" | "year";
+      currency?: string;
+      cancelAtPeriodEnd?: boolean;
+      scheduledChange?: components["schemas"]["ScheduledChange"];
+      /** Format: date-time */
+      pastDueSince?: string | null;
+      paymentMethod?: {
+        /** @enum {string} */
+        method: "invoice" | "card";
+        cardBrand: string | null;
+        cardLast4: string | null;
+      } | null;
+      balanceDueMinor?: number;
+      /** Format: date-time */
+      selectedAt?: string | null;
+    } | null;
+    ScheduledChange: {
+      planKey: string | null;
+      addOns: string[] | null;
+      /** @enum {string|null} */
+      billingPeriod: "month" | "year" | null;
+      /** Format: date-time */
+      at: string | null;
     } | null;
     AssignPlanRequest: {
       planKey: string;
@@ -6242,6 +6270,13 @@ export interface components {
           | "billing.plans.read"
           | "billing.subscription.read"
           | "billing.subscription.manage"
+          | "billing.subscription.change"
+          | "billing.account.manage"
+          | "billing.invoices.read"
+          | "billing.plans.manage"
+          | "billing.subscriptions.list"
+          | "billing.invoices.list"
+          | "billing.invoices.manage"
           | "club.create"
           | "club.creation.decide"
           | "club.join_requests.manage"

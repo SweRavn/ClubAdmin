@@ -16,6 +16,10 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
     "the calendars' read model, derived from activities and activity_groups (which have history) in the same transaction",
   "public.notification_deliveries":
     "delivery log of notifications (status, attempts, provider IDs; no personal values), high volume, deleted after 30 days (P1.7)",
+  "billing.invoice_number_series":
+    "the next invoice number per seller (a counter keyed by text; every number is on its invoice, which has history)",
+  "billing.provider_events":
+    "card provider webhook bookkeeping (event IDs and processing state only, no payload), deleted after 90 days (P1.13)",
   "public.profile_views":
     "the profile view log (P1.12) is itself a log, rewritten by the daily upsert; IDs, dates and counts only",
   "privacy.anonymization_ledger":

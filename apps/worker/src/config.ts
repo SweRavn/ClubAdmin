@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { baseConfigShape, parseConfig } from "@clubadmin/server-kit";
+import { baseConfigShape, billingSellerIssues, parseConfig } from "@clubadmin/server-kit";
 import { notificationsConfigShape } from "@clubadmin/server-kit/notifications";
 import {
   objectStorageConfigIssues,
@@ -39,6 +39,9 @@ export const workerConfigSchema = z
         path: ["NOTIFICATION_TOKEN_KEY"],
         message: "required with SMTP_URL or PUSH_PROVIDER (at least 32 characters)",
       });
+    }
+    for (const issue of billingSellerIssues(config)) {
+      ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
     }
     for (const issue of objectStorageConfigIssues(config)) {
       ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });

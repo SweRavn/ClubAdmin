@@ -591,6 +591,43 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("billing.subscription.manage", "club", ({ actor }) => actor.isOperator(), {
     mfa: true,
   }),
+  // Billing (P1.13, ADR 0045): club managers choose the plan; club managers
+  // and treasurers keep the billing details and read invoices (operators
+  // too); the platform tools are for operators. All with a second factor
+  // except reading invoices in the club.
+  definePolicy(
+    "billing.subscription.change",
+    "club",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null && actor.hasClubRole(resource.clubId, "club_manager"),
+    { mfa: true },
+  ),
+  definePolicy(
+    "billing.account.manage",
+    "club",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null && actor.hasClubRole(resource.clubId, "club_manager", "treasurer"),
+    { mfa: true },
+  ),
+  definePolicy(
+    "billing.invoices.read",
+    "club",
+    ({ actor, resource }) =>
+      actor.isOperator() || actor.hasClubRole(resource.clubId, "club_manager", "treasurer"),
+    { mfa: ({ actor }) => actor.isOperator() },
+  ),
+  definePolicy("billing.plans.manage", "platform", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
+  definePolicy("billing.subscriptions.list", "platform", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
+  definePolicy("billing.invoices.list", "platform", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
+  definePolicy("billing.invoices.manage", "platform", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
   // Joining (P1.1, ADR 0018). Club creation follows CLUB_CREATION: anyone
   // logged in (open, approval: the service then files a request), only
   // operators (operators_only, with a second factor). The service also

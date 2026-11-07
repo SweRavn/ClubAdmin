@@ -77,6 +77,8 @@ export const clubs = pgTable(
     status: text().$type<ClubStatus>().notNull().default("active"),
     /** Whether the club can change its data (P0.12): read_only and suspended never delete anything. */
     accessState: text().$type<ClubAccessState>().notNull().default("active"),
+    /** Who restricted the club (P1.13): an operator, or billing; a payment lifts only billing's. */
+    accessStateSource: text().$type<"operator" | "billing">(),
     joinPolicy: text().$type<JoinPolicy>().notNull().default("approval"),
     /** Next club_profiles.member_number; taken under a row lock. */
     nextMemberNumber: integer().notNull().default(1),
@@ -108,6 +110,7 @@ export const clubs = pgTable(
     uniqueIndex("clubs_slug_unique").on(t.slug),
     check("clubs_status", oneOf(t.status, CLUB_STATUSES)),
     check("clubs_access_state", oneOf(t.accessState, CLUB_ACCESS_STATES)),
+    check("clubs_access_state_source", oneOf(t.accessStateSource, ["operator", "billing"])),
     check("clubs_join_policy", oneOf(t.joinPolicy, JOIN_POLICIES)),
     check("clubs_attendance_lock_days", sql`${t.attendanceLockDays} BETWEEN 1 AND 365`),
     check(

@@ -23,6 +23,7 @@
     "@swc/core": "catalog:",
     "@types/node": "catalog:",
     "@types/nodemailer": "catalog:",
+    "@types/pdfkit": "^0.17.7",
     "chokidar": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
@@ -39,6 +40,7 @@
     "intl-messageformat": "catalog:",
     "ioredis": "catalog:",
     "nodemailer": "catalog:",
+    "pdfkit": "^0.17.2",
     "zod": "catalog:"
   }
 }

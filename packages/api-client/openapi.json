@@ -3242,6 +3242,24 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "pastDueSince": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "accessStateSource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "operator",
+              "billing",
+              null
+            ]
           }
         },
         "required": [
@@ -7223,6 +7241,71 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "billingPeriod": {
+            "type": "string",
+            "enum": [
+              "month",
+              "year"
+            ]
+          },
+          "currency": {
+            "type": "string"
+          },
+          "cancelAtPeriodEnd": {
+            "type": "boolean"
+          },
+          "scheduledChange": {
+            "$ref": "#/components/schemas/ScheduledChange"
+          },
+          "pastDueSince": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "paymentMethod": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "invoice",
+                  "card"
+                ]
+              },
+              "cardBrand": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "cardLast4": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "method",
+              "cardBrand",
+              "cardLast4"
+            ]
+          },
+          "balanceDueMinor": {
+            "type": "integer"
+          },
+          "selectedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         },
         "required": [
@@ -7235,6 +7318,53 @@
           "currentPeriodStart",
           "currentPeriodEnd",
           "cancelledAt"
+        ]
+      },
+      "ScheduledChange": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "planKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "addOns": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "billingPeriod": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "month",
+              "year",
+              null
+            ]
+          },
+          "at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "planKey",
+          "addOns",
+          "billingPeriod",
+          "at"
         ]
       },
       "AssignPlanRequest": {
@@ -9961,6 +10091,13 @@
                       "billing.plans.read",
                       "billing.subscription.read",
                       "billing.subscription.manage",
+                      "billing.subscription.change",
+                      "billing.account.manage",
+                      "billing.invoices.read",
+                      "billing.plans.manage",
+                      "billing.subscriptions.list",
+                      "billing.invoices.list",
+                      "billing.invoices.manage",
                       "club.create",
                       "club.creation.decide",
                       "club.join_requests.manage",

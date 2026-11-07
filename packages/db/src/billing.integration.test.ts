@@ -130,7 +130,15 @@ describe("billing schema", () => {
           sql`UPDATE billing.subscriptions SET status = 'cancelled', cancelled_at = now()`,
         ),
       ),
-    ).resolves.toMatchObject({ rowCount: 0 });
+    ).rejects.toThrow(/only change the plan selection/);
+    // The selection columns are theirs (P1.13); the billing job applies them.
+    await expect(
+      t.db.withTenant({ ...person(manager), clubId: club }, (tx) =>
+        tx.execute(
+          sql`UPDATE billing.subscriptions SET cancel_at_period_end = true, selected_at = now()`,
+        ),
+      ),
+    ).resolves.toMatchObject({ rowCount: 1 });
     await expect(
       t.db.withTenant({ ...person(manager), clubId: club }, (tx) =>
         tx.execute(

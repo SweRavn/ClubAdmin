@@ -848,6 +848,65 @@ const CASES: Record<Permission, Case[]> = {
     { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
     { name: "club manager", actor: manager, resource: clubR, allowed: false },
   ],
+  "billing.subscription.change": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "treasurer",
+      actor: as({ roles: [{ clubId: club, role: "treasurer" }] }),
+      resource: clubR,
+      allowed: false,
+    },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "plain member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "billing.account.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "treasurer",
+      actor: as({ roles: [{ clubId: club, role: "treasurer" }] }),
+      resource: clubR,
+      allowed: true,
+    },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "plain member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "billing.invoices.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "treasurer",
+      actor: as({ roles: [{ clubId: club, role: "treasurer" }] }),
+      resource: clubR,
+      allowed: true,
+    },
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "plain member", actor: plainMember, resource: clubR, allowed: false },
+  ],
+  "billing.plans.manage": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+  ],
+  "billing.subscriptions.list": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+  ],
+  "billing.invoices.list": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    {
+      name: "treasurer",
+      actor: as({ roles: [{ clubId: club, role: "treasurer" }] }),
+      resource: platformR,
+      allowed: false,
+    },
+  ],
+  "billing.invoices.manage": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+  ],
   "club.create": [
     { name: "anyone (open or approval)", actor: outsider, resource: platformR, allowed: true },
     {

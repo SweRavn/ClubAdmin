@@ -14,6 +14,14 @@ export const DOMAIN_EVENTS = {
   "club.created": z.object({ clubId: id }),
   /** A club's plan, subscription status or access state changed (entitlements cache). */
   "club.entitlements.changed": z.object({ clubId: id }),
+  /** Billing (P1.13): IDs only. */
+  "billing.invoice.issued": z.object({ clubId: id, invoiceId: id }),
+  "billing.invoice.paid": z.object({ clubId: id, invoiceId: id }),
+  "billing.invoice.overdue": z.object({ clubId: id, invoiceId: id, level: z.number().int() }),
+  "billing.subscription.changed": z.object({
+    clubId: id,
+    change: z.enum(["trial_ending", "trial_ended", "past_due", "read_only", "restored", "renewed"]),
+  }),
   "role.changed": z.object({ clubId: id, personId: id }),
   /** The person left the club themselves (P1.8a): tell the managers and registrars. */
   "membership.left": z.object({ clubId: id, personId: id }),

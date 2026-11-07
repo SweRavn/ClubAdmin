@@ -77,6 +77,13 @@ export const NOTIFICATION_TYPES = {
   "members.exported": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "members.import.finished": { category: "club_admin", immediate: true },
   "membership.left": { category: "club_admin" },
+  // Billing (P1.13): club managers and treasurers, by email (mandatory).
+  "billing.trial.ending": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "billing.invoice.issued": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "billing.invoice.reminder": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "billing.past_due": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "billing.read_only": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "billing.restored": { category: "club_admin", mandatoryEmail: true, immediate: true },
   // Protected identity (P1.12): the club's managers, never naming the person.
   "member.protection.changed": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "assignment.ended": { category: "club_admin" },
