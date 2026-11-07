@@ -102,6 +102,17 @@ export function useClub(clubId: string) {
   });
 }
 
+/** The club's access state and plan (billing banners, P1.13). */
+export function useEntitlements(clubId: string) {
+  const { api } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["entitlements", clubId, ...scope],
+    queryFn: async () =>
+      data(await api.GET("/api/v1/clubs/{clubId}/entitlements", { params: { path: { clubId } } })),
+  });
+}
+
 export function useClubGroups(clubId: string | null) {
   const { api } = useSession();
   const scope = useScope();

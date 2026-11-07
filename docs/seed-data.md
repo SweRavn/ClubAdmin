@@ -297,10 +297,22 @@ schedule (Ola left two years ago).
   (left SVK, anonymised, in the deletion ledger). Ahmed's deletion preview
   names his ownership of IKN P2012 as the blocker. Mikael has no blockers:
   the web and Maestro tests schedule his deletion and cancel it.
-- **Billing** (only with `BILLING_ENABLED=true`, P0.12): plans Free, Standard
-  and the Streaming add-on; SVK on Standard with Streaming (active), IKN on
-  Free (active), FIL in a Standard trial ending in ten days. With billing off
-  the demo has no billing data (`apps/api/src/seed/steps/billing.ts`).
+- **Billing** (only with `BILLING_ENABLED=true`, P0.12, P1.13): plans Free,
+  Standard (499 SEK per month, 4,990 per year) and the Streaming add-on
+  (199 SEK), all prices excluding VAT; the fictional demo seller
+  (`DEMO_SELLER`). SVK on Standard with Streaming (active) with billing
+  details (Strandvikens Volleybollklubb, `kassor@strandviken.example`,
+  reference "Kassören"; no organisation number seeded) and invoices issued
+  85, 55 and 25 days ago for the last three months: the first paid on time,
+  the second charged Streaming twice (a credit note for the duplicate line)
+  and was paid three days late after a reminder, the current one is open
+  and due in five days. Anna and Sara see the billing page; Johan
+  (registrar) gets 403. IKN on Free (active), no invoices: Peter (treasurer)
+  can enter details, Karin can choose Standard. FIL in a Standard trial
+  ending in ten days: Lars sees the trial banner. The operator sees all
+  three in `/ops/billing`. With `--scenario load` every load club gets a year
+  of paid monthly invoices. With billing off the demo has no billing data
+  (`apps/api/src/seed/steps/billing.ts`).
 - **Protected identity and the profile view log** (P1.12,
   `apps/api/src/seed/steps/protection.ts`): Samira's and Nadia's global flags
   are set by Samira through the service (set by Samira). In IKN, Erik (F2015

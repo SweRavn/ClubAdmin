@@ -74,7 +74,8 @@ by the CI check when added.
 | Maestro (mobile end-to-end flows; CI tool, not a dependency) | Apache-2.0 |
 | oasdiff (breaking-change check; CI tool run through Go's module proxy, not a dependency) | Apache-2.0 |
 | `openid-client` / `jose` (OIDC/JWT) | MIT |
-| Stripe SDK (`stripe`) | MIT |
+| Stripe SDK (`stripe`; P1.13 part B) | MIT |
+| pdfkit (invoice PDFs in the worker, P1.13; with its dependencies fontkit, linebreak, png-js, crypto-js, jpeg-exif) | MIT (dependencies MIT, BSD-3-Clause) |
 | @faker-js/faker (seed data) | MIT |
 | @nestjs/common, @nestjs/core, @nestjs/platform-fastify | MIT |
 | reflect-metadata | Apache-2.0 |

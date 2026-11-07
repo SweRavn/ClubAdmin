@@ -13,10 +13,12 @@ import {
   AssignmentsSchema,
   AttendanceSchema,
   AuditPageSchema,
+  BillingAccountResponseSchema,
   CalendarFeedListSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
+  ClubPlansSchema,
   ClubPrivacySchema,
   ClubProfileViewsSchema,
   ClubSearchResultSchema,
@@ -24,6 +26,7 @@ import {
   ConsentTextVersionsSchema,
   DataExportsPageSchema,
   DecisionsPageSchema,
+  EntitlementsResponseSchema,
   EventDetailSchema,
   EventPageSchema,
   FamilyDuplicatesSchema,
@@ -43,6 +46,8 @@ import {
   InvitationListSchema,
   InvitationLookupSchema,
   InviteesSchema,
+  InvoiceDetailSchema,
+  InvoicePageSchema,
   isUuid,
   JoinRequestListSchema,
   LeavePreviewSchema,
@@ -68,8 +73,11 @@ import {
   NotificationListSchema,
   NotificationSettingsResponseSchema,
   OpenGroupsSchema,
+  OperatorSubscriptionPageSchema,
+  PaymentPageSchema,
   PersonConsentsSchema,
   PersonProfileSchema,
+  PlanListSchema,
   PrivacyPolicySchema,
   ProfileViewPageSchema,
   PushDeviceListSchema,
@@ -85,6 +93,7 @@ import {
   SeriesSchema,
   SessionListSchema,
   SourceResponseSchema,
+  SubscriptionResponseSchema,
   TrustedPeopleSchema,
   UnreadCountSchema,
   VersionResponseSchema,
@@ -657,3 +666,47 @@ export const getClubWaitlists = cache((clubId: string, cursor: string | null) =>
 export const getOpenGroups = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/open-groups`, OpenGroupsSchema),
 );
+
+// --- Billing (P1.13; BILLING_ENABLED only) --------------------------------------------------
+
+/** The club's entitlements and access state (banners); null when unreadable. */
+export const getEntitlements = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/entitlements`, EntitlementsResponseSchema, {
+    nullOn: [403, 404],
+  }),
+);
+export const getSubscription = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/subscription`, SubscriptionResponseSchema),
+);
+export const getClubPlans = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/billing/plans`, ClubPlansSchema),
+);
+export const getBillingAccount = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/billing/account`, BillingAccountResponseSchema),
+);
+export const getInvoices = cache((clubId: string, cursor: string | null) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/invoices${cursor && isUuid(cursor) ? `?cursor=${cursor}` : ""}`,
+    InvoicePageSchema,
+    { nullOn: [403] },
+  ),
+);
+export const getInvoice = cache((clubId: string, invoiceId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/invoices/${requireId(invoiceId)}`,
+    InvoiceDetailSchema,
+  ),
+);
+/** Operators (P1.13): null when the person is not an operator acting as one. */
+export const getOpsSubscriptions = cache((query: string) =>
+  apiGet(`/api/v1/billing/subscriptions?${query}`, OperatorSubscriptionPageSchema, {
+    nullOn: [403],
+  }),
+);
+export const getOpsInvoices = cache((query: string) =>
+  required(`/api/v1/billing/invoices?${query}`, InvoicePageSchema),
+);
+export const getOpsPayments = cache((query: string) =>
+  required(`/api/v1/billing/payments?${query}`, PaymentPageSchema),
+);
+export const getOpsPlans = cache(() => required("/api/v1/billing/plans", PlanListSchema));

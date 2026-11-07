@@ -766,18 +766,25 @@ export class BillingService {
 
   listSubscriptions(
     context: ActorContext,
-    query: { status?: string | undefined; plan?: string | undefined; cursor?: string | undefined },
+    query: {
+      status?: string | undefined;
+      plan?: string | undefined;
+      clubId?: string | undefined;
+      cursor?: string | undefined;
+    },
+    limit: number | undefined = PAGE_SIZE,
   ) {
+    limit ??= PAGE_SIZE;
     return this.db.withActor(context, async (tx) => {
       const planId = query.plan ? (await repo.findPlansByKey(tx, [query.plan]))[0]?.id : undefined;
       if (query.plan && !planId) return { items: [], nextCursor: null };
       const rows = await repo.operatorSubscriptions(
         tx,
-        { status: query.status, planId },
+        { status: query.status, planId, clubId: query.clubId },
         query.cursor ?? null,
-        PAGE_SIZE + 1,
+        limit + 1,
       );
-      const page = rows.slice(0, PAGE_SIZE);
+      const page = rows.slice(0, limit);
       const plans = await repo.findPlansById(tx, [
         ...new Set(page.flatMap((r) => [r.subscription.planId, ...r.subscription.addOnPlanIds])),
       ]);
@@ -797,7 +804,7 @@ export class BillingService {
           balanceDueMinor: r.balanceDueMinor,
           accessState: r.accessState,
         })),
-        nextCursor: rows.length > PAGE_SIZE ? page.at(-1)!.subscription.id : null,
+        nextCursor: rows.length > limit ? page.at(-1)!.subscription.id : null,
       };
     });
   }
@@ -811,8 +818,9 @@ export class BillingService {
       to?: string | undefined;
       cursor?: string | undefined;
     },
-    limit = PAGE_SIZE,
+    limit: number | undefined = PAGE_SIZE,
   ): Promise<InvoicePage> {
+    limit ??= PAGE_SIZE;
     return this.db.withActor(context, async (tx) => {
       const rows = await repo.operatorInvoices(tx, query, query.cursor ?? null, limit + 1);
       const page = rows.slice(0, limit);
@@ -830,8 +838,9 @@ export class BillingService {
   listPayments(
     context: ActorContext,
     query: { from?: string | undefined; to?: string | undefined; cursor?: string | undefined },
-    limit = PAGE_SIZE,
+    limit: number | undefined = PAGE_SIZE,
   ) {
+    limit ??= PAGE_SIZE;
     return this.db.withActor(context, async (tx) => {
       const rows = await repo.operatorPayments(tx, query, query.cursor ?? null, limit + 1);
       const page = rows.slice(0, limit);

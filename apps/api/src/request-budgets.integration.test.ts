@@ -30,6 +30,8 @@ const key = (k: string) => {
   return found.id;
 };
 const LOAD_CLUBS = 40;
+/** The billing-on CI leg (P1.13) measures the billing pages too. */
+const BILLING = ["true", "1"].includes((process.env.BILLING_ENABLED ?? "").toLowerCase());
 
 let t: TestDatabase;
 let app: TestApp;
@@ -56,8 +58,73 @@ const range = () => {
   return `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=500`;
 };
 
+/** Billing (P1.13, BILLING_ENABLED only): the club's billing page and the operator console. */
+const BILLING_CASES: Case[] = [
+  {
+    route: "GET /api/v1/clubs/{clubId}/subscription",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/subscription`,
+    statements: 6,
+    pages: 60,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/billing/plans",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/billing/plans`,
+    statements: 7,
+    pages: 60,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/billing/account",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/billing/account`,
+    statements: 2,
+    pages: 30,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/invoices",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/invoices`,
+    statements: 4,
+    pages: 60,
+  },
+  {
+    route: "GET /api/v1/billing/subscriptions",
+    persona: "operator",
+    method: "GET",
+    // A page of three: the cost of a page, never of all clubs.
+    url: () => "/api/v1/billing/subscriptions?limit=3",
+    statements: 3,
+    pages: 60,
+    mfa: true,
+  },
+  {
+    route: "GET /api/v1/billing/invoices",
+    persona: "operator",
+    method: "GET",
+    url: () => "/api/v1/billing/invoices?limit=3",
+    statements: 4,
+    pages: 60,
+    mfa: true,
+  },
+];
+
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // The club's access state and plan (banners; P1.13 in the apps).
+  {
+    route: "GET /api/v1/clubs/{clubId}/entitlements",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/entitlements`,
+    statements: 4,
+    pages: 40,
+  },
+  ...(BILLING ? BILLING_CASES : []),
   // Group administration (P1.10a, web only).
   {
     route: "GET /api/v1/groups/{groupId}/candidates",
@@ -705,7 +772,7 @@ beforeAll(async () => {
     admin: async (sql: string) => {
       await t.query("admin", sql);
     },
-    billingEnabled: false,
+    billingEnabled: BILLING,
   };
   await seed(env, { scenario: "demo", data });
   await t.query("admin", "ANALYZE");

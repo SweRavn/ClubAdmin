@@ -6,7 +6,7 @@ import { getTranslations } from "next-intl/server";
 
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { Notice } from "../../../../components/form-error.tsx";
-import { getClub, getClubGroups, getMyClubs } from "../../../../server/data.ts";
+import { getClub, getClubGroups, getEntitlements, getMyClubs } from "../../../../server/data.ts";
 
 type Params = {
   params: Promise<{ clubId: string }>;
@@ -19,11 +19,12 @@ export async function generateMetadata({ params }: Params) {
 
 export default async function ClubPage({ params, searchParams }: Params) {
   const [{ clubId }, query] = await Promise.all([params, searchParams]);
-  const [t, club, groups, mine] = await Promise.all([
+  const [t, club, groups, mine, entitlements] = await Promise.all([
     getTranslations(),
     getClub(clubId),
     getClubGroups(clubId),
     getMyClubs(),
+    getEntitlements(clubId),
   ]);
   const permissions = mine.clubs.find((c) => c.club.id === club.id)?.permissions ?? [];
   const canManage = permissions.includes("club.roles.manage");
@@ -31,6 +32,9 @@ export default async function ClubPage({ params, searchParams }: Params) {
   // History and the audit log (P1.9): club managers.
   const canHistory = permissions.includes("club.history.read");
   const canAudit = permissions.includes("club.audit.read");
+  // Billing (P1.13): club managers and treasurers, only with billing on.
+  const canBilling =
+    entitlements?.billingEnabled === true && permissions.includes("billing.subscription.read");
   const topLevel = groups.filter((g) => g.parentGroupId === null && !g.archived);
 
   return (
@@ -68,6 +72,15 @@ export default async function ClubPage({ params, searchParams }: Params) {
               data-testid="club-settings-link"
             >
               {t("clubSettings.title")}
+            </a>
+          ) : null}
+          {canBilling ? (
+            <a
+              href={`/clubs/${club.id}/billing`}
+              className="text-sm text-accent underline"
+              data-testid="club-billing-link"
+            >
+              {t("billing.nav")}
             </a>
           ) : null}
           <a

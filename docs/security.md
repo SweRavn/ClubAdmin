@@ -179,6 +179,23 @@ later phase. Backup and disaster recovery are in
   their persisted cache until their next fetch (on foreground and after
   login); the web holds no person cache.
 
+### Billing (P1.13, billing on only)
+- Club managers choose plans with a second factor; club managers and
+  treasurers keep the billing details (MFA). They write only their club's
+  billing details and the selection columns of its subscription (a guard
+  trigger refuses the rest); invoices, payments and statuses are written by
+  system jobs and operators only (RLS).
+- Issued invoices are immutable (trigger), numbered without gaps (row lock),
+  amounts are integers, totals are the sums of their lines (tests).
+- Invoice PDFs are downloaded through a pre-signed URL valid five minutes,
+  for club managers and treasurers; emails carry the PDF as an attachment and
+  at most a link to the logged-in billing page, never a public link.
+- Operators act as operators with MFA, audited, and see clubs by name and
+  country only (`billing.club_refs`), never member data.
+- Card payments (part B): the provider's hosted pages only (PCI DSS SAQ A,
+  no card data on our pages or in logs), webhooks with signature and
+  timestamp verification, idempotent by event ID, no payload stored.
+
 ### Data protection
 - TLS 1.3 everywhere (Caddy), HSTS preload, internal traffic on a private
   network; database connections use TLS.

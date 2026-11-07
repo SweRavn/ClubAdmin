@@ -8,7 +8,13 @@ import { onlineManager, useIsRestoring } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { useFormatter, useTranslations } from "use-intl";
 
-import { useAccountDeletion, useMe, useMyWards } from "../api/queries.ts";
+import {
+  useAccountDeletion,
+  useEntitlements,
+  useMe,
+  useMyClubs,
+  useMyWards,
+} from "../api/queries.ts";
 import { useSession } from "../state/session.tsx";
 import { UpdateNotice } from "./gates.tsx";
 import { Banner, LinkButton } from "./ui.tsx";
@@ -85,4 +91,37 @@ export function Banners() {
       <UpdateNotice />
     </>
   );
+}
+
+/**
+ * The club's billing notice (P1.13), text only: no plans, prices or payment
+ * in the app (store rules). Read-only for everyone; a payment overdue for
+ * club managers and treasurers, who are told to use the web. Nothing with
+ * billing off.
+ */
+export function BillingNotice({ clubId }: { clubId: string }) {
+  const t = useTranslations("mobile.billing");
+  const entitlements = useEntitlements(clubId);
+  const clubs = useMyClubs();
+  const e = entitlements.data;
+  if (!e?.billingEnabled) return null;
+  const permissions = clubs.data?.clubs.find((c) => c.club.id === clubId)?.permissions ?? [];
+  const payer = permissions.includes("billing.invoices.read");
+  if (e.accessState === "read_only") {
+    return (
+      <Banner tone="warning" testID="billing-read-only">
+        {e.accessStateSource === "billing"
+          ? `${t("readOnly")} ${payer ? t("payOnWeb") : t("contactManager")}`
+          : t("readOnlyOperator")}
+      </Banner>
+    );
+  }
+  if (e.subscriptionStatus === "past_due" && payer) {
+    return (
+      <Banner tone="warning" testID="billing-past-due">
+        {`${t("pastDue")} ${t("payOnWeb")}`}
+      </Banner>
+    );
+  }
+  return null;
 }

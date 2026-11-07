@@ -364,7 +364,14 @@
     "signOutAnyway": "Sign out anyway",
     "takeAttendance": "Take attendance",
     "attendanceOffline": "Offline: attendance is saved on the phone and sent when you are online.",
-    "searchTimeZone": "Search time zones (e.g. Stockholm)"
+    "searchTimeZone": "Search time zones (e.g. Stockholm)",
+    "billing": {
+      "readOnly": "The club is read-only because an invoice is unpaid. Nothing is deleted.",
+      "readOnlyOperator": "The club is read-only. Nothing is deleted. Contact a club manager.",
+      "pastDue": "An invoice is overdue; the club becomes read-only unless it is paid.",
+      "payOnWeb": "Billing is handled in the web app.",
+      "contactManager": "Contact a club manager."
+    }
   },
   "email": {
     "footer": "This email was sent by ClubAdmin on behalf of {club}.",
@@ -2912,6 +2919,168 @@
         "plan_year": "{plan}, yearly",
         "plan_upgrade": "{plan}, upgrade"
       }
-    }
+    },
+    "title": "Billing",
+    "subscription": "Subscription",
+    "plan": "Plan",
+    "plans": "Plans",
+    "status": "Status",
+    "statuses": {
+      "trial": "Trial",
+      "active": "Active",
+      "past_due": "Payment overdue",
+      "read_only": "Read-only",
+      "cancelled": "Cancelled"
+    },
+    "trialEnds": "Trial ends",
+    "periodEnds": "Period ends",
+    "balanceDue": "Left to pay",
+    "noSubscription": "The club has no subscription yet.",
+    "includes": "Included:",
+    "includesNothing": "the basic features",
+    "features": {
+      "chat": "chat",
+      "calendar_feeds": "calendar subscriptions",
+      "streaming": "streaming",
+      "documents": "documents",
+      "finance": "finance",
+      "sponsors": "sponsors"
+    },
+    "scheduled": "Changes to {plan} on {date}.",
+    "undo": "Undo the change",
+    "cancelPending": "The subscription ends on {date}; the club then moves to the free plan. Nothing is deleted.",
+    "resume": "Keep the subscription",
+    "choose": "Choose plan",
+    "billingPeriod": "Billing",
+    "periods": {
+      "month": "monthly",
+      "year": "yearly"
+    },
+    "pricePerMonth": "{excl} per month excl. VAT ({incl} incl. VAT)",
+    "pricePerYear": "{excl} per year excl. VAT ({incl} incl. VAT)",
+    "vatNotes": {
+      "none": "Prices are shown excluding and including VAT.",
+      "reverse_charge": "Reverse charge: no Swedish VAT is added; your club accounts for the VAT.",
+      "outside_scope": "No Swedish VAT is added for clubs outside Sweden."
+    },
+    "paidUnavailable": "Paid plans are not available for clubs in this country yet. Contact support.",
+    "addOns": "Add-ons",
+    "acceptTerms": "I accept the terms of service and the data processing agreement on behalf of the club (version {version}).",
+    "readTerms": "Read the terms",
+    "startNow": "Start the paid period now instead of when the trial ends",
+    "chooseHint": "Upgrades apply at once and the difference is added to the next invoice. Downgrades, removed add-ons and a change of billing period apply at the end of the period. Choosing needs two-factor authentication.",
+    "chooseSubmit": "Choose plan",
+    "cancel": "Cancel subscription",
+    "cancelHint": "The subscription ends at the end of the period; there are no refunds for unused time.",
+    "details": "Billing details",
+    "detailsHint": "The association's details as they appear on the invoice. Use an organisation address (e.g. treasurer@…) for invoices, and a role, not a name, as the reference.",
+    "fields": {
+      "legalName": "Association name",
+      "organizationNumber": "Organisation number",
+      "vatNumber": "VAT number (if registered)",
+      "street": "Street address",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country (two letters, e.g. SE)",
+      "invoiceEmail": "Invoice email",
+      "reference": "Your reference",
+      "invoiceLocale": "Invoice language"
+    },
+    "fieldHints": {
+      "invoiceEmail": "An address of the association, not a person's.",
+      "reference": "A role, e.g. \"Treasurer\"."
+    },
+    "saveDetails": "Save details",
+    "paymentMethod": "Payment method",
+    "methods": {
+      "invoice": "Invoice (bankgiro with OCR)",
+      "card": "Card"
+    },
+    "cardLater": "Card payments are coming. Invoices are sent by email as PDF.",
+    "invoices": "Invoices",
+    "noInvoices": "No invoices yet.",
+    "number": "Number",
+    "period": "Period",
+    "amount": "Amount",
+    "due": "Due",
+    "invoiceStatuses": {
+      "draft": "Draft",
+      "open": "Open",
+      "paid": "Paid",
+      "void": "Void"
+    },
+    "balance": "{amount} left",
+    "creditNote": "credit note",
+    "downloadPdf": "Download PDF",
+    "invoiceNumber": "Invoice {number}",
+    "creditNoteNumber": "Credit note {number}",
+    "prorated": "prorated",
+    "subtotal": "Total excl. VAT",
+    "vat": "VAT {rate} %",
+    "total": "Total",
+    "payTo": "Pay {amount} by {due} to bankgiro with the OCR reference:",
+    "bankgiro": "Bankgiro",
+    "ocr": "OCR reference",
+    "copy": "Copy",
+    "copied": "Copied",
+    "showMore": "Show more",
+    "saved": {
+      "plan": "Your choice is saved.",
+      "cancelled": "The subscription ends at the end of the period.",
+      "resumed": "The pending change is undone.",
+      "account": "The billing details are saved.",
+      "method": "The payment method is saved."
+    },
+    "banner": {
+      "link": "Go to billing",
+      "trial": "The trial ends {date} ({days, plural, one {# day} other {# days}} left). Choose a plan to keep the features.",
+      "pastDue": "An invoice is overdue. Pay it before {date} or the club becomes read-only.",
+      "readOnly": "The club is read-only because an invoice is unpaid. Nothing is deleted and exports still work.",
+      "readOnlyPayer": "Paying the open invoices restores it at once.",
+      "readOnlyOther": "Contact a club manager.",
+      "readOnlyOperator": "The club is read-only. Nothing is deleted and exports still work. Contact a club manager."
+    },
+    "ops": {
+      "title": "Billing",
+      "noMemberData": "Operator console: clubs by name and country only, never member data.",
+      "subscriptions": "Subscriptions",
+      "all": "All",
+      "filter": "Filter",
+      "club": "Club",
+      "exports": "Exports for bookkeeping",
+      "from": "From",
+      "to": "To",
+      "export": {
+        "invoices": "Download invoices (CSV)",
+        "payments": "Download payments (CSV)"
+      },
+      "latestInvoices": "Latest invoices",
+      "latestPayments": "Latest payments",
+      "noPayments": "No payments yet.",
+      "inactive": "inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "plansHint": "Prices are never edited: add a new price through the API; existing subscriptions keep theirs until the period ends.",
+      "saved": "Saved.",
+      "assignPlan": "Plan",
+      "changeStatus": "Status",
+      "apply": "Apply",
+      "trialEndsOn": "Trial ends on",
+      "noDetails": "No billing details yet.",
+      "receivedOn": "Received on",
+      "reference": "Bank reference",
+      "recordPayment": "Record payment",
+      "creditReason": "Credit note reason",
+      "creditAll": "Credit the invoice",
+      "reasons": {
+        "duplicate": "Duplicate",
+        "wrong_amount": "Wrong amount",
+        "goodwill": "Goodwill",
+        "cancelled": "Cancelled",
+        "other": "Other"
+      },
+      "resend": "Email again"
+    },
+    "nav": "Billing"
   }
 }

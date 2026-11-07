@@ -304,7 +304,7 @@ export interface OperatorSubscriptionRow {
 /** Subscriptions across clubs (operators), by subscription id (keyset). */
 export async function operatorSubscriptions(
   tx: Tx,
-  filter: { status?: string | undefined; planId?: string | undefined },
+  filter: { status?: string | undefined; planId?: string | undefined; clubId?: string | undefined },
   cursor: string | null,
   limit: number,
 ): Promise<OperatorSubscriptionRow[]> {
@@ -329,6 +329,7 @@ export async function operatorSubscriptions(
           ? eq(billingSubscriptions.status, filter.status as SubscriptionRow["status"])
           : undefined,
         filter.planId ? eq(billingSubscriptions.planId, filter.planId) : undefined,
+        filter.clubId ? eq(billingSubscriptions.clubId, filter.clubId) : undefined,
         cursor ? sql`${billingSubscriptions.id} > ${cursor}` : undefined,
       ),
     )

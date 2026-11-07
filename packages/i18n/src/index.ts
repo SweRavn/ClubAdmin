@@ -137,7 +137,14 @@ export type EnumNamespace =
   | "calendar.ui.scopes"
   | "protection.sources"
   | "protection.viewers"
-  | "protection.viewerRoles";
+  | "protection.viewerRoles"
+  | "billing.saved"
+  | "billing.statuses"
+  | "billing.features"
+  | "billing.invoiceStatuses"
+  | "billing.vatNotes"
+  | "billing.methods"
+  | "billing.ops.reasons";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

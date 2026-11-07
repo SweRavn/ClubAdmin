@@ -287,10 +287,16 @@ export type UpdatePlanInput = z.infer<typeof UpdatePlanSchema>;
 
 export const PlanParamsSchema = z.object({ planId: z.uuid() });
 
+/** Page size of the operators' lists (default 50). */
+const pageLimit = z.coerce.number().int().min(1).max(200).optional();
+
 export const OperatorSubscriptionsQuerySchema = z.object({
   status: z.string().max(20).optional(),
   plan: planKey.optional(),
+  /** One club (the console's club page). */
+  clubId: z.uuid().optional(),
   cursor: z.uuid().optional(),
+  limit: pageLimit,
 });
 
 export const OperatorSubscriptionSchema = z
@@ -324,12 +330,14 @@ export const OperatorInvoicesQuerySchema = z.object({
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
   cursor: z.uuid().optional(),
+  limit: pageLimit,
 });
 
 export const OperatorPaymentsQuerySchema = z.object({
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
   cursor: z.uuid().optional(),
+  limit: pageLimit,
 });
 
 export const PaymentPageSchema = z

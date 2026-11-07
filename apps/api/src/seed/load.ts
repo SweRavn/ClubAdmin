@@ -226,4 +226,45 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
     COMMIT;
     ANALYZE;
   `);
+  if (env.billingEnabled) await seedLoadBilling(env);
+}
+
+/**
+ * Billing on (P1.13): every load club on Standard with a year of monthly
+ * invoices, each paid (the operators' lists and the club's invoice page on
+ * volume). Inserted as drafts with their lines, then issued, as the ledger
+ * would; numbers from their own LOAD- series.
+ */
+async function seedLoadBilling(env: SeedEnvironment): Promise<void> {
+  await env.admin(`
+    BEGIN;
+    SELECT set_config('app.actor_kind', 'system_job', true), set_config('app.request_id', 'job:seed:load', true);
+    INSERT INTO billing.subscriptions (club_id, plan_id, status, current_period_start, current_period_end)
+      SELECT c.id, p.id, 'active', date_trunc('month', now()), date_trunc('month', now()) + interval '1 month'
+      FROM clubs c CROSS JOIN billing.plans p
+      WHERE c.slug LIKE 'load-%' AND p.key = 'standard'
+      ON CONFLICT (club_id) DO NOTHING;
+    CREATE TEMP TABLE li ON COMMIT DROP AS
+      SELECT s.club_id, s.id AS subscription_id, uuidv7() AS id,
+             date_trunc('month', now()) - make_interval(months => k) AS ps
+      FROM billing.subscriptions s JOIN clubs c ON c.id = s.club_id AND c.slug LIKE 'load-%'
+      CROSS JOIN generate_series(1, 12) AS k
+      WHERE NOT EXISTS (SELECT 1 FROM billing.invoices i WHERE i.subscription_id = s.id);
+    INSERT INTO billing.invoices (id, club_id, subscription_id, currency, period_start, period_end)
+      SELECT id, club_id, subscription_id, 'SEK', ps, ps + interval '1 month' FROM li;
+    INSERT INTO billing.invoice_lines (club_id, invoice_id, description_key, unit_minor, amount_minor,
+        period_start, period_end, vat_rate_bp, vat_minor)
+      SELECT club_id, id, 'plan.month', 49900, 49900, ps, ps + interval '1 month', 2500, 12475 FROM li;
+    UPDATE billing.invoices i SET number = 'LOAD-' || replace(i.id::text, '-', ''), status = 'paid',
+        subtotal_minor = 49900, vat_minor = 12475, total_minor = 62375,
+        issued_at = li.ps, due_at = li.ps + interval '30 days', paid_at = li.ps + interval '20 days',
+        payment_method = 'invoice', ocr_reference = '1234567890'
+      FROM li WHERE i.id = li.id;
+    INSERT INTO billing.payments (club_id, invoice_id, provider, provider_reference, amount_minor,
+        currency, status, received_on, recorded_at)
+      SELECT club_id, id, 'manual', 'LOAD-' || id::text, 62375, 'SEK', 'succeeded',
+             (ps + interval '20 days')::date, ps + interval '20 days' FROM li;
+    COMMIT;
+    ANALYZE;
+  `);
 }

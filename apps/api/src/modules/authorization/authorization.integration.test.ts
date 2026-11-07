@@ -1095,7 +1095,7 @@ describe("permission matrix", () => {
         .all()
         .some((e) => `${e.method} ${e.fullPath}` === endpoint);
       // Billing routes exist only with BILLING_ENABLED=true (CI runs both).
-      if (!registered && /\/(billing|subscription)/.test(endpoint)) test.skip();
+      if (!registered && /\/(billing|subscription|invoices)/.test(endpoint)) test.skip();
       const actual: Record<string, number> = {};
       for (const persona of MATRIX_PERSONAS) {
         const token = await devToken(personaId(persona));

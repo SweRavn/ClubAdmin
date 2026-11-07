@@ -122,7 +122,7 @@ export class BillingOpsController {
     @CurrentAuthorization() authorization: RequestAuthorization,
     @Query() query: z.infer<typeof OperatorSubscriptionsQuerySchema>,
   ) {
-    return this.billing.listSubscriptions(this.operator(authorization), query);
+    return this.billing.listSubscriptions(this.operator(authorization), query, query.limit);
   }
 
   @Endpoint({
@@ -138,7 +138,7 @@ export class BillingOpsController {
     @CurrentAuthorization() authorization: RequestAuthorization,
     @Query() query: z.infer<typeof OperatorInvoicesQuerySchema>,
   ): Promise<InvoicePage> {
-    return this.billing.listAllInvoices(this.operator(authorization), query);
+    return this.billing.listAllInvoices(this.operator(authorization), query, query.limit);
   }
 
   @Endpoint({
@@ -223,7 +223,7 @@ export class BillingOpsController {
     @CurrentAuthorization() authorization: RequestAuthorization,
     @Query() query: z.infer<typeof OperatorPaymentsQuerySchema>,
   ) {
-    return this.billing.listPayments(this.operator(authorization), query);
+    return this.billing.listPayments(this.operator(authorization), query, query.limit);
   }
 
   @Endpoint({

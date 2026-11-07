@@ -364,7 +364,14 @@
     "signOutAnyway": "Logg ut likevel",
     "takeAttendance": "Registrer oppmøte",
     "attendanceOffline": "Uten nett: oppmøtet lagres på telefonen og sendes når du er på nett.",
-    "searchTimeZone": "Søk tidssone (f.eks. Oslo)"
+    "searchTimeZone": "Søk tidssone (f.eks. Oslo)",
+    "billing": {
+      "readOnly": "Klubben er skrivebeskyttet fordi en faktura er ubetalt. Ingenting slettes.",
+      "readOnlyOperator": "Klubben er skrivebeskyttet. Ingenting slettes. Kontakt en klubbadministrator.",
+      "pastDue": "En faktura er forfalt; klubben blir skrivebeskyttet hvis den ikke betales.",
+      "payOnWeb": "Faktureringen gjøres i nettappen.",
+      "contactManager": "Kontakt en klubbadministrator."
+    }
   },
   "email": {
     "footer": "Denne e-posten ble sendt av ClubAdmin på vegne av {club}.",
@@ -2912,6 +2919,168 @@
         "plan_year": "{plan}, årlig",
         "plan_upgrade": "{plan}, oppgradering"
       }
-    }
+    },
+    "title": "Fakturering",
+    "subscription": "Abonnement",
+    "plan": "Abonnementsnivå",
+    "plans": "Abonnementer",
+    "status": "Status",
+    "statuses": {
+      "trial": "Prøveperiode",
+      "active": "Aktivt",
+      "past_due": "Betaling forsinket",
+      "read_only": "Skrivebeskyttet",
+      "cancelled": "Avsluttet"
+    },
+    "trialEnds": "Prøveperioden slutter",
+    "periodEnds": "Perioden slutter",
+    "balanceDue": "Gjenstår å betale",
+    "noSubscription": "Klubben har ikke noe abonnement ennå.",
+    "includes": "Inkludert:",
+    "includesNothing": "grunnfunksjonene",
+    "features": {
+      "chat": "chat",
+      "calendar_feeds": "kalenderabonnementer",
+      "streaming": "strømming",
+      "documents": "dokumenter",
+      "finance": "økonomi",
+      "sponsors": "sponsorer"
+    },
+    "scheduled": "Bytter til {plan} {date}.",
+    "undo": "Angre endringen",
+    "cancelPending": "Abonnementet slutter {date}; klubben flyttes da til gratisnivået. Ingenting slettes.",
+    "resume": "Behold abonnementet",
+    "choose": "Velg abonnement",
+    "billingPeriod": "Fakturering",
+    "periods": {
+      "month": "månedlig",
+      "year": "årlig"
+    },
+    "pricePerMonth": "{excl} per måned eks. MVA ({incl} inkl. MVA)",
+    "pricePerYear": "{excl} per år eks. MVA ({incl} inkl. MVA)",
+    "vatNotes": {
+      "none": "Prisene vises eksklusive og inklusive MVA.",
+      "reverse_charge": "Omvendt avgiftsplikt: ingen svensk MVA legges til; klubben beregner MVA selv.",
+      "outside_scope": "Ingen svensk MVA legges til for klubber utenfor Sverige."
+    },
+    "paidUnavailable": "Betalte abonnementer finnes ennå ikke for klubber i dette landet. Kontakt brukerstøtten.",
+    "addOns": "Tillegg",
+    "acceptTerms": "Jeg godtar vilkårene for bruk og databehandleravtalen på vegne av klubben (versjon {version}).",
+    "readTerms": "Les vilkårene",
+    "startNow": "Start den betalte perioden nå i stedet for når prøveperioden slutter",
+    "chooseHint": "Oppgraderinger gjelder straks, og mellomlegget legges på neste faktura. Nedgraderinger, fjernede tillegg og bytte av faktureringsperiode gjelder fra periodens slutt. Valget krever tofaktorautentisering.",
+    "chooseSubmit": "Velg abonnement",
+    "cancel": "Si opp abonnementet",
+    "cancelHint": "Abonnementet slutter ved periodens slutt; ubrukt tid refunderes ikke.",
+    "details": "Faktureringsopplysninger",
+    "detailsHint": "Klubbens opplysninger slik de står på fakturaen. Bruk en adresse som tilhører klubben (f.eks. kasserer@…) for fakturaer og en rolle, ikke et navn, som referanse.",
+    "fields": {
+      "legalName": "Klubbens navn",
+      "organizationNumber": "Organisasjonsnummer",
+      "vatNumber": "MVA-nummer (hvis registrert)",
+      "street": "Gateadresse",
+      "postalCode": "Postnummer",
+      "city": "Sted",
+      "country": "Land (to bokstaver, f.eks. NO)",
+      "invoiceEmail": "Faktura-e-post",
+      "reference": "Deres referanse",
+      "invoiceLocale": "Fakturaspråk"
+    },
+    "fieldHints": {
+      "invoiceEmail": "En adresse som tilhører klubben, ikke en person.",
+      "reference": "En rolle, f.eks. \"Kasserer\"."
+    },
+    "saveDetails": "Lagre opplysningene",
+    "paymentMethod": "Betalingsmåte",
+    "methods": {
+      "invoice": "Faktura (bankgiro med OCR)",
+      "card": "Kort"
+    },
+    "cardLater": "Kortbetaling kommer. Fakturaer sendes på e-post som PDF.",
+    "invoices": "Fakturaer",
+    "noInvoices": "Ingen fakturaer ennå.",
+    "number": "Nummer",
+    "period": "Periode",
+    "amount": "Beløp",
+    "due": "Forfaller",
+    "invoiceStatuses": {
+      "draft": "Utkast",
+      "open": "Ubetalt",
+      "paid": "Betalt",
+      "void": "Annullert"
+    },
+    "balance": "{amount} gjenstår",
+    "creditNote": "kreditnota",
+    "downloadPdf": "Last ned PDF",
+    "invoiceNumber": "Faktura {number}",
+    "creditNoteNumber": "Kreditnota {number}",
+    "prorated": "del av periode",
+    "subtotal": "Sum eks. MVA",
+    "vat": "MVA {rate} %",
+    "total": "Å betale",
+    "payTo": "Betal {amount} innen {due} til bankgiro med OCR-referansen:",
+    "bankgiro": "Bankgiro",
+    "ocr": "OCR-referanse",
+    "copy": "Kopier",
+    "copied": "Kopiert",
+    "showMore": "Vis flere",
+    "saved": {
+      "plan": "Valget ditt er lagret.",
+      "cancelled": "Abonnementet slutter ved periodens slutt.",
+      "resumed": "Den ventende endringen er angret.",
+      "account": "Faktureringsopplysningene er lagret.",
+      "method": "Betalingsmåten er lagret."
+    },
+    "banner": {
+      "link": "Til faktureringen",
+      "trial": "Prøveperioden slutter {date} ({days, plural, one {# dag} other {# dager}} igjen). Velg abonnement for å beholde funksjonene.",
+      "pastDue": "En faktura er forfalt. Betal før {date}, ellers blir klubben skrivebeskyttet.",
+      "readOnly": "Klubben er skrivebeskyttet fordi en faktura er ubetalt. Ingenting slettes og eksport fungerer.",
+      "readOnlyPayer": "En betaling av de åpne fakturaene gjenoppretter den straks.",
+      "readOnlyOther": "Kontakt en klubbadministrator.",
+      "readOnlyOperator": "Klubben er skrivebeskyttet. Ingenting slettes og eksport fungerer. Kontakt en klubbadministrator."
+    },
+    "ops": {
+      "title": "Fakturering",
+      "noMemberData": "Operatørkonsoll: klubber med navn og land, aldri medlemsdata.",
+      "subscriptions": "Abonnementer",
+      "all": "Alle",
+      "filter": "Filtrer",
+      "club": "Klubb",
+      "exports": "Eksport for regnskap",
+      "from": "Fra",
+      "to": "Til",
+      "export": {
+        "invoices": "Last ned fakturaer (CSV)",
+        "payments": "Last ned betalinger (CSV)"
+      },
+      "latestInvoices": "Siste fakturaer",
+      "latestPayments": "Siste betalinger",
+      "noPayments": "Ingen betalinger ennå.",
+      "inactive": "inaktiv",
+      "activate": "Aktiver",
+      "deactivate": "Deaktiver",
+      "plansHint": "Priser endres aldri: legg til en ny pris via API-et; eksisterende abonnementer beholder sin til periodens slutt.",
+      "saved": "Lagret.",
+      "assignPlan": "Abonnementsnivå",
+      "changeStatus": "Status",
+      "apply": "Utfør",
+      "trialEndsOn": "Prøveperioden slutter",
+      "noDetails": "Ingen faktureringsopplysninger ennå.",
+      "receivedOn": "Mottatt",
+      "reference": "Bankreferanse",
+      "recordPayment": "Registrer betaling",
+      "creditReason": "Årsak til kreditering",
+      "creditAll": "Krediter fakturaen",
+      "reasons": {
+        "duplicate": "Duplikat",
+        "wrong_amount": "Feil beløp",
+        "goodwill": "Goodwill",
+        "cancelled": "Oppsagt",
+        "other": "Annet"
+      },
+      "resend": "Send på e-post igjen"
+    },
+    "nav": "Fakturering"
   }
 }

@@ -1497,6 +1497,194 @@ const PROTECTION_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+/** Billing (P1.13; BILLING_ENABLED only): the club's choice and details, the operators' tools. */
+const PLAN_KEY = /^[a-z0-9]+(_[a-z0-9]+)*$/;
+const BILLING_ACTIONS: Record<string, FormAction> = {
+  "select-plan": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const planKey = text(form, "planKey");
+      const period = text(form, "billingPeriod");
+      const addOns = form
+        .getAll("addOn")
+        .filter((a): a is string => typeof a === "string" && PLAN_KEY.test(a));
+      if (!clubId || !PLAN_KEY.test(planKey) || (period !== "month" && period !== "year"))
+        return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/subscription/selection`,
+        method: "PUT",
+        body: {
+          planKey,
+          addOns,
+          billingPeriod: period,
+          acceptTerms: text(form, "acceptTerms") === "1",
+          startNow: text(form, "startNow") === "1",
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "plan"),
+  },
+  "cancel-subscription": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      return { path: `/api/v1/clubs/${clubId}/subscription/cancel`, method: "POST", body: {} };
+    },
+    done: (form) => withParam(back(form), "saved", "cancelled"),
+  },
+  "resume-subscription": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      return { path: `/api/v1/clubs/${clubId}/subscription/resume`, method: "POST", body: {} };
+    },
+    done: (form) => withParam(back(form), "saved", "resumed"),
+  },
+  "save-billing-account": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const locale = text(form, "invoiceLocale");
+      if (!clubId || !["sv", "en", "nb"].includes(locale)) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/billing/account`,
+        method: "PUT",
+        body: {
+          legalName: text(form, "legalName"),
+          organizationNumber: optional(text(form, "organizationNumber")) ?? null,
+          vatNumber: optional(text(form, "vatNumber").toUpperCase().replace(/\s/g, "")) ?? null,
+          address: {
+            street: text(form, "street"),
+            postalCode: text(form, "postalCode"),
+            city: text(form, "city"),
+            country: text(form, "country").toUpperCase(),
+          },
+          invoiceEmail: text(form, "invoiceEmail"),
+          reference: optional(text(form, "reference")) ?? null,
+          invoiceLocale: locale,
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "account"),
+  },
+  "set-payment-method": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const method = text(form, "method");
+      if (!clubId || (method !== "invoice" && method !== "card")) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/billing/payment-method`,
+        method: "POST",
+        body: { method },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "method"),
+  },
+  // Operators (P1.13, /ops/billing).
+  "ops-record-payment": {
+    call: (form) => {
+      const invoiceId = id(form, "invoiceId");
+      const amount = Number(text(form, "amount").replace(",", "."));
+      const receivedOn = text(form, "receivedOn");
+      const reference = text(form, "reference");
+      if (!invoiceId || !(amount > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(receivedOn) || !reference) {
+        return null;
+      }
+      return {
+        path: `/api/v1/billing/invoices/${invoiceId}/payments`,
+        method: "POST",
+        body: { amountMinor: Math.round(amount * 100), receivedOn, reference },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "payment"),
+  },
+  "ops-credit-note": {
+    call: (form) => {
+      const invoiceId = id(form, "invoiceId");
+      const reason = text(form, "reason");
+      const lines = form
+        .getAll("line")
+        .map((l) => Number(l))
+        .filter((l) => Number.isInteger(l) && l >= 0);
+      if (
+        !invoiceId ||
+        !["duplicate", "wrong_amount", "goodwill", "cancelled", "other"].includes(reason)
+      ) {
+        return null;
+      }
+      return {
+        path: `/api/v1/billing/invoices/${invoiceId}/credit-note`,
+        method: "POST",
+        body: { reason, ...(lines.length > 0 ? { lines } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "credit"),
+  },
+  "ops-resend-invoice": {
+    call: (form) => {
+      const invoiceId = id(form, "invoiceId");
+      if (!invoiceId) return null;
+      return { path: `/api/v1/billing/invoices/${invoiceId}/resend`, method: "POST", body: {} };
+    },
+    done: (form) => withParam(back(form), "saved", "resent"),
+  },
+  "ops-set-trial": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const day = text(form, "trialEndsOn");
+      if (!clubId || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/subscription/trial`,
+        method: "PUT",
+        body: { trialEndsAt: new Date(`${day}T23:00:00Z`).toISOString() },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "trial"),
+  },
+  "ops-assign-plan": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const planKey = text(form, "planKey");
+      if (!clubId || !PLAN_KEY.test(planKey)) return null;
+      const addOns = form
+        .getAll("addOn")
+        .filter((a): a is string => typeof a === "string" && PLAN_KEY.test(a));
+      return {
+        path: `/api/v1/clubs/${clubId}/subscription`,
+        method: "PUT",
+        body: { planKey, addOns },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "plan"),
+  },
+  "ops-subscription-status": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const status = text(form, "status");
+      if (!clubId || !["trial", "active", "past_due", "read_only", "cancelled"].includes(status))
+        return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/subscription/status`,
+        method: "PUT",
+        body: { status },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "status"),
+  },
+  "ops-plan-active": {
+    call: (form) => {
+      const planId = id(form, "planId");
+      const active = text(form, "active");
+      if (!planId || (active !== "1" && active !== "0")) return null;
+      return {
+        path: `/api/v1/billing/plans/${planId}`,
+        method: "PATCH",
+        body: { active: active === "1" },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "plans"),
+  },
+};
+
 /** Calendar subscriptions (P1.11): creating and new links go through app/actions/calendar-feed. */
 const CALENDAR_ACTIONS: Record<string, FormAction> = {
   "rename-calendar-feed": {
@@ -1523,6 +1711,7 @@ const CALENDAR_ACTIONS: Record<string, FormAction> = {
 
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...FAMILY_ACTIONS,
+  ...BILLING_ACTIONS,
   ...CALENDAR_ACTIONS,
   ...PROTECTION_ACTIONS,
   ...PRIVACY_ACTIONS,

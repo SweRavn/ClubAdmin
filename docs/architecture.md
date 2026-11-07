@@ -539,7 +539,9 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `history:maintain_partitions` | daily 03:17 UTC | Creates history partitions ahead, drops expired ones |
 | `guardianships:flag_adult_wards` | daily 04:23 UTC | Flags (never ends) guardianships whose ward reached the adult age (highest `adultAge` of all packs, as the job cannot see the ward's clubs), audits it and publishes `guardianship.ward.adult` |
 | `ops:backup_metrics` | every 5 minutes | Reads the latest backup runs and restore verification for the backup gauges (docs/operations/backup-restore.md, "Monitoring") |
-| `billing:generate_invoices` | 1st of the month, 04:41 UTC (billing on only) | Placeholder until P1.13 (InvoiceGenerator) |
+| `billing:daily` | daily 04:41 UTC (billing on only) | Club by club, one transaction each (P1.13, ADR 0045): trial reminders and endings, selections and scheduled changes, invoices for periods that have started, dunning steps; the clubs with work come from `billing.due_clubs` |
+| `billing:send_invoice` | per issued invoice, credit note, reminder or resend (outbox handler `billing-send`) | Renders the PDF once (`pdfkit`, stored with its SHA-256) and emails it as an attachment to the club's invoice address |
+| `billing:retention` | yearly, 2 January 03:29 UTC (billing on only) | As `clubadmin_retention`: deletes invoices, credit notes, lines, payments and PDFs seven years after the end of their year; clears billing contact fields with nothing left to keep |
 | `joining:retention` | daily 04:53 UTC | Deletes decided join requests and unusable invitations 12 months after their last change, club by club (`docs/gdpr.md`) |
 | `attendance:retention` | daily 05:07 UTC | Deletes answers and attendance of activities that ended more than the club's `attendance_retention_months` ago (at least 12), club by club, through `app.purge_expired_attendance()` (the app roles cannot delete attendance otherwise; #18) |
 | `calendar:retention` | daily 05:13 UTC | Revokes calendar subscriptions no calendar app fetched for 12 months (`unused`, the owner is told through `calendar.feed.revoked`) and deletes revoked ones 30 days later (P1.11, `docs/gdpr.md`) |
@@ -639,7 +641,7 @@ can skip.
 | Email | `MailProvider` | SMTP (self-host), EU transactional provider (hosted) |
 | Inbound email (calendar replies) | `InboundMailProvider` | Provider webhook (hosted), IMAP/LMTP mailbox (self-host) |
 | Push | `PushProvider` | Expo Push, direct APNs/FCM |
-| Payments | `PaymentProvider` | Stripe (cards), Swish (SE) |
+| Payments | `PaymentProvider` | Billing of the service (P1.13, ADR 0045): `manual` (invoice with bankgiro and OCR, payments recorded by operators) now, Stripe (cards) in part B; the invoices themselves are issued by ClubAdmin's ledger (`@clubadmin/db`), not by the provider. Swish for member fees later (Phase 3) |
 | Video | `StreamingProvider` | api.video / Mux, self-hosted MediaMTX |
 | eID | OIDC via Zitadel | Criipto/Signicat broker for BankID/Freja |
 | Accounting | `AccountingExport` | SIE file export, Fortnox API |

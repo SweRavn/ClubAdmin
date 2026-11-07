@@ -50,3 +50,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0042](0042-history-views.md) | History views: who reads history, the column policy, isolation from the everyday paths | Accepted |
 | [0043](0043-waiting-lists.md) | Waiting lists: capacity, offers, admission and positions | Accepted |
 | [0044](0044-calendar-feeds.md) | Calendar feeds: secret URLs served by the API, signed answer links behind a confirmation | Accepted |
+| [0045](0045-billing-invoices-and-dunning.md) | Billing: invoices issued by ClubAdmin, calendar periods, VAT by seller, dunning to read-only | Accepted |

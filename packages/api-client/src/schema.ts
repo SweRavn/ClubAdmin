@@ -9246,6 +9246,7 @@ export interface operations {
         from?: string;
         to?: string;
         cursor?: string;
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -9325,6 +9326,7 @@ export interface operations {
         from?: string;
         to?: string;
         cursor?: string;
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -9639,6 +9641,7 @@ export interface operations {
         from?: string;
         to?: string;
         cursor?: string;
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -9717,6 +9720,7 @@ export interface operations {
         from?: string;
         to?: string;
         cursor?: string;
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -10017,7 +10021,9 @@ export interface operations {
       query?: {
         status?: string;
         plan?: string;
+        clubId?: string;
         cursor?: string;
+        limit?: number;
       };
       header?: never;
       path?: never;

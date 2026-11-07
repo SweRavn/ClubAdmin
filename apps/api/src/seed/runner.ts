@@ -12,7 +12,7 @@ import { seedLoad } from "./load.ts";
 import { seedMinimal } from "./minimal.ts";
 import { activitiesDemoStep } from "./steps/activities.ts";
 import { attendanceDemoStep } from "./steps/attendance.ts";
-import { billingDemoStep } from "./steps/billing.ts";
+import { billingDemoStep, billingInvoicesDemoStep } from "./steps/billing.ts";
 import { calendarDemoStep } from "./steps/calendar.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
 import { eventsDemoStep } from "./steps/events.ts";
@@ -27,6 +27,7 @@ export type Scenario = (typeof SCENARIOS)[number];
 
 export const DEMO_STEPS: readonly DemoStep[] = [
   billingDemoStep,
+  billingInvoicesDemoStep,
   importsDemoStep,
   activitiesDemoStep,
   attendanceDemoStep,

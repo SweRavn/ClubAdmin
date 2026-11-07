@@ -364,7 +364,14 @@
     "signOutAnyway": "Logga ut ändå",
     "takeAttendance": "Ta närvaro",
     "attendanceOffline": "Offline: närvaron sparas i telefonen och skickas när du är online.",
-    "searchTimeZone": "Sök tidszon (t.ex. Stockholm)"
+    "searchTimeZone": "Sök tidszon (t.ex. Stockholm)",
+    "billing": {
+      "readOnly": "Föreningen är skrivskyddad eftersom en faktura är obetald. Inget raderas.",
+      "readOnlyOperator": "Föreningen är skrivskyddad. Inget raderas. Kontakta en föreningsadministratör.",
+      "pastDue": "En faktura är förfallen; föreningen blir skrivskyddad om den inte betalas.",
+      "payOnWeb": "Faktureringen sköts i webbappen.",
+      "contactManager": "Kontakta en föreningsadministratör."
+    }
   },
   "email": {
     "footer": "Det här mejlet skickades av ClubAdmin för {club}.",
@@ -2912,6 +2919,168 @@
         "plan_year": "{plan}, årsvis",
         "plan_upgrade": "{plan}, uppgradering"
       }
-    }
+    },
+    "title": "Fakturering",
+    "subscription": "Abonnemang",
+    "plan": "Abonnemangsnivå",
+    "plans": "Abonnemang",
+    "status": "Status",
+    "statuses": {
+      "trial": "Provperiod",
+      "active": "Aktivt",
+      "past_due": "Betalning försenad",
+      "read_only": "Skrivskyddad",
+      "cancelled": "Avslutat"
+    },
+    "trialEnds": "Provperioden slutar",
+    "periodEnds": "Perioden slutar",
+    "balanceDue": "Kvar att betala",
+    "noSubscription": "Föreningen har inget abonnemang ännu.",
+    "includes": "Ingår:",
+    "includesNothing": "grundfunktionerna",
+    "features": {
+      "chat": "chatt",
+      "calendar_feeds": "kalenderprenumerationer",
+      "streaming": "streaming",
+      "documents": "dokument",
+      "finance": "ekonomi",
+      "sponsors": "sponsorer"
+    },
+    "scheduled": "Byter till {plan} den {date}.",
+    "undo": "Ångra ändringen",
+    "cancelPending": "Abonnemanget slutar den {date}; föreningen flyttas då till gratisnivån. Inget raderas.",
+    "resume": "Behåll abonnemanget",
+    "choose": "Välj abonnemang",
+    "billingPeriod": "Fakturering",
+    "periods": {
+      "month": "månadsvis",
+      "year": "årsvis"
+    },
+    "pricePerMonth": "{excl} per månad exkl. moms ({incl} inkl. moms)",
+    "pricePerYear": "{excl} per år exkl. moms ({incl} inkl. moms)",
+    "vatNotes": {
+      "none": "Priserna visas exklusive och inklusive moms.",
+      "reverse_charge": "Omvänd skattskyldighet: ingen svensk moms läggs på; föreningen redovisar momsen.",
+      "outside_scope": "Ingen svensk moms läggs på för föreningar utanför Sverige."
+    },
+    "paidUnavailable": "Betalda abonnemang finns ännu inte för föreningar i det här landet. Kontakta supporten.",
+    "addOns": "Tillägg",
+    "acceptTerms": "Jag godkänner användarvillkoren och personuppgiftsbiträdesavtalet för föreningens räkning (version {version}).",
+    "readTerms": "Läs villkoren",
+    "startNow": "Starta den betalda perioden nu i stället för när provperioden slutar",
+    "chooseHint": "Uppgraderingar gäller direkt och mellanskillnaden läggs på nästa faktura. Nedgraderingar, borttagna tillägg och byte av faktureringsperiod gäller från periodens slut. Valet kräver tvåstegsverifiering.",
+    "chooseSubmit": "Välj abonnemang",
+    "cancel": "Säg upp abonnemanget",
+    "cancelHint": "Abonnemanget slutar vid periodens slut; outnyttjad tid återbetalas inte.",
+    "details": "Faktureringsuppgifter",
+    "detailsHint": "Föreningens uppgifter som de står på fakturan. Använd en adress som tillhör föreningen (t.ex. kassor@…) för fakturor och en roll, inte ett namn, som referens.",
+    "fields": {
+      "legalName": "Föreningens namn",
+      "organizationNumber": "Organisationsnummer",
+      "vatNumber": "Momsregistreringsnummer (om registrerad)",
+      "street": "Gatuadress",
+      "postalCode": "Postnummer",
+      "city": "Ort",
+      "country": "Land (två bokstäver, t.ex. SE)",
+      "invoiceEmail": "Fakturamejl",
+      "reference": "Er referens",
+      "invoiceLocale": "Fakturaspråk"
+    },
+    "fieldHints": {
+      "invoiceEmail": "En adress som tillhör föreningen, inte en person.",
+      "reference": "En roll, t.ex. \"Kassör\"."
+    },
+    "saveDetails": "Spara uppgifterna",
+    "paymentMethod": "Betalsätt",
+    "methods": {
+      "invoice": "Faktura (bankgiro med OCR)",
+      "card": "Kort"
+    },
+    "cardLater": "Kortbetalning kommer. Fakturor skickas med mejl som PDF.",
+    "invoices": "Fakturor",
+    "noInvoices": "Inga fakturor ännu.",
+    "number": "Nummer",
+    "period": "Period",
+    "amount": "Belopp",
+    "due": "Förfaller",
+    "invoiceStatuses": {
+      "draft": "Utkast",
+      "open": "Obetald",
+      "paid": "Betald",
+      "void": "Makulerad"
+    },
+    "balance": "{amount} kvar",
+    "creditNote": "kreditfaktura",
+    "downloadPdf": "Ladda ner PDF",
+    "invoiceNumber": "Faktura {number}",
+    "creditNoteNumber": "Kreditfaktura {number}",
+    "prorated": "del av period",
+    "subtotal": "Summa exkl. moms",
+    "vat": "Moms {rate} %",
+    "total": "Att betala",
+    "payTo": "Betala {amount} senast {due} till bankgiro med OCR-numret:",
+    "bankgiro": "Bankgiro",
+    "ocr": "OCR-nummer",
+    "copy": "Kopiera",
+    "copied": "Kopierat",
+    "showMore": "Visa fler",
+    "saved": {
+      "plan": "Ditt val är sparat.",
+      "cancelled": "Abonnemanget slutar vid periodens slut.",
+      "resumed": "Den väntande ändringen är ångrad.",
+      "account": "Faktureringsuppgifterna är sparade.",
+      "method": "Betalsättet är sparat."
+    },
+    "banner": {
+      "link": "Till faktureringen",
+      "trial": "Provperioden slutar {date} ({days, plural, one {# dag} other {# dagar}} kvar). Välj abonnemang för att behålla funktionerna.",
+      "pastDue": "En faktura är förfallen. Betala före {date}, annars blir föreningen skrivskyddad.",
+      "readOnly": "Föreningen är skrivskyddad eftersom en faktura är obetald. Inget raderas och exporter fungerar.",
+      "readOnlyPayer": "En betalning av de öppna fakturorna återställer den direkt.",
+      "readOnlyOther": "Kontakta en föreningsadministratör.",
+      "readOnlyOperator": "Föreningen är skrivskyddad. Inget raderas och exporter fungerar. Kontakta en föreningsadministratör."
+    },
+    "ops": {
+      "title": "Fakturering",
+      "noMemberData": "Operatörskonsol: föreningar med namn och land, aldrig medlemsdata.",
+      "subscriptions": "Abonnemang",
+      "all": "Alla",
+      "filter": "Filtrera",
+      "club": "Förening",
+      "exports": "Exporter för bokföring",
+      "from": "Från",
+      "to": "Till",
+      "export": {
+        "invoices": "Ladda ner fakturor (CSV)",
+        "payments": "Ladda ner betalningar (CSV)"
+      },
+      "latestInvoices": "Senaste fakturor",
+      "latestPayments": "Senaste betalningar",
+      "noPayments": "Inga betalningar ännu.",
+      "inactive": "inaktiv",
+      "activate": "Aktivera",
+      "deactivate": "Inaktivera",
+      "plansHint": "Priser ändras aldrig: lägg till ett nytt pris via API:t; befintliga abonnemang behåller sitt till periodens slut.",
+      "saved": "Sparat.",
+      "assignPlan": "Abonnemangsnivå",
+      "changeStatus": "Status",
+      "apply": "Verkställ",
+      "trialEndsOn": "Provperioden slutar",
+      "noDetails": "Inga faktureringsuppgifter ännu.",
+      "receivedOn": "Mottagen",
+      "reference": "Bankreferens",
+      "recordPayment": "Registrera betalning",
+      "creditReason": "Orsak till kreditering",
+      "creditAll": "Kreditera fakturan",
+      "reasons": {
+        "duplicate": "Dubblett",
+        "wrong_amount": "Fel belopp",
+        "goodwill": "Goodwill",
+        "cancelled": "Uppsagd",
+        "other": "Annat"
+      },
+      "resend": "Mejla igen"
+    },
+    "nav": "Fakturering"
   }
 }

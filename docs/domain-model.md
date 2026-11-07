@@ -882,7 +882,14 @@ includes owners of parent groups; "leader" is any function except `member`.
 | `club.access_state.update` | club | platform operators, with MFA (read-only and suspended clubs, also with billing off) |
 | `billing.plans.read` | platform | platform operators, with MFA (billing on only) |
 | `billing.subscription.read` | club | club managers and treasurers; platform operators with MFA (billing on only) |
-| `billing.subscription.manage` | club | platform operators, with MFA (billing on only) |
+| `billing.subscription.manage` | club | platform operators, with MFA (billing on only): assign a plan, change the status, extend or end a trial |
+| `billing.subscription.change` | club | club managers, with MFA, not on behalf of someone (billing on only): choose a plan, cancel, resume |
+| `billing.account.manage` | club | club managers and treasurers, with MFA, not on behalf (billing on only): billing details, payment method |
+| `billing.invoices.read` | club | club managers and treasurers; platform operators with MFA (billing on only): invoices, credit notes, PDFs |
+| `billing.plans.manage` | platform | platform operators, with MFA (billing on only): create and change plans and prices |
+| `billing.subscriptions.list` | platform | platform operators, with MFA (billing on only): every club's subscription (club name and country only) |
+| `billing.invoices.list` | platform | platform operators, with MFA (billing on only): invoices and payments of every club, CSV exports |
+| `billing.invoices.manage` | platform | platform operators, with MFA (billing on only): bank payments, credit notes, resends |
 | `club.create` | platform | anyone logged in with `CLUB_CREATION` `open` or `approval` (then a request); only platform operators, with MFA, with `operators_only`. The service also requires a verified email and a completed profile |
 | `club.creation.decide` | platform | platform operators, with MFA |
 | `club.join_requests.manage` | club | club managers, registrars |

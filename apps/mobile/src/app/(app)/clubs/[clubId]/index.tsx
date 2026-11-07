@@ -6,6 +6,7 @@ import { Link, Stack } from "expo-router";
 import { useTranslations } from "use-intl";
 
 import { useClub, useClubGroups } from "../../../../api/queries.ts";
+import { BillingNotice } from "../../../../components/banners.tsx";
 import { DataAge } from "../../../../components/data-age.tsx";
 import { DateTime } from "../../../../components/date-time.tsx";
 import { ErrorView } from "../../../../components/error-view.tsx";
@@ -52,6 +53,7 @@ function Club({ clubId }: { clubId: string }) {
     >
       <Stack.Screen options={{ title: club.data.name }} />
       <DataAge updatedAt={club.dataUpdatedAt} />
+      <BillingNotice clubId={clubId} />
       <Section title={t("club.managers")}>
         {club.data.managers.length === 0 ? (
           <EmptyState title={t("club.noManagers")} />

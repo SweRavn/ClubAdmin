@@ -58,4 +58,10 @@ lookup more; a club's first request per minute and instance loads the
 snapshot (two small queries). A lost pub/sub message delays a change by at
 most a minute. Payment providers, invoices, dunning and the trial's end are
 P1.13; the interfaces (`PaymentProvider`, `InvoiceGenerator`) and the
-monthly worker job are placeholders until then.
+monthly worker job were placeholders until then.
+
+**Amended by ADR 0045 (P1.13).** Invoices are issued by ClubAdmin's ledger
+(no `InvoiceGenerator`); `billing:daily` replaces the monthly job; club
+managers choose plans themselves (MFA); a restriction of the access state
+records its source (`operator` or `billing`), and a payment lifts only
+billing's.
