@@ -75,6 +75,7 @@ Built so far (P0.5, `apps/api/src/modules/`, no HTTP endpoints yet; wired in
 | `roles` | `club_role_assignments`, `club_manager_handovers`, `club_manager_reassignments` | Roles, last-manager rule, hand-over (propose, accept, decline, cancel) |
 | `club-profiles` | `club_profiles` | Member number, shared fields, club-level protected identity (managers only) |
 | `groups` | `groups`, `group_owners`, `seasons`, `group_seasons`, `group_waitlist_entries` | Hierarchy, archive, owners (`allowedBy: club_manager \| group_owner`), seasons and effective capacity (P1.10a); the waiting-list entries and their status changes with audit and outbox events (`GroupsService.waitlist`), places (`app.group_places`), positions and open groups for applicants (lookup functions; P1.10b, ADR 0043) |
+| `calendar` | `calendar_feeds` | Calendar subscriptions (P1.11, ADR 0044): the person's secret feeds (`my_schedule`, `group`, `club`), the feed itself (`GET /cal/<secret>.ics`, unprefixed, iCalendar from `packages/shared` `calendar/ical.ts`, acting as the owner through `AuthorizationService.forPerson`, schedule rows from `ActivitiesService.scheduleForFeed`/`feedEntries`, rendered bodies cached in Valkey) and the signed answer links (`/api/v1/calendar-answers/:token`, answering through `AttendanceService.respond`) |
 | `memberships` | `club_memberships`, `group_memberships` | Join an open club, add, leave, group functions, "my clubs and groups"; group administration (P1.10a): adding and ending members with the capacity check, the candidate search (`app.register_entries`), owner eligibility, and archiving a group with its people in one transaction (through the groups service's `…InTx` methods) |
 | `guardianships` | `guardianships`, `guardian_invitations` | Add child, invite and accept co-guardian, rights, ending rules |
 | `authorization` | `platform_operators`, `support_access_grants` (reads all relationship tables) | Relationship sets, policies, resource loaders, `PersonVisibility`, `PersonPresenter`, profile field filtering (P0.7, ADR 0025) |
@@ -106,7 +107,7 @@ Planned modules (see `roadmap.md` for order):
 
 `identity` · `people` · `clubs` · `groups` (incl. waiting lists) · `memberships` · `authorization` (incl. person visibility) ·
 `audit` (audit events + record history) · `privacy` (GDPR) · `notifications` · `activities` (incl. responses and attendance, ADR 0035) ·
-`events` · `calendar` (iCal feeds, invitations) · `carpool` · `messaging` (email/board) · `chat` · `documents` ·
+`events` · `calendar` (iCal feeds since P1.11; email invitations later) · `carpool` · `messaging` (email/board) · `chat` · `documents` ·
 `clearances` (background checks) · `grants` (LOK-stöd, country packs) ·
 `plans` (training plans/library) · `finance` (team cash desk, fees) ·
 `sponsors` · `streaming` · `staff` (time/salary) · `billing` · `entitlements`
@@ -540,6 +541,7 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `billing:generate_invoices` | 1st of the month, 04:41 UTC (billing on only) | Placeholder until P1.13 (InvoiceGenerator) |
 | `joining:retention` | daily 04:53 UTC | Deletes decided join requests and unusable invitations 12 months after their last change, club by club (`docs/gdpr.md`) |
 | `attendance:retention` | daily 05:07 UTC | Deletes answers and attendance of activities that ended more than the club's `attendance_retention_months` ago (at least 12), club by club, through `app.purge_expired_attendance()` (the app roles cannot delete attendance otherwise; #18) |
+| `calendar:retention` | daily 05:13 UTC | Revokes calendar subscriptions no calendar app fetched for 12 months (`unused`, the owner is told through `calendar.feed.revoked`) and deletes revoked ones 30 days later (P1.11, `docs/gdpr.md`) |
 | `members:export` | per export (insert trigger on `member_exports`) | Writes a member register export as CSV to object storage in batches (P1.2) |
 | `members:purge_imports` | hourly | Deletes member import staging rows and files seven days after the import ended (P1.3b) |
 | `members:import_parse`, `members:import_run` | per import (status trigger on `member_imports`) | **Run by the API process** (ADR 0033), not the worker: read and validate an import file; add the confirmed members in batches |

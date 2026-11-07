@@ -50,6 +50,7 @@ with two entries:
 | `person` | The person: name, birth date, gender, protected identity, phone, address; `personalIdentityNumber` (`country`, `value`) when stored |
 | `account` | Login email, language, time zone, theme, notification settings (never the identity provider's subject or session handles) |
 | `pushDevices` | Phones with notifications: service, platform, app variant, last used, turned off (never the token) |
+| `calendarFeeds` | Calendar subscriptions (P1.11): scope, club and group, the chosen people, label, last fetched, revoked and why (never the secret or its hash) |
 | `guardianships` | Family links where the subject is the guardian or the child: kind, rights, status, period, the decision at the adult age |
 | `guardianInvitations` | Family invitations the subject sent (without the invited address) |
 | `notifications` | The inbox of the last 90 days: type, category, what it is about, read |

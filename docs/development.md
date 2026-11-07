@@ -127,6 +127,7 @@ recompile and restart when you save a file.
 | What | Where |
 |---|---|
 | API through Caddy | https://api.clubadmin.localhost/api/v1/meta/version |
+| A calendar feed (P1.11; Caddy sends `/cal/*` on the main host to the API) | https://clubadmin.localhost/cal/demo-anna-my-schedule.ics |
 | API directly | http://127.0.0.1:4000 (health: `/health/live`, `/health/ready`) |
 | OpenAPI document | https://api.clubadmin.localhost/api/v1/openapi.json (development only) |
 

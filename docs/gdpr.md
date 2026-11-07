@@ -135,6 +135,7 @@
 | Notification deliveries (which channel, when, provider ticket; no texts or addresses; retention: `notification_deliveries`) | 30 days |
 | Push devices (sealed Expo push token, platform; retention: `push_devices`) | Until logout, Expo reports the token unregistered, or 90 days after last use |
 | People without a login and without any relationship (retention: `orphaned_people`) | Kept `ORPHAN_RETENTION_MONTHS` (an installation setting, default 36, at least 12) after their last relationship ended and every club purged them, in case a club or a guardian links them again; then erased (`privacy.erase_person`, worker `privacy:retention`). A new relationship clears the mark. Accounts with a login are never erased automatically (P1.8a) |
+| Calendar subscriptions (P1.11: owner, scope, label, the hash of the secret, last fetch; retention: `calendar_feeds`) | Until the owner removes or replaces them; a feed no calendar app fetched for 12 months is revoked and the owner told; revoked feeds are deleted 30 days later (worker `calendar:retention`). Only the SHA-256 hash of the secret is stored (redacted in the history); feed and answer-link paths are redacted from logs and traces. Feeds carry no attendee names, only the owner's own family by name (protected wards as initials) |
 | Restorable club profiles (retention: `restorable_club_profiles`, planned) | Deferred from P1.8 |
 | Backups (retention: `backups`) | ≤ 12 months, then destroyed (deletion ledger re-applied on restore; the ledger export next to the backups holds erased person IDs only) |
 

@@ -301,8 +301,16 @@ schedule (Ola left two years ago).
   and the Streaming add-on; SVK on Standard with Streaming (active), IKN on
   Free (active), FIL in a Standard trial ending in ten days. With billing off
   the demo has no billing data (`apps/api/src/seed/steps/billing.ts`).
-- Calendar feeds: Anna has a "my schedule" feed including Elsa and Oskar;
-  Erik subscribes to the F2017 group feed; Ahmed has revoked an old feed token.
+- **Calendar feeds** (P1.11, `apps/api/src/seed/steps/calendar.ts`): Anna
+  has a "My schedule" feed for Elsa and Oskar
+  (`/cal/demo-anna-my-schedule.ics`), Erik subscribes to the F2017 group
+  feed (`/cal/demo-erik-f2017.ics`), Ahmed has an open feed and one he
+  revoked a month ago. The demo secrets are fixed so the request budgets
+  can fetch them; real secrets are random. The seed prints the feed URLs
+  and, when `CALENDAR_TOKEN_KEY` is set, an answer link for Elsa's next
+  F2017 training, so answering from a calendar can be tried without a
+  phone. The rows are written directly as the persona (the service would
+  make random secrets).
 - **Record history:** the seed writes through the same services as the app,
   with the persona as actor, so history exists from the start. It also replays a
   few changes over time so the History panel has content: Anna moved Elsa

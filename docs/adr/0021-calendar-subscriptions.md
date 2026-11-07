@@ -43,3 +43,15 @@ Calendar data must never expose members with protected identity.
 **Consequences.** Needs inbound email handling for level 2 (provider webhook
 in the hosted service, an IMAP/LMTP mailbox for self-hosters). Answer-link
 tokens are bounded in time (valid until the activity has passed).
+
+**Amendment (2026-11-07, P1.11, ADR 0044).**
+- Level 1 is implemented with the scopes `my_schedule`, `group` and `club`
+  (the club calendar for those who read it: managers, registrars, the
+  board). "The club's public calendar" (`club_public`) waits for public
+  activities and club pages (Phase 3).
+- Answer links are not one-click: a `GET` that answers can be triggered by
+  link scanners and previews. The link opens a page with one pre-chosen
+  button ("Confirm"); only the `POST` answers. Links also stop working when
+  their feed is revoked.
+- Protected wards appear by initials in their guardian's feed; the guardian
+  is warned when creating it.

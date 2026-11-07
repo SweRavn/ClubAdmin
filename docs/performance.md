@@ -55,6 +55,7 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 | Backups | No effect on the API budgets above (pgBackRest with 2 processes, zstd); measured under the load scenario: [#14](https://github.com/SweRavn/ClubAdmin/issues/14) |
 | Restore (RTO planning) | < 30 minutes for a 10 GB database (docs/operations/backup-restore.md) |
 | Waiting lists (P1.10b) | The owners' list of a group with 500 entries < 100 ms (order index, keyset); the summary one grouped statement; `/me/waitlists` with positions < 50 ms (one `app.waitlist_positions` call); offer, admit, accept < 200 ms; `waitlists:offers` set-based, one statement to expire and one to offer per club with work, < 1 s on the load scenario; query plans in `waitlist-plans.integration.test.ts`, request budgets for the reads |
+| Calendar feeds (P1.11) | A feed (`GET /cal/<secret>.ics`) < 50 ms p95: one lookup by hash, the owner's relationship set from Valkey, one schedule statement for the family (up to 3,000 entries, 30 days back and 370 ahead) or one read of `schedule_entries` by group or club, rendered body cached 60 s in Valkey (`CALENDAR_FEED_CACHE_SECONDS`), `ETag`/`304`; `last_fetched_at` written at most hourly; `calendar:retention` two statements on partial indexes |
 | History panels, first page (P1.9) | < 300 ms p95; club-wide changes and the audit log < 500 ms p95 (volume tests, Nightly; ADR 0042) |
 
 ## Design rules
@@ -165,6 +166,8 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   | Assignments, leave preview | 4, 5 | 6, 8 → 9, 12 |
   | History of a member, group, activity (P1.9) | 8, 6, 7 | 334 → 713, 154 → 193, 95 → 138 |
   | Club-wide changes, audit log (P1.9) | 4, 4 | 40 → 51, 20 → 33 |
+  | `GET /me/calendar-feeds` (P1.11) | 2 | 3 → 4 |
+  | A "My schedule" feed, a group feed (rendered, no cache; P1.11) | 6, 10 | 138 → 227, 174 → 305 |
 
   History reads go to their own pool (ADR 0042); their pages are mostly one
   index probe per record and monthly partition, bounded by the panel's scope

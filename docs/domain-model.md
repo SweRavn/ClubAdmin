@@ -728,10 +728,25 @@ Who hears about what (guardians with `receive_messages` plus
 the activity's groups for late "not coming") is in the prompt's catalogue,
 docs/prompts/P1.7-notifications.md.
 
-### `calendar_feeds` (ADR 0021)
-Personal, secret, revocable iCalendar subscription URLs: `person_id`, `scope`
-(`my_schedule` incl. children, `group`, `club_public`), `scope_id`,
-`token_hash`, `include_children`, `last_fetched_at`, `revoked_at`.
+### `calendar_feeds` (ADR 0021, ADR 0044)
+Personal, secret, revocable iCalendar subscription URLs (P1.11), a global
+table owned by `person_id` (RLS: the owner and system jobs; the fetch finds
+one row by hash through `app.find_calendar_feed`). Columns: `scope`
+(`my_schedule`, `group`, `club`; `club_public` is reserved for Phase 3),
+`club_id` and `group_id` (null for `my_schedule`; checked per scope),
+`person_ids` (`my_schedule`: empty means me and everyone whose schedule I
+may see, also later wards), `label` (≤ 60), `token_hash` (SHA-256 of the
+secret, unique), `last_fetched_at` (at most hourly), `access_lost_at`,
+`revoked_at` with `revoked_reason` (`owner`, `regenerated`, `access_lost`,
+`unused`, `erased`), `created_at`, `updated_at`. At most ten open feeds per
+person. Endpoints: `GET/POST /me/calendar-feeds`, `PATCH/DELETE
+/me/calendar-feeds/:feedId`, `POST /me/calendar-feeds/:feedId/regenerate`,
+`POST /groups/:groupId/calendar-feeds` (`group.activities.read` and the
+`calendar_feeds` entitlement), `POST /clubs/:clubId/calendar-feeds`
+(`club.activities.read`), the feed `GET /cal/<secret>.ics` and the answer
+links `GET/POST /calendar-answers/:token` (public). `schedule_entries`
+gained `sequence`, `meet_place`, `address`, `latitude` and `longitude` for
+the feeds.
 
 ### Record history (ADR 0017)
 Every table has a trigger writing to `history.record_changes`: table, record
