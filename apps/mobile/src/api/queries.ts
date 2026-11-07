@@ -184,6 +184,24 @@ export function useSessions() {
   });
 }
 
+// Protected identity (P1.12): turning the global flag on or off. Afterwards
+// every cached view may show the person differently: everything is
+// refetched (the persisted cache of the affected clubs included).
+export function useSetProtection() {
+  const { api } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { personId: string; protected: boolean }) =>
+      data(
+        await api.PUT("/api/v1/people/{personId}/protection", {
+          params: { path: { personId: input.personId }, query: {} },
+          body: { protected: input.protected },
+        }),
+      ),
+    onSettled: () => queryClient.invalidateQueries(),
+  });
+}
+
 // Calendar subscriptions (P1.11): the list (never secrets) and creating one
 // for my schedule and all my children; the app opens its webcal URL once.
 export function useCalendarFeeds() {

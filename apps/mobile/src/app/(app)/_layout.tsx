@@ -57,6 +57,7 @@ export default function SignedInLayout() {
         <Stack.Screen name="settings/index" options={{ title: t("mobile.settings") }} />
         <Stack.Screen name="settings/sessions" options={{ title: t("sessions.title") }} />
         <Stack.Screen name="settings/calendar" options={{ title: t("calendar.ui.title") }} />
+        <Stack.Screen name="settings/protection" options={{ title: t("protection.title") }} />
         <Stack.Screen name="settings/privacy" options={{ title: t("privacy.title") }} />
         <Stack.Screen name="settings/privacy-policy" options={{ title: t("privacy.policyLink") }} />
         <Stack.Screen

@@ -1,0 +1,33 @@
+# Protected identity (P1.12): Anna turns on protected identity for Oskar in
+# Settings → Family, after the confirmation that explains what changes. The
+# app refetches, and Oskar's state says it is on. (Last flow: other flows
+# expect the demo family unprotected.)
+appId: ${APP_ID}
+name: Protect a child
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- tapOn:
+    id: "open-settings"
+- scrollUntilVisible:
+    element:
+      id: "open-family"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "open-family"
+- scrollUntilVisible:
+    element:
+      id: "ward-protection-0199a000-0000-7000-8000-000000000004-on"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "ward-protection-0199a000-0000-7000-8000-000000000004-on"
+- tapOn:
+    text: "Ja, slå på|Yes, turn it on"
+- extendedWaitUntil:
+    visible:
+      text: "Skyddad identitet är på.|Protected identity is on."
+    timeout: 20000

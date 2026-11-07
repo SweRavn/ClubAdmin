@@ -11,6 +11,7 @@ import { useTranslations } from "use-intl";
 import { type MyWards, useMyWards, useWardGuardians } from "../../../api/queries.ts";
 import { ErrorView } from "../../../components/error-view.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
+import { ProtectionToggle } from "../../../components/protection-toggle.tsx";
 import { RoleBadge } from "../../../components/role-badge.tsx";
 import { EmptyState, Loading, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
 
@@ -30,6 +31,13 @@ function WardSection({ ward }: { ward: MyWards["wards"][number] }) {
             ? ward.rights.map((r) => t(enumKey("guardianRights", r))).join(", ")
             : t("family.noRights")}
         </Muted>
+        {/* Protected identity (P1.12): full guardians change it here too. */}
+        {ward.protectedIdentity !== undefined ? (
+          <ProtectionToggle
+            personId={ward.person.id}
+            testID={`ward-protection-${ward.person.id}`}
+          />
+        ) : null}
       </Row>
       {guardians.isError ? (
         <ErrorView error={guardians.error} onRetry={() => void guardians.refetch()} />
