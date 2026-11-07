@@ -69,6 +69,7 @@ and must never name other people (ADR 0022).
 a client library; Google refreshes only every few hours (said in the help
 text). Rotating `CALENDAR_TOKEN_KEY` invalidates all answer links (feeds
 keep working; the links come back on the next fetch). Merging duplicate
-people does not move feeds or `person_ids`; erasure deletes the person's
-feeds and removes them from other feeds' lists. Email invitations (iMIP)
+people moves the merged person's feeds to the kept person but not
+`person_ids` (a feed shows only people the owner still sees); erasure
+deletes the person's feeds and removes them from other feeds' lists. Email invitations (iMIP)
 and CalDAV remain ADR 0021 levels 2 and 3.
