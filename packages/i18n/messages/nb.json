@@ -272,7 +272,13 @@
       "title": "Noe gikk galt",
       "text": "Prøv igjen om litt. Hvis det fortsetter, oppgi referansen nedenfor."
     },
-    "reference": "Referanse: {id}"
+    "reference": "Referanse: {id}",
+    "unavailable": {
+      "title": "Tjenesten svarer ikke akkurat nå",
+      "text": "Innloggingen kan ikke leses akkurat nå. Prøv igjen om litt.",
+      "devHint": "Utvikling: sesjonslageret (Valkey) kan ikke nås. Kjør pnpm dev:doctor; hvis Valkey svarer i containeren, men ikke fra datamaskinen, start containeren på nytt:",
+      "retry": "Prøv igjen"
+    }
   },
   "roles": {
     "chair": "Leder",

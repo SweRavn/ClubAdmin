@@ -272,7 +272,13 @@
       "title": "Something went wrong",
       "text": "Try again in a moment. If it keeps happening, tell us the reference below."
     },
-    "reference": "Reference: {id}"
+    "reference": "Reference: {id}",
+    "unavailable": {
+      "title": "The service is not responding right now",
+      "text": "Your login cannot be read right now. Please try again in a moment.",
+      "devHint": "Development: the session store (Valkey) cannot be reached. Run pnpm dev:doctor; if Valkey answers inside its container but not from the computer, restart the container:",
+      "retry": "Try again"
+    }
   },
   "roles": {
     "chair": "Chair",

@@ -6,6 +6,9 @@ import { webConfig } from "./config.ts";
 
 let client: Redis | undefined;
 
+/** The page shown when the session store cannot be reached. */
+export const UNAVAILABLE_PATH = "/unavailable";
+
 /**
  * One connection per server process (kept across hot reloads in development).
  * TCP keep-alive stops idle connections from being dropped silently (Docker
@@ -40,4 +43,18 @@ export function createValkey(url: string): Redis {
     down = false;
   });
   return redis;
+}
+
+/**
+ * Whether an error means Valkey cannot be reached (refused, reset, timed out,
+ * or ioredis gave up on a command), not a bug in the caller (P1.14 finding 4).
+ */
+export function isValkeyUnavailable(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.name === "MaxRetriesPerRequestError" ||
+    /ECONNREFUSED|ECONNRESET|EPIPE|ETIMEDOUT|EHOSTUNREACH|Connection is closed|max retries per request/i.test(
+      error.message,
+    )
+  );
 }

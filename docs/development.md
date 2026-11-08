@@ -375,3 +375,6 @@ connections are accepted and reset at once. `pnpm dev:doctor` checks the
 port from the host ("valkey reachable on 127.0.0.1:6379"); the fix is
 `docker restart clubadmin-valkey-1` (Valkey holds only sessions and caches:
 you are logged out, nothing else is lost), or `pnpm dev:services`.
+Since P1.14 the web app shows this as a page ("The service is not
+responding right now", `/unavailable`, with these commands in development)
+instead of an error overlay, and "Try again" returns to where you were.

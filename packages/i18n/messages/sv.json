@@ -272,7 +272,13 @@
       "title": "Något gick fel",
       "text": "Försök igen om en stund. Om det fortsätter, berätta referensen nedan för oss."
     },
-    "reference": "Referens: {id}"
+    "reference": "Referens: {id}",
+    "unavailable": {
+      "title": "Tjänsten svarar inte just nu",
+      "text": "Inloggningen går inte att läsa just nu. Försök igen om en liten stund.",
+      "devHint": "Utveckling: sessionslagret (Valkey) går inte att nå. Kör pnpm dev:doctor; om Valkey svarar i containern men inte från datorn, starta om containern:",
+      "retry": "Försök igen"
+    }
   },
   "roles": {
     "chair": "Ordförande",

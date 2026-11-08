@@ -12,7 +12,7 @@ import { redirectTo } from "../../../../server/http.ts";
 import { client, oidcClient, redirectUri, scopes } from "../../../../server/oidc.ts";
 import { allowAuthRequest, clientIp } from "../../../../server/rate-limit.ts";
 import { safeReturnTo } from "../../../../server/return-to.ts";
-import { valkey } from "../../../../server/valkey.ts";
+import { isValkeyUnavailable, UNAVAILABLE_PATH, valkey } from "../../../../server/valkey.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +40,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     returnTo: safeReturnTo(params.get("returnTo")),
     invitation: params.get("invitation")?.slice(0, 200) ?? null,
   };
-  await valkey().set(flowKey(state), JSON.stringify(flow), "EX", 600);
+  try {
+    await valkey().set(flowKey(state), JSON.stringify(flow), "EX", 600);
+  } catch (error) {
+    if (!isValkeyUnavailable(error)) throw error;
+    return redirectTo(`${UNAVAILABLE_PATH}?returnTo=/login`);
+  }
 
   const url = client.buildAuthorizationUrl(await oidcClient(config), {
     redirect_uri: redirectUri(config),

@@ -110,6 +110,7 @@ import { apiFetch } from "./api.ts";
 import { SESSION_COOKIE } from "./cookies.ts";
 import { type FormDraft, loadFormDraft } from "./form-drafts.ts";
 import { freshSession, loadSession, type Session } from "./sessions.ts";
+import { isValkeyUnavailable, UNAVAILABLE_PATH } from "./valkey.ts";
 
 /** Set by the proxy (src/proxy.ts): the requested path and query, for returnTo and the current club. */
 export const PATH_HEADER = "x-clubadmin-path";
@@ -119,8 +120,16 @@ export const currentPath = cache(
 );
 
 export const getSession = cache(async (): Promise<Session | null> => {
-  const loaded = await loadSession((await cookies()).get(SESSION_COOKIE)?.value);
-  return loaded ? freshSession(loaded) : null;
+  try {
+    const loaded = await loadSession((await cookies()).get(SESSION_COOKIE)?.value);
+    return loaded ? await freshSession(loaded) : null;
+  } catch (error) {
+    // The session store cannot be reached (P1.14): a readable page, not an error overlay.
+    if (!isValkeyUnavailable(error)) throw error;
+    const path = await currentPath();
+    if (path.startsWith(UNAVAILABLE_PATH)) return null;
+    redirect(`${UNAVAILABLE_PATH}?returnTo=${encodeURIComponent(path)}`);
+  }
 });
 
 /**
