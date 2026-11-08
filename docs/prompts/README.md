@@ -61,7 +61,8 @@ test the foundation by hand.
 | [P1.10b Waiting lists: applying, offers, admission](P1.10b-waiting-lists.md) | P1.10a |
 | [P1.11 Calendar subscriptions with answer links](P1.11-calendar-subscriptions.md) (draft) | P1.5 |
 | [P1.12 Protected identity UI and profile view log](P1.12-protected-identity-ui.md) (draft) | P1.9 |
-| [P1.13 Billing: plans, subscriptions, invoices](P1.13-billing.md) (draft) | P0.12 |
+| [P1.13 Billing: plans, subscriptions, invoices](P1.13-billing.md) | P0.12 |
+| [P1.14 Review fixes and clean-up before Phase 2](P1.14-review-fixes.md) (filled in during the review) | P1.13 |
 
 The P1.7–P1.13 prompts are drafts written before P1.6 was implemented:
 check "What exists already" against the code and settle each prompt's

@@ -43,6 +43,7 @@ Ordered so each package only depends on earlier ones. Prompts:
 | P1.11 | Calendar subscriptions: secret iCal feeds (my schedule / group / club) with one-click answer links (ADR 0021) |
 | P1.12 | Protected identity UI: flags, crossed-camera icon, chat-acceptance flow, access log (ADR 0022) |
 | P1.13 | Billing: plans, subscriptions, invoices (only active with `BILLING_ENABLED`) |
+| P1.14 | Review fixes and clean-up before Phase 2 (first: recurring trainings with calendar-like rules, open-ended series and a timed answer request) |
 
 ## Phase 2 — Communication and compliance
 
