@@ -10,7 +10,17 @@ import { Suspense } from "react";
 import { Agenda, weekRange } from "../../components/agenda.tsx";
 import { FormError, Notice } from "../../components/form-error.tsx";
 import { InProgress, Onboarding } from "../../components/joining-panels.tsx";
-import { getMe, getMyClubs, getMyGroups, getMyWards, getSchedule } from "../../server/data.ts";
+import {
+  getMe,
+  getMyClubs,
+  getMyCreationRequests,
+  getMyGroups,
+  getMyHandovers,
+  getMyJoinRequests,
+  getMyWaitlists,
+  getMyWards,
+  getSchedule,
+} from "../../server/data.ts";
 
 export async function generateMetadata() {
   const t = await getTranslations();
@@ -27,6 +37,13 @@ export default async function HomePage({ searchParams }: Props) {
     getMyGroups(),
     getMyWards(),
     searchParams,
+    // What is in progress, fetched with the rest (cached per request): rendered
+    // with the page instead of streamed in after it, so it never becomes a late
+    // largest paint (P1.14; Lighthouse measures a home page with a hand-over).
+    getMyJoinRequests(),
+    getMyCreationRequests(),
+    getMyHandovers(),
+    getMyWaitlists(),
   ]);
 
   const notice = params.joined
@@ -45,9 +62,7 @@ export default async function HomePage({ searchParams }: Props) {
         </h1>
         {notice ? <Notice>{notice}</Notice> : null}
         <FormError code={params.error} />
-        <Suspense fallback={null}>
-          <InProgress />
-        </Suspense>
+        <InProgress />
         <Onboarding />
       </div>
     );
@@ -62,10 +77,8 @@ export default async function HomePage({ searchParams }: Props) {
       </h1>
       {notice ? <Notice>{notice}</Notice> : null}
       <FormError code={params.error} />
-      {/* Streamed: the hand-overs and requests must not hold back the page (LCP budget). */}
-      <Suspense fallback={null}>
-        <InProgress />
-      </Suspense>
+      {/* Its data came with the page's (above): no late paint (LCP budget). */}
+      <InProgress />
 
       <Suspense fallback={null}>
         <Upcoming />

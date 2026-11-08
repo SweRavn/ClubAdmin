@@ -326,6 +326,15 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
     Runs are cold (no cache), stricter than the "cached" budget. At P0.9:
     LCP about 1.3 s, CLS 0, scripts 137 KB. Total Blocking Time (190–230 ms,
     mostly React's hydration) is reported as a warning above 200 ms.
+    P1.14: also the home page of someone with something "In progress"
+    (Peter, a manager hand-over waiting). Its largest paint was that
+    section, about 1.6 s: the page sat in the `(app)/loading.tsx` Suspense
+    boundary, and React 19.2 holds back a streamed boundary's reveal for
+    about 300 ms after the shell's first paint. The home page now has no
+    loading boundary (the other sections keep theirs, `route-loading.tsx`)
+    and fetches "In progress" with the rest of the page, so everything paints
+    at once (about 1.28 s). Content above the fold must not sit in a Suspense
+    boundary that streams after the shell.
   - INP: the production end-to-end spec (`E2E_PRODUCTION=1`) interacts with a
     group page (menus, tooltip) at 4× CPU slowdown and fails if an
     interaction takes 200 ms or more to paint (Event Timing). At P0.9 the

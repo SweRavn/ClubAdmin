@@ -25,6 +25,11 @@ name: My schedule
     visible:
       id: "activity-screen"
     timeout: 20000
+# The series' summary under "When" (P1.14) can push the place below the fold.
+- scrollUntilVisible:
+    element: "Norrbackahallen"
+    direction: DOWN
+    timeout: 10000
 - assertVisible:
     id: "activity-place"
 - assertVisible: "Norrbackahallen"
