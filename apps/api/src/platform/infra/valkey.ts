@@ -12,6 +12,8 @@ export function createValkeyClient(url: string | undefined): ValkeyClient {
   const client = new Redis(url, {
     lazyConnect: true,
     connectTimeout: 2_000,
+    // Idle connections through Docker port forwarding or NAT are kept alive.
+    keepAlive: 30_000,
     maxRetriesPerRequest: 1,
     enableOfflineQueue: false,
     connectionName: "clubadmin-api",

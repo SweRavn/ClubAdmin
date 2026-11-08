@@ -36,7 +36,11 @@ const retentionDb = config.DATABASE_RETENTION_URL
   : null;
 if (!retentionDb) logger.warn("DATABASE_RETENTION_URL is not set: the privacy jobs do nothing");
 const valkey = config.VALKEY_URL
-  ? new Redis(config.VALKEY_URL, { maxRetriesPerRequest: 3, connectionName: "clubadmin-worker" })
+  ? new Redis(config.VALKEY_URL, {
+      maxRetriesPerRequest: 3,
+      connectionName: "clubadmin-worker",
+      keepAlive: 30_000,
+    })
   : undefined;
 const storageConfig = objectStorageConfig(config);
 const storage = storageConfig ? new ObjectStorage(storageConfig) : null;
