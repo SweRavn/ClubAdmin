@@ -8,6 +8,7 @@
 import { PersonSummarySchema } from "../auth/schemas.ts";
 import { z } from "../zod.ts";
 import { RESPONSE_MODES, RESPONSE_STATUSES, ResponseCountsSchema } from "./attendance.ts";
+import { RECURRENCE_FREQS, ruleProblem, type SeriesRule, WEEKDAY_ORDINALS } from "./recurrence.ts";
 
 export const ACTIVITY_KINDS = ["training", "match", "meeting", "other"] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
@@ -21,7 +22,7 @@ export type HomeAway = (typeof HOME_AWAY)[number];
 /** ISO weekday: 1 = Monday … 7 = Sunday. */
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 
-/** A series covers at most this many days (ADR 0034: fully materialised). */
+/** A series' sessions exist at most this far ahead (ADR 0034; P1.14: open-ended series are extended daily). */
 export const SERIES_MAX_DAYS = 400;
 /** A calendar range asked for at once. */
 export const CALENDAR_MAX_DAYS = 400;
@@ -88,6 +89,14 @@ export const LocationListQuerySchema = z.object({
 
 // --- Activities --------------------------------------------------------------
 
+/** When the group is asked to answer (P1.14): N days before at a local time, or N hours before. */
+export const RequestLeadSchema = z
+  .discriminatedUnion("kind", [
+    z.object({ kind: z.literal("days"), days: z.number().int().min(0).max(14), time: localTime }),
+    z.object({ kind: z.literal("hours"), hours: z.number().int().min(1).max(72) }),
+  ])
+  .openapi("RequestLead");
+
 /** Where an activity is: a club location, a free-text address, or neither. */
 const place = {
   locationId: z.uuid().nullish(),
@@ -98,6 +107,8 @@ const place = {
 const answers = {
   responseMode: z.enum(RESPONSE_MODES).optional(),
   respondBy: z.iso.datetime({ offset: true }).nullish(),
+  /** The answer request before the start (P1.14); null: none. */
+  requestLead: RequestLeadSchema.nullish(),
 };
 
 const details = {
@@ -174,6 +185,45 @@ export const SeriesSlotSchema = z
   .strict();
 export type SeriesSlot = z.infer<typeof SeriesSlotSchema>;
 
+/**
+ * How a series repeats (P1.14): a subset of RFC 5545 RRULE. Weekly rules take
+ * their weekdays and times from `slots`; daily and monthly rules carry one
+ * start time and length.
+ */
+export const SeriesRuleSchema = z
+  .object({
+    freq: z.enum(RECURRENCE_FREQS),
+    interval: z.number().int().min(1).max(52).default(1),
+    /** Monthly by position: "first Wednesday" = { weekday: 3, ordinal: 1 }; last = −1. */
+    byDay: z
+      .array(
+        z
+          .object({
+            weekday: z.number().int().min(1).max(7),
+            ordinal: z.union(WEEKDAY_ORDINALS.map((o) => z.literal(o))),
+          })
+          .strict(),
+      )
+      .max(10)
+      .optional(),
+    /** Monthly by day of the month (1–31; a month without the day skips it). */
+    byMonthDay: z.array(z.number().int().min(1).max(31)).max(10).optional(),
+    startTime: localTime.optional(),
+    durationMinutes: z.number().int().min(15).max(720).optional(),
+  })
+  .strict()
+  .openapi("SeriesRule");
+
+/** A rule and its slots fit together (weekly rules need slots, the others a time). */
+const ruleFits = (v: {
+  rule?: SeriesRule | undefined;
+  slots?: readonly SeriesSlot[] | undefined;
+}) =>
+  v.rule === undefined
+    ? (v.slots?.length ?? 0) > 0
+    : ruleProblem(v.rule, v.rule.freq === "weekly" ? (v.slots ?? []) : []) === null;
+const ruleMessage = { message: "rule and slots do not fit", path: ["rule"] };
+
 /** A series' answers: the mode and a deadline before each session (minutes, up to two weeks). */
 const seriesAnswers = {
   responseMode: z.enum(RESPONSE_MODES).optional(),
@@ -181,9 +231,13 @@ const seriesAnswers = {
 };
 
 const recurrence = {
-  slots: z.array(SeriesSlotSchema).min(1).max(14),
+  /** Weekly rules (and requests without a rule): a slot per weekday. */
+  slots: z.array(SeriesSlotSchema).max(14).default([]),
+  /** Absent: weekly by the slots (as before P1.14). */
+  rule: SeriesRuleSchema.optional(),
   startsOn: z.iso.date(),
-  endsOn: z.iso.date(),
+  /** Null: until further notice (P1.14). */
+  endsOn: z.iso.date().nullable(),
   skipDates: z.array(z.iso.date()).max(200).default([]),
   skipPublicHolidays: z.boolean().default(false),
 };
@@ -197,10 +251,16 @@ export const CreateSeriesSchema = z
     ...place,
     ...recurrence,
     ...seriesAnswers,
+    /** The answer request before each session (P1.14); null or absent: none. */
+    requestLead: RequestLeadSchema.nullish(),
     groupIds: z.array(z.uuid()).max(20).default([]),
   })
   .strict()
-  .refine((v) => v.endsOn >= v.startsOn, { message: "endsOn before startsOn", path: ["endsOn"] })
+  .refine((v) => v.endsOn === null || v.endsOn >= v.startsOn, {
+    message: "endsOn before startsOn",
+    path: ["endsOn"],
+  })
+  .refine(ruleFits, ruleMessage)
   .openapi("CreateSeriesRequest");
 export type CreateSeriesInput = z.input<typeof CreateSeriesSchema>;
 
@@ -213,11 +273,14 @@ export const UpdateSeriesSchema = z
     notes: details.notes,
     leaderNotes: details.leaderNotes,
     ...place,
-    slots: recurrence.slots.optional(),
-    endsOn: z.iso.date().optional(),
-    skipDates: z.array(z.iso.date()).max(200).optional(),
+    slots: z.array(SeriesSlotSchema).max(14).optional(),
+    rule: SeriesRuleSchema.optional(),
+    /** Null: until further notice (P1.14). */
+    endsOn: z.iso.date().nullable().optional(),
+    skipDates: z.array(z.iso.date()).max(400).optional(),
     skipPublicHolidays: z.boolean().optional(),
     ...seriesAnswers,
+    requestLead: RequestLeadSchema.nullish(),
   })
   .strict()
   .openapi("UpdateSeriesRequest");
@@ -235,8 +298,21 @@ export const SeriesPreviewSchema = z
     ...recurrence,
   })
   .strict()
-  .refine((v) => v.endsOn >= v.startsOn, { message: "endsOn before startsOn", path: ["endsOn"] })
+  .refine((v) => v.endsOn === null || v.endsOn >= v.startsOn, {
+    message: "endsOn before startsOn",
+    path: ["endsOn"],
+  })
+  .refine(ruleFits, ruleMessage)
   .openapi("SeriesPreviewRequest");
+
+/** Removing a date or a range of dates from a series (P1.14): every session in it. */
+export const SkipDatesSchema = z
+  .object({ from: z.iso.date(), to: z.iso.date().optional() })
+  .strict()
+  .refine((v) => v.to === undefined || v.to >= v.from, { message: "to before from", path: ["to"] })
+  .openapi("SkipDatesRequest");
+export type SkipDatesInput = z.input<typeof SkipDatesSchema>;
+export const SkippedDateParamsSchema = z.object({ seriesId: z.uuid(), date: z.iso.date() });
 export type SeriesPreviewInput = z.input<typeof SeriesPreviewSchema>;
 
 export const SeriesPreviewResultSchema = z
@@ -295,6 +371,9 @@ export const ActivitySchema = z
     /** Answers (P1.5). */
     responseMode: z.enum(RESPONSE_MODES).optional(),
     respondBy: z.iso.datetime({ offset: true }).nullable().optional(),
+    /** The answer request (P1.14): when it goes out, and whether it has. */
+    requestLead: RequestLeadSchema.nullable().optional(),
+    requestAt: z.iso.datetime({ offset: true }).nullable().optional(),
     /** Only those called up take part and answer (#19). */
     inviteesOnly: z.boolean().optional(),
     /** For those who manage it, in the group calendar. */
@@ -303,9 +382,22 @@ export const ActivitySchema = z
   .openapi("Activity");
 export type Activity = z.infer<typeof ActivitySchema>;
 
+/** How a session's series repeats, for its summary ("every other Wednesday …"; P1.14). */
+export const SeriesRecurrenceSchema = z
+  .object({
+    rule: SeriesRuleSchema,
+    slots: z.array(SeriesSlotSchema),
+    startsOn: z.iso.date(),
+    endsOn: z.iso.date().nullable(),
+  })
+  .openapi("SeriesRecurrence");
+export type SeriesRecurrence = z.infer<typeof SeriesRecurrenceSchema>;
+
 export const ActivityDetailSchema = ActivitySchema.extend({
   /** The leaders of its groups the viewer may see (never participants). */
   leaders: z.array(PersonSummarySchema),
+  /** A series session: how the series repeats (P1.14). */
+  recurrence: SeriesRecurrenceSchema.nullable().optional(),
 }).openapi("ActivityDetail");
 export type ActivityDetail = z.infer<typeof ActivityDetailSchema>;
 
@@ -334,12 +426,20 @@ export const SeriesSchema = z
     location: LocationSchema.nullable(),
     locationText: z.string().nullable(),
     slots: z.array(SeriesSlotSchema),
+    /** How it repeats (P1.14); weekly rules take their days from `slots`. */
+    rule: SeriesRuleSchema.optional(),
+    /** The rule as an RFC 5545 RRULE value. */
+    rrule: z.string().optional(),
     startsOn: z.iso.date(),
+    /** The last date: the end date, or for an open-ended series the last date sessions exist yet. */
     endsOn: z.iso.date(),
+    /** Runs until further notice (P1.14): `endsOn` moves ahead daily. */
+    openEnded: z.boolean().optional(),
     skipDates: z.array(z.iso.date()),
     skipPublicHolidays: z.boolean(),
     responseMode: z.enum(RESPONSE_MODES).optional(),
     respondByMinutes: z.number().int().nullable().optional(),
+    requestLead: RequestLeadSchema.nullable().optional(),
     groups: z.array(ActivityGroupRefSchema),
     /** Sessions it has now (scheduled and cancelled). */
     sessions: z.number().int(),
@@ -417,6 +517,9 @@ export const ScheduleEntrySchema = z
     /** Answers (P1.5). */
     responseMode: z.enum(RESPONSE_MODES).optional(),
     respondBy: z.iso.datetime({ offset: true }).nullable().optional(),
+    /** The answer request (P1.14): when it goes out, and whether it has. */
+    requestLead: RequestLeadSchema.nullable().optional(),
+    requestAt: z.iso.datetime({ offset: true }).nullable().optional(),
     /** Per person in `people`: their answer and whether the viewer may give it. */
     responses: z
       .array(

@@ -27,9 +27,14 @@ import {
   defaultResponseMode,
   type LocationInput,
   LocationInputSchema,
+  requestAt,
+  SERIES_HORIZON_DAYS,
   type SeriesPreviewInput,
   SeriesPreviewSchema,
+  type SeriesRule,
   type SeriesSlot,
+  type SkipDatesInput,
+  SkipDatesSchema,
   type SplitSeriesInput,
   SplitSeriesSchema,
   type UpdateActivityInput,
@@ -39,6 +44,7 @@ import {
   type UpdateSeriesInput,
   UpdateSeriesSchema,
   uuidv7,
+  WEEKLY_RULE,
 } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
@@ -56,6 +62,13 @@ export interface ActivityView {
   groups: { id: string; name: string }[];
   location: Location | null;
   timeZone: string;
+  /** A series session (detail only): how the series repeats (P1.14). */
+  recurrence?: {
+    rule: SeriesRule;
+    slots: SeriesSlot[];
+    startsOn: string;
+    endsOn: string | null;
+  } | null;
 }
 
 export interface SeriesView {
@@ -74,6 +87,8 @@ export interface SeriesChange {
 }
 
 const DAY_MS = 86_400_000;
+/** Skipped dates a series keeps (removed ranges add theirs). */
+const SKIP_DATES_MAX = 1000;
 
 const addDays = (date: string, days: number) =>
   new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
@@ -109,7 +124,11 @@ const SHOWN_FIELDS = [
 ] as const;
 
 const sameValue = (a: unknown, b: unknown) =>
-  a instanceof Date && b instanceof Date ? a.getTime() === b.getTime() : a === b;
+  a instanceof Date && b instanceof Date
+    ? a.getTime() === b.getTime()
+    : a !== null && b !== null && typeof a === "object" && typeof b === "object"
+      ? JSON.stringify(a) === JSON.stringify(b)
+      : a === b;
 
 export class ActivitiesService {
   private readonly db: Database;
@@ -266,6 +285,14 @@ export class ActivitiesService {
         meetAt: data.meetAt ? new Date(data.meetAt) : null,
         responseMode: data.responseMode ?? defaultResponseMode(data.kind),
         respondBy: data.respondBy ? new Date(data.respondBy) : null,
+        requestLead: data.requestLead ?? null,
+        requestAt: data.requestLead
+          ? requestAt(
+              data.requestLead,
+              new Date(data.startsAt),
+              (await this.clubs.getClubInTx(tx, context.clubId)).timeZone,
+            )
+          : null,
         createdByPersonId: actorPersonId(context),
       },
     ]);
@@ -284,7 +311,19 @@ export class ActivitiesService {
     return this.db.withTenant(context, async (tx) => {
       const activity = await repo.findActivity(tx, activityId);
       if (!activity) throw new DomainError("not_found");
-      return (await this.views(tx, context.clubId, [activity]))[0]!;
+      const view = (await this.views(tx, context.clubId, [activity]))[0]!;
+      const series = activity.seriesId ? await repo.findSeries(tx, activity.seriesId) : null;
+      return {
+        ...view,
+        recurrence: series
+          ? {
+              rule: series.rule,
+              slots: series.slots,
+              startsOn: series.startsOn,
+              endsOn: series.endsOn,
+            }
+          : null,
+      };
     });
   }
 
@@ -322,6 +361,7 @@ export class ActivitiesService {
         ...("respondBy" in data
           ? { respondBy: data.respondBy ? new Date(data.respondBy) : null }
           : {}),
+        ...("requestLead" in data ? { requestLead: data.requestLead ?? null } : {}),
       };
       if ("locationId" in data || "locationText" in data) {
         const locationId = data.locationId ?? null;
@@ -334,6 +374,12 @@ export class ActivitiesService {
       const startsAt = next.startsAt ?? current.startsAt;
       const endsAt = next.endsAt ?? current.endsAt;
       if (endsAt.getTime() <= startsAt.getTime()) throw new DomainError("invalid_input");
+      // The request's moment follows its lead and the start; one already sent is not sent again.
+      if ("requestLead" in next || next.startsAt !== undefined) {
+        const lead = "requestLead" in next ? (next.requestLead ?? null) : current.requestLead;
+        const club = await this.clubs.getClubInTx(tx, context.clubId);
+        next.requestAt = requestAt(lead, startsAt, club.timeZone);
+      }
 
       const changed = Object.keys(next).filter(
         (key) => !sameValue(next[key as keyof typeof next], current[key as keyof repo.ActivityRow]),
@@ -495,7 +541,11 @@ export class ActivitiesService {
     return this.db.withTenant(context, async (tx) => {
       const data = parseInput(SeriesPreviewSchema, input);
       const club = await this.clubs.getClubInTx(tx, context.clubId);
-      return { timeZone: club.timeZone, ...this.expand(club, data) };
+      const to = this.horizon(club, data.endsOn, null);
+      return {
+        timeZone: club.timeZone,
+        ...this.expand(club, { ...data, rule: this.ruleOf(data) }, data.startsOn, to),
+      };
     });
   }
 
@@ -512,7 +562,9 @@ export class ActivitiesService {
       const locationId = data.locationId ?? null;
       if (locationId) await this.requireLocation(tx, context.clubId, locationId);
       const club = await this.clubs.getClubInTx(tx, context.clubId);
-      const { sessions } = this.expand(club, data);
+      const rule = this.ruleOf(data);
+      const until = this.horizon(club, data.endsOn, null);
+      const { sessions } = this.expand(club, { ...data, rule }, data.startsOn, until);
       const series = await repo.insertSeries(
         tx,
         {
@@ -524,18 +576,28 @@ export class ActivitiesService {
           leaderNotes: data.leaderNotes ?? null,
           locationId,
           locationText: locationId ? null : (data.locationText ?? null),
-          slots: data.slots,
+          slots: rule.freq === "weekly" ? data.slots : [],
+          rule,
           startsOn: data.startsOn,
           endsOn: data.endsOn,
+          materializedUntil: until,
           skipDates: [...new Set(data.skipDates)].sort(),
           skipPublicHolidays: data.skipPublicHolidays,
           responseMode: data.responseMode ?? defaultResponseMode(data.kind),
           respondByMinutes: data.respondByMinutes ?? null,
+          requestLead: data.requestLead ?? null,
           createdByPersonId: actorPersonId(context),
         },
         groupIds,
       );
-      const created = await this.insertSessions(tx, series, groupIds, sessions, options.sessionId);
+      const created = await this.insertSessions(
+        tx,
+        club,
+        series,
+        groupIds,
+        sessions,
+        options.sessionId,
+      );
       await audit.record(tx, {
         action: "activity.series.created",
         resourceType: "activity_series",
@@ -583,7 +645,11 @@ export class ActivitiesService {
       const from = data.from ?? today;
       if (from < today) throw new DomainError("series_change_in_past");
       const values = await this.seriesValues(tx, context.clubId, current, data);
-      if (values.endsOn !== undefined && values.endsOn < current.startsOn) {
+      if (
+        values.endsOn !== undefined &&
+        values.endsOn !== null &&
+        values.endsOn < current.startsOn
+      ) {
         throw new DomainError("invalid_recurrence");
       }
       const series = await repo.updateSeries(tx, seriesId, values);
@@ -641,7 +707,10 @@ export class ActivitiesService {
       }
 
       const later = await repo.seriesSessions(tx, seriesId, day);
-      await repo.updateSeries(tx, seriesId, { endsOn: addDays(day, -1) });
+      await repo.updateSeries(tx, seriesId, {
+        endsOn: addDays(day, -1),
+        materializedUntil: addDays(day, -1),
+      });
       const successor = await repo.insertSeries(
         tx,
         {
@@ -664,6 +733,124 @@ export class ActivitiesService {
       const counts = await this.applyRules(tx, club, successor, groupIds, day);
       await this.recordSplit(tx, context.clubId, seriesId, successor.id);
       return { series: await this.seriesView(tx, successor), ...counts };
+    });
+  }
+
+  /**
+   * Removes a date or a range of dates from a series (P1.14): every date of
+   * its pattern in the range becomes a skipped date, and its sessions go as a
+   * deleted session does (cancelled when someone answered). Not in the past.
+   */
+  skipDates(
+    context: TenantContext,
+    seriesId: string,
+    input: SkipDatesInput,
+  ): Promise<SeriesChange> {
+    return this.db.withTenant(context, async (tx) => {
+      const data = parseInput(SkipDatesSchema, input);
+      const current = await repo.lockSeries(tx, seriesId);
+      if (!current) throw new DomainError("not_found");
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      if (data.from < localDate(this.now(), club.timeZone)) {
+        throw new DomainError("series_change_in_past");
+      }
+      const to = data.to ?? data.from;
+      const { sessions, skipped } = this.expand(club, current, data.from, to);
+      const added = [...sessions.map((x) => x.date), ...skipped.map((x) => x.date)];
+      const skipDates = [...new Set([...current.skipDates, ...added])].sort();
+      if (skipDates.length > SKIP_DATES_MAX) throw new DomainError("invalid_input");
+      const series = await repo.updateSeries(tx, seriesId, { skipDates });
+      const groupIds = await repo.seriesGroupIds(tx, seriesId);
+      const counts = await this.applyRules(tx, club, series, groupIds, data.from);
+      await audit.record(tx, {
+        action: "activity.series.dates_skipped",
+        resourceType: "activity_series",
+        resourceId: seriesId,
+        changedFields: ["skip_dates"],
+      });
+      await outbox.publish(tx, "activity_series.changed", {
+        clubId: context.clubId,
+        seriesId,
+        change: "updated",
+      });
+      return { series: await this.seriesView(tx, series), ...counts };
+    });
+  }
+
+  /**
+   * Brings a removed date back (P1.14): a session cancelled when the date was
+   * removed is restored, otherwise the session is made again from the rule.
+   */
+  restoreDate(context: TenantContext, seriesId: string, date: string): Promise<SeriesChange> {
+    return this.db.withTenant(context, async (tx) => {
+      const current = await repo.lockSeries(tx, seriesId);
+      if (!current?.skipDates.includes(date)) throw new DomainError("not_found");
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      if (date < localDate(this.now(), club.timeZone)) {
+        throw new DomainError("series_change_in_past");
+      }
+      const series = await repo.updateSeries(tx, seriesId, {
+        skipDates: current.skipDates.filter((d) => d !== date),
+      });
+      const [kept] = (await repo.seriesSessions(tx, seriesId, date)).filter(
+        (a) => a.occurrenceOn === date && a.status === "cancelled" && !a.detached,
+      );
+      if (kept) {
+        await repo.updateActivity(tx, kept.id, {
+          status: "scheduled",
+          cancelledReason: null,
+          sequence: kept.sequence + 1,
+          changedAt: this.now(),
+        });
+      }
+      const groupIds = await repo.seriesGroupIds(tx, seriesId);
+      const counts = await this.applyRules(tx, club, series, groupIds, date);
+      if (kept) {
+        await repo.syncScheduleEntries(tx, { activityIds: [kept.id] });
+        await this.publish(tx, context.clubId, kept.id, "restored");
+      }
+      await audit.record(tx, {
+        action: "activity.series.date_restored",
+        resourceType: "activity_series",
+        resourceId: seriesId,
+        changedFields: ["skip_dates"],
+      });
+      await outbox.publish(tx, "activity_series.changed", {
+        clubId: context.clubId,
+        seriesId,
+        change: "updated",
+      });
+      return {
+        series: await this.seriesView(tx, series),
+        ...counts,
+        created: counts.created + (kept ? 1 : 0),
+      };
+    });
+  }
+
+  /** Series whose sessions should reach further ahead (P1.14; the daily job, all clubs). */
+  seriesToExtend(limit: number): Promise<{ id: string; clubId: string }[]> {
+    const until = addDays(this.now().toISOString().slice(0, 10), SERIES_HORIZON_DAYS - 1);
+    return this.db.withSystem("activities:extend_series", {}, (tx) =>
+      repo.seriesToExtend(tx, until, limit),
+    );
+  }
+
+  /**
+   * Extends one series to the horizon (P1.14, ADR 0034): the sessions after
+   * its last materialised date, as the system, in its club. Idempotent: the
+   * sessions are keyed by their date.
+   */
+  extendSeries(clubId: string, seriesId: string): Promise<number> {
+    return this.db.withSystem("activities:extend_series", { clubId }, async (tx) => {
+      const series = await repo.lockSeries(tx, seriesId);
+      if (!series) return 0;
+      const club = await this.clubs.getClubInTx(tx, clubId);
+      const today = localDate(this.now(), club.timeZone);
+      const next = addDays(series.materializedUntil, 1);
+      const groupIds = await repo.seriesGroupIds(tx, seriesId);
+      const counts = await this.applyRules(tx, club, series, groupIds, next > today ? next : today);
+      return counts.created;
     });
   }
 
@@ -844,27 +1031,49 @@ export class ActivitiesService {
 
   // --- Internals ----------------------------------------------------------------------
 
+  /** The rule of a request: weekly by its slots when it names none (as before P1.14). */
+  private ruleOf(data: { rule?: SeriesRule | undefined }): SeriesRule {
+    return data.rule ?? WEEKLY_RULE;
+  }
+
+  /**
+   * The last date a series' sessions should exist: its end, but never more
+   * than the horizon ahead of today (P1.14), and never less than already made.
+   */
+  private horizon(
+    club: { timeZone: string },
+    endsOn: string | null,
+    materializedUntil: string | null,
+  ): string {
+    let limit = addDays(localDate(this.now(), club.timeZone), SERIES_HORIZON_DAYS);
+    if (materializedUntil && materializedUntil > limit) limit = materializedUntil;
+    return endsOn !== null && endsOn < limit ? endsOn : limit;
+  }
+
   private expand(
     club: { country: string; timeZone: string },
     rules: {
+      rule: SeriesRule;
       slots: readonly SeriesSlot[];
       startsOn: string;
-      endsOn: string;
+      endsOn: string | null;
       skipDates: readonly string[];
       skipPublicHolidays: boolean;
     },
+    from: string,
+    to: string,
   ): Expansion {
     const holidays = new Set<string>();
     if (rules.skipPublicHolidays) {
       const pack = getCountryPack(club.country);
-      const first = Number(rules.startsOn.slice(0, 4));
-      const last = Number(rules.endsOn.slice(0, 4));
+      const first = Number((from < rules.startsOn ? rules.startsOn : from).slice(0, 4));
+      const last = Number(to.slice(0, 4));
       for (let year = first; year <= last; year++) {
         for (const day of pack.publicHolidays(year)) holidays.add(day);
       }
     }
     try {
-      return expandSeries({ ...rules, holidays, timeZone: club.timeZone });
+      return expandSeries({ ...rules, from, to, holidays, timeZone: club.timeZone });
     } catch (error) {
       return recurrenceError(error);
     }
@@ -883,7 +1092,14 @@ export class ActivitiesService {
       ...(data.notes === undefined ? {} : { notes: data.notes ?? null }),
       ...(data.leaderNotes === undefined ? {} : { leaderNotes: data.leaderNotes ?? null }),
       ...(data.slots === undefined ? {} : { slots: data.slots }),
+      ...(data.rule === undefined
+        ? {}
+        : {
+            rule: { ...data.rule, interval: data.rule.interval ?? 1 },
+            ...(data.rule.freq === "weekly" ? {} : { slots: [] }),
+          }),
       ...(data.endsOn === undefined ? {} : { endsOn: data.endsOn }),
+      ...(data.requestLead === undefined ? {} : { requestLead: data.requestLead ?? null }),
       ...(data.skipDates === undefined ? {} : { skipDates: [...new Set(data.skipDates)].sort() }),
       ...(data.skipPublicHolidays === undefined
         ? {}
@@ -915,7 +1131,13 @@ export class ActivitiesService {
     groupIds: readonly string[],
     from: string,
   ): Promise<{ created: number; updated: number; removed: number }> {
-    const { sessions } = this.expand(club, series);
+    // Sessions exist to the horizon (P1.14); later ones are made by the daily extension.
+    const until = this.horizon(
+      club,
+      series.endsOn,
+      series.endsOn === null ? series.materializedUntil : null,
+    );
+    const { sessions } = this.expand(club, series, from, until);
     const wanted = sessions.filter((s) => s.date >= from);
     const existing = await repo.seriesSessions(tx, series.id, from);
     const detachedDates = new Set(existing.filter((a) => a.detached).map((a) => a.occurrenceOn));
@@ -942,6 +1164,8 @@ export class ActivitiesService {
         locationText: series.locationText,
         responseMode: series.responseMode,
         respondBy: respondByOf(series, session.startsAt),
+        requestLead: series.requestLead,
+        requestAt: requestAt(series.requestLead, session.startsAt, club.timeZone),
       };
       const shown =
         row.startsAt.getTime() !== next.startsAt.getTime() ||
@@ -953,7 +1177,9 @@ export class ActivitiesService {
         row.locationText !== next.locationText;
       const answers =
         row.responseMode !== next.responseMode ||
-        row.respondBy?.getTime() !== next.respondBy?.getTime();
+        row.respondBy?.getTime() !== next.respondBy?.getTime() ||
+        row.requestAt?.getTime() !== next.requestAt?.getTime() ||
+        JSON.stringify(row.requestLead) !== JSON.stringify(next.requestLead);
       if (shown || answers || row.leaderNotes !== next.leaderNotes) {
         updates.push({ ...next, bump: shown });
       }
@@ -976,7 +1202,10 @@ export class ActivitiesService {
         changedAt: this.now(),
       });
     }
-    const created = await this.insertSessions(tx, series, groupIds, inserts);
+    const created = await this.insertSessions(tx, club, series, groupIds, inserts);
+    if (until !== series.materializedUntil) {
+      await repo.updateSeries(tx, series.id, { materializedUntil: until });
+    }
     await repo.syncScheduleEntries(tx, {
       activityIds: [...updates.map((u) => u.id), ...cancelled.map((a) => a.id), ...created],
     });
@@ -991,6 +1220,7 @@ export class ActivitiesService {
   /** Inserts sessions of a series with its groups and calendar entries; returns their IDs. */
   private async insertSessions(
     tx: Tx,
+    club: { timeZone: string },
     series: repo.SeriesRow,
     groupIds: readonly string[],
     sessions: readonly { date: string; startsAt: Date; endsAt: Date }[],
@@ -1013,6 +1243,8 @@ export class ActivitiesService {
         endsAt: s.endsAt,
         responseMode: series.responseMode,
         respondBy: respondByOf(series, s.startsAt),
+        requestLead: series.requestLead,
+        requestAt: requestAt(series.requestLead, s.startsAt, club.timeZone),
         createdByPersonId: series.createdByPersonId,
       })),
     );

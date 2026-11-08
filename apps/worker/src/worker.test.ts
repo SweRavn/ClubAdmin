@@ -31,6 +31,7 @@ describe("worker", () => {
       "members:purge_imports",
       "notifications:deliver",
       "notifications:response_reminders",
+      "notifications:response_requests",
       "notifications:event_reminders",
       "notifications:push_receipts",
       "notifications:retention",

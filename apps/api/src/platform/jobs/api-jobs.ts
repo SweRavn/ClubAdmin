@@ -15,6 +15,7 @@ import {
   type TaskList,
 } from "graphile-worker";
 
+import type { ActivitiesService } from "../../modules/activities/index.ts";
 import type { EventsService } from "../../modules/events/index.ts";
 import type { MemberImportsService } from "../../modules/members/index.ts";
 import {
@@ -53,6 +54,20 @@ export function eventTasks(events: EventsService): TaskList {
   };
 }
 
+/** Series extended per run; the next run takes the rest. */
+const SERIES_PER_RUN = 500;
+
+export function activityTasks(activities: ActivitiesService): TaskList {
+  return {
+    // Open-ended series reach the horizon (P1.14, ADR 0034): each in its own transaction.
+    "activities:extend_series": async () => {
+      for (const due of await activities.seriesToExtend(SERIES_PER_RUN)) {
+        await activities.extendSeries(due.clubId, due.id);
+      }
+    },
+  };
+}
+
 const ExportPayload = z.object({ exportId: z.uuid() });
 
 export function privacyTasks(exports: DataExportJobDeps, erasure: ErasureJobDeps): TaskList {
@@ -69,11 +84,13 @@ export function privacyTasks(exports: DataExportJobDeps, erasure: ErasureJobDeps
 
 /**
  * Every minute: an offer is answered by its time to the minute. Every ten
- * minutes: erasures whose grace period has passed.
+ * minutes: erasures whose grace period has passed. Daily: series extended
+ * to the horizon (P1.14).
  */
 export const API_CRONTAB = [
   "* * * * * events:expire_offers ?max=1",
   "*/10 * * * * privacy:erase ?max=1",
+  "23 2 * * * activities:extend_series ?max=1",
 ].join("\n");
 
 function graphileLogger(logger: Logger): GraphileLogger {
@@ -92,6 +109,7 @@ export function startApiJobs(options: {
   concurrency: number;
   imports: MemberImportsService;
   events: EventsService;
+  activities: ActivitiesService;
   exports: DataExportJobDeps;
   erasure: ErasureJobDeps;
   logger: Logger;
@@ -104,6 +122,7 @@ export function startApiJobs(options: {
     taskList: {
       ...memberImportTasks(options.imports),
       ...eventTasks(options.events),
+      ...activityTasks(options.activities),
       ...privacyTasks(options.exports, options.erasure),
     },
     crontab: API_CRONTAB,

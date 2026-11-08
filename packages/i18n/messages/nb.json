@@ -1198,7 +1198,7 @@
   },
   "series": {
     "newTitle": "Ny treningsserie",
-    "intro": "Velg ukedager og tider; alle økter opprettes med en gang. Forhåndsvis først.",
+    "intro": "Velg hvordan treningen gjentas; øktene lages med en gang (for serier inntil videre 13 måneder fram, deretter løpende). Forhåndsvis først.",
     "slots": "Ukedager og tider",
     "weekday": "Ukedag",
     "noSlot": "–",
@@ -1229,7 +1229,53 @@
     "save": "Lagre endringen",
     "splitTitle": "Endre fra {date} og fremover",
     "splitIntro": "Serien slutter dagen før; en ny serie med endringene tar over fra denne økten.",
-    "split": "Endre denne og følgende"
+    "split": "Endre denne og følgende",
+    "repeats": "Gjentas",
+    "freq": {
+      "weekly": "Ukentlig",
+      "daily": "Daglig",
+      "monthly": "Månedlig"
+    },
+    "interval": "Hvor ofte",
+    "intervalHint": "1 = hver, 2 = annenhver, 3 = hver tredje …",
+    "slotsHint": "Ukentlig: ukedager og tider.",
+    "monthlyBy": "Månedlig på",
+    "monthlyByPosition": "En ukedag i måneden (f.eks. første onsdag)",
+    "monthlyByDay": "En dato i måneden (f.eks. den 15.)",
+    "ordinal": "Hvilken",
+    "ordinals": {
+      "1": "Første",
+      "2": "Andre",
+      "3": "Tredje",
+      "4": "Fjerde",
+      "last": "Siste"
+    },
+    "monthDays": "Dag i måneden",
+    "monthDaysHint": "F.eks. 15, eller 1, 15. Måneder uten dagen hoppes over.",
+    "ruleTime": "Starttid (daglig og månedlig)",
+    "ends": "Slutter",
+    "endsNever": "Inntil videre",
+    "endsOnDate": "På en sluttdato",
+    "endsHint": "Kan endres senere begge veier.",
+    "request": "Be gruppen svare",
+    "requestNone": "Ingen forespørsel",
+    "requestDays": "Dager før, på et klokkeslett",
+    "requestHours": "Timer før start",
+    "requestDaysField": "Antall dager før",
+    "requestTimeField": "Klokken",
+    "requestHoursField": "Antall timer før",
+    "requestHint": "Alle som deltar og ikke har svart, blir spurt om de kommer, én gang per økt.",
+    "rule": "Gjentakelse",
+    "untilFurtherNotice": "inntil videre",
+    "removeDates": "Fjern datoer",
+    "removeDatesIntro": "For eksempel ferie eller stengt hall: alle økter i perioden fjernes. Økter noen allerede har svart på, avlyses i stedet.",
+    "removeFrom": "Fra",
+    "removeTo": "Til og med (tomt = bare én dag)",
+    "removeButton": "Fjern datoene",
+    "removed": "Fjernede datoer",
+    "bringBack": "Ta tilbake",
+    "datesRemoved": "Datoene er fjernet.",
+    "dateRestored": "Datoen er tilbake."
   },
   "clubCalendar": {
     "title": "Klubbens kalender",
@@ -1586,6 +1632,10 @@
       "late_decline": {
         "title": "Sent avbud: {title} {when}",
         "body": "{club} · {group}"
+      },
+      "requested": {
+        "title": "Kommer du? {title} {when}",
+        "body": "Svar om du kommer. {club} · {group}"
       }
     },
     "event": {
@@ -2557,6 +2607,8 @@
       "billing_plan_updated": "{actor} oppdaterte et abonnementsnivå",
       "club_access_state_changed": "{actor} endret klubbens tilgang",
       "activity_series_split": "{actor} delte en aktivitetsserie",
+      "activity_series_dates_skipped": "{actor} fjernet datoer fra en aktivitetsserie",
+      "activity_series_date_restored": "{actor} tok tilbake en dato i en aktivitetsserie",
       "activity_invitees_changed": "{actor} endret hvem som er invitert",
       "group_waitlist_withdrawn": "{actor} forlot en kø",
       "person_club_data_purged": "{actor} fjernet opplysningene til et tidligere medlem",
@@ -3098,5 +3150,31 @@
     "cardSaved": "Takk. Kortet lagres så snart betalingsleverandøren bekrefter det (vanligvis innen ett minutt).",
     "paidThanks": "Takk for betalingen. Den vises så snart betalingsleverandøren bekrefter den.",
     "payNow": "Betal nå med kort"
+  },
+  "recurrence": {
+    "every": {
+      "daily": "{interval, plural, =1 {Hver dag} =2 {Annenhver dag} other {Hver {interval}. dag}}",
+      "weekly": "{interval, plural, =1 {Hver uke} =2 {Annenhver uke} other {Hver {interval}. uke}}",
+      "monthly": "{interval, plural, =1 {Hver måned} =2 {Annenhver måned} other {Hver {interval}. måned}}"
+    },
+    "weekly": "{every} på {slots}",
+    "slot": "{weekday} {time}",
+    "monthlyByPosition": "{every} på {positions} kl. {time}",
+    "position": "{ordinal} {weekday}",
+    "ordinal": {
+      "1": "første",
+      "2": "andre",
+      "3": "tredje",
+      "4": "fjerde",
+      "last": "siste"
+    },
+    "monthlyByDay": "{every} den {days}. kl. {time}",
+    "daily": "{every} kl. {time}",
+    "untilFurtherNotice": "{pattern}, inntil videre",
+    "through": "{pattern}, til og med {date}",
+    "request": {
+      "days": "Gruppen blir bedt om å svare {days, plural, =0 {samme dag} one {# dag før} other {# dager før}} kl. {time}",
+      "hours": "Gruppen blir bedt om å svare {hours, plural, one {# time} other {# timer}} før start"
+    }
   }
 }

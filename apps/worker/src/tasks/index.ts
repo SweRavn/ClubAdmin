@@ -26,6 +26,7 @@ import {
   fanoutTask,
   notificationsRetentionTask,
   responseRemindersTask,
+  responseRequestsTask,
 } from "../notifications/tasks.ts";
 import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
@@ -197,6 +198,7 @@ function notificationTasks(deps: TaskDependencies): TaskList {
     "notifications:deliver": deliverTask(delivery),
     "notifications:push_receipts": pushReceiptsTask(delivery),
     "notifications:response_reminders": responseRemindersTask({ db: deps.db, channels }),
+    "notifications:response_requests": responseRequestsTask({ db: deps.db, channels }),
     "notifications:event_reminders": eventRemindersTask({ db: deps.db, channels }),
     "notifications:retention": notificationsRetentionTask(deps.db),
   };
@@ -211,7 +213,8 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * past their club's retention daily at 05:07 UTC (#18), expired member
  * exports every ten minutes and member import staging data hourly (P1.3b);
  * notifications (P1.7): delivery every minute (also woken when notices are
- * created), reminders and push receipts every 15 minutes, retention daily
+ * created), reminders and push receipts every 15 minutes, answer requests
+ * before sessions every five minutes (P1.14), retention daily
  * at 05:37 UTC; privacy (P1.8a): board decisions taking effect at 00:17
  * UTC, former members and orphaned people at 05:31 UTC, the audit log at
  * 05:43 UTC; "download my data" files past seven days hourly at :07 (P1.8b);
@@ -232,6 +235,7 @@ export const crontab = [
   "17 * * * * members:purge_imports ?max=1",
   "* * * * * notifications:deliver ?max=1&jobKey=notifications:deliver",
   "*/15 * * * * notifications:response_reminders ?max=1",
+  "*/5 * * * * notifications:response_requests ?max=1",
   "*/15 * * * * notifications:event_reminders ?max=1",
   "*/15 * * * * notifications:push_receipts ?max=1",
   "37 5 * * * notifications:retention ?fill=2d",

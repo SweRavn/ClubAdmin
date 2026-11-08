@@ -62,6 +62,8 @@ export const NOTIFICATION_TYPES = {
   "callup.added": { category: "schedule" },
   "callup.removed": { category: "schedule" },
   "response.reminder": { category: "responses" },
+  // The answer request a chosen time before a session (P1.14).
+  "response.requested": { category: "responses" },
   "response.late_decline": { category: "leader" },
   "event.published": { category: "events" },
   "event.cancelled": { category: "events" },

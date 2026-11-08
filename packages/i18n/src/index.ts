@@ -172,3 +172,5 @@ export function format(
     name in values ? String(values[name]) : whole,
   );
 }
+
+export { describeRecurrence, type RecurrenceSummaryInput, weekdayName } from "./recurrence.ts";

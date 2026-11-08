@@ -6,12 +6,12 @@
 // were ever loaded, the schedule's cached entry is shown. Activities are
 // planned on the web.
 
-import { enumKey } from "@clubadmin/i18n";
+import { describeRecurrence, enumKey } from "@clubadmin/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
 import { useState } from "react";
 import { Linking, View } from "react-native";
-import { useFormatter, useTranslations } from "use-intl";
+import { useFormatter, useLocale, useTranslations } from "use-intl";
 
 import {
   type SchedulePage,
@@ -50,6 +50,7 @@ function Activity({ activityId }: { activityId: string }) {
   const t = useTranslations();
   const theme = useTheme();
   const format = useFormatter();
+  const locale = useLocale();
   const activity = useActivity(activityId);
   const answers = useResponseSummary(activityId);
   const myGroups = useMyGroups();
@@ -175,6 +176,20 @@ function Activity({ activityId }: { activityId: string }) {
               ]
                 .filter(Boolean)
                 .join(", ")}`}
+            </Muted>
+          ) : null}
+          {a?.recurrence ? (
+            <Muted testID="activity-recurrence">
+              {describeRecurrence(
+                (key, values) => t(key as never, values as never),
+                locale,
+                a.recurrence,
+                (date) =>
+                  format.dateTime(new Date(`${date}T12:00:00Z`), {
+                    dateStyle: "long",
+                    timeZone: "UTC",
+                  }),
+              )}
             </Muted>
           ) : null}
         </Row>

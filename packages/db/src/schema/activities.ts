@@ -12,8 +12,10 @@ import {
   type ActivityStatus,
   HOME_AWAY,
   type HomeAway,
+  type RequestLead,
   RESPONSE_MODES,
   type ResponseMode,
+  type SeriesRule,
   type SeriesSlot,
 } from "@clubadmin/shared";
 import { sql } from "drizzle-orm";
@@ -78,10 +80,20 @@ export const activitySeries = pgTable(
     leaderNotes: text(),
     locationId: uuid(),
     locationText: text(),
-    /** Weekly sessions: ISO weekday, local start time, duration. */
+    /** Weekly sessions: ISO weekday, local start time, duration (weekly rules). */
     slots: jsonb().$type<SeriesSlot[]>().notNull(),
+    /** How it repeats (P1.14): a subset of RFC 5545 RRULE. */
+    rule: jsonb()
+      .$type<SeriesRule>()
+      .notNull()
+      .default(sql`'{"freq": "weekly", "interval": 1}'::jsonb`),
     startsOn: date({ mode: "string" }).notNull(),
-    endsOn: date({ mode: "string" }).notNull(),
+    /** Null: until further notice (P1.14). */
+    endsOn: date({ mode: "string" }),
+    /** Sessions exist up to this date; open-ended series are extended daily (P1.14). */
+    materializedUntil: date({ mode: "string" }).notNull(),
+    /** The answer request before each session (P1.14); null: none. */
+    requestLead: jsonb().$type<RequestLead>(),
     skipDates: date({ mode: "string" })
       .array()
       .notNull()
@@ -107,7 +119,14 @@ export const activitySeries = pgTable(
     }),
     check("activity_series_kind", oneOf(t.kind, ACTIVITY_KINDS)),
     check("activity_series_period", sql`${t.endsOn} >= ${t.startsOn}`),
-    check("activity_series_length", sql`${t.endsOn} - ${t.startsOn} <= 400`),
+    check("activity_series_rule", sql`${t.rule}->>'freq' IN ('daily', 'weekly', 'monthly')`),
+    check(
+      "activity_series_request_lead",
+      sql`${t.requestLead} IS NULL OR ${t.requestLead}->>'kind' IN ('days', 'hours')`,
+    ),
+    index("activity_series_extend_idx")
+      .on(t.materializedUntil)
+      .where(sql`${t.endsOn} IS NULL OR ${t.endsOn} > ${t.materializedUntil}`),
     index("activity_series_club_idx").on(t.clubId, t.startsOn),
     index("activity_series_creator_idx").on(t.createdByPersonId),
   ],
@@ -173,6 +192,10 @@ export const activities = pgTable(
     respondBy: timestamp(tz),
     /** Only the people called up (activity_invitees) take part and answer (#19). */
     inviteesOnly: boolean().notNull().default(false),
+    /** The answer request (P1.14): its lead, when it goes out, when it went out. */
+    requestLead: jsonb().$type<RequestLead>(),
+    requestAt: timestamp(tz),
+    requestedAt: timestamp(tz),
     createdByPersonId: personRef(),
     ...timestamps,
   },
@@ -213,6 +236,16 @@ export const activities = pgTable(
     index("activities_reminder_idx")
       .on(sql`coalesce(${t.respondBy}, ${t.startsAt})`)
       .where(sql`${t.responseMode} = 'requested' AND ${t.status} = 'scheduled'`),
+    // Answer requests (P1.14): unsent requests by their time, per club.
+    index("activities_request_idx")
+      .on(t.clubId, t.requestAt)
+      .where(
+        sql`${t.requestedAt} IS NULL AND ${t.requestAt} IS NOT NULL AND ${t.status} = 'scheduled'`,
+      ),
+    check(
+      "activities_request_lead",
+      sql`${t.requestLead} IS NULL OR ${t.requestLead}->>'kind' IN ('days', 'hours')`,
+    ),
   ],
 );
 

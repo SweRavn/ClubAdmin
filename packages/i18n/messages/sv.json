@@ -1198,7 +1198,7 @@
   },
   "series": {
     "newTitle": "Ny träningsserie",
-    "intro": "Välj veckodagar och tider; alla tillfällen skapas direkt. Förhandsgranska först.",
+    "intro": "Välj hur träningen upprepas; tillfällena skapas direkt (för serier tills vidare 13 månader framåt, sedan löpande). Förhandsgranska först.",
     "slots": "Veckodagar och tider",
     "weekday": "Veckodag",
     "noSlot": "–",
@@ -1229,7 +1229,53 @@
     "save": "Spara ändringen",
     "splitTitle": "Ändra från {date} och framåt",
     "splitIntro": "Serien slutar dagen före; en ny serie med ändringarna tar över från det här tillfället.",
-    "split": "Ändra detta och följande"
+    "split": "Ändra detta och följande",
+    "repeats": "Upprepas",
+    "freq": {
+      "weekly": "Veckovis",
+      "daily": "Dagligen",
+      "monthly": "Månadsvis"
+    },
+    "interval": "Hur ofta",
+    "intervalHint": "1 = varje, 2 = varannan, 3 = var tredje …",
+    "slotsHint": "Veckovis: veckodagar och tider.",
+    "monthlyBy": "Månadsvis på",
+    "monthlyByPosition": "En veckodag i månaden (t.ex. första onsdagen)",
+    "monthlyByDay": "Ett datum i månaden (t.ex. den 15:e)",
+    "ordinal": "Vilken",
+    "ordinals": {
+      "1": "Första",
+      "2": "Andra",
+      "3": "Tredje",
+      "4": "Fjärde",
+      "last": "Sista"
+    },
+    "monthDays": "Dag i månaden",
+    "monthDaysHint": "T.ex. 15, eller 1, 15. Månader utan dagen hoppas över.",
+    "ruleTime": "Starttid (dagligen och månadsvis)",
+    "ends": "Slutar",
+    "endsNever": "Tills vidare",
+    "endsOnDate": "På ett slutdatum",
+    "endsHint": "Går att ändra senare åt båda hållen.",
+    "request": "Be gruppen svara",
+    "requestNone": "Skicka ingen förfrågan",
+    "requestDays": "Dagar före, vid en tid",
+    "requestHours": "Timmar före start",
+    "requestDaysField": "Antal dagar före",
+    "requestTimeField": "Klockan",
+    "requestHoursField": "Antal timmar före",
+    "requestHint": "Alla som deltar och inte har svarat får en fråga om de kommer, en gång per tillfälle.",
+    "rule": "Upprepning",
+    "untilFurtherNotice": "tills vidare",
+    "removeDates": "Ta bort datum",
+    "removeDatesIntro": "Till exempel lov eller stängd hall: alla tillfällen i perioden tas bort. Tillfällen som någon redan svarat på ställs in i stället.",
+    "removeFrom": "Från",
+    "removeTo": "Till och med (tomt = bara en dag)",
+    "removeButton": "Ta bort datumen",
+    "removed": "Borttagna datum",
+    "bringBack": "Ta tillbaka",
+    "datesRemoved": "Datumen är borttagna.",
+    "dateRestored": "Datumet är tillbaka."
   },
   "clubCalendar": {
     "title": "Föreningens kalender",
@@ -1586,6 +1632,10 @@
       "late_decline": {
         "title": "Sent återbud: {title} {when}",
         "body": "{club} · {group}"
+      },
+      "requested": {
+        "title": "Kommer du? {title} {when}",
+        "body": "Svara om du kommer. {club} · {group}"
       }
     },
     "event": {
@@ -2557,6 +2607,8 @@
       "billing_plan_updated": "{actor} uppdaterade en abonnemangsnivå",
       "club_access_state_changed": "{actor} ändrade klubbens åtkomst",
       "activity_series_split": "{actor} delade en aktivitetsserie",
+      "activity_series_dates_skipped": "{actor} tog bort datum ur en aktivitetsserie",
+      "activity_series_date_restored": "{actor} tog tillbaka ett datum i en aktivitetsserie",
       "activity_invitees_changed": "{actor} ändrade vilka som är inbjudna",
       "group_waitlist_withdrawn": "{actor} lämnade en kö",
       "person_club_data_purged": "{actor} tog bort en tidigare medlems uppgifter",
@@ -3098,5 +3150,31 @@
     "cardSaved": "Tack. Kortet sparas så snart betalleverantören bekräftar det (oftast inom en minut).",
     "paidThanks": "Tack för betalningen. Den visas så snart betalleverantören bekräftar den.",
     "payNow": "Betala nu med kort"
+  },
+  "recurrence": {
+    "every": {
+      "daily": "{interval, plural, =1 {Varje dag} =2 {Varannan dag} other {Var {interval}:e dag}}",
+      "weekly": "{interval, plural, =1 {Varje vecka} =2 {Varannan vecka} other {Var {interval}:e vecka}}",
+      "monthly": "{interval, plural, =1 {Varje månad} =2 {Varannan månad} other {Var {interval}:e månad}}"
+    },
+    "weekly": "{every} på {slots}",
+    "slot": "{weekday} {time}",
+    "monthlyByPosition": "{every} på {positions} kl. {time}",
+    "position": "{ordinal} {weekday}en",
+    "ordinal": {
+      "1": "första",
+      "2": "andra",
+      "3": "tredje",
+      "4": "fjärde",
+      "last": "sista"
+    },
+    "monthlyByDay": "{every} den {days} kl. {time}",
+    "daily": "{every} kl. {time}",
+    "untilFurtherNotice": "{pattern}, tills vidare",
+    "through": "{pattern}, till och med {date}",
+    "request": {
+      "days": "Gruppen ombeds svara {days, plural, =0 {samma dag} one {# dag före} other {# dagar före}} kl. {time}",
+      "hours": "Gruppen ombeds svara {hours, plural, one {# timme} other {# timmar}} före start"
+    }
   }
 }

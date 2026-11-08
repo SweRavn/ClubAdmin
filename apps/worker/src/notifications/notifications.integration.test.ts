@@ -20,7 +20,12 @@ import {
 import { emailAtOnce, nextDigest, quietUntil } from "./fanout.ts";
 import { notificationsHandler } from "./handler.ts";
 import { memoryPushProvider } from "./push.ts";
-import { eventRemindersTask, fanoutTask, responseRemindersTask } from "./tasks.ts";
+import {
+  eventRemindersTask,
+  fanoutTask,
+  responseRemindersTask,
+  responseRequestsTask,
+} from "./tasks.ts";
 
 let t: TestDatabase;
 const KEY = "worker-test-notification-key-0123456789";
@@ -167,9 +172,14 @@ const publish = (clubId: string, type: Parameters<typeof outbox.publish>[1], pay
   t.db.withSystem("test", { clubId }, (tx) => outbox.publish(tx, type, payload as never));
 
 async function noticesOf(personId: string) {
-  const { rows } = await t.query<{ type: string; about_person_ids: string[]; id: string }>(
+  const { rows } = await t.query<{
+    type: string;
+    about_person_ids: string[];
+    id: string;
+    subject_id: string;
+  }>(
     "admin",
-    "SELECT id, type, about_person_ids FROM notifications WHERE recipient_person_id = $1 ORDER BY id",
+    "SELECT id, type, about_person_ids, subject_id FROM notifications WHERE recipient_person_id = $1 ORDER BY id",
     [personId],
   );
   return rows;
@@ -424,6 +434,47 @@ describe("answer reminders", () => {
     expect(await noticesOf(x.nils)).toEqual([]);
     expect(await noticesOf(x.gunilla)).toEqual([]);
     void id;
+  });
+});
+
+describe("answer requests (P1.14)", () => {
+  it("go once, when their time has come, to those who may answer for someone who has not", async () => {
+    const x = await team();
+    const due = await activity(x, 3 * DAY);
+    const later = await activity(x, 5 * DAY);
+    const answered = await activity(x, 3 * DAY);
+    const started = await activity(x, -HOUR);
+    await t.query(
+      "admin",
+      `UPDATE activities SET request_at = CASE WHEN id = $2 THEN now() + interval '1 day' ELSE now() - interval '1 minute' END
+       WHERE id = ANY ($1::uuid[])`,
+      [[due, later, answered, started], later],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO activity_responses (club_id, activity_id, person_id, status, responded_by_person_id)
+       VALUES ($1, $2, $3, 'attending', $4)`,
+      [x.club, answered, x.elsa, x.anna],
+    );
+    const request = responseRequestsTask({ db: t.db, channels: { email: true, push: true } });
+    await request({}, helpers);
+    await request({}, helpers);
+    expect((await noticesOf(x.anna)).map((n) => [n.type, n.subject_id])).toEqual([
+      ["response.requested", due],
+    ]);
+    // Nils (contact person) may not answer.
+    expect(await noticesOf(x.nils)).toEqual([]);
+    const { rows } = await t.query<{ id: string; sent: boolean }>(
+      "admin",
+      "SELECT id, requested_at IS NOT NULL AS sent FROM activities WHERE id = ANY ($1::uuid[])",
+      [[due, later, answered, started]],
+    );
+    expect(Object.fromEntries(rows.map((r) => [r.id, r.sent]))).toEqual({
+      [due]: true,
+      [later]: false,
+      [answered]: true,
+      [started]: true,
+    });
   });
 });
 

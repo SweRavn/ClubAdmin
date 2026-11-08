@@ -4,6 +4,7 @@ import { createLogger, loadEnvFiles, onShutdown } from "@clubadmin/server-kit";
 
 import { createApp } from "./app.ts";
 import { loadApiConfig } from "./config.ts";
+import { ActivitiesService } from "./modules/activities/index.ts";
 import { AuthorizationService, PersonPresenter } from "./modules/authorization/index.ts";
 import { EventsService } from "./modules/events/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
@@ -44,6 +45,7 @@ const importJobs =
         concurrency: config.MEMBER_IMPORT_CONCURRENCY,
         imports: app.get(MemberImportsService),
         events: app.get(EventsService),
+        activities: app.get(ActivitiesService),
         ...privacyJobDeps(),
         logger,
       })

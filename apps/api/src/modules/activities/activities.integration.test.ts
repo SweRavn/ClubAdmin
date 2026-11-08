@@ -19,6 +19,7 @@ import {
 import { devToken, TEST_DEV_AUTH_KEY } from "../../testing/oidc.ts";
 import { type CoreServices, createCoreServices } from "../../testing/services.ts";
 import { createTestApp, NO_RATE_LIMITS, type TestApp } from "../../testing/test-app.ts";
+import { ActivitiesService } from "./activities.service.ts";
 
 let t: TestDatabase;
 let s: CoreServices;
@@ -40,7 +41,7 @@ afterAll(async () => {
   await t?.drop();
 });
 
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 async function api(
   personId: string,
@@ -203,17 +204,21 @@ describe("series", () => {
     expect(await clubAudit(club.id)).toContain("activity.series.created");
   });
 
-  it("refuses series longer than 400 days and times that do not exist", async () => {
+  it("makes a long series' sessions up to the horizon and refuses times that do not exist", async () => {
     const { groupId, coach } = await team();
-    const tooLong = await api(coach.id, "POST", `/groups/${groupId}/activity-series`, {
+    // P1.14: a series may run longer than 400 days; its sessions exist 13 months ahead.
+    const long = await api(coach.id, "POST", `/groups/${groupId}/activity-series`, {
       body: {
         title: "Forever",
         slots: [{ weekday: 1, startTime: "18:00", durationMinutes: 60 }],
-        startsOn: "2027-01-01",
-        endsOn: "2028-03-01",
+        startsOn: day(1),
+        endsOn: day(900),
       },
     });
-    expect(detail(tooLong)).toBe("series_too_long");
+    expect(long.statusCode).toBe(201);
+    const longSeries = long.json<SeriesChangeJson>().series;
+    expect(longSeries.endsOn).toBe(day(900));
+    expect(long.json<SeriesChangeJson>().created).toBeLessThanOrEqual(58);
     // 02:30 on 28 March 2027 does not exist in Stockholm (a Sunday).
     const missing = await api(coach.id, "POST", `/groups/${groupId}/activity-series/preview`, {
       body: {
@@ -647,5 +652,206 @@ describe("places added by leaders (P1.6b)", () => {
       },
     });
     expect(match.json<{ kindLabel: string | null }>().kindLabel ?? null).toBeNull();
+  });
+});
+
+describe("rules, open-ended series, removed dates and answer requests (P1.14)", () => {
+  const createSeries = async (personId: string, groupId: string, body: Record<string, unknown>) => {
+    const res = await api(personId, "POST", `/groups/${groupId}/activity-series`, {
+      body: { title: "Träning", ...body },
+    });
+    expect(res.statusCode).toBe(201);
+    return res.json<SeriesChangeJson & { series: { rrule: string; openEnded: boolean } }>();
+  };
+
+  it("monthly by position: the first Saturday of each month, to an end date", async () => {
+    const { groupId, coach } = await team();
+    const created = await createSeries(coach.id, groupId, {
+      rule: {
+        freq: "monthly",
+        byDay: [{ weekday: 6, ordinal: 1 }],
+        startTime: "10:00",
+        durationMinutes: 120,
+      },
+      startsOn: "2027-01-01",
+      endsOn: "2027-06-30",
+    });
+    expect(created.series.rrule).toBe("FREQ=MONTHLY;BYDAY=1SA;UNTIL=20270630");
+    const sessions = await calendar(coach.id, groupId, "2027-01-01", "2027-06-30");
+    expect(sessions.map((a) => a.startsAt.slice(0, 10))).toEqual([
+      "2027-01-02",
+      "2027-02-06",
+      "2027-03-06",
+      "2027-04-03",
+      "2027-05-01",
+      "2027-06-05",
+    ]);
+    // A rule that does not fit its fields is refused.
+    const bad = await api(coach.id, "POST", `/groups/${groupId}/activity-series`, {
+      body: { title: "X", rule: { freq: "monthly" }, startsOn: "2027-01-01", endsOn: null },
+    });
+    expect(bad.statusCode).toBe(400);
+  });
+
+  it("switches between until further notice and an end date; answered sessions are cancelled", async () => {
+    const { groupId, coach, member } = await team();
+    const start = day(8);
+    const created = await createSeries(coach.id, groupId, {
+      slots: [{ weekday: isoWeekday(start), startTime: "17:00", durationMinutes: 60 }],
+      startsOn: start,
+      endsOn: null,
+    });
+    expect(created.series.openEnded).toBe(true);
+    expect(created.series.endsOn >= day(390)).toBe(true);
+    const seriesId = created.series.id;
+    const sessions = await calendar(coach.id, groupId, day(20), day(40));
+    expect(sessions.length).toBeGreaterThanOrEqual(2);
+    const answered = sessions.at(-1)!;
+    const answer = await api(
+      member.id,
+      "PUT",
+      `/activities/${answered.id}/responses/${member.id}`,
+      {
+        body: { status: "attending" },
+      },
+    );
+    expect(answer.statusCode).toBe(200);
+
+    // An end date before the answered session: later sessions go, the answered one is cancelled.
+    const ended = await api(coach.id, "PATCH", `/activity-series/${seriesId}`, {
+      body: { endsOn: day(19) },
+    });
+    expect(ended.statusCode).toBe(200);
+    expect(ended.json<SeriesChangeJson>().series).toMatchObject({
+      endsOn: day(19),
+      openEnded: false,
+    });
+    const after = await calendar(coach.id, groupId, day(20), day(400));
+    expect(after.map((a) => [a.id, a.status])).toEqual([[answered.id, "cancelled"]]);
+
+    // Until further notice again: the sessions come back to the horizon.
+    const reopened = await api(coach.id, "PATCH", `/activity-series/${seriesId}`, {
+      body: { endsOn: null },
+    });
+    expect(reopened.statusCode).toBe(200);
+    expect(reopened.json<SeriesChangeJson>().created).toBeGreaterThan(40);
+    expect((await calendar(coach.id, groupId, day(20), day(40))).length).toBe(sessions.length);
+  });
+
+  it("removes a range of dates and brings one back; a cancelled session is restored", async () => {
+    const { groupId, coach, member } = await team();
+    const start = day(8);
+    const created = await createSeries(coach.id, groupId, {
+      rule: { freq: "daily", interval: 1, startTime: "09:00", durationMinutes: 60 },
+      startsOn: start,
+      endsOn: day(30),
+    });
+    const seriesId = created.series.id;
+    const [answered] = await calendar(coach.id, groupId, day(12), day(12));
+    await api(member.id, "PUT", `/activities/${answered!.id}/responses/${member.id}`, {
+      body: { status: "attending" },
+    });
+    const removed = await api(coach.id, "POST", `/activity-series/${seriesId}/skipped-dates`, {
+      body: { from: day(10), to: day(14) },
+    });
+    expect(removed.statusCode).toBe(200);
+    expect(removed.json<SeriesChangeJson>()).toMatchObject({ removed: 5 });
+    expect(removed.json<SeriesChangeJson>().series.skipDates).toEqual(
+      [10, 11, 12, 13, 14].map(day),
+    );
+    expect((await calendar(coach.id, groupId, day(10), day(14))).map((a) => a.status)).toEqual([
+      "cancelled",
+    ]);
+
+    const back = await api(
+      coach.id,
+      "DELETE",
+      `/activity-series/${seriesId}/skipped-dates/${day(12)}`,
+    );
+    expect(back.statusCode).toBe(200);
+    const restored = await calendar(coach.id, groupId, day(10), day(14));
+    expect(restored.map((a) => [a.id, a.status])).toEqual([[answered!.id, "scheduled"]]);
+    await api(coach.id, "DELETE", `/activity-series/${seriesId}/skipped-dates/${day(13)}`);
+    expect((await calendar(coach.id, groupId, day(13), day(13))).map((a) => a.status)).toEqual([
+      "scheduled",
+    ]);
+    // Not in the past, and only dates that were removed.
+    const past = await api(coach.id, "POST", `/activity-series/${seriesId}/skipped-dates`, {
+      body: { from: day(-3) },
+    });
+    expect(detail(past)).toBe("series_change_in_past");
+    const unknown = await api(
+      coach.id,
+      "DELETE",
+      `/activity-series/${seriesId}/skipped-dates/${day(20)}`,
+    );
+    expect(unknown.statusCode).toBe(404);
+    // Someone who does not manage the group may not.
+    const denied = await api(member.id, "POST", `/activity-series/${seriesId}/skipped-dates`, {
+      body: { from: day(20) },
+    });
+    expect(denied.statusCode).toBe(403);
+  });
+
+  it("the daily job extends open-ended series to the horizon, idempotently", async () => {
+    const { club, groupId, coach } = await team();
+    const start = day(8);
+    const created = await createSeries(coach.id, groupId, {
+      slots: [{ weekday: isoWeekday(start), startTime: "17:00", durationMinutes: 60 }],
+      startsOn: start,
+      endsOn: null,
+    });
+    const before = created.series.sessions;
+    // Thirty days later the horizon has moved about four weeks.
+    const later30 = new ActivitiesService(
+      t.db,
+      s.clubs,
+      () => new Date(Date.now() + 30 * 86_400_000),
+    );
+    const due = (await later30.seriesToExtend(10_000)).filter((d) => d.id === created.series.id);
+    expect(due).toEqual([{ id: created.series.id, clubId: club.id }]);
+    const added = await later30.extendSeries(club.id, created.series.id);
+    expect(added).toBeGreaterThanOrEqual(4);
+    expect(added).toBeLessThanOrEqual(5);
+    expect(await later30.extendSeries(club.id, created.series.id)).toBe(0);
+    expect((await later30.seriesToExtend(10_000)).some((d) => d.id === created.series.id)).toBe(
+      false,
+    );
+    const series = await api(coach.id, "GET", `/activity-series/${created.series.id}`);
+    expect(series.json<{ sessions: number }>().sessions).toBe(before + added);
+  });
+
+  it("each session gets its answer request time; a single activity too", async () => {
+    const { groupId, coach } = await team();
+    const created = await createSeries(coach.id, groupId, {
+      slots: [{ weekday: 3, startTime: "18:00", durationMinutes: 60 }],
+      startsOn: "2027-03-01",
+      endsOn: "2027-03-31",
+      requestLead: { kind: "days", days: 3, time: "18:00" },
+    });
+    expect(created.series).toMatchObject({ requestLead: { kind: "days", days: 3, time: "18:00" } });
+    const [first] = await calendar(coach.id, groupId, "2027-03-01", "2027-03-07");
+    const detailRes = await api(coach.id, "GET", `/activities/${first!.id}`);
+    // Wednesday 3 March 18:00 CET; Sunday 28 February 18:00 CET.
+    expect(detailRes.json()).toMatchObject({
+      startsAt: "2027-03-03T17:00:00.000Z",
+      requestAt: "2027-02-28T17:00:00.000Z",
+      recurrence: { rule: { freq: "weekly", interval: 1 }, endsOn: "2027-03-31" },
+    });
+    const single = await api(coach.id, "POST", `/groups/${groupId}/activities`, {
+      body: {
+        kind: "match",
+        title: "Match",
+        startsAt: "2027-04-10T10:00:00Z",
+        endsAt: "2027-04-10T12:00:00Z",
+        requestLead: { kind: "hours", hours: 48 },
+      },
+    });
+    expect(single.json()).toMatchObject({ requestAt: "2027-04-08T10:00:00.000Z" });
+    // Moving it moves the request.
+    const moved = await api(coach.id, "PATCH", `/activities/${single.json<{ id: string }>().id}`, {
+      body: { startsAt: "2027-04-11T10:00:00Z", endsAt: "2027-04-11T12:00:00Z" },
+    });
+    expect(moved.json()).toMatchObject({ requestAt: "2027-04-09T10:00:00.000Z" });
   });
 });

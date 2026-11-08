@@ -48,11 +48,12 @@ export default async function NewSeriesPage({ params, searchParams }: Props) {
   const values = seriesValuesFromQuery(query);
   const asked = query.preview !== undefined;
   const preview =
-    asked && values.slots.length > 0 && values.startsOn && values.endsOn
+    asked && values.valid && values.startsOn && values.endsOn !== undefined
       ? await previewSeries(group.id, {
+          ...(values.rule ? { rule: values.rule } : {}),
           slots: values.slots,
           startsOn: values.startsOn,
-          endsOn: values.endsOn,
+          endsOn: values.endsOn === "" ? null : values.endsOn,
           skipDates: [...(values.skipDates ?? [])],
           skipPublicHolidays: values.skipPublicHolidays ?? true,
         })

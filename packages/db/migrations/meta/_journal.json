@@ -204,6 +204,13 @@
       "when": 1794110001000,
       "tag": "0028_billing_cards",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794110002000,
+      "tag": "0029_series_rules",
+      "breakpoints": true
     }
   ]
 }

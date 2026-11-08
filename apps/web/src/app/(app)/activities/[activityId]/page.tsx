@@ -22,6 +22,7 @@ import { ActivityFields } from "../../../../components/activity-fields.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
+import { recurrenceText, requestLeadText } from "../../../../components/recurrence-summary.ts";
 import { ResponseButtons, ResponseForm } from "../../../../components/response-buttons.tsx";
 import {
   getActivity,
@@ -171,6 +172,22 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           <>
             <dt className="text-muted">{t("activities.competition")}</dt>
             <dd>{activity.competition}</dd>
+          </>
+        ) : null}
+        {activity.recurrence ? (
+          <>
+            <dt className="text-muted">{t("series.rule")}</dt>
+            <dd data-testid="activity-recurrence">
+              <a href={`/activity-series/${activity.seriesId}`} className="underline">
+                {await recurrenceText(activity.recurrence)}
+              </a>
+            </dd>
+          </>
+        ) : null}
+        {activity.requestLead ? (
+          <>
+            <dt className="text-muted">{t("series.request")}</dt>
+            <dd data-testid="activity-request">{await requestLeadText(activity.requestLead)}</dd>
           </>
         ) : null}
         {activity.notes ? (
@@ -402,6 +419,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                   respondByHours: activity.respondBy
                     ? Math.round((start.getTime() - Date.parse(activity.respondBy)) / 3_600_000)
                     : null,
+                  requestLead: activity.requestLead ?? null,
                 }}
               />
               <button type="submit" className={buttonClass} data-testid="activity-save">

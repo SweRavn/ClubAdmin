@@ -219,6 +219,8 @@ export const AUDIT_ACTION_SENTENCES: readonly AuditAction[] = [
   "billing.plan.updated",
   "club.access_state.changed",
   "activity.series.split",
+  "activity.series.dates_skipped",
+  "activity.series.date_restored",
   "activity.invitees.changed",
   "group.waitlist.withdrawn",
   "group.waitlist.priority_changed",

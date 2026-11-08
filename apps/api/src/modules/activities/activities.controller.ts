@@ -22,6 +22,7 @@ import {
   CreateActivitySchema,
   type CreateSeriesInput,
   CreateSeriesSchema,
+  formatRRule,
   type GroupCalendar,
   GroupCalendarSchema,
   GroupParamsSchema,
@@ -46,6 +47,9 @@ import {
   SeriesPreviewResultSchema,
   SeriesPreviewSchema,
   SeriesSchema,
+  type SkipDatesInput,
+  SkipDatesSchema,
+  SkippedDateParamsSchema,
   type SplitSeriesInput,
   SplitSeriesSchema,
   type UpdateActivityInput,
@@ -137,6 +141,8 @@ export function toActivityResponse(view: ActivityView, canManage: boolean): Acti
     canManage,
     responseMode: a.responseMode,
     respondBy: a.respondBy ? iso(a.respondBy) : null,
+    requestLead: a.requestLead,
+    requestAt: a.requestAt ? iso(a.requestAt) : null,
     inviteesOnly: a.inviteesOnly,
   };
 }
@@ -154,12 +160,17 @@ function toSeriesResponse(view: SeriesView, canManage: boolean): Series {
     location: view.location ? toLocationResponse(view.location) : null,
     locationText: s.locationText,
     slots: s.slots,
+    rule: s.rule,
+    rrule: formatRRule(s.rule, s.slots, s.endsOn),
     startsOn: s.startsOn,
-    endsOn: s.endsOn,
+    // Open-ended (P1.14): the last date sessions exist yet; `openEnded` says it moves.
+    endsOn: s.endsOn ?? s.materializedUntil,
+    openEnded: s.endsOn === null,
     skipDates: s.skipDates,
     skipPublicHolidays: s.skipPublicHolidays,
     responseMode: s.responseMode,
     respondByMinutes: s.respondByMinutes,
+    requestLead: s.requestLead,
     groups: view.groups,
     sessions: view.sessions,
     canManage,
@@ -411,7 +422,11 @@ export class ActivitiesController {
       resource.clubId,
       await this.people.summaries(context, leaderIds),
     );
-    return { ...toActivityResponse(view, this.managesAll(authz, resource.groups)), leaders };
+    return {
+      ...toActivityResponse(view, this.managesAll(authz, resource.groups)),
+      leaders,
+      recurrence: view.recurrence ?? null,
+    };
   }
 
   @Endpoint({
@@ -609,6 +624,47 @@ export class ActivitiesController {
     const { clubId } = resourceOf(authz, "activity");
     return toChangeResponse(
       await this.activities.splitSeries(tenantContext(authz, clubId), params.seriesId, body),
+    );
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "activity-series/:seriesId/skipped-dates",
+    summary: "Remove a date or a range of dates from a series (holidays, a closed hall)",
+    tags: ["activities"],
+    access: { permission: "activity.manage", resource: "activity" },
+    request: { params: SeriesParamsSchema, body: SkipDatesSchema },
+    response: SeriesChangeResultSchema,
+    status: 200,
+  })
+  async skipDates(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof SeriesParamsSchema>,
+    @Body() body: SkipDatesInput,
+  ): Promise<SeriesChangeResult> {
+    const { clubId } = resourceOf(authz, "activity");
+    return toChangeResponse(
+      await this.activities.skipDates(tenantContext(authz, clubId), params.seriesId, body),
+    );
+  }
+
+  @Endpoint({
+    method: "DELETE",
+    path: "activity-series/:seriesId/skipped-dates/:date",
+    summary: "Bring a removed date of a series back",
+    tags: ["activities"],
+    access: { permission: "activity.manage", resource: "activity" },
+    request: { params: SkippedDateParamsSchema },
+    response: SeriesChangeResultSchema,
+    status: 200,
+  })
+  async restoreDate(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof SkippedDateParamsSchema>,
+  ): Promise<SeriesChangeResult> {
+    const { clubId } = resourceOf(authz, "activity");
+    return toChangeResponse(
+      await this.activities.restoreDate(tenantContext(authz, clubId), params.seriesId, params.date),
     );
   }
 

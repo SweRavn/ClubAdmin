@@ -48,6 +48,10 @@ import {
 } from "./request-authorization.ts";
 
 const PhoneBody = z.object({ phone: z.string() });
+/** A date `offset` days from today, as the matrix scenario's series uses (P1.14 rows). */
+const matrixDay = (offset: number) =>
+  new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+const isoWeekdayOf = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay() || 7;
 
 /** A write endpoint for the on-behalf-of test (write endpoints come with P1.x). */
 @Controller("test-authz")
@@ -745,6 +749,19 @@ describe("permission matrix", () => {
       url: () => `/api/v1/activity-series/${m.seriesId}`,
       expected: TEAM_MANAGERS(200),
       body: { notes: "Bring water" },
+    },
+    // P1.14: a range with one Wednesday of the series; the manager (first) brings it back.
+    "POST /api/v1/activity-series/:seriesId/skipped-dates": {
+      url: () => `/api/v1/activity-series/${m.seriesId}/skipped-dates`,
+      expected: TEAM_MANAGERS(200),
+      body: () => ({ from: matrixDay(40), to: matrixDay(46) }),
+    },
+    "DELETE /api/v1/activity-series/:seriesId/skipped-dates/:date": {
+      url: () =>
+        `/api/v1/activity-series/${m.seriesId}/skipped-dates/${[40, 41, 42, 43, 44, 45, 46]
+          .map(matrixDay)
+          .find((d) => isoWeekdayOf(d) === 3)!}`,
+      expected: { ...TEAM_MANAGERS(404), manager: 200 },
     },
     "POST /api/v1/activity-series/:seriesId/split": {
       url: () => `/api/v1/activity-series/${m.seriesId}/split`,

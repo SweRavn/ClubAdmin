@@ -3,11 +3,11 @@
 // and times in the club's time zone, place (a club location or free text),
 // meeting time and place, match details and notes.
 import { enumKey } from "@clubadmin/i18n";
-import { ACTIVITY_KINDS, HOME_AWAY, type Location } from "@clubadmin/shared";
+import { ACTIVITY_KINDS, HOME_AWAY, type Location, type RequestLead } from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
 
 import { inputClass } from "./action-form.tsx";
-import { ResponseModeFields } from "./response-mode-fields.tsx";
+import { RequestLeadFields, ResponseModeFields } from "./response-mode-fields.tsx";
 
 export interface ActivityFieldValues {
   kind?: string;
@@ -27,6 +27,7 @@ export interface ActivityFieldValues {
   leaderNotes?: string | null;
   responseMode?: string | null;
   respondByHours?: number | null;
+  requestLead?: RequestLead | null;
 }
 
 export async function ActivityFields({
@@ -43,7 +44,7 @@ export async function ActivityFields({
 }) {
   const t = await getTranslations();
   const input = (
-    name: keyof ActivityFieldValues,
+    name: Exclude<keyof ActivityFieldValues, "requestLead">,
     label: string,
     props: Record<string, unknown> = {},
   ) => (
@@ -140,6 +141,9 @@ export async function ActivityFields({
       </label>
       {input("competition", t("activities.competition"), { maxLength: 120 })}
       <ResponseModeFields mode={values.responseMode} hours={values.respondByHours} />
+      <div className="sm:col-span-2">
+        <RequestLeadFields lead={values.requestLead} />
+      </div>
       <label className="block space-y-1 sm:col-span-2">
         <span className="text-sm">{t("activities.notes")}</span>
         <textarea

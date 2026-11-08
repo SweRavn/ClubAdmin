@@ -251,6 +251,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/activity-series/{seriesId}/skipped-dates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Remove a date or a range of dates from a series (holidays, a closed hall)
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Activities_skipDates"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activity-series/{seriesId}/skipped-dates/{date}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Bring a removed date of a series back
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Activities_restoreDate"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activity-series/{seriesId}/split": {
     parameters: {
       query?: never;
@@ -3940,6 +3980,7 @@ export interface components {
     };
     ActivityDetail: components["schemas"]["Activity"] & {
       leaders: components["schemas"]["PersonSummary"][];
+      recurrence?: components["schemas"]["SeriesRecurrence"];
     };
     Location: {
       /** Format: uuid */
@@ -3956,6 +3997,19 @@ export interface components {
       archived: boolean;
       canEdit?: boolean;
     } | null;
+    RequestLead:
+      | {
+          /** @enum {string} */
+          kind: "days";
+          days: number;
+          time: string;
+        }
+      | {
+          /** @enum {string} */
+          kind: "hours";
+          hours: number;
+        }
+      | null;
     ResponseCounts: {
       attending: number;
       notAttending: number;
@@ -3969,6 +4023,31 @@ export interface components {
       givenName: string;
       familyName: string;
       protected: boolean;
+    };
+    SeriesRecurrence: {
+      rule: components["schemas"]["SeriesRule"];
+      slots: {
+        weekday: number;
+        startTime: string;
+        durationMinutes: number;
+      }[];
+      /** Format: date */
+      startsOn: string;
+      /** Format: date */
+      endsOn: string | null;
+    } | null;
+    SeriesRule: {
+      /** @enum {string} */
+      freq: "daily" | "weekly" | "monthly";
+      /** @default 1 */
+      interval: number;
+      byDay?: {
+        weekday: number;
+        ordinal: 1 | 2 | 3 | 4 | -1;
+      }[];
+      byMonthDay?: number[];
+      startTime?: string;
+      durationMinutes?: number;
     };
     Activity: {
       /** Format: uuid */
@@ -4015,6 +4094,9 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       /** Format: date-time */
       respondBy?: string | null;
+      requestLead?: components["schemas"]["RequestLead"];
+      /** Format: date-time */
+      requestAt?: string | null;
       inviteesOnly?: boolean;
       responseCounts?: components["schemas"]["ResponseCounts"];
     };
@@ -4043,6 +4125,7 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       /** Format: date-time */
       respondBy?: string | null;
+      requestLead?: components["schemas"]["RequestLead"];
     };
     Attendance: {
       /** Format: uuid */
@@ -4370,15 +4453,19 @@ export interface components {
         startTime: string;
         durationMinutes: number;
       }[];
+      rule?: components["schemas"]["SeriesRule"];
+      rrule?: string;
       /** Format: date */
       startsOn: string;
       /** Format: date */
       endsOn: string;
+      openEnded?: boolean;
       skipDates: string[];
       skipPublicHolidays: boolean;
       /** @enum {string} */
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
+      requestLead?: components["schemas"]["RequestLead"];
       groups: {
         /** Format: uuid */
         id: string;
@@ -4409,13 +4496,21 @@ export interface components {
         startTime: string;
         durationMinutes: number;
       }[];
+      rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
-      endsOn?: string;
+      endsOn?: string | null;
       skipDates?: string[];
       skipPublicHolidays?: boolean;
       /** @enum {string} */
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
+      requestLead?: components["schemas"]["RequestLead"];
+    };
+    SkipDatesRequest: {
+      /** Format: date */
+      from: string;
+      /** Format: date */
+      to?: string;
     };
     SplitSeriesRequest: {
       /** @enum {string} */
@@ -4431,13 +4526,15 @@ export interface components {
         startTime: string;
         durationMinutes: number;
       }[];
+      rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
-      endsOn?: string;
+      endsOn?: string | null;
       skipDates?: string[];
       skipPublicHolidays?: boolean;
       /** @enum {string} */
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
+      requestLead?: components["schemas"]["RequestLead"];
       /** Format: uuid */
       activityId: string;
     };
@@ -6386,6 +6483,7 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       /** Format: date-time */
       respondBy?: string | null;
+      requestLead?: components["schemas"]["RequestLead"];
       /** @default [] */
       groupIds: string[];
     };
@@ -6401,15 +6499,17 @@ export interface components {
       /** Format: uuid */
       locationId?: string | null;
       locationText?: string | null;
+      /** @default [] */
       slots: {
         weekday: number;
         startTime: string;
         durationMinutes: number;
       }[];
+      rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
       startsOn: string;
       /** Format: date */
-      endsOn: string;
+      endsOn: string | null;
       /** @default [] */
       skipDates: string[];
       /** @default false */
@@ -6417,6 +6517,7 @@ export interface components {
       /** @enum {string} */
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
+      requestLead?: components["schemas"]["RequestLead"];
       /** @default [] */
       groupIds: string[];
     };
@@ -6437,15 +6538,17 @@ export interface components {
       }[];
     };
     SeriesPreviewRequest: {
+      /** @default [] */
       slots: {
         weekday: number;
         startTime: string;
         durationMinutes: number;
       }[];
+      rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
       startsOn: string;
       /** Format: date */
-      endsOn: string;
+      endsOn: string | null;
       /** @default [] */
       skipDates: string[];
       /** @default false */
@@ -7432,6 +7535,9 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       /** Format: date-time */
       respondBy?: string | null;
+      requestLead?: components["schemas"]["RequestLead"];
+      /** Format: date-time */
+      requestAt?: string | null;
       responses?: {
         /** Format: uuid */
         personId: string;
@@ -9146,6 +9252,163 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HistoryPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Activities_skipDates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        seriesId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SkipDatesRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ActivitySeriesChange"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Activities_restoreDate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        seriesId: string;
+        date: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ActivitySeriesChange"];
         };
       };
       /** @description Invalid request */

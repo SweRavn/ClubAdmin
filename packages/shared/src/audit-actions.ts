@@ -126,6 +126,8 @@ export const AUDIT_ACTIONS = [
   "activity.series.created",
   "activity.series.updated",
   "activity.series.split",
+  "activity.series.dates_skipped",
+  "activity.series.date_restored",
   "location.created",
   "location.updated",
   "activity.response.set",

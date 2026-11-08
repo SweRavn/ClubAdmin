@@ -192,12 +192,15 @@ const CASES: Case[] = [
     pages: 8,
   },
   {
+    // P1.14: SVK F2017 runs until further notice, so the feed's 370 days ahead
+    // hold about 105 of its sessions (12 before): the pages follow the feed's
+    // size, which the window bounds, not the amount of data.
     route: "GET /cal/{secret}.ics (my schedule)",
     persona: "anna",
     method: "GET",
     url: () => "/cal/demo-anna-my-schedule.ics",
     statements: 6,
-    pages: 240,
+    pages: 560,
   },
   {
     route: "GET /cal/{secret}.ics (group)",
@@ -205,7 +208,7 @@ const CASES: Case[] = [
     method: "GET",
     url: () => "/cal/demo-erik-f2017.ics",
     statements: 10,
-    pages: 320,
+    pages: 640,
   },
   // Waiting lists (P1.10b, web only). Writes that change the queue
   // (apply, offer, admit, accept) cannot run twice on the same data; their

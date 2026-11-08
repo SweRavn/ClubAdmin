@@ -26,6 +26,8 @@ export const DEMO_ACTIVITY_IDS = {
   iknP2012Series: "0199a000-0000-7000-8014-000000000004",
   iknF2015Series: "0199a000-0000-7000-8014-000000000005",
   filJ2014Series: "0199a000-0000-7000-8014-000000000006",
+  /** "The first Saturday of the month", with an end date (P1.14). */
+  iknP2012Monthly: "0199a000-0000-7000-8014-000000000007",
   /** An extra F2017 session that started half an hour before seeding (taking attendance, P1.5). */
   svkF2017Extra: "0199a000-0000-7000-8015-000000000001",
 } as const;
@@ -79,7 +81,9 @@ export const activitiesDemoStep: DemoStep = {
       { name: "Strandvikens skola, gymnastiksalen", street: "Skolgatan 1", city: "Strandviken" },
       { id: DEMO_ACTIVITY_IDS.strandvikenSchool },
     );
-    // F2017: two days with different times; one week skipped (the autumn break, four weeks ago).
+    // F2017: two days with different times, until further notice (P1.14), the group
+    // asked to answer three days before each session at 18:00; one week skipped
+    // (the autumn break, four weeks ago) and the coming Christmas break removed as a range.
     await series(s.activities, anna, id("svk-f2017"), DEMO_ACTIVITY_IDS.svkF2017Series, {
       title: "Träning",
       slots: [
@@ -87,12 +91,19 @@ export const activitiesDemoStep: DemoStep = {
         { weekday: 4, startTime: "18:00", durationMinutes: 75 },
       ],
       startsOn: ten,
-      endsOn: six,
+      endsOn: null,
+      requestLead: { kind: "days", days: 3, time: "18:00" },
       skipDates: [weekday(-4, 2), weekday(-4, 4)],
       skipPublicHolidays: true,
       locationId: DEMO_ACTIVITY_IDS.strandvikenHall,
       notes: "Ta med vattenflaska och inneskor.",
       leaderNotes: "Bollvagnen står i förrådet, koden är 1932.",
+    });
+    const christmas = Number(today.slice(5, 7)) === 12 && today.slice(8) > "20" ? 1 : 0;
+    const year = Number(today.slice(0, 4)) + christmas;
+    await s.activities.skipDates(anna, DEMO_ACTIVITY_IDS.svkF2017Series, {
+      from: `${year}-12-21`,
+      to: `${year + 1}-01-06`,
     });
     const f2017 = await sessions(s.activities, anna, id("svk-f2017"), date(1), date(42));
     // Next week's Tuesday: the hall is taken by the municipality.
@@ -226,6 +237,20 @@ export const activitiesDemoStep: DemoStep = {
       startsOn: ten,
       endsOn: six,
       skipPublicHolidays: true,
+      locationId: DEMO_ACTIVITY_IDS.norrbackaIp,
+    });
+    // Football school the first Saturday of every month, to an end date (P1.14).
+    await series(s.activities, karin, id("ikn-p2012"), DEMO_ACTIVITY_IDS.iknP2012Monthly, {
+      title: "Fotbollsskola",
+      rule: {
+        freq: "monthly",
+        interval: 1,
+        byDay: [{ weekday: 6, ordinal: 1 }],
+        startTime: "10:00",
+        durationMinutes: 120,
+      },
+      startsOn: date(1),
+      endsOn: date(180),
       locationId: DEMO_ACTIVITY_IDS.norrbackaIp,
     });
     await series(s.activities, karin, id("ikn-f2015"), DEMO_ACTIVITY_IDS.iknF2015Series, {

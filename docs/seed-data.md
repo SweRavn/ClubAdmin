@@ -204,12 +204,17 @@ schedule (Ola left two years ago).
   change it, Johan may use but not change it, Anna (club manager) changes
   any place.
   Weekly training series from ten weeks ago to six weeks ahead, public
-  holidays skipped: SVK F2017 on Tuesdays 17:30 and Thursdays 18:00 (the
-  autumn-break week four weeks ago skipped; next week's Tuesday cancelled,
+  holidays skipped: SVK F2017 on Tuesdays 17:30 and Thursdays 18:00, **until
+  further notice** (P1.14: sessions 13 months ahead, the group asked to
+  answer three days before each session at 18:00, the coming Christmas break
+  21 December – 6 January removed as a range, so Anna or Erik can bring a
+  date back on the series page; the autumn-break week four weeks ago
+  skipped; next week's Tuesday cancelled,
   "Hallen är upptagen av kommunen"; that Thursday moved to the school's gym,
   a detached session), SVK Herr senior on Mondays and Wednesdays at 20:00,
   split two weeks ahead into a winter schedule at 20:30, IKN P2012 (Mondays
-  and Wednesdays), IKN F2015 (Tuesdays), FIL J2014 (Tuesdays and Thursdays,
+  and Wednesdays; and "Fotbollsskola" the first Saturday of every month at
+  10:00, for six months, P1.14), IKN F2015 (Tuesdays), FIL J2014 (Tuesdays and Thursdays,
   Norwegian holidays). Three matches per team (two weeks ago, in five days,
   in three weeks; away matches with a meeting place), a parents' meeting in
   F2017 and a joint training of IKN P2012 and F2015 next Saturday. Erik

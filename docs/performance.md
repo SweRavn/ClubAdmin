@@ -252,7 +252,13 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   `activity_groups`, `schedule_entries` or `group_memberships`. A series is
   created with all its sessions in three statements (sessions, their groups,
   calendar entries); changing it is a comparison by date and one statement
-  each for deletes, updates and inserts. The load scenario has 32 trainings
+  each for deletes, updates and inserts. P1.14: a series' sessions exist at
+  most 13 months ahead; `activities:extend_series` finds the series behind
+  the horizon through `activity_series_extend_idx` (partial, only series
+  with something left to make) and extends each in its own transaction, so
+  a run costs per series extended, not per series in the system; the answer
+  request job reads `activities_request_idx (club_id, request_at)`, partial
+  on unsent requests of scheduled activities. The load scenario has 32 trainings
   per team (256,000 activities); `pnpm db:reset --scenario load` took about
   210 s locally at P1.4.
 - Responses and attendance (P1.5, the same test with answers to each team's

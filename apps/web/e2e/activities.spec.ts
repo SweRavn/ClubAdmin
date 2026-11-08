@@ -101,6 +101,60 @@ test("Erik previews and creates a series, then changes this and following", asyn
   await expect(page.getByTestId("series-sessions")).toHaveText("2");
 });
 
+test("Erik makes a monthly series until further notice, removes a date and brings it back", async ({
+  page,
+}) => {
+  // P1.14: the first Saturday of every month, the group asked two days before at 18:00.
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}/series/new` });
+  await page.getByTestId("series-title").fill("Lördagspass");
+  await page.getByTestId("series-freq").selectOption("monthly");
+  await page.getByTestId("series-ordinal-0").selectOption("1");
+  await page.getByTestId("series-pos-weekday-0").selectOption("6");
+  await page.getByTestId("series-rule-time").fill("10:00");
+  await page.getByTestId("series-startsOn").fill(day(1));
+  await page.getByTestId("series-ends-never").check();
+  await page.getByTestId("request-days").check();
+  await page.getByTestId("request-days-field").fill("2");
+  await page.getByTestId("series-skipHolidays").uncheck();
+  await page.getByTestId("series-preview-button").click();
+  await page.waitForURL(/preview=1/);
+  // Sessions 13 months ahead: 13 or 14 first Saturdays.
+  const previewed = await page.getByTestId("series-preview").locator("li").count();
+  expect(previewed).toBeGreaterThanOrEqual(13);
+  expect(previewed).toBeLessThanOrEqual(14);
+  await page.getByTestId("series-create").click();
+  await page.waitForURL(/\/activity-series\/.*saved=1/);
+  await expect(page.getByTestId("series-summary")).toHaveText(
+    "Varje månad på första lördagen kl. 10:00, tills vidare",
+  );
+  await expect(page.getByTestId("series-request")).toContainText("2 dagar före kl. 18:00");
+
+  // The next session's date, removed and brought back.
+  const first = page
+    .getByTestId("series-agenda")
+    .getByRole("link", { name: "Lördagspass" })
+    .first();
+  await first.click();
+  await page.waitForURL(/\/activities\//);
+  await expect(page.getByTestId("activity-recurrence")).toContainText("första lördagen");
+  await page.goBack();
+  await page.getByTestId("series-remove-dates").click();
+  const saturday = await page.evaluate(() => {
+    const d = new Date();
+    for (;;) {
+      d.setUTCDate(d.getUTCDate() + 1);
+      if (d.getUTCDay() === 6 && d.getUTCDate() <= 7) return d.toISOString().slice(0, 10);
+    }
+  });
+  await page.getByTestId("series-remove-from").fill(saturday);
+  await page.getByTestId("series-remove-dates-button").click();
+  await page.waitForURL(/removed=1/);
+  await expect(page.getByTestId("series-removed-dates")).toBeVisible();
+  await page.getByTestId(`series-bring-back-${saturday}`).click();
+  await page.waitForURL(/restored=1/);
+  await expect(page.getByTestId("series-removed-dates")).toHaveCount(0);
+});
+
 test("Anna uses the club calendar and adds a location", async ({ page }) => {
   await loginAs(page, PERSONAS.anna, { returnTo: `/clubs/${CLUBS.svk}/calendar` });
   await expect(page.getByTestId("club-calendar")).toContainText("Träning herr (vinterschema)");

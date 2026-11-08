@@ -4,6 +4,7 @@
 // people: no query here reads names.
 
 import { and, asc, eq, inArray, isNull, schema, type SQL, sql, type Tx } from "@clubadmin/db";
+import type { RequestLead } from "@clubadmin/shared";
 
 const { activities, activityGroups, activitySeries, activitySeriesGroups, groups, locations } =
   schema;
@@ -383,6 +384,8 @@ export async function updateSessions(
     locationText: string | null;
     responseMode: string;
     respondBy: Date | null;
+    requestLead: RequestLead | null;
+    requestAt: Date | null;
     bump: boolean;
   }[],
 ): Promise<void> {
@@ -392,6 +395,7 @@ export async function updateSessions(
       starts_at = v.starts_at, ends_at = v.ends_at, kind = v.kind, title = v.title,
       notes = v.notes, leader_notes = v.leader_notes, location_id = v.location_id,
       location_text = v.location_text, response_mode = v.response_mode, respond_by = v.respond_by,
+      request_lead = v.request_lead, request_at = v.request_at,
       sequence = a.sequence + CASE WHEN v.bump THEN 1 ELSE 0 END,
       changed_at = CASE WHEN v.bump THEN now() ELSE a.changed_at END
     FROM jsonb_to_recordset(${JSON.stringify(
@@ -407,11 +411,13 @@ export async function updateSessions(
         location_text: r.locationText,
         response_mode: r.responseMode,
         respond_by: r.respondBy?.toISOString() ?? null,
+        request_lead: r.requestLead,
+        request_at: r.requestAt?.toISOString() ?? null,
         bump: r.bump,
       })),
     )}::jsonb) AS v(id uuid, starts_at timestamptz, ends_at timestamptz, kind text, title text,
       notes text, leader_notes text, location_id uuid, location_text text, response_mode text,
-      respond_by timestamptz, bump boolean)
+      respond_by timestamptz, request_lead jsonb, request_at timestamptz, bump boolean)
     WHERE a.id = v.id`);
 }
 
@@ -622,4 +628,18 @@ export async function groupNames(tx: Tx, ids: readonly string[]): Promise<Map<st
     .from(groups)
     .where(inArray(groups.id, [...ids]));
   return new Map(rows.map((r) => [r.id, r.name]));
+}
+
+/** Series behind the horizon (P1.14): open-ended or ending later than they are materialised. */
+export async function seriesToExtend(
+  tx: Tx,
+  until: string,
+  limit: number,
+): Promise<{ id: string; clubId: string }[]> {
+  const { rows } = await tx.execute<{ id: string; club_id: string }>(sql`
+    SELECT id, club_id FROM public.activity_series
+    WHERE (ends_on IS NULL OR ends_on > materialized_until) AND materialized_until < ${until}::date
+    ORDER BY materialized_until, id
+    LIMIT ${limit}`);
+  return rows.map((r) => ({ id: r.id, clubId: r.club_id }));
 }

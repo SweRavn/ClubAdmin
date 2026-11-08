@@ -120,3 +120,50 @@ Everyone in the club picks any active place. Responses carry `canEdit`, so
 the web shows "Edit" only where it works. An activity of kind `other` says
 what it is (`activities.kind_label`, at most 60 characters, "Lunch",
 "Cup"), shown instead of "Other" in calendars and on the activity.
+
+**Amendment (P1.14): rules, open-ended series, removed ranges, answer
+requests.** Leaders asked for recurrence like a calendar app ("every other
+week", "the first Wednesday of the month"), for trainings that run until
+further notice, for removing a holiday period at once, and for the group to
+be asked "are you coming?" a chosen time before each session.
+
+- **Rules.** A series stores `rule` (jsonb): a strict subset of RFC 5545
+  RRULE, `FREQ` daily, weekly or monthly with `INTERVAL`, monthly
+  `BYDAY` with ordinals 1–4 and −1 ("first Wednesday", "last Friday") or
+  `BYMONTHDAY` (a month without the day skips it). Weekly rules keep their
+  weekdays and times in `slots` (as before; existing series are weekly
+  rules with interval 1); daily and monthly rules carry one start time and
+  length. No YEARLY, COUNT or BYSETPOS. The evaluator is pure
+  (`ruleDates`/`expandRule` in `packages/shared`), evaluated in the club's
+  time zone; the API returns the rule and its RRULE value (`rrule`), the
+  clients write the plain-language summary (`describeRecurrence` in
+  `packages/i18n`). Calendar feeds keep listing sessions.
+- **Until further notice; a horizon for open-ended series only.** `ends_on`
+  may be null. Sessions are still rows, made **13 months ahead**
+  (`SERIES_HORIZON_DAYS`, 396 days) and recorded in
+  `materialized_until`; the API job `activities:extend_series` (daily, in
+  the API's job runner because it uses the activities service) extends every
+  series behind the horizon, each in its own transaction as the system,
+  idempotently by `occurrence_on`. A series with an end date further away
+  than the horizon is extended the same way; the 400-day limit
+  (`series_too_long`) no longer applies to how long a series runs. The
+  first decision above ("no horizon, no nightly job") stays for series that
+  end within 13 months. Switching between an end date and until further
+  notice is an ordinary change from a date: sessions after a new end go
+  (cancelled when answered, ADR 0035); a later end or none adds them.
+  Responses keep `endsOn` a date (the last date sessions exist yet) and add
+  `openEnded`.
+- **Removing dates.** `POST /activity-series/:id/skipped-dates` with a date
+  or a range adds every date of the pattern in it to `skip_dates` and
+  removes the sessions as deleting one does; `DELETE
+  …/skipped-dates/:date` brings one back: a session cancelled when the date
+  was removed is restored, otherwise made again. Not in the past.
+- **Answer requests** (`request_lead`, on series and single activities): N
+  days before at a local time, or N hours before the start. Each session
+  stores `request_at` (computed in the club's time zone, recomputed when
+  it moves) and `requested_at`; the worker's
+  `notifications:response_requests` (every five minutes, club by club over
+  `activities_request_idx`) sends `response.requested` once to the roster
+  who have not answered, via those who may answer for them (ADR 0039), and
+  marks it sent. Visibility is unchanged: sessions show as soon as they
+  exist (P1.14 decision 2).

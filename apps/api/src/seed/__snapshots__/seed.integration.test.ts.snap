@@ -48,6 +48,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
           "Norrbackahallen",
         ],
         "series": [
+          "Fotbollsskola: ikn-p2012",
           "Fotbollsträning: ikn-p2012",
           "Innebandyträning: ikn-f2015",
         ],

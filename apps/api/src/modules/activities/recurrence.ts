@@ -1,19 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Weekly recurrence of an activity series (P1.4, ADR 0034): the sessions of
-// each weekday slot between two dates, in the club's time zone, without the
-// skipped dates and (optionally) the country's public holidays. Local times
-// stay local across daylight-saving changes; a local time that does not
-// exist on a day (the spring change) is refused.
+// Recurrence of an activity series (P1.4, P1.14, ADR 0034): the sessions of a
+// series' rule (shared, `@clubadmin/shared` recurrence) in a window of local
+// dates, in the club's time zone, without the skipped dates and (optionally)
+// the country's public holidays. Local times stay local across
+// daylight-saving changes; a local time that does not exist on a day (the
+// spring change) is refused.
 
 import {
+  expandRule,
   localDate,
   localTime,
+  RecurrenceRuleError,
+  type SeriesRule,
   type SeriesSlot,
+  WEEKLY_RULE,
   zonedTime as zonedLocalTime,
 } from "@clubadmin/shared";
 
 export class RecurrenceError extends Error {
-  readonly code: "invalid_recurrence" | "nonexistent_local_time" | "series_too_long";
+  readonly code: "invalid_recurrence" | "nonexistent_local_time";
 
   constructor(code: RecurrenceError["code"]) {
     super(code);
@@ -31,13 +36,6 @@ export function zonedTime(date: string, time: string, timeZone: string): Date {
 
 export { localDate, localTime };
 
-const addDays = (date: string, days: number) =>
-  new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
-const isoWeekday = (date: string) => {
-  const day = new Date(`${date}T00:00:00Z`).getUTCDay();
-  return day === 0 ? 7 : day;
-};
-
 export interface Session {
   /** The local date (the occurrence key in its series). */
   date: string;
@@ -50,41 +48,35 @@ export interface Expansion {
   skipped: { date: string; holiday: boolean }[];
 }
 
-export const MAX_SERIES_DAYS = 400;
-
-/** The sessions of a weekly series, in order. */
+/** The sessions of a series from `from` (default its first date) to `to` (default its end), in order. */
 export function expandSeries(input: {
+  rule?: SeriesRule | undefined;
   slots: readonly SeriesSlot[];
   startsOn: string;
-  endsOn: string;
+  /** Null: until further notice (`to` is then required). */
+  endsOn: string | null;
+  from?: string | undefined;
+  to?: string | undefined;
   skipDates: readonly string[];
   holidays: ReadonlySet<string>;
   timeZone: string;
 }): Expansion {
-  const weekdays = input.slots.map((s) => s.weekday);
-  if (new Set(weekdays).size !== weekdays.length || input.endsOn < input.startsOn) {
-    throw new RecurrenceError("invalid_recurrence");
-  }
-  const days = (Date.parse(input.endsOn) - Date.parse(input.startsOn)) / 86_400_000;
-  if (days > MAX_SERIES_DAYS) throw new RecurrenceError("series_too_long");
-  const skip = new Set(input.skipDates);
-  const byWeekday = new Map(input.slots.map((s) => [s.weekday, s]));
-  const sessions: Session[] = [];
-  const skipped: Expansion["skipped"] = [];
-  for (let date = input.startsOn; date <= input.endsOn; date = addDays(date, 1)) {
-    const slot = byWeekday.get(isoWeekday(date));
-    if (!slot) continue;
-    const holiday = input.holidays.has(date);
-    if (skip.has(date) || holiday) {
-      skipped.push({ date, holiday: holiday && !skip.has(date) });
-      continue;
-    }
-    const startsAt = zonedTime(date, slot.startTime, input.timeZone);
-    sessions.push({
-      date,
-      startsAt,
-      endsAt: new Date(startsAt.getTime() + slot.durationMinutes * 60_000),
+  const to = input.to ?? input.endsOn;
+  if (to === null) throw new RecurrenceError("invalid_recurrence");
+  try {
+    return expandRule({
+      rule: input.rule ?? WEEKLY_RULE,
+      slots: input.slots,
+      startsOn: input.startsOn,
+      endsOn: input.endsOn,
+      from: input.from ?? input.startsOn,
+      to,
+      skipDates: input.skipDates,
+      holidays: input.holidays,
+      timeZone: input.timeZone,
     });
+  } catch (error) {
+    if (error instanceof RecurrenceRuleError) throw new RecurrenceError(error.code);
+    throw error;
   }
-  return { sessions, skipped };
 }

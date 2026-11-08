@@ -556,6 +556,8 @@ shutdown with the API through `@clubadmin/server-kit`.
 | `notifications:fanout` | per debounced change (`job_key`) | Re-reads an activity, series or late answer and creates its notices (P1.7, ADR 0039) |
 | `notifications:deliver` | every minute and when notices are queued | Sends due push (batches of 100, per-person budget) and emails; the daily email at 17:00 local time; skips held deliveries whose notice was read or whose activity started |
 | `notifications:response_reminders`, `notifications:event_reminders` | every 15 minutes | Answer reminders to those who have not answered; sign-up reminders before an event's deadline, club by club |
+| `notifications:response_requests` | every 5 minutes | The answer request a chosen time before each session (P1.14): once, to those who take part and have not answered (via those who may answer), club by club over `activities_request_idx` |
+| `activities:extend_series` | daily 02:23 UTC | **Run by the API process**: extends series without an end date (or ending later) to 13 months ahead, each in its own transaction (P1.14, ADR 0034) |
 | `notifications:push_receipts` | every 15 minutes | Reads Expo's receipts; disables unregistered devices |
 | `notifications:retention` | daily 05:37 UTC | Deletes notices after 90 days, deliveries after 30, devices 90 days after last use |
 | `clubs:apply_decisions` | daily 00:17 UTC | Applies board decisions whose effective date has come (in the club's time zone) and publishes the club's next privacy policy (P1.8a) |

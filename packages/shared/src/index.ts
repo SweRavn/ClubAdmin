@@ -22,6 +22,7 @@ export * from "./domain/joining.ts";
 export * from "./domain/members.ts";
 export * from "./domain/person-label.ts";
 export * from "./domain/protection.ts";
+export * from "./domain/recurrence.ts";
 export * from "./domain/responses.ts";
 export * from "./domain/schemas.ts";
 export * from "./domain/waitlists.ts";

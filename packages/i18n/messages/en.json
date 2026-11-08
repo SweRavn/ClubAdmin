@@ -1198,7 +1198,7 @@
   },
   "series": {
     "newTitle": "New training series",
-    "intro": "Choose weekdays and times; all sessions are created at once. Preview first.",
+    "intro": "Choose how the training repeats; the sessions are made at once (for series until further notice 13 months ahead, then as time passes). Preview first.",
     "slots": "Weekdays and times",
     "weekday": "Weekday",
     "noSlot": "–",
@@ -1229,7 +1229,53 @@
     "save": "Save the change",
     "splitTitle": "Change from {date} on",
     "splitIntro": "The series ends the day before; a new series with the changes takes over from this session.",
-    "split": "Change this and following"
+    "split": "Change this and following",
+    "repeats": "Repeats",
+    "freq": {
+      "weekly": "Weekly",
+      "daily": "Daily",
+      "monthly": "Monthly"
+    },
+    "interval": "How often",
+    "intervalHint": "1 = every, 2 = every other, 3 = every third …",
+    "slotsHint": "Weekly: weekdays and times.",
+    "monthlyBy": "Monthly on",
+    "monthlyByPosition": "A weekday of the month (e.g. the first Wednesday)",
+    "monthlyByDay": "A day of the month (e.g. the 15th)",
+    "ordinal": "Which",
+    "ordinals": {
+      "1": "First",
+      "2": "Second",
+      "3": "Third",
+      "4": "Fourth",
+      "last": "Last"
+    },
+    "monthDays": "Day of the month",
+    "monthDaysHint": "E.g. 15, or 1, 15. Months without the day are skipped.",
+    "ruleTime": "Start time (daily and monthly)",
+    "ends": "Ends",
+    "endsNever": "Until further notice",
+    "endsOnDate": "On an end date",
+    "endsHint": "Can be changed later either way.",
+    "request": "Ask the group to answer",
+    "requestNone": "No request",
+    "requestDays": "Days before, at a time",
+    "requestHours": "Hours before the start",
+    "requestDaysField": "Days before",
+    "requestTimeField": "At",
+    "requestHoursField": "Hours before",
+    "requestHint": "Everyone who takes part and has not answered is asked whether they are coming, once per session.",
+    "rule": "Repeats",
+    "untilFurtherNotice": "until further notice",
+    "removeDates": "Remove dates",
+    "removeDatesIntro": "For example a holiday or a closed hall: every session in the period is removed. Sessions someone already answered are cancelled instead.",
+    "removeFrom": "From",
+    "removeTo": "Through (empty = one day only)",
+    "removeButton": "Remove the dates",
+    "removed": "Removed dates",
+    "bringBack": "Bring back",
+    "datesRemoved": "The dates are removed.",
+    "dateRestored": "The date is back."
   },
   "clubCalendar": {
     "title": "Club calendar",
@@ -1586,6 +1632,10 @@
       "late_decline": {
         "title": "Late cancellation: {title} {when}",
         "body": "{club} · {group}"
+      },
+      "requested": {
+        "title": "Are you coming? {title} {when}",
+        "body": "Let us know if you are coming. {club} · {group}"
       }
     },
     "event": {
@@ -2557,6 +2607,8 @@
       "billing_plan_updated": "{actor} updated a plan",
       "club_access_state_changed": "{actor} changed the club's access",
       "activity_series_split": "{actor} split an activity series",
+      "activity_series_dates_skipped": "{actor} removed dates from an activity series",
+      "activity_series_date_restored": "{actor} brought back a date in an activity series",
       "activity_invitees_changed": "{actor} changed who is invited",
       "group_waitlist_withdrawn": "{actor} withdrew from a waiting list",
       "person_club_data_purged": "{actor} removed a former member's details",
@@ -3098,5 +3150,31 @@
     "cardSaved": "Thank you. The card is saved as soon as the payment provider confirms it (usually within a minute).",
     "paidThanks": "Thank you for the payment. It is shown as soon as the payment provider confirms it.",
     "payNow": "Pay now by card"
+  },
+  "recurrence": {
+    "every": {
+      "daily": "{interval, plural, =1 {Every day} =2 {Every other day} other {Every # days}}",
+      "weekly": "{interval, plural, =1 {Every week} =2 {Every other week} other {Every # weeks}}",
+      "monthly": "{interval, plural, =1 {Every month} =2 {Every other month} other {Every # months}}"
+    },
+    "weekly": "{every} on {slots}",
+    "slot": "{weekday} {time}",
+    "monthlyByPosition": "{every} on the {positions} at {time}",
+    "position": "{ordinal} {weekday}",
+    "ordinal": {
+      "1": "first",
+      "2": "second",
+      "3": "third",
+      "4": "fourth",
+      "last": "last"
+    },
+    "monthlyByDay": "{every} on day {days} at {time}",
+    "daily": "{every} at {time}",
+    "untilFurtherNotice": "{pattern}, until further notice",
+    "through": "{pattern}, through {date}",
+    "request": {
+      "days": "The group is asked to answer {days, plural, =0 {the same day} one {# day before} other {# days before}} at {time}",
+      "hours": "The group is asked to answer {hours, plural, one {# hour} other {# hours}} before the start"
+    }
   }
 }

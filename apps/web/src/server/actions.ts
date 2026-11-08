@@ -45,6 +45,7 @@ import {
 } from "@clubadmin/shared";
 
 import { safeReturnTo } from "./return-to.ts";
+import { recurrenceFrom, requestLeadFrom } from "./series-form.ts";
 
 export interface ApiCall {
   path: string;
@@ -338,19 +339,6 @@ const placeOf = (form: FormData, clear: boolean) => {
   if (locationText) return { locationText, ...(clear ? { locationId: null } : {}) };
   return clear ? { locationId: null, locationText: null } : {};
 };
-/** Weekly slots from the rows weekday.N, startTime.N, duration.N (empty rows are skipped). */
-function slotsOf(form: FormData) {
-  const slots: { weekday: number; startTime: string; durationMinutes: number }[] = [];
-  for (let n = 0; n < 7; n++) {
-    const weekday = Number(text(form, `weekday.${n}`));
-    const startTime = text(form, `startTime.${n}`);
-    const duration = Number(text(form, `duration.${n}`));
-    if (!weekday || !startTime) continue;
-    if (!isTime(startTime) || !Number.isInteger(duration)) return null;
-    slots.push({ weekday, startTime, durationMinutes: duration });
-  }
-  return slots;
-}
 const datesOf = (value: string) => value.split(/[\s,;]+/).filter(isDate);
 /** Hours before the start (0–336) from the deadline field, null if empty, undefined if invalid. */
 function deadlineHours(form: FormData): number | null | undefined {
@@ -361,8 +349,11 @@ function deadlineHours(form: FormData): number | null | undefined {
 }
 /** The series fields of the create, change and split forms. */
 function seriesFields(form: FormData, clear: boolean) {
-  const slots = slotsOf(form);
-  if (slots === null) return null;
+  const get = (name: string) => text(form, name);
+  const recurrence = recurrenceFrom(get);
+  if (recurrence === null) return null;
+  const requestLead = requestLeadFrom(get);
+  if (requestLead === undefined) return null;
   const title = text(form, "title");
   const responseMode = oneOf(RESPONSE_MODES, text(form, "responseMode"));
   const hours = deadlineHours(form);
@@ -377,8 +368,12 @@ function seriesFields(form: FormData, clear: boolean) {
     ...(title ? { title } : {}),
     ...clearable(form, ["notes", "leaderNotes"], clear),
     ...placeOf(form, clear),
-    ...(slots.length > 0 ? { slots } : {}),
-    ...(isDate(text(form, "endsOn")) ? { endsOn: text(form, "endsOn") } : {}),
+    rule: recurrence.rule,
+    ...(recurrence.rule.freq !== "weekly" || recurrence.slots.length > 0
+      ? { slots: recurrence.slots }
+      : {}),
+    ...(recurrence.endsOn === undefined ? {} : { endsOn: recurrence.endsOn }),
+    ...(requestLead || clear ? { requestLead } : {}),
     skipDates: datesOf(text(form, "skipDates")),
     skipPublicHolidays: text(form, "skipPublicHolidays") === "on",
   };
@@ -393,11 +388,14 @@ function activityFields(form: FormData, clear: boolean) {
   const responseMode = oneOf(RESPONSE_MODES, text(form, "responseMode"));
   const hours = deadlineHours(form);
   if (hours === undefined) return null;
+  const requestLead = requestLeadFrom((name) => text(form, name));
+  if (requestLead === undefined) return null;
   const respondBy =
     hours === null ? null : new Date(Date.parse(startsAt) - hours * 3_600_000).toISOString();
   return {
     ...(responseMode ? { responseMode } : {}),
     ...(respondBy ? { respondBy } : clear ? { respondBy: null } : {}),
+    ...(requestLead || clear ? { requestLead } : {}),
     title: text(form, "title"),
     startsAt,
     endsAt,
@@ -492,7 +490,7 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       const kind = oneOf(ACTIVITY_KINDS, text(form, "kind")) ?? "training";
       const fields = seriesFields(form, false);
       const startsOn = text(form, "startsOn");
-      if (!groupId || !fields || !isDate(startsOn) || !fields.slots) return null;
+      if (!groupId || !fields || !isDate(startsOn) || fields.endsOn === undefined) return null;
       return {
         path: `/api/v1/groups/${groupId}/activity-series`,
         method: "POST",
@@ -534,6 +532,33 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       const created = seriesIdOf(result);
       return created ? `/activity-series/${created}?saved=1` : back(form);
     },
+  },
+  // Removed dates of a series (P1.14): a date or a range, and bringing one back.
+  "skip-series-dates": {
+    call: (form) => {
+      const seriesId = id(form, "seriesId");
+      const from = text(form, "from");
+      const to = text(form, "to");
+      if (!seriesId || !isDate(from) || (to !== "" && !isDate(to))) return null;
+      return {
+        path: `/api/v1/activity-series/${seriesId}/skipped-dates`,
+        method: "POST",
+        body: { from, ...(to ? { to } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form), "removed", "1"),
+  },
+  "restore-series-date": {
+    call: (form) => {
+      const seriesId = id(form, "seriesId");
+      const date = text(form, "date");
+      if (!seriesId || !isDate(date)) return null;
+      return {
+        path: `/api/v1/activity-series/${seriesId}/skipped-dates/${date}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => withParam(back(form), "restored", "1"),
   },
   // Responses and attendance (P1.5).
   respond: {

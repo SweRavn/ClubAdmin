@@ -67,12 +67,20 @@ describe("expandSeries", () => {
     expect(skipped).toEqual([{ date: "2025-06-06", holiday: true }]);
   });
 
-  it("refuses two slots on one weekday and series longer than 400 days", () => {
+  it("refuses two slots on one weekday", () => {
     expect(() =>
       expandSeries({ ...base, slots: [base.slots[0]!, { ...base.slots[0]!, startTime: "19:00" }] }),
     ).toThrow(expect.objectContaining({ code: "invalid_recurrence" }) as unknown);
-    expect(() => expandSeries({ ...base, endsOn: "2026-12-31" })).toThrow(
-      expect.objectContaining({ code: "series_too_long" }) as unknown,
-    );
+  });
+
+  it("an open-ended series expands to the window asked for (P1.14)", () => {
+    const { sessions } = expandSeries({
+      ...base,
+      endsOn: null,
+      skipDates: [],
+      from: "2025-09-01",
+      to: "2025-09-07",
+    });
+    expect(sessions.map((s) => s.date)).toEqual(["2025-09-02", "2025-09-04"]);
   });
 });

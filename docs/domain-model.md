@@ -614,12 +614,17 @@ managers and registrars get the notice `membership.left`.
   `created_by_person_id` (P1.6b: leaders add places and change only their
   own; club managers change any). Archived, never deleted; archived
   locations are not offered for new activities.
-- `activity_series`: a weekly series of a club's groups
+- `activity_series`: a recurring series of a club's groups
   (`activity_series_groups`): kind, title, notes, leader notes, location or
-  free-text place, slots (ISO weekday, local start time, length; one per
-  weekday), first and last date (at most 400 days), skipped dates and
-  whether the country pack's public holidays are skipped. Every session is
-  created with the series.
+  free-text place, `rule` (P1.14: daily, weekly or monthly with an
+  interval; monthly by weekday position or day of the month; a subset of
+  RFC 5545 RRULE), slots (weekly rules: ISO weekday, local start time,
+  length; one per weekday), first date and last date or none ("until
+  further notice"), skipped dates (single dates and removed ranges) and
+  whether the country pack's public holidays are skipped, and the answer
+  request (`request_lead`: N days before at a local time, or N hours
+  before). Sessions exist up to `materialized_until`: to the end, at most 13
+  months ahead; a daily job extends the rest (ADR 0034 amendment).
 - `activities`: a single activity or a session of a series (`series_id`,
   `occurrence_on` = its local date, unique per series). Kind (`training`,
   `match`, `meeting`, `other`), title, start and end (UTC; `all_day`),
@@ -640,7 +645,9 @@ managers and registrars get the notice `membership.left`.
   record history (derived data).
 - Changing a series applies from a date (never in the past); "this and
   following" ends the series the day before a session and starts a new one
-  with the changes. Deleting a session skips its date in the series. Past
+  with the changes. Deleting a session skips its date in the series; a
+  range of dates can be removed at once and a removed date brought back
+  (P1.14). Past
   sessions are never rewritten (attendance, P1.5). A session with answers
   or attendance is never deleted: deleting it is refused, and a series
   change that drops it cancels it (ADR 0035).
@@ -651,7 +658,10 @@ managers and registrars get the notice `membership.left`.
 - `activities.response_mode` (`none`, `optional`, `requested`; by kind:
   trainings optional, matches and meetings requested, other none) and
   `respond_by`; a series has the mode and `respond_by_minutes` before each
-  session. Until the deadline any answer, after it only "not attending";
+  session. The answer request (P1.14): `request_at` (when it goes out) and
+  `requested_at` (when it did), from the series' or the activity's
+  `request_lead`; `response.requested` reaches those who take part and have
+  not answered, once. Until the deadline any answer, after it only "not attending";
   cancelled or ended activities take no answers.
 - **The roster** of an activity is who was in its groups on its start
   (`group_memberships` valid at `starts_at`): members are participants,

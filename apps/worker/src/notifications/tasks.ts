@@ -4,6 +4,9 @@
 //   changes, a late "not coming"), reading the state when they run;
 // - `notifications:response_reminders` (every 15 minutes): 24 hours before
 //   an activity's deadline (or start), those who have not answered;
+// - `notifications:response_requests` (every 5 minutes, P1.14): the answer
+//   request a chosen time before a session, once, to those who take part and
+//   have not answered;
 // - `notifications:event_reminders` (every 15 minutes): 24 hours before an
 //   event's sign-up closes, its audience who have not signed up;
 // - `notifications:retention` (daily): notices after 90 days, deliveries
@@ -207,6 +210,66 @@ export function responseRemindersTask(deps: NotificationTaskDependencies): Task 
               params: activityParams(a),
               dedupeKey: `reminder:${a.id}`,
               dueAt: a.respondBy ?? a.startsAt,
+            })),
+            { channels: deps.channels, now: at },
+          );
+        }
+      });
+    }
+  };
+}
+
+/**
+ * The answer request before each session (P1.14): when its moment has come,
+ * once (requested_at), to the roster who have not answered, via those who
+ * may answer for them. Cancelled sessions and sessions without answers get
+ * none; a session that has started is marked without a notice.
+ */
+export function responseRequestsTask(deps: NotificationTaskDependencies): Task {
+  return async () => {
+    const at = deps.now?.() ?? new Date();
+    for (const clubId of await clubIds(deps.db)) {
+      await deps.db.withSystem("notifications:response_requests", { clubId }, async (tx) => {
+        // The partial index activities_request_idx, in each club (tenant row-level security).
+        const { rows } = await tx.execute<{ id: string; club_id: string; late: boolean }>(sql`
+          SELECT a.id, a.club_id, a.starts_at <= ${at.toISOString()}::timestamptz AS late
+          FROM public.activities a
+          WHERE a.club_id = ${clubId} AND a.requested_at IS NULL AND a.status = 'scheduled'
+            AND a.request_at IS NOT NULL AND a.request_at <= ${at.toISOString()}::timestamptz
+          ORDER BY a.request_at
+          LIMIT 500
+          FOR UPDATE SKIP LOCKED`);
+        for (const row of rows) {
+          await tx.execute(sql`
+            UPDATE public.activities SET requested_at = ${at.toISOString()}::timestamptz
+            WHERE id = ${row.id}`);
+          if (row.late) continue;
+          const a = await activityFacts(tx, row.club_id, row.id);
+          if (!a || a.responseMode === "none") continue;
+          const roster = await participants(tx, a.id);
+          if (roster.length === 0) continue;
+          const { rows: answered } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM public.activity_responses
+            WHERE club_id = ${a.clubId} AND activity_id = ${a.id}
+              AND person_id = ANY (${uuidArray(roster)}::uuid[])`);
+          const done = new Set(answered.map((r) => r.person_id));
+          const people = await withGuardians(
+            tx,
+            roster.filter((id) => !done.has(id)),
+            RIGHTS.answer,
+          );
+          await createNotices(
+            tx,
+            [...people].map(([recipient, about]) => ({
+              recipientPersonId: recipient,
+              clubId: a.clubId,
+              type: "response.requested",
+              subjectType: "activity",
+              subjectId: a.id,
+              about,
+              params: activityParams(a),
+              dedupeKey: `request:${a.id}`,
+              dueAt: a.startsAt,
             })),
             { channels: deps.channels, now: at },
           );
