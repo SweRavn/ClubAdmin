@@ -63,6 +63,7 @@ test the foundation by hand.
 | [P1.12 Protected identity UI and profile view log](P1.12-protected-identity-ui.md) (draft) | P1.9 |
 | [P1.13 Billing: plans, subscriptions, invoices](P1.13-billing.md) | P0.12 |
 | [P1.14 Review fixes and clean-up before Phase 2](P1.14-review-fixes.md) (filled in during the review) | P1.13 |
+| [P1.15 Club-defined roles and permissions, club types](P1.15-roles-and-permissions.md) | P1.14 |
 
 The P1.7–P1.13 prompts are drafts written before P1.6 was implemented:
 check "What exists already" against the code and settle each prompt's

@@ -44,6 +44,7 @@ Ordered so each package only depends on earlier ones. Prompts:
 | P1.12 | Protected identity UI: flags, crossed-camera icon, chat-acceptance flow, access log (ADR 0022) |
 | P1.13 | Billing: plans, subscriptions, invoices (only active with `BILLING_ENABLED`) |
 | P1.14 | Review fixes and clean-up before Phase 2 (first: recurring trainings with calendar-like rules, open-ended series and a timed answer request) |
+| P1.15 | Club-defined roles and permissions (roles per club built from a catalogue of permissions, immediate effect, pedagogical role editor); club types with role templates maintained by operators |
 
 ## Phase 2 — Communication and compliance
 
