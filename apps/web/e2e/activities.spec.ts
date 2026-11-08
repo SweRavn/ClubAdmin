@@ -155,8 +155,10 @@ test("Erik makes a monthly series until further notice, removes a date and bring
   await expect(page.getByTestId("series-removed-dates")).toHaveCount(0);
 });
 
-test("Erik asks for a place in a group with direct admission (P1.14)", async ({ page }) => {
-  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkHerr}` });
+// Anna, not Erik: Lighthouse measures Erik's home page after these tests, and an
+// open application adds "In progress" to it.
+test("Anna asks for a place in a group with direct admission (P1.14)", async ({ page }) => {
+  await loginAs(page, PERSONAS.anna, { returnTo: `/groups/${GROUPS.svkHerr}` });
   const apply = page.getByTestId("group-join-waitlist");
   await expect(apply).toHaveText("Ansök om plats");
   await apply.click();
@@ -164,6 +166,7 @@ test("Erik asks for a place in a group with direct admission (P1.14)", async ({ 
   await expect(page.getByTestId("open-group-state")).toHaveText(
     "Lediga platser: en ledare antar ansökan",
   );
+  await page.getByTestId("apply-person").selectOption(PERSONAS.anna.id);
   await page.getByTestId(`apply-${GROUPS.svkHerr}`).click();
   await page.waitForURL(/\/me\/waitlists/);
   await expect(page.getByTestId("my-waitlist-entry").first()).toContainText("Herr senior");
