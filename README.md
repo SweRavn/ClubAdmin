@@ -8,19 +8,60 @@ SportAdmin, MyClub and laget.se, but free and open source
 (AGPL-3.0). It can be used as a hosted service or self-hosted by organisations
 that have the capacity to run it.
 
-> Status: **design phase**. No application code yet. Start with the documents below.
+> **Status:** Phase 1 is in place: the API, the background worker, the web
+> app and the Android/iOS app run end to end on demo data. Phase 2
+> (communication and compliance) is next; see the [roadmap](docs/roadmap.md).
+> There are no release dates.
 
-## Highlights (planned)
+## What it does today
 
-- Members, teams, guardians and children, one person with many roles across many clubs
-- Activities (training, matches), attendance and LOK-stöd reporting
-- Events with sign-up, car pooling
-- Messaging: email, message board, team chat rooms
-- Shareable training plans across clubs
-- Documents, sponsors/ads, team cash desk
-- Tracking of required background checks (e.g. Swedish belastningsregisterutdrag)
-- Built-in GDPR tools, strong security, fast UI
-- Live streaming, payroll and bookkeeping integrations (later phases)
+- **Members, families and groups.** One person, many clubs and roles;
+  guardians and children (with or without their own login), bonus parents,
+  contact persons; the member register with filters and CSV export; adding
+  members by hand or importing a file
+  ([domain model](docs/domain-model.md)).
+- **Joining.** Sign-up and login through Zitadel, finding a club and
+  applying, invitations by link, code or email, creating a club, handing
+  over club management ([ADR 0018](docs/adr/0018-self-signup-club-managers.md)).
+- **Groups.** Teams, sections and training groups in a hierarchy, owners,
+  seasons and capacity, waiting lists with offers and admission
+  ([ADR 0019](docs/adr/0019-groups-owners-waitlists.md),
+  [ADR 0043](docs/adr/0043-waiting-lists.md)).
+- **Activities.** Trainings, matches and meetings; recurring series like a
+  calendar app (weekly, every other week, the first Wednesday of the month,
+  until further notice), removed dates and holidays; group and club
+  calendars and "My schedule" across clubs
+  ([ADR 0034](docs/adr/0034-activities-and-schedule.md)).
+- **Answers and attendance.** "Are you coming?" with deadlines and a request
+  sent a chosen time before each session, call-ups for matches, attendance
+  taking ([ADR 0035](docs/adr/0035-responses-and-attendance.md)).
+- **Events with sign-up**, places and waiting lists
+  ([ADR 0038](docs/adr/0038-events-and-sign-up.md)).
+- **Notifications** in the app, by push and by email, with per-person
+  settings ([ADR 0039](docs/adr/0039-notifications.md)).
+- **Calendar subscriptions** (iCal) with one-click answer links
+  ([ADR 0044](docs/adr/0044-calendar-feeds.md)).
+- **Privacy.** Consents, leaving a club, "download my data", account
+  deletion, retention, protected identity and the profile view log, record
+  history and the audit log ([GDPR](docs/gdpr.md)).
+- **Optional billing** for a hosted service: plans, invoices with bankgiro
+  and OCR, card payments, dunning to read-only; off by default
+  ([hosting and billing](docs/hosting-and-billing.md),
+  [ADR 0045](docs/adr/0045-billing-invoices-and-dunning.md)).
+- **Operations.** Backups with point-in-time restore and verified restores
+  ([backup and restore](docs/operations/backup-restore.md)), performance
+  budgets checked in CI ([performance](docs/performance.md)).
+
+Swedish, English and Norwegian (bokmål); country packs for Sweden and Norway.
+
+## Planned
+
+From the [roadmap](docs/roadmap.md): club-defined roles and permissions and
+club types (P1.15); then chat rooms, message board, bulk email, car pooling,
+documents and board meetings, background-check tracking, LOK-stöd reporting
+(Phase 2); team cash desk, member fees and payments, training plan library,
+sponsors, public club pages, facility booking (Phase 3); live streaming,
+payroll and bookkeeping integrations (Phase 4).
 
 ## Getting started (development)
 
@@ -85,18 +126,76 @@ pnpm dev:trust-ca    # once, so browsers trust https://clubadmin.localhost
 pnpm dev             # services + apps
 ```
 
-See [`docs/development.md`](docs/development.md) for daily use and
-troubleshooting, and `CLAUDE.md` for all commands and rules.
+`pnpm dev` seeds the demo scenario on its first start (clubs, groups,
+personas and activities, [docs/seed-data.md](docs/seed-data.md));
+`pnpm db:reset` starts over. See [`docs/development.md`](docs/development.md) for
+daily use and troubleshooting, and `CLAUDE.md` for all commands and rules.
+
+### Where things are
+
+| What | Where |
+|---|---|
+| The web app | https://clubadmin.localhost |
+| The login service (Zitadel itself, not the app) | https://auth.clubadmin.localhost |
+| The API | https://api.clubadmin.localhost/api/v1 |
+| All email the system sends (Mailpit) | http://127.0.0.1:8025 |
+
+### Logging in
+
+- **As a demo persona:** https://clubadmin.localhost/login lists the
+  personas (`DEV_AUTH`, development only), grouped by club, each with what it
+  tests. Tick "as if logged in with two-factor authentication" for pages that
+  need it (club managers' settings, roles).
+- **With your own account:** "Create an account" on the same page. The
+  verification code is sent to Mailpit, not to your real inbox. Stuck on
+  Zitadel's "Activate your user account"? Use "Log in with another account"
+  on the login page ([troubleshooting](docs/development.md)).
+- `pnpm dev:idp-sync` makes the personas real Zitadel users (password
+  `demo-password-123`).
+
+### Joining a club
+
+A new person completes their profile, then on the start page either
+**finds a club** (`/clubs/find`) and applies (the club's managers decide;
+the person gets a notice), **uses an invitation** (a link or a code), or is
+**invited by email** by a club manager or registrar. In the demo:
+Strandvikens VK approves applications (Anna or Sara: "Ansökningar"), IK
+Norrbacka lets everyone join at once, Fjordvik IL only by invitation
+(`pnpm db:seed` prints its invitation link and code).
+
+### The mobile app
+
+`pnpm --filter @clubadmin/mobile android` / `ios` / `start` builds and runs
+the development app ([development](docs/development.md), "Mobile app");
+[docs/android-emulator.md](docs/android-emulator.md) covers the emulator on
+Windows/WSL and the ready-made build from CI.
+
+### Billing on and off
+
+Billing is off by default (`BILLING_ENABLED=false`): self-hosted
+installations see nothing of it. Turn it on in `.env.local` to try plans,
+invoices and the fake card provider
+([hosting and billing](docs/hosting-and-billing.md)).
+
+## Running it yourself
+
+ClubAdmin can be self-hosted: the images and Compose files are in
+[`infra/docker`](infra/docker/README.md), configuration and the optional
+billing in [hosting and billing](docs/hosting-and-billing.md), and backups
+and restores in [backup and restore](docs/operations/backup-restore.md).
 
 ## Documentation
 
 | Document | Contents |
 |---|---|
 | [CLAUDE.md](CLAUDE.md) | Conventions and rules for anyone (human or AI) writing code here |
+| [docs/development.md](docs/development.md) | Daily development, logging in, tests, troubleshooting |
+| [docs/android-emulator.md](docs/android-emulator.md) | The Android emulator on Windows/WSL, the CI build |
 | [docs/vision.md](docs/vision.md) | Goals, users, scope, non-goals |
 | [docs/architecture.md](docs/architecture.md) | System design, stack, repository layout |
 | [docs/domain-model.md](docs/domain-model.md) | Core entities: people, clubs, teams, roles, guardians |
 | [docs/security.md](docs/security.md) | Threat model and security controls |
+| [docs/api/](docs/api/problems.md) | API conventions: problem details, the data export format |
 | [docs/operations/backup-restore.md](docs/operations/backup-restore.md) | Backup, restore and disaster recovery |
 | [docs/performance.md](docs/performance.md) | Performance budgets and design rules |
 | [docs/gdpr.md](docs/gdpr.md) | Privacy and data protection |
@@ -104,8 +203,16 @@ troubleshooting, and `CLAUDE.md` for all commands and rules.
 | [docs/licensing.md](docs/licensing.md) | AGPL-3.0 and dependency licence policy |
 | [docs/seed-data.md](docs/seed-data.md) | Demo clubs and personas for development |
 | [docs/roadmap.md](docs/roadmap.md) | Phases and modules |
-| [docs/adr/](docs/adr/) | Architecture decision records |
-| [docs/prompts/](docs/prompts/) | Implementation prompts, one per work package |
+| [docs/adr/](docs/adr/README.md) | Architecture decision records (index) |
+| [docs/prompts/](docs/prompts/README.md) | Implementation prompts, one per work package (index) |
+
+## Contributing
+
+Read [CLAUDE.md](CLAUDE.md) first: it holds the rules (tenant isolation,
+audit, privacy, i18n, performance budgets) and the commands. Commits follow
+Conventional Commits and are signed off (`git commit -s`, DCO); before
+pushing, run `pnpm lint`, `pnpm typecheck`, `pnpm test` and, with the
+services running, `pnpm test:integration`.
 
 ## License
 

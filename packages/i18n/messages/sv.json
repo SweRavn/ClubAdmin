@@ -156,7 +156,8 @@
     "useCode": "Använd koden",
     "haveLink": "Har du fått en länk? Öppna den bara.",
     "startTitle": "Välkommen! Hur vill du börja?",
-    "startText": "Gå med i en förening du känner, be en förening att ta in dig eller starta en ny förening."
+    "startText": "Gå med i en förening du känner, be en förening att ta in dig eller starta en ny förening.",
+    "findClubText": "Sök föreningen och ansök. Föreningens ansvariga får veta det, och du får en notis när de har beslutat. Vissa föreningar tar in alla direkt, andra bara via inbjudan."
   },
   "club": {
     "overview": "Översikt",

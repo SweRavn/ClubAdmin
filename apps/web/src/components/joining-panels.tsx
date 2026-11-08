@@ -63,6 +63,9 @@ export async function Onboarding() {
         </section>
         <section className="space-y-2 rounded-lg border border-border bg-raised p-4">
           <h3 className="font-semibold">{t("onboarding.findClub")}</h3>
+          <p className="text-sm text-muted" data-testid="find-club-text">
+            {t("onboarding.findClubText")}
+          </p>
           <a href="/clubs/find" className={linkButton} data-testid="find-club">
             {t("onboarding.findClub")}
           </a>

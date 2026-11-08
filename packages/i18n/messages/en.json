@@ -156,7 +156,8 @@
     "useCode": "Use the code",
     "haveLink": "Got a link? Just open it.",
     "startTitle": "Welcome! How do you want to start?",
-    "startText": "Join a club you know, ask a club to take you in, or start a new club."
+    "startText": "Join a club you know, ask a club to take you in, or start a new club.",
+    "findClubText": "Search for the club and apply. The club's managers are told, and you get a notice when they have decided. Some clubs let everyone join at once, others only by invitation."
   },
   "club": {
     "overview": "Overview",

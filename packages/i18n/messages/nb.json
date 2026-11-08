@@ -156,7 +156,8 @@
     "useCode": "Bruk koden",
     "haveLink": "Har du fått en lenke? Bare åpne den.",
     "startTitle": "Velkommen! Hvordan vil du begynne?",
-    "startText": "Bli med i en klubb du kjenner, be en klubb om å ta deg inn, eller start en ny klubb."
+    "startText": "Bli med i en klubb du kjenner, be en klubb om å ta deg inn, eller start en ny klubb.",
+    "findClubText": "Søk etter klubben og søk om medlemskap. Klubbens ansvarlige får beskjed, og du får et varsel når de har bestemt seg. Noen klubber tar inn alle med en gang, andre bare via invitasjon."
   },
   "club": {
     "overview": "Oversikt",
