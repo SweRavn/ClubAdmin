@@ -84,6 +84,7 @@ export const NOTIFICATION_TYPES = {
   "billing.past_due": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "billing.read_only": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "billing.restored": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "billing.card.failed": { category: "club_admin", mandatoryEmail: true, immediate: true },
   // Protected identity (P1.12): the club's managers, never naming the person.
   "member.protection.changed": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "assignment.ended": { category: "club_admin" },

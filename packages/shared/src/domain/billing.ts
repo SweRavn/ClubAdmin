@@ -56,6 +56,8 @@ export const ClubPlansSchema = z
     vatNote: z.enum(VAT_NOTES),
     /** A paid plan can be chosen (decision 5: only clubs the seller can invoice). */
     paidPlansAvailable: z.boolean(),
+    /** Card payments are available (a provider is configured; part B). */
+    cardAvailable: z.boolean().optional(),
     termsVersion: z.string(),
     termsUrl: z.url().nullable(),
     plans: z.array(PlanOfferSchema),
@@ -159,6 +161,11 @@ export const PaymentMethodRequestSchema = z
 export const PaymentMethodResultSchema = z
   .object({ method: z.enum(PAYMENT_METHODS), redirectUrl: z.url().nullable() })
   .openapi("PaymentMethodResult");
+
+export const PayLinkSchema = z.object({ redirectUrl: z.url() }).openapi("PayLink");
+
+export const WebhookParamsSchema = z.object({ provider: z.enum(["stripe", "fake"]) });
+export const WebhookAckSchema = z.object({ received: z.boolean() }).openapi("WebhookAck");
 
 export const InvoiceSummarySchema = z
   .object({

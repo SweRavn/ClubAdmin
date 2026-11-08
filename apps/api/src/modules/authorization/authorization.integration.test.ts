@@ -368,6 +368,12 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/invoices/${uuidv7()}/pdf`,
       expected: { ...OPERATOR_CLUB, manager: 404 },
     },
+    "POST /api/v1/clubs/:clubId/invoices/:invoiceId/pay": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invoices/${uuidv7()}/pay`,
+      // No card provider in the matrix: 409 for those who may (payment_method_unavailable).
+      expected: { ...OPERATOR_CLUB, manager: 409 },
+      body: {},
+    },
     // Operators only (platform, with a second factor).
     "POST /api/v1/billing/plans": {
       url: () => "/api/v1/billing/plans",

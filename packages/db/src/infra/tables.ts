@@ -189,6 +189,7 @@ export const billingAccounts = billingSchema.table("accounts", {
   paymentMethod: text("payment_method").$type<"invoice" | "card">().notNull().default("invoice"),
   provider: text(),
   providerCustomerId: text("provider_customer_id"),
+  providerPaymentMethodId: text("provider_payment_method_id"),
   cardBrand: text("card_brand"),
   cardLast4: text("card_last4"),
   cardExpMonth: integer("card_exp_month"),
@@ -224,6 +225,9 @@ export const billingInvoices = billingSchema.table("invoices", {
   pdfSha256: text("pdf_sha256"),
   reminderLevel: integer("reminder_level").notNull().default(0),
   lastRemindedAt: timestamp("last_reminded_at", tz),
+  // P1.13 part B: card charge attempts.
+  cardAttempts: integer("card_attempts").notNull().default(0),
+  nextCardAttemptAt: timestamp("next_card_attempt_at", tz),
 });
 export const billingInvoiceLines = billingSchema.table("invoice_lines", {
   id: uuid().primaryKey(),

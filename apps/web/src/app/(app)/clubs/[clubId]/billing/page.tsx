@@ -86,6 +86,8 @@ export default async function BillingPage({ params, searchParams }: Props) {
       <h1 className="text-2xl font-semibold">{t("billing.title")}</h1>
       <FormError code={query.error} />
       {saved ? <Notice>{t(enumKey("billing.saved", saved))}</Notice> : null}
+      {one(query.card) === "saved" ? <Notice>{t("billing.cardSaved")}</Notice> : null}
+      {one(query.paid) === "1" ? <Notice>{t("billing.paidThanks")}</Notice> : null}
 
       {/* The subscription. */}
       <section
@@ -385,7 +387,47 @@ export default async function BillingPage({ params, searchParams }: Props) {
             <p data-testid="billing-method">
               {t(enumKey("billing.methods", account?.paymentMethod ?? "invoice"))}
             </p>
-            <p className="text-sm text-muted">{t("billing.cardLater")}</p>
+            {account?.paymentMethod === "card" && account.cardLast4 ? (
+              <p className="text-sm" data-testid="billing-card">
+                {t("billing.cardOnFile", {
+                  brand: account.cardBrand ?? "",
+                  last4: account.cardLast4,
+                })}
+              </p>
+            ) : null}
+            {plans.cardAvailable ? (
+              <div className="flex flex-wrap gap-3">
+                <ActionForm action="set-payment-method">
+                  <input type="hidden" name="clubId" value={club.id} />
+                  <input type="hidden" name="method" value="card" />
+                  <button
+                    type="submit"
+                    className={secondaryButtonClass}
+                    data-testid="billing-use-card"
+                  >
+                    {t(
+                      account?.paymentMethod === "card" ? "billing.changeCard" : "billing.useCard",
+                    )}
+                  </button>
+                </ActionForm>
+                {account?.paymentMethod === "card" ? (
+                  <ActionForm action="set-payment-method">
+                    <input type="hidden" name="clubId" value={club.id} />
+                    <input type="hidden" name="method" value="invoice" />
+                    <button
+                      type="submit"
+                      className={secondaryButtonClass}
+                      data-testid="billing-use-invoice"
+                    >
+                      {t("billing.useInvoice")}
+                    </button>
+                  </ActionForm>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm text-muted">{t("billing.cardLater")}</p>
+            )}
+            <p className="text-sm text-muted">{t("billing.cardHint")}</p>
           </div>
         </section>
       ) : null}
@@ -469,6 +511,15 @@ export default async function BillingPage({ params, searchParams }: Props) {
                 />
               </p>
             </div>
+          ) : null}
+          {invoice.instructions && plans.cardAvailable ? (
+            <ActionForm action="pay-invoice">
+              <input type="hidden" name="clubId" value={club.id} />
+              <input type="hidden" name="invoiceId" value={invoice.id} />
+              <button type="submit" className={buttonClass} data-testid="billing-pay-now">
+                {t("billing.payNow")}
+              </button>
+            </ActionForm>
           ) : null}
         </section>
       ) : null}

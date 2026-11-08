@@ -22,10 +22,12 @@ import {
   LedgerError,
   type LedgerSettings,
   outbox,
+  sql,
   type TenantContext,
   type Tx,
 } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
+import type { PaymentProvider } from "@clubadmin/server-kit/payments";
 import {
   accessStateForSubscription,
   type BillingAccount,
@@ -64,6 +66,10 @@ export interface BillingOptions {
   storage: ObjectStorage | null;
   termsVersion: string;
   termsUrl: string | null;
+  /** The card provider (part B), or null: invoice only. */
+  payments?: PaymentProvider | null;
+  /** PUBLIC_WEB_URL: where the provider's hosted pages return to. */
+  webUrl?: string;
 }
 
 /** Ledger failures as domain errors (codes, never values). */
@@ -247,6 +253,7 @@ export class BillingService {
         vatRateBp: vat.rateBp,
         vatNote: vat.note,
         paidPlansAvailable: this.paidPlansAvailable(facts.country),
+        cardAvailable: Boolean(this.settings.payments),
         termsVersion: this.settings.termsVersion,
         termsUrl: this.settings.termsUrl,
         plans: offers,
@@ -606,11 +613,47 @@ export class BillingService {
   }
 
   /** Invoice (PR A); card needs the provider's hosted setup (PR B). */
+  private billingPage(clubId: string, query: string): string {
+    return new URL(
+      `/clubs/${clubId}/billing?${query}`,
+      this.settings.webUrl ?? "https://clubadmin.localhost",
+    ).toString();
+  }
+
+  /**
+   * Invoice, or card through the provider's hosted page (part B): the card
+   * becomes the payment method when the provider confirms it (webhook).
+   */
   async setPaymentMethod(
     context: TenantContext,
     method: "invoice" | "card",
   ): Promise<{ method: "invoice" | "card"; redirectUrl: string | null }> {
-    if (method === "card") throw new DomainError("payment_method_unavailable");
+    if (method === "card") {
+      const provider = this.settings.payments;
+      if (!provider) throw new DomainError("payment_method_unavailable");
+      const account = await this.db.withTenant(context, (tx) => repo.findAccount(tx, context.clubId));
+      if (!account || !ledger.accountComplete(account)) {
+        throw new DomainError("billing_details_incomplete");
+      }
+      const sameProvider = account.provider === provider.name;
+      const { customerId, redirectUrl } = await provider.setupCard({
+        clubId: context.clubId,
+        customerId: sameProvider ? account.providerCustomerId : null,
+        customerName: account.legalName,
+        customerEmail: account.invoiceEmail,
+        returnUrl: this.billingPage(context.clubId, "card=saved"),
+        cancelUrl: this.billingPage(context.clubId, "card=cancelled"),
+      });
+      if (!sameProvider || account.providerCustomerId !== customerId) {
+        await this.db.withTenant(context, (tx) =>
+          repo.updateAccount(tx, context.clubId, {
+            provider: provider.name,
+            providerCustomerId: customerId,
+          }),
+        );
+      }
+      return { method, redirectUrl };
+    }
     await this.db.withTenant(context, async (tx) => {
       const account = await repo.findAccount(tx, context.clubId);
       if (!account) throw new DomainError("billing_details_incomplete");
@@ -624,6 +667,68 @@ export class BillingService {
       });
     });
     return { method, redirectUrl: null };
+  }
+
+  /** The provider's hosted page for paying an open invoice's balance (the pay link). */
+  async payInvoice(context: TenantContext, invoiceId: string): Promise<{ redirectUrl: string }> {
+    const provider = this.settings.payments;
+    if (!provider) throw new DomainError("payment_method_unavailable");
+    const { invoice, account, balance } = await this.db.withTenant(context, async (tx) => {
+      const row = await repo.findInvoice(tx, invoiceId);
+      if (!row || row.clubId !== context.clubId || row.status === "draft") {
+        throw new DomainError("invoice_not_found");
+      }
+      if (row.kind !== "invoice" || row.status !== "open") throw new DomainError("invoice_not_open");
+      return {
+        invoice: row,
+        account: await repo.findAccount(tx, context.clubId),
+        balance: await ledger.balanceOf(tx, row),
+      };
+    });
+    if (balance <= 0) throw new DomainError("invoice_not_open");
+    return provider.payInvoice({
+      clubId: context.clubId,
+      invoiceId,
+      invoiceNumber: invoice.number ?? invoiceId,
+      customerId: account?.provider === provider.name ? account.providerCustomerId : null,
+      amountMinor: balance,
+      currency: invoice.currency,
+      returnUrl: this.billingPage(context.clubId, `invoice=${invoiceId}&paid=1`),
+      cancelUrl: this.billingPage(context.clubId, `invoice=${invoiceId}`),
+    });
+  }
+
+  /**
+   * A provider's webhook (public route): verified on the raw body, recorded
+   * by event ID (a duplicate is acknowledged and nothing more) and handed to
+   * the worker (billing:provider_event). No payload is stored.
+   */
+  async receiveWebhook(
+    providerName: string,
+    rawBody: Buffer,
+    headers: Record<string, string | string[] | undefined>,
+  ): Promise<{ duplicate: boolean }> {
+    const provider = this.options?.payments;
+    if (!provider || provider.name !== providerName) throw new DomainError("not_found");
+    let event: { eventId: string; type: string };
+    try {
+      event = provider.verifyWebhook(rawBody, headers);
+    } catch {
+      throw new DomainError("provider_signature_invalid");
+    }
+    return this.db.withSystem("billing:webhook", {}, async (tx) => {
+      const { rows } = await tx.execute<{ id: string }>(sql`
+        INSERT INTO billing.provider_events (provider, event_id, type)
+        VALUES (${provider.name}, ${event.eventId}, ${event.type.slice(0, 100)})
+        ON CONFLICT (provider, event_id) DO NOTHING
+        RETURNING id`);
+      const id = rows[0]?.id;
+      if (!id) return { duplicate: true };
+      await tx.execute(sql`
+        SELECT graphile_worker.add_job('billing:provider_event', ${JSON.stringify({ eventRowId: id })}::json,
+          job_key := ${`billing:event:${id}`}, max_attempts := 10)`);
+      return { duplicate: false };
+    });
   }
 
   // --- Invoices -------------------------------------------------------------------------

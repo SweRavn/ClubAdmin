@@ -12,16 +12,21 @@ import { createHash } from "node:crypto";
 import {
   audit,
   type Database,
+  eq,
   inClub,
   ledger,
+  LedgerError,
   type LedgerSettings,
+  outbox,
   type OutboxHandler,
   sql,
+  tables,
   type Tx,
 } from "@clubadmin/db";
 import { type Locale, localeOf } from "@clubadmin/i18n";
 import { billingSeller } from "@clubadmin/server-kit";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
+import type { PaymentProvider } from "@clubadmin/server-kit/payments";
 import { DOMAIN_EVENTS, ENTITLEMENTS_INVALIDATE_CHANNEL, z } from "@clubadmin/shared";
 import type { Task } from "graphile-worker";
 import type { Redis } from "ioredis";
@@ -143,6 +148,10 @@ export function billingSendHandler(): OutboxHandler {
             { ...p, purpose: "issued", level: 0 },
             `billing:send:${p.invoiceId}`,
           );
+          // Card invoices are charged at once (the job checks whether one is due).
+          await tx.execute(sql`
+            SELECT graphile_worker.add_job('billing:charge', ${JSON.stringify(p)}::json,
+              job_key := ${`billing:charge:${p.invoiceId}`}, max_attempts := 3)`);
           return;
         }
         case "billing.invoice.overdue": {
@@ -209,8 +218,10 @@ export async function runBillingDaily(
 
 export function billingDailyTask(db: Database, settings: LedgerSettings): Task {
   return async (_payload, helpers) => {
-    const result = await runBillingDaily(db, settings, new Date(), helpers.logger);
-    helpers.logger.info("billing: daily run", result);
+    const now = new Date();
+    const result = await runBillingDaily(db, settings, now, helpers.logger);
+    const charges = await enqueueDueCharges(db, now);
+    helpers.logger.info("billing: daily run", { ...result, charges });
     if (result.failed > 0) throw new Error(`billing: ${result.failed} clubs failed`);
   };
 }
@@ -235,6 +246,7 @@ interface InvoiceForSend {
   locale: Locale;
   status: string;
   pdfObjectKey: string | null;
+  paymentMethod: string | null;
 }
 
 /** The invoice as the PDF shows it, from its snapshots and lines. */
@@ -256,13 +268,14 @@ export async function loadInvoiceDocument(
     seller: InvoiceDocument["seller"] | null;
     buyer: (InvoiceDocument["buyer"] & { locale?: string }) | null;
     pdf_object_key: string | null;
+    payment_method: string | null;
     credited_number: string | null;
     club_name: string;
     time_zone: string;
     invoice_email: string | null;
     invoice_locale: string | null;
   }>(sql`
-    SELECT i.kind, i.number, i.status, i.issued_at, i.due_at, i.currency, i.subtotal_minor,
+    SELECT i.kind, i.number, i.status, i.payment_method, i.issued_at, i.due_at, i.currency, i.subtotal_minor,
       i.vat_minor, i.total_minor, i.ocr_reference, i.seller, i.buyer, i.pdf_object_key,
       ci.number AS credited_number, c.name AS club_name, c.time_zone,
       a.invoice_email, a.invoice_locale
@@ -302,6 +315,7 @@ export async function loadInvoiceDocument(
     locale,
     status: row.status,
     pdfObjectKey: row.pdf_object_key,
+    paymentMethod: row.payment_method,
     doc: {
       kind: row.kind,
       number: row.number,
@@ -404,6 +418,7 @@ export function sendInvoiceTask(deps: SendDependencies): Task {
         level: String(p.level),
         bankgiro: doc.seller.bankgiro,
         ocr: doc.ocrReference ?? "",
+        method: invoice.paymentMethod === "card" ? "card" : "invoice",
         url: link,
         hasLink: deps.emailLink ? "yes" : "no",
       };
@@ -482,5 +497,194 @@ export function billingRetentionTask(
     }
     const result = await runBillingRetention(retentionDb, storage, new Date());
     helpers.logger.info("billing: retention", result);
+  };
+}
+
+// --- Card payments (P1.13 part B) -----------------------------------------------------
+
+const ChargePayload = z.object({ clubId: z.uuid(), invoiceId: z.uuid() });
+
+/**
+ * billing:charge: one card attempt for an open card invoice whose attempt is
+ * due (at issue, then days 1, 3 and 7). The provider is called outside any
+ * transaction, with an idempotency key per invoice and attempt; the outcome
+ * is recorded by the ledger. The club is told on the first and the last
+ * failure (the invoice can still be paid by bankgiro or the pay link).
+ */
+export async function runCardCharge(
+  db: Database,
+  provider: PaymentProvider,
+  payload: { clubId: string; invoiceId: string },
+  now: Date,
+): Promise<"charged" | "failed" | "pending" | "skipped"> {
+  const { clubId, invoiceId } = payload;
+  const due = await db.withSystem("billing:charge", { clubId }, async (tx) => {
+    const { rows } = await tx.execute<{
+      status: string;
+      next_card_attempt_at: Date | null;
+      card_attempts: number;
+      currency: string;
+      customer: string | null;
+      method: string | null;
+      provider: string | null;
+    }>(sql`
+      SELECT i.status, i.next_card_attempt_at, i.card_attempts, i.currency,
+        a.provider_customer_id AS customer, a.provider_payment_method_id AS method, a.provider
+      FROM billing.invoices i LEFT JOIN billing.accounts a ON a.club_id = i.club_id
+      WHERE i.id = ${invoiceId}`);
+    const row = rows[0];
+    if (!row || row.status !== "open" || !row.next_card_attempt_at) return null;
+    if (new Date(row.next_card_attempt_at).getTime() > now.getTime()) return null;
+    if (!row.customer || !row.method || row.provider !== provider.name) return null;
+    const [invoice] = await tx
+      .select()
+      .from(tables.billingInvoices)
+      .where(eq(tables.billingInvoices.id, invoiceId));
+    if (!invoice) return null;
+    const balance = await ledger.balanceOf(tx, invoice);
+    return balance > 0
+      ? {
+          customer: row.customer,
+          method: row.method,
+          currency: row.currency,
+          attempt: row.card_attempts + 1,
+          balance,
+        }
+      : null;
+  });
+  if (!due) return "skipped";
+  const result = await provider.charge({
+    clubId,
+    invoiceId,
+    customerId: due.customer,
+    paymentMethodId: due.method,
+    amountMinor: due.balance,
+    currency: due.currency,
+    idempotencyKey: `invoice-${invoiceId}-${due.attempt}`,
+  });
+  await db.withSystem("billing:charge", { clubId }, async (tx) => {
+    const outcome = await ledger.recordCardAttempt(tx, {
+      invoiceId,
+      status: result.status,
+      reference: result.reference,
+      amountMinor: due.balance,
+      failureCode: result.failureCode,
+      now,
+    });
+    if (outcome.notify) {
+      await outbox.publish(
+        tx,
+        "billing.card.failed",
+        { clubId, invoiceId, final: outcome.notify === "final_failure" },
+        { idempotencyKey: `billing:card-failed:${invoiceId}:${outcome.notify}` },
+      );
+    }
+  });
+  return result.status === "succeeded" ? "charged" : result.status;
+}
+
+export function chargeTask(db: Database, provider: PaymentProvider | null): Task {
+  return async (payload, helpers) => {
+    if (!provider) return;
+    const result = await runCardCharge(db, provider, ChargePayload.parse(payload), new Date());
+    helpers.logger.info("billing: card charge", { result });
+  };
+}
+
+/** Card invoices due for an attempt (after billing:daily; at most 1,000 per run). */
+export async function enqueueDueCharges(db: Database, now: Date): Promise<number> {
+  return db.withSystem("billing:daily", {}, async (tx) => {
+    const due = await ledger.dueCardCharges(tx, now, 1000);
+    for (const d of due) {
+      await tx.execute(sql`
+        SELECT graphile_worker.add_job('billing:charge', ${JSON.stringify(d)}::json,
+          job_key := ${`billing:charge:${d.invoiceId}`}, max_attempts := 3)`);
+    }
+    // Provider events are kept 90 days (their IDs only).
+    await tx.execute(sql`
+      DELETE FROM billing.provider_events WHERE received_at < ${new Date(now.getTime() - 90 * 86_400_000)}`);
+    return due.length;
+  });
+}
+
+const EventPayload = z.object({ eventRowId: z.uuid() });
+
+/**
+ * billing:provider_event: a verified webhook, fetched again from the provider
+ * by its ID: a saved card becomes the club's payment method; a succeeded
+ * payment settles its invoice (idempotent by the provider's reference).
+ */
+export async function runProviderEvent(
+  db: Database,
+  provider: PaymentProvider,
+  eventRowId: string,
+  now: Date,
+): Promise<string> {
+  const row = await db.withSystem("billing:provider_event", {}, async (tx) => {
+    const { rows } = await tx.execute<{
+      provider: string;
+      event_id: string;
+      processed_at: Date | null;
+    }>(
+      sql`SELECT provider, event_id, processed_at FROM billing.provider_events WHERE id = ${eventRowId}`,
+    );
+    return rows[0] ?? null;
+  });
+  if (!row || row.processed_at || row.provider !== provider.name) return "skipped";
+  const event = await provider.fetchEvent(row.event_id);
+  let errorCode: string | null = null;
+  if (event.kind === "card_saved") {
+    await db.withSystem("billing:provider_event", { clubId: event.clubId }, async (tx) => {
+      await tx.execute(sql`
+        UPDATE billing.accounts SET payment_method = 'card', provider = ${provider.name},
+          provider_customer_id = ${event.customerId},
+          provider_payment_method_id = ${event.card.paymentMethodId},
+          card_brand = ${event.card.brand}, card_last4 = ${event.card.last4},
+          card_exp_month = ${event.card.expMonth}, card_exp_year = ${event.card.expYear}
+        WHERE club_id = ${event.clubId}`);
+      await audit.record(tx, {
+        action: "billing.account.updated",
+        resourceType: "billing_account",
+        resourceId: event.clubId,
+        changedFields: ["payment_method", "provider_payment_method_id", "card"],
+      });
+    });
+  } else if (event.kind === "payment_succeeded") {
+    try {
+      await db.withSystem("billing:provider_event", { clubId: event.clubId }, (tx) =>
+        ledger.recordPayment(tx, {
+          invoiceId: event.invoiceId,
+          provider: "card",
+          reference: event.reference,
+          amountMinor: event.amountMinor,
+          receivedOn: now.toISOString().slice(0, 10),
+          status: "succeeded",
+          now,
+        }),
+      );
+    } catch (error) {
+      // An overpayment or a closed invoice: recorded for the operators, never retried.
+      if (!(error instanceof LedgerError)) throw error;
+      errorCode = error.code;
+    }
+  }
+  await db.withSystem("billing:provider_event", {}, (tx) =>
+    tx.execute(sql`
+      UPDATE billing.provider_events SET processed_at = ${now}, error_code = ${errorCode}
+      WHERE id = ${eventRowId}`),
+  );
+  return event.kind;
+}
+
+export function providerEventTask(db: Database, provider: PaymentProvider | null): Task {
+  return async (payload, helpers) => {
+    if (!provider) return;
+    const result = await runProviderEvent(
+      db,
+      provider,
+      EventPayload.parse(payload).eventRowId,
+      new Date(),
+    );
+    helpers.logger.info("billing: provider event", { result });
   };
 }

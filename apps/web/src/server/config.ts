@@ -58,3 +58,22 @@ export function webConfig(): WebConfig {
 /** Real login is configured (Zitadel client registered by pnpm auth:configure). */
 export const oidcConfigured = (config: WebConfig): boolean =>
   Boolean(config.AUTH_ISSUER && config.AUTH_WEB_CLIENT_ID && config.AUTH_WEB_CLIENT_SECRET);
+
+/**
+ * Origins of payment providers' hosted pages (P1.13, e.g.
+ * https://checkout.stripe.com): forms may be redirected there (CSP
+ * form-action) and actions may answer with a link there. Comma-separated.
+ */
+export function checkoutOrigins(env: NodeJS.ProcessEnv = process.env): string[] {
+  return (env.BILLING_CHECKOUT_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim())
+    .flatMap((o) => {
+      try {
+        const url = new URL(o);
+        return url.protocol === "https:" ? [url.origin] : [];
+      } catch {
+        return [];
+      }
+    });
+}

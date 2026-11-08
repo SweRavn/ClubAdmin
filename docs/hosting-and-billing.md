@@ -132,7 +132,14 @@ Billing must be easy to ignore. It is built in two layers (ADR 0013, ADR 0031):
      accounting records, kept seven years after the end of the invoice's
      year (`billing:retention`, yearly) — **never delete club data for
      non-payment**; export always remains available,
-   - `PaymentProvider` for cards (Stripe) follows in P1.13 part B.
+   - **cards** (P1.13 part B): with `BILLING_CARD_PROVIDER=stripe` club
+     managers and treasurers save a card on the provider's page ("Pay by
+     card"); card invoices are charged when issued and retried on days 1, 3
+     and 7, with notices on the first and last failure; "Pay now" opens the
+     provider's page for an open invoice. Terms and dunning stay those of
+     invoices. Webhook: `POST /api/v1/billing/webhooks/stripe` (configure the
+     events `checkout.session.completed` and `payment_intent.succeeded`);
+     the web app needs `BILLING_CHECKOUT_ORIGINS=https://checkout.stripe.com`.
 
 ### Seller configuration (billing on)
 
@@ -144,6 +151,8 @@ Billing must be easy to ignore. It is built in two layers (ADR 0013, ADR 0031):
 | `BILLING_TERMS_VERSION`, `BILLING_TERMS_URL` | The terms a club manager accepts when choosing a paid plan |
 | `BILLING_TRIAL_PLAN`, `BILLING_TRIAL_DAYS` | The trial |
 | `BILLING_INVOICE_EMAIL_LINK` (default false) | Invoice emails also link to the billing page |
+| `BILLING_CARD_PROVIDER` (`stripe`; `fake` outside production), `BILLING_CARD_SECRET_KEY`, `BILLING_CARD_WEBHOOK_SECRET` | Card payments (part B); keys required with `stripe` |
+| `BILLING_CHECKOUT_ORIGINS` (web) | The provider's hosted pages (CSP `form-action`, redirects) |
 
 Development and tests use a fictional seller (`DEMO_SELLER`); the maintainer
 supplies the real values before the hosted service charges anyone.

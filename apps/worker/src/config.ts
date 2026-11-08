@@ -5,6 +5,7 @@ import {
   objectStorageConfigIssues,
   objectStorageConfigShape,
 } from "@clubadmin/server-kit/object-storage";
+import { paymentsConfigIssues, paymentsConfigShape } from "@clubadmin/server-kit/payments";
 import { z } from "@clubadmin/shared";
 
 export const workerConfigSchema = z
@@ -12,6 +13,7 @@ export const workerConfigSchema = z
     ...baseConfigShape,
     ...objectStorageConfigShape,
     ...notificationsConfigShape,
+    ...paymentsConfigShape,
     /** clubadmin_app connection: jobs and their database work are subject to row-level security. */
     DATABASE_URL: z.string().min(1, "required: the worker stores its jobs in PostgreSQL"),
     /**
@@ -40,7 +42,7 @@ export const workerConfigSchema = z
         message: "required with SMTP_URL or PUSH_PROVIDER (at least 32 characters)",
       });
     }
-    for (const issue of billingSellerIssues(config)) {
+    for (const issue of [...billingSellerIssues(config), ...paymentsConfigIssues(config)]) {
       ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
     }
     for (const issue of objectStorageConfigIssues(config)) {

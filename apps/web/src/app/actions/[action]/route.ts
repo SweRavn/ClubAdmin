@@ -3,10 +3,11 @@
 // check, one API call, then a redirect. Failures go back to the form with
 // the problem's detail code (?error=...), which the page translates.
 
-import { type NextRequest, type NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { FORM_ACTIONS } from "../../../server/actions.ts";
 import { apiFetch } from "../../../server/api.ts";
+import { checkoutOrigins } from "../../../server/config.ts";
 import { CSRF_COOKIE, SESSION_COOKIE } from "../../../server/cookies.ts";
 import { checkCsrf } from "../../../server/csrf.ts";
 import { clearFormDraft, KEEP_VALUES_ACTIONS, saveFormDraft } from "../../../server/form-drafts.ts";
@@ -80,6 +81,14 @@ export async function POST(
     : null;
   if (res.ok) {
     if (keepValues) await clearFormDraft(session.id, name);
+    // A payment provider's hosted page (P1.13): only to an allowed origin.
+    const external = externalRedirect(body);
+    if (external) {
+      const response = NextResponse.redirect(external, 303);
+      response.headers.set("cache-control", "no-store");
+      response.headers.set("referrer-policy", "no-referrer");
+      return response;
+    }
     return redirectTo(safeReturnTo(action.done(form, body)));
   }
   const detail = (body as { detail?: unknown } | null)?.detail;
@@ -96,4 +105,20 @@ export async function POST(
             : "failed";
   if (keepValues) await saveFormDraft(session.id, name, form);
   return redirectTo(withError(back, code));
+}
+
+/**
+ * The provider page an action answered with (`redirectUrl`), when its origin
+ * is one of BILLING_CHECKOUT_ORIGINS; otherwise null (the action's own page).
+ * The same origins are allowed as form targets in the CSP.
+ */
+function externalRedirect(body: unknown): string | null {
+  const url = (body as { redirectUrl?: unknown } | null)?.redirectUrl;
+  if (typeof url !== "string") return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && checkoutOrigins().includes(parsed.origin) ? url : null;
+  } catch {
+    return null;
+  }
 }

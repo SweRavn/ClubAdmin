@@ -431,7 +431,7 @@
     "billing": {
       "invoice": {
         "subject": "Faktura {number} fra {seller}",
-        "body": "Her er faktura {number} til {club}: {amount}, forfaller {due}.\n\nBetal til bankgiro {bankgiro} med OCR-referansen {ocr}.\n\nFakturaen er vedlagt som PDF.{hasLink, select, yes {\n\nDu ser den også på klubbens faktureringsside (innlogging kreves):\n{url}} other {}}"
+        "body": "Her er faktura {number} til {club}: {amount}, forfaller {due}.\n\n{method, select, card {Beløpet trekkes fra klubbens lagrede kort. Hvis trekket mislykkes, kan dere betale til bankgiro {bankgiro} med OCR-referansen {ocr}.} other {Betal til bankgiro {bankgiro} med OCR-referansen {ocr}.}}\n\nFakturaen er vedlagt som PDF.{hasLink, select, yes {\n\nDu ser den også på klubbens faktureringsside (innlogging kreves):\n{url}} other {}}"
       },
       "reminder": {
         "subject": "Påminnelse: faktura {number} fra {seller} er forfalt",
@@ -1818,6 +1818,12 @@
       "restored": {
         "title": "{club} er aktiv igjen",
         "body": "Takk for betalingen. Klubben har full tilgang igjen."
+      },
+      "card": {
+        "failed": {
+          "title": "{club}: kortbetalingen for faktura {number} mislyktes",
+          "body": "{final, select, yes {Vi klarte ikke å trekke beløpet fra kortet etter flere forsøk. Betal {amount} via bankgiro eller med betalingslenken på faktureringssiden før forfallsdatoen {date}.} other {Kortbetalingen på {amount} mislyktes. Vi prøver igjen; du kan også betale nå på faktureringssiden eller via bankgiro. Forfaller {date}.}}"
+        }
       }
     }
   },
@@ -3081,6 +3087,14 @@
       },
       "resend": "Send på e-post igjen"
     },
-    "nav": "Fakturering"
+    "nav": "Fakturering",
+    "useCard": "Betal med kort",
+    "changeCard": "Bytt kort",
+    "useInvoice": "Betal med faktura i stedet",
+    "cardOnFile": "Kort: {brand} som slutter på {last4}",
+    "cardHint": "Kortopplysningene fylles ut på betalingsleverandørens side; ClubAdmin ser dem aldri. Fakturaer trekkes fra kortet når de utstedes; forfallsdato og påminnelser er de samme som for faktura.",
+    "cardSaved": "Takk. Kortet lagres så snart betalingsleverandøren bekrefter det (vanligvis innen ett minutt).",
+    "paidThanks": "Takk for betalingen. Den vises så snart betalingsleverandøren bekrefter den.",
+    "payNow": "Betal nå med kort"
   }
 }

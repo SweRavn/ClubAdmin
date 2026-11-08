@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Loaded only with BILLING_ENABLED=true (EntitlementsModule.register).
 import { billingSeller } from "@clubadmin/server-kit";
+import { paymentProvider } from "@clubadmin/server-kit/payments";
 import { Module } from "@nestjs/common";
 
 import { API_CONFIG, type ApiConfig } from "../../config.ts";
@@ -13,11 +14,12 @@ import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { BillingController } from "./billing.controller.ts";
 import { BillingService } from "./billing.service.ts";
 import { BillingOpsController } from "./billing-ops.controller.ts";
+import { BillingWebhookController } from "./billing-webhook.controller.ts";
 import { PlanEntitlements } from "./plan-entitlements.ts";
 
 @Module({
   imports: [ClubsModule, AuthorizationModule],
-  controllers: [BillingController, BillingOpsController],
+  controllers: [BillingController, BillingOpsController, BillingWebhookController],
   providers: [
     {
       provide: PlanEntitlements,
@@ -50,6 +52,8 @@ import { PlanEntitlements } from "./plan-entitlements.ts";
                 storage,
                 termsVersion: c.BILLING_TERMS_VERSION,
                 termsUrl: c.BILLING_TERMS_URL ?? null,
+                payments: paymentProvider(c),
+                webUrl: c.PUBLIC_WEB_URL,
               }
             : null,
         });

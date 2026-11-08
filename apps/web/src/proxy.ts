@@ -6,6 +6,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 
+import { checkoutOrigins } from "./server/config.ts";
 import { PATH_HEADER } from "./server/data.ts";
 import { contentSecurityPolicy, newNonce } from "./server/security-headers.ts";
 
@@ -22,7 +23,7 @@ export function proxy(request: NextRequest): NextResponse {
   const csp = contentSecurityPolicy({
     nonce: newNonce(),
     development: process.env.NODE_ENV === "development",
-    formActions: formActions(),
+    formActions: [...formActions(), ...checkoutOrigins()],
   });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("content-security-policy", csp);

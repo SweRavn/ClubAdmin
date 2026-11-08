@@ -9,6 +9,7 @@
 import { ledger, type LedgerSettings } from "@clubadmin/db";
 import { createTestDatabase, type TestDatabase } from "@clubadmin/db/testing";
 import { DEMO_SELLER } from "@clubadmin/server-kit";
+import { stripeSignature } from "@clubadmin/server-kit/payments";
 import { uuidv7 } from "@clubadmin/shared";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -22,6 +23,7 @@ let t: TestDatabase;
 let m: MatrixScenario;
 let app: TestApp;
 const treasurer = uuidv7();
+const WEBHOOK_SECRET = "whsec_matrix_test_secret";
 
 const settings: LedgerSettings = {
   seller: DEMO_SELLER,
@@ -70,6 +72,8 @@ beforeAll(async () => {
     DEV_AUTH_KEY: TEST_DEV_AUTH_KEY,
     BILLING_ENABLED: "true",
     BILLING_DEFAULT_PLAN: "free",
+    BILLING_CARD_PROVIDER: "fake",
+    BILLING_CARD_WEBHOOK_SECRET: WEBHOOK_SECRET,
     ...NO_RATE_LIMITS,
   });
 });
@@ -174,16 +178,6 @@ describe("plans and choice", () => {
       "billing.account.updated",
       "billing.subscription.selected",
     ]);
-  });
-
-  it("refuses card payments until the provider exists (PR B)", async () => {
-    const res = await call(treasurer, {
-      method: "POST",
-      url: `${club()}/billing/payment-method`,
-      payload: { method: "card" },
-      mfa: true,
-    });
-    expect(res.json()).toMatchObject({ detail: "payment_method_unavailable" });
   });
 });
 
@@ -341,5 +335,99 @@ describe("invoices", () => {
       pastDueSince: null,
       accessStateSource: null,
     });
+  });
+});
+
+describe("cards (part B)", () => {
+  it("sends the treasurer to the provider's page to save a card, and keeps the customer", async () => {
+    const res = await call(treasurer, {
+      method: "POST",
+      url: `${club()}/billing/payment-method`,
+      payload: { method: "card" },
+      mfa: true,
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{ method: string; redirectUrl: string }>();
+    expect(body.redirectUrl).toContain("fake_provider=setup");
+    const { rows } = await t.query<{
+      provider: string;
+      provider_customer_id: string;
+      payment_method: string;
+    }>(
+      "admin",
+      "SELECT provider, provider_customer_id, payment_method FROM billing.accounts WHERE club_id = $1",
+      [m.clubA.id],
+    );
+    // The card becomes the method only when the provider confirms it.
+    expect(rows[0]).toMatchObject({ provider: "fake", payment_method: "invoice" });
+    expect(rows[0]!.provider_customer_id).toMatch(/^cus_fake_/);
+  });
+
+  it("gives a pay link for an open invoice", async () => {
+    const { rows } = await t.query<{ id: string }>(
+      "admin",
+      "SELECT id FROM billing.invoices WHERE club_id = $1 AND kind = 'invoice' AND status = 'open'",
+      [m.clubA.id],
+    );
+    const res = await call(m.manager.id, {
+      method: "POST",
+      url: `${club()}/invoices/${rows[0]!.id}/pay`,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json<{ redirectUrl: string }>().redirectUrl).toContain("fake_provider=pay");
+    expect(
+      (await call(m.registrar.id, { method: "POST", url: `${club()}/invoices/${rows[0]!.id}/pay` }))
+        .statusCode,
+    ).toBe(403);
+  });
+
+  it("records verified webhooks once and refuses bad signatures", async () => {
+    const body = JSON.stringify({
+      id: "evt_matrix_1",
+      type: "payment_intent.succeeded",
+      data: { object: { email: "x@y" } },
+    });
+    const send = (signature: string) =>
+      app.app
+        .getHttpAdapter()
+        .getInstance()
+        .inject({
+          method: "POST",
+          url: "/api/v1/billing/webhooks/fake",
+          headers: { "content-type": "application/json", "stripe-signature": signature },
+          payload: body,
+        });
+    const now = Math.floor(Date.now() / 1000);
+    const bad = await send(stripeSignature("wrong", body, now));
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json()).toMatchObject({ detail: "provider_signature_invalid" });
+    expect((await send(stripeSignature(WEBHOOK_SECRET, body, now))).json()).toEqual({
+      received: true,
+    });
+    expect((await send(stripeSignature(WEBHOOK_SECRET, body, now))).statusCode).toBe(200);
+    const { rows } = await t.query<{ n: number; type: string }>(
+      "admin",
+      "SELECT count(*)::int AS n, max(type) AS type FROM billing.provider_events WHERE event_id = 'evt_matrix_1'",
+    );
+    expect(rows[0]).toEqual({ n: 1, type: "payment_intent.succeeded" });
+    const jobs = await t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM graphile_worker.jobs WHERE task_identifier = 'billing:provider_event'",
+    );
+    expect(jobs.rows[0]!.n).toBe(1);
+    // Another provider's route does not exist here.
+    expect(
+      (
+        await app.app
+          .getHttpAdapter()
+          .getInstance()
+          .inject({
+            method: "POST",
+            url: "/api/v1/billing/webhooks/stripe",
+            headers: { "content-type": "application/json" },
+            payload: body,
+          })
+      ).statusCode,
+    ).toBe(404);
   });
 });

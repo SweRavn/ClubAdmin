@@ -48,6 +48,7 @@ export * as schema from "./schema/index.ts";
 // Query operators for repositories (only packages/db depends on drizzle-orm).
 export {
   type BuyerSnapshot,
+  CARD_RETRY_DAYS,
   DUNNING_DAYS,
   ledger,
   LedgerError,

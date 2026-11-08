@@ -6,6 +6,7 @@ import {
   ObjectStorage,
   objectStorageConfig,
 } from "@clubadmin/server-kit/object-storage";
+import { paymentProvider } from "@clubadmin/server-kit/payments";
 import { run } from "graphile-worker";
 import { Redis } from "ioredis";
 
@@ -99,6 +100,7 @@ const runner = await run({
     billing: billing
       ? {
           settings: billing,
+          payments: paymentProvider(config),
           send: {
             mail: mailProvider,
             webUrl: config.PUBLIC_WEB_URL,

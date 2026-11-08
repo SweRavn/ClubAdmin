@@ -66,7 +66,13 @@ export async function createApp(
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule.register(config, options.modules),
     adapter,
-    { logger: new NestPinoLogger(logger), bufferLogs: false, abortOnError: false },
+    {
+      logger: new NestPinoLogger(logger),
+      bufferLogs: false,
+      abortOnError: false,
+      // Payment webhooks (P1.13) verify their signature on the raw body.
+      rawBody: true,
+    },
   );
   app.setGlobalPrefix(API_PREFIX, {
     exclude: UNPREFIXED_PATHS.map((p) => `${p.slice(1)}/{*path}`),

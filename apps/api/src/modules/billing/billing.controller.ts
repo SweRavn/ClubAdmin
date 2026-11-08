@@ -21,6 +21,7 @@ import {
   type InvoicePage,
   InvoicePageSchema,
   InvoiceParamsSchema,
+  PayLinkSchema,
   PaymentMethodRequestSchema,
   PaymentMethodResultSchema,
   type SelectPlanInput,
@@ -252,6 +253,25 @@ export class BillingController {
     @Param() params: z.infer<typeof InvoiceParamsSchema>,
   ): Promise<{ url: string; expiresAt: string }> {
     return this.billing.invoicePdf(this.context(authorization), params.invoiceId);
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "clubs/:clubId/invoices/:invoiceId/pay",
+    summary: "The provider's hosted page for paying an open invoice by card (the pay link)",
+    tags: ["billing"],
+    access: { permission: "billing.invoices.read", resource: "club" },
+    request: { params: InvoiceParamsSchema },
+    response: PayLinkSchema,
+    status: 200,
+    clubAccess: "exempt",
+  })
+  pay(
+    @CurrentAuthorization() authorization: RequestAuthorization,
+    @Param() params: z.infer<typeof InvoiceParamsSchema>,
+  ): Promise<{ redirectUrl: string }> {
+    const { clubId } = resourceOf(authorization, "club");
+    return this.billing.payInvoice(tenantContext(authorization, clubId), params.invoiceId);
   }
 
   // --- Operators on one club (P0.12, P1.13) ------------------------------------------------

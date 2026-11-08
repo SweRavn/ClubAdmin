@@ -11,6 +11,7 @@ import {
   objectStorageConfigIssues,
   objectStorageConfigShape,
 } from "@clubadmin/server-kit/object-storage";
+import { paymentsConfigIssues, paymentsConfigShape } from "@clubadmin/server-kit/payments";
 import { AppVersionSchema, devAuthViolation, ERASURE_GRACE_DAYS, z } from "@clubadmin/shared";
 
 export const apiConfigSchema = z
@@ -18,6 +19,7 @@ export const apiConfigSchema = z
     ...baseConfigShape,
     ...objectStorageConfigShape,
     ...notificationsConfigShape,
+    ...paymentsConfigShape,
     API_HOST: z.string().default("0.0.0.0"),
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     PUBLIC_WEB_URL: z.url().default("https://clubadmin.localhost"),
@@ -145,7 +147,7 @@ export const apiConfigSchema = z
   .superRefine((config, ctx) => {
     const devAuth = devAuthViolation(config);
     if (devAuth) ctx.addIssue({ code: "custom", path: ["DEV_AUTH"], message: devAuth });
-    for (const issue of billingSellerIssues(config)) {
+    for (const issue of [...billingSellerIssues(config), ...paymentsConfigIssues(config)]) {
       ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
     }
     for (const issue of objectStorageConfigIssues(config)) {

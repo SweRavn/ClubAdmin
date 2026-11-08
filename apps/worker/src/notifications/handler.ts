@@ -134,6 +134,7 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "billing.invoice.issued",
       "billing.invoice.overdue",
       "billing.subscription.changed",
+      "billing.card.failed",
       ...MOVED_EVENTS,
     ],
     async handle(event, tx) {
@@ -563,7 +564,8 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
         // amount and dates; the invoice itself goes to the invoice address.
         case "billing.invoice.issued":
         case "billing.invoice.overdue":
-        case "billing.subscription.changed": {
+        case "billing.subscription.changed":
+        case "billing.card.failed": {
           const notices = await billingNotices(tx, event);
           await notify(tx, notices);
           return;
@@ -854,7 +856,11 @@ async function billingNotices(tx: Tx, event: OutboxEvent): Promise<Notice[]> {
   let subjectId: string | null = null;
   let params: Record<string, unknown> = {};
   let managersOnly = false;
-  if (event.type === "billing.invoice.issued" || event.type === "billing.invoice.overdue") {
+  if (
+    event.type === "billing.invoice.issued" ||
+    event.type === "billing.invoice.overdue" ||
+    event.type === "billing.card.failed"
+  ) {
     const p = DOMAIN_EVENTS["billing.invoice.issued"].parse(event.payload);
     clubId = p.clubId;
     await useClub(tx, clubId);
@@ -877,15 +883,20 @@ async function billingNotices(tx: Tx, event: OutboxEvent): Promise<Notice[]> {
         ? DOMAIN_EVENTS["billing.invoice.overdue"].parse(event.payload).level
         : 0;
     type =
-      event.type === "billing.invoice.overdue"
-        ? "billing.invoice.reminder"
-        : "billing.invoice.issued";
+      event.type === "billing.card.failed"
+        ? "billing.card.failed"
+        : event.type === "billing.invoice.overdue"
+          ? "billing.invoice.reminder"
+          : "billing.invoice.issued";
     params = {
       number: invoice.number,
       kind: invoice.kind,
       amountMinor: Number(invoice.total_minor),
       currency: invoice.currency,
       level,
+      ...(event.type === "billing.card.failed"
+        ? { final: DOMAIN_EVENTS["billing.card.failed"].parse(event.payload).final ? "yes" : "no" }
+        : {}),
       // The due date; for the second reminder the day the club becomes read-only.
       date: invoice.due_at
         ? new Date(new Date(invoice.due_at).getTime() + (level >= 2 ? 30 * DAY : 0)).toISOString()

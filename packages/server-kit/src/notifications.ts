@@ -246,6 +246,7 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     amount: formatAmount(locale, p.amountMinor, p.currency),
     date: formatDay(locale, p.date, p.timeZone),
     level: str(p.level ?? ""),
+    final: str(p.final ?? "no"),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

@@ -31,6 +31,8 @@ export const DOMAIN_EVENTS = {
       "renewed",
     ]),
   }),
+  /** A card charge failed (part B): the first failure, and the last retry (`final`). */
+  "billing.card.failed": z.object({ clubId: id, invoiceId: id, final: z.boolean() }),
   /** An operator asked to email an invoice again. */
   "billing.invoice.resend_requested": z.object({ clubId: id, invoiceId: id }),
   "role.changed": z.object({ clubId: id, personId: id }),

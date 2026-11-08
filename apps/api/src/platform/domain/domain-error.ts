@@ -221,6 +221,7 @@ export const DOMAIN_ERRORS = {
   open_invoices: "conflict",
   pdf_unavailable: "unavailable",
   plan_key_taken: "conflict",
+  provider_signature_invalid: "bad-request",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

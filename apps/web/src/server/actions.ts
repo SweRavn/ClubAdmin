@@ -1579,6 +1579,20 @@ const BILLING_ACTIONS: Record<string, FormAction> = {
     },
     done: (form) => withParam(back(form), "saved", "method"),
   },
+  // Card (part B): the API answers with the provider's page (route: externalRedirect).
+  "pay-invoice": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const invoiceId = id(form, "invoiceId");
+      if (!clubId || !invoiceId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/invoices/${invoiceId}/pay`,
+        method: "POST",
+        body: {},
+      };
+    },
+    done: (form) => back(form),
+  },
   // Operators (P1.13, /ops/billing).
   "ops-record-payment": {
     call: (form) => {

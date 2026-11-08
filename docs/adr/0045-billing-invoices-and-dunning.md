@@ -93,7 +93,26 @@ later module (Phase 3) and is not touched here.
   club, as the other retention jobs; not a separate `SECURITY DEFINER`
   function). Billing contact fields are cleared when no records remain.
 
-**Consequences.** Billing stays invisible with billing off: the module,
+- **Cards (part B; decision 2026-11-08).** `PaymentProvider`
+  (`@clubadmin/server-kit/payments`): Stripe through its REST API (no SDK;
+  form-encoded requests, idempotency keys), and a `fake` provider for
+  development and tests. Saving a card and paying one invoice happen on the
+  provider's hosted pages (PCI DSS SAQ A); the card becomes the club's
+  method when the provider's webhook confirms it. Card invoices are charged
+  off-session when issued (`billing:charge`), and on failure again on days
+  1, 3 and 7 after issue; the club is told on the first and the last
+  failure and can pay with the pay link or by bankgiro. **Payment terms and
+  dunning are those of invoices** (due after 30 days, reminders on days 1 and
+  14 overdue, read-only on day 30): a failed card never shortens them.
+  Webhooks are verified on the raw body (HMAC, five minutes' tolerance),
+  recorded by event ID only (`billing.provider_events`, 90 days) and
+  processed by `billing:provider_event`, which fetches the event from the
+  provider; payments are idempotent by the provider's reference. The web
+  app's CSP `form-action` gains the provider's checkout origin
+  (`BILLING_CHECKOUT_ORIGINS`), the only CSP change.
+
+**Consequences.** A card that keeps failing costs the club nothing extra and never restricts
+it sooner than an invoice would. Billing stays invisible with billing off: the module,
 routes, jobs and handlers are not loaded and the web and app show nothing
 (`billingEnabled`). The first period is cheaper and an upgrade costs the
 difference only, which is fair and explainable on the invoice. Operators

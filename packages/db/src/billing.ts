@@ -335,7 +335,10 @@ export async function issueInvoice(
   const totals = priceLines(all.map((l) => ({ ...l, vatRateBp: rate })));
   if (totals.totalMinor <= 0 && !existing) return null;
   const [account] = await tx
-    .select({ paymentMethod: billingAccounts.paymentMethod })
+    .select({
+      paymentMethod: billingAccounts.paymentMethod,
+      cardOnFile: billingAccounts.providerPaymentMethodId,
+    })
     .from(billingAccounts)
     .where(eq(billingAccounts.clubId, sub.clubId));
 
@@ -378,6 +381,10 @@ export async function issueInvoice(
       seller: { ...settings.seller },
       buyer: { ...buyer },
       paymentMethod: account?.paymentMethod ?? "invoice",
+      // Card (part B): charged at once by billing:charge, retried on days 1, 3 and 7.
+      ...(account?.paymentMethod === "card" && account.cardOnFile && totals.totalMinor > 0
+        ? { nextCardAttemptAt: now }
+        : {}),
       ocrReference: ocrReference(number),
     })
     .where(eq(billingInvoices.id, id));
@@ -1016,7 +1023,93 @@ export async function dueClubs(
   return rows.map((r) => r.club_id);
 }
 
+/** Card retries after the charge at issue: days 1, 3 and 7 (then bankgiro or the pay link). */
+export const CARD_RETRY_DAYS = [1, 3, 7] as const;
+
+/**
+ * The outcome of a card charge attempt (billing:charge): a success settles
+ * the invoice; a failure is recorded and the next attempt scheduled, or none
+ * after the last retry. Returns whether the club should be told (first and
+ * last failure).
+ */
+export async function recordCardAttempt(
+  tx: Tx,
+  input: {
+    invoiceId: string;
+    status: "succeeded" | "failed" | "pending";
+    reference: string;
+    amountMinor: number;
+    failureCode?: string | null;
+    now: Date;
+  },
+): Promise<{ notify: "first_failure" | "final_failure" | null; paid: boolean }> {
+  const invoice = await lockInvoice(tx, input.invoiceId);
+  if (invoice.status !== "open") return { notify: null, paid: invoice.status === "paid" };
+  const attempts = invoice.cardAttempts + 1;
+  if (input.status === "succeeded") {
+    await tx
+      .update(billingInvoices)
+      .set({ cardAttempts: attempts, nextCardAttemptAt: null })
+      .where(eq(billingInvoices.id, invoice.id));
+    const result = await recordPayment(tx, {
+      invoiceId: invoice.id,
+      provider: "card",
+      reference: input.reference,
+      amountMinor: input.amountMinor,
+      receivedOn: input.now.toISOString().slice(0, 10),
+      status: "succeeded",
+      now: input.now,
+    });
+    return { notify: null, paid: result.paid };
+  }
+  if (input.status === "pending") {
+    // Confirmed later by the provider's webhook (payment_intent.succeeded).
+    await tx
+      .update(billingInvoices)
+      .set({ cardAttempts: attempts, nextCardAttemptAt: null })
+      .where(eq(billingInvoices.id, invoice.id));
+    return { notify: null, paid: false };
+  }
+  await recordPayment(tx, {
+    invoiceId: invoice.id,
+    provider: "card",
+    reference: input.reference,
+    amountMinor: input.amountMinor,
+    receivedOn: null,
+    status: "failed",
+    failureCode: input.failureCode ?? null,
+    now: input.now,
+  });
+  const retry = CARD_RETRY_DAYS[attempts - 1];
+  const issued = invoice.issuedAt ?? input.now;
+  await tx
+    .update(billingInvoices)
+    .set({
+      cardAttempts: attempts,
+      nextCardAttemptAt: retry === undefined ? null : new Date(issued.getTime() + retry * DAY_MS),
+    })
+    .where(eq(billingInvoices.id, invoice.id));
+  return {
+    notify: attempts === 1 ? "first_failure" : retry === undefined ? "final_failure" : null,
+    paid: false,
+  };
+}
+
+/** Card invoices whose next attempt has come (system jobs only). */
+export async function dueCardCharges(
+  tx: Tx,
+  now: Date,
+  limit: number,
+): Promise<{ clubId: string; invoiceId: string }[]> {
+  const { rows } = await tx.execute<{ club_id: string; invoice_id: string }>(
+    sql`SELECT * FROM billing.due_card_charges(${now}, ${limit})`,
+  );
+  return rows.map((r) => ({ clubId: r.club_id, invoiceId: r.invoice_id }));
+}
+
 export const ledger = {
+  recordCardAttempt,
+  dueCardCharges,
   issueInvoice,
   issueCreditNote,
   recordPayment,

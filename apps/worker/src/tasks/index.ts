@@ -4,12 +4,15 @@
 
 import { type Database, type LedgerSettings, outbox, type OutboxHandler, sql } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
+import type { PaymentProvider } from "@clubadmin/server-kit/payments";
 import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 
 import {
   billingDailyTask,
   billingRetentionTask,
+  chargeTask,
+  providerEventTask,
   type SendDependencies,
   sendInvoiceTask,
 } from "../billing.ts";
@@ -57,7 +60,13 @@ export interface TaskDependencies {
   privacy?: PrivacyJobOptions | undefined;
   /** Billing on (P1.13): the ledger's settings and the invoice email; without it no billing jobs. */
   billing?:
-    { settings: LedgerSettings; send: Omit<SendDependencies, "db" | "storage"> } | undefined;
+    | {
+        settings: LedgerSettings;
+        send: Omit<SendDependencies, "db" | "storage">;
+        /** The card provider (P1.13 part B), or null: invoice only. */
+        payments?: PaymentProvider | null;
+      }
+    | undefined;
 }
 
 /** Does nothing; used to check that jobs are picked up. */
@@ -146,6 +155,8 @@ function billingTasks(deps: TaskDependencies): TaskList {
       storage: deps.storage ?? null,
       ...deps.billing.send,
     }),
+    "billing:charge": chargeTask(deps.db, deps.billing.payments ?? null),
+    "billing:provider_event": providerEventTask(deps.db, deps.billing.payments ?? null),
     "billing:retention": billingRetentionTask(
       deps.privacy?.retentionDb ?? null,
       deps.storage ?? null,

@@ -24,7 +24,7 @@
 | Storage limitation | Retention rules per data category, configurable per club within legal limits, enforced by a nightly job. |
 | Integrity & confidentiality | See `security.md`. |
 | Accountability | Audit log, record of processing activities (ROPA) template generated per club. |
-| Billing of the service (P1.13, billing on only) | Billing data is about the club as a customer: no member data, no person IDs in `billing`. The invoice email and "reference" may identify a person: the form asks for an organisation address and a role; they are never logged and are kept as accounting records (legal obligation, Bokföringslagen, 7 years; `accounting_records`). Billing emails go to the invoice address; notices to club managers and treasurers, looked up when sending. Operators see clubs by name and country only. |
+| Billing of the service (P1.13, billing on only) | Billing data is about the club as a customer: no member data, no person IDs in `billing`. The invoice email and "reference" may identify a person: the form asks for an organisation address and a role; they are never logged and are kept as accounting records (legal obligation, Bokföringslagen, 7 years; `accounting_records`). Billing emails go to the invoice address; notices to club managers and treasurers, looked up when sending. Operators see clubs by name and country only. With card payments (part B) the payment provider (Stripe Payments Europe, Ireland; listed as sub-processor) receives the association's name, invoice email and card payment; webhook events are kept by ID only, 90 days. |
 
 ## Legal bases (typical, club can adjust)
 

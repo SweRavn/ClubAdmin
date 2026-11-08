@@ -193,8 +193,15 @@ later phase. Backup and disaster recovery are in
 - Operators act as operators with MFA, audited, and see clubs by name and
   country only (`billing.club_refs`), never member data.
 - Card payments (part B): the provider's hosted pages only (PCI DSS SAQ A,
-  no card data on our pages or in logs), webhooks with signature and
-  timestamp verification, idempotent by event ID, no payload stored.
+  no card data on our pages or in logs; we keep the card's brand, last four
+  digits and expiry, and the provider's IDs). Webhooks: signature on the raw
+  body (HMAC-SHA256, five minutes' tolerance), rate-limited per address,
+  recorded by event ID only (no payload; the worker fetches the event from
+  the provider), idempotent by event ID and by payment reference. The
+  provider's secret key and webhook secret come from the environment; error
+  messages from the provider are never logged (they may echo customer data).
+  The web app's CSP `form-action` allows the provider's checkout origin
+  (`BILLING_CHECKOUT_ORIGINS`) and action redirects go only there.
 
 ### Data protection
 - TLS 1.3 everywhere (Caddy), HSTS preload, internal traffic on a private

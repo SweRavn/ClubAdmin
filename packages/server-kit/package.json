@@ -15,7 +15,8 @@
     "./invitations": "./src/invitations.ts",
     "./object-storage": "./src/object-storage.ts",
     "./notifications": "./src/notifications.ts",
-    "./calendar": "./src/calendar.ts"
+    "./calendar": "./src/calendar.ts",
+    "./payments": "./src/payments.ts"
   },
   "scripts": {
     "lint": "eslint .",

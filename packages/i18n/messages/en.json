@@ -431,7 +431,7 @@
     "billing": {
       "invoice": {
         "subject": "Invoice {number} from {seller}",
-        "body": "Here is invoice {number} for {club}: {amount}, due {due}.\n\nPay to bankgiro {bankgiro} with the OCR reference {ocr}.\n\nThe invoice is attached as a PDF.{hasLink, select, yes {\n\nYou can also see it on the club's billing page (login required):\n{url}} other {}}"
+        "body": "Here is invoice {number} for {club}: {amount}, due {due}.\n\n{method, select, card {The amount is charged to the club's saved card. If the charge fails, you can pay by bankgiro {bankgiro} with the OCR reference {ocr}.} other {Pay to bankgiro {bankgiro} with the OCR reference {ocr}.}}\n\nThe invoice is attached as a PDF.{hasLink, select, yes {\n\nYou can also see it on the club's billing page (login required):\n{url}} other {}}"
       },
       "reminder": {
         "subject": "Reminder: invoice {number} from {seller} is overdue",
@@ -1818,6 +1818,12 @@
       "restored": {
         "title": "{club} is active again",
         "body": "Thank you for the payment. The club has full access again."
+      },
+      "card": {
+        "failed": {
+          "title": "{club}: the card payment for invoice {number} failed",
+          "body": "{final, select, yes {We could not charge the card after several attempts. Pay {amount} by bankgiro or with the pay link on the billing page before the due date {date}.} other {The card payment of {amount} failed. We will try again; you can also pay now on the billing page or by bankgiro. Due {date}.}}"
+        }
       }
     }
   },
@@ -3081,6 +3087,14 @@
       },
       "resend": "Email again"
     },
-    "nav": "Billing"
+    "nav": "Billing",
+    "useCard": "Pay by card",
+    "changeCard": "Change card",
+    "useInvoice": "Pay by invoice instead",
+    "cardOnFile": "Card: {brand} ending {last4}",
+    "cardHint": "Card details are entered on the payment provider's page; ClubAdmin never sees them. Invoices are charged when issued; the due date and reminders are the same as for invoices.",
+    "cardSaved": "Thank you. The card is saved as soon as the payment provider confirms it (usually within a minute).",
+    "paidThanks": "Thank you for the payment. It is shown as soon as the payment provider confirms it.",
+    "payNow": "Pay now by card"
   }
 }
