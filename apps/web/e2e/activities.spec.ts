@@ -155,6 +155,20 @@ test("Erik makes a monthly series until further notice, removes a date and bring
   await expect(page.getByTestId("series-removed-dates")).toHaveCount(0);
 });
 
+test("Erik asks for a place in a group with direct admission (P1.14)", async ({ page }) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkHerr}` });
+  const apply = page.getByTestId("group-join-waitlist");
+  await expect(apply).toHaveText("Ansök om plats");
+  await apply.click();
+  await page.waitForURL(/\/clubs\/find\//);
+  await expect(page.getByTestId("open-group-state")).toHaveText(
+    "Lediga platser: en ledare antar ansökan",
+  );
+  await page.getByTestId(`apply-${GROUPS.svkHerr}`).click();
+  await page.waitForURL(/\/me\/waitlists/);
+  await expect(page.getByTestId("my-waitlist-entry").first()).toContainText("Herr senior");
+});
+
 test("Anna uses the club calendar and adds a location", async ({ page }) => {
   await loginAs(page, PERSONAS.anna, { returnTo: `/clubs/${CLUBS.svk}/calendar` });
   await expect(page.getByTestId("club-calendar")).toContainText("Träning herr (vinterschema)");

@@ -101,7 +101,7 @@ export default async function GroupPage({ params, searchParams }: Params) {
         {query.saved ? <Notice>{t("groupForm.saved")}</Notice> : null}
         {query.updated ? <Notice>{t("groupForm.updated")}</Notice> : null}
         {query.archived ? <Notice>{t("groupAdmin.archived")}</Notice> : null}
-        {group.canManageWaitlist || (group.admissionMode === "waitlist" && !group.archived) ? (
+        {group.canManageWaitlist || (group.admissionMode !== "closed" && !group.archived) ? (
           <p className="mt-2 flex flex-wrap items-center gap-2">
             {group.canManageWaitlist ? (
               <a
@@ -112,13 +112,14 @@ export default async function GroupPage({ params, searchParams }: Params) {
                 {t("waitlist.tab")}
               </a>
             ) : null}
-            {group.admissionMode === "waitlist" && !group.archived ? (
+            {group.admissionMode !== "closed" && !group.archived ? (
               <a
                 href={`/clubs/find/${group.clubId}?group=${group.id}`}
                 className={secondaryButtonClass}
                 data-testid="group-join-waitlist"
               >
-                {t("waitlist.join")}
+                {/* P1.14: direct groups take an application an owner admits. */}
+                {group.admissionMode === "direct" ? t("waitlist.applyPlace") : t("waitlist.join")}
               </a>
             ) : null}
             {group.waitingCount !== undefined ? (
@@ -126,6 +127,11 @@ export default async function GroupPage({ params, searchParams }: Params) {
                 {t("waitlist.groupWaiting", { count: group.waitingCount })}
               </span>
             ) : null}
+          </p>
+        ) : null}
+        {group.admissionMode === "closed" && !group.archived && !group.canManageWaitlist ? (
+          <p className="mt-2 text-sm text-muted" data-testid="group-closed-note">
+            {t("waitlist.closedGroup")}
           </p>
         ) : null}
         {!group.canManage && (group.canManageMembers || group.canManageOwners) ? (

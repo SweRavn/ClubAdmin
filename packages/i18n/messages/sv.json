@@ -1562,7 +1562,8 @@
     "deleteConfirm": "Ja, ta bort {group} för gott",
     "delete": "Ta bort gruppen",
     "waitlistVisiblePublicly": "Visa kön i klubbsöket (personer utanför klubben kan söka)",
-    "waitlistAutoOffer": "Erbjudanden går automatiskt till nästa i kön"
+    "waitlistAutoOffer": "Erbjudanden går automatiskt till nästa i kön",
+    "admissionModesHint": "Direkt: medlemmar ansöker och en ledare antar dem (eller lägger till dem själv). Kö: medlemmar ställer sig i kö och erbjuds plats i tur och ordning. Stängd: inga ansökningar; bara ledare lägger till medlemmar."
   },
   "timeZones": {
     "other": "Övriga"
@@ -1809,6 +1810,10 @@
         "created": {
           "title": "I kön till {group}",
           "body": "Platsen i kön till {group} ({club}) syns under Köer."
+        },
+        "received": {
+          "title": "Ny ansökan till {group}",
+          "body": "Någon har ansökt om en plats i {group} ({club}). Anta eller svara under gruppens kö."
         }
       },
       "offer": {
@@ -2774,7 +2779,11 @@
     "decidedBy": "av {name}",
     "more": "Fler",
     "queueBypassReason": "Skäl att lägga till förbi kön ({count} i kön)",
-    "groupWaiting": "{count, plural, =0 {Ingen i kön} one {# person i kön} other {# personer i kön}}"
+    "groupWaiting": "{count, plural, =0 {Ingen i kön} one {# person i kön} other {# personer i kön}}",
+    "applyPlace": "Ansök om plats",
+    "applyPlaceButton": "Skicka ansökan",
+    "directOpen": "Lediga platser: en ledare antar ansökan",
+    "closedGroup": "Gruppen tar inte emot ansökningar; kontakta en ledare."
   },
   "calendar": {
     "feed": {

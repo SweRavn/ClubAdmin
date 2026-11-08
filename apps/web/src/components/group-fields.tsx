@@ -129,6 +129,9 @@ export async function GroupFields({
           label: t(enumKey("groupForm.admissionModes", m)),
         })),
       )}
+      <p className="text-xs text-muted sm:col-span-2" data-testid="admission-modes-hint">
+        {t("groupForm.admissionModesHint")}
+      </p>
       {input("offerReplyDays", t("groupForm.offerReplyDays"), { type: "number", min: 1, max: 60 })}
       <input type="hidden" name="waitlistFields" value="1" />
       {checkbox("waitlistVisiblePublicly", t("groupForm.waitlistVisiblePublicly"))}

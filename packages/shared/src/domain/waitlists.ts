@@ -204,6 +204,8 @@ export const OpenGroupsSchema = z
         level: z.string().nullable(),
         full: z.boolean(),
         waiting: z.number().int(),
+        /** P1.14: `direct` groups are listed for insiders; applying with free places asks an owner to admit. */
+        admissionMode: z.enum(ADMISSION_MODES).optional(),
       }),
     ),
   })

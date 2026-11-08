@@ -107,6 +107,8 @@ export const NOTIFICATION_TYPES = {
   // Waiting lists (P1.10a, P1.10b, ADR 0043). The offer's email cannot be
   // turned off (a deadline); the others follow the category's settings.
   "waitlist.entry.created": { category: "waitlist" },
+  // To those who may admit (P1.14).
+  "waitlist.entry.received": { category: "waitlist" },
   "waitlist.offer.sent": { category: "waitlist", mandatoryEmail: true, immediate: true },
   "waitlist.offer.expired": { category: "waitlist", immediate: true },
   "waitlist.admitted": { category: "waitlist", immediate: true },

@@ -42,66 +42,74 @@ export default async function OpenGroupsPage({ params, searchParams }: Props) {
         <p className="text-muted">{t("waitlist.noOpenGroups")}</p>
       ) : (
         <ul className="space-y-3">
-          {items.map((g) => (
-            <li
-              key={g.id}
-              className="space-y-2 rounded-lg border border-border bg-raised p-4"
-              data-testid="open-group"
-            >
-              <div className="flex flex-wrap items-baseline gap-2">
-                <h2 className="text-lg font-semibold">{g.name}</h2>
-                {g.parentName ? <span className="text-sm text-muted">{g.parentName}</span> : null}
-                <span className="text-sm text-muted">{t(enumKey("kinds", g.kind))}</span>
-                <span className="ml-auto text-sm" data-testid="open-group-state">
-                  {g.full
-                    ? t("waitlist.full", { waiting: g.waiting })
-                    : t("waitlist.notFull", { waiting: g.waiting })}
-                </span>
-              </div>
-              <p className="text-sm text-muted">
-                {[
-                  g.birthYearFrom !== null
-                    ? g.birthYearTo !== null && g.birthYearTo !== g.birthYearFrom
-                      ? `${g.birthYearFrom}–${g.birthYearTo}`
-                      : String(g.birthYearFrom)
-                    : null,
-                  g.genderCategory
-                    ? t(enumKey("groupForm.genderCategories", g.genderCategory))
-                    : null,
-                  g.sport,
-                  g.level,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </p>
-              <details open={only !== null}>
-                <summary className="cursor-pointer text-accent">{t("waitlist.applyTitle")}</summary>
-                <ActionForm action="apply-waitlist" className="mt-3 space-y-3">
-                  <input type="hidden" name="groupId" value={g.id} />
-                  <label className="block space-y-1">
-                    <span>{t("waitlist.applyFor")}</span>
-                    <select name="personId" className={inputClass} data-testid="apply-person">
-                      {children.map((w) => (
-                        <option key={w.person.id} value={w.person.id}>
-                          {personLabel(w.person)}
+          {items.map((g) => {
+            // P1.14: a direct group with free places takes an application an owner admits.
+            const place = g.admissionMode === "direct" && !g.full;
+            return (
+              <li
+                key={g.id}
+                className="space-y-2 rounded-lg border border-border bg-raised p-4"
+                data-testid="open-group"
+              >
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <h2 className="text-lg font-semibold">{g.name}</h2>
+                  {g.parentName ? <span className="text-sm text-muted">{g.parentName}</span> : null}
+                  <span className="text-sm text-muted">{t(enumKey("kinds", g.kind))}</span>
+                  <span className="ml-auto text-sm" data-testid="open-group-state">
+                    {place
+                      ? t("waitlist.directOpen")
+                      : g.full
+                        ? t("waitlist.full", { waiting: g.waiting })
+                        : t("waitlist.notFull", { waiting: g.waiting })}
+                  </span>
+                </div>
+                <p className="text-sm text-muted">
+                  {[
+                    g.birthYearFrom !== null
+                      ? g.birthYearTo !== null && g.birthYearTo !== g.birthYearFrom
+                        ? `${g.birthYearFrom}–${g.birthYearTo}`
+                        : String(g.birthYearFrom)
+                      : null,
+                    g.genderCategory
+                      ? t(enumKey("groupForm.genderCategories", g.genderCategory))
+                      : null,
+                    g.sport,
+                    g.level,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                <details open={only !== null}>
+                  <summary className="cursor-pointer text-accent">
+                    {place ? t("waitlist.applyPlace") : t("waitlist.applyTitle")}
+                  </summary>
+                  <ActionForm action="apply-waitlist" className="mt-3 space-y-3">
+                    <input type="hidden" name="groupId" value={g.id} />
+                    <label className="block space-y-1">
+                      <span>{t("waitlist.applyFor")}</span>
+                      <select name="personId" className={inputClass} data-testid="apply-person">
+                        {children.map((w) => (
+                          <option key={w.person.id} value={w.person.id}>
+                            {personLabel(w.person)}
+                          </option>
+                        ))}
+                        <option value={me.personId}>
+                          {t("findClub.yourself")} ({personLabel(me.person)})
                         </option>
-                      ))}
-                      <option value={me.personId}>
-                        {t("findClub.yourself")} ({personLabel(me.person)})
-                      </option>
-                    </select>
-                  </label>
-                  <label className="block space-y-1">
-                    <span>{t("waitlist.note")}</span>
-                    <textarea name="note" maxLength={500} rows={3} className={inputClass} />
-                  </label>
-                  <button type="submit" className={buttonClass} data-testid={`apply-${g.id}`}>
-                    {t("waitlist.apply")}
-                  </button>
-                </ActionForm>
-              </details>
-            </li>
-          ))}
+                      </select>
+                    </label>
+                    <label className="block space-y-1">
+                      <span>{t("waitlist.note")}</span>
+                      <textarea name="note" maxLength={500} rows={3} className={inputClass} />
+                    </label>
+                    <button type="submit" className={buttonClass} data-testid={`apply-${g.id}`}>
+                      {place ? t("waitlist.applyPlaceButton") : t("waitlist.apply")}
+                    </button>
+                  </ActionForm>
+                </details>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

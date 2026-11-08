@@ -7847,6 +7847,14 @@
                 },
                 "waiting": {
                   "type": "integer"
+                },
+                "admissionMode": {
+                  "type": "string",
+                  "enum": [
+                    "direct",
+                    "waitlist",
+                    "closed"
+                  ]
                 }
               },
               "required": [

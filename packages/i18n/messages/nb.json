@@ -1562,7 +1562,8 @@
     "deleteConfirm": "Ja, slett {group} for godt",
     "delete": "Slett gruppen",
     "waitlistVisiblePublicly": "Vis køen i klubbsøket (personer utenfor klubben kan søke)",
-    "waitlistAutoOffer": "Tilbud går automatisk til neste i køen"
+    "waitlistAutoOffer": "Tilbud går automatisk til neste i køen",
+    "admissionModesHint": "Direkte: medlemmer søker og en leder tar dem opp (eller legger dem til). Kø: medlemmer står i kø og tilbys plass etter tur. Stengt: ingen søknader; bare ledere legger til medlemmer."
   },
   "timeZones": {
     "other": "Andre"
@@ -1809,6 +1810,10 @@
         "created": {
           "title": "I køen til {group}",
           "body": "Plassen i køen til {group} ({club}) vises under Køer."
+        },
+        "received": {
+          "title": "Ny søknad til {group}",
+          "body": "Noen har søkt om plass i {group} ({club}). Ta opp eller svar under gruppens kø."
         }
       },
       "offer": {
@@ -2774,7 +2779,11 @@
     "decidedBy": "av {name}",
     "more": "Flere",
     "queueBypassReason": "Grunn til å legge til forbi køen ({count} i køen)",
-    "groupWaiting": "{count, plural, =0 {Ingen i køen} one {# person i køen} other {# personer i køen}}"
+    "groupWaiting": "{count, plural, =0 {Ingen i køen} one {# person i køen} other {# personer i køen}}",
+    "applyPlace": "Søk om plass",
+    "applyPlaceButton": "Send søknaden",
+    "directOpen": "Ledige plasser: en leder tar opp søknaden",
+    "closedGroup": "Gruppen tar ikke imot søknader; kontakt en leder."
   },
   "calendar": {
     "feed": {

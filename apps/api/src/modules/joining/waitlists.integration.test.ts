@@ -86,16 +86,21 @@ describe("applying", () => {
     ]);
   });
 
-  it("refuses closed groups, and direct groups with free places", async () => {
+  it("refuses closed groups; members apply to direct groups, with or without free places", async () => {
     const club = await buildClub(c.s);
     const person = await member(club);
     const closed = await team(club, { admissionMode: "closed" });
     await expect(apply(club, closed.id, person.id)).rejects.toSatisfy(fails("admission_closed"));
-    const direct = await team(club, { admissionMode: "direct", capacity: 1 });
-    await expect(apply(club, direct.id, person.id)).rejects.toSatisfy(fails("admission_closed"));
+    // P1.14: a member asks for a free place in a direct group; an owner admits it in one step.
+    const direct = await team(club, { admissionMode: "direct", capacity: 2 });
+    const entry = await apply(club, direct.id, person.id);
+    expect(await entryRow(entry.id)).toMatchObject({ status: "waiting" });
+    expect(await inGroup(direct.id, person.id)).toBe(false);
+    await c.s.waitlists.admit(club.ctx, direct.id, entry.id, {});
+    expect(await inGroup(direct.id, person.id)).toBe(true);
+    // Full: the direct group takes a waiting list as before.
     await c.s.memberships.addGroupMember(club.ctx, direct.id, (await member(club)).id, "member");
-    // Full: the direct group takes a waiting list.
-    await apply(club, direct.id, person.id);
+    await apply(club, direct.id, (await member(club)).id);
   });
 
   it("lets someone outside the club apply to a public list, with a join request", async () => {

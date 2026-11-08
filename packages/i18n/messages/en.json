@@ -1562,7 +1562,8 @@
     "deleteConfirm": "Yes, delete {group} for good",
     "delete": "Delete the group",
     "waitlistVisiblePublicly": "Show the waiting list in the club search (people outside the club can apply)",
-    "waitlistAutoOffer": "Offers go out automatically to the next in line"
+    "waitlistAutoOffer": "Offers go out automatically to the next in line",
+    "admissionModesHint": "Direct: members apply and a leader admits them (or adds them). Waiting list: members queue and are offered a place in turn. Closed: no applications; only leaders add members."
   },
   "timeZones": {
     "other": "Other"
@@ -1809,6 +1810,10 @@
         "created": {
           "title": "On the waiting list for {group}",
           "body": "The place in the queue for {group} ({club}) is shown under Waiting lists."
+        },
+        "received": {
+          "title": "New application to {group}",
+          "body": "Someone has applied for a place in {group} ({club}). Admit or answer in the group's waiting list."
         }
       },
       "offer": {
@@ -2774,7 +2779,11 @@
     "decidedBy": "by {name}",
     "more": "More",
     "queueBypassReason": "Reason for adding past the waiting list ({count} waiting)",
-    "groupWaiting": "{count, plural, =0 {Nobody is waiting} one {# person waiting} other {# people waiting}}"
+    "groupWaiting": "{count, plural, =0 {Nobody is waiting} one {# person waiting} other {# people waiting}}",
+    "applyPlace": "Apply for a place",
+    "applyPlaceButton": "Send the application",
+    "directOpen": "Places free: a leader admits the application",
+    "closedGroup": "The group does not take applications; contact a leader."
   },
   "calendar": {
     "feed": {

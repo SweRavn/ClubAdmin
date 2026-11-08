@@ -201,6 +201,9 @@ export function noticeLink(input: NoticeInput): string {
     // Waiting lists (P1.10a): the applicant's waiting-list page.
     case "group_waitlist_entry":
       return "/me/waitlists";
+    // Those who may admit (P1.14): the group's waiting list.
+    case "group_waitlist":
+      return id ? `/groups/${id}/waitlist` : "/";
     case "account":
       return "/me";
     // Billing (P1.13): the club's billing page (an invoice opened when given).

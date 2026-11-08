@@ -408,11 +408,12 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
             requested_by_person_id: string;
             closed_reason: string | null;
             offer_expires_at: Date | null;
+            group_id: string;
             group_name: string;
             time_zone: string;
           }>(sql`
             SELECT w.person_id, w.requested_by_person_id, w.closed_reason, w.offer_expires_at,
-              g.name AS group_name, c.time_zone
+              w.group_id, g.name AS group_name, c.time_zone
             FROM public.group_waitlist_entries w
             JOIN public.groups g ON g.id = w.group_id
             JOIN public.clubs c ON c.id = w.club_id
@@ -445,6 +446,26 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `${type}:${entryId}`,
             })),
           );
+          // P1.14: those who may admit learn of a new application: the
+          // owners of the group or its ancestors, else the club managers.
+          if (type === "waitlist.entry.created") {
+            const admitters = (await waitlistAdmitters(tx, clubId, entryId)).filter(
+              (id) => id !== entry.requested_by_person_id && id !== entry.person_id,
+            );
+            await notify(
+              tx,
+              admitters.map((recipient) => ({
+                recipientPersonId: recipient,
+                clubId,
+                type: "waitlist.entry.received" as const,
+                subjectType: "group_waitlist",
+                subjectId: entry.group_id,
+                about: [entry.person_id],
+                params: { group: entry.group_name },
+                dedupeKey: `waitlist.entry.received:${entryId}`,
+              })),
+            );
+          }
           return;
         }
         case "club.privacy_policy.published": {
@@ -939,4 +960,28 @@ async function billingNotices(tx: Tx, event: OutboxEvent): Promise<Notice[]> {
     params,
     dedupeKey: `${type}:${event.idempotencyKey}:${clubId}`,
   }));
+}
+
+/**
+ * Who may admit to a group's waiting list (`group.waitlist.manage`): the
+ * owners of the group or of its ancestors; the club managers when it has
+ * none (P1.14).
+ */
+async function waitlistAdmitters(tx: Tx, clubId: string, entryId: string): Promise<string[]> {
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    WITH RECURSIVE g AS (
+      SELECT w.group_id AS id FROM public.group_waitlist_entries w WHERE w.id = ${entryId}
+      UNION
+      SELECT p.parent_group_id FROM public.groups p JOIN g ON p.id = g.id
+      WHERE p.parent_group_id IS NOT NULL
+    ), owners AS (
+      SELECT DISTINCT o.person_id FROM public.group_owners o JOIN g ON o.group_id = g.id
+      WHERE o.valid_to IS NULL
+    )
+    SELECT person_id FROM owners
+    UNION
+    SELECT r.person_id FROM public.club_role_assignments r
+    WHERE r.club_id = ${clubId} AND r.role = 'club_manager' AND r.valid_to IS NULL
+      AND NOT EXISTS (SELECT 1 FROM owners)`);
+  return rows.map((r) => r.person_id);
 }

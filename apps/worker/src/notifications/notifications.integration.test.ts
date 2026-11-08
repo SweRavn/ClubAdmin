@@ -972,6 +972,22 @@ describe("waiting-list notices (P1.10a)", () => {
     return rows[0]!.id;
   }
 
+  it("waitlist.entry.received reaches the owners of the group or its ancestors, not the managers then", async () => {
+    const ids = await team();
+    await t.query(
+      "admin",
+      `INSERT INTO group_owners (club_id, group_id, person_id) VALUES ($1, $2, $3)`,
+      [ids.club, ids.group, ids.gunilla],
+    );
+    const entryId = await entry(ids);
+    const event = await publish(ids.club, "waitlist.entry.created", { clubId: ids.club, entryId });
+    await outbox.dispatch(t.db, event, [handler()]);
+    expect(await noticesOf(ids.gunilla)).toMatchObject([
+      { type: "waitlist.entry.received", about_person_ids: [ids.elsa], subject_id: ids.group },
+    ]);
+    expect(await noticesOf(ids.coach)).toEqual([]);
+  });
+
   it.each([
     ["waitlist.entry.created", "waiting", false],
     ["waitlist.offer.expired", "expired", false],
@@ -988,7 +1004,10 @@ describe("waiting-list notices (P1.10a)", () => {
       expect(await noticesOf(ids.mikael)).toHaveLength(guardians ? 1 : 0);
       expect(await noticesOf(ids.gunilla)).toEqual([]);
       expect(await noticesOf(ids.nils)).toEqual([]);
-      expect(await noticesOf(ids.coach)).toEqual([]);
+      // P1.14: a new application reaches those who may admit (no owners: the club manager).
+      expect((await noticesOf(ids.coach)).map((n) => n.type)).toEqual(
+        type === "waitlist.entry.created" ? ["waitlist.entry.received"] : [],
+      );
       if (type === "waitlist.offer.sent") {
         const { rows } = await t.query<{ params: Record<string, string> }>(
           "admin",

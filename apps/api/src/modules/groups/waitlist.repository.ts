@@ -5,6 +5,7 @@
 
 import { and, eq, inArray, schema, type SQL, sql, type Tx } from "@clubadmin/db";
 import {
+  type AdmissionMode,
   OPEN_WAITLIST_STATUSES,
   type WaitlistClosedReason,
   type WaitlistPriorityReason,
@@ -463,6 +464,7 @@ export interface OpenGroupRow {
   level: string | null;
   full: boolean;
   waiting: number;
+  admissionMode: AdmissionMode;
 }
 
 type OpenGroupDbRow = {
@@ -477,6 +479,7 @@ type OpenGroupDbRow = {
   level: string | null;
   full_now: boolean;
   waiting_count: number;
+  admission_mode?: string;
 };
 
 const toOpenGroup = (r: OpenGroupDbRow): OpenGroupRow => ({
@@ -491,6 +494,7 @@ const toOpenGroup = (r: OpenGroupDbRow): OpenGroupRow => ({
   level: r.level,
   full: r.full_now,
   waiting: r.waiting_count,
+  admissionMode: (r.admission_mode ?? "waitlist") as AdmissionMode,
 });
 
 /** Groups open for applications from outside the club (app.club_open_groups). */
@@ -501,18 +505,22 @@ export async function publicOpenGroups(tx: Tx, clubId: string): Promise<OpenGrou
   return rows.map(toOpenGroup);
 }
 
-/** For insiders (a tenant transaction): every unarchived group with a waiting list. */
+/**
+ * For insiders (a tenant transaction): every unarchived group they may apply
+ * to: with a waiting list, or with direct admission (P1.14; an owner admits).
+ */
 export async function insiderOpenGroups(tx: Tx, clubId: string): Promise<OpenGroupRow[]> {
   const { rows } = await tx.execute<OpenGroupDbRow>(sql`
     SELECT g.id, g.name, g.kind, p.name AS parent_name, g.sport, g.birth_year_from,
-      g.birth_year_to, g.gender_category, g.level,
+      g.birth_year_to, g.gender_category, g.level, g.admission_mode,
       coalesce(pl.capacity IS NOT NULL AND pl.occupied >= pl.capacity, false) AS full_now,
       (SELECT count(*)::int FROM public.group_waitlist_entries w
        WHERE w.group_id = g.id AND w.status = 'waiting') AS waiting_count
     FROM public.groups g
     LEFT JOIN public.groups p ON p.club_id = g.club_id AND p.id = g.parent_group_id
     LEFT JOIN LATERAL app.group_places(g.id) pl ON true
-    WHERE g.club_id = ${clubId} AND g.archived_at IS NULL AND g.admission_mode = 'waitlist'
+    WHERE g.club_id = ${clubId} AND g.archived_at IS NULL
+      AND g.admission_mode IN ('waitlist', 'direct')
     ORDER BY g.name, g.id
     LIMIT 200`);
   return rows.map(toOpenGroup);

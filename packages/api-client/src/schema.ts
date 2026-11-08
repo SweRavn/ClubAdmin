@@ -6042,6 +6042,8 @@ export interface components {
         level: string | null;
         full: boolean;
         waiting: number;
+        /** @enum {string} */
+        admissionMode?: "direct" | "waitlist" | "closed";
       }[];
     };
     SetClubPhoneNumbersRequest: {

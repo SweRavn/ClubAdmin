@@ -114,7 +114,8 @@ export class WaitlistsService {
   /**
    * Puts the person on the group's waiting list (the caller checked that the
    * person is them or a ward they act for). Allowed with admission_mode =
-   * waitlist, or direct when the group is full. Someone outside the club gets
+   * waitlist; with direct for members of the club (P1.14: an owner admits
+   * them), and for others when the group is full. Someone outside the club gets
    * a pending join request with this group as preference (or their pending
    * one is reused), in the same transaction; invite_only clubs answer 404.
    */
@@ -144,7 +145,7 @@ export class WaitlistsService {
           throw new DomainError("not_found");
         }
       }
-      await this.checkAdmissionMode(tx, group);
+      await this.checkAdmissionMode(tx, group, member);
       if (await this.memberships.hasGroupFunctionInTx(tx, groupId, input.personId, "member")) {
         throw new DomainError("already_in_group");
       }
@@ -402,9 +403,11 @@ export class WaitlistsService {
     return club;
   }
 
-  private async checkAdmissionMode(tx: Tx, group: Group): Promise<void> {
+  private async checkAdmissionMode(tx: Tx, group: Group, member: boolean): Promise<void> {
     if (group.admissionMode === "waitlist") return;
     if (group.admissionMode === "direct") {
+      // Members ask for a place also when there are free places (P1.14).
+      if (member) return;
       const { capacity, occupied } = await this.groups.capacityInTx(tx, group.id);
       if (capacity !== null && occupied >= capacity) return;
     }

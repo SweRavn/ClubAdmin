@@ -342,8 +342,11 @@ information), `owner_note` (owners only, never shown to the applicant),
 non-member's application). Groups have `waitlist_auto_offer`; a group
 membership added past people waiting has `queue_bypass_reason` (P1.10b).
 - **Applying:** a member, or a guardian with `act_on_behalf` for a child,
-  applies to a group with `admission_mode = waitlist`, or `direct` when it is
-  full (`closed` refuses). Someone outside the club finds the club's publicly
+  applies to a group with `admission_mode = waitlist` or `direct` (P1.14:
+  also with free places; an owner admits the application with one click,
+  nobody joins without a decision); `closed` refuses, and its group page
+  says to contact a leader. Those who may admit (the owners of the group or
+  its ancestors, else the club managers) get `waitlist.entry.received`. Someone outside the club finds the club's publicly
   visible waiting lists in the club search (`GET /clubs/{id}/open-groups`)
   and applies; this also creates (or reuses) a pending join request with the
   group as preference, in the same transaction. `invite_only` clubs answer

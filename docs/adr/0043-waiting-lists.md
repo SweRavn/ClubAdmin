@@ -95,3 +95,20 @@ join requests fills its groups with accepted entries; the club view shows
 them. Writes that change a queue cannot be measured twice on the same data,
 so their statements are covered by the integration tests rather than the
 request budgets.
+
+**Amendment (P1.14): applying to direct groups; telling those who admit.**
+A member found no way to ask for a place in a group with direct admission
+and free places: only full direct groups took applications. Now members of
+the club (and guardians acting for a child) apply to a `direct` group also
+when it has free places: the application is a waiting-list entry like any
+other, shown to the applicant with its position, and an owner admits it with
+one click (`admit`) or removes it with a reason; nobody joins without a
+decision (P1.14 decision 1). Outsiders are unchanged (only public `waitlist`
+groups, and `direct` ones when full). Every new entry, in any mode, is told
+to those who may admit (`waitlist.entry.received`, category `waitlist`):
+the owners of the group or its ancestors, or the club managers when it has
+none; the notice names the group, the applicant only through the person
+presenter. The web says "Ansök om plats" for direct groups and "Ställ dig i
+kön" for waiting lists, explains `closed` groups, and the group form
+explains the three modes (decision 2). The insiders' open-groups list
+includes direct groups and returns `admissionMode`.
