@@ -631,7 +631,9 @@ export class BillingService {
     if (method === "card") {
       const provider = this.settings.payments;
       if (!provider) throw new DomainError("payment_method_unavailable");
-      const account = await this.db.withTenant(context, (tx) => repo.findAccount(tx, context.clubId));
+      const account = await this.db.withTenant(context, (tx) =>
+        repo.findAccount(tx, context.clubId),
+      );
       if (!account || !ledger.accountComplete(account)) {
         throw new DomainError("billing_details_incomplete");
       }
@@ -678,7 +680,8 @@ export class BillingService {
       if (!row || row.clubId !== context.clubId || row.status === "draft") {
         throw new DomainError("invoice_not_found");
       }
-      if (row.kind !== "invoice" || row.status !== "open") throw new DomainError("invoice_not_open");
+      if (row.kind !== "invoice" || row.status !== "open")
+        throw new DomainError("invoice_not_open");
       return {
         invoice: row,
         account: await repo.findAccount(tx, context.clubId),
