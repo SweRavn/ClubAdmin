@@ -89,8 +89,10 @@
       "loginAs": "Logg inn som {name}",
       "empty": "Ingen har en innlogging ennå. Opprett en konto med e-post først.",
       "noClub": "Uten klubb",
-      "roles": "Roller: {roles}"
-    }
+      "roles": "Roller: {roles}",
+      "mail": "I utviklingsmiljøet går all e-post (også koder når du oppretter konto) til Mailpit, aldri til en ekte innboks:"
+    },
+    "otherAccount": "Logg inn med en annen konto"
   },
   "account": {
     "title": "Min konto",

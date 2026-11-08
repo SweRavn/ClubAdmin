@@ -11,6 +11,9 @@ import { apiFetch } from "../../server/api.ts";
 import { oidcConfigured, webConfig } from "../../server/config.ts";
 import { safeReturnTo } from "../../server/return-to.ts";
 
+/** Mailpit, where every email of the development environment goes (docs/development.md). */
+const MAILPIT_URL = "http://127.0.0.1:8025";
+
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
@@ -68,6 +71,13 @@ export default async function LoginPage({
           <a href={`${start}&signup=1`} className="rounded-md border border-border px-4 py-2">
             {t("login.signUp")}
           </a>
+          <a
+            href={`${start}&account=other`}
+            className="px-1 py-2 text-sm underline"
+            data-testid="other-account"
+          >
+            {t("login.otherAccount")}
+          </a>
         </p>
       ) : (
         <p>{t("login.notConfigured")}</p>
@@ -81,6 +91,12 @@ export default async function LoginPage({
             {t("login.dev.title")}
           </h2>
           <p className="text-muted">{t("login.dev.hint")}</p>
+          <p className="text-sm" data-testid="dev-mail-hint">
+            {t("login.dev.mail")}{" "}
+            <a href={MAILPIT_URL} className="underline" target="_blank" rel="noreferrer">
+              {MAILPIT_URL}
+            </a>
+          </p>
           <DevPicker
             personas={await personas()}
             returnTo={returnTo}

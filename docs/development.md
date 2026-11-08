@@ -5,12 +5,12 @@ sent to external services.
 
 ## Prerequisites
 
-| Tool | Notes |
-|---|---|
-| Node.js | Version 24, exact version in `.nvmrc`. Install with fnm or nvm (see the README); the system package is often too old. |
-| pnpm | Via Corepack: `corepack enable` (version is pinned in `package.json`). |
-| Docker | Docker Desktop (macOS, Windows) or Docker Engine with the Compose v2 plugin (Linux). On Windows, work inside **WSL2** with Docker Desktop's WSL integration. |
-| Free ports | 80, 443, 5432, 6379, 3900, 3903, 1025, 8025 on 127.0.0.1 (all configurable in `.env.local`). |
+| Tool       | Notes                                                                                                                                                        |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Node.js    | Version 24, exact version in `.nvmrc`. Install with fnm or nvm (see the README); the system package is often too old.                                        |
+| pnpm       | Via Corepack: `corepack enable` (version is pinned in `package.json`).                                                                                       |
+| Docker     | Docker Desktop (macOS, Windows) or Docker Engine with the Compose v2 plugin (Linux). On Windows, work inside **WSL2** with Docker Desktop's WSL integration. |
+| Free ports | 80, 443, 5432, 6379, 3900, 3903, 1025, 8025 on 127.0.0.1 (all configurable in `.env.local`).                                                                 |
 
 `pnpm dev:doctor` checks all of this and tells you how to fix problems.
 
@@ -19,7 +19,7 @@ sent to external services.
 - Clone the repository **inside WSL** (e.g. `~/ClubAdmin`), not under
   `/mnt/c/...`: the Windows drive is slow from WSL and file watching does not
   work there. `pnpm dev:doctor` warns about this.
-- Docker Desktop must have *Settings → Resources → WSL integration* enabled for
+- Docker Desktop must have _Settings → Resources → WSL integration_ enabled for
   your distro; then `docker version` in WSL shows a server. Without it the doctor
   reports `spawnSync docker ENOENT`.
 - `pnpm dev:trust-ca` exports the certificate and prints the PowerShell command
@@ -48,15 +48,15 @@ pnpm dev               # start services and all apps in watch mode
 pnpm dev:down          # stop services, keep data
 ```
 
-| What | Where |
-|---|---|
-| Web app (its `/api` proxies to the API with the session's tokens) | https://clubadmin.localhost |
-| API directly | https://api.clubadmin.localhost |
-| Login (Zitadel) | https://auth.clubadmin.localhost (admin user and password in `.env.local`) |
-| Emails sent by the system | http://127.0.0.1:8025 or https://mail.clubadmin.localhost |
-| PostgreSQL | `127.0.0.1:5432`, connection string `DATABASE_ADMIN_URL` in `.env.local` |
-| Valkey | `127.0.0.1:6379` |
-| Object storage (S3 API) | `http://127.0.0.1:3900`, buckets `clubadmin-files`, `clubadmin-backups` and `clubadmin-files-replica` (the last two with the separate backup key) |
+| What                                                              | Where                                                                                                                                             |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web app (its `/api` proxies to the API with the session's tokens) | https://clubadmin.localhost                                                                                                                       |
+| API directly                                                      | https://api.clubadmin.localhost                                                                                                                   |
+| Login (Zitadel)                                                   | https://auth.clubadmin.localhost (admin user and password in `.env.local`)                                                                        |
+| Emails sent by the system                                         | http://127.0.0.1:8025 or https://mail.clubadmin.localhost                                                                                         |
+| PostgreSQL                                                        | `127.0.0.1:5432`, connection string `DATABASE_ADMIN_URL` in `.env.local`                                                                          |
+| Valkey                                                            | `127.0.0.1:6379`                                                                                                                                  |
+| Object storage (S3 API)                                           | `http://127.0.0.1:3900`, buckets `clubadmin-files`, `clubadmin-backups` and `clubadmin-files-replica` (the last two with the separate backup key) |
 
 When the web app is not running, https://clubadmin.localhost shows a
 placeholder page served by Caddy.
@@ -124,12 +124,12 @@ DEV_AUTH. CI runs them in the services job.
 `pnpm dev` also starts the API (port 4000) and the worker in watch mode; they
 recompile and restart when you save a file.
 
-| What | Where |
-|---|---|
-| API through Caddy | https://api.clubadmin.localhost/api/v1/meta/version |
-| A calendar feed (P1.11; Caddy sends `/cal/*` on the main host to the API) | https://clubadmin.localhost/cal/demo-anna-my-schedule.ics |
-| API directly | http://127.0.0.1:4000 (health: `/health/live`, `/health/ready`) |
-| OpenAPI document | https://api.clubadmin.localhost/api/v1/openapi.json (development only) |
+| What                                                                      | Where                                                                  |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| API through Caddy                                                         | https://api.clubadmin.localhost/api/v1/meta/version                    |
+| A calendar feed (P1.11; Caddy sends `/cal/*` on the main host to the API) | https://clubadmin.localhost/cal/demo-anna-my-schedule.ics              |
+| API directly                                                              | http://127.0.0.1:4000 (health: `/health/live`, `/health/ready`)        |
+| OpenAPI document                                                          | https://api.clubadmin.localhost/api/v1/openapi.json (development only) |
 
 ### Notifications (P1.7)
 
@@ -191,13 +191,13 @@ Metro in WSL and the emulator on Windows (`adb` over TCP); iOS needs a Mac.
 - **Variants:** `APP_VARIANT=development` (default; bundle ID
   `org.clubadmin.app.dev`, scheme `clubadmin-dev://`, persona picker, trusts
   Caddy's local CA), `preview` and `production` (`APP_VARIANT=production
-  pnpm exec expo prebuild ...`). Release builds must set `APP_VARIANT`.
+pnpm exec expo prebuild ...`). Release builds must set `APP_VARIANT`.
   The build reads `AUTH_MOBILE_CLIENT_ID`, `AUTH_PROJECT_ID`,
   `AUTH_ISSUER` and `MOBILE_API_URL` from the environment (`set -a; .
-  ./.env.local; set +a` before building), and `EXPO_UPDATES_URL` for
+./.env.local; set +a` before building), and `EXPO_UPDATES_URL` for
   over-the-air updates.
 - **iOS simulator:** it shares this machine's network; `pnpm dev:trust-ca
-  --ios` adds Caddy's CA to the booted simulators. The names must resolve
+--ios` adds Caddy's CA to the booted simulators. The names must resolve
   (see `pnpm dev:doctor`).
 - **Android emulator:** start it, then `pnpm dev:trust-ca --android`: it
   puts Caddy's CA in the emulator's user store (for Chrome, which shows the
@@ -226,12 +226,12 @@ Metro in WSL and the emulator on Windows (`adb` over TCP); iOS needs a Mac.
 - **Tests:** `pnpm --filter @clubadmin/mobile test` (Jest, also part of
   `pnpm test`); end-to-end flows with [Maestro](https://maestro.dev) in
   `apps/mobile/maestro/` (`maestro test -e APP_ID=org.clubadmin.app.dev -e
-  APP_SCHEME=clubadmin-dev apps/mobile/maestro/03-language.yaml`; CI runs
+APP_SCHEME=clubadmin-dev apps/mobile/maestro/03-language.yaml`; CI runs
   them all, see `apps/mobile/scripts/ci-android-e2e.sh`).
 - **Checks:** `pnpm --filter @clubadmin/mobile bundle:check` (production
   bundle without development code, size budget), `pnpm licenses:check
-  --mobile`, and after changing dependencies `pnpm --filter
-  @clubadmin/mobile licenses:generate` (the About screen's licence list).
+--mobile`, and after changing dependencies `pnpm --filter
+@clubadmin/mobile licenses:generate` (the About screen's licence list).
 
 ## Database
 
@@ -247,12 +247,12 @@ the template is rebuilt automatically when migrations change.
 
 Any PostgreSQL client works (DBeaver, pgAdmin, `psql`):
 
-| Setting | Value |
-|---|---|
-| Host | `127.0.0.1` |
-| Port | `POSTGRES_PORT` (5432) |
-| Database | `clubadmin` |
-| User | `postgres` |
+| Setting  | Value                                           |
+| -------- | ----------------------------------------------- |
+| Host     | `127.0.0.1`                                     |
+| Port     | `POSTGRES_PORT` (5432)                          |
+| Database | `clubadmin`                                     |
+| User     | `postgres`                                      |
 | Password | the one in `DATABASE_ADMIN_URL` in `.env.local` |
 
 `psql "$DATABASE_ADMIN_URL"` (after `set -a; . ./.env.local; set +a`)
@@ -287,17 +287,17 @@ Settings, schedules and restores: `infra/backup/README.md` and
 
 ## Commands
 
-| Command | Does |
-|---|---|
-| `pnpm dev` | Start services, then `turbo run dev` for all apps |
-| `pnpm dev:services [--full] [--backup]` | Start services only; `--full` also starts ClamAV (slow first start); `--backup` turns on backups (kept in `.env.local`) |
-| `pnpm dev:down` | Stop services; data is kept |
-| `pnpm dev:logs [service]` | Follow logs, e.g. `pnpm dev:logs zitadel` |
-| `pnpm dev:clean [--yes]` | Stop services and **delete all their data** |
-| `pnpm dev:doctor` | Check tools, ports, names, certificates and service health |
-| `pnpm dev:trust-ca [--print]` | Install Caddy's local CA in the OS trust store; `--ios` booted simulators, `--android` the running emulator (also forwards port 443) |
-| `pnpm dev:smoke` | End-to-end check of every service (also run in CI) |
-| `pnpm auth:configure [--print]` | Apply `infra/zitadel/` to Zitadel (idempotent); `--print` shows the results instead of writing `.env.local` |
+| Command                                 | Does                                                                                                                                 |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm dev`                              | Start services, then `turbo run dev` for all apps                                                                                    |
+| `pnpm dev:services [--full] [--backup]` | Start services only; `--full` also starts ClamAV (slow first start); `--backup` turns on backups (kept in `.env.local`)              |
+| `pnpm dev:down`                         | Stop services; data is kept                                                                                                          |
+| `pnpm dev:logs [service]`               | Follow logs, e.g. `pnpm dev:logs zitadel`                                                                                            |
+| `pnpm dev:clean [--yes]`                | Stop services and **delete all their data**                                                                                          |
+| `pnpm dev:doctor`                       | Check tools, ports, names, certificates and service health                                                                           |
+| `pnpm dev:trust-ca [--print]`           | Install Caddy's local CA in the OS trust store; `--ios` booted simulators, `--android` the running emulator (also forwards port 443) |
+| `pnpm dev:smoke`                        | End-to-end check of every service (also run in CI)                                                                                   |
+| `pnpm auth:configure [--print]`         | Apply `infra/zitadel/` to Zitadel (idempotent); `--print` shows the results instead of writing `.env.local`                          |
 
 ## Resetting
 
@@ -341,3 +341,27 @@ Settings, schedules and restores: `infra/backup/README.md` and
 
 See also [`infra/docker/README.md`](../infra/docker/README.md) for details
 about each service.
+
+## Troubleshooting: stuck on "Aktivera ditt användarkonto"
+
+You signed up through Zitadel, and every visit to the login now shows
+"Aktivera ditt användarkonto" (activate your account), and its back arrow
+leads back to the same page.
+
+- **The code is in Mailpit, not in your inbox.** In development every email
+  (Zitadel's verification codes too) goes to Mailpit:
+  http://127.0.0.1:8025 or https://mail.clubadmin.localhost. Open the newest
+  message to your address, enter the code, and the account is active. The
+  same address can be used again for testing: Zitadel accepts any address
+  and never sends real mail here.
+- **Start from the app, not from the login service.**
+  https://auth.clubadmin.localhost is Zitadel itself (its root opens
+  Zitadel's console, which reuses the remembered account). Go to
+  https://clubadmin.localhost/login instead.
+- **Leave the remembered account:** on https://clubadmin.localhost/login
+  choose "Logga in med ett annat konto" (OIDC `prompt=select_account`),
+  then "Välj ett annat konto"; or delete the cookies of
+  `auth.clubadmin.localhost` in the browser.
+- **Test without Zitadel:** the persona picker on the same page (DEV_AUTH)
+  logs in as any demo persona, and `pnpm dev:idp-sync` gives the personas
+  real Zitadel logins with verified emails.

@@ -89,8 +89,10 @@
       "loginAs": "Log in as {name}",
       "empty": "Nobody has a login yet. Create an account with email first.",
       "noClub": "Without a club",
-      "roles": "Roles: {roles}"
-    }
+      "roles": "Roles: {roles}",
+      "mail": "In development all email (also verification codes when you sign up) goes to Mailpit, never to a real inbox:"
+    },
+    "otherAccount": "Log in with another account"
   },
   "account": {
     "title": "My account",

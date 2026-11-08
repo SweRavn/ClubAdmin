@@ -95,3 +95,16 @@ test("the old login URL redirects to /login", async ({ page }) => {
   await page.goto("/auth/login?returnTo=%2Fme");
   await expect(page).toHaveURL(/\/login\?returnTo=%2Fme$/);
 });
+
+test("the login page says where development email goes and offers another account", async ({
+  page,
+}) => {
+  await page.goto("/login");
+  await expect(page.getByTestId("dev-mail-hint")).toContainText("Mailpit");
+  // "Another account" asks Zitadel for the account choice (prompt=select_account).
+  const href = await page.getByTestId("other-account").getAttribute("href");
+  expect(href).toContain("account=other");
+  const res = await page.request.get(href!, { maxRedirects: 0 });
+  expect(res.status()).toBe(303);
+  expect(res.headers().location).toContain("prompt=select_account");
+});

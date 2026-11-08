@@ -50,8 +50,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     state,
     nonce: flow.nonce,
     ui_locales: negotiateLocale(request.headers.get("accept-language") ?? undefined),
-    // Zitadel shows its registration form directly.
-    ...(params.get("signup") === "1" ? { prompt: "create" } : {}),
+    // Zitadel shows its registration form directly; or the account choice, so
+    // a remembered account (e.g. one waiting for its email code) can be left.
+    ...(params.get("signup") === "1"
+      ? { prompt: "create" }
+      : params.get("account") === "other"
+        ? { prompt: "select_account" }
+        : {}),
   });
   const response = NextResponse.redirect(url.toString(), 303);
   response.cookies.set(FLOW_COOKIE, state, flowCookieOptions);
