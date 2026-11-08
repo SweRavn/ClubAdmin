@@ -530,7 +530,7 @@
     "email": "E-postadress",
     "group": "Grupp (valfritt)",
     "noGroup": "Ingen grupp",
-    "role": "Roll (endast föreningsansvariga)",
+    "role": "Roll (föreningsansvariga, kräver tvåfaktorsinloggning)",
     "noRole": "Ingen roll",
     "maxUses": "Hur många som får använda den (valfritt)",
     "expiresInDays": "Giltig i (dagar)",

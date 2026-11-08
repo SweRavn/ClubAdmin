@@ -95,16 +95,19 @@ export class InvitationsService {
 
   /**
    * Creates an invitation and returns its link or code once. `mayPresetRole`:
-   * the caller holds club.roles.manage (authorization decides).
+   * the caller is a club manager; `mfa`: they logged in with a second factor
+   * (a role preset grants a role, so it needs both, as assigning one does).
    */
   create(
     context: TenantContext,
     input: CreateInvitationInput,
-    options: { mayPresetRole: boolean },
+    options: { mayPresetRole: boolean; mfa: boolean },
   ): Promise<{ invitation: Invitation; url: string | null; code: string | null }> {
     const data = parseInput(CreateInvitationSchema, input);
     const me = actorPersonId(context);
     if (data.rolePreset && !options.mayPresetRole) throw new DomainError("role_preset_not_allowed");
+    // A manager without a second factor is told so (and offered the MFA login), not refused as a non-manager.
+    if (data.rolePreset && !options.mfa) throw new DomainError("mfa_required");
     if (data.kind === "email" && !this.tokenKey) {
       throw new DomainError("invitation_email_unavailable");
     }

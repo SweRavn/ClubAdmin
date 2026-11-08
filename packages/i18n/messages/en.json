@@ -530,7 +530,7 @@
     "email": "Email address",
     "group": "Group (optional)",
     "noGroup": "No group",
-    "role": "Role (club managers only)",
+    "role": "Role (club managers, needs a two-factor login)",
     "noRole": "No role",
     "maxUses": "How many people may use it (optional)",
     "expiresInDays": "Valid for (days)",

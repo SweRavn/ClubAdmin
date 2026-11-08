@@ -530,7 +530,7 @@
     "email": "E-postadresse",
     "group": "Gruppe (valgfritt)",
     "noGroup": "Ingen gruppe",
-    "role": "Rolle (bare klubbansvarlige)",
+    "role": "Rolle (klubbansvarlige, krever tofaktorinnlogging)",
     "noRole": "Ingen rolle",
     "maxUses": "Hvor mange som kan bruke den (valgfritt)",
     "expiresInDays": "Gyldig i (dager)",

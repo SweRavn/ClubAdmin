@@ -315,6 +315,11 @@ describe("invitations", () => {
     });
     expect(byRegistrar.statusCode).toBe(403);
     expect(detail(byRegistrar)).toBe("role_preset_not_allowed");
+    const withoutMfa = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "code", rolePreset: "treasurer" },
+    });
+    expect(withoutMfa.statusCode).toBe(403);
+    expect(detail(withoutMfa)).toBe("mfa_required");
 
     const created = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
       body: { kind: "code", rolePreset: "treasurer" },
