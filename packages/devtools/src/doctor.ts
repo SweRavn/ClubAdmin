@@ -4,6 +4,7 @@
 import { X509Certificate } from "node:crypto";
 import { lookup } from "node:dns/promises";
 import { existsSync, readFileSync } from "node:fs";
+import { connect } from "node:net";
 import { join } from "node:path";
 import { getCACertificates } from "node:tls";
 
@@ -26,6 +27,45 @@ export function nodeVersionCheck(actual: string, wanted: string): CheckResult {
         fix: "install the version in .nvmrc, e.g. `nvm install` or `fnm use`",
       };
 }
+
+/**
+ * Sends `request` to 127.0.0.1:port and resolves with the first bytes of the
+ * answer, or an error message. A container can be healthy while its
+ * published port no longer reaches it (Docker's port forwarding after WSL2
+ * slept or changed network): the connection is then reset.
+ */
+export function probePort(port: number, request: Buffer, timeoutMs = 2_000): Promise<string> {
+  return new Promise((resolve) => {
+    const socket = connect({ host: "127.0.0.1", port });
+    const done = (result: string) => {
+      socket.destroy();
+      resolve(result);
+    };
+    socket.setTimeout(timeoutMs, () => done("error: timeout"));
+    socket.on("connect", () => socket.write(request));
+    socket.on("data", (data) => done(data.toString("latin1")));
+    socket.on("error", (error) => done(`error: ${error.message}`));
+    socket.on("close", () => done("error: closed without an answer"));
+  });
+}
+
+/** Valkey answers PING with +PONG; PostgreSQL answers an SSL request with S or N. */
+export const HOST_PROBES = [
+  {
+    service: "valkey",
+    portKey: "VALKEY_PORT",
+    defaultPort: 6379,
+    request: Buffer.from("PING\r\n"),
+    ok: (answer: string) => answer.startsWith("+PONG"),
+  },
+  {
+    service: "postgres",
+    portKey: "POSTGRES_PORT",
+    defaultPort: 5432,
+    request: Buffer.from([0, 0, 0, 8, 4, 210, 22, 47]),
+    ok: (answer: string) => answer === "S" || answer === "N",
+  },
+] as const;
 
 const isLoopback = (address: string) => address === "::1" || address.startsWith("127.");
 
@@ -151,6 +191,24 @@ export async function doctor(): Promise<boolean> {
             },
       );
     }
+  }
+
+  // The services as the apps reach them: through the published ports.
+  for (const probe of HOST_PROBES) {
+    const state = states.find((s) => s.service === probe.service);
+    if (state?.state !== "running") continue;
+    const port = Number(env.get(probe.portKey) ?? probe.defaultPort);
+    const answer = await probePort(port, probe.request);
+    results.push(
+      probe.ok(answer)
+        ? { name: `${probe.service} reachable on 127.0.0.1:${port}`, status: "ok" }
+        : {
+            name: `${probe.service} reachable on 127.0.0.1:${port}`,
+            status: "fail",
+            detail: answer.startsWith("error") ? answer : "unexpected answer",
+            fix: `the container is healthy but its port does not reach it: \`docker restart clubadmin-${probe.service}-1\` (or \`pnpm dev:services\`)`,
+          },
+    );
   }
 
   // Names and certificates

@@ -365,3 +365,13 @@ leads back to the same page.
 - **Test without Zitadel:** the persona picker on the same page (DEV_AUTH)
   logs in as any demo persona, and `pnpm dev:idp-sync` gives the personas
   real Zitadel logins with verified emails.
+
+## Troubleshooting: `MaxRetriesPerRequestError` or `ECONNRESET` from Valkey
+
+The web app cannot reach Valkey through `127.0.0.1:6379` although the
+container may look healthy. After the computer slept or WSL2 changed
+network, Docker's port forwarding to a long-running container can break:
+connections are accepted and reset at once. `pnpm dev:doctor` checks the
+port from the host ("valkey reachable on 127.0.0.1:6379"); the fix is
+`docker restart clubadmin-valkey-1` (Valkey holds only sessions and caches:
+you are logged out, nothing else is lost), or `pnpm dev:services`.
