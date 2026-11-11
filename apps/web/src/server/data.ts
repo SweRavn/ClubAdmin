@@ -10,6 +10,7 @@ import {
   type ActivityPage,
   ActivityPageSchema,
   AdultGuardiansSchema,
+  AssignableRolesSchema,
   AssignmentsSchema,
   AttendanceSchema,
   AuditPageSchema,
@@ -67,6 +68,7 @@ import {
   MyGroupsSchema,
   MyHandoversSchema,
   MyJoinRequestsSchema,
+  MyPermissionsSchema,
   MyProfileSchema,
   MyWaitlistsSchema,
   MyWardsSchema,
@@ -75,6 +77,8 @@ import {
   OpenGroupsSchema,
   OperatorSubscriptionPageSchema,
   PaymentPageSchema,
+  PermissionCatalogueSchema,
+  PermissionHolderPageSchema,
   PersonConsentsSchema,
   PersonProfileSchema,
   PlanListSchema,
@@ -86,6 +90,9 @@ import {
   RegistrationListSchema,
   ResponseListSchema,
   ResponseSummarySchema,
+  RoleAssignmentListSchema,
+  RoleListSchema,
+  RolePreviewSchema,
   SchedulePageSchema,
   SeasonListSchema,
   type SeriesPreviewInput,
@@ -354,6 +361,56 @@ export const getClubJoinRequests = cache((clubId: string) =>
 export const getClubInvitations = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/invitations?limit=100`, InvitationListSchema),
 );
+// Club-defined roles (P1.15 A2).
+export const getClubRoles = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/roles`, RoleListSchema),
+);
+export const getPermissionCatalogue = cache(() =>
+  required("/api/v1/permissions", PermissionCatalogueSchema),
+);
+export const getMyPermissions = cache((clubId: string) =>
+  required(`/api/v1/me/permissions?clubId=${requireId(clubId)}`, MyPermissionsSchema),
+);
+export const getPermissionHolders = cache(
+  (clubId: string, permission: string, cursor: string | null) =>
+    required(
+      `/api/v1/clubs/${requireId(clubId)}/permissions/${encodeURIComponent(permission)}/holders?limit=50${
+        cursor && isUuid(cursor) ? `&cursor=${cursor}` : ""
+      }`,
+      PermissionHolderPageSchema,
+    ),
+);
+export const getRoleAssignments = cache((clubId: string, personId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/role-assignments?personId=${requireId(personId)}`,
+    RoleAssignmentListSchema,
+    { nullOn: [403] },
+  ),
+);
+export const getAssignableRoles = cache((groupId: string) =>
+  apiGet(`/api/v1/groups/${requireId(groupId)}/assignable-roles`, AssignableRolesSchema, {
+    nullOn: [403],
+  }),
+);
+/**
+ * The effect of a role change (P1.15 A2; nothing is saved), or null when the
+ * caller may not change roles now (no second factor: 403).
+ */
+export async function getRolePreview(clubId: string, roleId: string, permissions: string[]) {
+  const session = await requireSession();
+  const res = await apiFetch(
+    `/api/v1/clubs/${requireId(clubId)}/roles/${requireId(roleId)}/preview`,
+    session.record,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ permissions }),
+    },
+  );
+  if (!res.ok) return null;
+  return RolePreviewSchema.parse(await res.json());
+}
+
 export const getClubManagers = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/managers`, ManagerListSchema),
 );

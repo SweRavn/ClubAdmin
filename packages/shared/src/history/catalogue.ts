@@ -158,7 +158,7 @@ const CATEGORY_RULES: readonly [AuditCategory, readonly string[]][] = [
       "backup.",
     ],
   ],
-  ["roles", ["club.role.", "club.manager.", "group.owner."]],
+  ["roles", ["club.role.", "club.manager.", "group.owner.", "role."]],
   ["attendance", ["attendance.", "activity.response."]],
   ["activities", ["activity.", "location."]],
   ["events", ["event."]],

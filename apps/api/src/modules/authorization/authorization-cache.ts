@@ -54,7 +54,7 @@ export class AuthorizationCache {
     const [v, raw] = read;
     const version = v ?? "0";
     const cached = parse<RelationshipSet>(raw ?? null);
-    if (cached && cached.v === version) return cached.value;
+    if (cached && cached.v === version) return { ...cached.value, version };
     // Stored under the version read before loading: a change committed while
     // loading bumps the version, so this entry is never served as current.
     const value = await load();
@@ -66,7 +66,7 @@ export class AuthorizationCache {
         AUTHZ_CACHE_TTL_SECONDS,
       )
       .catch(() => undefined);
-    return value;
+    return { ...value, version };
   }
 
   async protectedSet(clubId: string, load: () => Promise<string[]>): Promise<string[]> {

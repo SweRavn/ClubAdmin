@@ -8,6 +8,8 @@ export const PERMISSIONS = [
   "club.read",
   "club.settings.update",
   "club.roles.manage",
+  // Club-defined roles (P1.15 A2): the roles page and who holds what.
+  "club.roles.read",
   "club.members.read",
   "club.members.manage",
   "club.members.export",
@@ -85,6 +87,13 @@ export type Permission = (typeof PERMISSIONS)[number];
 
 export const isPermission = (value: string): value is Permission =>
   (PERMISSIONS as readonly string[]).includes(value);
+
+/**
+ * The caller's authorization version (P1.15 A2): it changes whenever what
+ * they may do changes (a role, its permissions, a membership). Apps compare
+ * it with the version they cached with and refresh their permissions.
+ */
+export const AUTHZ_VERSION_HEADER = "x-authz-version";
 
 /** A guardian acting for a ward sends the ward's person ID in this header (ADR 0006). */
 export const ON_BEHALF_OF_HEADER = "x-on-behalf-of";

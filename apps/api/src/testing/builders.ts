@@ -70,12 +70,18 @@ export interface BuiltClub extends Club {
   ctx: TenantContext;
 }
 
-/** A club created by a new person, who becomes manager and member #1. */
+/**
+ * A club created by a new person, who becomes manager and member #1. Since
+ * P1.15 A2 the club manager no longer does the registrar's work (the
+ * register's details, adding and importing members, guardians, consents):
+ * the manager also gets the registrar role, as in a small club, unless
+ * `registrar: false` (the permission matrix shows the split).
+ */
 export async function buildClub(
   services: CoreServices,
-  overrides: Partial<CreateClubInput> & { manager?: BuiltPerson } = {},
+  overrides: Partial<CreateClubInput> & { manager?: BuiltPerson; registrar?: boolean } = {},
 ): Promise<BuiltClub> {
-  const { manager: given, ...clubOverrides } = overrides;
+  const { manager: given, registrar = true, ...clubOverrides } = overrides;
   const manager = given ?? (await buildPerson(services));
   const n = next();
   const club = await services.onboarding.createClub(actor(manager.id), {
@@ -84,6 +90,8 @@ export async function buildClub(
     country: "SE",
     ...clubOverrides,
   });
+  if (registrar)
+    await services.roles.assignRole(actor(manager.id, club.id), manager.id, "registrar");
   return { ...club, manager, ctx: actor(manager.id, club.id) };
 }
 

@@ -86,6 +86,7 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "club.read": builtIn,
   "club.settings.update": role("club", "club"),
   "club.roles.manage": role("club", "club", true),
+  "club.roles.read": role("club", "club"),
   "club.managers.claim": role("club", "club", true),
   "club.handover.respond": builtIn,
   "club.managers.reassign": builtIn,
@@ -200,7 +201,9 @@ export function uncataloguedPermissions(): Permission[] {
  * club without managers.
  */
 export const LOCKED_ROLES = {
-  club_manager: ["club.roles.manage"],
+  // P1.15 decision 12: the person who assigns roles finds every member and
+  // sees who is protected (not their details).
+  club_manager: ["club.roles.manage", "club.people.protected"],
   chair: ["club.managers.claim"],
 } as const satisfies Partial<Record<ClubRole, readonly RolePermission[]>>;
 
@@ -260,27 +263,42 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
     { scope: PermissionScope; permissions: readonly RolePermission[] }
   >
 > = {
+  // P1.15 A2 (decision 2026-11-08): the club manager administers the club
+  // and access, not the day-to-day work of other roles (MANAGER_SPLIT).
   club_manager: {
     scope: "club",
     permissions: [
-      ...ADMIN,
       "club.settings.update",
       "club.roles.manage",
+      "club.roles.read",
+      "club.people.protected",
+      "club.members.read",
+      "club.join_requests.manage",
+      "club.invitations.manage",
+      "club.waitlists.read",
+      "club.groups.archived.read",
       "club.groups.create",
       "group.update",
       "group.owners.manage",
+      "group.members.read",
       "group.members.manage",
       "group.waitlist.manage",
+      "group.activities.read",
       "group.activities.manage",
+      "club.activities.read",
       "club.locations.manage",
       "club.locations.create",
       "club.events.create",
+      "event.read",
       "event.manage",
       "person.protection.set",
       "person.merge",
       "club.guardianships.end",
       "club.history.read",
       "club.audit.read",
+      "group.history.read",
+      "activity.history.read",
+      "event.history.read",
       "club.profile_views.read",
       "club.profile_views.configure",
       "billing.subscription.read",
@@ -289,8 +307,11 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.invoices.read",
     ],
   },
-  registrar: { scope: "club", permissions: [...ADMIN, "club.members.routine"] },
-  chair: { scope: "club", permissions: [...BOARD, "club.managers.claim"] },
+  registrar: {
+    scope: "club",
+    permissions: [...ADMIN, "club.members.routine", "club.roles.read"],
+  },
+  chair: { scope: "club", permissions: [...BOARD, "club.managers.claim", "club.roles.read"] },
   vice_chair: { scope: "club", permissions: BOARD },
   treasurer: {
     scope: "club",
@@ -321,3 +342,34 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
 export function templatePermissions(key: ClubRole | GroupFunction): readonly RolePermission[] {
   return BUILT_IN_ROLE_TEMPLATE[key].permissions;
 }
+
+/**
+ * What owning a group gives (ADR 0019; the policies' `ownsGroup`), for the
+ * no-escalation rule: an owner may give roles in their group whose
+ * permissions are among these (P1.15 A2). Taking part and counting as a
+ * leader are not powers and never block.
+ */
+export const OWNER_PERMISSIONS: readonly RolePermission[] = [
+  "group.update",
+  "group.members.read",
+  "group.members.manage",
+  "group.waitlist.manage",
+  "group.activities.read",
+  "group.activities.manage",
+  "activity.responses.read",
+  "activity.attendance.manage",
+  "group.attendance.read",
+  "group.people.details",
+  "person.consents.read",
+  "group.consents.read",
+];
+export const NON_POWERS: readonly RolePermission[] = ["group.participate", "group.lead"];
+
+/**
+ * The club manager's day-to-day permissions that moved to the registrar
+ * (P1.15 A2, migration 0032): existing clubs' managers are told and can give
+ * themselves the registrar role.
+ */
+export const MANAGER_SPLIT: readonly RolePermission[] = BUILT_IN_ROLE_TEMPLATE.registrar.permissions
+  .filter((p) => !BUILT_IN_ROLE_TEMPLATE.club_manager.permissions.includes(p))
+  .filter((p) => p !== "club.members.routine");

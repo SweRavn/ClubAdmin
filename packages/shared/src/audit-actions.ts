@@ -76,6 +76,12 @@ export const AUDIT_ACTIONS = [
   "club.phone_numbers.updated",
   "club.role.assigned",
   "club.role.ended",
+  // Club-defined roles (P1.15 A2).
+  "role.created",
+  "role.updated",
+  "role.deleted",
+  "role.assigned",
+  "role.unassigned",
   "club.manager.handover.proposed",
   "club.manager.handover.accepted",
   "club.manager.handover.declined",

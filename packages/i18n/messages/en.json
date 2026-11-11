@@ -1889,6 +1889,28 @@
           "body": "{final, select, yes {We could not charge the card after several attempts. Pay {amount} by bankgiro or with the pay link on the billing page before the due date {date}.} other {The card payment of {amount} failed. We will try again; you can also pay now on the billing page or by bankgiro. Due {date}.}}"
         }
       }
+    },
+    "roles": {
+      "manager_split": {
+        "title": "The club manager's role is clearer in {club}",
+        "body": "Club managers run the club and who may do what. The member register's details, memberships, guardians, consents and correcting attendance now belong to the {role} role. Do you do that work? Give yourself the role under Roles and permissions."
+      }
+    },
+    "role": {
+      "self_assigned": {
+        "title": "An administrator gave themselves a role in {club}",
+        "body": "The {role} role was given by the person themselves. Check under Roles and permissions that this is right."
+      },
+      "permissions": {
+        "removed": {
+          "title": "The {role} role in {club} can do less now",
+          "body": "{count, plural, one {A permission was} other {# permissions were}} removed from the role. See what your roles allow."
+        }
+      },
+      "unassigned": {
+        "title": "You no longer have the {role} role in {club}",
+        "body": "A club administrator ended the role. See what your roles allow."
+      }
     }
   },
   "notifyCategories": {
@@ -2587,7 +2609,8 @@
       "unsubscribed": "unsubscribed from",
       "updated": "updated",
       "verified": "verified",
-      "withdrawn": "withdrew"
+      "withdrawn": "withdrew",
+      "unassigned": "unassigned"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -3213,6 +3236,11 @@
         "name": "Administer roles and permissions",
         "description": "Can create and change roles and give any role to anyone in the club.",
         "example": "For example, can make someone treasurer or change what a coach may do."
+      },
+      "club_roles_read": {
+        "name": "See roles and permissions",
+        "description": "Can see the club's roles, what they may do and who holds them.",
+        "example": "For example, can see who holds the Treasurer role."
       },
       "club_managers_claim": {
         "name": "Take over as club manager",

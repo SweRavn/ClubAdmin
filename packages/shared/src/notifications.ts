@@ -90,6 +90,11 @@ export const NOTIFICATION_TYPES = {
   // Protected identity (P1.12): the club's managers, never naming the person.
   "member.protection.changed": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "assignment.ended": { category: "club_admin" },
+  // Club-defined roles (P1.15 A2).
+  "roles.manager_split": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "role.self_assigned": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "role.permissions.removed": { category: "club_admin" },
+  "role.unassigned": { category: "club_admin" },
   "club.privacy_policy.updated": { category: "membership" },
   "family.accepted": { category: "family" },
   "family.own_login_age": { category: "family" },

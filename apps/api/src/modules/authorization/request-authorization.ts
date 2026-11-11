@@ -22,6 +22,8 @@ export interface RequestAuthorization {
   resource: Resource | null;
   /** Protected sets per club, loaded at most once per request. */
   protectedSets: Map<string, Promise<ReadonlySet<string>>>;
+  /** The caller's authorization version (x-authz-version, P1.15 A2). */
+  authzVersion?: string;
 }
 
 declare module "fastify" {

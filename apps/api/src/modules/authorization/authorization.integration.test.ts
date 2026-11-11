@@ -48,6 +48,8 @@ import {
 } from "./request-authorization.ts";
 
 const PhoneBody = z.object({ phone: z.string() });
+/** Club A's treasurer role (P1.15 A2 rows). */
+let treasurerRoleA = "";
 /** A date `offset` days from today, as the matrix scenario's series uses (P1.14 rows). */
 const matrixDay = (offset: number) =>
   new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
@@ -118,6 +120,12 @@ beforeAll(async () => {
     [OnBehalfModule],
   );
   m = await buildMatrixScenario(s, t);
+  const { rows: roleRows } = await t.query<{ id: string; template_key: string }>(
+    "admin",
+    "SELECT id, template_key FROM public.roles WHERE club_id = $1 AND scope = 'club'",
+    [m.clubA.id],
+  );
+  treasurerRoleA = roleRows.find((r) => r.template_key === "treasurer")!.id;
   // Calendar feeds need the entitlement when CI runs with billing on (P1.11).
   await subscribeToFeatures(t, [m.clubA.id, m.clubB.id], ["calendar_feeds"]);
   await dispatchPending();
@@ -1092,6 +1100,58 @@ describe("permission matrix", () => {
       expected: CLUB_FORBIDDEN,
       body: { mode: "all" },
     },
+    // Club-defined roles (P1.15 A2): reading for club managers, registrars
+    // (and the chair); changes need club.roles.manage with a second factor,
+    // which these tokens lack, so even the manager gets 403.
+    "GET /api/v1/permissions": { url: () => "/api/v1/permissions", expected: ALL_OK },
+    "GET /api/v1/me/permissions": {
+      url: () => `/api/v1/me/permissions?clubId=${m.clubA.id}`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/groups/:groupId/assignable-roles": {
+      url: () => `/api/v1/groups/${m.team.id}/assignable-roles`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, owner: 200 },
+    },
+    "GET /api/v1/clubs/:clubId/roles": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/roles`,
+      expected: ADMINS(200),
+    },
+    "POST /api/v1/clubs/:clubId/roles": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/roles`,
+      expected: CLUB_FORBIDDEN,
+      body: { scope: "group", names: { sv: "Materialansvarig" }, permissions: [] },
+    },
+    "PATCH /api/v1/clubs/:clubId/roles/:roleId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/roles/${treasurerRoleA}`,
+      expected: CLUB_FORBIDDEN,
+      body: { version: 1, names: { sv: "Ekonomiansvarig" } },
+    },
+    "POST /api/v1/clubs/:clubId/roles/:roleId/preview": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/roles/${treasurerRoleA}/preview`,
+      expected: CLUB_FORBIDDEN,
+      body: { permissions: [] },
+    },
+    "DELETE /api/v1/clubs/:clubId/roles/:roleId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/roles/${uuidv7()}`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "GET /api/v1/clubs/:clubId/permissions/:permission/holders": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/permissions/club.members.read/holders`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/clubs/:clubId/role-assignments": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/role-assignments?personId=${m.registrar.id}`,
+      expected: ADMINS(200),
+    },
+    "POST /api/v1/clubs/:clubId/role-assignments": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/role-assignments`,
+      expected: CLUB_FORBIDDEN,
+      body: () => ({ personId: m.member.id, roleId: treasurerRoleA }),
+    },
+    "DELETE /api/v1/clubs/:clubId/role-assignments/:assignmentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/role-assignments/${uuidv7()}`,
+      expected: CLUB_FORBIDDEN,
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {
@@ -1100,6 +1160,40 @@ describe("permission matrix", () => {
       } as Record<MatrixPersona, number>,
     },
   };
+
+  /**
+   * P1.15 A2: the intended changes to the matrix, and only these. The club
+   * manager administers the club and access; the register's details,
+   * guardians, consents, own logins and member history moved to the
+   * registrar (MANAGER_SPLIT). Where the person or record no longer exists
+   * for the manager, they get 404 like other insiders without the right.
+   */
+  const A2_CHANGES: Record<string, Partial<Record<MatrixPersona, number>>> = {
+    "POST /api/v1/people/:personId/own-login-invitations": { manager: 404 },
+    "GET /api/v1/clubs/:clubId/members/:personId/guardians": { manager: 403 },
+    "POST /api/v1/clubs/:clubId/members/:personId/guardians": { manager: 403 },
+    "POST /api/v1/clubs/:clubId/guardianships/:guardianshipId/end": { manager: 403 },
+    "GET /api/v1/clubs/:clubId/duplicates": { manager: 403 },
+    "GET /api/v1/people/:personId/consents": { manager: 404 },
+    "PUT /api/v1/people/:personId/consents/:purpose": { manager: 404 },
+    "DELETE /api/v1/people/:personId/consents/:purpose": { manager: 404 },
+    "GET /api/v1/groups/:groupId/consents": { manager: 403 },
+    "GET /api/v1/people/:personId/history": { manager: 404 },
+  };
+  const A1_EXPECTED = Object.fromEntries(
+    Object.keys(A2_CHANGES).map((k) => [k, { ...MATRIX[k]!.expected }]),
+  );
+  for (const [endpoint, change] of Object.entries(A2_CHANGES)) {
+    MATRIX[endpoint]!.expected = { ...MATRIX[endpoint]!.expected, ...change };
+  }
+
+  it("lists only real changes in the table of intended changes (P1.15 A2)", () => {
+    for (const [endpoint, change] of Object.entries(A2_CHANGES)) {
+      for (const [persona, status] of Object.entries(change)) {
+        expect(A1_EXPECTED[endpoint]![persona as MatrixPersona], endpoint).not.toBe(status);
+      }
+    }
+  });
 
   it("covers every endpoint that has a permission", () => {
     const endpoints = app.app
@@ -1210,6 +1304,7 @@ describe("reads", () => {
       }>().clubs[0];
     expect((await permissions(m.registrar.id))?.permissions).toEqual([
       "club.read",
+      "club.roles.read",
       "club.members.read",
       "club.members.manage",
       "club.members.export",
@@ -1383,10 +1478,13 @@ describe("reads", () => {
         expect.objectContaining({ kind: "relative" }),
       ]),
     );
-    const asManager = await profile(m.manager.id, m.child.id);
-    expect(asManager).toMatchObject({
+    const asRegistrar = await profile(m.registrar.id, m.child.id);
+    expect(asRegistrar).toMatchObject({
       club: { membership: { status: "active", membershipType: "active" } },
     });
+    // P1.15 A2: the club manager reads the register, not its details: the name.
+    const asManager = await profile(m.manager.id, m.child.id);
+    expect(Object.keys(asManager).sort()).toEqual(["person", "protection"]);
   });
 });
 

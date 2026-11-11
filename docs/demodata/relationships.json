@@ -322,6 +322,24 @@
       "club": "svk",
       "role": "registrar",
       "since": "-6mo"
+    },
+    {
+      "person": "anna",
+      "club": "svk",
+      "role": "registrar",
+      "since": "-1y"
+    },
+    {
+      "person": "karin",
+      "club": "ikn",
+      "role": "registrar",
+      "since": "-3y"
+    },
+    {
+      "person": "lars",
+      "club": "fil",
+      "role": "registrar",
+      "since": "-2y"
     }
   ],
   "groupMemberships": [
@@ -426,6 +444,44 @@
       "person": "lars",
       "group": "fil-veteran",
       "since": "-2y"
+    }
+  ],
+  "clubRoles": [
+    {
+      "club": "svk",
+      "scope": "group",
+      "template": "team_manager",
+      "names": {
+        "sv": "Lagansvarig",
+        "en": "Team lead",
+        "nb": "Lagansvarlig"
+      }
+    },
+    {
+      "club": "svk",
+      "scope": "group",
+      "names": {
+        "sv": "Materialansvarig",
+        "en": "Equipment manager",
+        "nb": "Materialansvarlig"
+      },
+      "permissions": [
+        "group.activities.manage"
+      ],
+      "holders": [
+        {
+          "person": "lars",
+          "group": "svk-herr"
+        }
+      ]
+    },
+    {
+      "club": "fil",
+      "scope": "group",
+      "template": "team_manager",
+      "remove": [
+        "person.consents.read"
+      ]
     }
   ],
   "handovers": [

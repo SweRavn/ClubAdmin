@@ -211,6 +211,14 @@ const CASES: Record<Permission, Case[]> = {
     { name: "registrar", actor: registrar, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
+  "club.roles.read": [
+    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "chair", actor: chair, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
   "club.members.read": [
     { name: "manager", actor: manager, resource: clubR, allowed: true },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
@@ -227,28 +235,48 @@ const CASES: Record<Permission, Case[]> = {
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
   "club.members.manage": [
-    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: clubR,
+      allowed: false,
+    },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "member", actor: plainMember, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
   "club.members.export": [
-    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: clubR,
+      allowed: false,
+    },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
     { name: "chair", actor: chair, resource: clubR, allowed: false },
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
   "club.members.add": [
-    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: clubR,
+      allowed: false,
+    },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
     { name: "chair", actor: chair, resource: clubR, allowed: false },
     { name: "coach", actor: coach, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
   "club.members.import": [
-    { name: "manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: clubR,
+      allowed: false,
+    },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "member", actor: plainMember, resource: clubR, allowed: false },
@@ -733,10 +761,10 @@ const CASES: Record<Permission, Case[]> = {
       allowed: true,
     },
     {
-      name: "the club's manager for a member",
+      name: "the club's manager for a member (P1.15 A2: the registrar's work)",
       actor: manager,
       resource: playerInTeam(),
-      allowed: true,
+      allowed: false,
     },
     { name: "a coach", actor: coach, resource: playerInTeam(), allowed: false },
     { name: "a relative", actor: relative, resource: personResource(ward, null), allowed: false },
@@ -794,7 +822,12 @@ const CASES: Record<Permission, Case[]> = {
       allowed: true,
     },
     { name: "the club's registrar", actor: registrar, resource: playerInTeam(), allowed: true },
-    { name: "the club's manager", actor: manager, resource: playerInTeam(), allowed: true },
+    {
+      name: "the club's manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: playerInTeam(),
+      allowed: false,
+    },
     {
       name: "a relative with act_on_behalf",
       actor: relativeActing,
@@ -811,7 +844,12 @@ const CASES: Record<Permission, Case[]> = {
     },
   ],
   "group.consents.read": [
-    { name: "manager", actor: manager, resource: teamR, allowed: true },
+    {
+      name: "manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: teamR,
+      allowed: false,
+    },
     { name: "registrar", actor: registrar, resource: teamR, allowed: true },
     { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: true },
     { name: "coach", actor: coach, resource: teamR, allowed: true },
@@ -820,7 +858,12 @@ const CASES: Record<Permission, Case[]> = {
     { name: "club member outside the group", actor: plainMember, resource: teamR, allowed: false },
   ],
   "club.guardians.manage": [
-    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    {
+      name: "club manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: clubR,
+      allowed: false,
+    },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
     { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
     { name: "a parent of a member", actor: parent, resource: clubR, allowed: false },
@@ -934,7 +977,12 @@ const CASES: Record<Permission, Case[]> = {
     { name: "club manager", actor: manager, resource: platformR, allowed: false },
   ],
   "person.history.read": [
-    { name: "club manager", actor: manager, resource: playerInTeam(), allowed: true },
+    {
+      name: "club manager (P1.15 A2: the registrar's work)",
+      actor: manager,
+      resource: playerInTeam(),
+      allowed: false,
+    },
     { name: "registrar", actor: registrar, resource: playerInTeam(), allowed: true },
     {
       name: "the person themselves",
@@ -1144,8 +1192,9 @@ describe("policies", () => {
 });
 
 describe("registerAccess", () => {
-  it("gives administrators the full register and the board the limited one", () => {
-    expect(registerAccess(manager, club)).toBe("full");
+  it("gives registrars the full register, club managers and the board the limited one", () => {
+    // P1.15 A2: the register's details are the registrar's work.
+    expect(registerAccess(manager, club)).toBe("limited");
     expect(registerAccess(registrar, club)).toBe("full");
     expect(registerAccess(treasurer, club)).toBe("limited");
     expect(registerAccess(chair, club)).toBe("limited");

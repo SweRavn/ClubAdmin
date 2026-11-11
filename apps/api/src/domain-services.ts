@@ -31,7 +31,7 @@ import {
   LeavingService,
   type OutstandingObligationsProvider,
 } from "./modules/privacy/index.ts";
-import { RolesService } from "./modules/roles/index.ts";
+import { ClubRolesService, RolesService } from "./modules/roles/index.ts";
 import type { FieldEncryption } from "./platform/crypto/field-encryption.ts";
 
 export interface CoreServices {
@@ -42,6 +42,8 @@ export interface CoreServices {
   clubs: ClubsService;
   onboarding: OnboardingService;
   roles: RolesService;
+  /** Club-defined roles (P1.15 A2). */
+  clubRoles: ClubRolesService;
   profiles: ClubProfilesService;
   groups: GroupsService;
   memberships: MembershipsService;
@@ -157,6 +159,7 @@ export function createCoreServices(
       webUrl: options.webUrl ?? "https://clubadmin.localhost",
     }),
     roles,
+    clubRoles: new ClubRolesService(db, clubs, roles),
     profiles,
     groups,
     memberships,

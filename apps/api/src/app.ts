@@ -7,7 +7,7 @@ import "reflect-metadata";
 import type { IncomingMessage } from "node:http";
 
 import { createLogger, type Logger } from "@clubadmin/server-kit";
-import { DEV_AUTH_WARNING, isUuid, uuidv7 } from "@clubadmin/shared";
+import { AUTHZ_VERSION_HEADER, DEV_AUTH_WARNING, isUuid, uuidv7 } from "@clubadmin/shared";
 import fastifyCors from "@fastify/cors";
 import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
@@ -83,6 +83,10 @@ export async function createApp(
 
   fastify.addHook("onSend", async (request: FastifyRequest, reply: FastifyReply) => {
     void reply.header(REQUEST_ID_HEADER, request.id);
+    // What the caller may do changed when this does (P1.15 A2): the apps refresh.
+    if (request.authz?.authzVersion !== undefined) {
+      void reply.header(AUTHZ_VERSION_HEADER, request.authz.authzVersion);
+    }
   });
   fastify.addHook("onResponse", async (request: FastifyRequest, reply: FastifyReply) => {
     request.log.info(
@@ -110,7 +114,7 @@ export async function createApp(
     origin: config.CORS_ORIGINS,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    exposedHeaders: [REQUEST_ID_HEADER, "retry-after"],
+    exposedHeaders: [REQUEST_ID_HEADER, AUTHZ_VERSION_HEADER, "retry-after"],
     maxAge: 600,
   });
   const valkey = app.get<ValkeyClient>(VALKEY_CLIENT);

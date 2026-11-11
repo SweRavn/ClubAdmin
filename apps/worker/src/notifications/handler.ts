@@ -13,6 +13,7 @@
 // an account (invitations) stay in mail.ts.
 
 import { type OutboxEvent, type OutboxHandler, sql, type Tx } from "@clubadmin/db";
+import { catalogues, localeOf } from "@clubadmin/i18n";
 import {
   DOMAIN_EVENTS,
   type DomainEventType,
@@ -124,6 +125,11 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "account.email.changed",
       "membership.left",
       "assignment.ended",
+      // Club-defined roles (P1.15 A2).
+      "roles.manager_split",
+      "role.updated",
+      "role.self_assigned",
+      "role.unassigned",
       ...WAITLIST_EVENTS,
       "club.privacy_policy.published",
       "privacy.export.ready",
@@ -345,9 +351,12 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
         case "membership.left": {
           const { clubId, personId } = DOMAIN_EVENTS["membership.left"].parse(event.payload);
           await useClub(tx, clubId);
-          // Those who manage memberships (club managers, registrars).
+          // Those who manage memberships (registrars) and administer the club
+          // (club managers, P1.15 A2).
           const { rows } = await tx.execute<{ person_id: string }>(sql`
-            SELECT DISTINCT h.person_id FROM (${clubHolders(clubId, "club.members.manage")}) h
+            SELECT DISTINCT h.person_id FROM (
+              ${clubHolders(clubId, "club.members.manage")}
+              UNION ${clubHolders(clubId, "club.roles.manage")}) h
             WHERE h.person_id <> ${personId}`);
           await notify(
             tx,
@@ -362,6 +371,103 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `membership.left:${event.idempotencyKey}`,
             })),
           );
+          return;
+        }
+        // Club-defined roles (P1.15 A2): never naming a person in the texts.
+        case "roles.manager_split": {
+          const { clubId } = DOMAIN_EVENTS["roles.manager_split"].parse(event.payload);
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{ person_id: string }>(
+            sql`${clubHolders(clubId, "club.roles.manage")}`,
+          );
+          // eslint-disable-next-line clubadmin/no-role-names -- names the template role that took the work (a label)
+          const registrar = await roleNameOfKey(tx, clubId, "registrar");
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId,
+              type: "roles.manager_split" as const,
+              subjectType: "club_roles",
+              subjectId: clubId,
+              about: [],
+              params: { role: registrar },
+              dedupeKey: `roles.manager_split:${clubId}`,
+            })),
+          );
+          return;
+        }
+        case "role.updated": {
+          const { clubId, roleId, removed } = DOMAIN_EVENTS["role.updated"].parse(event.payload);
+          if (removed.length === 0) return;
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM public.club_role_assignments
+            WHERE club_id = ${clubId} AND role_id = ${roleId} AND valid_to IS NULL
+            UNION
+            SELECT person_id FROM public.group_memberships
+            WHERE club_id = ${clubId} AND role_id = ${roleId} AND valid_to IS NULL`);
+          const role = await roleName(tx, clubId, roleId);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId,
+              type: "role.permissions.removed" as const,
+              subjectType: "my_roles",
+              subjectId: roleId,
+              about: [],
+              params: { role, count: removed.length },
+              dedupeKey: `role.permissions.removed:${event.idempotencyKey}`,
+            })),
+          );
+          return;
+        }
+        case "role.self_assigned": {
+          const { clubId, personId, roleId } = DOMAIN_EVENTS["role.self_assigned"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          // The other administrators and the chair (decision 3).
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            ${clubHolders(clubId, "club.roles.manage")}
+            UNION
+            ${clubHolders(clubId, "club.managers.claim")}`);
+          const role = await roleName(tx, clubId, roleId);
+          await notify(
+            tx,
+            rows
+              .filter((r) => r.person_id !== personId)
+              .map((r) => ({
+                recipientPersonId: r.person_id,
+                clubId,
+                type: "role.self_assigned" as const,
+                subjectType: "club_roles",
+                subjectId: clubId,
+                about: [personId],
+                params: { role },
+                dedupeKey: `role.self_assigned:${event.idempotencyKey}`,
+              })),
+          );
+          return;
+        }
+        case "role.unassigned": {
+          const { clubId, personId, roleId } = DOMAIN_EVENTS["role.unassigned"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          await notify(tx, [
+            {
+              recipientPersonId: personId,
+              clubId,
+              type: "role.unassigned" as const,
+              subjectType: "my_roles",
+              subjectId: roleId,
+              about: [],
+              params: { role: await roleName(tx, clubId, roleId) },
+              dedupeKey: `role.unassigned:${event.idempotencyKey}`,
+            },
+          ]);
           return;
         }
         case "assignment.ended": {
@@ -984,4 +1090,47 @@ async function waitlistAdmitters(tx: Tx, clubId: string, entryId: string): Promi
     SELECT h.person_id FROM (${clubHolders(clubId, "group.waitlist.manage")}) h
     WHERE NOT EXISTS (SELECT 1 FROM owners)`);
   return rows.map((r) => r.person_id);
+}
+
+/**
+ * A role's name in the club's language (P1.15 A2): the club's own name, or
+ * the catalogue's for a template role. Not personal data.
+ */
+async function roleName(tx: Tx, clubId: string, roleId: string): Promise<string> {
+  const { rows } = await tx.execute<{
+    names: Record<string, string> | null;
+    template_key: string | null;
+    scope: string;
+    locale: string;
+  }>(sql`
+    SELECT r.names, r.template_key, r.scope, c.default_locale AS locale
+    FROM public.roles r JOIN public.clubs c ON c.id = r.club_id
+    WHERE r.club_id = ${clubId} AND r.id = ${roleId}`);
+  const row = rows[0];
+  if (!row) return "";
+  return displayRoleName(row.names, row.template_key, row.scope, row.locale);
+}
+
+async function roleNameOfKey(tx: Tx, clubId: string, templateKey: string): Promise<string> {
+  const { rows } = await tx.execute<{ names: Record<string, string> | null; locale: string }>(sql`
+    SELECT r.names, c.default_locale AS locale
+    FROM public.roles r JOIN public.clubs c ON c.id = r.club_id
+    WHERE r.club_id = ${clubId} AND r.scope = 'club' AND r.template_key = ${templateKey}`);
+  const row = rows[0];
+  return displayRoleName(row?.names ?? null, templateKey, "club", row?.locale ?? "sv");
+}
+
+function displayRoleName(
+  names: Record<string, string> | null,
+  templateKey: string | null,
+  scope: string,
+  clubLocale: string,
+): string {
+  const locale = localeOf(clubLocale) ?? "sv";
+  const own = names?.[locale] ?? names?.sv ?? names?.en ?? names?.nb;
+  if (own) return own;
+  if (!templateKey) return "";
+  const group = catalogues[locale][scope === "club" ? "roles" : "functions"];
+  const text = typeof group === "object" ? group[templateKey] : undefined;
+  return typeof text === "string" ? text : templateKey;
 }

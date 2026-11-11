@@ -24,6 +24,7 @@ import {
 } from "@clubadmin/shared";
 import { Body, Controller, Param, Query } from "@nestjs/common";
 
+import { DomainError } from "../../platform/domain/domain-error.ts";
 import { Endpoint } from "../../platform/http/endpoint.ts";
 import {
   CurrentAuthorization,
@@ -36,6 +37,7 @@ import {
 } from "../authorization/index.ts";
 import { GroupsService, toGroupResponse } from "../groups/index.ts";
 import { PeopleService } from "../people/index.ts";
+import { ClubRolesService, mayAssignGroupRole } from "../roles/index.ts";
 import { MembershipsService } from "./memberships.service.ts";
 
 @Controller("groups")
@@ -46,13 +48,17 @@ export class GroupMembersController {
   private readonly presenter: PersonPresenter;
   private readonly groups: GroupsService;
 
+  private readonly roles: ClubRolesService;
+
   constructor(
     memberships: MembershipsService,
     people: PeopleService,
     visibility: PersonVisibility,
     presenter: PersonPresenter,
     groups: GroupsService,
+    roles: ClubRolesService,
   ) {
+    this.roles = roles;
     this.memberships = memberships;
     this.people = people;
     this.visibility = visibility;
@@ -162,17 +168,18 @@ export class GroupMembersController {
   ): Promise<GroupMembershipResponse> {
     const group = resourceOf(authz, "group");
     const fn = body.function ?? "member";
-    const row = await this.memberships.addGroupMember(
-      tenantContext(authz, group.clubId),
-      group.groupId,
-      body.personId,
-      fn,
-      {
-        overCapacity: body.overCapacity === true,
-        ...(body.queueBypassReason ? { queueBypassReason: body.queueBypassReason } : {}),
-      },
-    );
-    return { id: row.id, personId: row.personId, function: row.function };
+    const context = tenantContext(authz, group.clubId);
+    const role = await this.roles.groupRole(context, { roleId: body.roleId, templateKey: fn });
+    // No escalation (P1.15 A2): only roles whose permissions the caller holds.
+    if (!mayAssignGroupRole(authz.actor, group, role.permissions)) {
+      throw new DomainError("role_not_allowed");
+    }
+    const row = await this.memberships.addGroupMember(context, group.groupId, body.personId, fn, {
+      overCapacity: body.overCapacity === true,
+      ...(body.queueBypassReason ? { queueBypassReason: body.queueBypassReason } : {}),
+      role: { id: role.id, participates: role.permissions.includes("group.participate") },
+    });
+    return { id: row.id, personId: row.personId, function: row.function, roleId: role.id };
   }
 
   @Endpoint({

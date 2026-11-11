@@ -101,6 +101,7 @@ export class AuthorizationService {
       },
       resource: null,
       protectedSets: new Map(),
+      authzVersion: set.version ?? "0",
     };
   }
 

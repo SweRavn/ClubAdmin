@@ -302,7 +302,7 @@ export class MembershipsService {
      * group (imports, P1.3b). `queueBypassReason`: why a member is added past
      * people waiting (P1.10b).
      */
-    options: { checked?: boolean; queueBypassReason?: string } = {},
+    options: { checked?: boolean; queueBypassReason?: string; roleId?: string } = {},
   ): Promise<GroupMembership> {
     {
       parseInput(GroupFunctionSchema, fn);
@@ -321,6 +321,8 @@ export class MembershipsService {
           groupId,
           personId,
           function: fn,
+          // The role wins over the function (the trigger fills the function, P1.15 A2).
+          ...(options.roleId ? { roleId: options.roleId } : {}),
           queueBypassReason: options.queueBypassReason ?? null,
         });
       } catch (error) {
@@ -372,7 +374,12 @@ export class MembershipsService {
     groupId: string,
     personId: string,
     fn: GroupFunction,
-    options: { overCapacity?: boolean; queueBypassReason?: string } = {},
+    options: {
+      overCapacity?: boolean;
+      queueBypassReason?: string;
+      /** A club group role (P1.15 A2), with whether it takes part (places count). */
+      role?: { id: string; participates: boolean };
+    } = {},
   ): Promise<GroupMembership> {
     return this.db.withTenant(context, async (tx) => {
       const group = await this.groups.lockGroupInTx(tx, groupId);
@@ -380,7 +387,7 @@ export class MembershipsService {
       let over = false;
       let bypass: string | undefined;
       let own: Awaited<ReturnType<typeof this.groups.waitlist.openEntryOfInTx>> = null;
-      if (fn === "member") {
+      if (options.role ? options.role.participates : fn === "member") {
         own = await this.groups.waitlist.lockOpenEntryOfInTx(tx, groupId, personId);
         // An offer or accepted entry of the person already holds their place.
         const holdsPlace = own !== null && own.status !== "waiting";
@@ -396,6 +403,7 @@ export class MembershipsService {
       }
       const row = await this.addToGroupInTx(tx, context, groupId, personId, fn, {
         ...(bypass ? { queueBypassReason: bypass } : {}),
+        ...(options.role ? { roleId: options.role.id } : {}),
       });
       // The person's own entry is settled: they are in the group now.
       if (own) {

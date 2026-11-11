@@ -180,6 +180,11 @@ export function noticeLink(input: NoticeInput): string {
       return input.clubId && id ? `/clubs/${input.clubId}/members/import?import=${id}` : "/";
     case "club":
       return input.clubId ? `/clubs/${input.clubId}` : "/";
+    // Club-defined roles (P1.15 A2): the roles page, and one's own roles.
+    case "club_roles":
+      return input.clubId ? `/clubs/${input.clubId}/roles` : "/";
+    case "my_roles":
+      return "/me/roles";
     // Privacy (P1.8a): the register of the club a member left, the club's privacy page.
     case "club_membership":
       return input.clubId ? `/clubs/${input.clubId}/members` : "/";
@@ -250,6 +255,8 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     date: formatDay(locale, p.date, p.timeZone),
     level: str(p.level ?? ""),
     final: str(p.final ?? "no"),
+    /** A role's name (P1.15 A2; not personal data), in the club's language. */
+    role: str(p.role),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

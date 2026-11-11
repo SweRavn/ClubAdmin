@@ -322,6 +322,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "named": [
         "johan",
         "lars",
+        "lars (other_leader)",
       ],
       "owners": [
         "johan",
@@ -399,6 +400,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "roles": [
         "svk: chair",
         "svk: club_manager",
+        "svk: registrar",
       ],
     },
     "bo": {
@@ -594,6 +596,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "protected": false,
       "roles": [
         "ikn: club_manager",
+        "ikn: registrar",
         "ikn: safeguarding_officer",
         "ikn: staff",
       ],
@@ -606,6 +609,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "clubProtected": [],
       "groups": [
         "svk-herr: member",
+        "svk-herr: other_leader",
         "fil-j2014: head_coach",
         "fil-veteran: member",
       ],
@@ -621,6 +625,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "roles": [
         "fil: board_member",
         "fil: club_manager",
+        "fil: registrar",
       ],
     },
     "leyla": {

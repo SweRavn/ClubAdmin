@@ -7,7 +7,7 @@ import { ClubProfilesModule, ClubProfilesService } from "../club-profiles/index.
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { GroupsModule, GroupsService } from "../groups/index.ts";
 import { PeopleModule } from "../people/index.ts";
-import { RolesModule, RolesService } from "../roles/index.ts";
+import { ClubRolesModule, RolesModule, RolesService } from "../roles/index.ts";
 import { GroupMembersController } from "./group-members.controller.ts";
 import { MembershipsService } from "./memberships.service.ts";
 
@@ -19,6 +19,7 @@ import { MembershipsService } from "./memberships.service.ts";
     GroupsModule,
     PeopleModule,
     RolesModule,
+    ClubRolesModule,
   ],
   controllers: [GroupMembersController],
   providers: [

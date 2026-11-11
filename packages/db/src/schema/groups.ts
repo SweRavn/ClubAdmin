@@ -144,7 +144,7 @@ export const groupMemberships = pgTable(
     personId: personRef(),
     function: text().$type<GroupFunction>().notNull().default("member"),
     /** The club's group role (P1.15; filled from `function` by a trigger for older writers). */
-    roleId: uuid(),
+    roleId: uuid(), // NOT NULL in the database (0032); filled by a trigger for writers naming the template key
     /** The role holds `group.participate` / `group.lead` (kept by triggers). */
     participates: boolean().notNull().default(false),
     leads: boolean().notNull().default(false),
@@ -158,7 +158,7 @@ export const groupMemberships = pgTable(
     check("group_memberships_function", oneOf(t.function, GROUP_FUNCTIONS)),
     check("group_memberships_valid_period", validPeriod(t.validFrom, t.validTo)),
     uniqueIndex("group_memberships_open_unique")
-      .on(t.groupId, t.personId, t.function)
+      .on(t.groupId, t.personId, t.roleId)
       .where(sql`${t.validTo} IS NULL`),
     // Members of a group; my groups.
     index("group_memberships_group_idx")

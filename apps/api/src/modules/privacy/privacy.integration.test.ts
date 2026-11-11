@@ -231,7 +231,7 @@ describe("leaving a club", () => {
   });
 
   it("the last club manager cannot step down; outstanding invoices refuse leaving", async () => {
-    const club = await buildClub(s);
+    const club = await buildClub(s, { registrar: false });
     const assignments = await s.leaving.assignments(club.ctx, club.manager.id);
     expect(assignments).toMatchObject([
       { kind: "role", role: "club_manager", blockedBy: "last_club_manager" },

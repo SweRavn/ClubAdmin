@@ -262,7 +262,8 @@ const CASES: Case[] = [
   // scope and the retention, not by the club's size.
   {
     route: "GET /api/v1/people/{personId}/history",
-    persona: "sara",
+    // A member's history is the registrar's (P1.15 A2): Anna is also SVK's registrar.
+    persona: "anna",
     method: "GET",
     url: () => `/api/v1/people/${key("elsa")}/history?clubId=${key("svk")}`,
     statements: 9,

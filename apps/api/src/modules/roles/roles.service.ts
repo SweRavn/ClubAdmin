@@ -104,6 +104,19 @@ export class RolesService {
     return true;
   }
 
+  /** Ends an open club role assignment by its ID (P1.15 A2); false if there is none. */
+  async endAssignmentByIdInTx(
+    tx: Tx,
+    context: TenantContext,
+    assignmentId: string,
+  ): Promise<RoleAssignment | null> {
+    const assignment = await repo.lockOpenAssignment(tx, context.clubId, assignmentId);
+    if (!assignment) return null;
+    if (assignment.role === "club_manager") await this.clubs.lockClubInTx(tx, context.clubId);
+    await this.endAssignmentInTx(tx, context, assignment);
+    return assignment;
+  }
+
   /** The person's open roles in the club (stepping down and leaving, P1.8a). */
   activeRolesOfPersonInTx(tx: Tx, clubId: string, personId: string): Promise<RoleAssignment[]> {
     return repo.activeAssignmentsOfPerson(tx, clubId, personId);

@@ -163,7 +163,11 @@ export class MembersController {
     const { clubId } = resourceOf(authz, "club");
     const access = accessOf(authz, clubId);
     const filter = registerFilterOf(query, access);
-    const context = tenantContext(authz, clubId, { viewerPrivileged: access === "full" });
+    // Protected members are in the register for those who may see them (P1.15:
+    // club managers always, registrars), marked; their details only with full access.
+    const context = tenantContext(authz, clubId, {
+      viewerPrivileged: authz.actor.holds("club.people.protected", clubId),
+    });
     const page = await this.members.registerPage(context, {
       filter,
       sort: query.sort,

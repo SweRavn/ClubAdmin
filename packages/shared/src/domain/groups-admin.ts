@@ -92,6 +92,8 @@ export const AddGroupMemberSchema = z
   .object({
     personId: z.uuid(),
     function: z.enum(GROUP_FUNCTIONS).default("member"),
+    /** The club's group role (P1.15 A2); wins over `function`. */
+    roleId: z.uuid().optional(),
     /** Add a `member` to a full group anyway (audited). */
     overCapacity: z.boolean().optional(),
     /**
@@ -113,6 +115,8 @@ export const GroupMembershipSchema = z
     id: z.uuid(),
     personId: z.uuid(),
     function: z.enum(GROUP_FUNCTIONS),
+    /** The club's group role (P1.15 A2). */
+    roleId: z.uuid().optional(),
   })
   .openapi("GroupMembership");
 export type GroupMembershipResponse = z.infer<typeof GroupMembershipSchema>;

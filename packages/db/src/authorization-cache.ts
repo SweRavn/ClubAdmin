@@ -27,6 +27,7 @@ export interface CacheVersions {
 const TYPES = [
   "membership.changed",
   "role.changed",
+  "role.updated",
   "group.owner.changed",
   "guardianship.changed",
   "person.protection.changed",
@@ -49,6 +50,21 @@ async function isGloballyProtected(tx: Tx, personId: string): Promise<boolean> {
   return rows[0]?.protected === true;
 }
 
+/**
+ * Everyone holding a role now (P1.15 A2): its club assignments and group
+ * memberships, read in the role's club by the role indexes.
+ */
+async function holdersOfRole(tx: Tx, clubId: string, roleId: string): Promise<string[]> {
+  await tx.execute(sql`SELECT set_config('app.club_id', ${clubId}, true)`);
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT person_id AS id FROM public.club_role_assignments
+    WHERE club_id = ${clubId} AND role_id = ${roleId} AND valid_to IS NULL
+    UNION
+    SELECT person_id FROM public.group_memberships
+    WHERE club_id = ${clubId} AND role_id = ${roleId} AND valid_to IS NULL`);
+  return rows.map((r) => r.id);
+}
+
 /** The version keys an event invalidates. */
 export async function invalidatedKeys(event: OutboxEvent, tx: Tx): Promise<string[]> {
   const people = new Set<string>();
@@ -66,6 +82,15 @@ export async function invalidatedKeys(event: OutboxEvent, tx: Tx): Promise<strin
     case "group.owner.changed": {
       const { personId } = event.payload as OutboxEvent<"role.changed">["payload"];
       people.add(personId);
+      break;
+    }
+    case "role.updated": {
+      // A role's permissions changed: every holder's set (and their
+      // guardians', whose sets carry their wards' group roles).
+      const { clubId, roleId } = event.payload as OutboxEvent<"role.updated">["payload"];
+      const holders = await holdersOfRole(tx, clubId, roleId);
+      for (const personId of holders) people.add(personId);
+      for (const guardian of await guardiansOf(tx, holders)) people.add(guardian);
       break;
     }
     case "guardianship.changed": {

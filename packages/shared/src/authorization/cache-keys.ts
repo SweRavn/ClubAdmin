@@ -13,9 +13,10 @@ export const relationshipVersionKey = (personId: string): string => `authz:rel:v
 /**
  * A person's cached relationship set ({ version, set }). The set's shape is
  * part of the key: sets cached by an older release (before P1.15 carried
- * the roles' permissions) are never read.
+ * the roles' permissions, and before the A2 split of the club manager's
+ * permissions) are never read.
  */
-export const relationshipSetKey = (personId: string): string => `authz:rel:2:${personId}`;
+export const relationshipSetKey = (personId: string): string => `authz:rel:3:${personId}`;
 
 /** Version of a club's protected set (club flags and members). */
 export const protectedVersionKey = (clubId: string): string => `authz:prot:v:${clubId}`;

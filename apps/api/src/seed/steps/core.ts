@@ -134,6 +134,47 @@ class CoreSeeder {
     await this.waitlists();
     await this.laterHistory();
     await this.groupAdmin();
+    await this.clubRoles();
+  }
+
+  /**
+   * Club-defined roles (P1.15 A2): SVK calls its team managers
+   * "Lagansvarig" and has its own group role "Materialansvarig" (plans the
+   * group's activities), held by Lars in the men's team; FIL's team managers
+   * no longer see consents.
+   */
+  private async clubRoles(): Promise<void> {
+    for (const r of this.data.relationships.clubRoles) {
+      const club = this.club(r.club);
+      const ctx = this.as(club.actor, r.club);
+      if (r.template) {
+        const role = await this.s.clubRoles.groupRole(ctx, { templateKey: r.template });
+        await this.s.clubRoles.updateRole(ctx, role.id, {
+          version: role.version,
+          ...(r.names ? { names: r.names } : {}),
+          ...(r.remove.length
+            ? { permissions: role.permissions.filter((p) => !r.remove.includes(p)) }
+            : {}),
+        });
+        continue;
+      }
+      const role = await this.s.clubRoles.createRole(ctx, {
+        scope: r.scope,
+        names: r.names ?? {},
+        permissions: r.permissions,
+      });
+      for (const h of r.holders) {
+        await this.s.memberships.addGroupMember(
+          ctx,
+          this.group(h.group).id,
+          this.id(h.person),
+          "member",
+          {
+            role: { id: role.id, participates: role.permissions.includes("group.participate") },
+          },
+        );
+      }
+    }
   }
 
   /**

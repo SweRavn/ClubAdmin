@@ -245,7 +245,8 @@ describe("history entries", () => {
 describe("field visibility and people", () => {
   it("shows a phone change only while the person shares the phone with the club", async () => {
     const phoneChanges = async () =>
-      (await page("sara", personUrl("erik", "&limit=100"))).items.filter((i) =>
+      // A member's history is the registrar's (P1.15 A2): Anna is also SVK's registrar.
+      (await page("anna", personUrl("erik", "&limit=100"))).items.filter((i) =>
         i.changes.some((c) => c.column === "phone"),
       );
     // Erik shares his phone with SVK (demo): his change is shown with its values.

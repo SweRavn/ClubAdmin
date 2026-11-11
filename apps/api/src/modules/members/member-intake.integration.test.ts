@@ -217,7 +217,7 @@ describe("adding a member by hand", () => {
     expect(rows[0]!.n).toBe(2);
   });
 
-  it("invites an adult to their own login; a manager needs a second factor", async () => {
+  it("invites an adult to their own login; the club manager role alone does not add members (P1.15 A2)", async () => {
     const { club, registrar } = await clubWithRegistrar();
     const res = await api(registrar.id, "POST", `/clubs/${club.id}/members`, {
       body: {
@@ -233,12 +233,16 @@ describe("adding a member by hand", () => {
     const manager = await api(club.manager.id, "POST", `/clubs/${club.id}/members`, {
       body: { givenName: "Ville", familyName: "Holm", birthDate: "1981-02-03" },
     });
-    expect(manager.statusCode).toBe(403);
-    const withMfa = await api(club.manager.id, "POST", `/clubs/${club.id}/members`, {
+    // The test club's manager is also its registrar (builders): no second
+    // factor for routine membership work. Without the registrar role a club
+    // manager may not add members, even with one.
+    expect(manager.statusCode).toBe(201);
+    const managerOnly = await buildClub(s, { registrar: false });
+    const withMfa = await api(managerOnly.manager.id, "POST", `/clubs/${managerOnly.id}/members`, {
       body: { givenName: "Ville", familyName: "Holm", birthDate: "1981-02-03" },
       mfa: true,
     });
-    expect(withMfa.statusCode).toBe(201);
+    expect(withMfa.statusCode).toBe(403);
   });
 });
 

@@ -43,6 +43,15 @@ export function profileAccess(actor: Actor, resource: PersonResource): ProfileAc
   ) {
     return "leader";
   }
+  // The register's readers (club managers since P1.15 A2, the board) see the
+  // name, as in the register; protected people only with
+  // club.people.protected (club managers always: decision 12).
+  if (
+    actor.holds("club.members.read", clubId) &&
+    (!inClub.protected || actor.holds("club.people.protected", clubId))
+  ) {
+    return "member";
+  }
   if (inClub.protected) return null;
   if (
     groups.some(
@@ -189,6 +198,8 @@ export const POLICIES: readonly Policy[] = [
   ),
   definePolicy("club.settings.update", "club", holdsInClub("club.settings.update"), { mfa: true }),
   definePolicy("club.roles.manage", "club", holdsInClub("club.roles.manage"), { mfa: true }),
+  // The roles page and who holds what (P1.15 A2): club managers, registrars, the chair.
+  definePolicy("club.roles.read", "club", holdsInClub("club.roles.read")),
   // The member register (P1.2): full for administrators, limited for the board.
   definePolicy(
     "club.members.read",

@@ -71,8 +71,10 @@ export async function buildMatrixScenario(
   s: CoreServices,
   t: TestDatabase,
 ): Promise<MatrixScenario> {
-  const clubA = await buildClub(s);
-  const clubB = await buildClub(s);
+  // The managers do not also hold the registrar role: the matrix shows the
+  // club manager's own permissions (P1.15 A2).
+  const clubA = await buildClub(s, { registrar: false });
+  const clubB = await buildClub(s, { registrar: false });
   const a = clubA.ctx;
   const section = await s.groups.createGroup(a, { name: "Fotboll", kind: "section" });
   const team = await s.groups.createGroup(a, {

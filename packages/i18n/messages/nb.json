@@ -1889,6 +1889,28 @@
           "body": "{final, select, yes {Vi klarte ikke å trekke beløpet fra kortet etter flere forsøk. Betal {amount} via bankgiro eller med betalingslenken på faktureringssiden før forfallsdatoen {date}.} other {Kortbetalingen på {amount} mislyktes. Vi prøver igjen; du kan også betale nå på faktureringssiden eller via bankgiro. Forfaller {date}.}}"
         }
       }
+    },
+    "roles": {
+      "manager_split": {
+        "title": "Klubbansvarligs rolle er tydeligere i {club}",
+        "body": "Klubbansvarlige styrer klubben og hvem som får gjøre hva. Medlemsregisterets opplysninger, medlemskap, foresatte, samtykker og retting av oppmøte ligger nå hos rollen {role}. Gjør du det arbeidet? Gi deg selv rollen under Roller og tillatelser."
+      }
+    },
+    "role": {
+      "self_assigned": {
+        "title": "En administrator har gitt seg selv en rolle i {club}",
+        "body": "Rollen {role} ble gitt av personen selv. Sjekk under Roller og tillatelser at det stemmer."
+      },
+      "permissions": {
+        "removed": {
+          "title": "Rollen {role} i {club} kan nå mindre",
+          "body": "{count, plural, one {En tillatelse} other {# tillatelser}} er fjernet fra rollen. Se hva rollene dine tillater."
+        }
+      },
+      "unassigned": {
+        "title": "Du har ikke lenger rollen {role} i {club}",
+        "body": "En klubbadministrator har avsluttet rollen. Se hva rollene dine tillater."
+      }
     }
   },
   "notifyCategories": {
@@ -2587,7 +2609,8 @@
       "unsubscribed": "avsluttet abonnementet på",
       "updated": "oppdaterte",
       "verified": "verifiserte",
-      "withdrawn": "trakk tilbake"
+      "withdrawn": "trakk tilbake",
+      "unassigned": "fjernet"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -3213,6 +3236,11 @@
         "name": "Administrere roller og tillatelser",
         "description": "Kan opprette og endre roller og gi hvilken som helst rolle til hvem som helst i klubben.",
         "example": "Kan for eksempel gjøre noen til kasserer eller endre hva en trener får gjøre."
+      },
+      "club_roles_read": {
+        "name": "Se roller og tillatelser",
+        "description": "Kan se klubbens roller, hva de får gjøre og hvem som har dem.",
+        "example": "Kan for eksempel se hvem som har rollen Kasserer."
       },
       "club_managers_claim": {
         "name": "Overta som klubbansvarlig",

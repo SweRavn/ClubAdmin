@@ -36,6 +36,22 @@ export const DOMAIN_EVENTS = {
   /** An operator asked to email an invoice again. */
   "billing.invoice.resend_requested": z.object({ clubId: id, invoiceId: id }),
   "role.changed": z.object({ clubId: id, personId: id }),
+  /**
+   * A role's permissions changed (P1.15 A2): its holders' relationship sets
+   * are invalidated, and holders are told of removed permissions.
+   */
+  "role.updated": z.object({
+    clubId: id,
+    roleId: id,
+    added: z.array(z.string()),
+    removed: z.array(z.string()),
+  }),
+  /** Someone gave themselves a role (P1.15 A2): the other administrators and the chair are told. */
+  "role.self_assigned": z.object({ clubId: id, personId: id, roleId: id }),
+  /** A club role assignment was ended by an administrator (P1.15 A2): the person is told. */
+  "role.unassigned": z.object({ clubId: id, personId: id, roleId: id }),
+  /** Migration 0032 split the club manager's permissions (P1.15 A2): the managers are told. */
+  "roles.manager_split": z.object({ clubId: id }),
   /** The person left the club themselves (P1.8a): tell the managers and registrars. */
   "membership.left": z.object({ clubId: id, personId: id }),
   /**

@@ -65,6 +65,8 @@ export interface RelationshipSet {
   }[];
   /** The wards' open group memberships. */
   wardGroups: (GroupAssignment & { personId: string })[];
+  /** The version the set was read at (Valkey; not cached in the set itself). */
+  version?: string;
 }
 
 /** Where a permission is asked for: a club (its ID) or a group of it. */

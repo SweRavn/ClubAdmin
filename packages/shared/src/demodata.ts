@@ -202,6 +202,24 @@ export const DemoRelationshipsFileSchema = z.object({
       since,
     }),
   ),
+  /**
+   * Club-defined roles (P1.15 A2): a template role renamed or with
+   * permissions removed, or a club's own role with its holders in groups.
+   */
+  clubRoles: z
+    .array(
+      z.object({
+        club: key,
+        scope: z.enum(["club", "group"]),
+        /** A template role to change; without it, a new role of the club. */
+        template: z.string().optional(),
+        names: z.record(z.string(), z.string()).optional(),
+        permissions: z.array(z.string()).default([]),
+        remove: z.array(z.string()).default([]),
+        holders: z.array(z.object({ person: key, group: key })).default([]),
+      }),
+    )
+    .default([]),
   handovers: z.array(
     z.object({
       club: key,

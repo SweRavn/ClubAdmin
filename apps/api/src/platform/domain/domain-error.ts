@@ -222,6 +222,13 @@ export const DOMAIN_ERRORS = {
   pdf_unavailable: "unavailable",
   plan_key_taken: "conflict",
   provider_signature_invalid: "bad-request",
+  // Club-defined roles (P1.15 A2).
+  role_changed: "conflict",
+  role_locked: "conflict",
+  invalid_replacement_role: "validation",
+  permission_not_for_group_roles: "validation",
+  /** Assigning a role with permissions the caller does not hold (no escalation). */
+  role_not_allowed: "forbidden",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

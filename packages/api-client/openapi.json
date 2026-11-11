@@ -7877,6 +7877,59 @@
           "items"
         ]
       },
+      "PermissionHolderPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionHolder"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PermissionHolder": {
+        "type": "object",
+        "properties": {
+          "person": {
+            "$ref": "#/components/schemas/PersonSummary"
+          },
+          "roleIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "person",
+          "roleIds",
+          "groupIds"
+        ]
+      },
+      "RolePermission": {
+        "type": "string",
+        "description": "A key of the permission catalogue"
+      },
       "SetClubPhoneNumbersRequest": {
         "type": "object",
         "properties": {
@@ -8456,6 +8509,361 @@
         "required": [
           "items",
           "nextCursor"
+        ]
+      },
+      "ClubRoleAssignmentList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClubRoleAssignment"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ClubRoleAssignment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "validFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "self": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "personId",
+          "roleId",
+          "validFrom",
+          "self"
+        ]
+      },
+      "AssignRole": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "personId",
+          "roleId"
+        ]
+      },
+      "RoleList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Role"
+            }
+          },
+          "selfAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SelfAssignment"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "selfAssignments"
+        ]
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "club",
+              "group"
+            ]
+          },
+          "templateKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locked": {
+            "type": "boolean"
+          },
+          "lockedPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "names": {
+            "$ref": "#/components/schemas/RoleTexts"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/RoleDescriptions"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "holderCount": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "differsFromTemplate": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "templateKey",
+          "locked",
+          "lockedPermissions",
+          "names",
+          "descriptions",
+          "permissions",
+          "holderCount",
+          "version",
+          "differsFromTemplate"
+        ]
+      },
+      "RoleTexts": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "sv": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "en": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "nb": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      },
+      "RoleDescriptions": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "sv": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "en": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "nb": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "SelfAssignment": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonSummary"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "assignmentId",
+          "person",
+          "roleId",
+          "since"
+        ]
+      },
+      "CreateRole": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "club",
+              "group"
+            ]
+          },
+          "names": {
+            "$ref": "#/components/schemas/RoleTexts"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/RoleDescriptions"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolePermission"
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "scope",
+          "names",
+          "permissions"
+        ]
+      },
+      "DeleteRoleResult": {
+        "type": "object",
+        "properties": {
+          "moved": {
+            "type": "integer"
+          },
+          "ended": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "moved",
+          "ended"
+        ]
+      },
+      "UpdateRole": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "names": {
+            "$ref": "#/components/schemas/RoleTexts"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/RoleDescriptions"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolePermission"
+            },
+            "maxItems": 100
+          },
+          "resetToTemplate": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "RolePreview": {
+        "type": "object",
+        "properties": {
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "holderCount": {
+            "type": "integer"
+          },
+          "losing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "permission": {
+                  "type": "string"
+                },
+                "people": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PersonSummary"
+                  }
+                },
+                "hiddenCount": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "permission",
+                "people",
+                "hiddenCount"
+              ]
+            }
+          }
+        },
+        "required": [
+          "added",
+          "removed",
+          "holderCount",
+          "losing"
+        ]
+      },
+      "RolePreviewRequest": {
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolePermission"
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "permissions"
         ]
       },
       "SeasonList": {
@@ -9953,6 +10361,47 @@
           "activeChildren"
         ]
       },
+      "AssignableRoles": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "templateKey": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "names": {
+                  "$ref": "#/components/schemas/RoleTexts"
+                },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "templateKey",
+                "names",
+                "permissions"
+              ]
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
       "GroupAttendance": {
         "type": "object",
         "properties": {
@@ -10319,6 +10768,10 @@
               "physio",
               "other_leader"
             ]
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
@@ -10345,6 +10798,10 @@
               "other_leader"
             ],
             "default": "member"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
           },
           "overCapacity": {
             "type": "boolean"
@@ -11579,6 +12036,7 @@
                       "club.read",
                       "club.settings.update",
                       "club.roles.manage",
+                      "club.roles.read",
                       "club.members.read",
                       "club.members.manage",
                       "club.members.export",
@@ -12828,6 +13286,110 @@
             ],
             "additionalProperties": false
           }
+        ]
+      },
+      "MyPermissions": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "groupId",
+                "permissions"
+              ]
+            }
+          },
+          "roleIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "scope": {
+                  "type": "string",
+                  "enum": [
+                    "club",
+                    "group"
+                  ]
+                },
+                "templateKey": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "names": {
+                  "$ref": "#/components/schemas/RoleTexts"
+                },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "groupIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "scope",
+                "templateKey",
+                "names",
+                "permissions",
+                "groupIds"
+              ]
+            }
+          },
+          "authzVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "clubId",
+          "permissions",
+          "groups",
+          "roleIds",
+          "roles",
+          "authzVersion"
         ]
       },
       "UpdatePreferences": {
@@ -14727,6 +15289,84 @@
           "protected"
         ],
         "additionalProperties": false
+      },
+      "PermissionCatalogue": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionCatalogueEntry"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "PermissionCatalogueEntry": {
+        "type": "object",
+        "properties": {
+          "permission": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "role",
+              "derived",
+              "built_in"
+            ]
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "club",
+              "group",
+              null
+            ]
+          },
+          "area": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sensitive": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "example": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "permission",
+          "kind",
+          "scope",
+          "area",
+          "sensitive",
+          "name",
+          "description",
+          "example"
+        ]
       },
       "HealthResponse": {
         "type": "object",
@@ -25432,6 +26072,133 @@
         }
       }
     },
+    "/api/v1/clubs/{clubId}/permissions/{permission}/holders": {
+      "get": {
+        "operationId": "ClubRoles_holders",
+        "summary": "Who holds a permission in the club, and through which roles",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/RolePermission"
+            },
+            "required": true,
+            "description": "A key of the permission catalogue",
+            "name": "permission",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionHolderPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clubs/{clubId}/phone-numbers": {
       "put": {
         "operationId": "Clubs_setPhoneNumbers",
@@ -25924,6 +26691,878 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClubProfileViews"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/role-assignments": {
+      "get": {
+        "operationId": "ClubRoles_assignments",
+        "summary": "A person's club roles",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubRoleAssignmentList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "ClubRoles_assign",
+        "summary": "Give a person a club role (any role; giving it to yourself is told to the others)",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubRoleAssignment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/role-assignments/{assignmentId}": {
+      "delete": {
+        "operationId": "ClubRoles_unassign",
+        "summary": "End a club role assignment (never the last club manager)",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "assignmentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/roles": {
+      "get": {
+        "operationId": "ClubRoles_list",
+        "summary": "The club's roles with their permissions and how many hold them",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "ClubRoles_create",
+        "summary": "Create a role (or copy one: send its permissions)",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/roles/{roleId}": {
+      "delete": {
+        "operationId": "ClubRoles_remove",
+        "summary": "Delete a role: its holders move to a replacement role, or their assignments end",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "roleId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "replacementRoleId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteRoleResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "ClubRoles_update",
+        "summary": "Change a role's names and permissions (locked permissions stay)",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "roleId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/roles/{roleId}/preview": {
+      "post": {
+        "operationId": "ClubRoles_preview",
+        "summary": "What a change of a role's permissions would do (nothing is saved)",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "roleId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolePreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolePreview"
                 }
               }
             }
@@ -30142,6 +31781,104 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GroupArchivePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{groupId}/assignable-roles": {
+      "get": {
+        "operationId": "ClubRoles_assignable",
+        "summary": "The group roles I may give in this group (no escalation)",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.members.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignableRoles"
                 }
               }
             }
@@ -36389,6 +38126,93 @@
         }
       }
     },
+    "/api/v1/me/permissions": {
+      "get": {
+        "operationId": "ClubRoles_myPermissions",
+        "summary": "What I may do in a club (menus), with the authorization version",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPermissions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me/preferences": {
       "patch": {
         "operationId": "Me_updatePreferences",
@@ -40434,6 +42258,72 @@
           },
           "404": {
             "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/permissions": {
+      "get": {
+        "operationId": "ClubRoles_catalogue",
+        "summary": "The permission catalogue, explained in the caller's language",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionCatalogue"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -672,10 +672,13 @@ describe("member exports (P1.2)", () => {
          VALUES ($1, 'Export IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
         [club, `export-${club.slice(-8)}`],
       );
-      await session.query(
-        `INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')`,
-        [club, manager],
-      );
+      // Exports are the registrar's (P1.15 A2): the manager also holds that role.
+      for (const role of ["club_manager", "registrar"]) {
+        await session.query(
+          `INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, $3)`,
+          [club, manager, role],
+        );
+      }
       for (const person of [manager, anna, nadia, formula]) {
         await session.query(
           `INSERT INTO club_memberships (club_id, person_id, status, valid_from)

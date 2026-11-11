@@ -253,7 +253,7 @@ export const clubRoleAssignments = pgTable(
     personId: personRef(),
     role: text().$type<ClubRole>().notNull(),
     /** The club's role (P1.15; filled from `role` by a trigger for older writers). */
-    roleId: uuid(),
+    roleId: uuid(), // NOT NULL in the database (0032); filled by a trigger for writers naming the template key
     assignedByPersonId: uuid().references(() => people.id),
     endedByPersonId: uuid().references(() => people.id),
     ...validity,
@@ -263,7 +263,7 @@ export const clubRoleAssignments = pgTable(
     check("club_role_assignments_role", oneOf(t.role, CLUB_ROLES)),
     check("club_role_assignments_valid_period", validPeriod(t.validFrom, t.validTo)),
     uniqueIndex("club_role_assignments_open_unique")
-      .on(t.clubId, t.personId, t.role)
+      .on(t.clubId, t.personId, t.roleId)
       .where(sql`${t.validTo} IS NULL`),
     index("club_role_assignments_club_role_idx")
       .on(t.clubId, t.role)

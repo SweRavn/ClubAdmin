@@ -225,6 +225,13 @@
       "when": 1794110004000,
       "tag": "0031_holds_permission_once",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794110005000,
+      "tag": "0032_club_roles_editable",
+      "breakpoints": true
     }
   ]
 }

@@ -73,6 +73,26 @@ const back = (form: FormData, fallback = "/") => safeReturnTo(text(form, "back")
 const withParam = (path: string, key: string, value: string) =>
   `${path}${path.includes("?") ? "&" : "?"}${key}=${encodeURIComponent(value)}`;
 
+/** A role's names from the form (nameSv, nameEn, nameNb); null without any. */
+function roleNames(form: FormData): Record<string, string> | null {
+  const names: Record<string, string> = {};
+  for (const [key, field] of [
+    ["sv", "nameSv"],
+    ["en", "nameEn"],
+    ["nb", "nameNb"],
+  ] as const) {
+    const value = text(form, field).slice(0, 60);
+    if (value) names[key] = value;
+  }
+  return Object.keys(names).length > 0 ? names : null;
+}
+
+/** The ticked permissions of a role form. */
+const permissionsOf = (form: FormData): string[] =>
+  form
+    .getAll("permission")
+    .filter((v): v is string => typeof v === "string" && /^[a-z_.]{3,60}$/.test(v));
+
 /** The register filter carried by the export form (hidden fields, as in the list's URL). */
 function exportFilter(form: FormData): Record<string, unknown> {
   const raw: Record<string, unknown> = {};
@@ -1021,12 +1041,15 @@ const GROUP_ACTIONS: Record<string, FormAction> = {
       const fn = text(form, "function");
       if (!groupId || !personId || !(GROUP_FUNCTIONS as readonly string[]).includes(fn))
         return null;
+      const roleId = id(form, "roleId");
       return {
         path: `/api/v1/groups/${groupId}/members`,
         method: "POST",
         body: {
           personId,
           function: fn,
+          // The club's group role (P1.15 A2) wins over the function.
+          ...(roleId ? { roleId } : {}),
           overCapacity: text(form, "overCapacity") === "on",
           ...(text(form, "queueBypassReason")
             ? { queueBypassReason: text(form, "queueBypassReason").slice(0, 500) }
@@ -1863,6 +1886,84 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
         : null;
     },
     done: (form) => back(form),
+  },
+  // Club-defined roles (P1.15 A2).
+  "create-role": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const scope = text(form, "scope");
+      const names = roleNames(form);
+      if (!clubId || (scope !== "club" && scope !== "group") || !names) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/roles`,
+        method: "POST",
+        body: { scope, names, permissions: permissionsOf(form) },
+      };
+    },
+    done: (form, result) => {
+      const roleId = (result as { id?: string } | null)?.id;
+      return roleId ? `/clubs/${text(form, "clubId")}/roles/${roleId}?saved=1` : back(form);
+    },
+  },
+  "update-role": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const roleId = id(form, "roleId");
+      const version = Number(text(form, "version"));
+      if (!clubId || !roleId || !Number.isInteger(version)) return null;
+      const reset = text(form, "reset") === "1";
+      const names = roleNames(form);
+      return {
+        path: `/api/v1/clubs/${clubId}/roles/${roleId}`,
+        method: "PATCH",
+        body: reset
+          ? { version, resetToTemplate: true }
+          : {
+              version,
+              names,
+              permissions: permissionsOf(form),
+            },
+      };
+    },
+    done: (form) => `/clubs/${text(form, "clubId")}/roles/${text(form, "roleId")}?saved=1`,
+  },
+  "delete-role": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const roleId = id(form, "roleId");
+      if (!clubId || !roleId) return null;
+      const replacement = id(form, "replacementRoleId");
+      return {
+        path: `/api/v1/clubs/${clubId}/roles/${roleId}${replacement ? `?replacementRoleId=${replacement}` : ""}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => `/clubs/${text(form, "clubId")}/roles?deleted=1`,
+  },
+  "assign-club-role": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      const roleId = id(form, "roleId");
+      return clubId && personId && roleId
+        ? {
+            path: `/api/v1/clubs/${clubId}/role-assignments`,
+            method: "POST",
+            body: { personId, roleId },
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form), "role", "assigned"),
+  },
+  "unassign-club-role": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const assignmentId = id(form, "assignmentId");
+      return clubId && assignmentId
+        ? { path: `/api/v1/clubs/${clubId}/role-assignments/${assignmentId}`, method: "DELETE" }
+        : null;
+    },
+    done: (form) => withParam(back(form), "role", "ended"),
   },
   "remove-manager": {
     call: (form) => {
