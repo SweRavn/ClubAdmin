@@ -633,8 +633,10 @@ const CASES: Case[] = [
     method: "GET",
     url: () => "/api/v1/me/account/deletion",
     // Wards and their logins, assignments in every club, a pending request.
+    // Anna also holds the registrar role in her club since P1.15 A2: one more
+    // assignment to explain, a few pages, not a cost that grows with the data.
     statements: 3,
-    pages: 80,
+    pages: 90,
   },
   {
     route: "GET /api/v1/me/wards/{personId}/erasure",
