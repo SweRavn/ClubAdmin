@@ -500,7 +500,9 @@
     "country": "Country",
     "joinPolicy": "How people join",
     "create": "Create the club",
-    "request": "Send the request"
+    "request": "Send the request",
+    "secondAdministrator": "Second administrator (email)",
+    "secondAdministratorHint": "A club needs at least two administrators to take members. The person gets an invitation when the club is created; you can also invite later."
   },
   "joinPolicies": {
     "open": "Anyone joins at once",
@@ -761,6 +763,14 @@
     "invalid_replacement_role": "The replacement must be another role of the same kind.",
     "permission_not_for_group_roles": "A group role can only hold permissions that apply in a group.",
     "role_not_allowed": "You can only give roles whose permissions you hold in the group yourself.",
+    "club_needs_administrators": "The club has fewer than two administrators and cannot take new members right now. Appoint another administrator under Administrators.",
+    "administrators_minimum": "The club must keep at least two administrators. Appoint another before someone leaves the role.",
+    "not_an_administrator": "The person is not an administrator.",
+    "suspension_requested": "There is already a request to suspend that administrator.",
+    "suspension_not_open": "The request is no longer open.",
+    "suspension_not_allowed": "You cannot confirm or change this suspension: the person who asked for it and the person it concerns cannot confirm it.",
+    "grace_already_extended": "The club's grace period has already been extended once.",
+    "no_grace_period": "The club has no grace period to extend.",
     "forbidden": "You do not have permission for that. Your permissions may have changed: reload the page to see what you can do now."
   },
   "memberExport": {
@@ -1714,6 +1724,20 @@
           "title": "{club} has a new privacy policy",
           "body": "Read what changed and which decision it rests on."
         }
+      },
+      "administrators": {
+        "grace_started": {
+          "title": "{club} needs another administrator",
+          "body": "A club must have at least two administrators. Appoint another by {graceUntil}; after that the club cannot take new members until it has two."
+        },
+        "grace_reminder": {
+          "title": "Reminder: {club} needs another administrator",
+          "body": "Appoint another by {graceUntil}. After that the club cannot take new members until it has two administrators."
+        },
+        "needed": {
+          "title": "{club} cannot take new members",
+          "body": "The club has fewer than two administrators. Everything else works as usual. Appoint another administrator to add members again."
+        }
       }
     },
     "members": {
@@ -1916,6 +1940,26 @@
       "unassigned": {
         "title": "You no longer have the {role} role in {club}",
         "body": "A club administrator ended the role. See what your roles allow."
+      }
+    },
+    "administrator": {
+      "suspension": {
+        "requested": {
+          "title": "{self, select, true {Someone wants to suspend you as an administrator of {club}} other {A suspension of an administrator of {club} is waiting}}",
+          "body": "{self, select, true {Another administrator asked for you to be suspended ({suspensionReason, select, compromised {suspected break-in} left_task {the task has passed on} other {another reason}}). Is this wrong? Contact the club's other administrators or the chair.} other {An administrator asked for a suspension ({suspensionReason, select, compromised {suspected break-in} left_task {the task has passed on} other {another reason}}). Another administrator, or the chair, must confirm it within 72 hours.}}"
+        },
+        "closed": {
+          "title": "{status, select, cancelled {The suspension in {club} was withdrawn} other {The suspension in {club} was not confirmed in time}}",
+          "body": "{self, select, true {You are still an administrator.} other {Nothing has changed.}}"
+        }
+      },
+      "suspended": {
+        "title": "{self, select, true {You are suspended as an administrator of {club}} other {An administrator of {club} is suspended}}",
+        "body": "{self, select, true {Two administrators confirmed the suspension. {suspensionReason, select, compromised {You have been logged out everywhere; log in again, also for other clubs.} other {Your other roles in the club may have ended too.}}} other {The suspension is confirmed and applies at once. Review the person's changes to roles and permissions in the last 14 days.}}"
+      },
+      "added": {
+        "title": "A new administrator of {club}",
+        "body": "Someone was given the right to administer the club and who may do what. Check that this is right."
       }
     }
   },
@@ -2590,6 +2634,7 @@
       "expired": "expired",
       "finished": "finished",
       "given": "gave",
+      "grace_extended": "extended the grace period of",
       "invited": "invited",
       "linked": "linked",
       "merged": "merged",
@@ -2610,13 +2655,14 @@
       "scheduled": "scheduled",
       "set": "set",
       "started": "started",
+      "suspended": "suspended",
       "synced": "synced",
+      "unassigned": "unassigned",
       "undone": "undid",
       "unsubscribed": "unsubscribed from",
       "updated": "updated",
       "verified": "verified",
-      "withdrawn": "withdrew",
-      "unassigned": "unassigned"
+      "withdrawn": "withdrew"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -3611,5 +3657,56 @@
     "helpManagers": "Club managers always see which members have protected identity, but not their details, unless they also hold a role that gives them. That is needed to find every member and give them roles.",
     "helpSelf": "Whoever administers roles may give any role, also to themselves. It shows on the roles page and the other administrators and the chair are told.",
     "helpEffect": "A change applies at once: the next time someone with the role opens a page, the new permissions decide. Those who lose a permission get a notice."
+  },
+  "administrators": {
+    "title": "Administrators",
+    "intro": "Administrators run the club and decide who may do what. A club needs at least two, so that it is never left without one and nobody alone can take it over. Three are recommended.",
+    "rolesLink": "Roles and permissions",
+    "appointLink": "Appoint another administrator",
+    "neededTitle": "The club cannot take new members",
+    "neededBody": "It has fewer than two administrators. Everything else works as usual: existing members, activities and logins are unaffected.",
+    "graceTitle": "Appoint another administrator by {date}",
+    "graceBody": "A club must have at least two. After that the club cannot take new members until it has two.",
+    "recommendThird": "The club has two administrators. With three, two of them can suspend the third without outside help, for example after a break-in.",
+    "hideFor90Days": "Hide for 90 days",
+    "who": "{count, plural, =0 {Nobody counts right now} one {# administrator counts} other {# administrators count}}",
+    "whoHint": "Whoever holds the permission to administer roles, through any role. Only adults with their own account count towards the minimum.",
+    "counts": "Counts",
+    "notCounted": {
+      "no_account": "Does not count: no account",
+      "minor": "Does not count: not an adult"
+    },
+    "suspend": "Suspend as administrator",
+    "suspendHint": "Another administrator, or the chair if the club has exactly two, must confirm within 72 hours. The person is told at once.",
+    "reason": "Reason",
+    "reasons": {
+      "compromised": "Suspected break-in",
+      "left_task": "The task has passed on",
+      "other": "Another reason"
+    },
+    "note": "Note (optional)",
+    "demote": "Demote to an ordinary member: also end the person's other roles in the club and leader roles in groups (the membership stays). Recommended after a suspected break-in.",
+    "startSuspension": "Ask for the suspension",
+    "openSuspensions": "Suspensions waiting",
+    "suspensionOf": "<target></target> is proposed to be suspended, asked by <by></by>.",
+    "expires": "Must be confirmed by {date}.",
+    "willDemote": "The person is demoted to an ordinary member.",
+    "compromisedHint": "On confirmation the person is logged out everywhere, also at the login service, and must log in again, also for other clubs.",
+    "review": "{count, plural, one {# change to roles and permissions in the last 14 days} other {# changes to roles and permissions in the last 14 days}}",
+    "reviewOpen": "See the changes in the audit log",
+    "confirm": "Confirm the suspension",
+    "cancel": "Withdraw the request",
+    "youAreTarget": "The request concerns you. Is it wrong? Contact the club's other administrators or the chair.",
+    "done": {
+      "requested": "The request is sent. Another administrator must confirm it.",
+      "confirmed": "The suspension is confirmed and applies at once.",
+      "cancelled": "The request is withdrawn."
+    },
+    "howTitle": "How it works",
+    "howMinimum": "With fewer than two administrators the club cannot take new members. Someone cannot leave the role if fewer than two would remain.",
+    "howCounts": "The permission can be in several roles. Only adults with their own account count.",
+    "howThird": "Three are recommended: then two can suspend the third without help.",
+    "howSuspend": "A suspension is asked for by one administrator and confirmed by another (or the chair when the club has two). With two and the chair concerned, the platform's operator helps through the documented procedure.",
+    "howAdd": "Every administrator and the chair are told when someone becomes an administrator. One administrator is enough to appoint another."
   }
 }

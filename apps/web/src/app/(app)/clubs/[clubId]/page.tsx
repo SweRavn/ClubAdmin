@@ -4,9 +4,16 @@ import { enumKey } from "@clubadmin/i18n";
 import { EmptyState, PersonName } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
+import { AdministratorsBanner } from "../../../../components/administrators-banner.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { Notice } from "../../../../components/form-error.tsx";
-import { getClub, getClubGroups, getEntitlements, getMyClubs } from "../../../../server/data.ts";
+import {
+  getAdministrators,
+  getClub,
+  getClubGroups,
+  getEntitlements,
+  getMyClubs,
+} from "../../../../server/data.ts";
 
 type Params = {
   params: Promise<{ clubId: string }>;
@@ -36,6 +43,9 @@ export default async function ClubPage({ params, searchParams }: Params) {
   const canBilling =
     entitlements?.billingEnabled === true && permissions.includes("billing.subscription.read");
   const topLevel = groups.filter((g) => g.parentGroupId === null && !g.archived);
+  // The administrator state (P1.15 A3) for those who read the roles.
+  const canReadRoles = permissions.includes("club.roles.read");
+  const administrators = canReadRoles ? await getAdministrators(club.id) : null;
 
   return (
     <div className="space-y-8">
@@ -56,6 +66,7 @@ export default async function ClubPage({ params, searchParams }: Params) {
 
       {query.welcome ? <Notice>{t("club.welcome")}</Notice> : null}
       {query.created ? <Notice>{t("club.created")}</Notice> : null}
+      {administrators ? <AdministratorsBanner clubId={club.id} overview={administrators} /> : null}
 
       <section
         aria-labelledby="club-details"
@@ -83,13 +94,22 @@ export default async function ClubPage({ params, searchParams }: Params) {
               {t("billing.nav")}
             </a>
           ) : null}
-          {permissions.includes("club.roles.read") ? (
+          {canReadRoles ? (
             <a
               href={`/clubs/${club.id}/roles`}
               className="text-sm text-accent underline"
               data-testid="club-roles-link"
             >
               {t("rolesAdmin.title")}
+            </a>
+          ) : null}
+          {canReadRoles ? (
+            <a
+              href={`/clubs/${club.id}/administrators`}
+              className="text-sm text-accent underline"
+              data-testid="club-administrators-link"
+            >
+              {t("administrators.title")}
             </a>
           ) : null}
           <a

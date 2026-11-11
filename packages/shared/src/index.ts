@@ -11,6 +11,7 @@ export * from "./billing/index.ts";
 export * from "./calendar/ical.ts";
 export * from "./demodata.ts";
 export * from "./domain/activities.ts";
+export * from "./domain/administrators.ts";
 export * from "./domain/attendance.ts";
 export * from "./domain/billing.ts";
 export * from "./domain/calendar.ts";

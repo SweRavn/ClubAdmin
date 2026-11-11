@@ -99,6 +99,49 @@ async function accountTimeZone(tx: Tx, personId: string): Promise<string> {
   return rows[0]?.time_zone ?? "Europe/Stockholm";
 }
 
+/** The club's administrators and the chair (P1.15 A3), distinct. */
+export async function administratorsAndChair(tx: Tx, clubId: string): Promise<string[]> {
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    ${clubHolders(clubId, "club.roles.manage")}
+    UNION
+    ${clubHolders(clubId, "club.managers.claim")}`);
+  return rows.map((r) => r.person_id);
+}
+
+async function suspensionFacts(
+  tx: Tx,
+  suspensionId: string,
+): Promise<{
+  target: string;
+  requestedBy: string;
+  confirmedBy: string | null;
+  reason: string;
+} | null> {
+  const { rows } = await tx.execute<{
+    target_person_id: string;
+    requested_by_person_id: string;
+    confirmed_by_person_id: string | null;
+    reason: string;
+  }>(sql`
+    SELECT target_person_id, requested_by_person_id, confirmed_by_person_id, reason
+    FROM public.administrator_suspensions WHERE id = ${suspensionId}`);
+  const row = rows[0];
+  return row
+    ? {
+        target: row.target_person_id,
+        requestedBy: row.requested_by_person_id,
+        confirmedBy: row.confirmed_by_person_id,
+        reason: row.reason,
+      }
+    : null;
+}
+
+async function graceOf(tx: Tx, clubId: string): Promise<Date | null> {
+  const { rows } = await tx.execute<{ grace_until: string | null }>(sql`
+    SELECT administrators_grace_until AS grace_until FROM public.clubs WHERE id = ${clubId}`);
+  return rows[0]?.grace_until ? new Date(rows[0].grace_until) : null;
+}
+
 /** The waiting-list events that become notices (P1.10a, P1.10b). */
 const WAITLIST_EVENTS = [
   "waitlist.entry.created",
@@ -130,6 +173,12 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "role.updated",
       "role.self_assigned",
       "role.unassigned",
+      // At least two administrators (P1.15 A3).
+      "administrator.suspension.requested",
+      "administrator.suspended",
+      "administrator.suspension.closed",
+      "administrator.added",
+      "club.administrators.grace_started",
       ...WAITLIST_EVENTS,
       "club.privacy_policy.published",
       "privacy.export.ready",
@@ -448,6 +497,102 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
                 params: { role },
                 dedupeKey: `role.self_assigned:${event.idempotencyKey}`,
               })),
+          );
+          return;
+        }
+        case "administrator.suspension.requested":
+        case "administrator.suspended": {
+          const type = event.type;
+          const { clubId, suspensionId } = DOMAIN_EVENTS[type].parse(event.payload);
+          await useClub(tx, clubId);
+          const suspension = await suspensionFacts(tx, suspensionId);
+          if (!suspension) return;
+          // The target (told at once, so that a mistaken or malicious request
+          // is visible), every administrator and the chair; not the one who acted.
+          const actor =
+            type === "administrator.suspended" ? suspension.confirmedBy : suspension.requestedBy;
+          const recipients = new Set([
+            suspension.target,
+            ...(await administratorsAndChair(tx, clubId)),
+          ]);
+          if (actor) recipients.delete(actor);
+          await notify(
+            tx,
+            [...recipients].map((recipient) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type,
+              subjectType: "club_administrators",
+              subjectId: clubId,
+              about: recipient === suspension.target ? [] : [suspension.target],
+              params: { reason: suspension.reason, self: recipient === suspension.target },
+              dedupeKey: `${type}:${suspensionId}`,
+            })),
+          );
+          return;
+        }
+        case "administrator.suspension.closed": {
+          const { clubId, suspensionId, status } = DOMAIN_EVENTS[
+            "administrator.suspension.closed"
+          ].parse(event.payload);
+          await useClub(tx, clubId);
+          const suspension = await suspensionFacts(tx, suspensionId);
+          if (!suspension) return;
+          await notify(
+            tx,
+            [suspension.target, suspension.requestedBy].map((recipient) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type: "administrator.suspension.closed" as const,
+              subjectType: "club_administrators",
+              subjectId: clubId,
+              about: recipient === suspension.target ? [] : [suspension.target],
+              params: { status, self: recipient === suspension.target },
+              dedupeKey: `administrator.suspension.closed:${suspensionId}`,
+            })),
+          );
+          return;
+        }
+        case "administrator.added": {
+          const { clubId, personId } = DOMAIN_EVENTS["administrator.added"].parse(event.payload);
+          await useClub(tx, clubId);
+          const recipients = (await administratorsAndChair(tx, clubId)).filter(
+            (r) => r !== personId,
+          );
+          await notify(
+            tx,
+            recipients.map((recipient) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type: "administrator.added" as const,
+              subjectType: "club_administrators",
+              subjectId: clubId,
+              about: [personId],
+              params: {},
+              dedupeKey: `administrator.added:${event.idempotencyKey}`,
+            })),
+          );
+          return;
+        }
+        case "club.administrators.grace_started": {
+          const { clubId } = DOMAIN_EVENTS["club.administrators.grace_started"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const graceUntil = await graceOf(tx, clubId);
+          if (!graceUntil) return;
+          await notify(
+            tx,
+            (await administratorsAndChair(tx, clubId)).map((recipient) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type: "club.administrators.grace_started" as const,
+              subjectType: "club_administrators",
+              subjectId: clubId,
+              about: [],
+              params: { graceUntil: graceUntil.toISOString() },
+              dedupeKey: `club.administrators.grace_started:${clubId}`,
+            })),
           );
           return;
         }

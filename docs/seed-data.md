@@ -111,9 +111,10 @@ email" as `anna.lindqvist@example.test`. Idempotent; run it again after
 
 | Club | Country / locale / TZ | Sport(s) | Join policy | Managers | Billing (if enabled) |
 |---|---|---|---|---|---|
-| **Strandvikens Volleybollklubb** (SVK) | SE / sv-SE / Europe/Stockholm | Volleyball | `approval` | Anna, Sara (two managers); Peter was manager until last year | Paid plan, active |
-| **IK Norrbacka** (IKN) | SE / sv-SE / Europe/Stockholm | Multi-sport: football + floorball sections | `open` | Karin; hand-over to Peter **pending** his acceptance | Free plan |
-| **Fjordvik Idrettslag** (FIL) | NO / nb-NO / Europe/Oslo | Handball | `invite_only` | Lars (sole manager → "last manager cannot leave" rule) | Trial, ends in 10 days |
+| **Strandvikens Volleybollklubb** (SVK) | SE / sv-SE / Europe/Stockholm | Volleyball | `approval` | Anna, Sara, Mats (three administrators); Peter was manager until last year; Linnea was **suspended** last week (P1.15 A3) | Paid plan, active |
+| **IK Norrbacka** (IKN) | SE / sv-SE / Europe/Stockholm | Multi-sport: football + floorball sections | `open` | Karin, Göran (two administrators); hand-over from Karin to Peter **pending** his acceptance | Free plan |
+| **Fjordvik Idrettslag** (FIL) | NO / nb-NO / Europe/Oslo | Handball | `invite_only` | Lars, Kari (exactly two: the recommendation of a third shows) | Trial, ends in 10 days |
+| **Lövsta Bordtennisklubb** (Lövsta BTK) | SE / sv-SE / Europe/Stockholm | Table tennis | `approval` | Ulf alone, **within his grace period** (12 days left; P1.15 A3) | — |
 
 SVK has contact details (P1.6b, `contact` in `docs/demodata/clubs.json`):
 `kansli@strandvikens-vk.test`, Idrottsvägen 4, 451 50 Strandviken, the
@@ -183,6 +184,11 @@ club has roughly 10 named/central users plus generated players.
 | 32 | **Tilde Yilmaz** | 18 | yes | IKN, own login; just reached the adult age (guardianships flagged) → **adult decision** page for Ahmed and Leyla |
 | 33 | **Leyla Yilmaz** | 45 | yes | Tilde's mother, invited by Ahmed as second guardian |
 | 34 | **Petra Johansson** | — | no | Recorded by Johan (SVK registrar) as Maja's mother **from a paper application**; ended by Anna (club manager) **with a reason** (history) |
+| 35 | **Mats Berg** | 48 | yes | SVK **club manager**, the third administrator: with three, two can suspend the third without outside help (P1.15 A3) |
+| 36 | **Linnea Holm** | 33 | yes | Was an SVK club manager; **suspended** last week by Anna and Sara (suspected break-in, demoted to an ordinary member) → a confirmed suspension on the administrators page and in the audit log |
+| 37 | **Göran Lund** | 58 | yes | IKN **club manager** next to Karin (the minimum of two) |
+| 38 | **Kari Haugen** | 44 | yes | Norwegian (nb). FIL **club manager** next to Lars: FIL has exactly two administrators |
+| 39 | **Ulf Ek** | 63 | yes | Founded **Lövsta Bordtennisklubb** and is its only administrator: the grace period's banner and reminders |
 
 Ahmed is Liam's parent; Liam, like Oskar, was created as a child and got his
 own login (half a year ago). The waiting list of F2017 has five waiting, one
@@ -383,10 +389,22 @@ schedule (Ola left two years ago).
 Every club has the built-in template's roles (ADR 0046). SVK calls its team
 managers **Lagansvarig** and has its own group role **Materialansvarig**
 ("Planera gruppens aktiviteter"), held by Lars in Herr; FIL's team managers
-(**Lagledare**) no longer see consents. The single-person administrators
-(Anna in SVK, Karin in IKN, Lars in FIL) also hold the registrar role; Sara
+(**Lagledare**) no longer see consents. The administrators doing the register's
+work themselves (Anna in SVK, Karin in IKN, Lars in FIL) also hold the registrar role; Sara
 (SVK) does not, which shows the club manager's split: try the roles page
 (`/clubs/<svk>/roles`) as Sara, and "Mina roller" (`/me/roles`) as anyone.
+
+## At least two administrators (P1.15 A3)
+
+SVK has three administrators (Anna, Sara, Mats) and the confirmed
+suspension of Linnea (requested by Anna, confirmed by Sara, a suspected
+break-in, demoted); IKN (Karin, Göran) and FIL (Lars, Kari) have two, and
+see the recommendation of a third; **Lövsta BTK** has only Ulf and 12 days
+of its grace period left. Try `/clubs/<svk>/administrators` as Sara, start
+a suspension of Mats (with a second factor) and confirm it as Anna; log in
+as Ulf to see the deadline. The minimal scenario has two administrators
+(the manager and the member). The load scenario's clubs have a grace
+period (their managers have no login).
 
 ## Load scenario
 

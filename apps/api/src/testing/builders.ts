@@ -79,17 +79,36 @@ export interface BuiltClub extends Club {
  */
 export async function buildClub(
   services: CoreServices,
-  overrides: Partial<CreateClubInput> & { manager?: BuiltPerson; registrar?: boolean } = {},
+  overrides: Partial<CreateClubInput> & {
+    manager?: BuiltPerson;
+    registrar?: boolean;
+    /**
+     * The club has a grace period for its second administrator (P1.15 A3),
+     * as an existing club with one administrator has: it adds members and
+     * its single manager may step down as before. `false`: none (a club
+     * created through the API, "needs an administrator").
+     */
+    administratorsGrace?: boolean;
+  } = {},
 ): Promise<BuiltClub> {
-  const { manager: given, registrar = true, ...clubOverrides } = overrides;
+  const {
+    manager: given,
+    registrar = true,
+    administratorsGrace = true,
+    ...clubOverrides
+  } = overrides;
   const manager = given ?? (await buildPerson(services));
   const n = next();
-  const club = await services.onboarding.createClub(actor(manager.id), {
-    name: `Test Club ${n}`,
-    slug: `test-club-${n}-${uuidv7().slice(-8)}`,
-    country: "SE",
-    ...clubOverrides,
-  });
+  const club = await services.onboarding.createClub(
+    actor(manager.id),
+    {
+      name: `Test Club ${n}`,
+      slug: `test-club-${n}-${uuidv7().slice(-8)}`,
+      country: "SE",
+      ...clubOverrides,
+    },
+    administratorsGrace ? { administratorsGraceUntil: new Date(Date.now() + 30 * 86_400_000) } : {},
+  );
   if (registrar)
     await services.roles.assignRole(actor(manager.id, club.id), manager.id, "registrar");
   return { ...club, manager, ctx: actor(manager.id, club.id) };

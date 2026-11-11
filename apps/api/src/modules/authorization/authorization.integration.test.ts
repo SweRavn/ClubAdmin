@@ -1152,6 +1152,38 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/role-assignments/${uuidv7()}`,
       expected: CLUB_FORBIDDEN,
     },
+    // At least two administrators (P1.15 A3): read with the roles; starting,
+    // cancelling and reviewing a suspension need club.roles.manage with a
+    // second factor (403 here); a suspension request exists only in its club
+    // (unknown: 404 for everyone); the grace extension is the operator's.
+    "GET /api/v1/clubs/:clubId/administrators": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/administrators`,
+      expected: ADMINS(200),
+    },
+    "POST /api/v1/clubs/:clubId/administrators/:personId/suspensions": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/administrators/${m.manager.id}/suspensions`,
+      expected: CLUB_FORBIDDEN,
+      body: { reason: "left_task" },
+    },
+    "POST /api/v1/clubs/:clubId/administrator-suspensions/:suspensionId/confirm": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/administrator-suspensions/${uuidv7()}/confirm`,
+      expected: ALL_NOT_FOUND,
+      body: {},
+    },
+    "POST /api/v1/clubs/:clubId/administrator-suspensions/:suspensionId/cancel": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/administrator-suspensions/${uuidv7()}/cancel`,
+      expected: CLUB_FORBIDDEN,
+      body: {},
+    },
+    "GET /api/v1/clubs/:clubId/administrator-suspensions/:suspensionId/review": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/administrator-suspensions/${uuidv7()}/review`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "POST /api/v1/ops/clubs/:clubId/administrators/grace-extension": {
+      url: () => `/api/v1/ops/clubs/${m.clubA.id}/administrators/grace-extension`,
+      expected: OPERATOR_CLUB,
+      body: {},
+    },
     "POST /api/v1/test-authz/people/:personId/phone": {
       url: () => `/api/v1/test-authz/people/${m.child.id}/phone`,
       expected: {

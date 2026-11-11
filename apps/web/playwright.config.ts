@@ -59,6 +59,12 @@ export default defineConfig({
         { name: "events", testMatch: /events\.spec\.ts/, dependencies: ["activities"] },
         // Club-defined roles (P1.15 A2): changes SVK's own role.
         { name: "roles", testMatch: /roles\.spec\.ts/, dependencies: ["events"] },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["roles"] },
+        // At least two administrators (P1.15 A3): suspends SVK's third administrator.
+        {
+          name: "administrators",
+          testMatch: /administrators\.spec\.ts/,
+          dependencies: ["roles"],
+        },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["administrators"] },
       ],
 });

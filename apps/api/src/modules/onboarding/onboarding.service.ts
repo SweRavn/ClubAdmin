@@ -32,6 +32,16 @@ import type { Club, ClubsService } from "../clubs/index.ts";
 import type { MembershipsService } from "../memberships/index.ts";
 import type { PeopleService, Person } from "../people/index.ts";
 import type { Handover, RolesService } from "../roles/index.ts";
+
+/** The joining module's invitation of the second administrator (P1.15 A3). */
+export interface AdministratorInvitations {
+  createAdministratorInvitationInTx(
+    tx: Tx,
+    clubId: string,
+    createdByPersonId: string,
+    email: string,
+  ): Promise<boolean>;
+}
 import * as repo from "./onboarding.repository.ts";
 
 export type ClubCreationRequest = repo.CreationRequestRow;
@@ -52,6 +62,7 @@ export class OnboardingService {
   private readonly roles: RolesService;
   private readonly people: PeopleService | undefined;
   private readonly accounts: AccountsService | undefined;
+  private readonly invitations: AdministratorInvitations | undefined;
   private readonly defaultCountry: string;
 
   constructor(
@@ -62,6 +73,8 @@ export class OnboardingService {
       roles: RolesService;
       people?: PeopleService;
       accounts?: AccountsService;
+      /** Invites the second administrator named at creation (P1.15 A3). */
+      invitations?: AdministratorInvitations;
       defaultCountry?: string;
     },
   ) {
@@ -71,6 +84,7 @@ export class OnboardingService {
     this.roles = deps.roles;
     this.people = deps.people;
     this.accounts = deps.accounts;
+    this.invitations = deps.invitations;
     this.defaultCountry = deps.defaultCountry ?? "SE";
   }
 
@@ -89,7 +103,17 @@ export class OnboardingService {
   createClub(
     context: ActorContext,
     input: CreateClubInput,
-    options: { id?: string; creatorPersonId?: string } = {},
+    options: {
+      id?: string;
+      creatorPersonId?: string;
+      /**
+       * Until when the club may add members with fewer than two
+       * administrators (P1.15 A3). A club created through the API has none:
+       * it opens for members when its second administrator joins. The seed
+       * and the test builders give one, as an existing club has.
+       */
+      administratorsGraceUntil?: Date | null;
+    } = {},
   ): Promise<Club> {
     const clubContext: TenantContext = { ...context, clubId: options.id ?? uuidv7() };
     return this.db.withTenant(clubContext, (tx) =>
@@ -98,6 +122,7 @@ export class OnboardingService {
         clubContext,
         input,
         options.creatorPersonId ?? actorPersonId(context),
+        options.administratorsGraceUntil ?? null,
       ),
     );
   }
@@ -107,10 +132,23 @@ export class OnboardingService {
     clubContext: TenantContext,
     input: CreateClubInput,
     creator: string,
+    administratorsGraceUntil: Date | null = null,
   ): Promise<Club> {
-    const club = await this.clubs.insertClubInTx(tx, clubContext.clubId, input);
-    await this.memberships.addMemberInTx(tx, clubContext, creator);
+    const club = await this.clubs.insertClubInTx(tx, clubContext.clubId, input, {
+      administratorsGraceUntil,
+    });
+    await this.memberships.addMemberInTx(tx, clubContext, creator, undefined, {
+      administrator: true,
+    });
     await this.roles.assignRoleInTx(tx, clubContext, creator, "club_manager");
+    if (input.secondAdministratorEmail && this.invitations) {
+      await this.invitations.createAdministratorInvitationInTx(
+        tx,
+        clubContext.clubId,
+        creator,
+        input.secondAdministratorEmail,
+      );
+    }
     return club;
   }
 
@@ -186,6 +224,7 @@ export class OnboardingService {
           currency: data.currency ?? null,
           joinPolicy: data.joinPolicy ?? null,
           organizationNumber: data.organizationNumber ?? null,
+          secondAdministratorEmail: data.secondAdministratorEmail ?? null,
         });
       } catch (error) {
         if (isUniqueViolation(error, "club_creation_requests_pending_unique")) {
@@ -277,6 +316,9 @@ export class OnboardingService {
           ...(request.currency ? { currency: request.currency } : {}),
           ...(request.joinPolicy ? { joinPolicy: request.joinPolicy } : {}),
           organizationNumber: request.organizationNumber,
+          ...(request.secondAdministratorEmail
+            ? { secondAdministratorEmail: request.secondAdministratorEmail }
+            : {}),
         },
         request.requestedByPersonId,
       );

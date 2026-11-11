@@ -28,6 +28,7 @@ const TYPES = [
   "membership.changed",
   "role.changed",
   "role.updated",
+  "administrator.suspended",
   "group.owner.changed",
   "guardianship.changed",
   "person.protection.changed",
@@ -91,6 +92,14 @@ export async function invalidatedKeys(event: OutboxEvent, tx: Tx): Promise<strin
       const holders = await holdersOfRole(tx, clubId, roleId);
       for (const personId of holders) people.add(personId);
       for (const guardian of await guardiansOf(tx, holders)) people.add(guardian);
+      break;
+    }
+    case "administrator.suspended": {
+      // P1.15 A3: the target's roles ended in the database (not through the
+      // roles service): their set and their guardians' sets.
+      const { personId } = event.payload as OutboxEvent<"administrator.suspended">["payload"];
+      people.add(personId);
+      for (const guardian of await guardiansOf(tx, [personId])) people.add(guardian);
       break;
     }
     case "guardianship.changed": {

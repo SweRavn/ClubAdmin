@@ -66,6 +66,17 @@ export interface EventResource {
   groups: readonly GroupRef[];
 }
 
+/** An administrator suspension request (:clubId, :suspensionId; P1.15 A3). */
+export interface SuspensionResource {
+  kind: "administrator_suspension";
+  clubId: string;
+  suspensionId: string;
+  targetPersonId: string;
+  requestedByPersonId: string;
+  /** The club's administrators who count, now. */
+  administrators: number;
+}
+
 export interface Resources {
   platform: PlatformResource;
   club: ClubResource;
@@ -74,6 +85,7 @@ export interface Resources {
   handover: HandoverResource;
   activity: ActivityResource;
   event: EventResource;
+  administrator_suspension: SuspensionResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

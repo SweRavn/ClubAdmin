@@ -6,6 +6,7 @@ import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform
 import { AccountsModule, AccountsService } from "../accounts/index.ts";
 import { AuthorizationModule } from "../authorization/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
+import { InvitationsService, JoiningModule } from "../joining/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
 import { RolesModule, RolesService } from "../roles/index.ts";
@@ -18,6 +19,7 @@ import { OnboardingService } from "./onboarding.service.ts";
     AccountsModule,
     AuthorizationModule,
     ClubsModule,
+    JoiningModule,
     MembershipsModule,
     PeopleModule,
     RolesModule,
@@ -34,6 +36,7 @@ import { OnboardingService } from "./onboarding.service.ts";
         RolesService,
         PeopleService,
         AccountsService,
+        InvitationsService,
       ],
       useFactory: (
         db: OptionalDatabase,
@@ -43,6 +46,7 @@ import { OnboardingService } from "./onboarding.service.ts";
         roles: RolesService,
         people: PeopleService,
         accounts: AccountsService,
+        invitations: InvitationsService,
       ) =>
         new OnboardingService(requireDatabase(db), {
           clubs,
@@ -50,6 +54,7 @@ import { OnboardingService } from "./onboarding.service.ts";
           roles,
           people,
           accounts,
+          invitations,
           defaultCountry: config.DEFAULT_COUNTRY,
         }),
     },

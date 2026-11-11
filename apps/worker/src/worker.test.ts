@@ -18,7 +18,7 @@ const taskList = createTaskList({
 });
 
 describe("worker", () => {
-  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining and attendance retention, export expiry, import purging, notifications, privacy, waiting-list offers, calendar retention and the profile view log; every cron task exists", () => {
+  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining and attendance retention, export expiry, import purging, notifications, privacy, waiting-list offers, calendar retention, the profile view log and administrators; every cron task exists", () => {
     const items = parseCrontab(crontab);
     expect(items.map((i) => i.task)).toEqual([
       "heartbeat",
@@ -42,6 +42,7 @@ describe("worker", () => {
       "waitlists:offers",
       "calendar:retention",
       "privacy:profile_views",
+      "administrators:daily",
     ]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
   });

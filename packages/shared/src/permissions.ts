@@ -73,6 +73,10 @@ export const PERMISSIONS = [
   "club.handover.respond",
   "club.managers.claim",
   "club.managers.reassign",
+  // At least two administrators (P1.15 A3): the two-person rule's
+  // confirmation, and an operator extending a club's grace period.
+  "club.administrators.confirm_suspension",
+  "club.administrators.extend_grace",
   // History and audit (P1.9, ADR 0042): club managers and registrars only.
   "person.history.read",
   "group.history.read",

@@ -1868,6 +1868,7 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
         slug: text(form, "slug"),
         country: text(form, "country"),
         joinPolicy: optional(text(form, "joinPolicy")),
+        secondAdministratorEmail: optional(text(form, "secondAdministratorEmail")),
       },
     }),
     done: (_form, result) => {
@@ -1964,6 +1965,54 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
         : null;
     },
     done: (form) => withParam(back(form), "role", "ended"),
+  },
+  // At least two administrators (P1.15 A3).
+  "start-suspension": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      const reason = text(form, "reason");
+      return clubId && personId && ["compromised", "left_task", "other"].includes(reason)
+        ? {
+            path: `/api/v1/clubs/${clubId}/administrators/${personId}/suspensions`,
+            method: "POST",
+            body: {
+              reason,
+              note: optional(text(form, "note")),
+              demote: form.get("demote") === "on",
+            },
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form), "suspension", "requested"),
+  },
+  "confirm-suspension": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const suspensionId = id(form, "suspensionId");
+      return clubId && suspensionId
+        ? {
+            path: `/api/v1/clubs/${clubId}/administrator-suspensions/${suspensionId}/confirm`,
+            method: "POST",
+            body: {},
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form), "suspension", "confirmed"),
+  },
+  "cancel-suspension": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const suspensionId = id(form, "suspensionId");
+      return clubId && suspensionId
+        ? {
+            path: `/api/v1/clubs/${clubId}/administrator-suspensions/${suspensionId}/cancel`,
+            method: "POST",
+            body: {},
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form), "suspension", "cancelled"),
   },
   "remove-manager": {
     call: (form) => {

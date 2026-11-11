@@ -185,6 +185,9 @@ export function noticeLink(input: NoticeInput): string {
       return input.clubId ? `/clubs/${input.clubId}/roles` : "/";
     case "my_roles":
       return "/me/roles";
+    // At least two administrators (P1.15 A3): the club's administrators.
+    case "club_administrators":
+      return input.clubId ? `/clubs/${input.clubId}/administrators` : "/";
     // Privacy (P1.8a): the register of the club a member left, the club's privacy page.
     case "club_membership":
       return input.clubId ? `/clubs/${input.clubId}/members` : "/";
@@ -257,6 +260,10 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     final: str(p.final ?? "no"),
     /** A role's name (P1.15 A2; not personal data), in the club's language. */
     role: str(p.role),
+    /** At least two administrators (P1.15 A3): a suspension's reason code, whether the notice is to its target, the grace period's end. */
+    suspensionReason: str(p.reason),
+    self: str(p.self ?? false),
+    graceUntil: formatDay(locale, p.graceUntil, p.timeZone),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

@@ -87,6 +87,20 @@ const handoverR: Resource = {
   toPersonId: successorSet.personId,
 };
 const chair = as({ ...member(), roles: [{ clubId: club, role: "chair" }] }, { mfa: true });
+// A suspension request (P1.15 A3): `manager` started it against `targetAdmin`.
+const targetAdmin = uuidv7();
+const suspensionR = (administrators: number, requestedBy = uuidv7()): Resource => ({
+  kind: "administrator_suspension",
+  clubId: club,
+  suspensionId: uuidv7(),
+  targetPersonId: targetAdmin,
+  requestedByPersonId: requestedBy,
+  administrators,
+});
+const targetAdminActor = as(
+  { ...member(), personId: targetAdmin, roles: [{ clubId: club, role: "club_manager" }] },
+  { mfa: true },
+);
 const teamR = groupResource(club, team, { ancestorIds: [section] });
 const archivedTeamR = groupResource(club, team, { ancestorIds: [section], archived: true });
 const coOwnersTeamR = groupResource(club, team, {
@@ -1105,6 +1119,47 @@ const CASES: Record<Permission, Case[]> = {
     { name: "member", actor: plainMember, resource: clubR, allowed: false },
   ],
   "club.managers.reassign": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
+    { name: "club manager", actor: manager, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+  ],
+  "club.administrators.confirm_suspension": [
+    { name: "another administrator", actor: manager, resource: suspensionR(3), allowed: true },
+    {
+      name: "the chair with two administrators",
+      actor: chair,
+      resource: suspensionR(2),
+      allowed: true,
+    },
+    {
+      name: "the chair with three administrators",
+      actor: chair,
+      resource: suspensionR(3),
+      allowed: false,
+    },
+    {
+      name: "an operator with two administrators",
+      actor: operatorWithoutGrant,
+      resource: suspensionR(2),
+      allowed: true,
+    },
+    {
+      name: "an operator with three administrators",
+      actor: operatorWithoutGrant,
+      resource: suspensionR(3),
+      allowed: false,
+    },
+    { name: "the target", actor: targetAdminActor, resource: suspensionR(3), allowed: false },
+    {
+      name: "the initiator",
+      actor: manager,
+      resource: suspensionR(3, manager.personId),
+      allowed: false,
+    },
+    { name: "a registrar", actor: registrar, resource: suspensionR(3), allowed: false },
+    { name: "outsider", actor: outsider, resource: suspensionR(2), allowed: false },
+  ],
+  "club.administrators.extend_grace": [
     { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
     { name: "club manager", actor: manager, resource: clubR, allowed: false },
     { name: "chair", actor: chair, resource: clubR, allowed: false },

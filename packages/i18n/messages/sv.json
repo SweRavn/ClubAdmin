@@ -500,7 +500,9 @@
     "country": "Land",
     "joinPolicy": "Hur man går med",
     "create": "Skapa föreningen",
-    "request": "Skicka ansökan"
+    "request": "Skicka ansökan",
+    "secondAdministrator": "Andra föreningsadministratör (e-post)",
+    "secondAdministratorHint": "En förening behöver minst två administratörer för att kunna ta emot medlemmar. Personen får en inbjudan när föreningen skapas; du kan också bjuda in senare."
   },
   "joinPolicies": {
     "open": "Alla går med direkt",
@@ -761,6 +763,14 @@
     "invalid_replacement_role": "Ersättaren måste vara en annan roll av samma slag.",
     "permission_not_for_group_roles": "En grupproll kan bara ha behörigheter som gäller i en grupp.",
     "role_not_allowed": "Du kan bara ge roller vars behörigheter du själv har i gruppen.",
+    "club_needs_administrators": "Föreningen har färre än två föreningsadministratörer och kan inte ta emot nya medlemmar just nu. Utse en till föreningsadministratör under Administratörer.",
+    "administrators_minimum": "Föreningen måste ha minst två föreningsadministratörer. Utse en till innan någon lämnar rollen.",
+    "not_an_administrator": "Personen är inte föreningsadministratör.",
+    "suspension_requested": "Det finns redan en begäran om att stänga av den administratören.",
+    "suspension_not_open": "Begäran är inte längre öppen.",
+    "suspension_not_allowed": "Du kan inte bekräfta eller ändra den här avstängningen: den som begärde den och den som berörs kan inte bekräfta den.",
+    "grace_already_extended": "Föreningens tidsfrist har redan förlängts en gång.",
+    "no_grace_period": "Föreningen har ingen tidsfrist att förlänga.",
     "forbidden": "Du har inte behörighet till det. Dina behörigheter kan ha ändrats: ladda om sidan för att se vad du kan göra nu."
   },
   "memberExport": {
@@ -1714,6 +1724,20 @@
           "title": "{club} har en ny integritetspolicy",
           "body": "Läs vad som ändrats och vilket beslut det bygger på."
         }
+      },
+      "administrators": {
+        "grace_started": {
+          "title": "{club} behöver en föreningsadministratör till",
+          "body": "En förening måste ha minst två administratörer. Utse en till senast {graceUntil}; därefter kan föreningen inte ta emot nya medlemmar förrän den har två."
+        },
+        "grace_reminder": {
+          "title": "Påminnelse: {club} behöver en föreningsadministratör till",
+          "body": "Utse en till senast {graceUntil}. Därefter kan föreningen inte ta emot nya medlemmar förrän den har två administratörer."
+        },
+        "needed": {
+          "title": "{club} kan inte ta emot nya medlemmar",
+          "body": "Föreningen har färre än två administratörer. Allt annat fungerar som vanligt. Utse en till föreningsadministratör för att kunna lägga till medlemmar igen."
+        }
       }
     },
     "members": {
@@ -1916,6 +1940,26 @@
       "unassigned": {
         "title": "Du har inte längre rollen {role} i {club}",
         "body": "En föreningsadministratör har avslutat rollen. Se vad dina roller tillåter."
+      }
+    },
+    "administrator": {
+      "suspension": {
+        "requested": {
+          "title": "{self, select, true {Någon vill stänga av dig som föreningsadministratör i {club}} other {En avstängning av en föreningsadministratör i {club} väntar}}",
+          "body": "{self, select, true {En annan administratör har begärt att du stängs av ({suspensionReason, select, compromised {misstänkt intrång} left_task {uppdraget har gått vidare} other {annat skäl}}). Är det fel? Kontakta föreningens andra administratörer eller ordföranden.} other {En administratör har begärt en avstängning ({suspensionReason, select, compromised {misstänkt intrång} left_task {uppdraget har gått vidare} other {annat skäl}}). En annan administratör, eller ordföranden, måste bekräfta inom 72 timmar.}}"
+        },
+        "closed": {
+          "title": "{status, select, cancelled {Avstängningen i {club} drogs tillbaka} other {Avstängningen i {club} bekräftades inte i tid}}",
+          "body": "{self, select, true {Du är fortfarande föreningsadministratör.} other {Ingenting har ändrats.}}"
+        }
+      },
+      "suspended": {
+        "title": "{self, select, true {Du är avstängd som föreningsadministratör i {club}} other {En föreningsadministratör i {club} är avstängd}}",
+        "body": "{self, select, true {Två administratörer har bekräftat avstängningen. {suspensionReason, select, compromised {Du har loggats ut överallt; logga in igen, också för andra föreningar.} other {Dina andra uppdrag i föreningen kan också ha avslutats.}}} other {Avstängningen är bekräftad och gäller direkt. Se över personens ändringar av roller och behörigheter de senaste 14 dagarna.}}"
+      },
+      "added": {
+        "title": "En ny föreningsadministratör i {club}",
+        "body": "Någon har fått rätten att administrera föreningen och vem som får göra vad. Kontrollera att det stämmer."
       }
     }
   },
@@ -2590,6 +2634,7 @@
       "expired": "lät gå ut",
       "finished": "slutförde",
       "given": "gav",
+      "grace_extended": "förlängde tidsfristen för",
       "invited": "bjöd in",
       "linked": "kopplade",
       "merged": "slog ihop",
@@ -2610,13 +2655,14 @@
       "scheduled": "planerade",
       "set": "satte",
       "started": "startade",
+      "suspended": "stängde av",
       "synced": "synkade",
+      "unassigned": "tog bort",
       "undone": "ångrade",
       "unsubscribed": "avslutade prenumerationen på",
       "updated": "uppdaterade",
       "verified": "verifierade",
-      "withdrawn": "drog tillbaka",
-      "unassigned": "tog bort"
+      "withdrawn": "drog tillbaka"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -3611,5 +3657,56 @@
     "helpManagers": "Föreningsansvariga ser alltid vilka medlemmar som har skyddad identitet, men inte deras uppgifter, om de inte också har en roll som ger det. Det behövs för att kunna hitta alla medlemmar och ge dem roller.",
     "helpSelf": "Den som administrerar roller kan ge vilken roll som helst, även till sig själv. Det syns på rollsidan och berättas för de andra administratörerna och ordföranden.",
     "helpEffect": "En ändring gäller direkt: nästa gång någon med rollen öppnar en sida avgörs det av de nya behörigheterna. De som förlorar en behörighet får en notis."
+  },
+  "administrators": {
+    "title": "Föreningsadministratörer",
+    "intro": "Föreningsadministratörer sköter föreningen och vem som får göra vad. En förening behöver minst två, så att den aldrig står utan och så att ingen ensam kan ta över den. Tre rekommenderas.",
+    "rolesLink": "Roller och behörigheter",
+    "appointLink": "Utse en till föreningsadministratör",
+    "neededTitle": "Föreningen kan inte ta emot nya medlemmar",
+    "neededBody": "Den har färre än två föreningsadministratörer. Allt annat fungerar som vanligt: befintliga medlemmar, aktiviteter och inloggningar påverkas inte.",
+    "graceTitle": "Utse en föreningsadministratör till senast {date}",
+    "graceBody": "En förening måste ha minst två. Därefter kan föreningen inte ta emot nya medlemmar förrän den har två.",
+    "recommendThird": "Föreningen har två föreningsadministratörer. Med tre kan två av dem stänga av den tredje utan hjälp utifrån, till exempel efter ett intrång.",
+    "hideFor90Days": "Dölj i 90 dagar",
+    "who": "{count, plural, =0 {Ingen räknas just nu} one {# administratör räknas} other {# administratörer räknas}}",
+    "whoHint": "Den som har behörigheten att administrera roller, genom vilken roll som helst. Bara vuxna med ett eget konto räknas mot minimiantalet.",
+    "counts": "Räknas",
+    "notCounted": {
+      "no_account": "Räknas inte: inget konto",
+      "minor": "Räknas inte: inte myndig"
+    },
+    "suspend": "Stäng av som föreningsadministratör",
+    "suspendHint": "En annan föreningsadministratör, eller ordföranden om föreningen har exakt två, måste bekräfta inom 72 timmar. Personen får veta det direkt.",
+    "reason": "Skäl",
+    "reasons": {
+      "compromised": "Misstänkt intrång",
+      "left_task": "Uppdraget har gått vidare",
+      "other": "Annat skäl"
+    },
+    "note": "Anteckning (valfri)",
+    "demote": "Degradera till vanlig medlem: avsluta också personens andra roller i föreningen och ledaruppdrag i grupper (medlemskapet finns kvar). Rekommenderas vid misstänkt intrång.",
+    "startSuspension": "Begär avstängning",
+    "openSuspensions": "Väntande avstängningar",
+    "suspensionOf": "<target></target> föreslås stängas av, begärt av <by></by>.",
+    "expires": "Måste bekräftas senast {date}.",
+    "willDemote": "Personen degraderas till vanlig medlem.",
+    "compromisedHint": "Vid bekräftelse loggas personen ut överallt, också hos inloggningstjänsten, och måste logga in igen, också för andra föreningar.",
+    "review": "{count, plural, one {# ändring av roller och behörigheter de senaste 14 dagarna} other {# ändringar av roller och behörigheter de senaste 14 dagarna}}",
+    "reviewOpen": "Se ändringarna i granskningsloggen",
+    "confirm": "Bekräfta avstängningen",
+    "cancel": "Dra tillbaka begäran",
+    "youAreTarget": "Begäran gäller dig. Är den fel? Kontakta föreningens andra administratörer eller ordföranden.",
+    "done": {
+      "requested": "Begäran är skickad. En annan administratör måste bekräfta den.",
+      "confirmed": "Avstängningen är bekräftad och gäller direkt.",
+      "cancelled": "Begäran är tillbakadragen."
+    },
+    "howTitle": "Så fungerar det",
+    "howMinimum": "Med färre än två föreningsadministratörer kan föreningen inte ta emot nya medlemmar. Den som lämnar rollen kan inte göra det om färre än två skulle bli kvar.",
+    "howCounts": "Behörigheten kan finnas i flera roller. Bara vuxna med eget konto räknas.",
+    "howThird": "Tre rekommenderas: då kan två stänga av den tredje utan hjälp.",
+    "howSuspend": "En avstängning begärs av en administratör och bekräftas av en annan (eller ordföranden när föreningen har två). Med två och ordföranden som berörd hjälper plattformens operatör till enligt den dokumenterade rutinen.",
+    "howAdd": "Alla administratörer och ordföranden får veta när någon blir administratör. En administratör räcker för att utse en till."
   }
 }

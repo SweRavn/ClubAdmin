@@ -74,6 +74,11 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO invitation_acceptances (club_id, invitation_id, person_id)
         SELECT ${a.id}, id, ${member.id} FROM invitations WHERE club_id = ${a.id}`);
+      // A suspension request (P1.15 A3) against the member.
+      await tx.execute(sql`
+        INSERT INTO administrator_suspensions (club_id, target_person_id, requested_by_person_id,
+          reason, expires_at)
+        VALUES (${a.id}, ${member.id}, ${a.manager.id}, 'other', now() + interval '3 days')`);
       await tx.execute(sql`
         INSERT INTO club_manager_reassignments (club_id, person_id, operator_person_id, reason)
         VALUES (${a.id}, ${member.id}, ${family.guardian.id}, 'Board minutes 2026-03')`);

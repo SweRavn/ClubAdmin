@@ -415,6 +415,22 @@ register's details, membership changes, guardians, consents and member
 history are the registrar's (ADR 0046). A club's own roles fill the old
 `role`/`function` columns with a stand-in for older readers.
 
+**Administrators** (P1.15 A3, ADR 0046): whoever holds `club.roles.manage`,
+through any role. They count towards the minimum of **two** when they have
+an account and are adults by the club's country pack. With fewer than two
+who count and no grace period (`clubs.administrators_grace_until`), a club
+is "needs an administrator": it adds no members (except its founder and an
+administrator invited to the club manager role); everything else works. The
+database refuses a change that leaves an active club below two outside its
+grace period; only a confirmed suspension or an erasure may, through
+SECURITY DEFINER functions. **Administrator suspensions**
+(`administrator_suspensions`) follow the two-person rule: one administrator
+asks, another (or the chair when the club has two, or an operator) confirms
+within 72 hours; confirming ends the target's administrator roles (and with
+"demote" every role and group leader role), their hand-overs and their
+invitations with a role, and with `compromised` their sessions. Three
+administrators are recommended.
+
 **Club managers** (ADR 0018) have full administrative rights in the club. A club
 can have several; there must always be at least one active manager. The person
 who creates a club becomes its first manager. Managers appoint/remove other

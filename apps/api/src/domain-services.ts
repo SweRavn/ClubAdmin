@@ -8,6 +8,7 @@ import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 
 import { AccountsService } from "./modules/accounts/index.ts";
 import { ActivitiesService, AttendanceService } from "./modules/activities/index.ts";
+import { AdministratorsService } from "./modules/administrators/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
 import { EventsService } from "./modules/events/index.ts";
@@ -44,6 +45,8 @@ export interface CoreServices {
   roles: RolesService;
   /** Club-defined roles (P1.15 A2). */
   clubRoles: ClubRolesService;
+  /** At least two administrators; suspensions (P1.15 A3). */
+  administrators: AdministratorsService;
   profiles: ClubProfilesService;
   groups: GroupsService;
   memberships: MembershipsService;
@@ -93,6 +96,16 @@ export function createCoreServices(
     invitationTokenKey: options.invitationTokenKey,
   });
   const joinRequests = new JoinRequestsService(db, { clubs, groups, memberships, accounts });
+  const invitations = new InvitationsService(db, {
+    clubs,
+    groups,
+    memberships,
+    roles,
+    accounts,
+    joinRequests,
+    tokenKey: options.invitationTokenKey,
+    webUrl: options.webUrl ?? "https://clubadmin.localhost",
+  });
   const waitlists = new WaitlistsService(db, { clubs, groups, memberships, accounts });
   const guardianships = new GuardianshipsService(db, {
     people,
@@ -144,22 +157,15 @@ export function createCoreServices(
       roles,
       people,
       accounts,
+      invitations,
       defaultCountry,
     }),
     joinRequests,
     waitlists,
-    invitations: new InvitationsService(db, {
-      clubs,
-      groups,
-      memberships,
-      roles,
-      accounts,
-      joinRequests,
-      tokenKey: options.invitationTokenKey,
-      webUrl: options.webUrl ?? "https://clubadmin.localhost",
-    }),
+    invitations,
     roles,
     clubRoles: new ClubRolesService(db, clubs, roles),
+    administrators: new AdministratorsService(db),
     profiles,
     groups,
     memberships,

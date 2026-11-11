@@ -13,6 +13,7 @@ import {
   inputClass,
   secondaryButtonClass,
 } from "../../../../../components/action-form.tsx";
+import { AdministratorsBanner } from "../../../../../components/administrators-banner.tsx";
 import { FormError, Notice } from "../../../../../components/form-error.tsx";
 import {
   isSensitive,
@@ -21,6 +22,7 @@ import {
   roleSummary,
 } from "../../../../../components/roles.ts";
 import {
+  getAdministrators,
   getClub,
   getClubRoles,
   getMe,
@@ -40,7 +42,7 @@ export async function generateMetadata() {
 
 export default async function RolesPage({ params, searchParams }: Props) {
   const [{ clubId }, query] = await Promise.all([params, searchParams]);
-  const [t, locale, club, roles, mine, me, catalogue, my] = await Promise.all([
+  const [t, locale, club, roles, mine, me, catalogue, my, administrators] = await Promise.all([
     getTranslations(),
     getLocale(),
     getClub(clubId),
@@ -49,6 +51,7 @@ export default async function RolesPage({ params, searchParams }: Props) {
     getMe(),
     getPermissionCatalogue(),
     getMyPermissions(clubId),
+    getAdministrators(clubId),
   ]);
   const permissions = mine.clubs.find((c) => c.club.id === club.id)?.permissions ?? [];
   const canManage = permissions.includes("club.roles.manage");
@@ -99,6 +102,14 @@ export default async function RolesPage({ params, searchParams }: Props) {
         </a>
       </div>
       <FormError code={query.error} />
+      <AdministratorsBanner clubId={club.id} overview={administrators} />
+      <a
+        href={`/clubs/${club.id}/administrators`}
+        className="text-sm text-accent underline"
+        data-testid="administrators-link"
+      >
+        {t("administrators.title")}
+      </a>
       {query.deleted ? <Notice>{t("rolesAdmin.deleted")}</Notice> : null}
       {query.role === "assigned" ? <Notice>{t("rolesAdmin.assigned")}</Notice> : null}
 

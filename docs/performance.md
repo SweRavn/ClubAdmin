@@ -239,6 +239,15 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   and the holders of a permission (two statements, keyset by person). A
   role's change invalidates its holders through the worker (one bump per
   holder), not every relationship set.
+  A3: `app.club_administrators` reads the club's assignments of roles with
+  `club.roles.manage` (`role_permissions_club_permission_idx`, the
+  assignments' role index) and the holders' people and accounts by key; the
+  administrators page has a budget (three statements). Every new membership
+  asks `app.club_needs_administrators` once (one statement, a handful of
+  pages); the minimum's triggers run at commit only for assignments of
+  administrator roles. `administrators:daily` lists its clubs through
+  `app.administrator_job_clubs` (open requests past their deadline by
+  `administrator_suspensions_expires_idx`, clubs with a grace period).
 - Member register (P1.2, `register-plans.integration.test.ts`: one club with
   10,000 members among 100,000 people, as the club's registrar with row-level
   security): p95 of a 50-row page sorted by name about 80–95 ms, search as you

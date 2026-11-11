@@ -613,6 +613,27 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("club.managers.reassign", "club", ({ actor }) => actor.isOperator(), {
     mfa: true,
   }),
+  // The two-person rule (P1.15 A3): never the target or the initiator; an
+  // administrator, the chair when the club has exactly two administrators,
+  // or an operator through the documented recovery when it has two or fewer
+  // (ADR 0018). The database checks the same in
+  // app.confirm_administrator_suspension.
+  definePolicy(
+    "club.administrators.confirm_suspension",
+    "administrator_suspension",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null &&
+      !actor.isSelf(resource.targetPersonId) &&
+      !actor.isSelf(resource.requestedByPersonId) &&
+      (actor.holds("club.roles.manage", resource.clubId) ||
+        (actor.holds("club.managers.claim", resource.clubId) && resource.administrators === 2) ||
+        (actor.isOperator() && resource.administrators <= 2)),
+    { mfa: true },
+  ),
+  // An operator gives a club with fewer than two administrators more time, once (audited).
+  definePolicy("club.administrators.extend_grace", "club", ({ actor }) => actor.isOperator(), {
+    mfa: true,
+  }),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

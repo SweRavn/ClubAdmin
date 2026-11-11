@@ -20,11 +20,21 @@ async function appSession(clubId: string, personId: string) {
   return client;
 }
 
+/**
+ * Two managers in a club that keeps its grace period (P1.15 A3): a second
+ * administrator ends it, but these tests are about the last-manager guard
+ * (ADR 0018), not the minimum of two (administrators.integration.test.ts).
+ */
 async function clubWithTwoManagers() {
   const club = await buildClub(c.s);
   const second = await buildPerson(c.s);
   await c.s.memberships.addMember(club.ctx, second.id);
   await c.s.roles.assignRole(club.ctx, second.id, "club_manager");
+  await c.t.query(
+    "admin",
+    "UPDATE clubs SET administrators_grace_until = now() + interval '30 days' WHERE id = $1",
+    [club.id],
+  );
   return { club, first: club.manager, second };
 }
 

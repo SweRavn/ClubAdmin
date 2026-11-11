@@ -135,6 +135,48 @@ class CoreSeeder {
     await this.laterHistory();
     await this.groupAdmin();
     await this.clubRoles();
+    await this.administrators();
+  }
+
+  /**
+   * At least two administrators (P1.15 A3): the suspensions of the story
+   * (requested by one administrator, confirmed by another), then the grace
+   * periods the clubs had while the seed built them end, except where the
+   * data gives one (a club with one administrator).
+   */
+  private async administrators(): Promise<void> {
+    for (const x of this.data.relationships.administratorSuspensions) {
+      const at = this.env.clock.at(x.at);
+      const requestedAt = new Date(at.getTime() - 86_400_000);
+      const suspension = await this.s.administrators.start(
+        this.as(x.by, x.club, requestedAt),
+        this.id(x.target),
+        { reason: x.reason, demote: x.demote },
+      );
+      await this.s.administrators.confirm(this.as(x.confirmedBy, x.club, at), suspension.id);
+      await this.env.db.withSystem("seed:backdate", { clubId: this.id(x.club) }, async (tx) => {
+        await tx.execute(sql`SELECT set_config('app.seed_skip_history', 'on', true)`);
+        await tx.execute(sql`
+          UPDATE public.administrator_suspensions
+          SET created_at = ${requestedAt}, decided_at = ${at},
+            expires_at = ${new Date(requestedAt.getTime() + 72 * 3_600_000)}
+          WHERE id = ${suspension.id}`);
+        await tx.execute(sql`
+          UPDATE public.club_role_assignments SET valid_to = ${at}
+          WHERE club_id = ${this.id(x.club)} AND person_id = ${this.id(x.target)}
+            AND valid_to > ${at}`);
+      });
+    }
+    for (const c of this.data.clubs) {
+      const graceUntil = c.administratorsGraceDays
+        ? new Date(Date.now() + c.administratorsGraceDays * 86_400_000)
+        : null;
+      await this.env.db.withSystem("seed:administrators", { clubId: c.id }, (tx) =>
+        tx.execute(sql`
+          UPDATE public.clubs SET administrators_grace_until = ${graceUntil}
+          WHERE id = ${c.id}`),
+      );
+    }
   }
 
   /**
@@ -294,7 +336,8 @@ class CoreSeeder {
           country: c.country,
           joinPolicy: c.joinPolicy,
         },
-        { id: c.id },
+        // A grace period while the seed builds the club (P1.15 A3); administrators() ends it.
+        { id: c.id, administratorsGraceUntil: new Date(Date.now() + 30 * 86_400_000) },
       );
       const from = this.env.clock.past(c.foundedAt);
       const where = sql`club_id = ${c.id} AND person_id = ${this.id(c.foundedBy)}`;

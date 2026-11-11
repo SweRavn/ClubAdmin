@@ -646,6 +646,97 @@
         "paper form",
         "ended guardianship"
       ]
+    },
+    {
+      "key": "mats",
+      "number": 35,
+      "givenName": "Mats",
+      "familyName": "Berg",
+      "age": 48,
+      "birthday": "03-09",
+      "gender": "male",
+      "login": "account",
+      "email": "mats.berg@example.test",
+      "phone": "+46 70 174 06 35",
+      "description": "SVK club manager, the third administrator: with three, two can suspend the third without outside help (P1.15 A3).",
+      "tags": [
+        "administrator"
+      ],
+      "createdAt": "-10y",
+      "id": "0199a000-0000-7000-8000-000000000035"
+    },
+    {
+      "key": "linnea",
+      "number": 36,
+      "givenName": "Linnea",
+      "familyName": "Holm",
+      "age": 33,
+      "birthday": "11-21",
+      "gender": "female",
+      "login": "account",
+      "email": "linnea.holm@example.test",
+      "phone": "+46 70 174 06 36",
+      "description": "Was an SVK club manager until Anna and Sara suspended her last week after a suspected break-in (compromised, demoted to an ordinary member).",
+      "tags": [
+        "suspended administrator"
+      ],
+      "createdAt": "-8y",
+      "id": "0199a000-0000-7000-8000-000000000036"
+    },
+    {
+      "key": "goran",
+      "number": 37,
+      "givenName": "Göran",
+      "familyName": "Lund",
+      "age": 58,
+      "birthday": "06-30",
+      "gender": "male",
+      "login": "account",
+      "email": "goran.lund@example.test",
+      "phone": "+46 70 174 06 37",
+      "description": "IKN club manager next to Karin: IKN has the minimum of two administrators.",
+      "tags": [
+        "administrator"
+      ],
+      "createdAt": "-12y",
+      "id": "0199a000-0000-7000-8000-000000000037"
+    },
+    {
+      "key": "kari",
+      "number": 38,
+      "givenName": "Kari",
+      "familyName": "Haugen",
+      "age": 44,
+      "birthday": "04-14",
+      "gender": "female",
+      "login": "account",
+      "email": "kari.haugen@example.test",
+      "phone": "+47 412 06 038",
+      "locale": "nb",
+      "description": "FIL club manager next to Lars: FIL has exactly two administrators and sees the recommendation of a third.",
+      "tags": [
+        "administrator"
+      ],
+      "createdAt": "-5y",
+      "id": "0199a000-0000-7000-8000-000000000038"
+    },
+    {
+      "key": "ulf",
+      "number": 39,
+      "givenName": "Ulf",
+      "familyName": "Ek",
+      "age": 63,
+      "birthday": "09-02",
+      "gender": "male",
+      "login": "account",
+      "email": "ulf.ek@example.test",
+      "phone": "+46 70 174 06 39",
+      "description": "Founded Lövsta Bordtennisklubb, a small club with one administrator within its grace period: it must appoint a second.",
+      "tags": [
+        "grace period"
+      ],
+      "createdAt": "-3y",
+      "id": "0199a000-0000-7000-8000-000000000039"
     }
   ]
 }

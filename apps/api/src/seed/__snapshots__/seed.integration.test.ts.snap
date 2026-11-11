@@ -30,10 +30,11 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       ],
       "locale": "nb-NO",
       "managers": [
+        "kari",
         "lars",
       ],
       "memberships": {
-        "active": 15,
+        "active": 16,
       },
       "slug": "fjordvik-il",
       "supportGrants": [],
@@ -80,15 +81,42 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "joinRequests": [],
       "locale": "sv-SE",
       "managers": [
+        "goran",
         "karin",
       ],
       "memberships": {
-        "active": 21,
+        "active": 22,
       },
       "slug": "ik-norrbacka",
       "supportGrants": [
         "operator by karin",
       ],
+      "timeZone": "Europe/Stockholm",
+    },
+    "lbtk": {
+      "activities": {
+        "cancelledSessions": [],
+        "detachedSessions": [],
+        "locations": [],
+        "series": [],
+        "single": [],
+      },
+      "consents": [],
+      "country": "SE",
+      "employments": [],
+      "handovers": [],
+      "invitations": [],
+      "joinPolicy": "approval",
+      "joinRequests": [],
+      "locale": "sv-SE",
+      "managers": [
+        "ulf",
+      ],
+      "memberships": {
+        "active": 1,
+      },
+      "slug": "lovsta-btk",
+      "supportGrants": [],
       "timeZone": "Europe/Stockholm",
     },
     "svk": {
@@ -148,10 +176,11 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "locale": "sv-SE",
       "managers": [
         "anna",
+        "mats",
         "sara",
       ],
       "memberships": {
-        "active": 23,
+        "active": 25,
         "left": 3,
         "paused": 1,
       },
@@ -497,6 +526,24 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "protected": false,
       "roles": [],
     },
+    "goran": {
+      "account": {
+        "email": "goran.lund@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "ikn: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "ikn: club_manager",
+      ],
+    },
     "gunilla": {
       "account": {
         "email": "gunilla.berg@example.test",
@@ -577,6 +624,24 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "pendingGuardianInvitations": 0,
       "protected": false,
       "roles": [],
+    },
+    "kari": {
+      "account": {
+        "email": "kari.haugen@example.test",
+        "locale": "nb",
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "fil: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "fil: club_manager",
+      ],
     },
     "karin": {
       "account": {
@@ -662,6 +727,24 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "protected": false,
       "roles": [],
     },
+    "linnea": {
+      "account": {
+        "email": "linnea.holm@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "svk: club_manager (ended)",
+      ],
+    },
     "maja": {
       "account": null,
       "clubProtected": [],
@@ -681,6 +764,24 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "pendingGuardianInvitations": 0,
       "protected": false,
       "roles": [],
+    },
+    "mats": {
+      "account": {
+        "email": "mats.berg@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "svk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "svk: club_manager",
+      ],
     },
     "mikael": {
       "account": {
@@ -879,6 +980,24 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "pendingGuardianInvitations": 0,
       "protected": false,
       "roles": [],
+    },
+    "ulf": {
+      "account": {
+        "email": "ulf.ek@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "lbtk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "lbtk: club_manager",
+      ],
     },
     "vera": {
       "account": null,

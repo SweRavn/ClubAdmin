@@ -82,6 +82,11 @@ export const AUDIT_ACTIONS = [
   "role.deleted",
   "role.assigned",
   "role.unassigned",
+  // At least two administrators (P1.15 A3).
+  "administrator.suspension.requested",
+  "administrator.suspended",
+  "administrator.suspension.cancelled",
+  "club.administrators.grace_extended",
   "club.manager.handover.proposed",
   "club.manager.handover.accepted",
   "club.manager.handover.declined",

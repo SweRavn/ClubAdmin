@@ -123,7 +123,17 @@ export class MembershipsService {
     context: TenantContext,
     personId: string,
     membershipType?: MembershipType,
-    options: { validFrom?: Date; profile?: ProfileInit; newPerson?: boolean } = {},
+    options: {
+      validFrom?: Date;
+      profile?: ProfileInit;
+      newPerson?: boolean;
+      /**
+       * The member becomes an administrator in the same transaction (the
+       * club's creator, an administrator's invitation): allowed also when
+       * the club needs administrators (P1.15 A3).
+       */
+      administrator?: boolean;
+    } = {},
   ): Promise<ClubMembership> {
     return this.createMembershipInTx(tx, context, personId, "active", membershipType, options);
   }
@@ -658,9 +668,17 @@ export class MembershipsService {
     status: "active",
     membershipType: MembershipType = "active",
     /** `newPerson`: created in this transaction (no membership or profile to look for). */
-    options: { validFrom?: Date; profile?: ProfileInit; newPerson?: boolean } = {},
+    options: {
+      validFrom?: Date;
+      profile?: ProfileInit;
+      newPerson?: boolean;
+      administrator?: boolean;
+    } = {},
   ): Promise<ClubMembership> {
     parseInput(MembershipTypeSchema, membershipType);
+    // A club with fewer than two administrators adds no members (P1.15 A3).
+    if (!options.administrator && (await this.clubs.needsAdministratorsInTx(tx, context.clubId)))
+      throw new DomainError("club_needs_administrators");
     if (!options.newPerson && (await repo.findOpenMembership(tx, context.clubId, personId)))
       throw new DomainError("already_member");
     await this.profiles.ensureProfileInTx(tx, context, personId, options.profile, {

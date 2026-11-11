@@ -30,9 +30,14 @@ export const PERSONAS = {
   vera: { id: person(28), name: "Vera Ahmed" },
   elsaDuplicate: { id: person(29), name: "Elsa Lindqvist" },
   tilde: { id: person(32), name: "Tilde Yilmaz" },
+  // At least two administrators (P1.15 A3).
+  mats: { id: person(35), name: "Mats Berg" },
+  linnea: { id: person(36), name: "Linnea Holm" },
+  kari: { id: person(38), name: "Kari Haugen" },
+  ulf: { id: person(39), name: "Ulf Ek" },
 } as const;
 
-export const CLUBS = { svk: club(1), ikn: club(2), fil: club(3) } as const;
+export const CLUBS = { svk: club(1), ikn: club(2), fil: club(3), lbtk: club(4) } as const;
 export const GROUPS = {
   svkF2017: group(1),
   svkHerr: group(3),

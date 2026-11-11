@@ -57,6 +57,9 @@ const secretHash = (secret: InvitationSecret): string =>
     ? hashInvitationSecret(secret.token)
     : hashInvitationSecret(parseInput(InvitationCodeSchema, secret.code));
 
+/** Days the second administrator's invitation stays valid. */
+const ADMINISTRATOR_INVITATION_DAYS = 14;
+
 export class InvitationsService {
   private readonly db: Database;
   private readonly clubs: ClubsService;
@@ -178,6 +181,44 @@ export class InvitationsService {
     });
   }
 
+  /**
+   * An email invitation to the club manager role for the club's second
+   * administrator, made with the club (P1.15 A3): by its creator, without a
+   * second factor (the creator is founding the club). Without
+   * INVITATION_TOKEN_KEY nothing is sent (false); the club then invites from
+   * its administrators page.
+   */
+  async createAdministratorInvitationInTx(
+    tx: Tx,
+    clubId: string,
+    createdByPersonId: string,
+    email: string,
+  ): Promise<boolean> {
+    if (!this.tokenKey) return false;
+    const id = uuidv7();
+    const token = emailInvitationToken(this.tokenKey, id);
+    await repo.insertInvitation(tx, {
+      id,
+      clubId,
+      kind: "email",
+      groupId: null,
+      rolePreset: "club_manager",
+      expiresAt: new Date(Date.now() + ADMINISTRATOR_INVITATION_DAYS * 86_400_000),
+      createdByPersonId,
+      email,
+      maxUses: 1,
+      tokenHash: hashInvitationSecret(token),
+    });
+    await outbox.publish(tx, "invitation.created", { invitationId: id, clubId });
+    await audit.record(tx, {
+      action: "invitation.created",
+      resourceType: "invitation",
+      resourceId: id,
+      changedFields: ["kind", "role_preset", "expires_at", "max_uses"],
+    });
+    return true;
+  }
+
   list(
     context: TenantContext,
     page: { cursor?: string | undefined; limit: number },
@@ -249,7 +290,12 @@ export class InvitationsService {
         throw new DomainError("invitation_invalid");
       }
       const alreadyMember = await this.memberships.hasOpenMembershipInTx(tx, found.clubId, me);
-      if (!alreadyMember) await this.memberships.addMemberInTx(tx, clubContext, me);
+      // An invitation to the club manager role brings an administrator: allowed
+      // also when the club needs administrators (P1.15 A3).
+      if (!alreadyMember)
+        await this.memberships.addMemberInTx(tx, clubContext, me, undefined, {
+          administrator: invitation.rolePreset === "club_manager",
+        });
       await this.joinRequests.settleByInvitationInTx(tx, found.clubId, me);
       await this.applyPresetsInTx(tx, clubContext, invitation, me);
       const first = await repo.insertAcceptance(tx, {

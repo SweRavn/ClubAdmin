@@ -229,6 +229,18 @@ export const DOMAIN_ERRORS = {
   permission_not_for_group_roles: "validation",
   /** Assigning a role with permissions the caller does not hold (no escalation). */
   role_not_allowed: "forbidden",
+  // At least two administrators; suspending one (P1.15 A3).
+  /** Fewer than two administrators who count, outside the grace period: no new members. */
+  club_needs_administrators: "conflict",
+  /** The change would leave fewer than two administrators (database constraint). */
+  administrators_minimum: "conflict",
+  not_an_administrator: "conflict",
+  suspension_requested: "conflict",
+  suspension_not_open: "conflict",
+  /** The target, the initiator, or someone who may not confirm. */
+  suspension_not_allowed: "forbidden",
+  grace_already_extended: "conflict",
+  no_grace_period: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

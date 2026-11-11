@@ -95,6 +95,27 @@ export const NOTIFICATION_TYPES = {
   "role.self_assigned": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "role.permissions.removed": { category: "club_admin" },
   "role.unassigned": { category: "club_admin" },
+  // At least two administrators (P1.15 A3): mandatory email to the target,
+  // the administrators and the chair.
+  "administrator.suspension.requested": {
+    category: "club_admin",
+    mandatoryEmail: true,
+    immediate: true,
+  },
+  "administrator.suspended": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "administrator.suspension.closed": { category: "club_admin" },
+  "administrator.added": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "club.administrators.grace_started": {
+    category: "club_admin",
+    mandatoryEmail: true,
+    immediate: true,
+  },
+  "club.administrators.grace_reminder": {
+    category: "club_admin",
+    mandatoryEmail: true,
+    immediate: true,
+  },
+  "club.administrators.needed": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "club.privacy_policy.updated": { category: "membership" },
   "family.accepted": { category: "family" },
   "family.own_login_age": { category: "family" },

@@ -4,6 +4,7 @@ import { Module } from "@nestjs/common";
 
 import { AccountsModule } from "./modules/accounts/index.ts";
 import { ActivitiesModule } from "./modules/activities/index.ts";
+import { AdministratorsModule } from "./modules/administrators/index.ts";
 import { AuditModule } from "./modules/audit/index.ts";
 import { BackupsModule } from "./modules/backups/index.ts";
 import { CalendarModule } from "./modules/calendar/index.ts";
@@ -36,6 +37,7 @@ const MODULES = [
   OnboardingModule,
   RolesModule,
   ClubRolesModule,
+  AdministratorsModule,
   ClubProfilesModule,
   GroupsModule,
   MembershipsModule,

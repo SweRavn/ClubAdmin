@@ -51,8 +51,11 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
     SELECT set_config('app.actor_kind', 'system_job', true), set_config('app.request_id', 'job:seed:load', true);
     CREATE TEMP TABLE lc ON COMMIT DROP AS
       SELECT i, uuidv7() AS id FROM generate_series(1, ${clubs}) AS i;
-    INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number)
-      SELECT id, 'Lastklubb ' || i, 'load-' || i, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK', 'approval', 201 FROM lc;
+    -- A grace period for a second administrator (P1.15 A3): the load clubs' managers have no login.
+    INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number,
+                       administrators_grace_until)
+      SELECT id, 'Lastklubb ' || i, 'load-' || i, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK', 'approval', 201,
+             now() + interval '30 days' FROM lc;
     CREATE TEMP TABLE lp ON COMMIT DROP AS
       SELECT c.id AS club_id, p.n, uuidv7() AS id, p.n <= 120 AS child
       FROM lc AS c CROSS JOIN generate_series(1, 200) AS p(n);
@@ -197,8 +200,10 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
       WHERE k <= 1;
     -- The large club.
     CREATE TEMP TABLE bc ON COMMIT DROP AS SELECT uuidv7() AS id;
-    INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number)
-      SELECT id, 'Storklubben', 'load-large', 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK', 'approval', 10001 FROM bc;
+    INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency, join_policy, next_member_number,
+                       administrators_grace_until)
+      SELECT id, 'Storklubben', 'load-large', 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK', 'approval', 10001,
+             now() + interval '30 days' FROM bc;
     CREATE TEMP TABLE bp ON COMMIT DROP AS
       SELECT n, uuidv7() AS id FROM generate_series(1, 10000) AS n;
     INSERT INTO people (id, given_name, family_name, birth_date, gender, protected_identity)

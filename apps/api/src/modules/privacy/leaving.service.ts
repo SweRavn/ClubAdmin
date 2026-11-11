@@ -181,6 +181,12 @@ export class LeavingService {
    */
   async leaveForErasureInTx(tx: Tx, clubId: string, personId: string): Promise<boolean> {
     const context: TenantContext = { actorKind: "anonymous", personId: null, clubId };
+    // An erasure may leave the club with fewer than two administrators (P1.15
+    // A3): only this SECURITY DEFINER function sets the exception, and only
+    // for a person in an erasure request the job is running.
+    await tx.execute(
+      sql`SELECT app.allow_fewer_administrators_for_erasure(${clubId}, ${personId})`,
+    );
     const left = await this.deps.memberships.leaveClubInTx(tx, context, personId);
     await this.deps.joinRequests.withdrawPendingInTx(tx, context, personId);
     await this.deps.groups.withdrawWaitlistEntriesOfPersonInTx(tx, context, personId);

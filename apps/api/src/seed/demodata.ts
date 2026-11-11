@@ -133,6 +133,11 @@ function checkReferences(data: DemoData): void {
     for (const k of [x.from, x.to]) check("person", k, `handovers[${i}]`);
     check("club", x.club, `handovers[${i}]`);
   });
+  r.administratorSuspensions.forEach((x, i) => {
+    for (const k of [x.target, x.by, x.confirmedBy])
+      check("person", k, `administratorSuspensions[${i}]`);
+    check("club", x.club, `administratorSuspensions[${i}]`);
+  });
   for (const x of r.ownLogins) for (const k of [x.person, x.by]) check("person", k, "ownLogins");
   for (const x of [...r.employments, ...r.sharedFields, ...r.consents, ...r.clubProtection]) {
     check("person", x.person, "relationships");

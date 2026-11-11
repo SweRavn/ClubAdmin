@@ -52,6 +52,21 @@ export const DOMAIN_EVENTS = {
   "role.unassigned": z.object({ clubId: id, personId: id, roleId: id }),
   /** Migration 0032 split the club manager's permissions (P1.15 A2): the managers are told. */
   "roles.manager_split": z.object({ clubId: id }),
+  // At least two administrators (P1.15 A3): the target, every administrator
+  // and the chair are told; a confirmed suspension also invalidates the
+  // target's relationship sets.
+  "administrator.suspension.requested": z.object({ clubId: id, suspensionId: id }),
+  "administrator.suspended": z.object({ clubId: id, suspensionId: id, personId: id }),
+  /** An open request was cancelled by its initiator or expired: target and initiator are told. */
+  "administrator.suspension.closed": z.object({
+    clubId: id,
+    suspensionId: id,
+    status: z.enum(["cancelled", "expired"]),
+  }),
+  /** Someone became an administrator (assigned, or a held role gained club.roles.manage). */
+  "administrator.added": z.object({ clubId: id, personId: id }),
+  /** Migration 0033: the club has fewer than two administrators and 30 days to appoint one. */
+  "club.administrators.grace_started": z.object({ clubId: id }),
   /** The person left the club themselves (P1.8a): tell the managers and registrars. */
   "membership.left": z.object({ clubId: id, personId: id }),
   /**

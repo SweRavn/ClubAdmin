@@ -247,6 +247,8 @@ export const clubCreationRequests = pgTable(
     decisionMessage: text(),
     /** The club created on approval (not club-owned: the request is global). */
     createdClubId: uuid(),
+    /** Who to invite as the second administrator on approval (P1.15 A3); cleared then. */
+    secondAdministratorEmail: text(),
     ...timestamps,
   },
   (t) => [

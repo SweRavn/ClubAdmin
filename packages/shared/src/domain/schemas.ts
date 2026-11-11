@@ -87,6 +87,11 @@ export const CreateClubSchema = z.object({
     .optional(),
   joinPolicy: z.enum(JOIN_POLICIES).optional(),
   organizationNumber: z.string().trim().max(30).nullish(),
+  /**
+   * The second administrator (P1.15 A3): invited to the club manager role
+   * when the club is created. A club opens for members when it has two.
+   */
+  secondAdministratorEmail: z.email().max(254).optional(),
 });
 export type CreateClubInput = z.input<typeof CreateClubSchema>;
 

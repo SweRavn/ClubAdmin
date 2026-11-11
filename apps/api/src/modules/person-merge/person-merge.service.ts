@@ -16,6 +16,7 @@ import { DomainError } from "../../platform/domain/domain-error.ts";
 import type { PersonReference } from "../../platform/domain/person-references.ts";
 import { actorPersonId, type Context, hasClub, runAs } from "../../platform/domain/run.ts";
 import { ACTIVITY_PERSON_REFERENCES } from "../activities/index.ts";
+import { ADMINISTRATOR_PERSON_REFERENCES } from "../administrators/index.ts";
 import { CALENDAR_PERSON_REFERENCES } from "../calendar/index.ts";
 import {
   CLUB_PROFILE_PERSON_REFERENCES,
@@ -38,6 +39,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...CLUB_PROFILE_PERSON_REFERENCES,
   ...MEMBERSHIP_PERSON_REFERENCES,
   ...ROLE_PERSON_REFERENCES,
+  ...ADMINISTRATOR_PERSON_REFERENCES,
   ...GROUP_PERSON_REFERENCES,
   ...CALENDAR_PERSON_REFERENCES,
   ...JOINING_PERSON_REFERENCES,

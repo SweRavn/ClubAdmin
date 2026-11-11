@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// The `minimal` scenario: one club with one group, a manager, an adult
-// member and the member's child (no login) — for fast manual checks.
+// The `minimal` scenario: one club with one group, two administrators (the
+// manager and an adult member, P1.15 A3) and the member's child (no login) —
+// for fast manual checks.
 
 import type { ActorContext } from "@clubadmin/db";
 
@@ -26,12 +27,15 @@ export async function seedMinimal(env: SeedEnvironment): Promise<void> {
   };
   const manager = await adult("minimal.manager@example.test");
   const member = await adult("minimal.member@example.test");
+  // The member is the second administrator (P1.15 A3); a grace period while the club is built.
   const club = await s.onboarding.createClub(
     manager,
     { name: "Minimala IF", slug: "minimala-if", country: "SE" },
-    { id: generator.nextId() },
+    { id: generator.nextId(), administratorsGraceUntil: new Date(Date.now() + 86_400_000) },
   );
   const ctx = { ...manager, clubId: club.id };
+  await s.memberships.addMember(ctx, member.personId!);
+  await s.roles.assignRole(ctx, member.personId!, "club_manager");
   const group = await s.groups.createGroup(
     ctx,
     { name: "Lag A", kind: "team" },
@@ -48,8 +52,8 @@ export async function seedMinimal(env: SeedEnvironment): Promise<void> {
     "parent",
     { id: childName.id },
   );
+  await s.memberships.addMember(ctx, child.id);
   for (const personId of [member.personId!, child.id]) {
-    await s.memberships.addMember(ctx, personId);
     await s.memberships.addToGroup(ctx, group.id, personId);
   }
 }

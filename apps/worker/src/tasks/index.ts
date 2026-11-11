@@ -28,6 +28,7 @@ import {
   responseRemindersTask,
   responseRequestsTask,
 } from "../notifications/tasks.ts";
+import { administratorsTask } from "./administrators.ts";
 import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { calendarRetentionTask } from "./calendar.ts";
@@ -201,6 +202,8 @@ function notificationTasks(deps: TaskDependencies): TaskList {
     "notifications:response_requests": responseRequestsTask({ db: deps.db, channels }),
     "notifications:event_reminders": eventRemindersTask({ db: deps.db, channels }),
     "notifications:retention": notificationsRetentionTask(deps.db),
+    // At least two administrators (P1.15 A3).
+    "administrators:daily": administratorsTask(deps.db, channels),
   };
 }
 
@@ -222,7 +225,8 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * calendar subscriptions unused for 12 months or revoked 30 days ago daily
  * at 05:13 UTC (P1.11); the profile view log (anonymising people who left
  * a club, rows after 24 months, the anonymisation ledger after 13) daily at
- * 05:19 UTC (P1.12).
+ * 05:19 UTC (P1.12); administrators (P1.15 A3: expired suspension requests,
+ * grace period reminders) hourly at :11.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -246,6 +250,7 @@ export const crontab = [
   "*/5 * * * * waitlists:offers ?max=1",
   "13 5 * * * calendar:retention ?fill=2d",
   "19 5 * * * privacy:profile_views ?fill=2d",
+  "11 * * * * administrators:daily ?max=1",
 ].join("\n");
 
 /**

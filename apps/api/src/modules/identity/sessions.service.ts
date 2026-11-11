@@ -29,6 +29,12 @@ import type { ValkeyClient } from "../../platform/infra/valkey.ts";
 export interface ZitadelSessions {
   /** Ends a Zitadel session; ignores sessions that are already gone. */
   end(sessionId: string): Promise<void>;
+  /**
+   * Ends every Zitadel session of a user (a suspended administrator, P1.15
+   * A3), also those the app never saw; tokens issued through them stop
+   * working. Returns how many were ended.
+   */
+  endAllOf(userId: string): Promise<number>;
 }
 
 /** Zitadel session API v2 with the clubadmin-api machine user (IAM_LOGIN_CLIENT). */
@@ -45,6 +51,29 @@ export function zitadelSessions(baseUrl: string, token: string): ZitadelSessions
       );
       if (!res.ok && res.status !== 404)
         throw new Error(`Zitadel session delete failed: HTTP ${res.status}`);
+    },
+    async endAllOf(userId) {
+      const base = baseUrl.replace(/\/$/, "");
+      const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+      let ended = 0;
+      // A page at a time until none is left (each round ends what it found).
+      for (let round = 0; round < 20; round++) {
+        const res = await fetch(`${base}/v2/sessions/search`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            query: { limit: 100 },
+            queries: [{ userIdQuery: { id: userId } }],
+          }),
+        });
+        if (!res.ok) throw new Error(`Zitadel session search failed: HTTP ${res.status}`);
+        const body = (await res.json()) as { sessions?: { id?: string }[] };
+        const ids = (body.sessions ?? []).flatMap((x) => (x.id ? [x.id] : []));
+        if (ids.length === 0) break;
+        for (const id of ids) await this.end(id);
+        ended += ids.length;
+      }
+      return ended;
     },
   };
 }
@@ -201,6 +230,16 @@ export class SessionsService {
       for (const id of idpSessions) await this.zitadel.end(id);
     }
     return Object.keys(entries).length;
+  }
+
+  /**
+   * A suspended administrator (P1.15 A3, `compromised`): every app session
+   * and device as revokeAllOf, and every Zitadel session of the login, so
+   * that a still-valid session cannot simply log in again.
+   */
+  async revokeEverywhere(personId: string, idpSubject: string | null): Promise<void> {
+    await this.revokeAllOf(personId);
+    if (this.zitadel && idpSubject) await this.zitadel.endAllOf(idpSubject);
   }
 
   /**

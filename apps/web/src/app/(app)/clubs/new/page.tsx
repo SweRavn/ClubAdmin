@@ -80,6 +80,20 @@ export default async function NewClubPage({ searchParams }: Props) {
             ))}
           </select>
         </label>
+        <label className="block space-y-1">
+          <span className="font-medium">{t("createClubForm.secondAdministrator")}</span>
+          <input
+            name="secondAdministratorEmail"
+            type="email"
+            maxLength={254}
+            autoComplete="off"
+            aria-describedby="second-administrator-hint"
+            className={inputClass}
+          />
+          <span id="second-administrator-hint" className="block text-sm text-muted">
+            {t("createClubForm.secondAdministratorHint")}
+          </span>
+        </label>
         <button type="submit" className={buttonClass}>
           {request ? t("createClubForm.request") : t("createClubForm.create")}
         </button>

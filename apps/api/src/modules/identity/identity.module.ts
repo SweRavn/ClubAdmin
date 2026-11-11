@@ -35,6 +35,9 @@ export class IdentityModule {
   static register(config: Pick<ApiConfig, "DEV_AUTH">): DynamicModule {
     return {
       module: IdentityModule,
+      // Global: SessionsService is also used by modules that end someone
+      // else's sessions (a suspended administrator, P1.15 A3).
+      global: true,
       imports: [
         AccountsModule,
         AuthorizationModule,

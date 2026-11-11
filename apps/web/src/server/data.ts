@@ -9,6 +9,7 @@ import {
   ActivityDetailSchema,
   type ActivityPage,
   ActivityPageSchema,
+  AdministratorsOverviewSchema,
   AdultGuardiansSchema,
   AssignableRolesSchema,
   AssignmentsSchema,
@@ -101,6 +102,7 @@ import {
   SessionListSchema,
   SourceResponseSchema,
   SubscriptionResponseSchema,
+  SuspensionReviewSchema,
   TrustedPeopleSchema,
   UnreadCountSchema,
   VersionResponseSchema,
@@ -362,6 +364,19 @@ export const getClubInvitations = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/invitations?limit=100`, InvitationListSchema),
 );
 // Club-defined roles (P1.15 A2).
+/** The club's administrators, who counts, its state and open suspensions (P1.15 A3). */
+export const getAdministrators = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/administrators`, AdministratorsOverviewSchema),
+);
+export async function getSuspensionReview(clubId: string, suspensionId: string) {
+  const session = await requireSession();
+  const res = await apiFetch(
+    `/api/v1/clubs/${requireId(clubId)}/administrator-suspensions/${requireId(suspensionId)}/review`,
+    session.record,
+  );
+  if (!res.ok) return null;
+  return SuspensionReviewSchema.parse(await res.json());
+}
 export const getClubRoles = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/roles`, RoleListSchema),
 );

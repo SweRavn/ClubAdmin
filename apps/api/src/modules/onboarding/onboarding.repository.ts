@@ -29,7 +29,8 @@ export async function decideRequest(
 ): Promise<void> {
   await tx
     .update(requests)
-    .set({ ...values, decidedAt: new Date() })
+    // The second administrator's address is needed only until the decision.
+    .set({ ...values, decidedAt: new Date(), secondAdministratorEmail: null })
     .where(eq(requests.id, id));
 }
 

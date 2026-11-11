@@ -131,8 +131,10 @@ const CASES: Case[] = [
     persona: "sara",
     method: "GET",
     url: () => `/api/v1/groups/${key("svk-f2017")}/candidates?q=an&function=member`,
+    // SVK's two more members (P1.15 A3: its third administrator and the
+    // suspended one) add a page or two to the name search; not the data's size.
     statements: 3,
-    pages: 130,
+    pages: 140,
   },
   {
     route: "GET /api/v1/groups/{groupId}/archive-preview",
@@ -264,6 +266,17 @@ const CASES: Case[] = [
     url: () => `/api/v1/me/permissions?clubId=${key("svk")}`,
     statements: 1,
     pages: 160,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/administrators",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/administrators`,
+    // P1.15 A3: the administrators (app.club_administrators by the role and
+    // person indexes) with the club's grace period, the open suspension
+    // requests, the people's summaries.
+    statements: 3,
+    pages: 90,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/roles",

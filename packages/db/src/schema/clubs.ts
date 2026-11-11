@@ -104,6 +104,10 @@ export const clubs = pgTable(
     privacyContactEmail: text(),
     /** Which profile views the club logs (P1.12): protected people only, or every view. */
     profileViewLogging: text().$type<ProfileViewLoggingMode>().notNull().default("protected_only"),
+    /** Until when a club with fewer than two administrators may still add members (P1.15 A3). */
+    administratorsGraceUntil: timestamp(tz),
+    /** When an operator extended the grace period (once per club). */
+    administratorsGraceExtendedAt: timestamp(tz),
     ...timestamps,
   },
   (t) => [
@@ -344,6 +348,45 @@ export const clubManagerHandovers = pgTable(
     index("club_manager_handovers_to_idx")
       .on(t.toPersonId)
       .where(sql`${t.status} = 'proposed'`),
+  ],
+);
+
+/** The two-person rule for taking an administrator out (P1.15 A3, ADR 0046). */
+export const administratorSuspensions = pgTable(
+  "administrator_suspensions",
+  {
+    id: id(),
+    clubId: clubRef(),
+    targetPersonId: personRef(),
+    requestedByPersonId: personRef(),
+    confirmedByPersonId: uuid().references(() => people.id),
+    reason: text().$type<"compromised" | "left_task" | "other">().notNull(),
+    note: text(),
+    demote: boolean().notNull().default(false),
+    status: text()
+      .$type<"requested" | "confirmed" | "cancelled" | "expired">()
+      .notNull()
+      .default("requested"),
+    expiresAt: timestamp(tz).notNull(),
+    decidedAt: timestamp(tz),
+    ...timestamps,
+  },
+  (t) => [
+    check(
+      "administrator_suspensions_reason",
+      sql`${t.reason} IN ('compromised', 'left_task', 'other')`,
+    ),
+    check(
+      "administrator_suspensions_status",
+      sql`${t.status} IN ('requested', 'confirmed', 'cancelled', 'expired')`,
+    ),
+    uniqueIndex("administrator_suspensions_open_unique")
+      .on(t.clubId, t.targetPersonId)
+      .where(sql`${t.status} = 'requested'`),
+    index("administrator_suspensions_club_idx").on(t.clubId, t.createdAt.desc()),
+    index("administrator_suspensions_expires_idx")
+      .on(t.expiresAt)
+      .where(sql`${t.status} = 'requested'`),
   ],
 );
 

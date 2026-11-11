@@ -24,6 +24,7 @@ import {
   loadHandoverScope,
   loadPersonInClub,
   loadRelationshipSet,
+  loadSuspensionScope,
 } from "./authorization.repository.ts";
 import type { AuthorizationCache } from "./authorization-cache.ts";
 import type {
@@ -36,6 +37,7 @@ import type {
   PersonResource,
   Resource,
   ResourceKind,
+  SuspensionResource,
 } from "./policy.ts";
 import { Actor, type GroupRef, type RelationshipSet } from "./relationship-set.ts";
 import { type RequestAuthorization, tenantContext } from "./request-authorization.ts";
@@ -206,7 +208,21 @@ export class AuthorizationService {
         return this.activityResource(authorization, request);
       case "event":
         return this.eventResource(authorization, request);
+      case "administrator_suspension":
+        return this.suspensionResource(request);
     }
+  }
+
+  /** A suspension request with the club's number of administrators (P1.15 A3). */
+  private async suspensionResource(request: FastifyRequest): Promise<SuspensionResource> {
+    const { clubId } = this.clubResource(request);
+    const suspensionId = param(request, "suspensionId");
+    if (!suspensionId || !isUuid(suspensionId)) throw new ProblemError("not-found");
+    const scope = await this.db.withSystem("authz:suspension", { clubId }, (tx) =>
+      loadSuspensionScope(tx, clubId, suspensionId),
+    );
+    if (!scope) throw new ProblemError("not-found");
+    return { kind: "administrator_suspension", clubId, suspensionId, ...scope };
   }
 
   /**

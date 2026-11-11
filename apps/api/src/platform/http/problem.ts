@@ -2,6 +2,7 @@
 // Converts any error into an RFC 9457 problem-details response (used by
 // ProblemDetailsFilter).
 
+import { isCheckViolation } from "@clubadmin/db";
 import { negotiateLocale, translate } from "@clubadmin/i18n";
 import {
   PROBLEM_CONTENT_TYPE,
@@ -41,6 +42,10 @@ export function resolveProblem(error: unknown): ResolvedProblem {
       errors: error.errors,
       unexpected: false,
     };
+  }
+  // The administrator minimum (P1.15 A3) is checked at commit, after the service returned.
+  if (isCheckViolation(error, "club_administrators_minimum")) {
+    return { slug: "conflict", status: 409, detail: "administrators_minimum", unexpected: false };
   }
   if (error instanceof HttpException) {
     const status = error.getStatus();

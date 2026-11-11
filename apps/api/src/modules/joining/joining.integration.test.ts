@@ -543,7 +543,8 @@ describe("club managers", () => {
       managers.json<{ items: { person: { id: string } }[] }>().items.map((m) => m.person.id),
     ).toEqual([member.id]);
 
-    // The new manager appoints the old one again, who then steps down.
+    // The new manager appoints the old one again. With two administrators the
+    // club has left its grace period (P1.15 A3): one cannot step down alone.
     expect(
       (
         await api(member.id, "POST", `/clubs/${club.id}/managers`, {
@@ -552,10 +553,11 @@ describe("club managers", () => {
         })
       ).statusCode,
     ).toBe(201);
-    expect(
-      (await api(manager, "DELETE", `/clubs/${club.id}/managers/${manager}`, { mfa: true }))
-        .statusCode,
-    ).toBe(200);
+    const alone = await api(manager, "DELETE", `/clubs/${club.id}/managers/${manager}`, {
+      mfa: true,
+    });
+    expect(alone.statusCode).toBe(409);
+    expect(detail(alone)).toBe("administrators_minimum");
 
     // Recovery: the chair cannot claim while a manager exists; an operator reassigns with a reason.
     const chair = await buildPerson(s);
@@ -578,6 +580,11 @@ describe("club managers", () => {
     expect(rows).toEqual([
       { reason: "Board minutes 2026-10-01, item 4", operator_person_id: operator.id },
     ]);
+    // With a third administrator the old manager steps down.
+    expect(
+      (await api(manager, "DELETE", `/clubs/${club.id}/managers/${manager}`, { mfa: true }))
+        .statusCode,
+    ).toBe(200);
     const { rows: changes } = await t.query<{ change: string }>(
       "admin",
       `SELECT payload ->> 'change' AS change FROM outbox.events
@@ -587,8 +594,8 @@ describe("club managers", () => {
     expect(changes.map((c) => c.change)).toEqual([
       "handed_over",
       "appointed",
-      "removed",
       "reassigned",
+      "removed",
     ]);
   });
 });

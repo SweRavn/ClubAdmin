@@ -263,6 +263,40 @@ export async function loadHandoverScope(
 }
 
 /**
+ * An administrator suspension request (P1.15 A3) and the club's number of
+ * administrators who count, read as a system job in the club's context (the
+ * confirmer may be an operator without access to the club).
+ */
+export async function loadSuspensionScope(
+  tx: Tx,
+  clubId: string,
+  suspensionId: string,
+): Promise<{
+  targetPersonId: string;
+  requestedByPersonId: string;
+  administrators: number;
+} | null> {
+  const { rows } = await tx.execute<{
+    target_person_id: string;
+    requested_by_person_id: string;
+    administrators: number;
+  }>(sql`
+    SELECT s.target_person_id, s.requested_by_person_id,
+      (SELECT count(*) FILTER (WHERE a.counts) FROM app.club_administrators(s.club_id) a)::int
+        AS administrators
+    FROM public.administrator_suspensions s
+    WHERE s.id = ${suspensionId} AND s.club_id = ${clubId}`);
+  const row = rows[0];
+  return row
+    ? {
+        targetPersonId: row.target_person_id,
+        requestedByPersonId: row.requested_by_person_id,
+        administrators: row.administrators,
+      }
+    : null;
+}
+
+/**
  * The person a family resource is about, as visible to the actor (P1.3): the
  * ward of a guardianship or guardian invitation, the kept person of a merge.
  */

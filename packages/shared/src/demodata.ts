@@ -134,6 +134,11 @@ export const DemoClubSchema = z.object({
       phoneNumbers: z.array(z.object({ label: z.string(), number: z.string() })).default([]),
     })
     .optional(),
+  /**
+   * A club with one administrator within its grace period (P1.15 A3): days
+   * left. Without it the club ends the seed with no grace period.
+   */
+  administratorsGraceDays: z.number().int().positive().optional(),
 });
 export type DemoClub = z.infer<typeof DemoClubSchema>;
 
@@ -229,6 +234,20 @@ export const DemoRelationshipsFileSchema = z.object({
       at: RelativeTimeSchema,
     }),
   ),
+  /** Administrators suspended by two others (P1.15 A3): requested `by`, confirmed at `at`. */
+  administratorSuspensions: z
+    .array(
+      z.object({
+        club: key,
+        target: key,
+        by: key,
+        confirmedBy: key,
+        reason: z.enum(["compromised", "left_task", "other"]),
+        demote: z.boolean().default(false),
+        at: RelativeTimeSchema,
+      }),
+    )
+    .default([]),
   /** "Give own login": the guardian invites the child's address, the child accepts. */
   ownLogins: z.array(z.object({ person: key, by: key, at: RelativeTimeSchema })),
   employments: z.array(

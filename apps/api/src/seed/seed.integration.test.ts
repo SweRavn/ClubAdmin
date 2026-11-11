@@ -133,9 +133,12 @@ describe("demo scenario", () => {
         `${m.club}: ${m.status} (${type})`,
       );
     }
+    // A confirmed suspension (P1.15 A3) ends the target's administrator roles.
+    const suspended = new Set(r.administratorSuspensions.map((x) => `${x.target}/${x.club}`));
     for (const role of r.roles) {
+      const ended = role.until || suspended.has(`${role.person}/${role.club}`);
       expect(summary[role.person]!.roles, `${role.person} ${role.role}`).toContain(
-        `${role.club}: ${role.role}${role.until ? " (ended)" : ""}`,
+        `${role.club}: ${role.role}${ended ? " (ended)" : ""}`,
       );
     }
     for (const g of r.groupMemberships) {

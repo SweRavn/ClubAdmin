@@ -500,7 +500,9 @@
     "country": "Land",
     "joinPolicy": "Hvordan man blir med",
     "create": "Opprett klubben",
-    "request": "Send søknaden"
+    "request": "Send søknaden",
+    "secondAdministrator": "Andre administrator (e-post)",
+    "secondAdministratorHint": "En klubb trenger minst to administratorer for å kunne ta imot medlemmer. Personen får en invitasjon når klubben opprettes; du kan også invitere senere."
   },
   "joinPolicies": {
     "open": "Alle blir med med en gang",
@@ -761,6 +763,14 @@
     "invalid_replacement_role": "Erstatteren må være en annen rolle av samme slag.",
     "permission_not_for_group_roles": "En grupperolle kan bare ha tillatelser som gjelder i en gruppe.",
     "role_not_allowed": "Du kan bare gi roller med tillatelser du selv har i gruppen.",
+    "club_needs_administrators": "Klubben har færre enn to administratorer og kan ikke ta imot nye medlemmer akkurat nå. Utnevn en administrator til under Administratorer.",
+    "administrators_minimum": "Klubben må ha minst to administratorer. Utnevn en til før noen går ut av rollen.",
+    "not_an_administrator": "Personen er ikke administrator.",
+    "suspension_requested": "Det finnes allerede en forespørsel om å suspendere den administratoren.",
+    "suspension_not_open": "Forespørselen er ikke lenger åpen.",
+    "suspension_not_allowed": "Du kan ikke bekrefte eller endre denne suspensjonen: den som ba om den og den den gjelder kan ikke bekrefte den.",
+    "grace_already_extended": "Klubbens frist er allerede forlenget én gang.",
+    "no_grace_period": "Klubben har ingen frist å forlenge.",
     "forbidden": "Du har ikke tillatelse til det. Tillatelsene dine kan ha endret seg: last inn siden på nytt for å se hva du kan gjøre nå."
   },
   "memberExport": {
@@ -1714,6 +1724,20 @@
           "title": "{club} har en ny personvernerklæring",
           "body": "Les hva som er endret og hvilket vedtak det bygger på."
         }
+      },
+      "administrators": {
+        "grace_started": {
+          "title": "{club} trenger en administrator til",
+          "body": "En klubb må ha minst to administratorer. Utnevn en til innen {graceUntil}; deretter kan klubben ikke ta imot nye medlemmer før den har to."
+        },
+        "grace_reminder": {
+          "title": "Påminnelse: {club} trenger en administrator til",
+          "body": "Utnevn en til innen {graceUntil}. Deretter kan klubben ikke ta imot nye medlemmer før den har to administratorer."
+        },
+        "needed": {
+          "title": "{club} kan ikke ta imot nye medlemmer",
+          "body": "Klubben har færre enn to administratorer. Alt annet fungerer som vanlig. Utnevn en administrator til for å kunne legge til medlemmer igjen."
+        }
       }
     },
     "members": {
@@ -1916,6 +1940,26 @@
       "unassigned": {
         "title": "Du har ikke lenger rollen {role} i {club}",
         "body": "En klubbadministrator har avsluttet rollen. Se hva rollene dine tillater."
+      }
+    },
+    "administrator": {
+      "suspension": {
+        "requested": {
+          "title": "{self, select, true {Noen vil suspendere deg som administrator i {club}} other {En suspensjon av en administrator i {club} venter}}",
+          "body": "{self, select, true {En annen administrator har bedt om at du suspenderes ({suspensionReason, select, compromised {mistenkt innbrudd} left_task {oppgaven er gått videre} other {annen grunn}}). Er dette feil? Kontakt klubbens andre administratorer eller lederen.} other {En administrator har bedt om en suspensjon ({suspensionReason, select, compromised {mistenkt innbrudd} left_task {oppgaven er gått videre} other {annen grunn}}). En annen administrator, eller lederen, må bekrefte innen 72 timer.}}"
+        },
+        "closed": {
+          "title": "{status, select, cancelled {Suspensjonen i {club} ble trukket tilbake} other {Suspensjonen i {club} ble ikke bekreftet i tide}}",
+          "body": "{self, select, true {Du er fortsatt administrator.} other {Ingenting er endret.}}"
+        }
+      },
+      "suspended": {
+        "title": "{self, select, true {Du er suspendert som administrator i {club}} other {En administrator i {club} er suspendert}}",
+        "body": "{self, select, true {To administratorer har bekreftet suspensjonen. {suspensionReason, select, compromised {Du er logget ut overalt; logg inn igjen, også for andre klubber.} other {Dine andre verv i klubben kan også være avsluttet.}}} other {Suspensjonen er bekreftet og gjelder straks. Gå gjennom personens endringer av roller og tillatelser de siste 14 dagene.}}"
+      },
+      "added": {
+        "title": "En ny administrator i {club}",
+        "body": "Noen har fått rett til å administrere klubben og hvem som får gjøre hva. Kontroller at det stemmer."
       }
     }
   },
@@ -2590,6 +2634,7 @@
       "expired": "lot utløpe",
       "finished": "fullførte",
       "given": "ga",
+      "grace_extended": "forlenget fristen for",
       "invited": "inviterte",
       "linked": "koblet",
       "merged": "slo sammen",
@@ -2610,13 +2655,14 @@
       "scheduled": "planla",
       "set": "satte",
       "started": "startet",
+      "suspended": "suspenderte",
       "synced": "synkroniserte",
+      "unassigned": "fjernet",
       "undone": "angret",
       "unsubscribed": "avsluttet abonnementet på",
       "updated": "oppdaterte",
       "verified": "verifiserte",
-      "withdrawn": "trakk tilbake",
-      "unassigned": "fjernet"
+      "withdrawn": "trakk tilbake"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -3611,5 +3657,56 @@
     "helpManagers": "Klubbansvarlige ser alltid hvilke medlemmer som har beskyttet identitet, men ikke opplysningene deres, med mindre de også har en rolle som gir det. Det trengs for å finne alle medlemmer og gi dem roller.",
     "helpSelf": "Den som administrerer roller kan gi hvilken som helst rolle, også til seg selv. Det vises på rollesiden, og de andre administratorene og lederen får beskjed.",
     "helpEffect": "En endring gjelder med en gang: neste gang noen med rollen åpner en side, avgjør de nye tillatelsene. De som mister en tillatelse får en varsling."
+  },
+  "administrators": {
+    "title": "Administratorer",
+    "intro": "Administratorer driver klubben og bestemmer hvem som får gjøre hva. En klubb trenger minst to, slik at den aldri står uten og ingen alene kan ta den over. Tre anbefales.",
+    "rolesLink": "Roller og tillatelser",
+    "appointLink": "Utnevn en administrator til",
+    "neededTitle": "Klubben kan ikke ta imot nye medlemmer",
+    "neededBody": "Den har færre enn to administratorer. Alt annet fungerer som vanlig: eksisterende medlemmer, aktiviteter og innlogginger påvirkes ikke.",
+    "graceTitle": "Utnevn en administrator til innen {date}",
+    "graceBody": "En klubb må ha minst to. Deretter kan klubben ikke ta imot nye medlemmer før den har to.",
+    "recommendThird": "Klubben har to administratorer. Med tre kan to av dem suspendere den tredje uten hjelp utenfra, for eksempel etter et innbrudd.",
+    "hideFor90Days": "Skjul i 90 dager",
+    "who": "{count, plural, =0 {Ingen teller akkurat nå} one {# administrator teller} other {# administratorer teller}}",
+    "whoHint": "Den som har tillatelsen til å administrere roller, gjennom hvilken som helst rolle. Bare voksne med egen konto teller mot minimumet.",
+    "counts": "Teller",
+    "notCounted": {
+      "no_account": "Teller ikke: ingen konto",
+      "minor": "Teller ikke: ikke myndig"
+    },
+    "suspend": "Suspender som administrator",
+    "suspendHint": "En annen administrator, eller lederen hvis klubben har nøyaktig to, må bekrefte innen 72 timer. Personen får vite det straks.",
+    "reason": "Grunn",
+    "reasons": {
+      "compromised": "Mistenkt innbrudd",
+      "left_task": "Oppgaven er gått videre",
+      "other": "Annen grunn"
+    },
+    "note": "Notat (valgfritt)",
+    "demote": "Degrader til vanlig medlem: avslutt også personens andre roller i klubben og lederverv i grupper (medlemskapet består). Anbefales ved mistenkt innbrudd.",
+    "startSuspension": "Be om suspensjon",
+    "openSuspensions": "Suspensjoner som venter",
+    "suspensionOf": "<target></target> foreslås suspendert, etter forespørsel fra <by></by>.",
+    "expires": "Må bekreftes innen {date}.",
+    "willDemote": "Personen degraderes til vanlig medlem.",
+    "compromisedHint": "Ved bekreftelse logges personen ut overalt, også hos innloggingstjenesten, og må logge inn igjen, også for andre klubber.",
+    "review": "{count, plural, one {# endring av roller og tillatelser de siste 14 dagene} other {# endringer av roller og tillatelser de siste 14 dagene}}",
+    "reviewOpen": "Se endringene i revisjonsloggen",
+    "confirm": "Bekreft suspensjonen",
+    "cancel": "Trekk tilbake forespørselen",
+    "youAreTarget": "Forespørselen gjelder deg. Er den feil? Kontakt klubbens andre administratorer eller lederen.",
+    "done": {
+      "requested": "Forespørselen er sendt. En annen administrator må bekrefte den.",
+      "confirmed": "Suspensjonen er bekreftet og gjelder straks.",
+      "cancelled": "Forespørselen er trukket tilbake."
+    },
+    "howTitle": "Slik fungerer det",
+    "howMinimum": "Med færre enn to administratorer kan klubben ikke ta imot nye medlemmer. Man kan ikke gå ut av rollen hvis færre enn to ville bli igjen.",
+    "howCounts": "Tillatelsen kan ligge i flere roller. Bare voksne med egen konto teller.",
+    "howThird": "Tre anbefales: da kan to suspendere den tredje uten hjelp.",
+    "howSuspend": "En suspensjon bes om av én administrator og bekreftes av en annen (eller lederen når klubben har to). Med to og lederen berørt hjelper plattformens operatør etter den dokumenterte rutinen.",
+    "howAdd": "Alle administratorer og lederen får vite når noen blir administrator. Én administrator er nok til å utnevne en til."
   }
 }

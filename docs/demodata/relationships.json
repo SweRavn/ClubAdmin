@@ -264,6 +264,30 @@
       "club": "ikn",
       "by": "ahmed",
       "since": "-5y"
+    },
+    {
+      "person": "mats",
+      "club": "svk",
+      "since": "-4y",
+      "by": "peter"
+    },
+    {
+      "person": "linnea",
+      "club": "svk",
+      "since": "-3y",
+      "by": "peter"
+    },
+    {
+      "person": "goran",
+      "club": "ikn",
+      "since": "-6y",
+      "by": "karin"
+    },
+    {
+      "person": "kari",
+      "club": "fil",
+      "since": "-2y",
+      "by": "lars"
     }
   ],
   "roles": [
@@ -340,6 +364,30 @@
       "club": "fil",
       "role": "registrar",
       "since": "-2y"
+    },
+    {
+      "person": "mats",
+      "club": "svk",
+      "role": "club_manager",
+      "since": "-2y"
+    },
+    {
+      "person": "linnea",
+      "club": "svk",
+      "role": "club_manager",
+      "since": "-1y"
+    },
+    {
+      "person": "goran",
+      "club": "ikn",
+      "role": "club_manager",
+      "since": "-3y"
+    },
+    {
+      "person": "kari",
+      "club": "fil",
+      "role": "club_manager",
+      "since": "-1y"
     }
   ],
   "groupMemberships": [
@@ -660,6 +708,17 @@
       ],
       "rowCount": 14,
       "at": "-3d"
+    }
+  ],
+  "administratorSuspensions": [
+    {
+      "club": "svk",
+      "target": "linnea",
+      "by": "anna",
+      "confirmedBy": "sara",
+      "reason": "compromised",
+      "demote": true,
+      "at": "-7d"
     }
   ]
 }

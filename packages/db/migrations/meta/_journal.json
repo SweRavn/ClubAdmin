@@ -232,6 +232,13 @@
       "when": 1794110005000,
       "tag": "0032_club_roles_editable",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794200005000,
+      "tag": "0033_club_administrators",
+      "breakpoints": true
     }
   ]
 }

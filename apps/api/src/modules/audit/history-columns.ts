@@ -755,6 +755,8 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
   // editable and adds the role's history panel (with a policy here).
   "public.roles": "a club's roles, not editable before P1.15 part A2 (role history panel)",
   "public.role_permissions": "a role's permissions, shown with the role from P1.15 part A2",
+  "public.administrator_suspensions":
+    "the two-person rule's requests (P1.15 A3): on the club's administrators page and in the audit log (administrator.*)",
 };
 
 const byTable = new Map(HISTORY_POLICY.map((p) => [p.table, p]));

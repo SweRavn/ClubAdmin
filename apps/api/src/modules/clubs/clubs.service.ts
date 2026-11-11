@@ -9,6 +9,7 @@ import {
   type Database,
   isUniqueViolation,
   outbox,
+  sql,
   type TenantContext,
   type Tx,
 } from "@clubadmin/db";
@@ -39,7 +40,12 @@ export class ClubsService {
   }
 
   /** Inserts the club row; `tx` must be a tenant transaction for `clubId`. Defaults come from the country pack. */
-  async insertClubInTx(tx: Tx, clubId: string, input: CreateClubInput): Promise<Club> {
+  async insertClubInTx(
+    tx: Tx,
+    clubId: string,
+    input: CreateClubInput,
+    options: { administratorsGraceUntil?: Date | null } = {},
+  ): Promise<Club> {
     const data = parseInput(CreateClubSchema, input);
     if (!isSupportedCountry(data.country)) throw new DomainError("unsupported_country");
     const defaults = getCountryPack(data.country).localeDefaults;
@@ -55,6 +61,7 @@ export class ClubsService {
         currency: data.currency ?? defaults.currency,
         organizationNumber: data.organizationNumber ?? null,
         ...(data.joinPolicy ? { joinPolicy: data.joinPolicy } : {}),
+        administratorsGraceUntil: options.administratorsGraceUntil ?? null,
       });
     } catch (error) {
       if (isUniqueViolation(error, "clubs_slug_unique")) throw new DomainError("club_slug_taken");
@@ -63,6 +70,17 @@ export class ClubsService {
     await audit.record(tx, { action: "club.created", resourceType: "club", resourceId: clubId });
     await outbox.publish(tx, "club.created", { clubId });
     return this.getClubInTx(tx, clubId);
+  }
+
+  /**
+   * Whether the club is "needs an administrator" (P1.15 A3, ADR 0046): fewer
+   * than two administrators who count, outside its grace period.
+   */
+  async needsAdministratorsInTx(tx: Tx, clubId: string): Promise<boolean> {
+    const { rows } = await tx.execute<{ needs: boolean }>(
+      sql`SELECT app.club_needs_administrators(${clubId}) AS needs`,
+    );
+    return rows[0]?.needs === true;
   }
 
   getClub(context: TenantContext): Promise<Club> {
