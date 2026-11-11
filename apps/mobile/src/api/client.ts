@@ -7,6 +7,7 @@
 
 import { type ApiClient, createApiClient, onBehalfApplies } from "@clubadmin/api-client";
 import {
+  AUTHZ_VERSION_HEADER,
   CLIENT_DEVICE_HEADER,
   CLIENT_PLATFORM_HEADER,
   CLIENT_VERSION_HEADER,
@@ -16,6 +17,7 @@ import {
 import { randomUUID } from "expo-crypto";
 
 import type { TokenSet } from "../auth/tokens.ts";
+import { noteAuthzVersion } from "./authz-version.ts";
 
 export interface RequestContext {
   /** A valid token set (refreshed when needed); null when signed out. */
@@ -60,11 +62,15 @@ export function authorizedFetch(context: RequestContext, base: typeof fetch = fe
     const retryCopy = request.clone();
     const tokens = await context.tokens();
     const response = await send(request, tokens);
-    if (response.status !== 401 || !tokens) return response;
+    if (response.status !== 401 || !tokens) {
+      noteAuthzVersion(response.headers.get(AUTHZ_VERSION_HEADER));
+      return response;
+    }
     // The access token was refused (expired early, or the session was revoked).
     const renewed = await context.renew();
     const retried = await send(retryCopy, renewed);
     if (retried.status === 401) context.loginEnded();
+    noteAuthzVersion(retried.headers.get(AUTHZ_VERSION_HEADER));
     return retried;
   };
 }

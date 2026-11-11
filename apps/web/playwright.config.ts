@@ -57,6 +57,8 @@ export default defineConfig({
           dependencies: ["member-imports"],
         },
         { name: "events", testMatch: /events\.spec\.ts/, dependencies: ["activities"] },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["events"] },
+        // Club-defined roles (P1.15 A2): changes SVK's own role.
+        { name: "roles", testMatch: /roles\.spec\.ts/, dependencies: ["events"] },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["roles"] },
       ],
 });

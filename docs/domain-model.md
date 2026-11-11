@@ -408,7 +408,12 @@ Every club gets the built-in template's roles when it is created (a trigger
 on `clubs`); the template gives today's roles exactly the permissions they
 had. A club role's permission applies in the whole club (a group permission
 held through a club role in every group); a group role's in its group only,
-not in child groups. Roles become editable in P1.15 part A2.
+not in child groups. Since P1.15 A2 administrators create, change, copy and
+delete roles (archived; holders move to a replacement or their assignments
+end); the club manager role administers the club and access, while the
+register's details, membership changes, guardians, consents and member
+history are the registrar's (ADR 0046). A club's own roles fill the old
+`role`/`function` columns with a stand-in for older readers.
 
 **Club managers** (ADR 0018) have full administrative rights in the club. A club
 can have several; there must always be at least one active manager. The person

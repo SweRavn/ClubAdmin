@@ -82,6 +82,17 @@ export function useMyClubs() {
   });
 }
 
+/** My permissions and roles in a club (P1.15 A2; "My roles"). */
+export function useMyPermissions(clubId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["me", personId, "permissions", clubId],
+    queryFn: async () =>
+      data(await api.GET("/api/v1/me/permissions", { params: { query: { clubId } } })),
+    enabled: personId !== null,
+  });
+}
+
 export function useMyGroups() {
   const { api, personId } = useSession();
   const scope = useScope();

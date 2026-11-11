@@ -41,6 +41,6 @@ test("a club manager reads the audit log by category", async ({ page }) => {
   for (const action of await page
     .getByTestId("audit-entry")
     .evaluateAll((rows) => rows.map((r) => r.getAttribute("data-action")))) {
-    expect(action).toMatch(/^(club\.role|club\.manager|group\.owner)\./);
+    expect(action).toMatch(/^(club\.role|club\.manager|group\.owner|role)\./);
   }
 });

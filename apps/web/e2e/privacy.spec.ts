@@ -36,8 +36,9 @@ test("the club's privacy policy shows the board's decision", async ({ page }) =>
   ).toContainText("Beslutat av styrelsen");
 });
 
-test("a club manager sees who in a team has consented", async ({ page }) => {
-  await loginAs(page, PERSONAS.sara, { returnTo: `/groups/${GROUPS.svkF2017}/consents` });
+// Consents are the registrar's (P1.15 A2): Anna is SVK's club manager and registrar.
+test("the registrar sees who in a team has consented", async ({ page }) => {
+  await loginAs(page, PERSONAS.anna, { returnTo: `/groups/${GROUPS.svkF2017}/consents` });
   await expect(page.getByTestId("consent-table")).toBeVisible();
   await expect(page.getByTestId("consent-counts")).toContainText("Publicering av foto");
 });

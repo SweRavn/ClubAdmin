@@ -199,6 +199,9 @@ export default function Settings() {
             <Body>{t("calendar.ui.title")}</Body>
           </Row>
         ) : null}
+        <Row onPress={() => router.push("/settings/roles")} testID="open-my-roles">
+          <Body>{t("rolesAdmin.myRoles")}</Body>
+        </Row>
         <Row onPress={() => router.push("/settings/protection")} testID="open-protection">
           <Body>{t("protection.title")}</Body>
         </Row>

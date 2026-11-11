@@ -83,6 +83,15 @@ export default async function ClubPage({ params, searchParams }: Params) {
               {t("billing.nav")}
             </a>
           ) : null}
+          {permissions.includes("club.roles.read") ? (
+            <a
+              href={`/clubs/${club.id}/roles`}
+              className="text-sm text-accent underline"
+              data-testid="club-roles-link"
+            >
+              {t("rolesAdmin.title")}
+            </a>
+          ) : null}
           <a
             href={`/clubs/${club.id}/privacy`}
             className="text-sm text-accent underline"

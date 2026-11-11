@@ -178,6 +178,17 @@ export async function templatePermissions(
   return rows.map((r) => r.permission);
 }
 
+/** Every template role's permissions, by "scope:key" (one statement). */
+export async function allTemplatePermissions(tx: Tx): Promise<Map<string, string[]>> {
+  const { rows } = await tx.execute<{ scope: string; template_key: string; permissions: string[] }>(
+    sql`
+    SELECT scope, template_key,
+      coalesce(array_agg(permission) FILTER (WHERE permission IS NOT NULL), '{}') AS permissions
+    FROM app.builtin_role_template() GROUP BY scope, template_key`,
+  );
+  return new Map(rows.map((r) => [`${r.scope}:${r.template_key}`, r.permissions]));
+}
+
 /** Open holders of a role: club assignments and group memberships. */
 export async function holdersOfRole(
   tx: Tx,

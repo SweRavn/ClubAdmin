@@ -149,19 +149,19 @@ club has roughly 10 named/central users plus generated players.
 
 | # | Person | Age | Has login | Relationships (what it tests) |
 |---|---|---|---|---|
-| 1 | **Anna Lindqvist** | 41 | yes | SVK: **chair** (board) + **club manager**. Parent of Elsa (SVK) and Oskar (IKN) → board role + parent in two clubs |
+| 1 | **Anna Lindqvist** | 41 | yes | SVK: **chair** (board) + **club manager** + **registrar** (does the register's work herself, P1.15 A2). Parent of Elsa (SVK) and Oskar (IKN) → board role + parent in two clubs |
 | 2 | **Mikael Lindqvist** | 43 | yes | Parent of Elsa and Oskar; separate household from Anna (divorced) → two full guardians, separate addresses |
 | 3 | **Elsa Lindqvist** | 9 | **no** | SVK F2017 player → child without account, managed by guardians |
 | 4 | **Oskar Lindqvist** | 14 | yes | IKN P2012 player → teen with own login *and* guardians; was created by Anna as a child without email and **got his own email/login last year** (visible in history) |
 | 5 | **Erik Johansson** | 38 | yes | SVK F2017 **head coach**; IKN floorball F2015 **assistant coach**; parent of Maja → leader in two clubs + parent; background check **valid** |
 | 6 | **Maja Johansson** | 10 | no | Plays in SVK F2017 *and* IKN F2015 → one child in two clubs/sports |
-| 7 | **Sara Ahmed** | 35 | yes | SVK **club manager** + **treasurer** + F2017 **team manager** (cash desk) + parent of Alva → several roles in one club, second manager; MFA required |
+| 7 | **Sara Ahmed** | 35 | yes | SVK **club manager** + **treasurer** + F2017 **team manager** (cash desk) + parent of Alva → several roles in one club, second manager; MFA required. Not the registrar: since P1.15 A2 she administers SVK but does not see the register's details, guardians or consents (the roles page offers her the registrar role) |
 | 8 | **Alva Ahmed** | 9 | no | SVK F2017 player; **no photo consent** → tests consent filtering |
 | 9 | **Gunilla Berg** | 68 | yes | Grandmother of Alva, **relative** with view-only rights → restricted guardian kind |
 | 10 | **Johan Nilsson** | 27 | yes | SVK **registrar** (the full member register without manager rights, P1.2), Herr senior player and F2017 **assistant coach**; background check **expires in 20 days** → reminder flow |
-| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior** (membership **paused**, P1.2) and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
+| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** + **registrar** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior**, where he holds SVK's own group role **Materialansvarig** (P1.15 A2) (membership **paused**, P1.2) and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
 | 12 | **Ingrid Haugen** | 12 | no | Daughter of Lars, FIL J2014 player |
-| 13 | **Karin Ek** | 52 | yes | IKN **club manager** + **safeguarding officer**; employed part-time as club administrator (staff, time reporting) |
+| 13 | **Karin Ek** | 52 | yes | IKN **club manager** + **registrar** + **safeguarding officer**; employed part-time as club administrator (staff, time reporting) |
 | 14 | **Ahmed Yilmaz** | 47 | yes | IKN P2012 **head coach**; background check **expired** → must be flagged |
 | 15 | **Liam Yilmaz** | 14 | yes | IKN P2012 player; user preference `en` locale → locale override |
 | 16 | **Peter Sund** | 60 | yes | IKN **treasurer**; former SVK board member and **manager**, handed over to Anna last year → historic roles (valid_to in past); has a **pending manager hand-over** from Karin in IKN |
@@ -377,6 +377,16 @@ schedule (Ola left two years ago).
   Lindqvist, and Tove Ek without a birth date (an error). Open
   `/clubs/<ikn>/members/import` as Karin with a second factor to try the
   preview. Both start from a file through the import service.
+
+## Club-defined roles (P1.15)
+
+Every club has the built-in template's roles (ADR 0046). SVK calls its team
+managers **Lagansvarig** and has its own group role **Materialansvarig**
+("Planera gruppens aktiviteter"), held by Lars in Herr; FIL's team managers
+(**Lagledare**) no longer see consents. The single-person administrators
+(Anna in SVK, Karin in IKN, Lars in FIL) also hold the registrar role; Sara
+(SVK) does not, which shows the club manager's split: try the roles page
+(`/clubs/<svk>/roles`) as Sara, and "Mina roller" (`/me/roles`) as anyone.
 
 ## Load scenario
 

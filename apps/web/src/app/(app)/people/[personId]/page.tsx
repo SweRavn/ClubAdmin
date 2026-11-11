@@ -16,6 +16,7 @@ import { GuardianRow, RightsFields } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
 import { PersonConsents } from "../../../../components/person-consents.tsx";
+import { PersonClubRoles } from "../../../../components/person-roles.tsx";
 import { ClubProtectionPanel, ProtectionControls } from "../../../../components/protection.tsx";
 import {
   getClubGroups,
@@ -60,6 +61,12 @@ export default async function PersonPage({ params, searchParams }: Props) {
       )
     : undefined;
   const isActiveMember = profile.club?.membership?.status === "active";
+  // Club roles (P1.15 A2): read with club.roles.read, given and ended with club.roles.manage.
+  const roleClub = profile.club
+    ? mine.clubs.find(
+        (c) => c.club.id === profile.club!.clubId && c.permissions.includes("club.roles.read"),
+      )
+    : undefined;
   // Registrars and club managers change memberships here (P1.2).
   const registerClub = profile.club?.membership
     ? mine.clubs.find(
@@ -293,6 +300,15 @@ export default async function PersonPage({ params, searchParams }: Props) {
             </ActionForm>
           </div>
         </section>
+      ) : null}
+
+      {roleClub && profile.club ? (
+        <PersonClubRoles
+          clubId={profile.club.clubId}
+          personId={personId}
+          canManage={roleClub.permissions.includes("club.roles.manage")}
+          back={`/people/${personId}?clubId=${profile.club.clubId}`}
+        />
       ) : null}
 
       {clubGuardians && guardianClub ? (

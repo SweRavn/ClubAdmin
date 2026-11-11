@@ -1,7 +1,7 @@
 # 0046 — Club-defined roles: permissions in a catalogue, roles per club
 
-**Status:** Accepted, part A1 implemented (P1.15; decisions with the
-maintainer on 2026-11-08 and 2026-11-11). Parts A2–A4 and B grow this ADR.
+**Status:** Accepted, parts A1 and A2 implemented (P1.15; decisions with the
+maintainer on 2026-11-08 and 2026-11-11). Parts A3, A4 and B grow this ADR.
 Amends ADR 0006 (authorization: policies ask for permissions, not role
 names), ADR 0018 (the locked club manager and chair roles), ADR 0019 (group
 roles next to ownership) and ADR 0022 (who sees protected people is a
@@ -102,3 +102,58 @@ club managers and registrars, as before.
 - Web and mobile still read the old `roles` and `functions` fields for
   hints (e.g. who may merge duplicates); A2 moves them to
   `/me/permissions`.
+
+## Part A2: editable roles, the club manager's split, immediate effect
+
+**Decision.**
+
+- **The club manager administers, the registrar does the register's
+  work** (decision 2026-11-08). Migration 0032 gives the club manager the
+  club's administration: settings, roles (`club.roles.manage`,
+  `club.roles.read`), groups and owners, invitations, join requests and
+  waiting lists, places and events, protection flags and duplicates, the
+  audit log and the history of groups, activities and events, the
+  subscription and billing. The register's details, membership changes,
+  adding and importing members, guardians, consents, own logins, member
+  history and correcting locked attendance moved to the registrar
+  (`MANAGER_SPLIT`); the managers of existing clubs are told (notice and
+  email), and the roles page offers them the registrar role in one click.
+  The club manager still plans every group's activities and so takes
+  attendance as a planner. Board members and club managers read the
+  register's names and open a member's profile with the name only (tier
+  "member"); club managers see protected people (decision 12).
+- **Locked permissions**: the club manager keeps `club.roles.manage` and
+  `club.people.protected`, the chair `club.managers.claim`; locked roles
+  cannot be deleted.
+- **Roles are created, changed (from the version the editor saw: 409
+  `role_changed`), copied, reset to the template and deleted** (archived:
+  history keeps them; holders move to a replacement of the same scope, or
+  their assignments end). A group role holds group permissions only.
+- **Assignment**: club roles through `/clubs/:clubId/role-assignments`
+  (club.roles.manage), group roles in the group's member list (the body's
+  `roleId`). Without club.roles.manage a role may only be given if the
+  caller holds its permissions in the group (owners: what owning gives;
+  taking part and counting as a leader are not powers);
+  `/groups/:groupId/assignable-roles` lists those roles.
+- **The old columns stay**: `role_id` is NOT NULL; a club's own roles fill
+  `role`/`function` with a stand-in (`staff`; `member` for a role that
+  takes part, else `other_leader`) so older readers keep working (ADR
+  0029); uniqueness moved to the role.
+- **Immediate effect** (deviation from the prompt's per-club version): a
+  change of a role's permissions publishes `role.updated`; the worker bumps
+  the relationship version of every holder and of their guardians, as it
+  does for every other relationship change (well under a second). Every
+  authenticated response carries `x-authz-version` (the caller's version);
+  the mobile app refetches what it shows when it changes, the web app reads
+  permissions on every page anyway, and a refused form says the
+  permissions may have changed. The silent push is not built (best effort
+  in the prompt; the header is what guarantees it).
+- **People are told**: holders of a role that lost permissions, a person
+  whose role was ended, and, when an administrator gives themselves a
+  role, the other administrators and the chair (mandatory email).
+
+**Consequences.** The permission matrix differs from A1 only by the table
+of intended changes in `authorization.integration.test.ts` (the club
+manager's register, guardian, consent and member-history endpoints). The
+role's own history panel (ADR 0042) is not built yet: role changes are in
+the club's history and the audit log (`role.*`).

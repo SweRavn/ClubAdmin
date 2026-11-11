@@ -2,10 +2,13 @@
 // Signed-in part of the app: redirects to login when there is no login, shows
 // the banners and the screens.
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Redirect, Stack } from "expo-router";
+import { useEffect } from "react";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
+import { onAuthzChanged } from "../../api/authz-version.ts";
 import { useClientInfo } from "../../api/queries.ts";
 import { Banners } from "../../components/banners.tsx";
 import { hasFeature } from "../../state/client-info.ts";
@@ -18,6 +21,10 @@ export default function SignedInLayout() {
   const theme = useTheme();
   const t = useTranslations();
   const info = useClientInfo();
+  const queryClient = useQueryClient();
+  // What the person may do changed (P1.15 A2, x-authz-version): refetch what
+  // is shown; screens they may no longer see answer 403/404 and leave the cache.
+  useEffect(() => onAuthzChanged(() => void queryClient.invalidateQueries()), [queryClient]);
   // Push only when the server has a push provider (P1.7, ADR 0029).
   usePush(
     api,
@@ -58,6 +65,7 @@ export default function SignedInLayout() {
         <Stack.Screen name="settings/sessions" options={{ title: t("sessions.title") }} />
         <Stack.Screen name="settings/calendar" options={{ title: t("calendar.ui.title") }} />
         <Stack.Screen name="settings/protection" options={{ title: t("protection.title") }} />
+        <Stack.Screen name="settings/roles" options={{ title: t("rolesAdmin.myRoles") }} />
         <Stack.Screen name="settings/privacy" options={{ title: t("privacy.title") }} />
         <Stack.Screen name="settings/privacy-policy" options={{ title: t("privacy.policyLink") }} />
         <Stack.Screen

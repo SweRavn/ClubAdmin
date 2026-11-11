@@ -39,6 +39,11 @@ export default async function AccountPage() {
           </a>
         </li>
         <li>
+          <a href="/me/roles" className="text-accent underline" data-testid="me-roles">
+            {t("rolesAdmin.myRoles")}
+          </a>
+        </li>
+        <li>
           <a href="/me/protection" className="text-accent underline" data-testid="me-protection">
             {t("userMenu.protection")}
           </a>

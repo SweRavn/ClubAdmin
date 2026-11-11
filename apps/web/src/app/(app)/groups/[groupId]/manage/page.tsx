@@ -8,7 +8,7 @@ import { enumKey } from "@clubadmin/i18n";
 import { GROUP_FUNCTIONS } from "@clubadmin/shared";
 import { personLabel, PersonName } from "@clubadmin/ui";
 import { forbidden } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import {
   ActionForm,
@@ -17,7 +17,9 @@ import {
   secondaryButtonClass,
 } from "../../../../../components/action-form.tsx";
 import { FormError, Notice } from "../../../../../components/form-error.tsx";
+import { roleName } from "../../../../../components/roles.ts";
 import {
+  getAssignableRoles,
   getClubSeasons,
   getGroup,
   getGroupCandidates,
@@ -40,7 +42,12 @@ export async function generateMetadata() {
 
 export default async function ManageGroupPage({ params, searchParams }: Props) {
   const [{ groupId }, query] = await Promise.all([params, searchParams]);
-  const [t, group, mine] = await Promise.all([getTranslations(), getGroup(groupId), getMyClubs()]);
+  const [t, locale, group, mine] = await Promise.all([
+    getTranslations(),
+    getLocale(),
+    getGroup(groupId),
+    getMyClubs(),
+  ]);
   if (!group.canManage && !group.canManageMembers && !group.canManageOwners) forbidden();
   const isManager =
     mine.clubs
@@ -48,7 +55,12 @@ export default async function ManageGroupPage({ params, searchParams }: Props) {
       ?.permissions.includes("club.settings.update") ?? false;
   const ownerQ = one(query.ownerQ);
   const memberQ = one(query.memberQ);
-  const fnParam = one(query.function);
+  // The club's group roles the caller may give here (P1.15 A2); the old
+  // function names stand for the template roles.
+  const assignable = group.canManageMembers ? await getAssignableRoles(group.id) : null;
+  const roleParam = one(query.role);
+  const chosen = assignable?.items.find((r) => r.id === roleParam);
+  const fnParam = chosen ? (chosen.templateKey ?? "") : one(query.function);
   const fn = (GROUP_FUNCTIONS as readonly string[]).includes(fnParam) ? fnParam : "member";
   const [members, seasons, groupSeasons, ownerMatches, memberMatches] = await Promise.all([
     getGroupMembers(group.id, 200),
@@ -236,14 +248,24 @@ export default async function ManageGroupPage({ params, searchParams }: Props) {
                 data-testid="member-search"
               />
               <label className="flex items-center gap-2 text-sm">
-                {t("groupAdmin.function")}
-                <select name="function" defaultValue={fn} className={inputClass}>
-                  {GROUP_FUNCTIONS.map((f) => (
-                    <option key={f} value={f}>
-                      {fnLabel(f)}
-                    </option>
-                  ))}
-                </select>
+                {t("rolesAdmin.groupRole")}
+                {assignable ? (
+                  <select name="role" defaultValue={chosen?.id ?? ""} className={inputClass}>
+                    {assignable.items.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {roleName(t, locale, { ...r, scope: "group" })}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <select name="function" defaultValue={fn} className={inputClass}>
+                    {GROUP_FUNCTIONS.map((f) => (
+                      <option key={f} value={f}>
+                        {fnLabel(f)}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </label>
               <button type="submit" className={secondaryButtonClass}>
                 {t("groupAdmin.searchButton")}
@@ -263,6 +285,7 @@ export default async function ManageGroupPage({ params, searchParams }: Props) {
                         <input type="hidden" name="groupId" value={group.id} />
                         <input type="hidden" name="personId" value={c.person.id} />
                         <input type="hidden" name="function" value={fn} />
+                        {chosen ? <input type="hidden" name="roleId" value={chosen.id} /> : null}
                         <span>{candidateLine(c)}</span>
                         {full && fn === "member" ? (
                           <label className="flex items-center gap-1 text-sm">

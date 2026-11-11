@@ -110,11 +110,10 @@ export class ClubRolesService {
   }
 
   private async templatesOf(tx: Tx, roles: readonly ClubRoleRow[]): Promise<Map<string, string[]>> {
+    const all = await repo.allTemplatePermissions(tx);
     const templates = new Map<string, string[]>();
     for (const r of roles) {
-      if (r.templateKey) {
-        templates.set(r.id, await repo.templatePermissions(tx, r.scope, r.templateKey));
-      }
+      if (r.templateKey) templates.set(r.id, all.get(`${r.scope}:${r.templateKey}`) ?? []);
     }
     return templates;
   }

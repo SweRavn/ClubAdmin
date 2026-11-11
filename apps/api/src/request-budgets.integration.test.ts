@@ -253,6 +253,34 @@ const CASES: Case[] = [
     statements: 6,
     pages: 110,
   },
+  // Club-defined roles (P1.15 A2): the app's "my roles" (the relationship
+  // set plus the club's roles by club), the roles page (roles with their
+  // permissions and holder counts by the role indexes, and the people who
+  // gave themselves a role) and who holds a permission (keyset by person).
+  {
+    route: "GET /api/v1/me/permissions",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/me/permissions?clubId=${key("svk")}`,
+    statements: 1,
+    pages: 160,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/roles",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/roles`,
+    statements: 4,
+    pages: 170,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/permissions/{permission}/holders",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/permissions/group.participate/holders?limit=50`,
+    statements: 2,
+    pages: 90,
+  },
   // History panels and the audit log (P1.9, web only; ADR 0042). Read
   // through the history pool: the scope, the club rows' history, the global
   // rows' history, the current rows behind the page and the names it

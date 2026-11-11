@@ -13,7 +13,8 @@ test("a club manager adds a leader to a team and ends the function", async ({ pa
   const members = page.getByTestId("group-members-admin");
   await expect(members).toBeVisible();
   await page.getByTestId("member-search").fill("Lars");
-  await members.locator("select[name=function]").selectOption("other_leader");
+  // The club's group roles (P1.15 A2): "Ledare" is the template role other_leader.
+  await members.locator("select[name=role]").selectOption({ label: "Ledare" });
   await members.getByRole("button", { name: "Sök" }).click();
   await page.getByTestId("add-member").first().click();
   await expect(page.getByText("Tillagd i gruppen.")).toBeVisible();

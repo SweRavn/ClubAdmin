@@ -232,7 +232,13 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   `club_role_assignments_role_idx` / `group_memberships_role_idx` and
   `role_permissions_unique`. The schedule, rosters, attendance and
   recipients read `group_memberships.participates` / `leads` instead of
-  joining roles. Request budgets are unchanged.
+  joining roles. Request budgets are unchanged. A2 adds budgets for
+  `/me/permissions` (one statement after the cached relationship set), the
+  roles page (four statements: roles with permissions and holder counts by
+  the role indexes, the template, the people who gave themselves a role)
+  and the holders of a permission (two statements, keyset by person). A
+  role's change invalidates its holders through the worker (one bump per
+  holder), not every relationship set.
 - Member register (P1.2, `register-plans.integration.test.ts`: one club with
   10,000 members among 100,000 people, as the club's registrar with row-level
   security): p95 of a 50-row page sorted by name about 80–95 ms, search as you
