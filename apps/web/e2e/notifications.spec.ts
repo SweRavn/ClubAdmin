@@ -14,7 +14,11 @@ test("the bell counts unread notices; opening one marks it read and follows its 
 }) => {
   await loginAs(page, PERSONAS.anna);
   const bell = page.getByTestId("notifications-bell");
-  await expect(page.getByTestId("notifications-badge")).toHaveText("2");
+  // The seed's two unread notices, and an answer request if the worker's
+  // five-minute job (notifications:response_requests) ran since the seed.
+  const badge = page.getByTestId("notifications-badge");
+  await expect(badge).toHaveText(/^[23]$/);
+  const unread = Number(await badge.textContent());
   await bell.click();
   await expect(page).toHaveURL(/\/me\/notifications$/);
   const list = page.getByTestId("notifications");
@@ -23,10 +27,10 @@ test("the bell counts unread notices; opening one marks it read and follows its 
   await expect(cancelled).toContainText("Elsa Lindqvist");
   await cancelled.getByRole("button").click();
   await expect(page).toHaveURL(/\/activities\/[0-9a-f-]{36}$/);
-  await expect(page.getByTestId("notifications-badge")).toHaveText("1");
+  await expect(badge).toHaveText(String(unread - 1));
 
   await page.goto("/me/notifications?unread=true");
-  await expect(page.getByTestId("notifications").locator("li")).toHaveCount(1);
+  await expect(page.getByTestId("notifications").locator("li")).toHaveCount(unread - 1);
   await page.getByTestId("notifications-mark-all").click();
   await expect(page.getByTestId("notifications-empty")).toBeVisible();
   await expect(page.getByTestId("notifications-badge")).toHaveCount(0);
