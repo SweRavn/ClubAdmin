@@ -234,7 +234,7 @@ overrides:
   '@esbuild-kit/core-utils>esbuild': ^0.25.0
   xcode>uuid: ^11.1.1
   '@nestjs/platform-fastify>fastify': 5.12.7
-  node-forge@1.4.0: 1.4.1
+  node-forge@1.4.0: 1.4.3
 
 importers:
 
@@ -6556,8 +6556,8 @@ packages:
   node-addon-api@7.1.1:
     resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
 
-  node-forge@1.4.1:
-    resolution: {integrity: sha512-w5/MfWaeMrpR/5ba6fZyAUTLSuE6aYz7H/3cYrqwZEmf5eQS3IaaLgJt4MBv7HglGFWmV22K8h4U18RJQmw/ow==}
+  node-forge@1.4.3:
+    resolution: {integrity: sha512-P6wzfh6t70avmV8FrVEAd/36sOPJQ+hkaJVX1Laap9J/77m7M0eyozDvc8SwnDf4P7MP94gwbAAo0rg3YVXT+g==}
     engines: {node: '>= 6.13.0'}
 
   node-int64@0.4.0:
@@ -9002,7 +9002,7 @@ snapshots:
       glob: 13.0.6
       lan-network: 0.2.1
       multitars: 1.0.2
-      node-forge: 1.4.1
+      node-forge: 1.4.3
       npm-package-arg: 11.0.3
       ora: 3.4.0
       picomatch: 4.0.7
@@ -9039,7 +9039,7 @@ snapshots:
 
   '@expo/code-signing-certificates@0.0.6':
     dependencies:
-      node-forge: 1.4.1
+      node-forge: 1.4.3
 
   '@expo/config-plugins@57.0.10(typescript@6.0.3)':
     dependencies:
@@ -14583,7 +14583,7 @@ snapshots:
 
   node-addon-api@7.1.1: {}
 
-  node-forge@1.4.1: {}
+  node-forge@1.4.3: {}
 
   node-int64@0.4.0: {}
 
