@@ -258,38 +258,32 @@ CREATE TRIGGER clubs_create_roles AFTER INSERT ON public.clubs
   FOR EACH ROW EXECUTE FUNCTION app.clubs_create_roles();
 --> statement-breakpoint
 
--- A template role's ID in a club, and whether a role takes part in or leads
--- a group (for the triggers below; in the club's tenant scope, whoever writes).
-CREATE FUNCTION app.template_role_id(p_club uuid, p_scope text, p_key text) RETURNS uuid
+-- A group membership's role (by its ID, or by the template key older writers
+-- name) and whether it takes part and leads: one lookup per row, in the
+-- club's tenant scope whoever writes. Club role assignments need the ID only.
+CREATE FUNCTION app.role_of(p_club uuid, p_scope text, p_role uuid, p_key text,
+    OUT role_id uuid, OUT participates boolean, OUT leads boolean)
   LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
 DECLARE
   v_previous text := app.setting('app.club_id');
-  v_id uuid;
 BEGIN
   PERFORM set_config('app.club_id', p_club::text, true);
-  SELECT r.id INTO v_id FROM public.roles r
-  WHERE r.club_id = p_club AND r.scope = p_scope AND r.template_key = p_key;
+  SELECT r.id,
+    coalesce(bool_or(rp.permission = 'group.participate'), false),
+    coalesce(bool_or(rp.permission = 'group.lead'), false)
+  INTO role_id, participates, leads
+  FROM public.roles r
+  LEFT JOIN public.role_permissions rp ON rp.club_id = r.club_id AND rp.role_id = r.id
+    AND rp.permission IN ('group.participate', 'group.lead')
+  WHERE r.club_id = p_club
+    AND (CASE WHEN p_role IS NOT NULL THEN r.id = p_role
+         ELSE r.scope = p_scope AND r.template_key = p_key END)
+  GROUP BY r.id;
   PERFORM set_config('app.club_id', coalesce(v_previous, ''), true);
-  RETURN v_id;
 END
 $$;
-CREATE FUNCTION app.role_holds(p_club uuid, p_role uuid, p_permission text) RETURNS boolean
-  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
-DECLARE
-  v_previous text := app.setting('app.club_id');
-  v_holds boolean;
-BEGIN
-  PERFORM set_config('app.club_id', p_club::text, true);
-  v_holds := EXISTS (SELECT 1 FROM public.role_permissions rp
-    WHERE rp.club_id = p_club AND rp.role_id = p_role AND rp.permission = p_permission);
-  PERFORM set_config('app.club_id', coalesce(v_previous, ''), true);
-  RETURN v_holds;
-END
-$$;
-REVOKE ALL ON FUNCTION app.template_role_id(uuid, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION app.role_holds(uuid, uuid, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION app.template_role_id(uuid, text, text), app.role_holds(uuid, uuid, text)
-  TO clubadmin_app;
+REVOKE ALL ON FUNCTION app.role_of(uuid, text, uuid, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app.role_of(uuid, text, uuid, text) TO clubadmin_app;
 
 -- Older writers name the role or function; newer ones (A2) the role.
 CREATE FUNCTION app.club_role_assignments_role() RETURNS trigger
@@ -297,7 +291,7 @@ CREATE FUNCTION app.club_role_assignments_role() RETURNS trigger
 BEGIN
   IF NEW.role_id IS NULL OR (TG_OP = 'UPDATE' AND NEW.role IS DISTINCT FROM OLD.role
       AND NEW.role_id IS NOT DISTINCT FROM OLD.role_id) THEN
-    NEW.role_id := app.template_role_id(NEW.club_id, 'club', NEW.role);
+    NEW.role_id := (app.role_of(NEW.club_id, 'club', NULL, NEW.role)).role_id;
   END IF;
   RETURN NEW;
 END
@@ -307,13 +301,18 @@ CREATE TRIGGER club_role_assignments_role BEFORE INSERT OR UPDATE OF role, role_
 
 CREATE FUNCTION app.group_memberships_role() RETURNS trigger
   LANGUAGE plpgsql SET search_path = pg_catalog, pg_temp AS $$
+DECLARE
+  v_role record;
 BEGIN
   IF NEW.role_id IS NULL OR (TG_OP = 'UPDATE' AND NEW.function IS DISTINCT FROM OLD.function
       AND NEW.role_id IS NOT DISTINCT FROM OLD.role_id) THEN
-    NEW.role_id := app.template_role_id(NEW.club_id, 'group', NEW.function);
+    v_role := app.role_of(NEW.club_id, 'group', NULL, NEW.function);
+  ELSE
+    v_role := app.role_of(NEW.club_id, 'group', NEW.role_id, NULL);
   END IF;
-  NEW.participates := coalesce(app.role_holds(NEW.club_id, NEW.role_id, 'group.participate'), false);
-  NEW.leads := coalesce(app.role_holds(NEW.club_id, NEW.role_id, 'group.lead'), false);
+  NEW.role_id := v_role.role_id;
+  NEW.participates := coalesce(v_role.participates, false);
+  NEW.leads := coalesce(v_role.leads, false);
   RETURN NEW;
 END
 $$;
