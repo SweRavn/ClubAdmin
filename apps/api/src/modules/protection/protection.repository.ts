@@ -113,6 +113,24 @@ export interface ViewContext {
 export const roleKey = (clubId: string | null, viewer: string, viewed: string | null) =>
   `${clubId ?? ""}:${viewer}:${viewed ?? ""}`;
 
+/* eslint-disable clubadmin/no-role-names -- labels a viewer in the access log, decides nothing */
+/** Which of a viewer's roles names them in the access log. */
+const ROLE_LABEL_ORDER = [
+  "club_manager",
+  "registrar",
+  "chair",
+  "vice_chair",
+  "treasurer",
+  "secretary",
+  "board_member",
+  "deputy_board_member",
+  "auditor",
+  "nomination_committee",
+  "safeguarding_officer",
+  "communications",
+] as const;
+/* eslint-enable clubadmin/no-role-names */
+
 /**
  * Club names and the relationship that allows each viewer to open the
  * profile now (read time): a club role, a leader function, guardian of the
@@ -140,13 +158,11 @@ export async function viewContext(tx: Tx, rows: readonly ViewRow[]): Promise<Vie
       coalesce(
         (SELECT r.role FROM public.club_role_assignments r
          WHERE r.club_id = x.club AND r.person_id = x.viewer AND r.valid_to IS NULL
-         ORDER BY array_position(ARRAY['club_manager', 'registrar', 'chair', 'vice_chair',
-           'treasurer', 'secretary', 'board_member', 'deputy_board_member', 'auditor',
-           'nomination_committee', 'safeguarding_officer', 'communications']::text[], r.role::text)
+         ORDER BY array_position(${`{${ROLE_LABEL_ORDER.join(",")}}`}::text[], r.role::text)
          LIMIT 1),
         CASE WHEN EXISTS (SELECT 1 FROM public.group_memberships gm
           WHERE gm.club_id = x.club AND gm.person_id = x.viewer AND gm.valid_to IS NULL
-            AND gm.function <> 'member') THEN 'group_leader' END,
+            AND gm.leads) THEN 'group_leader' END,
         CASE WHEN EXISTS (SELECT 1 FROM public.guardianships g
           WHERE g.guardian_person_id = x.viewer AND g.ward_person_id = x.viewed
             AND g.status = 'active' AND g.valid_to IS NULL) THEN 'guardian' END,

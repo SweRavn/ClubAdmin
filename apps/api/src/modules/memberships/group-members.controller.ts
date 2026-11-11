@@ -127,7 +127,7 @@ export class GroupMembersController {
   ): Promise<GroupCandidateList> {
     const group = resourceOf(authz, "group");
     // Protected members only for those who see every protected member of the club.
-    const viewerPrivileged = authz.actor.hasClubRole(group.clubId, "club_manager", "registrar");
+    const viewerPrivileged = authz.actor.holds("club.people.protected", group.clubId);
     const context = tenantContext(authz, group.clubId, { viewerPrivileged });
     const page = await this.memberships.groupCandidates(context, group.groupId, query);
     const rows = await this.people.summaries(
@@ -217,7 +217,7 @@ export class GroupMembersController {
       tenantContext(authz, group.clubId),
       group.groupId,
       body.personId,
-      authz.actor.isClubManager(group.clubId) ? "club_manager" : "group_owner",
+      authz.actor.holds("group.owners.manage", group.clubId) ? "club_manager" : "group_owner",
     );
     return null;
   }

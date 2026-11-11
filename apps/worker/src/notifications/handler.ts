@@ -21,6 +21,7 @@ import {
   type NotificationType,
 } from "@clubadmin/shared";
 
+import { clubHolders } from "../holders.ts";
 import { mailHandler, type MailHandlerOptions, memoryMailProvider } from "../mail.ts";
 import { type Channels, createNotices, debounce, type Notice } from "./fanout.ts";
 import {
@@ -344,10 +345,10 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
         case "membership.left": {
           const { clubId, personId } = DOMAIN_EVENTS["membership.left"].parse(event.payload);
           await useClub(tx, clubId);
+          // Those who manage memberships (club managers, registrars).
           const { rows } = await tx.execute<{ person_id: string }>(sql`
-            SELECT DISTINCT person_id FROM public.club_role_assignments
-            WHERE club_id = ${clubId} AND role IN ('club_manager', 'registrar')
-              AND valid_to IS NULL AND person_id <> ${personId}`);
+            SELECT DISTINCT h.person_id FROM (${clubHolders(clubId, "club.members.manage")}) h
+            WHERE h.person_id <> ${personId}`);
           await notify(
             tx,
             rows.map((r) => ({
@@ -369,8 +370,7 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
           );
           await useClub(tx, clubId);
           const { rows } = await tx.execute<{ person_id: string }>(sql`
-            SELECT person_id FROM public.club_role_assignments
-            WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL
+            ${clubHolders(clubId, "club.roles.manage")}
             UNION
             SELECT person_id FROM public.group_owners
             WHERE club_id = ${clubId} AND group_id = ${groupId ?? null}::uuid AND valid_to IS NULL`);
@@ -537,10 +537,9 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
           for (const clubId of clubIds) {
             await useClub(tx, clubId);
             const { rows } = await tx.execute<{ person_id: string }>(sql`
-              SELECT DISTINCT person_id FROM public.club_role_assignments
-              WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL
-                AND person_id <> ${payload.personId}
-                AND person_id IS DISTINCT FROM ${by}::uuid`);
+              SELECT DISTINCT h.person_id FROM (${clubHolders(clubId, "person.protection.set")}) h
+              WHERE h.person_id <> ${payload.personId}
+                AND h.person_id IS DISTINCT FROM ${by}::uuid`);
             for (const r of rows) {
               notices.push({
                 recipientPersonId: r.person_id,
@@ -860,12 +859,14 @@ async function movedShape(tx: Tx, origin: MovedOrigin): Promise<MovedShape | nul
   }
 }
 
-/** Who gets billing notices: the club's managers, and its treasurers unless only managers. */
+/**
+ * Who gets billing notices: those who read the club's invoices (managers and
+ * treasurers), or only those who choose the plan (managers).
+ */
 async function billingRecipients(tx: Tx, clubId: string, managersOnly: boolean): Promise<string[]> {
-  const roles = managersOnly ? ["club_manager"] : ["club_manager", "treasurer"];
+  const permission = managersOnly ? "billing.subscription.change" : "billing.invoices.read";
   const { rows } = await tx.execute<{ person_id: string }>(sql`
-    SELECT DISTINCT person_id FROM public.club_role_assignments
-    WHERE club_id = ${clubId} AND role = ANY (${`{${roles.join(",")}}`}::text[]) AND valid_to IS NULL`);
+    SELECT DISTINCT h.person_id FROM (${clubHolders(clubId, permission)}) h`);
   return rows.map((r) => r.person_id);
 }
 
@@ -980,8 +981,7 @@ async function waitlistAdmitters(tx: Tx, clubId: string, entryId: string): Promi
     )
     SELECT person_id FROM owners
     UNION
-    SELECT r.person_id FROM public.club_role_assignments r
-    WHERE r.club_id = ${clubId} AND r.role = 'club_manager' AND r.valid_to IS NULL
-      AND NOT EXISTS (SELECT 1 FROM owners)`);
+    SELECT h.person_id FROM (${clubHolders(clubId, "group.waitlist.manage")}) h
+    WHERE NOT EXISTS (SELECT 1 FROM owners)`);
   return rows.map((r) => r.person_id);
 }

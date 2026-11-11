@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { and, eq, isNull, ne, registerConditions, schema, sql, type Tx } from "@clubadmin/db";
+import { and, eq, isNull, registerConditions, schema, sql, type Tx } from "@clubadmin/db";
 import type { GroupFunction } from "@clubadmin/shared";
 
 const { clubMemberships, groupMemberships } = schema;
@@ -103,7 +103,7 @@ export async function endGroupMembership(tx: Tx, id: string): Promise<void> {
     .where(eq(groupMemberships.id, id));
 }
 
-/** The person's open leader functions (anything but plain membership) in the club's groups. */
+/** The person's open leader roles (`group.lead`, P1.15) in the club's groups. */
 export async function leaderFunctionsOfPerson(
   tx: Tx,
   clubId: string,
@@ -121,7 +121,7 @@ export async function leaderFunctionsOfPerson(
         eq(groupMemberships.clubId, clubId),
         eq(groupMemberships.personId, personId),
         isNull(groupMemberships.validTo),
-        ne(groupMemberships.function, "member"),
+        eq(groupMemberships.leads, true),
       ),
     )
     .orderBy(groupMemberships.groupId, groupMemberships.function);
@@ -154,6 +154,7 @@ export function groupMembersQuery(tx: Tx, clubId: string, groupId: string) {
       id: groupMemberships.id,
       personId: groupMemberships.personId,
       function: groupMemberships.function,
+      leads: groupMemberships.leads,
     })
     .from(groupMemberships)
     .where(
@@ -200,7 +201,13 @@ export async function activeMemberIds(tx: Tx, clubId: string): Promise<string[]>
   return rows.map((r) => r.personId);
 }
 
-export type GroupMember = { id: string; personId: string; function: GroupFunction };
+export type GroupMember = {
+  id: string;
+  personId: string;
+  function: GroupFunction;
+  /** The role counts as the group's leader (`group.lead`, P1.15). */
+  leads: boolean;
+};
 
 export interface GroupMembersPageRow {
   totalCount: number;
@@ -269,7 +276,9 @@ export function groupMembersPageQuery(
 export async function endOpenMembershipsOfGroup(
   tx: Tx,
   groupId: string,
-): Promise<{ id: string; personId: string; function: GroupFunction }[]> {
+): Promise<
+  { id: string; personId: string; function: GroupFunction; participates: boolean; leads: boolean }[]
+> {
   return tx
     .update(groupMemberships)
     .set({ validTo: sql`now()` })
@@ -278,6 +287,8 @@ export async function endOpenMembershipsOfGroup(
       id: groupMemberships.id,
       personId: groupMemberships.personId,
       function: groupMemberships.function,
+      participates: groupMemberships.participates,
+      leads: groupMemberships.leads,
     });
 }
 
@@ -287,8 +298,8 @@ export async function openMembershipCounts(
   groupId: string,
 ): Promise<{ members: number; leaders: number }> {
   const { rows } = await tx.execute<{ members: number; leaders: number }>(sql`
-    SELECT count(*) FILTER (WHERE function = 'member')::int AS members,
-      count(*) FILTER (WHERE function <> 'member')::int AS leaders
+    SELECT count(*) FILTER (WHERE participates)::int AS members,
+      count(*) FILTER (WHERE leads)::int AS leaders
     FROM public.group_memberships WHERE group_id = ${groupId} AND valid_to IS NULL`);
   return rows[0] ?? { members: 0, leaders: 0 };
 }
@@ -376,11 +387,11 @@ export async function groupCandidates(
 }
 
 /** Whether the person holds the function in the group now. */
-export async function hasOpenGroupFunction(
+/** Whether the person takes part in the group now (a role with `group.participate`, P1.15). */
+export async function takesPartInGroup(
   tx: Tx,
   groupId: string,
   personId: string,
-  fn: GroupFunction,
 ): Promise<boolean> {
   const [row] = await tx
     .select({ id: groupMemberships.id })
@@ -389,7 +400,7 @@ export async function hasOpenGroupFunction(
       and(
         eq(groupMemberships.groupId, groupId),
         eq(groupMemberships.personId, personId),
-        eq(groupMemberships.function, fn),
+        eq(groupMemberships.participates, true),
         isNull(groupMemberships.validTo),
       ),
     )

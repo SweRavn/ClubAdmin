@@ -108,7 +108,7 @@ export class ProtectionService {
       resource.clubId !== null &&
       resource.inClub !== null &&
       authz.actor.onBehalfOf === null &&
-      authz.actor.isClubManager(resource.clubId);
+      authz.actor.holds("person.protection.set", resource.clubId);
     if (!self && !guardian && !manager) return undefined;
     const clubId = manager ? resource.clubId : null;
     const details = clubId

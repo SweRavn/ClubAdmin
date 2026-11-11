@@ -4,12 +4,7 @@
 // otherwise (EndpointRegistry) and the policy tests cover each with allow
 // and deny cases.
 
-import {
-  type ClubRole,
-  type Permission,
-  PERMISSIONS,
-  type RegisterAccess,
-} from "@clubadmin/shared";
+import { type Permission, PERMISSIONS, type RegisterAccess } from "@clubadmin/shared";
 
 import {
   type ClubResource,
@@ -26,8 +21,10 @@ import type { Actor, GroupRef } from "./relationship-set.ts";
  * How much of a person's profile the actor sees (field filtering in the
  * profile presenter), or null if the person does not exist for them:
  * - self: the person or a guardian with act_on_behalf (everything);
- * - admin: club manager or registrar of the club;
- * - leader: owner (incl. parent groups) or leader of one of the person's groups;
+ * - admin: `club.people.details` in the club (P1.15; club managers and
+ *   registrars in the built-in template);
+ * - leader: owner (incl. parent groups) of one of the person's groups, or
+ *   `group.people.details` in one (the template's leader roles);
  * - member: someone in one of the person's groups (or their guardian), or
  *   support access; never for a protected person (ADR 0022).
  */
@@ -37,13 +34,12 @@ export function profileAccess(actor: Actor, resource: PersonResource): ProfileAc
   const { personId, clubId, inClub, groups } = resource;
   if (actor.isSelf(personId) || actor.isGuardianOf(personId, "act_on_behalf")) return "self";
   if (!clubId || !inClub) return null;
-  if (actor.hasClubRole(clubId, "club_manager", "registrar")) return "admin";
+  if (actor.holds("club.people.details", clubId)) return "admin";
   if (
-    groups.some(
-      (g) =>
-        actor.ownsGroup({ clubId, groupId: g.groupId, ancestorIds: g.ancestorIds }) ||
-        actor.leadsGroup(g.groupId),
-    )
+    groups.some((g) => {
+      const group = { clubId, groupId: g.groupId, ancestorIds: g.ancestorIds };
+      return actor.ownsGroup(group) || actor.holds("group.people.details", group);
+    })
   ) {
     return "leader";
   }
@@ -84,62 +80,58 @@ export function contactVisible(actor: Actor, resource: PersonResource): boolean 
   );
 }
 
-const isAdmin = (actor: Actor, clubId: string) =>
-  actor.hasClubRole(clubId, "club_manager", "registrar");
-
 /**
- * Who sees a group's activities (P1.4): its members and leaders (any
- * function), their guardians with view_schedule (full guardians hold every
- * right), the group's owners (also of parent groups), club managers and
- * registrars.
+ * Who sees a group's activities (P1.4): its members and leaders (any role),
+ * their guardians with view_schedule (full guardians hold every right), the
+ * group's owners (also of parent groups), and holders of
+ * `group.activities.read` (club managers and registrars).
  */
 export function canReadGroupActivities(actor: Actor, group: GroupRef): boolean {
   return (
-    isAdmin(actor, group.clubId) ||
+    actor.holds("group.activities.read", group) ||
     actor.ownsGroup(group) ||
     actor.isGroupMember(group.groupId) ||
     actor.isGuardianOfGroupMember(group.groupId, "view_schedule")
   );
 }
 
-/** Who plans a group's activities: owners, coaches and team managers, club managers. */
+/**
+ * Who plans a group's activities: owners, and holders of
+ * `group.activities.manage` (coaches and team managers, club managers).
+ */
 export function canManageGroupActivities(actor: Actor, group: GroupRef): boolean {
-  return (
-    actor.isClubManager(group.clubId) ||
-    actor.ownsGroup(group) ||
-    actor.hasGroupFunction(group.groupId, "head_coach", "assistant_coach", "team_manager")
-  );
+  return actor.ownsGroup(group) || actor.holds("group.activities.manage", group);
 }
 
 /**
  * Who leads a group's activities (P1.5: sees every answer, takes
- * attendance): those who manage them and the group's other leaders; not
- * physios.
+ * attendance): those who manage them and holders of
+ * `activity.responses.read` (the group's other leaders; not physios).
  */
 export function canLeadGroupActivities(actor: Actor, group: GroupRef): boolean {
-  return (
-    canManageGroupActivities(actor, group) || actor.hasGroupFunction(group.groupId, "other_leader")
-  );
+  return canManageGroupActivities(actor, group) || actor.holds("activity.responses.read", group);
 }
 
 /**
- * Who answers for someone in a group (P1.5): its members themselves, and
- * guardians with the sign_up right (full guardians hold every right).
+ * Who answers for someone in a group (P1.5): those taking part
+ * (`group.participate`), and guardians with the sign_up right (full
+ * guardians hold every right).
  */
 export function canRespondInGroup(actor: Actor, group: GroupRef): boolean {
   return (
-    actor.hasGroupFunction(group.groupId, "member") ||
+    actor.holds("group.participate", group) ||
     actor.isGuardianOfGroupMember(group.groupId, "sign_up")
   );
 }
 
 /**
- * Who reads a group's roster: administrators, owners; for active groups also
- * everyone in the group, guardians (with act_on_behalf) of its members, and
- * support access. Protected members are filtered per viewer.
+ * Who reads a group's roster: holders of `group.members.read`
+ * (administrators), owners; for active groups also everyone in the group,
+ * guardians (with act_on_behalf) of its members, and support access.
+ * Protected members are filtered per viewer.
  */
 export function canReadGroupMembers(actor: Actor, group: GroupRef, archived = false): boolean {
-  if (isAdmin(actor, group.clubId) || actor.ownsGroup(group)) return true;
+  if (actor.holds("group.members.read", group) || actor.ownsGroup(group)) return true;
   if (archived) return false;
   return (
     actor.isGroupMember(group.groupId) ||
@@ -149,12 +141,13 @@ export function canReadGroupMembers(actor: Actor, group: GroupRef, archived = fa
 }
 
 /**
- * Who organises an event (P1.6): club managers; for a group event those who
- * manage every audience group; for a club event also the board.
+ * Who organises an event (P1.6): holders of `event.manage` (club managers);
+ * for a club event those who create club events (the board); for a group
+ * event those who manage every audience group.
  */
 export function canManageEvent(actor: Actor, event: EventResource): boolean {
-  if (actor.isClubManager(event.clubId)) return true;
-  if (event.audience === "club") return actor.hasClubRole(event.clubId, ...BOARD_ROLES);
+  if (actor.holds("event.manage", event.clubId)) return true;
+  if (event.audience === "club") return actor.holds("club.events.create", event.clubId);
   return event.groups.length > 0 && event.groups.every((g) => canManageGroupActivities(actor, g));
 }
 
@@ -165,95 +158,57 @@ export function canManageEvent(actor: Actor, event: EventResource): boolean {
  * club.
  */
 export function canReadEvent(actor: Actor, event: EventResource): boolean {
-  if (canManageEvent(actor, event) || isAdmin(actor, event.clubId)) return true;
+  if (canManageEvent(actor, event) || actor.holds("event.read", event.clubId)) return true;
   if (event.status === "draft") return false;
   return event.audience === "club"
     ? actor.hasClubRelationship(event.clubId)
     : event.groups.some((g) => canReadGroupActivities(actor, g));
 }
 
-/** Board roles: the limited member register (P1.2). */
-export const BOARD_ROLES: readonly ClubRole[] = [
-  "chair",
-  "vice_chair",
-  "treasurer",
-  "secretary",
-  "board_member",
-  "deputy_board_member",
-];
-
 /**
  * How much of the member register the actor sees (P1.2), or null:
- * - full: club managers and registrars (every field, protected members marked);
- * - limited: board roles (name, member number, membership type, groups;
- *   never protected members).
+ * - full: `club.members.read` and `club.people.details` (club managers and
+ *   registrars: every field, protected members marked);
+ * - limited: `club.members.read` alone (the board: name, member number,
+ *   membership type, groups; never protected members).
  */
 export function registerAccess(actor: Actor, clubId: string): RegisterAccess | null {
-  if (isAdmin(actor, clubId)) return "full";
-  if (actor.hasClubRole(clubId, ...BOARD_ROLES)) return "limited";
-  return null;
+  if (!actor.holds("club.members.read", clubId)) return null;
+  return actor.holds("club.people.details", clubId) ? "full" : "limited";
 }
+
+/** The permission held through a club role (club-scope policies, P1.15). */
+const holdsInClub =
+  (permission: Permission) =>
+  ({ actor, resource }: { actor: Actor; resource: { clubId: string } }) =>
+    actor.holds(permission, resource.clubId);
 
 export const POLICIES: readonly Policy[] = [
   definePolicy("club.read", "club", ({ actor, resource }) =>
     actor.hasClubRelationship(resource.clubId),
   ),
-  definePolicy(
-    "club.settings.update",
-    "club",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId),
-    { mfa: true },
-  ),
-  definePolicy(
-    "club.roles.manage",
-    "club",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId),
-    { mfa: true },
-  ),
+  definePolicy("club.settings.update", "club", holdsInClub("club.settings.update"), { mfa: true }),
+  definePolicy("club.roles.manage", "club", holdsInClub("club.roles.manage"), { mfa: true }),
   // The member register (P1.2): full for administrators, limited for the board.
   definePolicy(
     "club.members.read",
     "club",
     ({ actor, resource }) => registerAccess(actor, resource.clubId) !== null,
   ),
-  // Pausing, resuming, ending and retyping memberships: registrars, and club
-  // managers with a second factor.
-  definePolicy(
-    "club.members.manage",
-    "club",
-    ({ actor, resource }) => isAdmin(actor, resource.clubId),
-    {
-      mfa: ({ actor, resource }) => !actor.hasClubRole(resource.clubId, "registrar"),
-    },
-  ),
+  // Pausing, resuming, ending and retyping memberships: with a second factor,
+  // except for those who do it routinely (`club.members.routine`: registrars).
+  definePolicy("club.members.manage", "club", holdsInClub("club.members.manage"), {
+    mfa: ({ actor, resource }) => !actor.holds("club.members.routine", resource.clubId),
+  }),
   // Exports of the register (the controller adds @RecentAuth(15)).
-  definePolicy(
-    "club.members.export",
-    "club",
-    ({ actor, resource }) => isAdmin(actor, resource.clubId),
-    {
-      mfa: true,
-    },
-  ),
+  definePolicy("club.members.export", "club", holdsInClub("club.members.export"), { mfa: true }),
   // Adding a member by hand (P1.3b): registrars; club managers with a second factor.
-  definePolicy(
-    "club.members.add",
-    "club",
-    ({ actor, resource }) => isAdmin(actor, resource.clubId),
-    {
-      mfa: ({ actor, resource }) => !actor.hasClubRole(resource.clubId, "registrar"),
-    },
-  ),
-  // Imports from a file (P1.3b): registrars and club managers, always with a
-  // second factor (the controller adds @RecentAuth(15) to confirming).
-  definePolicy(
-    "club.members.import",
-    "club",
-    ({ actor, resource }) => isAdmin(actor, resource.clubId),
-    {
-      mfa: true,
-    },
-  ),
+  definePolicy("club.members.add", "club", holdsInClub("club.members.add"), {
+    mfa: ({ actor, resource }) => !actor.holds("club.members.routine", resource.clubId),
+  }),
+  // Imports from a file (P1.3b): always with a second factor (the controller
+  // adds @RecentAuth(15) to confirming).
+  definePolicy("club.members.import", "club", holdsInClub("club.members.import"), { mfa: true }),
   // Group structure is not personal data: anyone related to the club sees its
   // groups; archived ones only those who administer them.
   definePolicy(
@@ -261,12 +216,14 @@ export const POLICIES: readonly Policy[] = [
     "group",
     ({ actor, resource }) =>
       actor.hasClubRelationship(resource.clubId) &&
-      (!resource.archived || isAdmin(actor, resource.clubId) || actor.ownsGroup(resource)),
+      (!resource.archived ||
+        actor.holds("club.groups.archived.read", resource.clubId) ||
+        actor.ownsGroup(resource)),
   ),
   definePolicy(
     "group.update",
     "group",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId) || actor.ownsGroup(resource),
+    ({ actor, resource }) => actor.holds("group.update", resource) || actor.ownsGroup(resource),
   ),
   // P1.6b: club managers; owners of a group create child groups of it (the
   // service checks the parent).
@@ -274,13 +231,13 @@ export const POLICIES: readonly Policy[] = [
     "club.groups.create",
     "club",
     ({ actor, resource }) =>
-      actor.isClubManager(resource.clubId) || actor.ownsAnyGroup(resource.clubId),
+      actor.holds("club.groups.create", resource.clubId) || actor.ownsAnyGroup(resource.clubId),
   ),
   definePolicy(
     "group.owners.manage",
     "group",
     ({ actor, resource }) =>
-      actor.isClubManager(resource.clubId) ||
+      actor.holds("group.owners.manage", resource) ||
       (resource.ownersCanAppointCoOwners && actor.ownsGroup(resource)),
   ),
   // The roster: administrators, owners, everyone in the group, guardians of
@@ -310,35 +267,28 @@ export const POLICIES: readonly Policy[] = [
       resource.groups.every((g) => canManageGroupActivities(actor, g)),
   ),
   // The club calendar (groups and places, no names): administrators and the board.
-  definePolicy(
-    "club.activities.read",
-    "club",
-    ({ actor, resource }) =>
-      isAdmin(actor, resource.clubId) || actor.hasClubRole(resource.clubId, ...BOARD_ROLES),
-  ),
-  definePolicy("club.locations.manage", "club", ({ actor, resource }) =>
-    actor.isClubManager(resource.clubId),
-  ),
+  definePolicy("club.activities.read", "club", holdsInClub("club.activities.read")),
+  definePolicy("club.locations.manage", "club", holdsInClub("club.locations.manage")),
   // P1.6b: leaders add the places they use; they change only their own (the
-  // service checks the creator for those who are not club managers).
+  // service checks the creator for those who do not manage places).
   definePolicy(
     "club.locations.create",
     "club",
     ({ actor, resource }) =>
-      actor.isClubManager(resource.clubId) || actor.managesAnyGroupActivities(resource.clubId),
+      actor.holds("club.locations.create", resource.clubId) ||
+      actor.managesAnyGroupActivities(resource.clubId),
   ),
   // Events with sign-up (P1.6).
   definePolicy("club.events.read", "club", ({ actor, resource }) =>
     actor.hasClubRelationship(resource.clubId),
   ),
   // Group events: the service checks that the caller manages each audience
-  // group; club events: club managers and the board.
+  // group; club events: holders of `club.events.create` (managers, the board).
   definePolicy(
     "club.events.create",
     "club",
     ({ actor, resource }) =>
-      actor.isClubManager(resource.clubId) ||
-      actor.hasClubRole(resource.clubId, ...BOARD_ROLES) ||
+      actor.holds("club.events.create", resource.clubId) ||
       actor.managesAnyGroupActivities(resource.clubId),
   ),
   definePolicy("event.read", "event", ({ actor, resource }) => canReadEvent(actor, resource)),
@@ -359,7 +309,7 @@ export const POLICIES: readonly Policy[] = [
     "event",
     ({ actor, resource }) =>
       canManageEvent(actor, resource) ||
-      isAdmin(actor, resource.clubId) ||
+      actor.holds("event.registrations.read", resource.clubId) ||
       resource.groups.some((g) => canLeadGroupActivities(actor, g)),
   ),
   definePolicy("event.registrations.manage", "event", ({ actor, resource }) =>
@@ -375,33 +325,37 @@ export const POLICIES: readonly Policy[] = [
     resource.groups.some((g) => canLeadGroupActivities(actor, g)),
   ),
   // Registrars too: they correct marks after the lock (the service lets
-  // only club managers and registrars change locked attendance).
+  // only holders of the club-wide permission change locked attendance).
   definePolicy(
     "activity.attendance.manage",
     "activity",
     ({ actor, resource }) =>
-      isAdmin(actor, resource.clubId) ||
-      resource.groups.some((g) => canLeadGroupActivities(actor, g)),
+      actor.holds("activity.attendance.manage", resource.clubId) ||
+      resource.groups.some(
+        (g) => actor.holds("activity.attendance.manage", g) || canLeadGroupActivities(actor, g),
+      ),
   ),
   definePolicy(
     "group.attendance.read",
     "group",
     ({ actor, resource }) =>
-      isAdmin(actor, resource.clubId) || canLeadGroupActivities(actor, resource),
+      actor.holds("group.attendance.read", resource) || canLeadGroupActivities(actor, resource),
   ),
   definePolicy(
     "group.members.manage",
     "group",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId) || actor.ownsGroup(resource),
+    ({ actor, resource }) =>
+      actor.holds("group.members.manage", resource) || actor.ownsGroup(resource),
   ),
-  // Waiting lists (P1.10b, ADR 0043): club managers, and owners of the group
-  // or a parent group while it is not archived. Not leaders who do not own
-  // it, registrars or members.
+  // Waiting lists (P1.10b, ADR 0043): holders of `group.waitlist.manage`
+  // (club managers), and owners of the group or a parent group while it is
+  // not archived. Not leaders who do not own it, registrars or members.
   definePolicy(
     "group.waitlist.manage",
     "group",
     ({ actor, resource }) =>
-      actor.isClubManager(resource.clubId) || (!resource.archived && actor.ownsGroup(resource)),
+      actor.holds("group.waitlist.manage", resource) ||
+      (!resource.archived && actor.ownsGroup(resource)),
   ),
   definePolicy(
     "person.profile.read",
@@ -414,8 +368,8 @@ export const POLICIES: readonly Policy[] = [
     ({ actor, resource }) =>
       actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId, "act_on_behalf"),
   ),
-  // Global flag: the person or a guardian; club flag (with clubId): a club
-  // manager, with a second factor.
+  // Global flag: the person or a guardian; club flag (with clubId): holders
+  // of `person.protection.set` (club managers), with a second factor.
   definePolicy(
     "person.protection.set",
     "person",
@@ -423,7 +377,7 @@ export const POLICIES: readonly Policy[] = [
       resource.clubId
         ? actor.onBehalfOf === null &&
           resource.inClub !== null &&
-          actor.isClubManager(resource.clubId)
+          actor.holds("person.protection.set", resource.clubId)
         : actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId, "act_on_behalf"),
     { mfa: ({ resource }) => resource.clubId !== null },
   ),
@@ -454,8 +408,8 @@ export const POLICIES: readonly Policy[] = [
       (actor.isFullGuardianOf(resource.personId) || actor.isSelf(resource.personId)),
   ),
   // Merging duplicates: a full guardian (of both: the service checks the
-  // duplicate), or a club manager with a second factor for two members of
-  // the club (clubId in the query).
+  // duplicate), or a holder of `person.merge` (club managers) with a second
+  // factor for two members of the club (clubId in the query).
   definePolicy(
     "person.merge",
     "person",
@@ -464,11 +418,11 @@ export const POLICIES: readonly Policy[] = [
       (actor.isFullGuardianOf(resource.personId) ||
         (resource.clubId !== null &&
           resource.inClub !== null &&
-          actor.isClubManager(resource.clubId))),
+          actor.holds("person.merge", resource.clubId))),
     { mfa: ({ actor, resource }) => !actor.isFullGuardianOf(resource.personId) },
   ),
-  // "Give own login": full guardians; club managers and registrars of a club
-  // the person is a member of (clubId in the query).
+  // "Give own login": full guardians; holders of `person.own_login.invite`
+  // (club managers and registrars) of a club the person is a member of.
   definePolicy(
     "person.own_login.invite",
     "person",
@@ -477,37 +431,40 @@ export const POLICIES: readonly Policy[] = [
       (actor.isFullGuardianOf(resource.personId) ||
         (resource.clubId !== null &&
           resource.inClub?.membership != null &&
-          isAdmin(actor, resource.clubId))),
+          actor.holds("person.own_login.invite", resource.clubId))),
   ),
   // Consents (P1.8a), in one club (clubId in the query). Status and history:
-  // the person, full guardians, club managers and registrars; status only
-  // for the owners and leaders of the person's groups (the service decides
-  // what each sees). Not members of the same group, relatives or support.
+  // the person, full guardians, holders of `person.consents.read` in the
+  // club (club managers, registrars); status only for the owners of the
+  // person's groups and holders in one of them (leaders; the service
+  // decides what each sees). Not members of the same group, relatives or
+  // support.
   definePolicy("person.consents.read", "person", ({ actor, resource }) => {
     const { personId, clubId, inClub, groups } = resource;
     if (!clubId) return false;
     if (actor.isSelf(personId) || actor.isFullGuardianOf(personId)) return true;
     if (!inClub) return false;
     return (
-      isAdmin(actor, clubId) ||
-      groups.some(
-        (g) =>
-          actor.ownsGroup({ clubId, groupId: g.groupId, ancestorIds: g.ancestorIds }) ||
-          actor.leadsGroup(g.groupId),
-      )
+      actor.holds("person.consents.read", clubId) ||
+      groups.some((g) => {
+        const group = { clubId, groupId: g.groupId, ancestorIds: g.ancestorIds };
+        return actor.ownsGroup(group) || actor.holds("person.consents.read", group);
+      })
     );
   }),
   // Giving and withdrawing: the person (the service requires the consent
   // age), full guardians (the service allows giving below the consent age,
   // withdrawing until the adult age, and their own contact purposes), and
-  // registrars and club managers recording a paper consent or a withdrawal
-  // on request. Never relatives, step or foster parents, contact persons or
-  // leaders.
+  // holders of `person.consents.manage` (registrars and club managers)
+  // recording a paper consent or a withdrawal on request. Never relatives,
+  // step or foster parents, contact persons or leaders.
   definePolicy("person.consents.manage", "person", ({ actor, resource }) => {
     const { personId, clubId, inClub } = resource;
     if (!clubId) return false;
     if (actor.isSelf(personId) || actor.isFullGuardianOf(personId)) return true;
-    return actor.onBehalfOf === null && inClub !== null && isAdmin(actor, clubId);
+    return (
+      actor.onBehalfOf === null && inClub !== null && actor.holds("person.consents.manage", clubId)
+    );
   }),
   // A group's consent overview (whom not to photograph): its leaders and
   // owners (also of parent groups), club managers and registrars.
@@ -515,17 +472,13 @@ export const POLICIES: readonly Policy[] = [
     "group.consents.read",
     "group",
     ({ actor, resource }) =>
-      isAdmin(actor, resource.clubId) ||
-      actor.ownsGroup(resource) ||
-      actor.leadsGroup(resource.groupId),
+      actor.holds("group.consents.read", resource) || actor.ownsGroup(resource),
   ),
   // Guardianships as the club sees them (paper applications): club managers
   // and registrars. Ending a full guardian's guardianship needs a club
   // manager with a second factor and a reason (checked by the controller and
   // the service).
-  definePolicy("club.guardians.manage", "club", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
-  ),
+  definePolicy("club.guardians.manage", "club", holdsInClub("club.guardians.manage")),
   // History and audit (P1.9, ADR 0042): club managers and registrars only;
   // not owners, leaders, organisers, the person or their family (they get
   // their own history through "download my data"). The audit log and the
@@ -534,41 +487,24 @@ export const POLICIES: readonly Policy[] = [
     "person.history.read",
     "person",
     ({ actor, resource }) =>
-      resource.clubId !== null && resource.inClub !== null && isAdmin(actor, resource.clubId),
+      resource.clubId !== null &&
+      resource.inClub !== null &&
+      actor.holds("person.history.read", resource.clubId),
   ),
-  definePolicy("group.history.read", "group", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
-  ),
-  definePolicy("activity.history.read", "activity", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
-  ),
-  definePolicy("event.history.read", "event", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
-  ),
-  definePolicy(
-    "club.history.read",
-    "club",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId),
-    { mfa: true },
-  ),
-  definePolicy(
-    "club.audit.read",
-    "club",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId),
-    { mfa: true },
-  ),
+  definePolicy("group.history.read", "group", holdsInClub("group.history.read")),
+  definePolicy("activity.history.read", "activity", holdsInClub("activity.history.read")),
+  definePolicy("event.history.read", "event", holdsInClub("event.history.read")),
+  definePolicy("club.history.read", "club", holdsInClub("club.history.read"), { mfa: true }),
+  definePolicy("club.audit.read", "club", holdsInClub("club.audit.read"), { mfa: true }),
   // The club's profile view log and its setting (P1.12): club managers, with
   // a second factor.
-  definePolicy(
-    "club.profile_views.read",
-    "club",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId),
-    { mfa: true },
-  ),
+  definePolicy("club.profile_views.read", "club", holdsInClub("club.profile_views.read"), {
+    mfa: true,
+  }),
   definePolicy(
     "club.profile_views.configure",
     "club",
-    ({ actor, resource }) => actor.isClubManager(resource.clubId),
+    holdsInClub("club.profile_views.configure"),
     { mfa: true },
   ),
   // Operator endpoints (backup status): platform operators, who are also the
@@ -585,7 +521,7 @@ export const POLICIES: readonly Policy[] = [
     "billing.subscription.read",
     "club",
     ({ actor, resource }) =>
-      actor.isOperator() || actor.hasClubRole(resource.clubId, "club_manager", "treasurer"),
+      actor.isOperator() || actor.holds("billing.subscription.read", resource.clubId),
     { mfa: ({ actor }) => actor.isOperator() },
   ),
   definePolicy("billing.subscription.manage", "club", ({ actor }) => actor.isOperator(), {
@@ -599,21 +535,21 @@ export const POLICIES: readonly Policy[] = [
     "billing.subscription.change",
     "club",
     ({ actor, resource }) =>
-      actor.onBehalfOf === null && actor.hasClubRole(resource.clubId, "club_manager"),
+      actor.onBehalfOf === null && actor.holds("billing.subscription.change", resource.clubId),
     { mfa: true },
   ),
   definePolicy(
     "billing.account.manage",
     "club",
     ({ actor, resource }) =>
-      actor.onBehalfOf === null && actor.hasClubRole(resource.clubId, "club_manager", "treasurer"),
+      actor.onBehalfOf === null && actor.holds("billing.account.manage", resource.clubId),
     { mfa: true },
   ),
   definePolicy(
     "billing.invoices.read",
     "club",
     ({ actor, resource }) =>
-      actor.isOperator() || actor.hasClubRole(resource.clubId, "club_manager", "treasurer"),
+      actor.isOperator() || actor.holds("billing.invoices.read", resource.clubId),
     { mfa: ({ actor }) => actor.isOperator() },
   ),
   definePolicy("billing.plans.manage", "platform", ({ actor }) => actor.isOperator(), {
@@ -644,16 +580,10 @@ export const POLICIES: readonly Policy[] = [
   // All waiting lists and the out-of-order decisions (P1.10b): managers and
   // registrars (they approve the club memberships that follow); owners see
   // their own lists only.
-  definePolicy("club.waitlists.read", "club", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
-  ),
-  definePolicy("club.join_requests.manage", "club", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
-  ),
+  definePolicy("club.waitlists.read", "club", holdsInClub("club.waitlists.read")),
+  definePolicy("club.join_requests.manage", "club", holdsInClub("club.join_requests.manage")),
   // Role presets additionally need club.roles.manage (checked by the controller).
-  definePolicy("club.invitations.manage", "club", ({ actor, resource }) =>
-    isAdmin(actor, resource.clubId),
-  ),
+  definePolicy("club.invitations.manage", "club", holdsInClub("club.invitations.manage")),
   // The successor accepts or declines, the proposer cancels (the service
   // checks which); nobody else sees the proposal.
   definePolicy(
@@ -663,14 +593,10 @@ export const POLICIES: readonly Policy[] = [
       actor.onBehalfOf === null &&
       (actor.isSelf(resource.toPersonId) || actor.isSelf(resource.fromPersonId)),
   ),
-  // Recovery (ADR 0018): the board chair, when no manager is left (the
-  // service checks that), with a second factor.
-  definePolicy(
-    "club.managers.claim",
-    "club",
-    ({ actor, resource }) => actor.hasClubRole(resource.clubId, "chair"),
-    { mfa: true },
-  ),
+  // Recovery (ADR 0018): the board chair (the locked permission of the
+  // chair's role), when no manager is left (the service checks that), with
+  // a second factor.
+  definePolicy("club.managers.claim", "club", holdsInClub("club.managers.claim"), { mfa: true }),
   // Recovery by an operator on the club's documented request; gives the
   // operator no access to club data.
   definePolicy("club.managers.reassign", "club", ({ actor }) => actor.isOperator(), {

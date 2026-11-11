@@ -58,12 +58,17 @@ export class PersonVisibility {
     return set;
   }
 
-  /** May the viewer see every protected member of this group (and so the whole roster)? */
+  /**
+   * May the viewer see every protected member of this group (and so the
+   * whole roster)? Holders of `club.people.protected` (P1.15: club managers
+   * always, registrars by default), owners, and holders of
+   * `group.people.details` in the group (its leaders).
+   */
   privilegedForGroup(viewer: Actor, group: GroupResource): boolean {
     return (
-      viewer.hasClubRole(group.clubId, "club_manager", "registrar") ||
+      viewer.holds("club.people.protected", group.clubId) ||
       viewer.ownsGroup(group) ||
-      viewer.leadsGroup(group.groupId)
+      viewer.holds("group.people.details", group)
     );
   }
 
@@ -84,7 +89,7 @@ export class PersonVisibility {
         result.set(id, "protected_visible");
       } else if (!clubId) {
         result.set(id, "hidden");
-      } else if (viewer.hasClubRole(clubId, "club_manager", "registrar")) {
+      } else if (viewer.holds("club.people.protected", clubId)) {
         result.set(id, "protected_visible");
       } else if (options.group && this.privilegedForGroup(viewer, options.group)) {
         result.set(id, "protected_visible");
@@ -98,19 +103,15 @@ export class PersonVisibility {
     const leads =
       clubId !== null &&
       (viewer.relationships.ownedGroups.some((o) => o.clubId === clubId) ||
-        viewer.relationships.groups.some(
-          (g) => g.clubId === clubId && viewer.leadsGroup(g.groupId),
-        ));
+        viewer.holdsInAnyGroup("group.people.details", clubId));
     const visible = new Set<string>();
     if (leads && clubId) {
       const groups = await this.db.withSystem(JOB, { clubId }, (tx) =>
         loadGroupsOfPeople(tx, clubId, undecided),
       );
       for (const g of groups) {
-        if (
-          viewer.ownsGroup({ clubId, groupId: g.groupId, ancestorIds: g.ancestorIds }) ||
-          viewer.leadsGroup(g.groupId)
-        ) {
+        const group = { clubId, groupId: g.groupId, ancestorIds: g.ancestorIds };
+        if (viewer.ownsGroup(group) || viewer.holds("group.people.details", group)) {
           visible.add(g.personId);
         }
       }

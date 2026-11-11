@@ -74,14 +74,6 @@ import {
 
 const iso = (date: Date) => date.toISOString();
 const iso_ = (date: Date | null) => (date ? date.toISOString() : null);
-const BOARD = [
-  "chair",
-  "vice_chair",
-  "treasurer",
-  "secretary",
-  "board_member",
-  "deputy_board_member",
-] as const;
 const MEMBER_STATUSES = ["active", "paused"];
 
 /** Registration endpoints: a per-account budget on top of the global limit (P0.10). */
@@ -124,9 +116,12 @@ function inAudience(actor: Actor, personId: string, event: EventResource): boole
   }
   const groups = new Set(event.groups.map((g) => g.groupId));
   return personId === actor.personId
-    ? r.groups.some((g) => groups.has(g.groupId) && g.function === "member")
+    ? r.groups.some((g) => groups.has(g.groupId) && g.permissions.includes("group.participate"))
     : r.wardGroups.some(
-        (g) => g.personId === personId && groups.has(g.groupId) && g.function === "member",
+        (g) =>
+          g.personId === personId &&
+          groups.has(g.groupId) &&
+          g.permissions.includes("group.participate"),
       );
 }
 
@@ -212,7 +207,7 @@ export class EventsController {
   ): Promise<Event> {
     const actor = authz.actor;
     if (body.audience === "club") {
-      if (!actor.isClubManager(params.clubId) && !actor.hasClubRole(params.clubId, ...BOARD)) {
+      if (!actor.holds("club.events.create", params.clubId)) {
         throw new DomainError("not_allowed");
       }
     } else {
@@ -680,7 +675,7 @@ export class EventsController {
   ): Promise<EventPage> {
     const actor = authz.actor;
     const r = actor.relationships;
-    const all = actor.hasClubRole(clubId, "club_manager", "registrar");
+    const all = actor.holds("event.read", clubId);
     const scope: EventScope = all
       ? { all: true }
       : {
@@ -690,7 +685,8 @@ export class EventsController {
             ...r.wardGroups.filter((g) => g.clubId === clubId).map((g) => g.groupId),
           ],
           ownedGroupIds: r.ownedGroups.filter((g) => g.clubId === clubId).map((g) => g.groupId),
-          drafts: actor.hasClubRole(clubId, ...BOARD) || actor.managesAnyGroupActivities(clubId),
+          drafts:
+            actor.holds("club.events.create", clubId) || actor.managesAnyGroupActivities(clubId),
         };
     const context = tenantContext(authz, clubId);
     const page = await this.events.listEvents(context, { groupId, scope, query });
@@ -745,7 +741,7 @@ export class EventsController {
       canManageEvent(actor, resource) ||
       (resource.audience === "groups"
         ? resource.groups.some((g) => canReadGroupMembers(actor, g))
-        : actor.hasClubRole(resource.clubId, "club_manager", "registrar"));
+        : actor.holds("event.registrations.read", resource.clubId));
     const confirmed = namesAllowed ? await this.events.confirmedPeople(context, eventId) : [];
     const shown = await this.presented(authz, resource.clubId, [
       ...family,

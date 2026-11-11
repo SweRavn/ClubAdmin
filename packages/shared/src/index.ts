@@ -6,6 +6,7 @@ export * from "./auth/dev-auth.ts";
 export * from "./auth/schemas.ts";
 export * from "./auth/sessions.ts";
 export * from "./authorization/cache-keys.ts";
+export * from "./authorization/permission-catalogue.ts";
 export * from "./billing/index.ts";
 export * from "./calendar/ical.ts";
 export * from "./demodata.ts";

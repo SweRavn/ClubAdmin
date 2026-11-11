@@ -69,7 +69,6 @@ import {
   canManageGroupActivities,
   CurrentAuthorization,
   type GroupRef,
-  LEADER_FUNCTIONS,
   permits,
   PersonPresenter,
   type RequestAuthorization,
@@ -105,9 +104,9 @@ export function toLocationResponse(location: LocationRow, canEdit?: boolean): Lo
   };
 }
 
-/** Club managers change every location; others only those they added (P1.6b). */
+/** Holders of club.locations.manage change every location; others only those they added (P1.6b). */
 const canEditLocation = (authz: RequestAuthorization, location: LocationRow) =>
-  authz.actor.isClubManager(location.clubId) ||
+  authz.actor.holds("club.locations.manage", location.clubId) ||
   (location.createdByPersonId !== null && location.createdByPersonId === authz.actor.personId);
 
 export function toActivityResponse(view: ActivityView, canManage: boolean): Activity {
@@ -269,7 +268,7 @@ export class ActivitiesController {
     const { clubId } = resourceOf(authz, "club");
     return toLocationResponse(
       await this.activities.updateLocation(tenantContext(authz, clubId), params.locationId, body, {
-        anyLocation: authz.actor.isClubManager(clubId),
+        anyLocation: authz.actor.holds("club.locations.manage", clubId),
       }),
       true,
     );
@@ -412,11 +411,7 @@ export class ActivitiesController {
     const members = (
       await Promise.all(view.groups.map((g) => this.memberships.groupMembers(context, g.id)))
     ).flat();
-    const leaderIds = [
-      ...new Set(
-        members.filter((m) => LEADER_FUNCTIONS.includes(m.function)).map((m) => m.personId),
-      ),
-    ];
+    const leaderIds = [...new Set(members.filter((m) => m.leads).map((m) => m.personId))];
     const leaders = await this.presenter.present(
       authz,
       resource.clubId,

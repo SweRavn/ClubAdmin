@@ -106,8 +106,7 @@ export class MemberIntakeService {
   addMember(context: TenantContext, input: AddMemberInput): Promise<IntakeResult> {
     return this.db.withTenant(context, async (tx) => {
       const data = parseInput(AddMemberSchema, input);
-      if (!(await repo.actorHasClubRole(tx, ["club_manager", "registrar"])))
-        throw new DomainError("not_allowed");
+      if (!(await repo.actorHolds(tx, "club.members.add"))) throw new DomainError("not_allowed");
       const club = await this.clubs.getClubInTx(tx, context.clubId);
       let birthDate = data.birthDate ?? null;
       if (data.personalIdentityNumber) {

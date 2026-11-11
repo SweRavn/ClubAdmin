@@ -107,6 +107,7 @@ export class LeavingService {
     personId: string,
   ): Promise<OutstandingObligation | null> {
     let count = 0;
+    // eslint-disable-next-line clubadmin/no-role-names -- a label ("ask the treasurer"), not a decision
     let contactRole: ClubRole = "treasurer";
     for (const provider of this.deps.obligations) {
       const found = await provider.forPerson(tx, clubId, personId);

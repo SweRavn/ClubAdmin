@@ -87,7 +87,7 @@ export class ClubGuardiansController {
       rows.map((r) => r.guardianPersonId),
     );
     const byId = new Map<string, GuardianPerson>(people.map((p) => [p.id, p]));
-    const manager = authz.actor.isClubManager(clubId);
+    const manager = authz.actor.holds("club.guardianships.end", clubId);
     const entries = await this.family.guardians(authz, clubId, rows, byId, {
       personId: authz.principal.personId,
       fullGuardian: false,
@@ -158,7 +158,7 @@ export class ClubGuardiansController {
   ): Promise<{ ok: true }> {
     const { clubId } = resourceOf(authz, "club");
     asSelf(authz);
-    const manager = authz.actor.isClubManager(clubId) && authz.actor.mfa;
+    const manager = authz.actor.holds("club.guardianships.end", clubId) && authz.actor.mfa;
     await this.guardianships.endGuardianship(tenantContext(authz, clubId), guardianshipId, {
       allowedBy: manager ? "club_manager" : "club",
       ...(body.reason ? { reason: body.reason } : {}),

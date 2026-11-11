@@ -65,6 +65,9 @@ describe("creating a club", () => {
       "public.club_profiles",
       "public.club_role_assignments",
       "public.clubs",
+      // The built-in template's roles (P1.15), created with the club.
+      "public.role_permissions",
+      "public.roles",
     ]);
   });
 

@@ -33,7 +33,7 @@ type ExportRow = {
   filter: RegisterFilter;
   columns: MemberExportColumn[];
   include_protected: boolean;
-  /** The requester still manages the register (club manager or registrar). */
+  /** The requester still holds `club.members.export` (P1.15: the permission is asked again). */
   allowed: boolean;
   locale: string | null;
   default_locale: string;
@@ -61,8 +61,9 @@ async function loadExport(tx: Tx, exportId: string): Promise<ExportRow | null> {
   const { rows } = await tx.execute<ExportRow>(sql`
     SELECT x.status, x.requested_by_person_id, x.filter, x.columns, x.include_protected,
       EXISTS (SELECT 1 FROM public.club_role_assignments r
+              JOIN public.role_permissions rp ON rp.club_id = r.club_id AND rp.role_id = r.role_id
               WHERE r.club_id = x.club_id AND r.person_id = x.requested_by_person_id
-                AND r.role IN ('club_manager', 'registrar') AND r.valid_to IS NULL) AS allowed,
+                AND r.valid_to IS NULL AND rp.permission = 'club.members.export') AS allowed,
       (SELECT a.locale FROM public.accounts a WHERE a.person_id = x.requested_by_person_id) AS locale,
       c.default_locale, c.time_zone
     FROM public.member_exports x JOIN public.clubs c ON c.id = x.club_id

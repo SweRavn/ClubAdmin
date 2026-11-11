@@ -146,7 +146,7 @@ export class WaitlistsService {
         }
       }
       await this.checkAdmissionMode(tx, group, member);
-      if (await this.memberships.hasGroupFunctionInTx(tx, groupId, input.personId, "member")) {
+      if (await this.memberships.takesPartInGroupInTx(tx, groupId, input.personId)) {
         throw new DomainError("already_in_group");
       }
       if (await this.groups.waitlist.openEntryOfInTx(tx, groupId, input.personId)) {

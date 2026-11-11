@@ -10,8 +10,12 @@ export const AUTHZ_VERSION_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 /** Version of a person's relationship set. */
 export const relationshipVersionKey = (personId: string): string => `authz:rel:v:${personId}`;
-/** A person's cached relationship set ({ version, set }). */
-export const relationshipSetKey = (personId: string): string => `authz:rel:${personId}`;
+/**
+ * A person's cached relationship set ({ version, set }). The set's shape is
+ * part of the key: sets cached by an older release (before P1.15 carried
+ * the roles' permissions) are never read.
+ */
+export const relationshipSetKey = (personId: string): string => `authz:rel:2:${personId}`;
 
 /** Version of a club's protected set (club flags and members). */
 export const protectedVersionKey = (clubId: string): string => `authz:prot:v:${clubId}`;

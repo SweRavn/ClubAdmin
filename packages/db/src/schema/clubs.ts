@@ -252,6 +252,8 @@ export const clubRoleAssignments = pgTable(
     clubId: clubRef(),
     personId: personRef(),
     role: text().$type<ClubRole>().notNull(),
+    /** The club's role (P1.15; filled from `role` by a trigger for older writers). */
+    roleId: uuid(),
     assignedByPersonId: uuid().references(() => people.id),
     endedByPersonId: uuid().references(() => people.id),
     ...validity,
@@ -269,6 +271,54 @@ export const clubRoleAssignments = pgTable(
     index("club_role_assignments_person_idx")
       .on(t.personId)
       .where(sql`${t.validTo} IS NULL`),
+    index("club_role_assignments_role_idx")
+      .on(t.clubId, t.roleId)
+      .where(sql`${t.validTo} IS NULL`),
+  ],
+);
+
+/**
+ * A club's roles (P1.15, ADR 0046): named sets of permissions, held in the
+ * club or in a group. Template roles keep their `template_key`; names and
+ * descriptions fall back to the catalogue's texts while NULL.
+ */
+export const roles = pgTable(
+  "roles",
+  {
+    id: id(),
+    clubId: clubRef(),
+    scope: text().$type<"club" | "group">().notNull(),
+    templateKey: text(),
+    locked: boolean().notNull().default(false),
+    names: jsonb().$type<Partial<Record<string, string>>>(),
+    descriptions: jsonb().$type<Partial<Record<string, string>>>(),
+    sortOrder: integer().notNull().default(0),
+    archivedAt: timestamp(tz),
+    version: integer().notNull().default(1),
+    ...timestamps,
+  },
+  (t) => [
+    check("roles_scope", sql`${t.scope} IN ('club', 'group')`),
+    unique("roles_club_id_unique").on(t.clubId, t.id),
+    uniqueIndex("roles_template_unique")
+      .on(t.clubId, t.scope, t.templateKey)
+      .where(sql`${t.templateKey} IS NOT NULL`),
+  ],
+);
+
+/** The permissions of a role (catalogue keys, @clubadmin/shared ROLE_PERMISSIONS). */
+export const rolePermissions = pgTable(
+  "role_permissions",
+  {
+    id: id(),
+    clubId: uuid().notNull(),
+    roleId: uuid().notNull(),
+    permission: text().notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("role_permissions_unique").on(t.roleId, t.permission),
+    index("role_permissions_club_permission_idx").on(t.clubId, t.permission),
   ],
 );
 

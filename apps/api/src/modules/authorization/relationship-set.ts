@@ -3,15 +3,40 @@
 // query and cached in Valkey. The Actor wraps it with the helpers policies
 // use. Group ownership includes child groups: helpers take the group's
 // ancestor chain, which resource loaders read together with the group.
+//
+// Roles (P1.15, ADR 0046): every club role and group membership carries its
+// role's permissions; policies ask `holds(permission, club or group)`, never
+// a role or function name.
 
-import type {
-  ClubRole,
-  GroupFunction,
-  GuardianshipKind,
-  GuardianshipRight,
-  MembershipStatus,
-  MembershipType,
+import {
+  type ClubRole,
+  type GroupFunction,
+  type GuardianshipKind,
+  type GuardianshipRight,
+  type MembershipStatus,
+  type MembershipType,
+  PERMISSION_CATALOGUE,
+  type RolePermission,
 } from "@clubadmin/shared";
+
+/** A club role held by the person, with the role's permissions. */
+export interface RoleAssignment {
+  clubId: string;
+  roleId: string | null;
+  /** The template key (the old API field; A2 makes it optional). */
+  role: ClubRole;
+  permissions: RolePermission[];
+}
+
+/** A group role (membership) held by the person, with the role's permissions. */
+export interface GroupAssignment {
+  clubId: string;
+  groupId: string;
+  roleId: string | null;
+  /** The template key (the old API field; A2 makes it optional). */
+  function: GroupFunction;
+  permissions: RolePermission[];
+}
 
 export interface RelationshipSet {
   personId: string;
@@ -19,9 +44,9 @@ export interface RelationshipSet {
   operator: boolean;
   /** Open club memberships (valid_to IS NULL), any status. */
   memberships: { clubId: string; status: MembershipStatus; membershipType: MembershipType }[];
-  roles: { clubId: string; role: ClubRole }[];
-  /** Open group memberships; one entry per function. */
-  groups: { clubId: string; groupId: string; function: GroupFunction }[];
+  roles: RoleAssignment[];
+  /** Open group memberships; one entry per role. */
+  groups: GroupAssignment[];
   /** Groups the person owns directly; ownership of a parent includes its children. */
   ownedGroups: { clubId: string; groupId: string }[];
   employments: { clubId: string; startsOn: string; endsOn: string | null }[];
@@ -39,8 +64,12 @@ export interface RelationshipSet {
     membershipType: MembershipType;
   }[];
   /** The wards' open group memberships. */
-  wardGroups: { personId: string; clubId: string; groupId: string; function: GroupFunction }[];
+  wardGroups: (GroupAssignment & { personId: string })[];
 }
+
+/** Where a permission is asked for: a club (its ID) or a group of it. */
+export type PermissionTarget =
+  string | { clubId: string; groupId: string; ancestorIds?: readonly string[] };
 
 /** A group with its ancestors (nearest first), as loaded with the group. */
 export interface GroupRef {
@@ -48,15 +77,6 @@ export interface GroupRef {
   groupId: string;
   ancestorIds: readonly string[];
 }
-
-/** Functions that lead a group (everything except plain membership). */
-export const LEADER_FUNCTIONS: readonly GroupFunction[] = [
-  "head_coach",
-  "assistant_coach",
-  "team_manager",
-  "physio",
-  "other_leader",
-];
 
 const MEMBER_STATUSES: readonly MembershipStatus[] = ["active", "paused"];
 
@@ -86,7 +106,10 @@ export class Actor {
   readonly relationships: RelationshipSet;
   private readonly now: () => Date;
   private readonly owned: Set<string>;
-  private readonly functions: Map<string, Set<GroupFunction>>;
+  /** Permissions held through club roles, per club. */
+  private readonly clubPermissions: Map<string, Set<RolePermission>>;
+  /** Permissions held through group roles, per group. */
+  private readonly groupPermissions: Map<string, Set<RolePermission>>;
 
   private constructor(
     relationships: RelationshipSet,
@@ -100,11 +123,17 @@ export class Actor {
     this.mfa = options.mfa;
     this.now = options.now ?? (() => new Date());
     this.owned = new Set(relationships.ownedGroups.map((o) => o.groupId));
-    this.functions = new Map();
+    this.clubPermissions = new Map();
+    for (const r of relationships.roles) {
+      const set = this.clubPermissions.get(r.clubId) ?? new Set<RolePermission>();
+      for (const p of r.permissions) set.add(p);
+      this.clubPermissions.set(r.clubId, set);
+    }
+    this.groupPermissions = new Map();
     for (const g of relationships.groups) {
-      const set = this.functions.get(g.groupId) ?? new Set<GroupFunction>();
-      set.add(g.function);
-      this.functions.set(g.groupId, set);
+      const set = this.groupPermissions.get(g.groupId) ?? new Set<RolePermission>();
+      for (const p of g.permissions) set.add(p);
+      this.groupPermissions.set(g.groupId, set);
     }
   }
 
@@ -131,9 +160,17 @@ export class Actor {
           .filter((m) => m.personId === wardId)
           .map(({ clubId, status, membershipType }) => ({ clubId, status, membershipType })),
         roles: [],
+        // The ward takes part in their groups; a guardian never exercises
+        // the ward's other group permissions (e.g. a leader role).
         groups: guardian.wardGroups
-          .filter((g) => g.personId === wardId && g.function === "member")
-          .map(({ clubId, groupId, function: fn }) => ({ clubId, groupId, function: fn })),
+          .filter((g) => g.personId === wardId && g.permissions.includes("group.participate"))
+          .map(({ clubId, groupId, roleId, function: fn }) => ({
+            clubId,
+            groupId,
+            roleId,
+            function: fn,
+            permissions: ["group.participate" as const],
+          })),
         ownedGroups: [],
         employments: [],
         supportGrants: [],
@@ -162,12 +199,30 @@ export class Actor {
     );
   }
 
-  hasClubRole(clubId: string, ...roles: ClubRole[]): boolean {
-    return this.relationships.roles.some((r) => r.clubId === clubId && roles.includes(r.role));
+  /**
+   * Whether the actor holds a permission through a role (P1.15): in a club
+   * (club roles), or in a group (club roles of its club, roles held in the
+   * group, and in a parent group for permissions that are inherited).
+   */
+  holds(permission: RolePermission, target: PermissionTarget): boolean {
+    if (typeof target === "string") {
+      return this.clubPermissions.get(target)?.has(permission) ?? false;
+    }
+    if (this.clubPermissions.get(target.clubId)?.has(permission)) return true;
+    if (this.groupPermissions.get(target.groupId)?.has(permission)) return true;
+    const entry = PERMISSION_CATALOGUE[permission];
+    return (
+      entry.kind === "role" &&
+      entry.inherits === true &&
+      (target.ancestorIds ?? []).some((id) => this.groupPermissions.get(id)?.has(permission))
+    );
   }
 
-  isClubManager(clubId: string): boolean {
-    return this.hasClubRole(clubId, "club_manager");
+  /** Holds the permission through a role held in some group of the club. */
+  holdsInAnyGroup(permission: RolePermission, clubId: string): boolean {
+    return this.relationships.groups.some(
+      (g) => g.clubId === clubId && g.permissions.includes(permission),
+    );
   }
 
   /** Any club role (board, manager, registrar, ...). */
@@ -241,14 +296,9 @@ export class Actor {
     return this.owned.has(group.groupId) || group.ancestorIds.some((id) => this.owned.has(id));
   }
 
-  hasGroupFunction(groupId: string, ...functions: GroupFunction[]): boolean {
-    const held = this.functions.get(groupId);
-    return held !== undefined && functions.some((f) => held.has(f));
-  }
-
-  /** In the group with any function. */
+  /** In the group with any role. */
   isGroupMember(groupId: string): boolean {
-    return this.functions.has(groupId);
+    return this.groupPermissions.has(groupId);
   }
 
   /** Owns at least one group of the club. */
@@ -256,23 +306,15 @@ export class Actor {
     return this.relationships.ownedGroups.some((o) => o.clubId === clubId);
   }
 
-  /** Owns a group of the club or plans one's activities (may create group events, P1.6). */
+  /**
+   * Owns a group of the club or plans one's activities through a group role
+   * (may create group events and places, P1.6).
+   */
   managesAnyGroupActivities(clubId: string): boolean {
     return (
       this.relationships.ownedGroups.some((o) => o.clubId === clubId) ||
-      this.relationships.groups.some(
-        (g) =>
-          g.clubId === clubId &&
-          (g.function === "head_coach" ||
-            g.function === "assistant_coach" ||
-            g.function === "team_manager"),
-      )
+      this.holdsInAnyGroup("group.activities.manage", clubId)
     );
-  }
-
-  /** Coach, team manager or another leader function in the group. */
-  leadsGroup(groupId: string): boolean {
-    return this.hasGroupFunction(groupId, ...LEADER_FUNCTIONS);
   }
 
   /** Guardian (with the right) of someone in the group. */

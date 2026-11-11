@@ -3192,5 +3192,298 @@
       "days": "The group is asked to answer {days, plural, =0 {the same day} one {# day before} other {# days before}} at {time}",
       "hours": "The group is asked to answer {hours, plural, one {# hour} other {# hours}} before the start"
     }
+  },
+  "permissionCatalogue": {
+    "areas": {
+      "members": "Members",
+      "groups": "Groups",
+      "activities": "Activities",
+      "events": "Events",
+      "finance": "Finance",
+      "privacy": "Privacy",
+      "club": "The club"
+    },
+    "permissions": {
+      "club_settings_update": {
+        "name": "Change the club's settings",
+        "description": "Can change the club's name, logo, time zone and how people join.",
+        "example": "For example, can change the logo or close the club to new applications."
+      },
+      "club_roles_manage": {
+        "name": "Administer roles and permissions",
+        "description": "Can create and change roles and give any role to anyone in the club.",
+        "example": "For example, can make someone treasurer or change what a coach may do."
+      },
+      "club_managers_claim": {
+        "name": "Take over as club manager",
+        "description": "Can become club manager when the club has none left.",
+        "example": "For example, can take over when the only club manager has left."
+      },
+      "club_history_read": {
+        "name": "See the club's change history",
+        "description": "Can see every change in the club: who changed what and when.",
+        "example": "For example, can see who moved a practice last week."
+      },
+      "club_audit_read": {
+        "name": "See the audit log",
+        "description": "Can see the log of sensitive events, such as exports and changed roles.",
+        "example": "For example, can see when the member register was last exported."
+      },
+      "club_profile_views_read": {
+        "name": "See who viewed profiles",
+        "description": "Can see the club's log of who opened members' profiles.",
+        "example": "For example, can check who viewed a protected member's profile."
+      },
+      "club_profile_views_configure": {
+        "name": "Set up logging of profile views",
+        "description": "Can decide whether the club logs who views profiles.",
+        "example": "For example, can turn on logging for every profile."
+      },
+      "club_members_read": {
+        "name": "See the member register",
+        "description": "Can see the list of the club's members with names, member numbers and groups.",
+        "example": "For example, can see who are members this year."
+      },
+      "club_people_details": {
+        "name": "See members' details",
+        "description": "Can see members' contact details, birth dates and other details in the register.",
+        "example": "For example, can see a member's address and phone number."
+      },
+      "club_people_protected": {
+        "name": "See people with protected identity",
+        "description": "Can see which members have protected identity, who are otherwise hidden.",
+        "example": "For example, can see a protected member in a group's member list."
+      },
+      "club_members_manage": {
+        "name": "Manage memberships",
+        "description": "Can pause, resume, end and change the type of memberships.",
+        "example": "For example, can end the membership of someone who moved away."
+      },
+      "club_members_routine": {
+        "name": "Handle memberships routinely",
+        "description": "Does not need two-step verification for each membership change (for those who do it daily).",
+        "example": "For example, can add many new members at the start of the season without extra steps."
+      },
+      "club_members_export": {
+        "name": "Export the member register",
+        "description": "Can download the member register as a file.",
+        "example": "For example, can download a member list for the federation's report."
+      },
+      "club_members_add": {
+        "name": "Add members",
+        "description": "Can add a new member by hand.",
+        "example": "For example, can register someone who handed in a paper application."
+      },
+      "club_members_import": {
+        "name": "Import members",
+        "description": "Can bring in many members at once from a file.",
+        "example": "For example, can move members over from an old system."
+      },
+      "club_join_requests_manage": {
+        "name": "Handle applications",
+        "description": "Can approve or decline applications for membership.",
+        "example": "For example, can approve a family that applied through the website."
+      },
+      "club_invitations_manage": {
+        "name": "Invite to the club",
+        "description": "Can send and revoke invitations to the club.",
+        "example": "For example, can invite new players to a team."
+      },
+      "club_guardians_manage": {
+        "name": "Manage guardians",
+        "description": "Can add and invite guardians and relatives of members.",
+        "example": "For example, can register a parent from a paper application."
+      },
+      "club_guardianships_end": {
+        "name": "End a parent's link",
+        "description": "Can end the link between a parent or legal guardian and a child in the club.",
+        "example": "For example, can remove a parent who no longer has custody."
+      },
+      "club_waitlists_read": {
+        "name": "See every waiting list",
+        "description": "Can see all of the club's waiting lists and who is on them.",
+        "example": "For example, can see how many are waiting for a place in swimming school."
+      },
+      "person_protection_set": {
+        "name": "Protect a member's identity",
+        "description": "Can mark that a member has protected identity in the club.",
+        "example": "For example, can hide a child who must not be seen by other members."
+      },
+      "person_merge": {
+        "name": "Merge duplicates",
+        "description": "Can merge two people who were registered twice.",
+        "example": "For example, can merge a member who was both imported and applied."
+      },
+      "person_own_login_invite": {
+        "name": "Give members their own login",
+        "description": "Can invite a member to get their own login.",
+        "example": "For example, can give a teenager who turned 13 their own login."
+      },
+      "person_consents_read": {
+        "name": "See members' consents",
+        "description": "Can see what members have consented to, for example photography.",
+        "example": "For example, can see who in the team must not be photographed."
+      },
+      "person_consents_manage": {
+        "name": "Record consents",
+        "description": "Can record a consent or a withdrawal given on paper.",
+        "example": "For example, can enter a photo consent from a form."
+      },
+      "person_history_read": {
+        "name": "See a member's history",
+        "description": "Can see changes made to a member's details.",
+        "example": "For example, can see when a member's address changed."
+      },
+      "club_groups_archived_read": {
+        "name": "See archived groups",
+        "description": "Can see groups that have been archived.",
+        "example": "For example, can see last season's teams."
+      },
+      "group_update": {
+        "name": "Change groups",
+        "description": "Can change a group's name, places and settings and archive it.",
+        "example": "For example, can increase the number of places in a team."
+      },
+      "club_groups_create": {
+        "name": "Create groups",
+        "description": "Can create new groups anywhere in the club.",
+        "example": "For example, can start a new team for a new age group."
+      },
+      "group_owners_manage": {
+        "name": "Appoint group owners",
+        "description": "Can decide who is in charge of a group.",
+        "example": "For example, can put a parent in charge of a team."
+      },
+      "group_members_read": {
+        "name": "See the group's members",
+        "description": "Can see who is in the group, also without being in it.",
+        "example": "For example, can see every team's player list."
+      },
+      "group_members_manage": {
+        "name": "Manage the group's members",
+        "description": "Can add and remove people in the group and change their role in it.",
+        "example": "For example, can move a player up to the first team."
+      },
+      "group_waitlist_manage": {
+        "name": "Manage the group's waiting list",
+        "description": "Can offer places to those waiting and change the waiting list.",
+        "example": "For example, can offer a free place to the next on the list."
+      },
+      "group_people_details": {
+        "name": "See the group members' details",
+        "description": "Can see contact details of the group's members and their guardians, protected members of the group included.",
+        "example": "For example, can call a player's parent before a match."
+      },
+      "group_consents_read": {
+        "name": "See the group's consents",
+        "description": "Can see an overview of what the group's members have consented to.",
+        "example": "For example, can see who must not appear in the team photo."
+      },
+      "group_history_read": {
+        "name": "See groups' history",
+        "description": "Can see changes made to groups.",
+        "example": "For example, can see when a team's number of places changed."
+      },
+      "group_participate": {
+        "name": "Take part in the group's activities",
+        "description": "Gets the group's activities in their schedule and is asked whether they will come.",
+        "example": "For example, can answer that they will come to Thursday's practice."
+      },
+      "group_lead": {
+        "name": "Count as a leader",
+        "description": "Is shown as a leader in the group, on activities and in attendance.",
+        "example": "For example, is listed as a leader on the match's page."
+      },
+      "group_activities_read": {
+        "name": "See the group's activities",
+        "description": "Can see the group's activities also without being in the group.",
+        "example": "For example, can see every team's practice times."
+      },
+      "group_activities_manage": {
+        "name": "Plan the group's activities",
+        "description": "Can add, change and cancel the group's practices, matches and other activities.",
+        "example": "For example, can add a practice or cancel a match."
+      },
+      "club_activities_read": {
+        "name": "See the club calendar",
+        "description": "Can see every group's activities and places in one calendar (without names).",
+        "example": "For example, can see when the hall is booked."
+      },
+      "club_locations_manage": {
+        "name": "Manage places",
+        "description": "Can add, change and remove all of the club's places.",
+        "example": "For example, can add a new artificial pitch."
+      },
+      "club_locations_create": {
+        "name": "Add places",
+        "description": "Can add new places and change the ones they added.",
+        "example": "For example, can add an away ground before a match."
+      },
+      "activity_responses_read": {
+        "name": "Lead the group's activities",
+        "description": "Can see everyone's answers, answer for participants and take attendance at the group's activities.",
+        "example": "For example, can see who is coming to Saturday's match."
+      },
+      "activity_attendance_manage": {
+        "name": "Record and correct attendance",
+        "description": "Can record attendance at activities, also after it was locked.",
+        "example": "For example, can correct attendance before a grant application."
+      },
+      "group_attendance_read": {
+        "name": "See the group's attendance",
+        "description": "Can see attendance statistics for the group.",
+        "example": "For example, can see how often players came to practice."
+      },
+      "activity_history_read": {
+        "name": "See activities' history",
+        "description": "Can see changes made to activities.",
+        "example": "For example, can see who cancelled a practice."
+      },
+      "club_events_create": {
+        "name": "Create events for the whole club",
+        "description": "Can create and manage events for everyone in the club.",
+        "example": "For example, can invite to the annual meeting."
+      },
+      "event_read": {
+        "name": "See every event",
+        "description": "Can see all of the club's events, drafts included.",
+        "example": "For example, can see an event before it is published."
+      },
+      "event_manage": {
+        "name": "Manage every event",
+        "description": "Can change, publish and cancel all of the club's events.",
+        "example": "For example, can move a team's end-of-season party."
+      },
+      "event_registrations_read": {
+        "name": "See event registrations",
+        "description": "Can see who registered for the club's events.",
+        "example": "For example, can see how many registered for the cup."
+      },
+      "event_history_read": {
+        "name": "See events' history",
+        "description": "Can see changes made to events.",
+        "example": "For example, can see when registration closed."
+      },
+      "billing_subscription_read": {
+        "name": "See the club's subscription",
+        "description": "Can see which plan the club has and what it costs.",
+        "example": "For example, can see when the subscription renews."
+      },
+      "billing_subscription_change": {
+        "name": "Change plan",
+        "description": "Can choose another plan for the club.",
+        "example": "For example, can upgrade when the club grows."
+      },
+      "billing_account_manage": {
+        "name": "Handle payment details",
+        "description": "Can change the club's billing details and payment card.",
+        "example": "For example, can change the billing address or add a new card."
+      },
+      "billing_invoices_read": {
+        "name": "See invoices",
+        "description": "Can see and download the club's invoices from ClubAdmin.",
+        "example": "For example, can download an invoice for the accounts."
+      }
+    }
   }
 }

@@ -468,7 +468,7 @@ export class GuardianshipsService {
           if (
             !hasClub(context) ||
             guardianship.recordedByClubId !== context.clubId ||
-            !(await repo.actorHasClubRole(tx, ["club_manager", "registrar"]))
+            !(await repo.actorHolds(tx, "club.guardians.manage"))
           ) {
             throw new DomainError("not_allowed");
           }
@@ -574,7 +574,7 @@ export class GuardianshipsService {
   ): Promise<{ guardianship: Guardianship; personId: string }> {
     const actor = actorPersonId(context);
     const kind = parseInput(GuardianshipKindSchema, input.kind);
-    if (!options.actorChecked && !(await repo.actorHasClubRole(tx, ["club_manager", "registrar"])))
+    if (!options.actorChecked && !(await repo.actorHolds(tx, "club.guardians.manage")))
       throw new DomainError("not_allowed");
     if (
       !options.wardChecked &&
@@ -635,7 +635,7 @@ export class GuardianshipsService {
     const actor = actorPersonId(context);
     const kind = parseInput(GuardianshipKindSchema, input.kind);
     const email = parseInput(EmailSchema, input.email);
-    if (!options.actorChecked && !(await repo.actorHasClubRole(tx, ["club_manager", "registrar"])))
+    if (!options.actorChecked && !(await repo.actorHolds(tx, "club.guardians.manage")))
       throw new DomainError("not_allowed");
     if (
       !options.wardChecked &&

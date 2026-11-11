@@ -18,7 +18,7 @@ describe("Actor", () => {
     expect(actor.ownsGroup({ clubId: club, groupId: team, ancestorIds: [] })).toBe(false);
   });
 
-  it("treats leader functions as leading, membership as not", () => {
+  it("holds the permissions of its roles: group roles in their group, club roles everywhere", () => {
     const actor = actorOf(
       relationships({
         groups: [
@@ -27,9 +27,24 @@ describe("Actor", () => {
         ],
       }),
     );
-    expect(actor.leadsGroup(team)).toBe(true);
-    expect(actor.leadsGroup(section)).toBe(false);
+    expect(actor.holds("group.lead", { clubId: club, groupId: team })).toBe(true);
+    expect(actor.holds("group.lead", { clubId: club, groupId: section })).toBe(false);
+    expect(actor.holds("group.participate", { clubId: club, groupId: section })).toBe(true);
+    // Not inherited by child groups (P1.15 decision 13), not a club permission.
+    expect(
+      actor.holds("group.activities.manage", {
+        clubId: club,
+        groupId: uuidv7(),
+        ancestorIds: [team],
+      }),
+    ).toBe(false);
+    expect(actor.holds("group.activities.manage", club)).toBe(false);
+    expect(actor.holdsInAnyGroup("group.activities.manage", club)).toBe(true);
     expect(actor.isGroupMember(section)).toBe(true);
+    const manager = actorOf(relationships({ roles: [{ clubId: club, role: "club_manager" }] }));
+    expect(manager.holds("group.activities.manage", { clubId: club, groupId: team })).toBe(true);
+    expect(manager.holds("group.activities.manage", club)).toBe(true);
+    expect(manager.holds("club.settings.update", uuidv7())).toBe(false);
   });
 
   it("checks support grants against the clock and requires a second factor", () => {
@@ -85,8 +100,9 @@ describe("Actor", () => {
       expect(actor.isClubMember(club)).toBe(true);
       expect(actor.isGroupMember(team)).toBe(true);
       // Never the guardian's roles, nor the ward's leader functions.
-      expect(actor.isClubManager(club)).toBe(false);
-      expect(actor.leadsGroup(section)).toBe(false);
+      expect(actor.holds("club.settings.update", club)).toBe(false);
+      expect(actor.holds("group.lead", { clubId: club, groupId: section })).toBe(false);
+      expect(actor.holds("group.participate", { clubId: club, groupId: team })).toBe(true);
     });
 
     it("needs a guardianship with act_on_behalf", () => {

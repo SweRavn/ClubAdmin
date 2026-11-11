@@ -113,7 +113,7 @@ export class GroupsController {
     const page = await this.groups.listGroups(tenantContext(authz, clubId), {
       cursor: query.cursor,
       limit: query.limit,
-      includeArchived: authz.actor.hasClubRole(clubId, "club_manager", "registrar"),
+      includeArchived: authz.actor.holds("club.groups.archived.read", clubId),
     });
     return { items: page.items.map(toGroupResponse), nextCursor: page.nextCursor };
   }
@@ -132,7 +132,8 @@ export class GroupsController {
     const context = tenantContext(authz, resource.clubId, {
       viewerPrivileged: this.visibility.privilegedForGroup(authz.actor, resource),
     });
-    const canManage = authz.actor.isClubManager(resource.clubId) || authz.actor.ownsGroup(resource);
+    const canManage =
+      authz.actor.holds("group.update", resource) || authz.actor.ownsGroup(resource);
     const { group, ownerIds, capacity, deletable, waitingCount } =
       await this.groups.getGroupWithOwners(context, resource.groupId, { manage: canManage });
     const owners = await this.presenter.present(
@@ -216,7 +217,8 @@ export class GroupsController {
   })
   async restoreGroup(@CurrentAuthorization() authz: RequestAuthorization): Promise<GroupResponse> {
     const resource = resourceOf(authz, "group");
-    if (!authz.actor.isClubManager(resource.clubId)) throw new DomainError("not_allowed");
+    // Restoring: club-wide holders of group.update only (club managers), not owners.
+    if (!authz.actor.holds("group.update", resource.clubId)) throw new DomainError("not_allowed");
     return toGroupResponse(
       await this.groups.restoreGroup(tenantContext(authz, resource.clubId), resource.groupId),
     );
@@ -259,7 +261,7 @@ export class GroupsController {
       tenantContext(authz, resource.clubId),
       resource.groupId,
       params.personId,
-      authz.actor.isClubManager(resource.clubId) ? "club_manager" : "group_owner",
+      authz.actor.holds("group.owners.manage", resource.clubId) ? "club_manager" : "group_owner",
     );
     return null;
   }
@@ -353,7 +355,7 @@ export class GroupsController {
     clubId: string,
     parentGroupId: string | null,
   ): Promise<void> {
-    if (authz.actor.isClubManager(clubId)) return;
+    if (authz.actor.holds("club.groups.create", clubId)) return;
     if (parentGroupId === null) throw new DomainError("group_not_managed");
     const [parent] = await this.authorization.groupRefs(authz, clubId, [parentGroupId]);
     if (!parent) throw new DomainError("group_parent_invalid");

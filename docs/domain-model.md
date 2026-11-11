@@ -313,10 +313,14 @@ Multi-sport sections are groups of kind `section`; the earlier
 `section_admin` role is simply an owner of a section group.
 
 ### `group_memberships`
-Person ↔ group with a **function**: `member` (player/participant),
-`head_coach`, `assistant_coach`, `team_manager`, `physio`, `other_leader`.
-A person can hold several functions in the same group (separate rows).
-`valid_from`/`valid_to`.
+Person ↔ group with a **group role** (`role_id`, P1.15, ADR 0046). The
+built-in template's group roles are today's functions: `member`
+(player/participant), `head_coach`, `assistant_coach`, `team_manager`,
+`physio`, `other_leader`; the `function` column keeps the template key for
+older readers. A person can hold several roles in the same group (separate
+rows). `participates` and `leads` say whether the role holds
+`group.participate` and `group.lead` (kept by triggers; read by the
+schedule, rosters, attendance and recipients). `valid_from`/`valid_to`.
 
 ### `group_owners`
 Person ↔ group, administrative ownership: edit the group, manage its members
@@ -387,11 +391,24 @@ membership added past people waiting has `queue_bypass_reason` (P1.10b).
   positions through `app.waitlist_positions`, in one transaction.
 
 ### `club_role_assignments`
-Club-level roles: `chair`, `vice_chair`, `treasurer`, `secretary`,
-`board_member`, `deputy_board_member`, `auditor`, `nomination_committee`,
-`club_manager`, `registrar` (membership/LOK), `safeguarding_officer`,
-`communications`, `staff`. Validity period; `assigned_by_person_id`,
-`ended_by_person_id`.
+Club-level roles (`role_id`, P1.15, ADR 0046). The built-in template's club
+roles: `chair`, `vice_chair`, `treasurer`, `secretary`, `board_member`,
+`deputy_board_member`, `auditor`, `nomination_committee`, `club_manager`,
+`registrar` (membership/LOK), `safeguarding_officer`, `communications`,
+`staff`; the `role` column keeps the template key. Validity period;
+`assigned_by_person_id`, `ended_by_person_id`.
+
+### `roles` and `role_permissions` (P1.15, ADR 0046)
+A club's roles: `scope` (`club` or `group`), `template_key` (the template
+role it comes from), `locked` (the club manager and the chair), names and
+descriptions per language (NULL: the catalogue's text), `version`. Each
+role's permissions are rows in `role_permissions` (keys of the permission
+catalogue, `packages/shared/src/authorization/permission-catalogue.ts`).
+Every club gets the built-in template's roles when it is created (a trigger
+on `clubs`); the template gives today's roles exactly the permissions they
+had. A club role's permission applies in the whole club (a group permission
+held through a club role in every group); a group role's in its group only,
+not in child groups. Roles become editable in P1.15 part A2.
 
 **Club managers** (ADR 0018) have full administrative rights in the club. A club
 can have several; there must always be at least one active manager. The person
@@ -520,9 +537,14 @@ who must not be exposed.
   `clubId`, club managers only; the register filters `protected=only` with
   the source (global, club, both).
 - **Who can see a protected person:** the person, their family (guardians and
-  wards), club managers, registrars, and the owners (including owners of parent
-  groups) and leaders of groups the person belongs to (they must run
-  activities and take attendance). They see a **camera-with-strike-through
+  wards), holders of `club.people.protected` (P1.15: club managers always,
+  registrars in the built-in template), and the owners (including owners of
+  parent groups) and holders of `group.people.details` (the leaders) of
+  groups the person belongs to (they must run activities and take
+  attendance). Club managers always see who is protected, so that they can
+  find every member when assigning roles (decision 2026-11-11, ADR 0046);
+  seeing that someone is protected is not seeing their details, which need
+  `club.people.details`. They see a **camera-with-strike-through
   icon** next to the name, meaning: do not photograph, film, publish or share.
   Platform operators with support access never see them.
 - **Everyone else sees nothing:** not in member lists, group rosters,
@@ -856,7 +878,11 @@ any current relationship with the club: active or paused member, a club role,
 a current employment, unexpired support access (operators, with a second
 factor), or guardian of an active or paused member. Without one, everything in
 the club answers 404; with one but without the permission, 403. "Owner"
-includes owners of parent groups; "leader" is any function except `member`.
+includes owners of parent groups; "leader" is any role holding `group.lead`
+(the template's leader functions). Since P1.15 (ADR 0046) the policies ask
+for permissions (`actor.holds(permission, club | group)`), never for role
+names; the role names below are those of the built-in template, which gives
+each role the permissions listed here.
 
 | Permission | Resource | Allowed for |
 |---|---|---|
@@ -940,8 +966,8 @@ shared them with it (`club_profiles.shared_fields`).
 | Viewer | Fields |
 |---|---|
 | The person, guardian with `act_on_behalf` | everything: birth date, gender, phone, address, club profile (member number, membership, groups), guardians with phone numbers |
-| Club manager, registrar | birth date; shared phone, gender and address; member number, membership, groups; guardians with phone numbers |
-| Owner or leader of one of the person's groups | birth date, shared phone, member number, groups, guardians with phone numbers |
+| `club.people.details` in the club (club manager, registrar) | birth date; shared phone, gender and address; member number, membership, groups; guardians with phone numbers |
+| Owner of one of the person's groups, or `group.people.details` in one (its leaders) | birth date, shared phone, member number, groups, guardians with phone numbers |
 | Same group, their guardians, support access | name only (never a protected person); the shared phone with the person's `contacts_group` or `contacts_club` consent, and guardians who gave theirs (P1.8a) |
 | Anyone else in the club | nothing, or with the person's `contacts_club` consent the name and shared phone (never a protected person) |
 

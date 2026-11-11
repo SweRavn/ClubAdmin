@@ -215,7 +215,7 @@ export async function eventsForPeople(
         AND m.status IN ('active', 'paused')
     ), teams AS MATERIALIZED (
       SELECT DISTINCT gm.club_id, gm.group_id FROM public.group_memberships gm
-      WHERE gm.person_id = ANY (${people}::uuid[]) AND gm.function = 'member' AND gm.valid_to IS NULL
+      WHERE gm.person_id = ANY (${people}::uuid[]) AND gm.participates AND gm.valid_to IS NULL
     ), candidates AS MATERIALIZED (
       SELECT e.id FROM clubs c
       JOIN public.events e ON e.club_id = c.club_id AND e.audience = 'club'

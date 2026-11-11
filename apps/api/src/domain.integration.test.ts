@@ -185,7 +185,14 @@ describe("tenant isolation of club-owned tables", () => {
       }
     }
 
-    expect(checkedWrites).toEqual(["club_memberships", "club_profiles", "club_role_assignments"]);
+    // Every club has its roles (P1.15), so club B has rows to move there too.
+    expect(checkedWrites).toEqual([
+      "club_memberships",
+      "club_profiles",
+      "club_role_assignments",
+      "role_permissions",
+      "roles",
+    ]);
     await expectTenantIsolation(c.t.db, b.id, (tx) =>
       tx.execute(sql`SELECT * FROM clubs WHERE id = ${a.id}`),
     );

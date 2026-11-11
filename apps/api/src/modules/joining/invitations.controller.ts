@@ -121,7 +121,7 @@ export class InvitationsController {
     const { clubId } = resourceOf(authz, "club");
     // A role preset grants a role: the same rule as assigning it (club manager with MFA).
     const created = await this.invitations.create(tenantContext(authz, clubId), body, {
-      mayPresetRole: authz.actor.isClubManager(clubId),
+      mayPresetRole: authz.actor.holds("club.roles.manage", clubId),
       mfa: authz.actor.mfa,
     });
     return {

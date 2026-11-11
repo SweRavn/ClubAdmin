@@ -301,7 +301,7 @@ export async function groupConsentsPage(
             ORDER BY k.purpose) AS purposes
     FROM (SELECT DISTINCT person_id FROM public.group_memberships
           WHERE club_id = ${clubId} AND group_id = ${groupId} AND valid_to IS NULL
-            AND function = 'member') gm
+            AND participates) gm
     JOIN public.people p ON p.id = gm.person_id
     LEFT JOIN public.club_profiles cp ON cp.club_id = ${clubId} AND cp.person_id = gm.person_id
     WHERE (${page.cursor}::uuid IS NULL OR gm.person_id > ${page.cursor}::uuid)
@@ -324,7 +324,7 @@ export async function groupConsentCounts(
     WITH members AS (
       SELECT DISTINCT gm.person_id FROM public.group_memberships gm
       WHERE gm.club_id = ${clubId} AND gm.group_id = ${groupId} AND gm.valid_to IS NULL
-        AND gm.function = 'member')
+        AND gm.participates)
     SELECT (SELECT count(*)::int FROM members) AS total,
       (SELECT count(*)::int FROM members m JOIN public.people p ON p.id = m.person_id
        LEFT JOIN public.club_profiles cp ON cp.club_id = ${clubId} AND cp.person_id = m.person_id

@@ -114,7 +114,7 @@ async function seriesChanged(
   const { rows: members } = await tx.execute<{ person_id: string }>(sql`
     SELECT DISTINCT gm.person_id FROM public.activity_series_groups sg
     JOIN public.group_memberships gm ON gm.group_id = sg.group_id
-      AND gm.function = 'member' AND gm.valid_to IS NULL
+      AND gm.participates AND gm.valid_to IS NULL
     WHERE sg.series_id = ${seriesId}`);
   const people = await withGuardians(
     tx,

@@ -531,7 +531,7 @@ export class MemberImportsService {
         const state: BatchState = { known, created: new Map(), invitations, used: 0 };
         return this.db
           .withTenant(context, async (tx) => {
-            if (!(await membersRepo.actorHasClubRole(tx, ["club_manager", "registrar"])))
+            if (!(await membersRepo.actorHolds(tx, "club.members.import")))
               throw new DomainError("not_allowed");
             const done: repo.ImportedRow[] = [];
             for (const row of batch) {

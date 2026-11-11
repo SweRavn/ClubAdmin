@@ -50,7 +50,7 @@ function callerOf(
   if (actor.onBehalfOf === personId) return "guardian";
   if (actor.isSelf(personId)) return "self";
   if (actor.isFullGuardianOf(personId)) return "guardian";
-  if (actor.hasClubRole(clubId, "club_manager", "registrar")) return "admin";
+  if (actor.holds("person.consents.manage", clubId)) return "admin";
   return "leader";
 }
 

@@ -3192,5 +3192,298 @@
       "days": "Gruppen blir bedt om å svare {days, plural, =0 {samme dag} one {# dag før} other {# dager før}} kl. {time}",
       "hours": "Gruppen blir bedt om å svare {hours, plural, one {# time} other {# timer}} før start"
     }
+  },
+  "permissionCatalogue": {
+    "areas": {
+      "members": "Medlemmer",
+      "groups": "Grupper",
+      "activities": "Aktiviteter",
+      "events": "Arrangementer",
+      "finance": "Økonomi",
+      "privacy": "Personvern",
+      "club": "Klubben"
+    },
+    "permissions": {
+      "club_settings_update": {
+        "name": "Endre klubbens innstillinger",
+        "description": "Kan endre klubbens navn, logo, tidssone og hvordan man blir medlem.",
+        "example": "Kan for eksempel bytte logo eller stenge for nye søknader."
+      },
+      "club_roles_manage": {
+        "name": "Administrere roller og tillatelser",
+        "description": "Kan opprette og endre roller og gi hvilken som helst rolle til hvem som helst i klubben.",
+        "example": "Kan for eksempel gjøre noen til kasserer eller endre hva en trener får gjøre."
+      },
+      "club_managers_claim": {
+        "name": "Overta som klubbansvarlig",
+        "description": "Kan bli klubbansvarlig når klubben ikke har noen igjen.",
+        "example": "Kan for eksempel overta når den eneste klubbansvarlige har sluttet."
+      },
+      "club_history_read": {
+        "name": "Se klubbens endringshistorikk",
+        "description": "Kan se alle endringer i klubben: hvem som endret hva og når.",
+        "example": "Kan for eksempel se hvem som flyttet en trening forrige uke."
+      },
+      "club_audit_read": {
+        "name": "Se revisjonsloggen",
+        "description": "Kan se loggen over sensitive hendelser, som eksporter og endrede roller.",
+        "example": "Kan for eksempel se når medlemsregisteret sist ble eksportert."
+      },
+      "club_profile_views_read": {
+        "name": "Se hvem som har sett profiler",
+        "description": "Kan se klubbens logg over hvem som har åpnet medlemmers profiler.",
+        "example": "Kan for eksempel sjekke hvem som har sett profilen til et beskyttet medlem."
+      },
+      "club_profile_views_configure": {
+        "name": "Stille inn loggingen av profilbesøk",
+        "description": "Kan bestemme om klubben logger hvem som ser på profiler.",
+        "example": "Kan for eksempel slå på logging for alle profiler."
+      },
+      "club_members_read": {
+        "name": "Se medlemsregisteret",
+        "description": "Kan se listen over klubbens medlemmer med navn, medlemsnummer og grupper.",
+        "example": "Kan for eksempel se hvem som er medlemmer i år."
+      },
+      "club_people_details": {
+        "name": "Se medlemmenes opplysninger",
+        "description": "Kan se medlemmenes kontaktopplysninger, fødselsdato og andre opplysninger i registeret.",
+        "example": "Kan for eksempel se adressen og telefonnummeret til et medlem."
+      },
+      "club_people_protected": {
+        "name": "Se personer med beskyttet identitet",
+        "description": "Kan se hvilke medlemmer som har beskyttet identitet, som ellers er skjult.",
+        "example": "Kan for eksempel se et beskyttet medlem i en gruppes medlemsliste."
+      },
+      "club_members_manage": {
+        "name": "Håndtere medlemskap",
+        "description": "Kan pause, gjenoppta, avslutte og endre type på medlemskap.",
+        "example": "Kan for eksempel avslutte medlemskapet til noen som har flyttet."
+      },
+      "club_members_routine": {
+        "name": "Håndtere medlemskap løpende",
+        "description": "Trenger ikke totrinnsbekreftelse for hver endring av medlemskap (for den som gjør det daglig).",
+        "example": "Kan for eksempel legge til mange nye medlemmer i starten av sesongen uten ekstra steg."
+      },
+      "club_members_export": {
+        "name": "Eksportere medlemsregisteret",
+        "description": "Kan laste ned medlemsregisteret som en fil.",
+        "example": "Kan for eksempel ta ut en medlemsliste til forbundets rapport."
+      },
+      "club_members_add": {
+        "name": "Legge til medlemmer",
+        "description": "Kan legge inn et nytt medlem manuelt.",
+        "example": "Kan for eksempel registrere noen som har levert en papirsøknad."
+      },
+      "club_members_import": {
+        "name": "Importere medlemmer",
+        "description": "Kan lese inn mange medlemmer på en gang fra en fil.",
+        "example": "Kan for eksempel flytte over medlemmer fra et gammelt system."
+      },
+      "club_join_requests_manage": {
+        "name": "Håndtere søknader",
+        "description": "Kan godkjenne eller avslå søknader om medlemskap.",
+        "example": "Kan for eksempel godkjenne en familie som har søkt via nettsiden."
+      },
+      "club_invitations_manage": {
+        "name": "Invitere til klubben",
+        "description": "Kan sende og trekke tilbake invitasjoner til klubben.",
+        "example": "Kan for eksempel invitere nye spillere til et lag."
+      },
+      "club_guardians_manage": {
+        "name": "Håndtere foresatte",
+        "description": "Kan legge til og invitere foresatte og pårørende for medlemmer.",
+        "example": "Kan for eksempel registrere en forelder fra en papirsøknad."
+      },
+      "club_guardianships_end": {
+        "name": "Avslutte en forelders kobling",
+        "description": "Kan avslutte koblingen mellom en forelder eller verge og et barn i klubben.",
+        "example": "Kan for eksempel fjerne en forelder som ikke lenger har foreldreansvar."
+      },
+      "club_waitlists_read": {
+        "name": "Se alle ventelister",
+        "description": "Kan se alle klubbens ventelister og hvem som står på dem.",
+        "example": "Kan for eksempel se hvor mange som venter på plass i svømmeskolen."
+      },
+      "person_protection_set": {
+        "name": "Beskytte et medlems identitet",
+        "description": "Kan markere at et medlem har beskyttet identitet i klubben.",
+        "example": "Kan for eksempel skjule et barn som ikke skal vises for andre medlemmer."
+      },
+      "person_merge": {
+        "name": "Slå sammen duplikater",
+        "description": "Kan slå sammen to personer som er registrert to ganger.",
+        "example": "Kan for eksempel slå sammen et medlem som både er importert og har søkt."
+      },
+      "person_own_login_invite": {
+        "name": "Gi medlemmer egen innlogging",
+        "description": "Kan invitere et medlem til å få egen innlogging.",
+        "example": "Kan for eksempel gi en tenåring som har fylt 13 sin egen innlogging."
+      },
+      "person_consents_read": {
+        "name": "Se medlemmers samtykker",
+        "description": "Kan se hva medlemmene har samtykket til, for eksempel fotografering.",
+        "example": "Kan for eksempel se hvem på laget som ikke skal fotograferes."
+      },
+      "person_consents_manage": {
+        "name": "Registrere samtykker",
+        "description": "Kan registrere et samtykke eller en tilbaketrekking gitt på papir.",
+        "example": "Kan for eksempel føre inn et fotosamtykke fra et skjema."
+      },
+      "person_history_read": {
+        "name": "Se et medlems historikk",
+        "description": "Kan se endringer som er gjort i et medlems opplysninger.",
+        "example": "Kan for eksempel se når adressen til et medlem ble endret."
+      },
+      "club_groups_archived_read": {
+        "name": "Se arkiverte grupper",
+        "description": "Kan se grupper som er arkivert.",
+        "example": "Kan for eksempel se fjorårets lag."
+      },
+      "group_update": {
+        "name": "Endre grupper",
+        "description": "Kan endre en gruppes navn, plasser og innstillinger og arkivere den.",
+        "example": "Kan for eksempel øke antall plasser på et lag."
+      },
+      "club_groups_create": {
+        "name": "Opprette grupper",
+        "description": "Kan opprette nye grupper hvor som helst i klubben.",
+        "example": "Kan for eksempel starte et nytt lag for et nytt årskull."
+      },
+      "group_owners_manage": {
+        "name": "Utnevne gruppeansvarlige",
+        "description": "Kan bestemme hvem som er ansvarlig for en gruppe.",
+        "example": "Kan for eksempel gjøre en forelder ansvarlig for et lag."
+      },
+      "group_members_read": {
+        "name": "Se gruppens medlemmer",
+        "description": "Kan se hvem som er med i gruppen, også uten å være med selv.",
+        "example": "Kan for eksempel se spillerlisten til alle lag."
+      },
+      "group_members_manage": {
+        "name": "Håndtere gruppens medlemmer",
+        "description": "Kan legge til og fjerne personer i gruppen og endre rollen deres i den.",
+        "example": "Kan for eksempel flytte en spiller opp til A-laget."
+      },
+      "group_waitlist_manage": {
+        "name": "Håndtere gruppens venteliste",
+        "description": "Kan tilby plasser til dem som venter og endre ventelisten.",
+        "example": "Kan for eksempel tilby en ledig plass til neste på listen."
+      },
+      "group_people_details": {
+        "name": "Se gruppemedlemmenes opplysninger",
+        "description": "Kan se kontaktopplysninger til gruppens medlemmer og deres foresatte, også beskyttede medlemmer i gruppen.",
+        "example": "Kan for eksempel ringe en spillers forelder før en kamp."
+      },
+      "group_consents_read": {
+        "name": "Se gruppens samtykker",
+        "description": "Kan se en oversikt over hva gruppens medlemmer har samtykket til.",
+        "example": "Kan for eksempel se hvem som ikke skal være med på lagbildet."
+      },
+      "group_history_read": {
+        "name": "Se gruppers historikk",
+        "description": "Kan se endringer som er gjort i grupper.",
+        "example": "Kan for eksempel se når antall plasser på et lag ble endret."
+      },
+      "group_participate": {
+        "name": "Delta i gruppens aktiviteter",
+        "description": "Får gruppens aktiviteter i timeplanen sin og blir spurt om man kommer.",
+        "example": "Kan for eksempel svare at man kommer på torsdagens trening."
+      },
+      "group_lead": {
+        "name": "Regnes som leder",
+        "description": "Vises som leder i gruppen, på aktiviteter og i oppmøtet.",
+        "example": "Står for eksempel som leder på kampens side."
+      },
+      "group_activities_read": {
+        "name": "Se gruppens aktiviteter",
+        "description": "Kan se gruppens aktiviteter også uten å være med i gruppen.",
+        "example": "Kan for eksempel se treningstidene til alle lag."
+      },
+      "group_activities_manage": {
+        "name": "Planlegge gruppens aktiviteter",
+        "description": "Kan legge til, endre og avlyse gruppens treninger, kamper og andre aktiviteter.",
+        "example": "Kan for eksempel legge til en trening eller avlyse en kamp."
+      },
+      "club_activities_read": {
+        "name": "Se klubbens kalender",
+        "description": "Kan se alle gruppers aktiviteter og steder i en felles kalender (uten navn).",
+        "example": "Kan for eksempel se når hallen er booket."
+      },
+      "club_locations_manage": {
+        "name": "Håndtere steder",
+        "description": "Kan legge til, endre og fjerne alle klubbens steder.",
+        "example": "Kan for eksempel legge inn en ny kunstgressbane."
+      },
+      "club_locations_create": {
+        "name": "Legge til steder",
+        "description": "Kan legge til nye steder og endre dem man selv har lagt til.",
+        "example": "Kan for eksempel legge inn en bortebane før en kamp."
+      },
+      "activity_responses_read": {
+        "name": "Lede gruppens aktiviteter",
+        "description": "Kan se alles svar, svare for deltakerne og ta oppmøte på gruppens aktiviteter.",
+        "example": "Kan for eksempel se hvem som kommer på lørdagens kamp."
+      },
+      "activity_attendance_manage": {
+        "name": "Føre og rette oppmøte",
+        "description": "Kan føre oppmøte på aktiviteter, også etter at det er låst.",
+        "example": "Kan for eksempel rette oppmøtet før en søknad om tilskudd."
+      },
+      "group_attendance_read": {
+        "name": "Se gruppens oppmøte",
+        "description": "Kan se oppmøtestatistikk for gruppen.",
+        "example": "Kan for eksempel se hvor ofte spillerne har vært på trening."
+      },
+      "activity_history_read": {
+        "name": "Se aktiviteters historikk",
+        "description": "Kan se endringer som er gjort i aktiviteter.",
+        "example": "Kan for eksempel se hvem som avlyste en trening."
+      },
+      "club_events_create": {
+        "name": "Opprette arrangementer for hele klubben",
+        "description": "Kan opprette og håndtere arrangementer som gjelder alle i klubben.",
+        "example": "Kan for eksempel invitere til årsmøtet."
+      },
+      "event_read": {
+        "name": "Se alle arrangementer",
+        "description": "Kan se alle klubbens arrangementer, også utkast.",
+        "example": "Kan for eksempel se et arrangement før det er publisert."
+      },
+      "event_manage": {
+        "name": "Håndtere alle arrangementer",
+        "description": "Kan endre, publisere og avlyse alle klubbens arrangementer.",
+        "example": "Kan for eksempel flytte et lags avslutning."
+      },
+      "event_registrations_read": {
+        "name": "Se påmeldinger til arrangementer",
+        "description": "Kan se hvem som har meldt seg på klubbens arrangementer.",
+        "example": "Kan for eksempel se hvor mange som har meldt seg på cupen."
+      },
+      "event_history_read": {
+        "name": "Se arrangementers historikk",
+        "description": "Kan se endringer som er gjort i arrangementer.",
+        "example": "Kan for eksempel se når påmeldingen ble stengt."
+      },
+      "billing_subscription_read": {
+        "name": "Se klubbens abonnement",
+        "description": "Kan se hvilken plan klubben har og hva den koster.",
+        "example": "Kan for eksempel se når abonnementet fornyes."
+      },
+      "billing_subscription_change": {
+        "name": "Bytte plan",
+        "description": "Kan velge en annen plan for klubben.",
+        "example": "Kan for eksempel oppgradere når klubben vokser."
+      },
+      "billing_account_manage": {
+        "name": "Håndtere betalingsopplysninger",
+        "description": "Kan endre klubbens fakturaopplysninger og betalingskort.",
+        "example": "Kan for eksempel bytte fakturaadresse eller legge inn et nytt kort."
+      },
+      "billing_invoices_read": {
+        "name": "Se fakturaer",
+        "description": "Kan se og laste ned klubbens fakturaer fra ClubAdmin.",
+        "example": "Kan for eksempel laste ned en faktura til regnskapet."
+      }
+    }
   }
 }

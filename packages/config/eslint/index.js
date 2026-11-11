@@ -7,6 +7,7 @@ import tseslint from "typescript-eslint";
 
 import { noJsxLiteralStrings } from "./jsx-literal-strings.js";
 import { personNamesInPresenters } from "./person-names.js";
+import { noRoleNames } from "./role-names.js";
 import { spdxHeader } from "./spdx-header.js";
 
 export const clubadminPlugin = {
@@ -15,6 +16,7 @@ export const clubadminPlugin = {
     "spdx-header": spdxHeader,
     "person-names-in-presenters": personNamesInPresenters,
     "no-jsx-literal-strings": noJsxLiteralStrings,
+    "no-role-names": noRoleNames,
   },
 };
 
@@ -129,6 +131,18 @@ export function createConfig({ tsconfigRootDir }) {
       files: ["apps/api/src/**/*.ts", "apps/worker/src/**/*.ts"],
       ignores: PERSON_NAMES_ALLOWED,
       rules: { "clubadmin/person-names-in-presenters": "error" },
+    },
+    {
+      // Permissions, not role or function names, decide (P1.15, ADR 0046).
+      // The roles module owns the roles; the seed and tests name them.
+      files: ["apps/api/src/**/*.ts", "apps/worker/src/**/*.ts"],
+      ignores: [
+        "apps/api/src/modules/roles/**",
+        "apps/api/src/seed/**",
+        "apps/api/src/testing/**",
+        "**/*.test.ts",
+      ],
+      rules: { "clubadmin/no-role-names": "error" },
     },
     {
       // The apps show names only through PersonName/personLabel (personLabel

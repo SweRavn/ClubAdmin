@@ -225,6 +225,14 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   BEGIN/COMMIT). A role change reaches the API through the worker in well
   under a second (`worker.integration.test.ts`). The query-plans test also
   covers the relationship set, a roster page and a club's protected set.
+  Since P1.15 (ADR 0046) the relationship set also reads each assignment's
+  role permissions in the same statement (`role_permissions_unique` by
+  role ID, the `own_roles` policy by the person indexes, no sequential
+  scan); `app.holds_permission` and the worker's `clubHolders(...)` use
+  `club_role_assignments_role_idx` / `group_memberships_role_idx` and
+  `role_permissions_unique`. The schedule, rosters, attendance and
+  recipients read `group_memberships.participates` / `leads` instead of
+  joining roles. Request budgets are unchanged.
 - Member register (P1.2, `register-plans.integration.test.ts`: one club with
   10,000 members among 100,000 people, as the club's registrar with row-level
   security): p95 of a 50-row page sorted by name about 80–95 ms, search as you

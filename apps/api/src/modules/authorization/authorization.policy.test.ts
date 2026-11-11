@@ -10,11 +10,12 @@ import {
   clubResource,
   groupResource,
   personResource,
+  type RelationshipOverrides,
   relationships,
 } from "../../testing/authorization.ts";
 import { policyFor, policyGaps, profileAccess, registerAccess } from "./authorization.policy.ts";
 import type { Resource } from "./policy.ts";
-import { Actor, type RelationshipSet } from "./relationship-set.ts";
+import { Actor } from "./relationship-set.ts";
 
 const club = uuidv7();
 const otherClub = uuidv7();
@@ -24,10 +25,10 @@ const otherTeam = uuidv7();
 const player = uuidv7();
 const ward = uuidv7();
 
-const member = (clubId = club): Partial<RelationshipSet> => ({
+const member = (clubId = club): RelationshipOverrides => ({
   memberships: [{ clubId, status: "active", membershipType: "active" }],
 });
-const as = (overrides: Partial<RelationshipSet>, options: { mfa?: boolean } = {}) =>
+const as = (overrides: RelationshipOverrides, options: { mfa?: boolean } = {}) =>
   actorOf(relationships(overrides), options);
 
 const manager = as({ ...member(), roles: [{ clubId: club, role: "club_manager" }] }, { mfa: true });

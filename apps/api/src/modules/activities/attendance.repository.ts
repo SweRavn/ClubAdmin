@@ -57,12 +57,12 @@ export function rosterQuery(
   // participants; the leaders stay. wholeGroups: everyone who could be called up.
   const calledUp = options.wholeGroups
     ? sql``
-    : sql`AND (gm.function <> 'member' OR NOT a.invitees_only OR EXISTS (
+    : sql`AND (NOT gm.participates OR NOT a.invitees_only OR EXISTS (
         SELECT 1 FROM public.activity_invitees i
         WHERE i.club_id = a.club_id AND i.activity_id = a.id AND i.person_id = gm.person_id))`;
   return sql`
     SELECT ag.activity_id, gm.person_id,
-      CASE WHEN bool_or(gm.function = 'member') THEN 'participant' ELSE 'leader' END AS role
+      CASE WHEN bool_or(gm.participates) THEN 'participant' ELSE 'leader' END AS role
     FROM public.activities a
     JOIN public.activity_groups ag ON ag.activity_id = a.id
     JOIN public.group_memberships gm ON gm.club_id = ag.club_id AND gm.group_id = ag.group_id
@@ -494,7 +494,7 @@ export function memberSummaryQuery(
       SELECT gm.person_id, array_agg(tstzrange(gm.valid_from, gm.valid_to)) AS periods,
         ${givenNameSortKey(sql`gm.person_id`)} AS sort_key
       FROM public.group_memberships gm
-      WHERE gm.club_id = ${clubId} AND gm.group_id = ${groupId} AND gm.function = 'member'
+      WHERE gm.club_id = ${clubId} AND gm.group_id = ${groupId} AND gm.participates
         AND gm.valid_from < ${range.to} AND (gm.valid_to IS NULL OR gm.valid_to > ${range.from})
       GROUP BY gm.person_id
     ),

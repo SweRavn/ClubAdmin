@@ -368,8 +368,10 @@ export class AttendanceController {
     const resource = resourceOf(authz, "activity");
     const actor = authz.actor;
     return {
-      leads: actor.isClubManager(resource.clubId) || leads(actor, resource.groups),
-      corrects: actor.hasClubRole(resource.clubId, "club_manager", "registrar"),
+      leads:
+        actor.holds("group.activities.manage", resource.clubId) || leads(actor, resource.groups),
+      // Correcting locked marks: the club-wide permission (club managers, registrars).
+      corrects: actor.holds("activity.attendance.manage", resource.clubId),
     };
   }
 

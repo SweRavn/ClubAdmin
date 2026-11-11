@@ -751,6 +751,10 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
   "public.erasure_requests": "a person's own deletion requests (global, ADR 0041)",
   "public.calendar_feeds":
     "a person's own calendar subscriptions (global, P1.11); never shown to clubs",
+  // P1.15 A1: every club has the built-in template's roles; part A2 makes them
+  // editable and adds the role's history panel (with a policy here).
+  "public.roles": "a club's roles, not editable before P1.15 part A2 (role history panel)",
+  "public.role_permissions": "a role's permissions, shown with the role from P1.15 part A2",
 };
 
 const byTable = new Map(HISTORY_POLICY.map((p) => [p.table, p]));

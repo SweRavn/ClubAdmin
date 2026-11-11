@@ -214,8 +214,10 @@ export class HistoryService {
     );
     const page = await this.present(authz, panel.clubId, read, {
       sharedFields: new Set(panel.sharedFields ?? []),
+      // Leader notes: those who plan every group's activities (club managers)
+      // and those who read the activity's answers.
       leaderNotes:
-        authz.actor.isClubManager(panel.clubId) ||
+        authz.actor.holds("group.activities.manage", panel.clubId) ||
         (panel.activity !== undefined &&
           permits(authz.actor, "activity.responses.read", panel.activity)),
     });
@@ -259,7 +261,7 @@ export class HistoryService {
     );
     return this.present(authz, clubId, read, {
       sharedFields: new Set(),
-      leaderNotes: authz.actor.isClubManager(clubId),
+      leaderNotes: authz.actor.holds("group.activities.manage", clubId),
     });
   }
 

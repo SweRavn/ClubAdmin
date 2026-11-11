@@ -23,6 +23,7 @@ import type {
   RegisterFilter,
   RegisterSort,
   RegisterStatus,
+  RolePermission,
 } from "@clubadmin/shared";
 
 const { memberExports } = schema;
@@ -258,9 +259,10 @@ export async function listExports(
 }
 
 /** The actor holds one of these roles in the transaction's club (database helper). */
-export async function actorHasClubRole(tx: Tx, roles: readonly string[]): Promise<boolean> {
+/** Whether the caller holds a permission in the transaction's club (P1.15, app.holds_permission). */
+export async function actorHolds(tx: Tx, permission: RolePermission): Promise<boolean> {
   const { rows } = await tx.execute<{ ok: boolean }>(
-    sql`SELECT app.has_club_role(string_to_array(${roles.join(",")}, ',')) AS ok`,
+    sql`SELECT app.holds_permission(app.current_club_id(), ${permission}) AS ok`,
   );
   return rows[0]?.ok === true;
 }

@@ -143,6 +143,11 @@ export const groupMemberships = pgTable(
     groupId: uuid().notNull(),
     personId: personRef(),
     function: text().$type<GroupFunction>().notNull().default("member"),
+    /** The club's group role (P1.15; filled from `function` by a trigger for older writers). */
+    roleId: uuid(),
+    /** The role holds `group.participate` / `group.lead` (kept by triggers). */
+    participates: boolean().notNull().default(false),
+    leads: boolean().notNull().default(false),
     /** Why a `member` was added past people waiting (P1.10b; audited, listed for club managers). */
     queueBypassReason: text(),
     ...validity,

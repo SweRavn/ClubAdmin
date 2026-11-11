@@ -42,9 +42,11 @@ export {
 } from "./presenters/register.presenter.ts";
 export {
   Actor,
+  type GroupAssignment,
   type GroupRef,
-  LEADER_FUNCTIONS,
+  type PermissionTarget,
   type RelationshipSet,
+  type RoleAssignment,
 } from "./relationship-set.ts";
 export {
   CurrentAuthorization,

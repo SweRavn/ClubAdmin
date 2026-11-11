@@ -2,7 +2,12 @@
 // Builders for unit tests of policies and visibility: relationship sets and
 // resources without a database.
 
-import { uuidv7 } from "@clubadmin/shared";
+import {
+  BUILT_IN_ROLE_TEMPLATE,
+  type ClubRole,
+  type GroupFunction,
+  uuidv7,
+} from "@clubadmin/shared";
 
 import type { PersonGroupRow } from "../modules/authorization/authorization.repository.ts";
 import type {
@@ -10,23 +15,68 @@ import type {
   GroupResource,
   PersonResource,
 } from "../modules/authorization/policy.ts";
-import { Actor, type RelationshipSet } from "../modules/authorization/relationship-set.ts";
+import {
+  Actor,
+  type GroupAssignment,
+  type RelationshipSet,
+  type RoleAssignment,
+} from "../modules/authorization/relationship-set.ts";
 
-export function relationships(overrides: Partial<RelationshipSet> = {}): RelationshipSet {
+type Template<T extends { roleId: string | null; permissions: unknown }> = Omit<
+  T,
+  "roleId" | "permissions"
+> &
+  Partial<Pick<T, "roleId" | "permissions">>;
+
+/**
+ * Overrides of a relationship set. Roles and group memberships may be given
+ * by their template key alone (`{ clubId, role: "registrar" }`): they get
+ * the built-in template's permissions (P1.15), as in a club created today.
+ */
+export type RelationshipOverrides = Omit<
+  Partial<RelationshipSet>,
+  "roles" | "groups" | "wardGroups"
+> & {
+  roles?: Template<RoleAssignment>[];
+  groups?: Template<GroupAssignment>[];
+  wardGroups?: (Template<GroupAssignment> & { personId: string })[];
+};
+
+const templateRoleId = new Map<string, string>();
+const roleIdOf = (clubId: string, key: string) => {
+  const k = `${clubId}:${key}`;
+  if (!templateRoleId.has(k)) templateRoleId.set(k, uuidv7());
+  return templateRoleId.get(k)!;
+};
+
+export const withTemplate = <T extends { clubId: string; role: ClubRole }>(r: T) => ({
+  roleId: roleIdOf(r.clubId, r.role),
+  permissions: [...BUILT_IN_ROLE_TEMPLATE[r.role].permissions],
+  ...r,
+});
+
+export const withGroupTemplate = <T extends { clubId: string; function: GroupFunction }>(g: T) => ({
+  roleId: roleIdOf(g.clubId, g.function),
+  permissions: [...BUILT_IN_ROLE_TEMPLATE[g.function].permissions],
+  ...g,
+});
+
+export function relationships(overrides: RelationshipOverrides = {}): RelationshipSet {
+  const { roles = [], groups = [], wardGroups = [], ...rest } = overrides;
   return {
     personId: uuidv7(),
     operator: false,
     memberships: [],
-    roles: [],
-    groups: [],
     ownedGroups: [],
     employments: [],
     supportGrants: [],
     wards: [],
     guardians: [],
     wardMemberships: [],
-    wardGroups: [],
-    ...overrides,
+    ...rest,
+    roles: roles.map(withTemplate),
+    groups: groups.map(withGroupTemplate),
+    wardGroups: wardGroups.map(withGroupTemplate),
   };
 }
 

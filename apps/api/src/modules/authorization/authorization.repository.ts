@@ -24,6 +24,14 @@ export async function loadRelationshipSet(tx: Tx, personId: string): Promise<Rel
   return { personId, ...rows[0]!.set };
 }
 
+/**
+ * The permissions of an assignment's role (P1.15): the role's rows by its
+ * unique (role_id, permission) index, read through the own_roles policy.
+ */
+const rolePermissions = (alias: "r" | "gm") =>
+  sql.raw(`coalesce((SELECT jsonb_agg(rp.permission) FROM public.role_permissions rp
+    WHERE rp.role_id = ${alias}.role_id), '[]')`);
+
 /** The statement of loadRelationshipSet (each part uses a person_id index; query-plans test). */
 export function relationshipSetQuery(personId: string) {
   return sql`
@@ -40,11 +48,13 @@ export function relationshipSetQuery(personId: string) {
         FROM public.club_memberships m WHERE m.person_id = ${personId} AND m.valid_to IS NULL
       ), '[]'),
       'roles', coalesce((
-        SELECT jsonb_agg(jsonb_build_object('clubId', r.club_id, 'role', r.role))
+        SELECT jsonb_agg(jsonb_build_object('clubId', r.club_id, 'roleId', r.role_id, 'role', r.role,
+          'permissions', ${rolePermissions("r")}))
         FROM public.club_role_assignments r WHERE r.person_id = ${personId} AND r.valid_to IS NULL
       ), '[]'),
       'groups', coalesce((
-        SELECT jsonb_agg(jsonb_build_object('clubId', gm.club_id, 'groupId', gm.group_id, 'function', gm.function))
+        SELECT jsonb_agg(jsonb_build_object('clubId', gm.club_id, 'groupId', gm.group_id, 'roleId', gm.role_id,
+          'function', gm.function, 'permissions', ${rolePermissions("gm")}))
         FROM public.group_memberships gm WHERE gm.person_id = ${personId} AND gm.valid_to IS NULL
       ), '[]'),
       'ownedGroups', coalesce((
@@ -73,7 +83,8 @@ export function relationshipSetQuery(personId: string) {
         FROM public.club_memberships m JOIN wards w ON w.person_id = m.person_id WHERE m.valid_to IS NULL
       ), '[]'),
       'wardGroups', coalesce((
-        SELECT jsonb_agg(jsonb_build_object('personId', gm.person_id, 'clubId', gm.club_id, 'groupId', gm.group_id, 'function', gm.function))
+        SELECT jsonb_agg(jsonb_build_object('personId', gm.person_id, 'clubId', gm.club_id, 'groupId', gm.group_id,
+          'roleId', gm.role_id, 'function', gm.function, 'permissions', ${rolePermissions("gm")}))
         FROM public.group_memberships gm JOIN wards w ON w.person_id = gm.person_id WHERE gm.valid_to IS NULL
       ), '[]')
     ) AS set`;

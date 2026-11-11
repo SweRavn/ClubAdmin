@@ -514,8 +514,8 @@ export class MembershipsService {
         "group_archived",
       );
       return {
-        members: ended.filter((r) => r.function === "member").length,
-        leaders: ended.filter((r) => r.function !== "member").length,
+        members: ended.filter((r) => r.participates).length,
+        leaders: ended.filter((r) => r.leads).length,
         waitlist,
       };
     });
@@ -548,14 +548,9 @@ export class MembershipsService {
     });
   }
 
-  /** Whether the person holds the function in the group now (applying, P1.10b). */
-  hasGroupFunctionInTx(
-    tx: Tx,
-    groupId: string,
-    personId: string,
-    fn: GroupFunction,
-  ): Promise<boolean> {
-    return repo.hasOpenGroupFunction(tx, groupId, personId, fn);
+  /** Whether the person takes part in the group now (applying, P1.10b). */
+  takesPartInGroupInTx(tx: Tx, groupId: string, personId: string): Promise<boolean> {
+    return repo.takesPartInGroup(tx, groupId, personId);
   }
 
   /** Active members of a group with their functions (IDs only; names go through PersonVisibility, P0.7). */

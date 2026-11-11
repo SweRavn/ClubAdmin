@@ -7,6 +7,7 @@
 import { sql, type Tx } from "@clubadmin/db";
 import type { GuardianshipRight } from "@clubadmin/shared";
 
+import { activityGroupHolders, clubHolders } from "../holders.ts";
 import { uuidArray } from "./fanout.ts";
 
 /** Club-owned rows are read in the club (tenant row-level security). */
@@ -125,7 +126,7 @@ export async function participants(tx: Tx, activityId: string): Promise<string[]
     SELECT DISTINCT gm.person_id FROM public.activities a
     JOIN public.activity_groups ag ON ag.activity_id = a.id
     JOIN public.group_memberships gm ON gm.club_id = ag.club_id AND gm.group_id = ag.group_id
-      AND gm.function = 'member' AND gm.valid_from <= a.starts_at
+      AND gm.participates AND gm.valid_from <= a.starts_at
       AND (gm.valid_to IS NULL OR gm.valid_to > a.starts_at)
     WHERE a.id = ${activityId}
       AND (NOT a.invitees_only OR EXISTS (
@@ -135,9 +136,11 @@ export async function participants(tx: Tx, activityId: string): Promise<string[]
 }
 
 /**
- * Those who see an activity's answers (`activity.responses.read`): club
- * managers, owners of its groups or their ancestors, and the groups'
- * leaders (head and assistant coaches, team managers, other leaders).
+ * Those who see an activity's answers (`activity.responses.read`, P1.15):
+ * club-wide planners (`group.activities.manage` through a club role: club
+ * managers), owners of its groups or their ancestors, and those holding
+ * `group.activities.manage` or `activity.responses.read` in one of its
+ * groups (coaches, team managers, other leaders).
  */
 export async function leaders(tx: Tx, clubId: string, activityId: string): Promise<string[]> {
   const { rows } = await tx.execute<{ person_id: string }>(sql`
@@ -147,25 +150,21 @@ export async function leaders(tx: Tx, clubId: string, activityId: string): Promi
       SELECT p.parent_group_id FROM public.groups p JOIN g ON p.id = g.id
       WHERE p.parent_group_id IS NOT NULL
     )
-    SELECT person_id FROM public.club_role_assignments
-    WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL
+    ${clubHolders(clubId, "group.activities.manage")}
     UNION
     SELECT o.person_id FROM public.group_owners o JOIN g ON o.group_id = g.id
     WHERE o.valid_to IS NULL
     UNION
-    SELECT gm.person_id FROM public.group_memberships gm
-    JOIN public.activity_groups ag ON ag.group_id = gm.group_id AND ag.activity_id = ${activityId}
-    WHERE gm.valid_to IS NULL
-      AND gm.function IN ('head_coach', 'assistant_coach', 'team_manager', 'other_leader')`);
+    ${activityGroupHolders(activityId, ["group.activities.manage", "activity.responses.read"])}`);
   return rows.map((r) => r.person_id);
 }
 
-/** Members of groups (now). */
+/** Those taking part in groups now (`group.participate`). */
 export async function groupMembers(tx: Tx, groupIds: readonly string[]): Promise<string[]> {
   if (groupIds.length === 0) return [];
   const { rows } = await tx.execute<{ person_id: string }>(sql`
     SELECT DISTINCT person_id FROM public.group_memberships
-    WHERE group_id = ANY (${uuidArray(groupIds)}::uuid[]) AND function = 'member' AND valid_to IS NULL`);
+    WHERE group_id = ANY (${uuidArray(groupIds)}::uuid[]) AND participates AND valid_to IS NULL`);
   return rows.map((r) => r.person_id);
 }
 

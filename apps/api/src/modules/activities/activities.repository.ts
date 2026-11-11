@@ -490,17 +490,17 @@ export interface ScheduleInput {
 export function scheduleQuery(input: ScheduleInput): SQL {
   return sql`
     WITH mine AS (
-      SELECT gm.person_id, gm.group_id, gm.function FROM public.group_memberships gm
+      SELECT gm.person_id, gm.group_id, gm.participates FROM public.group_memberships gm
       WHERE gm.person_id = ANY (${uuidArray(input.personIds)}::uuid[])
         AND gm.valid_to IS NULL
         ${input.clubId ? sql`AND gm.club_id = ${input.clubId}` : sql``}
     ), hits AS (
-      SELECT se.*, m.person_id, m.function FROM mine m
+      SELECT se.*, m.person_id, m.participates FROM mine m
       JOIN public.schedule_entries se ON se.group_id = m.group_id
       WHERE se.starts_at >= ${input.from} AND se.starts_at < ${input.to}
         ${input.activityId ? sql`AND se.activity_id = ${input.activityId}` : sql``}
-        -- A call-up (#19): members who are not called up do not have it in their schedule.
-        AND (m.function <> 'member' OR NOT se.invitees_only OR EXISTS (
+        -- A call-up (#19): participants who are not called up do not have it in their schedule.
+        AND (NOT m.participates OR NOT se.invitees_only OR EXISTS (
           SELECT 1 FROM public.activity_invitees i
           WHERE i.activity_id = se.activity_id AND i.person_id = m.person_id))
     )
@@ -508,7 +508,7 @@ export function scheduleQuery(input: ScheduleInput): SQL {
       h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode,
       h.respond_by, h.sequence, h.meet_place, h.address, h.latitude, h.longitude,
       array_agg(DISTINCT h.group_id) AS group_ids, array_agg(DISTINCT h.person_id) AS person_ids,
-      coalesce(array_agg(DISTINCT h.person_id) FILTER (WHERE h.function = 'member'), '{}') AS member_ids,
+      coalesce(array_agg(DISTINCT h.person_id) FILTER (WHERE h.participates), '{}') AS member_ids,
       (SELECT coalesce(jsonb_object_agg(r.person_id, r.status), '{}') FROM public.activity_responses r
        WHERE r.person_id = ANY (array_agg(DISTINCT h.person_id)) AND r.activity_id = h.activity_id) AS answers,
       -- The event link (P1.6): read-only, the events module owns event_activities.

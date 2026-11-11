@@ -101,7 +101,7 @@ describe("club memberships", () => {
       c.s.memberships.addToGroup(club.ctx, group.id, outsider.id, "head_coach"),
     ).rejects.toSatisfy((e) => isDomainError(e, "already_in_group"));
     expect(await c.s.memberships.groupMembers(club.ctx, group.id)).toEqual([
-      { id: gm.id, personId: outsider.id, function: "head_coach" },
+      { id: gm.id, personId: outsider.id, function: "head_coach", leads: true },
     ]);
     await c.s.memberships.endGroupMembership(club.ctx, gm.id);
     expect(await c.s.memberships.groupMembers(club.ctx, group.id)).toEqual([]);

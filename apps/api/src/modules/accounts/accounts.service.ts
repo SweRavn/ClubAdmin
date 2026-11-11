@@ -310,7 +310,7 @@ export class AccountsService {
     const allowed =
       (await repo.actorIsFullGuardianOf(tx, personId)) ||
       (hasClub(context) &&
-        (await repo.actorHasClubRole(tx, ["club_manager", "registrar"])) &&
+        (await repo.actorHolds(tx, "person.own_login.invite")) &&
         (await this.memberships.isMemberInTx(tx, context.clubId, personId)));
     if (!allowed) throw new DomainError("not_allowed");
     const person = await this.people.getPersonInTx(tx, personId);

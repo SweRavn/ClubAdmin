@@ -103,6 +103,7 @@ export async function erasureBlockersInTx(
       blockers.push({ ...where, code: "roles_must_be_removed", assignments: held });
     }
     let count = 0;
+    // eslint-disable-next-line clubadmin/no-role-names -- a label ("ask the treasurer"), not a decision
     let contactRole: ClubRole = "treasurer";
     for (const provider of obligations) {
       const owed = await provider.forPerson(tx, where.clubId, where.personId);

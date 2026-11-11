@@ -26,6 +26,7 @@ import { DOMAIN_EVENTS } from "@clubadmin/shared";
 import { IntlMessageFormat } from "intl-messageformat";
 import { createTransport } from "nodemailer";
 
+import { clubHolders } from "./holders.ts";
 import { givenNameFor, nameFor, unprotectedNames, visibleName } from "./presenters/mail-names.ts";
 
 export interface MailMessage {
@@ -276,9 +277,10 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
           await inClub(tx, clubId);
           const c = await club(tx, clubId);
           if (!c) return;
-          const { rows } = await tx.execute<{ person_id: string }>(sql`
-            SELECT person_id FROM public.club_role_assignments
-            WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL`);
+          // Administrators (holders of club.roles.manage: the club managers).
+          const { rows } = await tx.execute<{ person_id: string }>(
+            sql`${clubHolders(clubId, "club.roles.manage")}`,
+          );
           // Every manager hears about it, and so does the person who lost the role.
           const ids = [...new Set([...rows.map((r) => r.person_id), personId])];
           const person = await nameFor(tx, personId);
@@ -342,9 +344,9 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
           const exported = rows[0];
           const c = await club(tx, clubId);
           if (!exported || !c) return;
-          const { rows: managers } = await tx.execute<{ person_id: string }>(sql`
-            SELECT person_id FROM public.club_role_assignments
-            WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL`);
+          const { rows: managers } = await tx.execute<{ person_id: string }>(
+            sql`${clubHolders(clubId, "club.roles.manage")}`,
+          );
           // Managers see protected people of their club (ADR 0022).
           const requester = await nameFor(tx, exported.requested_by_person_id);
           for (const to of await recipients(
@@ -391,9 +393,9 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
           const imported = rows[0];
           const c = await club(tx, clubId);
           if (!imported || !c) return;
-          const { rows: managers } = await tx.execute<{ person_id: string }>(sql`
-            SELECT person_id FROM public.club_role_assignments
-            WHERE club_id = ${clubId} AND role = 'club_manager' AND valid_to IS NULL`);
+          const { rows: managers } = await tx.execute<{ person_id: string }>(
+            sql`${clubHolders(clubId, "club.roles.manage")}`,
+          );
           // Managers see protected people of their club (ADR 0022). Counts only, never rows.
           const importer = await nameFor(
             tx,

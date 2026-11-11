@@ -220,7 +220,7 @@ export async function assignmentFactsAsRetention(
       g.function, false
     FROM public.group_memberships g
     JOIN public.clubs c ON c.id = g.club_id JOIN public.groups gr ON gr.id = g.group_id
-    WHERE g.person_id = ANY (${people}) AND g.valid_to IS NULL AND g.function <> 'member'
+    WHERE g.person_id = ANY (${people}) AND g.valid_to IS NULL AND g.leads
     UNION ALL
     SELECT o.person_id, o.club_id, c.name, 'group_owner', o.id, NULL, o.group_id, gr.name, NULL,
       false
