@@ -41,7 +41,12 @@ before starting the next one.
 After P0.9 the maintainer can log in to the web app as any demo persona and
 test the foundation by hand.
 
-## Phase 1 — MVP
+## Phase 1 — MVP (done, 2026-11-12)
+
+Every Phase 1 prompt is implemented and CI is green on `main`. Prompts from
+P1.8b on end with an **"As implemented"** section (what was built, the
+deviations and the checks); ADRs record the decisions. P1.10 and P1.15 were
+split into parts, each delivered and documented on its own.
 
 | Prompt | Depends on |
 |---|---|
@@ -56,15 +61,22 @@ test the foundation by hand.
 | [P1.7 Notifications: email, push, in-app; preferences](P1.7-notifications.md) | P1.6b |
 | [P1.8a Privacy I: consents, leaving, privacy policy, retention](P1.8a-consents-leaving-retention.md) | P1.7 |
 | [P1.8b Privacy II: download my data, account deletion, ward erasure](P1.8b-export-and-erasure.md) | P1.8a |
-| [P1.9 Audit log and record-history UI](P1.9-audit-and-history-ui.md) (draft) | P1.8b |
+| [P1.9 Audit log and record-history UI](P1.9-audit-and-history-ui.md) | P1.8b |
 | [P1.10a Groups admin: owners, seasons, members, archiving](P1.10a-groups-owners-and-members.md) | P1.9 |
 | [P1.10b Waiting lists: applying, offers, admission](P1.10b-waiting-lists.md) | P1.10a |
-| [P1.11 Calendar subscriptions with answer links](P1.11-calendar-subscriptions.md) (draft) | P1.5 |
-| [P1.12 Protected identity UI and profile view log](P1.12-protected-identity-ui.md) (draft) | P1.9 |
-| [P1.13 Billing: plans, subscriptions, invoices](P1.13-billing.md) | P0.12 |
-| [P1.14 Review fixes and clean-up before Phase 2](P1.14-review-fixes.md) (filled in during the review) | P1.13 |
-| [P1.15 Club-defined roles and permissions, club types](P1.15-roles-and-permissions.md) | P1.14 |
+| [P1.11 Calendar subscriptions with answer links](P1.11-calendar-subscriptions.md) | P1.5 |
+| [P1.12 Protected identity UI and profile view log](P1.12-protected-identity-ui.md) | P1.9 |
+| [P1.13 Billing: plans, subscriptions, invoices, card payments](P1.13-billing.md) (parts A and B) | P0.12 |
+| [P1.14 Review fixes and clean-up before Phase 2](P1.14-review-fixes.md) (findings 1–5; finding 6 moved to P1.15 A4) | P1.13 |
+| [P1.15 Club-defined roles and permissions, club types](P1.15-roles-and-permissions.md) (parts A1–A4 and B) | P1.14 |
 
-The P1.7–P1.13 prompts are drafts written before P1.6 was implemented:
-check "What exists already" against the code and settle each prompt's
-"Open decisions" before starting it.
+Findings from the maintainer's review of Phase 1 go into a new review
+prompt (like P1.14) before Phase 2 starts.
+
+## Phase 2 — Communication and compliance (not started)
+
+No prompts yet. The scope, with chat first (real time, channels per group
+chosen by their creator, "Mina kanaler", push per channel), is in
+[`../roadmap.md`](../roadmap.md#phase-2--communication-and-compliance).
+Each work package gets its prompt just before it starts, written against
+the code as it is then.

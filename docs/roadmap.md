@@ -48,13 +48,48 @@ Ordered so each package only depends on earlier ones. Prompts:
 
 ## Phase 2 — Communication and compliance
 
-Chat rooms (group rooms, moderation, child-safety rules, protected-identity acceptance) ·
-calendar invitations by email with Accept/Decline from the native calendar (iMIP, ADR 0021) · message board ·
-bulk email with bounce handling · car pooling · documents (statutes, minutes,
-versions; club settings taken from adopted governing documents, opt-in per
-club, ADR 0037) · board meetings (agenda, minutes, decisions) · background-check
-tracking (clearances, country packs SE/NO) · LOK-stöd reporting and
-IdrottOnline export · volunteer duty schedules.
+**Chat is a unique selling point and comes first in this phase.** What it
+must do (maintainer, 2026-11-12):
+
+- **Built in-house (ADR 0016).** Postgres (messages partitioned by month),
+  the API's WebSocket gateway with Valkey pub/sub between instances, and
+  push; text, images, files, reactions, replies and read receipts;
+  encrypted in transit and at rest, not end to end (moderation and
+  safeguarding review must stay possible).
+- **Real time.** Messages arrive at once on web and in the app; the
+  `authz.changed` event of P1.15 travels on the same connection. The app keeps working from its cache without a
+  connection (cache first, ADR 0040) and sends queued messages when it is
+  back online.
+- **Channels in every group.** A group has its channels (a default channel
+  for everyone in the group, more as needed). Whoever creates a channel
+  chooses who is in it (people of the group, or a subset, e.g. the coaches
+  or one team's parents); a permission in the role catalogue (P1.15) says
+  who may create channels and manage their members. Protected people are
+  never added without their acceptance (ADR 0022, P1.12), and the
+  child-safety rules apply (no private adult-to-minor channels, guardians'
+  insight per country pack).
+- **Aggregated views, few clicks.** The app lists the channels the person
+  is in under **"Mina kanaler"** (unread first, the latest message per
+  channel), and each group's page lists its channels. The web app has the
+  same.
+- **Push per channel.** Push notifications in the app, set per channel (all
+  messages, mentions only, off) on top of the notification settings, quiet
+  hours and daily email of P1.7 (ADR 0039).
+- Moderation (reporting, removing messages, muting a member), retention
+  per club, history and audit as for other personal data.
+
+**Aggregation is a general rule**, not only for chat: wherever a person has
+the same kind of thing in several groups or clubs (channels, activities,
+answers to give, documents, duty shifts), the app gives one "Mina …" list
+across them, so nobody has to click through every group.
+
+The rest of the phase: calendar invitations by email with Accept/Decline
+from the native calendar (iMIP, ADR 0021) · message board · bulk email with
+bounce handling · car pooling · documents (statutes, minutes, versions; club
+settings taken from adopted governing documents, opt-in per club, ADR 0037)
+· board meetings (agenda, minutes, decisions) · background-check tracking
+(clearances, country packs SE/NO) · LOK-stöd reporting and IdrottOnline
+export · volunteer duty schedules.
 
 ## Phase 3 — Money and content
 
@@ -64,6 +99,8 @@ public club website pages · facility booking.
 
 ## Phase 4 — Heavy and specialised
 
-Live streaming and recordings · staff time reporting and salary data with
+Live streaming and recordings (a video broadcast started from a chat
+channel, e.g. a match sent to everyone who follows a group; viewers in the
+channel, recordings kept per the club's retention) · staff time reporting and salary data with
 payroll export · bookkeeping integrations (SIE, Fortnox, Visma) · more country
 packs · federation integrations · public API for third parties.
