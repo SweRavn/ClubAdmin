@@ -130,6 +130,26 @@ across them, so nobody has to click through every group.
   or club attesters; never one's own claim) that later serves all expenses;
   payment in Phase 3.
 
+**New permissions in Phase 2** (proposed; each prompt settles the names
+and adds them to the catalogue, `permission-catalogue.ts`, with the template
+roles that get them by default, P1.15 decision 5):
+
+| Permission | Scope | What it allows | Default template roles | Source |
+|---|---|---|---|---|
+| `group.channels.create` | group | Create chat channels in the group and choose their members | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | chat |
+| `group.channels.manage` | group | Manage channels others created in the group (members, archiving) | `head_coach`; owners of the group | chat |
+| `club.channels.create` | club | Club-wide channels (the board, all leaders) | `club_manager`, `chair` | chat |
+| `club.safeguarding.handle` | club | Receive reports, read reported chats (two-person rule, logged), close cases | `safeguarding_officer` | ADR 0047 |
+| `club.locations.create` (widened) | club | Create and edit all places, their distance included | every leader in the club (as today: anyone who leads a group) | ADR 0048 |
+| `group.expenses.attest` | group | Attest expense claims in the group (never one's own) | `head_coach`, `team_manager` | ADR 0048 |
+| `club.expenses.attest` | club | Attest expense claims anywhere in the club | `treasurer` | ADR 0048 |
+| `club.carpools.manage` | club | Delete old car-pool data and statistics; set the mileage rate | `club_manager`, `treasurer` | ADR 0048 |
+| `club.background_checks.manage` | club | Record and follow up leaders' background checks; the club's stricter requirement | `club_manager`, `registrar` | background checks, ADR 0047 |
+
+Settings that are not permissions: a group's "car-pool statistics public in
+the group" (group leaders), a guardian's age for a child booking seats
+themselves (the guardian).
+
 The rest of the phase: calendar invitations by email with Accept/Decline
 from the native calendar (iMIP, ADR 0021) · message board · bulk email with
 bounce handling · documents (statutes, minutes, versions; club
