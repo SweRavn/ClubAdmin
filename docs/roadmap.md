@@ -165,6 +165,15 @@ across them, so nobody has to click through every group.
 - Storage limits set by the operator and, within them, by the club (per
   group too). "Mina dokument" and a document tab per group.
 
+**Volunteer duties (ADR 0050):** the club's duty types (instruction,
+minimum age, background check where needed; qualifications prepared);
+shifts tied to activities and events or on their own, in "Mitt schema";
+a quota per player and season, done by anyone in the family; sign-up and
+assignment by leaders; free swaps; reminders and done/missed; who sees
+whom is a club setting that groups may change either way if the club
+allows; "Mina pass", the group's overview and hours statistics; buying out
+prepared.
+
 **New permissions in Phase 2** (proposed; each prompt settles the names
 and adds them to the catalogue, `permission-catalogue.ts`, with the template
 roles that get them by default, P1.15 decision 5):
@@ -184,6 +193,9 @@ roles that get them by default, P1.15 decision 5):
 | `group.documents.manage` | group | The group's folders and files | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | ADR 0049 |
 | `club.governing_documents.manage` | club | Draft governing documents, meetings' agendas and minutes | `secretary`, `chair` | ADR 0037, ADR 0049 |
 | `club.governing_documents.adopt` | club | Record a document as adopted (second factor) | `chair`, `secretary` | ADR 0037, ADR 0049 |
+| `group.duties.manage` | group | Create, assign and mark duty shifts in the group | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | ADR 0050 |
+| `club.duties.manage` | club | Club-level duty shifts, every group | `club_manager` | ADR 0050 |
+| `club.duty_types.manage` | club | The club's catalogue of duty types | `club_manager` | ADR 0050 |
 
 Settings that are not permissions: a group's "car-pool statistics public in
 the group" (group leaders), a guardian's age for a child booking seats
@@ -193,18 +205,21 @@ The rest of the phase: calendar invitations by email with Accept/Decline
 from the native calendar (iMIP, ADR 0021) · message board · bulk email with
 bounce handling · background-check tracking
 (clearances, country packs SE/NO) · LOK-stöd reporting and IdrottOnline
-export · volunteer duty schedules.
+export.
 
 ## Phase 3 — Money and content
 
 Team cash desk · member fees, invoicing, Swish/card payments · paying
-attested expense claims (mileage from car pools first, ADR 0048) · club budget ·
+attested expense claims (mileage from car pools first, ADR 0048) · buying
+out volunteer duties (ADR 0050) · club budget ·
 training plan library (versioning, sharing, copying, licences) · sponsors/ads ·
 public club website pages · facility booking.
 
 ## Phase 4 — Heavy and specialised
 
-Live streaming and recordings (a video broadcast started from a chat
+Automatic fair distribution of volunteer duties by quota and
+unavailability, and a register of people's qualifications (training,
+licences) for duties and leaders (ADR 0050) · Live streaming and recordings (a video broadcast started from a chat
 channel, e.g. a match sent to everyone in a group, including supporters
 such as a grandparent who is in the group to watch its matches; viewers in the
 channel, recordings kept per the club's retention) · staff time reporting and salary data with

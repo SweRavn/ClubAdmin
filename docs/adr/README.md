@@ -55,3 +55,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0047](0047-child-safety-in-chat.md) | Child safety in chat: no adult alone with a child, open to guardians, a reviewing bot | Accepted |
 | [0048](0048-car-pooling-and-attestation.md) | Car pooling, mileage and a general attestation flow | Accepted |
 | [0049](0049-documents-meetings-and-signing.md) | Documents, meetings with structured minutes, signing in the app | Accepted |
+| [0050](0050-volunteer-duties.md) | Volunteer duties: shifts, quotas per player, sign-up and swaps; automation later | Accepted |
