@@ -154,6 +154,11 @@ across them, so nobody has to click through every group.
   answers as in every group. Agenda items are structured, each with its own
   Markdown field during the meeting, decisions checked per item, action
   items; the minutes are assembled into one Markdown document.
+- **Documents in notices:** any activity's or event's notice (a meeting's
+  agenda, a cup's information) can have documents attached, picked from
+  ClubAdmin or uploaded from the computer (then stored in ClubAdmin);
+  notices always send links, never files, and the recipients may read
+  what is attached.
 - **Signing in the app** (simple electronic signature with a second factor,
   the hash of the signed version, audit, a signature page); BankID, Freja
   and the EU wallet later as `SignatureProvider` plugins.
