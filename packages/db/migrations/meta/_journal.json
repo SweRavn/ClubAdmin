@@ -239,6 +239,13 @@
       "when": 1794200005000,
       "tag": "0033_club_administrators",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794290005000,
+      "tag": "0034_needs_administrators_grace_first",
+      "breakpoints": true
     }
   ]
 }
