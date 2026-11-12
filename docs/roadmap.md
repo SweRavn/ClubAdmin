@@ -53,9 +53,17 @@ must do (maintainer, 2026-11-12):
 
 - **Built in-house (ADR 0016).** Postgres (messages partitioned by month),
   the API's WebSocket gateway with Valkey pub/sub between instances, and
-  push; text, images, files, reactions, replies and read receipts;
-  encrypted in transit and at rest, not end to end (moderation and
+  push; encrypted in transit and at rest, not end to end (moderation and
   safeguarding review must stay possible).
+- **First revision:** text, reactions, replies and read receipts.
+  - **Editing** a message (a typo) is supported; every edit is kept in the
+    message's history (each version with its time), the message shows that
+    it was edited, and those who may read the chat can see the earlier
+    versions. Nothing an edit replaces is lost (ADR 0047).
+  - **Files and images are prepared, not supported yet:** the data model,
+    API shapes and storage (object storage, as for imports) leave room for
+    attachments on a message, so adding uploads later needs no migration
+    of existing messages; the first revision accepts text only.
 - **Real time.** Messages arrive at once on web and in the app; the
   `authz.changed` event of P1.15 travels on the same connection. The app keeps working from its cache without a
   connection (cache first, ADR 0040) and sends queued messages when it is
