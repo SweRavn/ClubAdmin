@@ -73,9 +73,14 @@ split into parts, each delivered and documented on its own.
 Findings from the maintainer's review of Phase 1 go into a new review
 prompt (like P1.14) before Phase 2 starts.
 
-## Phase 2 — Communication and compliance (not started)
+## Phase 2 — Communication and compliance
 
-No prompts yet. The scope, with chat first (real time, channels per group
+| Prompt | Depends on |
+|---|---|
+| [P2.7 Plugins for grant reporting and background checks; LOK and LAM](P2.7-reporting-plugins.md) | P1.15 |
+
+The other Phase 2 work packages (P2.1–P2.6, P2.8) get their prompts just
+before they start. The scope, with chat first (real time, channels per group
 chosen by their creator, "Mina kanaler", push per channel), is in
 [`../roadmap.md`](../roadmap.md#phase-2--communication-and-compliance).
 Each work package gets its prompt just before it starts, written against

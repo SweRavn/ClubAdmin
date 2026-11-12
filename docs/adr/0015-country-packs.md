@@ -13,3 +13,6 @@ The core never branches on country codes. Sweden (SE) first, Norway (NO) second
 
 **Consequences.** Adding a country is additive. Rules that change yearly
 (grant thresholds) are data with validity dates inside the pack.
+
+**Amendment (ADR 0051, 2026-11-12).** Grant reporting (`GrantRules`) and
+background checks (`ClearanceRules`) are plugins, not country-pack interfaces.

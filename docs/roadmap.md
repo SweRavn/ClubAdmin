@@ -48,6 +48,19 @@ Ordered so each package only depends on earlier ones. Prompts:
 
 ## Phase 2 — Communication and compliance
 
+Work packages (proposed order; each gets its prompt just before it starts):
+
+| ID | Work package |
+|---|---|
+| P2.1 | Chat: channels per group, open or closed, real time, "Mina kanaler", push per channel, child safety (ADR 0016, ADR 0047) |
+| P2.2 | Announcements: board in the app, email and push in one message (below) |
+| P2.3 | Car pooling, mileage and a general attestation flow (ADR 0048) |
+| P2.4 | Documents I: file archive, audiences, documents attached to notices (ADR 0049) |
+| P2.5 | Documents II and meetings: governing documents, agendas, minutes, signing in the app (ADR 0037, ADR 0049) |
+| P2.6 | Volunteer duties (ADR 0050) |
+| P2.7 | Plugins for grant reporting and background checks; LOK and LAM plugins ([prompt](prompts/P2.7-reporting-plugins.md), ADR 0051) |
+| P2.8 | Background-check plugins for Sweden and Norway and the tracking screens (ADR 0047, ADR 0051) |
+
 **Chat is a unique selling point and comes first in this phase.** What it
 must do (maintainer, 2026-11-12):
 
@@ -189,6 +202,10 @@ roles that get them by default, P1.15 decision 5):
 | `club.expenses.attest` | club | Attest expense claims anywhere in the club | `treasurer` | ADR 0048 |
 | `club.carpools.manage` | club | Delete old car-pool data and statistics; set the mileage rate | `club_manager`, `treasurer` | ADR 0048 |
 | `club.background_checks.manage` | club | Record and follow up leaders' background checks; the club's stricter requirement | `club_manager`, `registrar` | background checks, ADR 0047 |
+| `ops.plugins.manage` | platform | Install and enable plugins for the installation (MFA) | operators (built-in) | ADR 0051 |
+| `club.plugins.manage` | club | Enable and configure plugins for the club (MFA) | `club_manager` | ADR 0051 |
+| `club.grants.read` | club | See grant schemes, periods and reports | `registrar`, `treasurer`, `club_manager` | ADR 0051 |
+| `club.grants.report` | club | Lock, export and submit grant reports | `registrar`, `treasurer` | ADR 0051 |
 | `club.documents.manage` | club | The club's folders and files, their audiences | `club_manager`, `secretary` | ADR 0049 |
 | `group.documents.manage` | group | The group's folders and files | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | ADR 0049 |
 | `club.governing_documents.manage` | club | Draft governing documents, meetings' agendas and minutes | `secretary`, `chair` | ADR 0037, ADR 0049 |
@@ -212,10 +229,12 @@ the aggregated views; email handles bounces and unsubscribing per P1.7
 (ADR 0039); push follows the recipients' notification settings. To be
 designed in its own prompt.
 
-The rest of the phase (to be researched before their prompts):
-background-check tracking (how each country handles checks for work with
-children, so the country packs scale) · LOK-stöd reporting and the
-corresponding grant schemes in other countries.
+**Grant reporting and background checks are plugins (ADR 0051)**: they
+differ too much between countries, regions and municipalities for country
+packs. One versioned contract that we and third parties implement; the host
+owns the data and gives a plugin only what it declares; LOK-stöd (with RF's
+2025 rules, which the current pack lacks) and Norway's LAM are the first
+grant plugins; background-check plugins for Sweden and Norway follow.
 
 ## Phase 3 — Money and content
 
