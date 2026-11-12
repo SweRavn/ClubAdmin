@@ -201,11 +201,21 @@ Settings that are not permissions: a group's "car-pool statistics public in
 the group" (group leaders), a guardian's age for a child booking seats
 themselves (the guardian).
 
-The rest of the phase: calendar invitations by email with Accept/Decline
-from the native calendar (iMIP, ADR 0021) · message board · bulk email with
-bounce handling · background-check tracking
-(clearances, country packs SE/NO) · LOK-stöd reporting and IdrottOnline
-export.
+**Announcements: the message board and bulk email in one feature.**
+Messages to the whole club or parts of it that do not belong to an
+activity (a newsletter, "the clubhouse is closed", the annual meeting's
+date). The sender chooses the audience (the audiences of ADR 0049: the
+club, groups and roles in them, club roles) and how it reaches people:
+**email**, **push** and/or the **board in the app**, one message with one
+text. The board keeps announcements (pinned, read or unread) and is part of
+the aggregated views; email handles bounces and unsubscribing per P1.7
+(ADR 0039); push follows the recipients' notification settings. To be
+designed in its own prompt.
+
+The rest of the phase (to be researched before their prompts):
+background-check tracking (how each country handles checks for work with
+children, so the country packs scale) · LOK-stöd reporting and the
+corresponding grant schemes in other countries.
 
 ## Phase 3 — Money and content
 
@@ -217,7 +227,9 @@ public club website pages · facility booking.
 
 ## Phase 4 — Heavy and specialised
 
-Automatic fair distribution of volunteer duties by quota and
+Calendar invitations by email with Accept/Decline from the native calendar
+(iMIP, ADR 0021; lower priority, since the calendar feeds of P1.11 already
+put the schedule in people's calendars with answer links) · Automatic fair distribution of volunteer duties by quota and
 unavailability, and a register of people's qualifications (training,
 licences) for duties and leaders (ADR 0050) · Live streaming and recordings (a video broadcast started from a chat
 channel, e.g. a match sent to everyone in a group, including supporters
