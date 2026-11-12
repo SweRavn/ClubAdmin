@@ -43,9 +43,14 @@ as a complement. Nothing here needs anyone to approve anything by hand.
      under rule 1).
    - The chat always shows the children that their parents can join, and
      which parents have joined.
-   - Guardians of a group's children see who is in the group's chats
-     (membership, not messages), also chats they are not in: child A's
-     parents see that child B's parents joined.
+   - Guardians of a group's children see who is in the group's chats that
+     have children in them (membership, not messages), also chats they are
+     not in: child A's parents see that child B's parents joined.
+   - **Closed channels** (only the members the creator adds; others of the
+     group neither see nor join them) may be created, e.g. for the leaders.
+     These rules still apply to a closed channel with children in it: their
+     guardians see it and may join, and a leader in it adds them. A closed
+     channel without children is hidden from everyone else.
    - The group's leaders may join the children's chats of their group; rule 1
      then adds the children's guardians.
 5. **Nothing disappears.** Messages are kept without a time limit, in

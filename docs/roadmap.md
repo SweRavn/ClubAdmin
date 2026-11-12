@@ -76,6 +76,14 @@ must do (maintainer, 2026-11-12):
   never added without their acceptance (ADR 0022, P1.12). A chat is not
   owned by one group: its members are its own list, so chats across groups
   can come later.
+- **Open or closed channels.** The creator chooses: **open** (people of the
+  group see it and may join) or **closed** (only the members the creator
+  or a channel manager adds; others of the group neither see it nor join),
+  e.g. a leaders' channel. The child-safety rules always apply: a closed
+  channel with children in it is still visible to those children's
+  guardians, who may join, and adding a leader still adds them (ADR 0047).
+  A closed channel without children (the leaders, the board) is hidden from
+  everyone else.
 - **Child safety (ADR 0047).** No adult is ever alone with a child: when a
   leader is in a chat with children, their guardians are added
   automatically with the whole history. Other adults cannot start direct
