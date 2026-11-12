@@ -65,9 +65,22 @@ must do (maintainer, 2026-11-12):
   chooses who is in it (people of the group, or a subset, e.g. the coaches
   or one team's parents); a permission in the role catalogue (P1.15) says
   who may create channels and manage their members. Protected people are
-  never added without their acceptance (ADR 0022, P1.12), and the
-  child-safety rules apply (no private adult-to-minor channels, guardians'
-  insight per country pack).
+  never added without their acceptance (ADR 0022, P1.12). A chat is not
+  owned by one group: its members are its own list, so chats across groups
+  can come later.
+- **Child safety (ADR 0047).** No adult is ever alone with a child: when a
+  leader is in a chat with children, their guardians are added
+  automatically with the whole history. Other adults cannot start direct
+  messages with someone else's child. Children of all ages may chat with
+  each other (for now within their group). Guardians see which chats their
+  child is in and may join any of them; children always see that parents
+  can join and which have; guardians of a group's children see who is in
+  the group's chats. Leaders may join the children's chats of their group.
+  Nothing disappears; reporting takes one tap; only leaders with a valid
+  background check write to children. A reviewing bot alerts the club's
+  safeguarding officers (rule signals first, classifiers and image checks
+  next), never punishes. The chat prompt describes these rules clearly in
+  the README, the help pages and the privacy notice.
 - **Aggregated views, few clicks.** The app lists the channels the person
   is in under **"Mina kanaler"** (unread first, the latest message per
   channel), and each group's page lists its channels. The web app has the
@@ -100,7 +113,8 @@ public club website pages · facility booking.
 ## Phase 4 — Heavy and specialised
 
 Live streaming and recordings (a video broadcast started from a chat
-channel, e.g. a match sent to everyone who follows a group; viewers in the
+channel, e.g. a match sent to everyone in a group, including supporters
+such as a grandparent who is in the group to watch its matches; viewers in the
 channel, recordings kept per the club's retention) · staff time reporting and salary data with
 payroll export · bookkeeping integrations (SIE, Fortnox, Visma) · more country
 packs · federation integrations · public API for third parties.

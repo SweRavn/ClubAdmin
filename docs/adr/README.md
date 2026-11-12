@@ -52,3 +52,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0044](0044-calendar-feeds.md) | Calendar feeds: secret URLs served by the API, signed answer links behind a confirmation | Accepted |
 | [0045](0045-billing-invoices-and-dunning.md) | Billing: invoices issued by ClubAdmin, calendar periods, VAT by seller, dunning to read-only | Accepted |
 | [0046](0046-club-defined-roles.md) | Club-defined roles: permissions in a catalogue, roles per club | Accepted (P1.15 A1) |
+| [0047](0047-child-safety-in-chat.md) | Child safety in chat: no adult alone with a child, open to guardians, a reviewing bot | Accepted |
