@@ -1,6 +1,6 @@
 # 0047 — Child safety in chat: no adult alone with a child, open to guardians
 
-**Status:** Accepted (decided 2026-11-12, before the Phase 2 chat prompt)
+**Status:** Accepted (decided 2026-11-12, before the Phase 2 chat prompt; the bot later)
 
 **Context.** Chat (ADR 0016) is the product's most important new feature in
 Phase 2, and children use it. Established safeguarding practice in sport is
@@ -44,17 +44,24 @@ as a complement. Nothing here needs anyone to approve anything by hand.
      parents see that child B's parents joined.
    - The group's leaders may join the children's chats of their group; rule 1
      then adds the children's guardians.
-5. **Nothing disappears.** No disappearing messages; a message its sender
-   deletes is hidden but kept for review for a period set by the club's
-   retention. Images in chats with children pass the image checks of the
-   bot (below) before delivery.
-6. **Only cleared leaders write to children.** A leader may write to a child
-   only with a valid background check where the country pack requires one
-   (the background-check tracking of Phase 2).
+5. **Nothing disappears.** Messages are kept without a time limit, in
+   every chat (decision 4, 2026-11-12): no disappearing messages and no
+   automatic deletion; a message its sender deletes is hidden, not removed.
+   Erasing a person (P1.8b, ADR 0041) still applies to their account and
+   profile; how it applies to their messages is settled in the chat prompt
+   with the DPIA (below).
+6. **Background checks for writing to children.** Every country pack has
+   the requirement as a flag (`backgroundCheckForChildren`: required or
+   not); the rule always exists. A club may require more than its pack
+   (require it where the pack does not), never less (the settings registry's
+   limits, ADR 0041). Where required, a leader writes to children and joins
+   children's chats only with a valid check (the background-check tracking
+   of Phase 2).
 7. **Reporting.** One tap for children and guardians; the reported person
    does not see who reported. Reports go to the club's safeguarding officers
    (the `safeguarding_officer` template role, a permission in the catalogue).
-8. **A reviewing bot that alerts, never punishes.**
+8. **A reviewing bot that alerts, never punishes** (later, decision 5: not
+   part of the first chat prompts).
    - Rule signals: moving the talk elsewhere (Snapchat, phone numbers,
      links), secrecy ("don't tell your parents"), gifts, messages late at
      night.
@@ -69,9 +76,10 @@ as a complement. Nothing here needs anyone to approve anything by hand.
    - Models run in the EU or self-hosted; children's messages are never sent
      to third parties for training. Everyone is told the bot exists. A DPIA
      is written before it is switched on. People decide, not the bot.
-9. **Order of delivery.** First the structure (rules 1–7) and the rule
-   signals with reporting; then the classifiers and image checks as a part
-   of their own (decision 3).
+9. **Order of delivery.** First the structure (rules 1–7) and reporting;
+   the bot (rule signals, then classifiers and image checks) comes later as
+   work of its own. Until then images in chats with children are not
+   scanned.
 
 **Architecture consequence (decision 3).** A chat is not owned by one group.
 Who is in a chat is its own membership list (people), with the context that
@@ -88,6 +96,9 @@ words they understand.
 
 **Consequences.** Leaders' direct messages to children always have parents
 reading along; children's chats are private among children until a parent or
-leader joins, which everyone sees. Open questions for the chat prompt: the
-retention of hidden messages, which country packs require background checks
-for writing to children, and the bot's languages and models.
+leader joins, which everyone sees. Keeping messages without a time limit
+needs a DPIA and a stated purpose (safeguarding, the club's record) under
+GDPR's storage limitation; the chat prompt writes it, together with how an
+erasure treats a person's messages (for example: the sender anonymised, the
+text kept) — an open question for the maintainer. The bot's languages and
+models are decided when it is built.

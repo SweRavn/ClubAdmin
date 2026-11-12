@@ -76,11 +76,14 @@ must do (maintainer, 2026-11-12):
   child is in and may join any of them; children always see that parents
   can join and which have; guardians of a group's children see who is in
   the group's chats. Leaders may join the children's chats of their group.
-  Nothing disappears; reporting takes one tap; only leaders with a valid
-  background check write to children. A reviewing bot alerts the club's
-  safeguarding officers (rule signals first, classifiers and image checks
-  next), never punishes. The chat prompt describes these rules clearly in
-  the README, the help pages and the privacy notice.
+  Messages are kept without a time limit; reporting takes one tap. Every
+  country pack flags whether a background check is required to write to
+  children, and a club may require it where its pack does not. The chat
+  prompt describes these rules clearly in the README, the help pages and
+  the privacy notice.
+- **Later:** a reviewing bot that alerts the club's safeguarding officers
+  (rule signals, then classifiers and image checks), never punishes
+  (ADR 0047).
 - **Aggregated views, few clicks.** The app lists the channels the person
   is in under **"Mina kanaler"** (unread first, the latest message per
   channel), and each group's page lists its channels. The web app has the
