@@ -95,7 +95,8 @@ and municipalities to fit fixed interfaces in country packs:
 plugin, not a core change. The contract is tested by a conformance suite
 every plugin runs, and by scenario tests across countries. The core keeps
 the data model (sessions, attendance, members, checks) and the storage of
-reports; plugins cannot see more than they declare. Open: the licence of
-`packages/plugin-api` for third-party plugins (AGPL today; a permissive
-licence for the contract types alone would let closed plugins run in
-process), and the out-of-process transport's security model.
+reports; plugins cannot see more than they declare. **Licence:** the
+contract and plugins are AGPL-3.0-only (decision 2026-11-12); an in-process
+plugin must be AGPL-compatible. **LOK:** only RF's 2025 rules are
+implemented (no session before 2025 is reported), in a structure versioned
+by date. Open: the out-of-process transport's security model.
