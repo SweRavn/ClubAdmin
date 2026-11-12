@@ -242,3 +242,45 @@ erasure request, which the application role (as a system job) could also
 write; push devices of a suspended administrator's app sessions stay
 registered until the sessions' refresh fails.
 
+## Part A4: invitations to several groups, each with a role
+
+**Decision** (maintainer, 2026-11-08: decisions 7 and 8 of the prompt).
+
+- **Data.** `invitation_groups (club_id, invitation_id, group_id, role_id)`
+  (RLS, history, `invitation_groups_unique` per invitation and group, at
+  most 50 rows, deleted with the invitation) and `invitations.club_role_id`
+  (migration 0035). One role per group per invitation; more roles in a
+  group are given afterwards. The old fields keep working (ADR 0029):
+  `groupId` becomes a row with the participant role (an older invitation
+  without rows is read the same way) and `rolePreset` is stored as its
+  template role's ID as well; the API grows `groups: [{ groupId, roleId }]`
+  and `clubRoleId`, and the lookup shows the groups and roles accepting
+  gives.
+- **Who may create.** `club.invitations.manage` (managers, registrars) as
+  before, plus owners of a group of the club (decision 7): the policy
+  allows both; owners must name at least one group, only groups they may
+  add members to, no club role, and see and revoke only their own
+  invitations. Per row the controller checks that the group is the club's,
+  that the caller may invite to it (`club.invitations.manage` or the
+  `group.members.manage` policy, which owners have), that a role other than
+  the participant role comes with `group.members.manage` there, and the
+  no-escalation rule (`mayAssignGroupRole`); otherwise
+  `group_role_not_allowed`. A club role needs `club.roles.manage` and a
+  second factor, as assigning one does. While the club needs an
+  administrator (part A3) only invitations that give a club role with
+  `club.roles.manage` are created (`club_needs_administrators`).
+- **Accepting** adds every row in the acceptance's transaction, each in a
+  savepoint: archived groups are skipped and "already in the group" is
+  ignored; each membership and the club role keep their audit events.
+  Accepting an invitation is not a self-assignment (no
+  `role.self_assigned` notice).
+- **The form** gets its choices from `GET /clubs/:clubId/invitation-options`
+  (the groups the caller may invite to, the caller's own groups first, the
+  roles they may give in each, the club roles for club managers), so the
+  web does not ask per group.
+
+**Consequences.** The group owner persona of the permission matrix now
+lists and revokes invitations (its own). oasdiff reads the optional fields
+added to each kind of the request body's `oneOf` as removed subschemas; the
+line is in `breaking-changes-allowed.txt`. The demo's link invitation still
+uses the old `group_id` (read as a participant row).

@@ -129,6 +129,47 @@ export async function loadGroupScope(tx: Tx, groupId: string): Promise<GroupScop
   };
 }
 
+/**
+ * Several groups' scopes in one statement (invitations to up to 50 groups,
+ * P1.15 A4); groups the actor cannot see are left out.
+ */
+export async function loadGroupScopes(
+  tx: Tx,
+  groupIds: readonly string[],
+): Promise<Map<string, GroupScopeRow>> {
+  if (groupIds.length === 0) return new Map();
+  const { rows } = await tx.execute<{
+    group_id: string;
+    club_id: string;
+    ancestor_ids: string[];
+    archived: boolean;
+    owners_can_appoint: boolean | null;
+  }>(sql`
+    WITH RECURSIVE up AS (
+      SELECT g.id AS start_id, g.id, g.club_id, g.parent_group_id, g.archived_at, 0 AS depth
+      FROM public.groups g WHERE g.id = ANY(${uuidArray(groupIds)})
+      UNION ALL
+      SELECT up.start_id, p.id, p.club_id, p.parent_group_id, p.archived_at, up.depth + 1
+      FROM up JOIN public.groups p ON p.id = up.parent_group_id
+    )
+    SELECT s.id AS group_id, s.club_id, s.archived_at IS NOT NULL AS archived,
+      coalesce((SELECT array_agg(a.id ORDER BY a.depth) FROM up a
+                WHERE a.start_id = s.start_id AND a.depth > 0), '{}') AS ancestor_ids,
+      (SELECT c.owners_can_appoint_co_owners FROM public.clubs c WHERE c.id = s.club_id) AS owners_can_appoint
+    FROM up s WHERE s.depth = 0`);
+  return new Map(
+    rows.map((row) => [
+      row.group_id,
+      {
+        clubId: row.club_id,
+        ancestorIds: row.ancestor_ids,
+        archived: row.archived,
+        ownersCanAppointCoOwners: row.owners_can_appoint === true,
+      },
+    ]),
+  );
+}
+
 export interface PersonGroupRow {
   personId: string;
   groupId: string;

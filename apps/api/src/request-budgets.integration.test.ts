@@ -269,6 +269,18 @@ const CASES: Case[] = [
     pages: 160,
   },
   {
+    route: "GET /api/v1/clubs/{clubId}/invitation-options",
+    persona: "anna",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/invitation-options`,
+    // P1.15 A4: the club's active groups (groups_club_idx), its roles with
+    // their permissions, the groups' ancestors in one statement. It grows
+    // with the club's groups, not with the data (about 90 pages, 125 on the
+    // larger data).
+    statements: 3,
+    pages: 150,
+  },
+  {
     route: "GET /api/v1/clubs/{clubId}/administrators",
     persona: "sara",
     method: "GET",

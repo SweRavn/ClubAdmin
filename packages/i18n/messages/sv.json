@@ -537,9 +537,7 @@
     "create": "Ny inbjudan",
     "kind": "Typ",
     "email": "E-postadress",
-    "group": "Grupp (valfritt)",
-    "noGroup": "Ingen grupp",
-    "role": "Roll (föreningsansvariga, kräver tvåfaktorsinloggning)",
+    "role": "Föreningsroll (föreningsansvariga, kräver tvåfaktorsinloggning)",
     "noRole": "Ingen roll",
     "maxUses": "Hur många som får använda den (valfritt)",
     "expiresInDays": "Giltig i (dagar)",
@@ -553,7 +551,18 @@
     "usesUnlimited": "Använd {uses} gånger",
     "expires": "Giltig till {date}",
     "revoke": "Återkalla",
-    "createdBy": "Skapad av {name}"
+    "createdBy": "Skapad av {name}",
+    "groups": "Grupper",
+    "groupsHint": "Kryssa i grupperna personen ska med i och välj roll i varje. Utan grupp blir personen bara medlem i föreningen.",
+    "groupsOwnerHint": "Du kan bjuda in till grupper du äger. Kryssa i minst en.",
+    "groupsFilter": "Filtrera på namn",
+    "allKinds": "Alla slag",
+    "groupRole": "Roll i gruppen",
+    "ownGroup": "Din",
+    "noGroups": "Det finns inga aktiva grupper du kan bjuda in till.",
+    "chosen": "Valda: #",
+    "groupAs": "{group} som {role}",
+    "unknownGroup": "Arkiverad grupp"
   },
   "invitationKinds": {
     "email": "E-post",
@@ -572,7 +581,10 @@
     "login": "Logga in eller skapa ett konto för att tacka ja",
     "accept": "Gå med i {club}",
     "intro": "Du har bjudits in att gå med i {club} i ClubAdmin.",
-    "completeProfile": "Fyll i din profil först, sedan kommer du tillbaka hit."
+    "completeProfile": "Fyll i din profil först, sedan kommer du tillbaka hit.",
+    "gives": "Om du tackar ja",
+    "groupAs": "kommer du med i {group} som {role}",
+    "clubRole": "får du rollen {role} i föreningen"
   },
   "managers": {
     "title": "Föreningsansvariga",
@@ -771,7 +783,8 @@
     "suspension_not_allowed": "Du kan inte bekräfta eller ändra den här avstängningen: den som begärde den och den som berörs kan inte bekräfta den.",
     "grace_already_extended": "Föreningens tidsfrist har redan förlängts en gång.",
     "no_grace_period": "Föreningen har ingen tidsfrist att förlänga.",
-    "forbidden": "Du har inte behörighet till det. Dina behörigheter kan ha ändrats: ladda om sidan för att se vad du kan göra nu."
+    "forbidden": "Du har inte behörighet till det. Dina behörigheter kan ha ändrats: ladda om sidan för att se vad du kan göra nu.",
+    "group_role_not_allowed": "Du får inte ge den rollen i gruppen. Utan behörigheten att hantera gruppens medlemmar kan du bara bjuda in deltagare, och du kan aldrig ge behörigheter du själv saknar."
   },
   "memberExport": {
     "columns": {

@@ -79,6 +79,7 @@ export async function isInUse(tx: Tx, id: string): Promise<boolean> {
       OR EXISTS (SELECT 1 FROM public.groups WHERE parent_group_id = ${id})
       OR EXISTS (SELECT 1 FROM public.group_waitlist_entries WHERE group_id = ${id})
       OR EXISTS (SELECT 1 FROM public.invitations WHERE group_id = ${id})
+      OR EXISTS (SELECT 1 FROM public.invitation_groups WHERE group_id = ${id})
       OR EXISTS (SELECT 1 FROM public.activity_groups WHERE group_id = ${id})
       OR EXISTS (SELECT 1 FROM public.activity_series_groups WHERE group_id = ${id})
       OR EXISTS (SELECT 1 FROM public.event_groups WHERE group_id = ${id}) AS used`);
@@ -272,6 +273,18 @@ export async function activeGroupNames(
     .select({ id: groups.id, name: groups.name })
     .from(groups)
     .where(and(eq(groups.clubId, clubId), isNull(groups.archivedAt)));
+}
+
+/** The club's active groups by name, for choosing several (invitations, P1.15 A4). */
+export async function activeGroupsOfClub(
+  tx: Tx,
+  clubId: string,
+): Promise<{ id: string; name: string; kind: GroupRow["kind"] }[]> {
+  return tx
+    .select({ id: groups.id, name: groups.name, kind: groups.kind })
+    .from(groups)
+    .where(and(eq(groups.clubId, clubId), isNull(groups.archivedAt)))
+    .orderBy(groups.name, groups.id);
 }
 
 // --- P1.10a: capacity, seasons, archiving -----------------------------------------------

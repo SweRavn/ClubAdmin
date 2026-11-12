@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Creating an invitation (P1.1): the API returns the link or code once. It
+// Creating an invitation (P1.1; several groups with roles, P1.15 A4): the API returns the link or code once. It
 // reaches the invitations page in a short-lived cookie scoped to that page
 // (never in a URL, which would end up in logs and the browser history).
 
@@ -39,6 +39,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const kind = formText(form, "kind");
   const groupId = formText(form, "groupId");
   const rolePreset = formText(form, "rolePreset");
+  const clubRoleId = formText(form, "clubRoleId");
+  // The ticked groups, each with its role (P1.15 A4); without one, the participant role.
+  const groups = [...new Set(form.getAll("groupIds").map(String).filter(isUuid))].map((id) => {
+    const roleId = formText(form, `role-${id}`);
+    return isUuid(roleId) ? { groupId: id, roleId } : { groupId: id };
+  });
   const maxUses = Number.parseInt(formText(form, "maxUses"), 10);
   const days = Number.parseInt(formText(form, "expiresInDays"), 10);
   const body = {
@@ -47,6 +53,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     ...(kind !== "email" && Number.isFinite(maxUses) ? { maxUses } : {}),
     ...(isUuid(groupId) ? { groupId } : {}),
     ...(rolePreset ? { rolePreset } : {}),
+    ...(groups.length > 0 ? { groups } : {}),
+    ...(isUuid(clubRoleId) ? { clubRoleId } : {}),
     ...(Number.isFinite(days) ? { expiresInDays: days } : {}),
   };
   const res = await apiFetch(`/api/v1/clubs/${clubId}/invitations`, session.record, {

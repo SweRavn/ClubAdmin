@@ -987,6 +987,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/invitation-options": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The groups I may invite to, with the roles I may give in each, and the club roles I may give
+     * @description Requires permission `club.invitations.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Invitations_options"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/invitations": {
     parameters: {
       query?: never;
@@ -1001,7 +1021,7 @@ export interface paths {
     get: operations["Invitations_list"];
     put?: never;
     /**
-     * Invite by email, or create a link or code (shown once); role presets only for club managers
+     * Invite by email, or create a link or code (shown once), to groups with roles; club roles only for club managers
      * @description Requires permission `club.invitations.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["Invitations_create"];
@@ -5653,6 +5673,38 @@ export interface components {
       /** @enum {boolean} */
       ok: true;
     };
+    InvitationOptions: {
+      groups: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+        /** @enum {string} */
+        kind:
+          | "section"
+          | "team"
+          | "training_group"
+          | "age_group"
+          | "committee"
+          | "board"
+          | "volunteers"
+          | "other";
+        own: boolean;
+        roleIds: string[];
+      }[];
+      groupRoles: components["schemas"]["InvitationRole"][];
+      /** Format: uuid */
+      participantRoleId: string | null;
+      clubRoles: components["schemas"]["InvitationRole"][];
+      clubWide: boolean;
+    };
+    InvitationRole: {
+      /** Format: uuid */
+      id: string;
+      templateKey: string | null;
+      names: {
+        [key: string]: string;
+      } | null;
+    };
     InvitationList: {
       items: components["schemas"]["Invitation"][];
       /** Format: uuid */
@@ -5684,6 +5736,14 @@ export interface components {
         | "communications"
         | "staff"
         | null;
+      groups: {
+        /** Format: uuid */
+        groupId: string;
+        /** Format: uuid */
+        roleId: string;
+      }[];
+      /** Format: uuid */
+      clubRoleId: string | null;
       /** Format: date-time */
       expiresAt: string;
       maxUses: number | null;
@@ -5719,6 +5779,9 @@ export interface components {
             | "safeguarding_officer"
             | "communications"
             | "staff";
+          groups?: components["schemas"]["InvitationGroupInput"][];
+          /** Format: uuid */
+          clubRoleId?: string;
           /** @default 14 */
           expiresInDays: number;
         }
@@ -5743,6 +5806,9 @@ export interface components {
             | "safeguarding_officer"
             | "communications"
             | "staff";
+          groups?: components["schemas"]["InvitationGroupInput"][];
+          /** Format: uuid */
+          clubRoleId?: string;
           /** @default 14 */
           expiresInDays: number;
         }
@@ -5767,9 +5833,18 @@ export interface components {
             | "safeguarding_officer"
             | "communications"
             | "staff";
+          groups?: components["schemas"]["InvitationGroupInput"][];
+          /** Format: uuid */
+          clubRoleId?: string;
           /** @default 14 */
           expiresInDays: number;
         };
+    InvitationGroupInput: {
+      /** Format: uuid */
+      groupId: string;
+      /** Format: uuid */
+      roleId?: string;
+    };
     PayLink: {
       /** Format: uri */
       redirectUrl: string;
@@ -7365,6 +7440,14 @@ export interface components {
       clubName: string;
       /** @enum {string} */
       kind: "email" | "link" | "code";
+      /** @default [] */
+      groups: {
+        /** Format: uuid */
+        groupId: string;
+        groupName: string;
+        role: components["schemas"]["InvitationRole"];
+      }[];
+      clubRole?: components["schemas"]["InvitationRole"] & (Record<string, never> | null);
     };
     Me: {
       /** Format: uuid */
@@ -13151,6 +13234,82 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HistoryPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Invitations_options: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InvitationOptions"];
         };
       };
       /** @description Invalid request */

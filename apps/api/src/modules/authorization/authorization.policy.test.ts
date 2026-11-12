@@ -1099,7 +1099,13 @@ const CASES: Record<Permission, Case[]> = {
   "club.invitations.manage": [
     { name: "manager", actor: manager, resource: clubR, allowed: true },
     { name: "registrar", actor: registrar, resource: clubR, allowed: true },
-    { name: "group owner", actor: sectionOwner, resource: clubR, allowed: false },
+    {
+      name: "group owner (own groups, P1.15 A4)",
+      actor: sectionOwner,
+      resource: clubR,
+      allowed: true,
+    },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
     { name: "member", actor: plainMember, resource: clubR, allowed: false },
   ],
   "club.handover.respond": [

@@ -95,12 +95,14 @@ export function createCoreServices(
     defaultCountry,
     invitationTokenKey: options.invitationTokenKey,
   });
+  const clubRoles = new ClubRolesService(db, clubs, roles);
   const joinRequests = new JoinRequestsService(db, { clubs, groups, memberships, accounts });
   const invitations = new InvitationsService(db, {
     clubs,
     groups,
     memberships,
     roles,
+    clubRoles,
     accounts,
     joinRequests,
     tokenKey: options.invitationTokenKey,
@@ -164,7 +166,7 @@ export function createCoreServices(
     waitlists,
     invitations,
     roles,
-    clubRoles: new ClubRolesService(db, clubs, roles),
+    clubRoles,
     administrators: new AdministratorsService(db),
     profiles,
     groups,

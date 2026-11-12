@@ -594,7 +594,16 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("club.waitlists.read", "club", holdsInClub("club.waitlists.read")),
   definePolicy("club.join_requests.manage", "club", holdsInClub("club.join_requests.manage")),
   // Role presets additionally need club.roles.manage (checked by the controller).
-  definePolicy("club.invitations.manage", "club", holdsInClub("club.invitations.manage")),
+  // Holders, and owners of a group of the club (P1.15 A4, decision 7): owners
+  // invite to their own groups only and see and revoke only their own
+  // invitations (the controller checks each group row).
+  definePolicy(
+    "club.invitations.manage",
+    "club",
+    ({ actor, resource }) =>
+      actor.holds("club.invitations.manage", resource.clubId) ||
+      actor.ownsAnyGroup(resource.clubId),
+  ),
   // The successor accepts or declines, the proposer cancels (the service
   // checks which); nobody else sees the proposal.
   definePolicy(

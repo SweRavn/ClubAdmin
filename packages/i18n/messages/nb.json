@@ -537,9 +537,7 @@
     "create": "Ny invitasjon",
     "kind": "Type",
     "email": "E-postadresse",
-    "group": "Gruppe (valgfritt)",
-    "noGroup": "Ingen gruppe",
-    "role": "Rolle (klubbansvarlige, krever tofaktorinnlogging)",
+    "role": "Klubbrolle (klubbansvarlige, krever tofaktorinnlogging)",
     "noRole": "Ingen rolle",
     "maxUses": "Hvor mange som kan bruke den (valgfritt)",
     "expiresInDays": "Gyldig i (dager)",
@@ -553,7 +551,18 @@
     "usesUnlimited": "Brukt {uses} ganger",
     "expires": "Gyldig til {date}",
     "revoke": "Trekk tilbake",
-    "createdBy": "Opprettet av {name}"
+    "createdBy": "Opprettet av {name}",
+    "groups": "Grupper",
+    "groupsHint": "Kryss av gruppene personen skal være med i, og velg rolle i hver. Uten gruppe blir personen bare medlem i klubben.",
+    "groupsOwnerHint": "Du kan invitere til grupper du eier. Kryss av minst én.",
+    "groupsFilter": "Filtrer på navn",
+    "allKinds": "Alle typer",
+    "groupRole": "Rolle i gruppen",
+    "ownGroup": "Din",
+    "noGroups": "Det finnes ingen aktive grupper du kan invitere til.",
+    "chosen": "Valgt: #",
+    "groupAs": "{group} som {role}",
+    "unknownGroup": "Arkivert gruppe"
   },
   "invitationKinds": {
     "email": "E-post",
@@ -572,7 +581,10 @@
     "login": "Logg inn eller opprett en konto for å takke ja",
     "accept": "Bli med i {club}",
     "intro": "Du er invitert til å bli med i {club} i ClubAdmin.",
-    "completeProfile": "Fyll ut profilen din først, så kommer du tilbake hit."
+    "completeProfile": "Fyll ut profilen din først, så kommer du tilbake hit.",
+    "gives": "Hvis du takker ja",
+    "groupAs": "blir du med i {group} som {role}",
+    "clubRole": "får du rollen {role} i klubben"
   },
   "managers": {
     "title": "Klubbansvarlige",
@@ -771,7 +783,8 @@
     "suspension_not_allowed": "Du kan ikke bekrefte eller endre denne suspensjonen: den som ba om den og den den gjelder kan ikke bekrefte den.",
     "grace_already_extended": "Klubbens frist er allerede forlenget én gang.",
     "no_grace_period": "Klubben har ingen frist å forlenge.",
-    "forbidden": "Du har ikke tillatelse til det. Tillatelsene dine kan ha endret seg: last inn siden på nytt for å se hva du kan gjøre nå."
+    "forbidden": "Du har ikke tillatelse til det. Tillatelsene dine kan ha endret seg: last inn siden på nytt for å se hva du kan gjøre nå.",
+    "group_role_not_allowed": "Du kan ikke gi den rollen i gruppen. Uten tillatelsen til å håndtere gruppens medlemmer kan du bare invitere deltakere, og du kan aldri gi tillatelser du ikke har selv."
   },
   "memberExport": {
     "columns": {

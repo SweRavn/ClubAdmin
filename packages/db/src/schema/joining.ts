@@ -31,6 +31,7 @@ import {
   smallint,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -177,6 +178,8 @@ export const invitations = pgTable(
     tokenHash: text().notNull(),
     /** Presets applied on acceptance. */
     rolePreset: text().$type<ClubRole>(),
+    /** A club role to give on acceptance (P1.15 A4; the role preset as an ID). */
+    clubRoleId: uuid(),
     groupId: uuid(),
     expiresAt: timestamp(tz).notNull(),
     maxUses: integer(),
@@ -201,6 +204,28 @@ export const invitations = pgTable(
     }),
     uniqueIndex("invitations_token_unique").on(t.tokenHash),
     index("invitations_club_idx").on(t.clubId, t.createdAt),
+  ],
+);
+
+/** The groups an invitation adds to, each with a group role (P1.15 A4). */
+export const invitationGroups = pgTable(
+  "invitation_groups",
+  {
+    id: id(),
+    clubId: clubRef(),
+    invitationId: uuid()
+      .notNull()
+      .references(() => invitations.id, { onDelete: "cascade" }),
+    groupId: uuid()
+      .notNull()
+      .references(() => groups.id),
+    roleId: uuid().notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    unique("invitation_groups_unique").on(t.invitationId, t.groupId),
+    index("invitation_groups_group_idx").on(t.groupId),
+    index("invitation_groups_role_idx").on(t.roleId),
   ],
 );
 

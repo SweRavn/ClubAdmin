@@ -47,6 +47,7 @@ import {
   HistoryPageSchema,
   InvitationListSchema,
   InvitationLookupSchema,
+  InvitationOptionsSchema,
   InviteesSchema,
   InvoiceDetailSchema,
   InvoicePageSchema,
@@ -649,6 +650,11 @@ export const lookupGuardianInvitation = cache(async (token: string) => {
 
 /** Which club an invitation link is for, without a session; null if it is not usable. */
 /** A usable invitation by its link token, or by its code with `kind: "code"` (P1.6b). */
+/** What the viewer may put in an invitation: groups, roles per group, club roles (P1.15 A4). */
+export const getInvitationOptions = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/invitation-options`, InvitationOptionsSchema),
+);
+
 export const lookupInvitation = cache(async (secret: string, kind: "token" | "code" = "token") => {
   const res = await apiFetch(
     `/api/v1/invitations/lookup?${kind}=${encodeURIComponent(secret)}`,

@@ -59,6 +59,15 @@ const toRole = (r: RawRole): RoleRow => ({
   holderCount: r.holder_count ?? 0,
 });
 
+/** The club's roles (not deleted) with their permissions, without holder counts. */
+export async function rolesOfClub(tx: Tx, clubId: string): Promise<RoleRow[]> {
+  const { rows } = await tx.execute<RawRole>(sql`
+    SELECT ${ROLE_COLUMNS} FROM public.roles r
+    WHERE r.club_id = ${clubId} AND r.archived_at IS NULL
+    ORDER BY r.scope, r.sort_order, r.created_at`);
+  return rows.map(toRole);
+}
+
 /** The club's roles (not deleted) with their permissions and open assignments. */
 export async function listRoles(tx: Tx, clubId: string): Promise<RoleRow[]> {
   const { rows } = await tx.execute<RawRole>(sql`

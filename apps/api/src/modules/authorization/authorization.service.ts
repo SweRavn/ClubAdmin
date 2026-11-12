@@ -20,6 +20,7 @@ import {
   loadEventScope,
   loadFamilyResourcePerson,
   loadGroupScope,
+  loadGroupScopes,
   loadGroupsOfPeople,
   loadHandoverScope,
   loadPersonInClub,
@@ -310,6 +311,17 @@ export class AuthorizationService {
   async groupResourceOf(context: ActorContext, groupId: string): Promise<GroupResource | null> {
     const scope = await this.db.withActor(context, (tx) => loadGroupScope(tx, groupId));
     return scope ? { kind: "group", groupId, ...scope } : null;
+  }
+
+  /** Several groups as resources (one statement); groups the context cannot see are left out. */
+  async groupResourcesOf(
+    context: ActorContext,
+    groupIds: readonly string[],
+  ): Promise<Map<string, GroupResource>> {
+    const scopes = await this.db.withActor(context, (tx) => loadGroupScopes(tx, groupIds));
+    return new Map(
+      [...scopes].map(([groupId, scope]) => [groupId, { kind: "group", groupId, ...scope }]),
+    );
   }
 
   private async groupResource(

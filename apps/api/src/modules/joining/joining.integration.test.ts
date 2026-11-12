@@ -282,7 +282,13 @@ describe("invitations", () => {
     const token = decodeURIComponent(url.split("/join/")[1]!);
 
     const lookup = await api(null, "GET", `/invitations/lookup?token=${encodeURIComponent(token)}`);
-    expect(lookup.json()).toEqual({ clubId: club.id, clubName: club.name, kind: "link" });
+    expect(lookup.json()).toMatchObject({
+      clubId: club.id,
+      clubName: club.name,
+      kind: "link",
+      groups: [{ groupId: group.id, groupName: "F2017", role: { templateKey: "member" } }],
+      clubRole: null,
+    });
 
     const person = await buildPerson(s);
     const accepted = await api(person.id, "POST", "/invitations/accept", { body: { token } });
@@ -597,5 +603,223 @@ describe("club managers", () => {
       "reassigned",
       "removed",
     ]);
+  });
+});
+
+describe("invitations to several groups, each with a role (P1.15 A4)", () => {
+  let club: BuiltClub;
+  let registrar: Awaited<ReturnType<typeof buildPerson>>;
+  let owner: Awaited<ReturnType<typeof buildPerson>>;
+  let roles: { id: string; scope: string; templateKey: string | null }[];
+  const roleId = (scope: string, key: string) =>
+    roles.find((r) => r.scope === scope && r.templateKey === key)!.id;
+
+  beforeAll(async () => {
+    club = await buildClub(s, { joinPolicy: "invite_only" });
+    registrar = await buildPerson(s);
+    await s.memberships.addMember(club.ctx, registrar.id);
+    await s.roles.assignRole(club.ctx, registrar.id, "registrar");
+    owner = await buildPerson(s);
+    await s.memberships.addMember(club.ctx, owner.id);
+    roles = await s.clubRoles.rolesOfClub(club.ctx);
+  });
+
+  const groupIn = async (groupId: string, personId: string) => {
+    const { rows } = await t.query<{ role_id: string }>(
+      "admin",
+      "SELECT role_id FROM group_memberships WHERE group_id = $1 AND person_id = $2 AND valid_to IS NULL",
+      [groupId, personId],
+    );
+    return rows.map((r) => r.role_id);
+  };
+
+  it("adds every group with its role in one acceptance; list and lookup show them", async () => {
+    const a = await s.groups.createGroup(club.ctx, { name: "P2014", kind: "team" });
+    const b = await s.groups.createGroup(club.ctx, { name: "Domare", kind: "other" });
+    const leader = roleId("group", "head_coach");
+    const created = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: a.id }, { groupId: b.id, roleId: leader }] },
+    });
+    expect(created.statusCode).toBe(201);
+    const { url, invitation } = created.json<{
+      url: string;
+      invitation: { id: string; groups: { groupId: string; roleId: string }[] };
+    }>();
+    const participant = roleId("group", "member");
+    expect(invitation.groups).toEqual([
+      { groupId: a.id, roleId: participant },
+      { groupId: b.id, roleId: leader },
+    ]);
+    const token = decodeURIComponent(url.split("/join/")[1]!);
+    const lookup = await api(null, "GET", `/invitations/lookup?token=${encodeURIComponent(token)}`);
+    expect(lookup.json()).toMatchObject({
+      clubId: club.id,
+      groups: [
+        { groupId: a.id, groupName: "P2014", role: { id: participant, templateKey: "member" } },
+        { groupId: b.id, groupName: "Domare", role: { id: leader, templateKey: "head_coach" } },
+      ],
+      clubRole: null,
+    });
+    const list = await api(club.manager.id, "GET", `/clubs/${club.id}/invitations`);
+    expect(
+      list
+        .json<{ items: { id: string; groups: unknown[] }[] }>()
+        .items.find((i) => i.id === invitation.id)?.groups,
+    ).toHaveLength(2);
+
+    const person = await buildPerson(s);
+    expect(
+      (await api(person.id, "POST", "/invitations/accept", { body: { token } })).statusCode,
+    ).toBe(200);
+    expect(await groupIn(a.id, person.id)).toEqual([participant]);
+    expect(await groupIn(b.id, person.id)).toEqual([leader]);
+
+    // Already in one group, the other archived since: accepted, nothing doubled.
+    const again = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: a.id }, { groupId: b.id }] },
+    });
+    const second = decodeURIComponent(again.json<{ url: string }>().url.split("/join/")[1]!);
+    await t.query("admin", "UPDATE groups SET archived_at = now() WHERE id = $1", [b.id]);
+    const other = await buildPerson(s);
+    await s.memberships.addMember(club.ctx, other.id);
+    await s.memberships.addToGroup(club.ctx, a.id, other.id);
+    expect(
+      (await api(other.id, "POST", "/invitations/accept", { body: { token: second } })).statusCode,
+    ).toBe(200);
+    expect(await groupIn(a.id, other.id)).toHaveLength(1);
+    expect(await groupIn(b.id, other.id)).toEqual([]);
+  });
+
+  it("one row per group, at most 50, groups of the club only", async () => {
+    const g = await s.groups.createGroup(club.ctx, { name: "Dubbel", kind: "team" });
+    const twice = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: g.id }, { groupId: g.id }] },
+    });
+    expect(twice.statusCode).toBe(400);
+    const otherClub = await buildClub(s);
+    const foreign = await s.groups.createGroup(otherClub.ctx, { name: "Främmande", kind: "team" });
+    const refused = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: foreign.id }] },
+    });
+    expect(refused.statusCode).toBe(404);
+  });
+
+  it("a role other than the participant role needs group.members.manage (no escalation)", async () => {
+    const g = await s.groups.createGroup(club.ctx, { name: "F2016", kind: "team" });
+    // The registrar invites to any group, as a participant only.
+    const participant = await api(registrar.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: g.id }] },
+    });
+    expect(participant.statusCode).toBe(201);
+    const asLeader = await api(registrar.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: g.id, roleId: roleId("group", "head_coach") }] },
+    });
+    expect(asLeader.statusCode).toBe(403);
+    expect(detail(asLeader)).toBe("group_role_not_allowed");
+    // A club role is not a group role.
+    const clubRole = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: g.id, roleId: roleId("club", "treasurer") }] },
+    });
+    expect(clubRole.statusCode).toBe(404);
+  });
+
+  it("group owners invite to their own groups, with roles within what owning gives", async () => {
+    const own = await s.groups.createGroup(club.ctx, { name: "F2015", kind: "team" });
+    const notOwn = await s.groups.createGroup(club.ctx, { name: "F2013", kind: "team" });
+    await s.groups.addOwner(club.ctx, own.id, owner.id, "club_manager");
+    const historian = await s.clubRoles.createRole(club.ctx, {
+      scope: "group",
+      names: { sv: "Krönikör" },
+      permissions: ["group.participate", "group.owners.manage"],
+    });
+
+    const leader = await api(owner.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: own.id, roleId: roleId("group", "head_coach") }] },
+    });
+    expect(leader.statusCode).toBe(201);
+    const ownId = leader.json<{ invitation: { id: string } }>().invitation.id;
+    const escalation = await api(owner.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: own.id, roleId: historian.id }] },
+    });
+    expect(detail(escalation)).toBe("group_role_not_allowed");
+    const elsewhere = await api(owner.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", groups: [{ groupId: own.id }, { groupId: notOwn.id }] },
+    });
+    expect(elsewhere.statusCode).toBe(403);
+    // To the club only, or with a club role: not for owners.
+    for (const body of [
+      { kind: "link" },
+      { kind: "link", groups: [{ groupId: own.id }], rolePreset: "treasurer" },
+    ]) {
+      expect(
+        (await api(owner.id, "POST", `/clubs/${club.id}/invitations`, { body })).statusCode,
+      ).toBe(403);
+    }
+    // Owners see and revoke their own invitations only.
+    const byManager = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link" },
+    });
+    const managerId = byManager.json<{ invitation: { id: string } }>().invitation.id;
+    const list = await api(owner.id, "GET", `/clubs/${club.id}/invitations`);
+    expect(list.json<{ items: { id: string }[] }>().items.map((i) => i.id)).toEqual([ownId]);
+    expect(
+      (await api(owner.id, "POST", `/clubs/${club.id}/invitations/${managerId}/revoke`)).statusCode,
+    ).toBe(404);
+    expect(
+      (await api(owner.id, "POST", `/clubs/${club.id}/invitations/${ownId}/revoke`)).statusCode,
+    ).toBe(200);
+  });
+
+  it("a club role by ID, given on acceptance (club manager with MFA)", async () => {
+    const office = await s.clubRoles.createRole(club.ctx, {
+      scope: "club",
+      names: { sv: "Kansli" },
+      permissions: ["club.members.read"],
+    });
+    const byRegistrar = await api(registrar.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", clubRoleId: office.id },
+      mfa: true,
+    });
+    expect(detail(byRegistrar)).toBe("role_preset_not_allowed");
+    const created = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", clubRoleId: office.id },
+      mfa: true,
+    });
+    expect(created.json<{ invitation: { clubRoleId: string } }>().invitation.clubRoleId).toBe(
+      office.id,
+    );
+    const token = decodeURIComponent(created.json<{ url: string }>().url.split("/join/")[1]!);
+    const lookup = await api(null, "GET", `/invitations/lookup?token=${encodeURIComponent(token)}`);
+    expect(lookup.json()).toMatchObject({ clubRole: { id: office.id, names: { sv: "Kansli" } } });
+    const person = await buildPerson(s);
+    await api(person.id, "POST", "/invitations/accept", { body: { token } });
+    const { rows } = await t.query<{ role_id: string }>(
+      "admin",
+      "SELECT role_id FROM club_role_assignments WHERE club_id = $1 AND person_id = $2 AND valid_to IS NULL",
+      [club.id, person.id],
+    );
+    expect(rows).toEqual([{ role_id: office.id }]);
+    // A role preset is stored as its club role too.
+    const preset = await api(club.manager.id, "POST", `/clubs/${club.id}/invitations`, {
+      body: { kind: "link", rolePreset: "treasurer" },
+      mfa: true,
+    });
+    expect(preset.json<{ invitation: { clubRoleId: string } }>().invitation.clubRoleId).toBe(
+      roleId("club", "treasurer"),
+    );
+  });
+
+  it("while the club needs administrators, only invitations for an administrator", async () => {
+    const needy = await buildClub(s, { administratorsGrace: false });
+    const plain = await api(needy.manager.id, "POST", `/clubs/${needy.id}/invitations`, {
+      body: { kind: "link" },
+    });
+    expect(plain.statusCode).toBe(409);
+    expect(detail(plain)).toBe("club_needs_administrators");
+    const admin = await api(needy.manager.id, "POST", `/clubs/${needy.id}/invitations`, {
+      body: { kind: "link", rolePreset: "club_manager" },
+      mfa: true,
+    });
+    expect(admin.statusCode).toBe(201);
   });
 });

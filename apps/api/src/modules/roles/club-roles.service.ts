@@ -348,47 +348,75 @@ export class ClubRolesService {
    * caller does not hold; also to themselves, which is told to the other
    * administrators and the chair).
    */
+  /**
+   * The club's roles with their permissions (no holder counts), in the
+   * caller's transaction or a new one: invitations choose and check roles
+   * by these (P1.15 A4).
+   */
+  rolesOfClub(context: TenantContext): Promise<ClubRoleRow[]> {
+    return this.db.withTenant(context, (tx) => repo.rolesOfClub(tx, context.clubId));
+  }
+
+  rolesOfClubInTx(tx: Tx, clubId: string): Promise<ClubRoleRow[]> {
+    return repo.rolesOfClub(tx, clubId);
+  }
+
   assignClubRole(
     context: TenantContext,
     personId: string,
     roleId: string,
   ): Promise<ClubAssignmentRow> {
-    return this.db.withTenant(context, async (tx) => {
-      const role = await repo.getRole(tx, context.clubId, roleId);
-      if (!role || role.scope !== "club") throw new DomainError("not_found");
-      if (role.permissions.includes("club.roles.manage")) {
-        await this.clubs.lockClubInTx(tx, context.clubId);
-      }
-      let assignment: ClubAssignmentRow;
-      try {
-        assignment = await repo.insertAssignment(tx, {
-          clubId: context.clubId,
-          personId,
-          roleId,
-          assignedByPersonId: context.personId ?? null,
-        });
-      } catch (error) {
-        if (isUniqueViolation(error, "club_role_assignments_open_unique")) {
-          throw new DomainError("role_already_assigned");
-        }
-        throw error;
-      }
-      await audit.record(tx, {
-        action: "role.assigned",
-        resourceType: "club_role_assignment",
-        resourceId: assignment.id,
-        changedFields: ["role_id"],
+    return this.db.withTenant(context, (tx) =>
+      this.assignClubRoleInTx(tx, context, personId, roleId),
+    );
+  }
+
+  /**
+   * Assigns a club role in the caller's transaction. `invited`: the person
+   * accepts an invitation that gives the role (P1.15 A4), which is not a
+   * self-assignment even though they are the actor.
+   */
+  async assignClubRoleInTx(
+    tx: Tx,
+    context: TenantContext,
+    personId: string,
+    roleId: string,
+    options: { invited?: boolean } = {},
+  ): Promise<ClubAssignmentRow> {
+    const role = await repo.getRole(tx, context.clubId, roleId);
+    if (!role || role.scope !== "club") throw new DomainError("not_found");
+    if (role.permissions.includes("club.roles.manage")) {
+      await this.clubs.lockClubInTx(tx, context.clubId);
+    }
+    let assignment: ClubAssignmentRow;
+    try {
+      assignment = await repo.insertAssignment(tx, {
+        clubId: context.clubId,
+        personId,
+        roleId,
+        assignedByPersonId: context.personId ?? null,
       });
-      await outbox.publish(tx, "role.changed", { clubId: context.clubId, personId });
-      if (personId === actorPersonId(context)) {
-        await outbox.publish(tx, "role.self_assigned", {
-          clubId: context.clubId,
-          personId,
-          roleId,
-        });
+    } catch (error) {
+      if (isUniqueViolation(error, "club_role_assignments_open_unique")) {
+        throw new DomainError("role_already_assigned");
       }
-      return assignment;
+      throw error;
+    }
+    await audit.record(tx, {
+      action: "role.assigned",
+      resourceType: "club_role_assignment",
+      resourceId: assignment.id,
+      changedFields: ["role_id"],
     });
+    await outbox.publish(tx, "role.changed", { clubId: context.clubId, personId });
+    if (personId === actorPersonId(context) && !options.invited) {
+      await outbox.publish(tx, "role.self_assigned", {
+        clubId: context.clubId,
+        personId,
+        roleId,
+      });
+    }
+    return assignment;
   }
 
   /** Ends a club role assignment (the last club manager is refused, ADR 0018). */

@@ -537,9 +537,7 @@
     "create": "New invitation",
     "kind": "Kind",
     "email": "Email address",
-    "group": "Group (optional)",
-    "noGroup": "No group",
-    "role": "Role (club managers, needs a two-factor login)",
+    "role": "Club role (club managers, needs two-factor login)",
     "noRole": "No role",
     "maxUses": "How many people may use it (optional)",
     "expiresInDays": "Valid for (days)",
@@ -553,7 +551,18 @@
     "usesUnlimited": "Used {uses} times",
     "expires": "Valid until {date}",
     "revoke": "Revoke",
-    "createdBy": "Created by {name}"
+    "createdBy": "Created by {name}",
+    "groups": "Groups",
+    "groupsHint": "Tick the groups the person is to join and choose a role in each. Without a group the person only becomes a member of the club.",
+    "groupsOwnerHint": "You can invite to groups you own. Tick at least one.",
+    "groupsFilter": "Filter by name",
+    "allKinds": "All kinds",
+    "groupRole": "Role in the group",
+    "ownGroup": "Yours",
+    "noGroups": "There are no active groups you can invite to.",
+    "chosen": "Chosen: #",
+    "groupAs": "{group} as {role}",
+    "unknownGroup": "Archived group"
   },
   "invitationKinds": {
     "email": "Email",
@@ -572,7 +581,10 @@
     "login": "Log in or create an account to accept",
     "accept": "Join {club}",
     "intro": "You have been invited to join {club} in ClubAdmin.",
-    "completeProfile": "Complete your profile first; you then come back here."
+    "completeProfile": "Complete your profile first; you then come back here.",
+    "gives": "If you accept",
+    "groupAs": "you join {group} as {role}",
+    "clubRole": "you get the role {role} in the club"
   },
   "managers": {
     "title": "Club managers",
@@ -771,7 +783,8 @@
     "suspension_not_allowed": "You cannot confirm or change this suspension: the person who asked for it and the person it concerns cannot confirm it.",
     "grace_already_extended": "The club's grace period has already been extended once.",
     "no_grace_period": "The club has no grace period to extend.",
-    "forbidden": "You do not have permission for that. Your permissions may have changed: reload the page to see what you can do now."
+    "forbidden": "You do not have permission for that. Your permissions may have changed: reload the page to see what you can do now.",
+    "group_role_not_allowed": "You may not give that role in the group. Without the permission to manage the group's members you can only invite participants, and you can never give permissions you do not have yourself."
   },
   "memberExport": {
     "columns": {

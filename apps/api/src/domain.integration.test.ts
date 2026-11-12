@@ -74,6 +74,12 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO invitation_acceptances (club_id, invitation_id, person_id)
         SELECT ${a.id}, id, ${member.id} FROM invitations WHERE club_id = ${a.id}`);
+      // The invitation's group with the participant role (P1.15 A4).
+      await tx.execute(sql`
+        INSERT INTO invitation_groups (club_id, invitation_id, group_id, role_id)
+        SELECT ${a.id}, i.id, ${group.id}, r.id FROM invitations i, roles r
+        WHERE i.club_id = ${a.id} AND r.club_id = ${a.id} AND r.scope = 'group'
+          AND r.template_key = 'member'`);
       // A suspension request (P1.15 A3) against the member.
       await tx.execute(sql`
         INSERT INTO administrator_suspensions (club_id, target_person_id, requested_by_person_id,

@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 
 import { buttonClass, inputClass } from "../../components/action-form.tsx";
 import { FormError } from "../../components/form-error.tsx";
+import { InvitationGifts } from "../../components/invitation-gifts.tsx";
 import { JoinActions } from "../../components/join-actions.tsx";
 import { lookupInvitation } from "../../server/data.ts";
 
@@ -35,6 +36,7 @@ export default async function JoinWithCodePage({ searchParams }: Props) {
           <p data-testid="invitation-club">
             {t("joinLanding.intro", { club: invitation.clubName })}
           </p>
+          <InvitationGifts invitation={invitation} />
           <FormError code={query.error} />
           <JoinActions clubName={invitation.clubName} here={here} secret={{ code }} />
         </>

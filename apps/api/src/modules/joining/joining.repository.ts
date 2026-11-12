@@ -2,10 +2,15 @@
 import { and, asc, desc, eq, inArray, isNull, schema, sql, type Tx } from "@clubadmin/db";
 import type { JoinPolicy, JoinRequestStatus } from "@clubadmin/shared";
 
-const { joinRequests, invitations, invitationAcceptances } = schema;
+const { joinRequests, invitations, invitationAcceptances, invitationGroups } = schema;
 
 export type JoinRequestRow = typeof joinRequests.$inferSelect;
 export type InvitationRow = typeof invitations.$inferSelect;
+export interface InvitationGroupRow {
+  invitationId: string;
+  groupId: string;
+  roleId: string;
+}
 
 // --- Club search (app.search_clubs, migration 0007) -----------------------
 
@@ -160,6 +165,36 @@ export async function insertInvitation(
   return row!;
 }
 
+/** The invitation's groups, each with its group role (P1.15 A4). */
+export async function insertInvitationGroups(
+  tx: Tx,
+  clubId: string,
+  invitationId: string,
+  rows: readonly { groupId: string; roleId: string }[],
+): Promise<void> {
+  if (rows.length === 0) return;
+  await tx
+    .insert(invitationGroups)
+    .values(rows.map((r) => ({ clubId, invitationId, groupId: r.groupId, roleId: r.roleId })));
+}
+
+/** The groups of the invitations (invitation_groups_unique), in the order they were added. */
+export async function invitationGroupsOf(
+  tx: Tx,
+  invitationIds: readonly string[],
+): Promise<InvitationGroupRow[]> {
+  if (invitationIds.length === 0) return [];
+  return tx
+    .select({
+      invitationId: invitationGroups.invitationId,
+      groupId: invitationGroups.groupId,
+      roleId: invitationGroups.roleId,
+    })
+    .from(invitationGroups)
+    .where(inArray(invitationGroups.invitationId, [...invitationIds]))
+    .orderBy(asc(invitationGroups.invitationId), asc(invitationGroups.id));
+}
+
 export async function setInvitationTokenHash(tx: Tx, id: string, tokenHash: string): Promise<void> {
   await tx.update(invitations).set({ tokenHash }).where(eq(invitations.id, id));
 }
@@ -200,7 +235,7 @@ export async function countInvitationUse(
 export async function clubInvitationsPage(
   tx: Tx,
   clubId: string,
-  page: { cursor: string | null; limit: number },
+  page: { cursor: string | null; limit: number; createdBy?: string | undefined },
 ): Promise<{ items: InvitationRow[]; cursorFound: boolean }> {
   let after: { createdAt: Date; id: string } | null = null;
   if (page.cursor) {
@@ -217,6 +252,7 @@ export async function clubInvitationsPage(
     .where(
       and(
         eq(invitations.clubId, clubId),
+        page.createdBy ? eq(invitations.createdByPersonId, page.createdBy) : undefined,
         after
           ? sql`(${invitations.createdAt}, ${invitations.id}) < (${after.createdAt.toISOString()}::timestamptz, ${after.id}::uuid)`
           : undefined,

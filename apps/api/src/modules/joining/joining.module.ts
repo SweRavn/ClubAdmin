@@ -9,7 +9,7 @@ import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { GroupsModule, GroupsService } from "../groups/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
 import { PeopleModule } from "../people/index.ts";
-import { RolesModule, RolesService } from "../roles/index.ts";
+import { ClubRolesModule, ClubRolesService, RolesModule, RolesService } from "../roles/index.ts";
 import { InvitationsController } from "./invitations.controller.ts";
 import { InvitationsService } from "./invitations.service.ts";
 import { JoinRequestsService } from "./join-requests.service.ts";
@@ -26,6 +26,7 @@ import { WaitlistsService } from "./waitlists.service.ts";
     MembershipsModule,
     PeopleModule,
     RolesModule,
+    ClubRolesModule,
   ],
   controllers: [JoiningController, InvitationsController, WaitlistsController],
   providers: [
@@ -60,6 +61,7 @@ import { WaitlistsService } from "./waitlists.service.ts";
         GroupsService,
         MembershipsService,
         RolesService,
+        ClubRolesService,
         AccountsService,
         JoinRequestsService,
       ],
@@ -70,6 +72,7 @@ import { WaitlistsService } from "./waitlists.service.ts";
         groups: GroupsService,
         memberships: MembershipsService,
         roles: RolesService,
+        clubRoles: ClubRolesService,
         accounts: AccountsService,
         joinRequests: JoinRequestsService,
       ) =>
@@ -78,6 +81,7 @@ import { WaitlistsService } from "./waitlists.service.ts";
           groups,
           memberships,
           roles,
+          clubRoles,
           accounts,
           joinRequests,
           tokenKey: config.INVITATION_TOKEN_KEY,

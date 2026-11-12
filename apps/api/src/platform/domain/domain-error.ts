@@ -105,6 +105,7 @@ export const DOMAIN_ERRORS = {
   invitation_email_mismatch: "conflict",
   invitation_email_unavailable: "unavailable",
   role_preset_not_allowed: "forbidden",
+  group_role_not_allowed: "forbidden",
   club_has_manager: "conflict",
   // Member register (P1.2)
   register_filter_not_allowed: "forbidden",

@@ -5593,6 +5593,114 @@
           "ok"
         ]
       },
+      "InvitationOptions": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "section",
+                    "team",
+                    "training_group",
+                    "age_group",
+                    "committee",
+                    "board",
+                    "volunteers",
+                    "other"
+                  ]
+                },
+                "own": {
+                  "type": "boolean"
+                },
+                "roleIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "kind",
+                "own",
+                "roleIds"
+              ]
+            }
+          },
+          "groupRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvitationRole"
+            }
+          },
+          "participantRoleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "clubRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvitationRole"
+            }
+          },
+          "clubWide": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "groups",
+          "groupRoles",
+          "participantRoleId",
+          "clubRoles",
+          "clubWide"
+        ]
+      },
+      "InvitationRole": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "names": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "templateKey",
+          "names"
+        ]
+      },
       "InvitationList": {
         "type": "object",
         "properties": {
@@ -5674,6 +5782,33 @@
               null
             ]
           },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "roleId": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "required": [
+                "groupId",
+                "roleId"
+              ]
+            }
+          },
+          "clubRoleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "expiresAt": {
             "type": "string",
             "format": "date-time"
@@ -5712,6 +5847,8 @@
           "email",
           "groupId",
           "rolePreset",
+          "groups",
+          "clubRoleId",
           "expiresAt",
           "maxUses",
           "uses",
@@ -5781,6 +5918,17 @@
                   "staff"
                 ]
               },
+              "groups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InvitationGroupInput"
+                },
+                "maxItems": 50
+              },
+              "clubRoleId": {
+                "type": "string",
+                "format": "uuid"
+              },
               "expiresInDays": {
                 "type": "integer",
                 "minimum": 1,
@@ -5830,6 +5978,17 @@
                   "staff"
                 ]
               },
+              "groups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InvitationGroupInput"
+                },
+                "maxItems": 50
+              },
+              "clubRoleId": {
+                "type": "string",
+                "format": "uuid"
+              },
               "expiresInDays": {
                 "type": "integer",
                 "minimum": 1,
@@ -5878,6 +6037,17 @@
                   "staff"
                 ]
               },
+              "groups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InvitationGroupInput"
+                },
+                "maxItems": 50
+              },
+              "clubRoleId": {
+                "type": "string",
+                "format": "uuid"
+              },
               "expiresInDays": {
                 "type": "integer",
                 "minimum": 1,
@@ -5891,6 +6061,23 @@
             "additionalProperties": false
           }
         ]
+      },
+      "InvitationGroupInput": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "groupId"
+        ],
+        "additionalProperties": false
       },
       "PayLink": {
         "type": "object",
@@ -11722,6 +11909,43 @@
               "email",
               "link",
               "code"
+            ]
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "groupId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "groupName": {
+                  "type": "string"
+                },
+                "role": {
+                  "$ref": "#/components/schemas/InvitationRole"
+                }
+              },
+              "required": [
+                "groupId",
+                "groupName",
+                "role"
+              ]
+            },
+            "default": []
+          },
+          "clubRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InvitationRole"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
             ]
           }
         },
@@ -22414,6 +22638,104 @@
         }
       }
     },
+    "/api/v1/clubs/{clubId}/invitation-options": {
+      "get": {
+        "operationId": "Invitations_options",
+        "summary": "The groups I may invite to, with the roles I may give in each, and the club roles I may give",
+        "tags": [
+          "joining"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.invitations.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationOptions"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clubs/{clubId}/invitations": {
       "get": {
         "operationId": "Invitations_list",
@@ -22533,7 +22855,7 @@
       },
       "post": {
         "operationId": "Invitations_create",
-        "summary": "Invite by email, or create a link or code (shown once); role presets only for club managers",
+        "summary": "Invite by email, or create a link or code (shown once), to groups with roles; club roles only for club managers",
         "tags": [
           "joining"
         ],

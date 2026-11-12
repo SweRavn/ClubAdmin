@@ -166,6 +166,13 @@ export class GroupsService {
     });
   }
 
+  /** The club's active groups by name (id, name, kind), all of them (invitations, P1.15 A4). */
+  activeGroups(
+    context: TenantContext,
+  ): Promise<{ id: string; name: string; kind: Group["kind"] }[]> {
+    return this.db.withTenant(context, (tx) => repo.activeGroupsOfClub(tx, context.clubId));
+  }
+
   /** The club's groups that are not archived, by lower-cased name (imports match groups by name, P1.3b). */
   async groupIdsByNameInTx(tx: Tx, clubId: string): Promise<Map<string, string>> {
     const rows = await repo.activeGroupNames(tx, clubId);

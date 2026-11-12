@@ -463,7 +463,16 @@ successor manager and ends the proposer's role in one transaction.
   `max_uses`, `uses`, `accepted_by_person_id` (first acceptance),
   `revoked_at`). Only a hash of the secret is stored; email tokens are
   derived from the invitation ID (ADR 0032). `invitation_acceptances`
-  records everyone who accepted a link or code.
+  records everyone who accepted a link or code. Since P1.15 A4 an
+  invitation adds to several groups, each with a group role:
+  `invitation_groups (club_id, invitation_id, group_id, role_id)`, unique
+  per invitation and group, at most 50, deleted with the invitation; and
+  `invitations.club_role_id` gives a club role (a `role_preset` is stored
+  as its template role too). An older invitation's `group_id` without a row
+  means the participant role. Club managers and registrars invite to any
+  group as participants; another role needs `group.members.manage` in the
+  group and passes the no-escalation rule; group owners invite to their
+  own groups only and see their own invitations (ADR 0046, part A4).
 - Club creation is governed by `CLUB_CREATION` (`open` | `approval` |
   `operators_only`; default open when hosted, operators only when
   self-hosted). With `approval`, `club_creation_requests` (global: the

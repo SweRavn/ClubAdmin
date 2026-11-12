@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// The club's invitations (club managers and registrars, P1.1): create by
-// email, link or code; the link or code is shown once, right after creation.
+// The club's invitations (club managers and registrars, P1.1; group owners
+// for their own groups, P1.15 A4): create by email, link or code, to several
+// groups each with a group role, optionally with a club role; the link or
+// code is shown once, right after creation.
 import { enumKey } from "@clubadmin/i18n";
-import { CLUB_ROLES } from "@clubadmin/shared";
+import { GROUP_KINDS } from "@clubadmin/shared";
 import { EmptyState, personLabel } from "@clubadmin/ui";
 import { cookies } from "next/headers";
 import { forbidden } from "next/navigation";
@@ -15,11 +17,14 @@ import {
   secondaryButtonClass,
 } from "../../../../../components/action-form.tsx";
 import { FormError, Notice } from "../../../../../components/form-error.tsx";
+import { InvitationGroupPicker } from "../../../../../components/invitation-group-picker.tsx";
+import { roleName } from "../../../../../components/roles.ts";
 import { INVITATION_SECRET_COOKIE } from "../../../../../server/cookies.ts";
 import {
   getClub,
   getClubGroups,
   getClubInvitations,
+  getInvitationOptions,
   getMyClubs,
   requireSession,
 } from "../../../../../server/data.ts";
@@ -45,10 +50,17 @@ export default async function InvitationsPage({ params, searchParams }: Props) {
   ]);
   const permissions = mine.clubs.find((c) => c.club.id === club.id)?.permissions ?? [];
   if (!permissions.includes("club.invitations.manage")) forbidden();
-  const canPresetRole = permissions.includes("club.roles.manage");
-  const [invitations, groups] = await Promise.all([
+  const [invitations, groups, options] = await Promise.all([
     getClubInvitations(club.id),
     getClubGroups(club.id),
+    getInvitationOptions(club.id),
+  ]);
+  const groupName = new Map(groups.map((g) => [g.id, g.name]));
+  const roleLabel = new Map([
+    ...options.groupRoles.map(
+      (r) => [r.id, roleName(t, locale, { ...r, scope: "group" })] as const,
+    ),
+    ...options.clubRoles.map((r) => [r.id, roleName(t, locale, { ...r, scope: "club" })] as const),
   ]);
   const secret = query.created ? (jar.get(INVITATION_SECRET_COOKIE)?.value ?? null) : null;
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
@@ -102,27 +114,37 @@ export default async function InvitationsPage({ params, searchParams }: Props) {
             <span className="text-sm font-medium">{t("invitations.email")}</span>
             <input type="email" name="email" autoComplete="off" className={inputClass} />
           </label>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium">{t("invitations.group")}</span>
-            <select name="groupId" className={inputClass} defaultValue="">
-              <option value="">{t("invitations.noGroup")}</option>
-              {groups
-                .filter((g) => !g.archived)
-                .map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          {canPresetRole ? (
+          <InvitationGroupPicker
+            groups={options.groups.map((g) => ({
+              id: g.id,
+              name: g.name,
+              kind: g.kind,
+              kindLabel: t(enumKey("kinds", g.kind)),
+              own: g.own,
+              roles: g.roleIds.map((id) => ({ id, label: roleLabel.get(id) ?? "" })),
+            }))}
+            kinds={GROUP_KINDS.map((k) => ({ value: k, label: t(enumKey("kinds", k)) }))}
+            labels={{
+              legend: t("invitations.groups"),
+              hint: options.clubWide
+                ? t("invitations.groupsHint")
+                : t("invitations.groupsOwnerHint"),
+              filter: t("invitations.groupsFilter"),
+              allKinds: t("invitations.allKinds"),
+              role: t("invitations.groupRole"),
+              own: t("invitations.ownGroup"),
+              none: t("invitations.noGroups"),
+              chosen: t("invitations.chosen"),
+            }}
+          />
+          {options.clubRoles.length > 0 ? (
             <label className="block space-y-1">
               <span className="text-sm font-medium">{t("invitations.role")}</span>
-              <select name="rolePreset" className={inputClass} defaultValue="">
+              <select name="clubRoleId" className={inputClass} defaultValue="">
                 <option value="">{t("invitations.noRole")}</option>
-                {CLUB_ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {t(enumKey("roles", r))}
+                {options.clubRoles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {roleLabel.get(r.id)}
                   </option>
                 ))}
               </select>
@@ -171,6 +193,21 @@ export default async function InvitationsPage({ params, searchParams }: Props) {
               <span className="text-sm text-muted">
                 {t("invitations.expires", { date: date.format(new Date(i.expiresAt)) })}
               </span>
+              {i.groups.length > 0 || i.clubRoleId ? (
+                <span className="basis-full text-sm" data-testid="invitation-gives">
+                  {[
+                    ...i.groups.map((g) =>
+                      t("invitations.groupAs", {
+                        group: groupName.get(g.groupId) ?? t("invitations.unknownGroup"),
+                        role: roleLabel.get(g.roleId) ?? "",
+                      }),
+                    ),
+                    ...(i.clubRoleId && roleLabel.has(i.clubRoleId)
+                      ? [roleLabel.get(i.clubRoleId)!]
+                      : []),
+                  ].join(" · ")}
+                </span>
+              ) : null}
               {i.createdBy ? (
                 <span className="text-sm text-muted">
                   {t("invitations.createdBy", { name: personLabel(i.createdBy) })}

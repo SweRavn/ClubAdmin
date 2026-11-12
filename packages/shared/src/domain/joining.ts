@@ -8,6 +8,7 @@ import { z } from "../zod.ts";
 import {
   CLUB_CREATION_REQUEST_STATUSES,
   CLUB_ROLES,
+  GROUP_KINDS,
   HANDOVER_STATUSES,
   INVITATION_KINDS,
   JOIN_POLICIES,
@@ -272,10 +273,30 @@ export const InvitationCodeSchema = z
   .transform((v) => v.replace(/[\s-]/g, ""))
   .pipe(z.string().regex(/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/));
 
+/** At most this many groups in one invitation (P1.15 A4). */
+export const INVITATION_GROUPS_MAX = 50;
+
+/** A group the invitation adds to; without a role, the club's participant role. */
+export const InvitationGroupInputSchema = z
+  .object({ groupId: z.uuid(), roleId: z.uuid().optional() })
+  .strict()
+  .openapi("InvitationGroupInput");
+
 const invitationPresets = {
+  /** One group (older clients); `groups` is the newer form (P1.15 A4). */
   groupId: z.uuid().optional(),
   /** Only club managers may preset a role. */
   rolePreset: z.enum(CLUB_ROLES).optional(),
+  /** Several groups, each with a group role (P1.15 A4); one row per group. */
+  groups: z
+    .array(InvitationGroupInputSchema)
+    .max(INVITATION_GROUPS_MAX)
+    .refine((rows) => new Set(rows.map((r) => r.groupId)).size === rows.length, {
+      message: "one row per group",
+    })
+    .optional(),
+  /** A club role to give (club managers with a second factor), by ID (P1.15 A4). */
+  clubRoleId: z.uuid().optional(),
   expiresInDays: z.number().int().min(1).max(90).default(14),
 };
 
@@ -317,6 +338,10 @@ export const InvitationSchema = z
     email: z.string().nullable(),
     groupId: z.uuid().nullable(),
     rolePreset: z.enum(CLUB_ROLES).nullable(),
+    /** The groups it adds to, each with its group role (P1.15 A4; `groupId` included). */
+    groups: z.array(z.object({ groupId: z.uuid(), roleId: z.uuid() })),
+    /** The club role it gives (P1.15 A4; also set for a `rolePreset`). */
+    clubRoleId: z.uuid().nullable(),
     expiresAt: z.iso.datetime(),
     maxUses: z.number().int().nullable(),
     uses: z.number().int(),
@@ -354,14 +379,56 @@ export const InvitationLookupQuerySchema = z
   .object(invitationSecret)
   .refine(exactlyOne, { message: "token or code" });
 
+/** A role as the invitation shows it: names per language, or the template's (P1.15 A4). */
+export const InvitationRoleSchema = z
+  .object({
+    id: z.uuid(),
+    templateKey: z.string().nullable(),
+    names: z.record(z.string(), z.string()).nullable(),
+  })
+  .openapi("InvitationRole");
+
 export const InvitationLookupSchema = z
   .object({
     clubId: z.uuid(),
     clubName: z.string(),
     kind: z.enum(INVITATION_KINDS),
+    /** The groups accepting adds to, with their roles (P1.15 A4). */
+    groups: z
+      .array(z.object({ groupId: z.uuid(), groupName: z.string(), role: InvitationRoleSchema }))
+      .default([]),
+    /** The club role accepting gives, if any. */
+    clubRole: InvitationRoleSchema.nullable().default(null),
   })
   .openapi("InvitationLookup");
 export type InvitationLookup = z.infer<typeof InvitationLookupSchema>;
+
+/**
+ * What the caller may put in an invitation (P1.15 A4): the club's active
+ * groups they may invite to, each with the group roles they may give there
+ * (the participant role first), their own groups marked; the club's group
+ * roles; and the club roles they may give (club managers).
+ */
+export const InvitationOptionsSchema = z
+  .object({
+    groups: z.array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        kind: z.enum(GROUP_KINDS),
+        /** The caller owns it or belongs to it (listed first). */
+        own: z.boolean(),
+        roleIds: z.array(z.uuid()),
+      }),
+    ),
+    groupRoles: z.array(InvitationRoleSchema),
+    participantRoleId: z.uuid().nullable(),
+    clubRoles: z.array(InvitationRoleSchema),
+    /** May invite to the club without a group (not group owners). */
+    clubWide: z.boolean(),
+  })
+  .openapi("InvitationOptions");
+export type InvitationOptions = z.infer<typeof InvitationOptionsSchema>;
 
 export const AcceptInvitationSchema = z
   .object(invitationSecret)

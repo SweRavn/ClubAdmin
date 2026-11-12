@@ -248,6 +248,14 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   administrator roles. `administrators:daily` lists its clubs through
   `app.administrator_job_clubs` (open requests past their deadline by
   `administrator_suspensions_expires_idx`, clubs with a grace period).
+  A4: the invitation form's options (`GET /clubs/:clubId/invitation-options`,
+  a budget of three statements) read the club's active groups
+  (`groups_club_idx`), its roles with their permissions (no holder counts)
+  and the groups' ancestors in one recursive statement; they grow with the
+  club's groups, not with the data. Creating an invitation checks up to 50
+  rows with the same two statements; accepting reads the invitation's rows
+  by `invitation_groups_unique` and adds each group in a savepoint. A group
+  owner's invitation list filters the club's invitations by creator.
 - Member register (P1.2, `register-plans.integration.test.ts`: one club with
   10,000 members among 100,000 people, as the club's registrar with row-level
   security): p95 of a 50-row page sorted by name about 80–95 ms, search as you

@@ -466,8 +466,14 @@ describe("permission matrix", () => {
     },
     "GET /api/v1/clubs/:clubId/invitations": {
       url: () => `/api/v1/clubs/${m.clubA.id}/invitations`,
-      expected: ADMINS(200),
+      // Group owners see their own invitations (P1.15 A4).
+      expected: { ...ADMINS(200), owner: 200 },
     },
+    "GET /api/v1/clubs/:clubId/invitation-options": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/invitation-options`,
+      expected: { ...ADMINS(200), owner: 200 },
+    },
+    // An owner may invite only to their own groups: not to the club alone.
     "POST /api/v1/clubs/:clubId/invitations": {
       url: () => `/api/v1/clubs/${m.clubA.id}/invitations`,
       expected: ADMINS(201),
@@ -475,7 +481,7 @@ describe("permission matrix", () => {
     },
     "POST /api/v1/clubs/:clubId/invitations/:invitationId/revoke": {
       url: () => `/api/v1/clubs/${m.clubA.id}/invitations/${uuidv7()}/revoke`,
-      expected: ADMINS(404),
+      expected: { ...ADMINS(404), owner: 404 },
     },
     "GET /api/v1/clubs/:clubId/managers": {
       url: () => `/api/v1/clubs/${m.clubA.id}/managers`,
