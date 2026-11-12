@@ -120,9 +120,12 @@ across them, so nobody has to click through every group.
 - No adult alone in a car with a single child who is not their own without
   the guardian's active confirmation, whoever drives.
 - "Mina samåkningar"; leaders see who has no ride.
-- Mileage statistics from the club's distance per location (the driver may
-  correct it): parents share costs, clubs reimburse at a club rate (the
-  country pack's tax-free rate as a guide). Claims are **attested** in a
+- Mileage statistics from the distance stored with each place in the
+  club's list of places (every leader may create and edit places by
+  default; the driver may correct a drive). Members settle among themselves
+  (the statistics public in the group when the group says so) or the club
+  reimburses at a club rate (the country pack's tax-free rate as a guide).
+  Kept until explicitly deleted. Events use the same car pools. Claims are **attested** in a
   general attestation flow (first the activity's creator, otherwise group
   or club attesters; never one's own claim) that later serves all expenses;
   payment in Phase 3.

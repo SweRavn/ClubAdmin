@@ -40,17 +40,35 @@ meeting time and place, and locations have coordinates (ADR 0034).
    seats across groups and clubs; the activity page shows the cars, free
    seats and, for leaders, who has no ride yet.
 7. **Mileage.** Each drive records distance, passengers and driver. The
-   distance comes from the club's distance per location (from the club's
-   starting point, entered once per location); the driver may correct it
-   after the trip. No routing service and no home addresses (a self-hosted
-   router may come later).
+   distance is a field of the place in the club's list of places
+   (`locations`: the distance from the club's starting point, kept with the
+   place); the driver may correct it for a drive after the trip. No routing
+   service and no home addresses (a self-hosted router may come later).
+   Creating and editing places, their distance included, is one permission
+   in the catalogue that **every leader in the club holds by default**
+   (today `club.locations.create` lets leaders add places and edit only
+   their own; it becomes create-and-edit for all places, and
+   `club.locations.manage` keeps archiving and merging).
 8. **Reimbursement.** A club may turn mileage reimbursement on and set a
    rate (the country pack gives the tax-free rate, e.g. per Swedish mil);
    more detail (per group, per vehicle, passenger supplements) may come
    later. A driver turns their drives into a claim; it is **attested**
    (below); approved claims are exported (CSV) for payment. Paying out
-   comes in Phase 3. The statistics also let parents share costs among
-   themselves without the club.
+   comes in Phase 3.
+   - **Settling among members instead of paying.** A club may prefer that
+     members settle the driving among themselves (kvittning). A group
+     setting makes its car-pool statistics **public in the group**: then
+     its members see per person how far and how often they drove and rode,
+     per period; otherwise the statistics are seen by the drivers
+     themselves and by attesters and the group's leaders.
+10. **Kept until deleted.** Car pools, drives and the statistics are kept
+    until someone deletes them explicitly (a driver their own offers before
+    the trip; the club's attesters or administrators older data); no
+    automatic deletion. Attested claims follow accounting rules. Erasing a
+    person anonymises them in drives and statistics (the deletion ledger
+    applies it again after a restore, ADR 0047).
+11. **Events** use the same tables: an event session has a transport mode
+    and car pools like an activity.
 9. **A general attestation flow**, built for car-pool claims first and for
    other expenses later (receipts, purchases in Phase 3):
    - A claim (`expense_claims`: kind, amount, lines, the person, the
@@ -65,10 +83,7 @@ meeting time and place, and locations have coordinates (ADR 0034).
    - The flow is generic (kinds, routing, permissions), so new expense
      kinds plug in without a new flow.
 
-**Consequences.** Leaders see who can drive and who lacks a ride; parents
-share costs on the club's numbers; clubs get attested mileage claims ready
-for payment. Distances are as good as the club's table; correcting them is
-the driver's. Open for the prompt: who may enter the club's distances (a
-permission), how long car-pool data is kept (statistics and claims follow
-accounting rules once attested), and whether car pools for events reuse the
-same tables (expected: yes, per session).
+**Consequences.** Leaders see who can drive and who lacks a ride; members
+settle or the club reimburses on the same numbers; clubs get attested
+mileage claims ready for payment. Distances are as good as the club's list
+of places; correcting a drive is the driver's.
