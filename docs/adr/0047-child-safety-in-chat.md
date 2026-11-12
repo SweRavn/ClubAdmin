@@ -47,9 +47,12 @@ as a complement. Nothing here needs anyone to approve anything by hand.
 5. **Nothing disappears.** Messages are kept without a time limit, in
    every chat (decision 4, 2026-11-12): no disappearing messages and no
    automatic deletion; a message its sender deletes is hidden, not removed.
-   Erasing a person (P1.8b, ADR 0041) still applies to their account and
-   profile; how it applies to their messages is settled in the chat prompt
-   with the DPIA (below).
+   Erasing a person (P1.8b, ADR 0041) anonymises their messages (decision
+   6): the sender becomes "a former member", the text stays. It is part of
+   `app.erase_person`, so the deletion ledger (`privacy.deletion_ledger`,
+   ADR 0030) applies it again after a restore, as for everything else the
+   erasure touches; no log of its own. Names the text itself mentions are
+   not rewritten.
 6. **Background checks for writing to children.** Every country pack has
    the requirement as a flag (`backgroundCheckForChildren`: required or
    not); the rule always exists. A club may require more than its pack
@@ -98,7 +101,5 @@ words they understand.
 reading along; children's chats are private among children until a parent or
 leader joins, which everyone sees. Keeping messages without a time limit
 needs a DPIA and a stated purpose (safeguarding, the club's record) under
-GDPR's storage limitation; the chat prompt writes it, together with how an
-erasure treats a person's messages (for example: the sender anonymised, the
-text kept) — an open question for the maintainer. The bot's languages and
-models are decided when it is built.
+GDPR's storage limitation; the chat prompt writes it. The bot's languages
+and models are decided when it is built.
