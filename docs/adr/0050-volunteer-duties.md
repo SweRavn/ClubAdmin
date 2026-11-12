@@ -35,13 +35,14 @@ for being alone with children and for background checks.
 5. **Swaps are free** (decision 3): a person offers their shift or asks for a
    swap; whoever takes it over confirms; the leaders see the swap but do not
    approve it. A push reminder the day before; afterwards a shift is marked
-   done or missed (a missed shift does not count).
+   done or missed (a missed shift does not count; nothing is marked done automatically,
+   decision 2026-11-12).
 6. **Visibility is a setting** (decision 4) of who sees whom on which shift
    and how others' quotas stand: the club chooses a default and whether its
    groups may change it, in both directions (more restrictive or more
    open); without that permission the groups follow the club. Leaders
    always see everything in their group.
-7. **Aggregation:** "Mina pass" (mine and my children's shifts, what is left
+7. **Aggregation:** "Mina pass" (now "Mina uppgifter", ADR 0052) (mine and my children's shifts, what is left
    of the quotas, open shifts I may take) and the group's overview
    (unstaffed shifts, quotas per player for the leaders).
 8. **Statistics:** hours and shifts per person, player, group and season,

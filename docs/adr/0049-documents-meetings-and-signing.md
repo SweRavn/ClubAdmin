@@ -52,7 +52,7 @@ offer free qualified signatures for non-professional use.
      "Val av justerare", …). During the meeting each item has its own
      editable Markdown field; **decisions** are checked per item with their
      text (which may mark settings, ADR 0037); action items get an assignee
-     and a date.
+     and a date (tasks, ADR 0052).
    - **The minutes are assembled** from the items into one Markdown
      document (one § per item) in the series of the group (e.g. board
      minutes). Markdown stays the format of every text; the structure
@@ -79,12 +79,14 @@ offer free qualified signatures for non-professional use.
    QES). For now a club cannot require a level.
 6. **Storage limits** at two levels: the operator sets a limit per
    installation or plan (entitlements, ADR 0012/P0.12); the club sets its
-   own within it and may divide it per group.
+   own within it and may divide it per group. Default: 100 MB per club
+   (decision 2026-11-12).
 7. **Files**: type allow list, size limits, ClamAV before a file is
    visible, served from a separate domain as attachments (`security.md`).
    The same storage serves chat attachments later (ADR 0047, first revision
    text only).
-8. **Kept until deleted**; an adopted governing document cannot be deleted,
+8. **Kept until deleted**, attachments to notices too; an uploader may set
+   a deletion date on a file, after which it is deleted automatically; an adopted governing document cannot be deleted,
    only archived (the club's record). Erasing a person does not rewrite
    adopted documents or signed minutes (stated in the privacy notice);
    mentions written with `@` render through `PersonPresenter` (protected

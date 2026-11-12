@@ -78,14 +78,15 @@ prompt (like P1.14) before Phase 2 starts.
 | Prompt | Depends on |
 |---|---|
 | [P2.1 Chat: channels, real time, "Mina kanaler", child safety](P2.1-chat.md) (parts A–C) | P1.15 |
-| [P2.2 Announcements: the board, email and push in one message](P2.2-announcements.md) | P1.15 (builds the shared audiences if it comes before P2.4) |
-| [P2.3 Car pooling, mileage and a general attestation flow](P2.3-car-pooling-and-attestation.md) | P1.15 |
-| [P2.4 Documents I: file archive, audiences, documents attached to notices](P2.4-file-archive.md) | P1.15 |
-| [P2.5 Documents II and meetings: governing documents, agendas, minutes, signing](P2.5-governing-documents-and-meetings.md) | P2.4 |
-| [P2.6 Volunteer duties](P2.6-volunteer-duties.md) | P2.4 (instructions as documents) |
+| [P2.2 Documents I: file archive, audiences, documents attached to notices](P2.2-file-archive.md) | P1.15 |
+| [P2.3 Announcements: the board, email and push in one message](P2.3-announcements.md) | P2.2 (audiences) |
+| [P2.4 Documents II and meetings: governing documents, agendas, minutes, signing](P2.4-governing-documents-and-meetings.md) | P2.2 |
+| [P2.5 Car pooling, mileage and a general attestation flow](P2.5-car-pooling-and-attestation.md) | P1.15 |
+| [P2.6 Volunteer duties](P2.6-volunteer-duties.md) | P2.4 (tasks, ADR 0052), P2.5 |
 | [P2.7 Plugins for grant reporting and background checks; LOK and LAM](P2.7-reporting-plugins.md) | P1.15 |
 | [P2.8 Background-check plugins for Sweden and Norway; tracking screens](P2.8-background-check-plugins.md) | P2.7, P2.1, P2.6 |
 
-Chat comes first. Each prompt is checked against the code as it is when it
-starts (as P1.15 B was) and adjusted before it is implemented; lines marked
-**Proposed** are not yet decided by the maintainer and are settled then.
+The prompts are numbered in the order they are built. Each prompt is checked against the code as it is when it
+starts (as P1.15 B was) and adjusted before it is implemented. Permissions
+are entries in the catalogue (ADR 0046); each prompt names the template
+roles that get a new permission, and every club can change its roles.

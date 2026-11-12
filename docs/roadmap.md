@@ -54,10 +54,10 @@ Chat is a unique selling point and comes first. The decisions of
 | ID | Work package | Decisions |
 |---|---|---|
 | [P2.1](prompts/P2.1-chat.md) | Chat: channels per group, open or closed, real time, "Mina kanaler", push per channel, child safety | ADR 0016, ADR 0047, `dpia-chat.md` |
-| [P2.2](prompts/P2.2-announcements.md) | Announcements: the board in the app, email and push in one message | ADR 0039, ADR 0049 (audiences) |
-| [P2.3](prompts/P2.3-car-pooling-and-attestation.md) | Car pooling, mileage and a general attestation flow | ADR 0048 |
-| [P2.4](prompts/P2.4-file-archive.md) | Documents I: file archive, audiences, documents attached to notices | ADR 0049 |
-| [P2.5](prompts/P2.5-governing-documents-and-meetings.md) | Documents II and meetings: governing documents, agendas, minutes, signing in the app | ADR 0037, ADR 0049 |
+| [P2.2](prompts/P2.2-file-archive.md) | Documents I: file archive, audiences, documents attached to notices | ADR 0049 |
+| [P2.3](prompts/P2.3-announcements.md) | Announcements: the board in the app, email and push in one message | ADR 0039, ADR 0049 (audiences) |
+| [P2.4](prompts/P2.4-governing-documents-and-meetings.md) | Documents II and meetings: governing documents, agendas, minutes, signing in the app | ADR 0037, ADR 0049 |
+| [P2.5](prompts/P2.5-car-pooling-and-attestation.md) | Car pooling, mileage and a general attestation flow | ADR 0048 |
 | [P2.6](prompts/P2.6-volunteer-duties.md) | Volunteer duties | ADR 0050 |
 | [P2.7](prompts/P2.7-reporting-plugins.md) | Plugins for grant reporting and background checks; LOK and LAM | ADR 0051 |
 | [P2.8](prompts/P2.8-background-check-plugins.md) | Background-check plugins for Sweden and Norway, tracking screens | ADR 0047, ADR 0051 |

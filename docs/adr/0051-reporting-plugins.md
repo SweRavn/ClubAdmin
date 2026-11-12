@@ -100,3 +100,14 @@ contract and plugins are AGPL-3.0-only (decision 2026-11-12); an in-process
 plugin must be AGPL-compatible. **LOK:** only RF's 2025 rules are
 implemented (no session before 2025 is reported), in a structure versioned
 by date. Open: the out-of-process transport's security model.
+
+**Amendment (2026-11-12, before P2.8).** Who needs a check is a
+**requirement** set on roles in the role editor (and on duty types), with a
+category from the plugin; it is not a permission. In Sweden the person
+shows the extract to someone holding `club.background_checks.verify`, who
+ticks it off; nothing is uploaded. Records are kept until someone with
+`club.background_checks.manage` deletes them. The out-of-process transport
+stays unbuilt until a third-party plugin needs it; its security model is an
+open issue ([#23](https://github.com/SweRavn/ClubAdmin/issues/23)). Submitting to
+RF's Idrottsarenan needs a vendor agreement
+([#22](https://github.com/SweRavn/ClubAdmin/issues/22)).
