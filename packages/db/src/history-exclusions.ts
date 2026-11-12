@@ -24,6 +24,8 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
     "the profile view log (P1.12) is itself a log, rewritten by the daily upsert; IDs, dates and counts only",
   "privacy.anonymization_ledger":
     "append-only list of (person, club) anonymisations; must survive restores unchanged (P1.12)",
+  "app.administrator_minimum_exceptions":
+    "transaction-local markers of a confirmed suspension or an erasure (P1.15 A3): owner-only (no application role has a privilege), cleared on the next use, IDs only",
   "public.member_import_rows":
     "staging rows of a member import (the file's values), deleted seven days after the import ends; the people created from them have history",
 };
