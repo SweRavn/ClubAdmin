@@ -48,6 +48,7 @@ class CoreSeeder {
   private readonly env: SeedEnvironment;
   private readonly data: DemoData;
   private readonly personas: Map<string, DemoPersona>;
+  private readonly clubTypeIds = new Map<string, string>();
   /** Group-membership row of (person key, group key), for moves. */
   private readonly groupRows = new Map<string, string>();
 
@@ -119,6 +120,8 @@ class CoreSeeder {
 
   async run(): Promise<void> {
     await this.people();
+    await this.operators();
+    await this.clubTypes();
     await this.children();
     await this.clubs();
     await this.guardians();
@@ -324,6 +327,54 @@ class CoreSeeder {
     }
   }
 
+  /** Platform operators (before the club types they add). */
+  private async operators(): Promise<void> {
+    for (const operator of this.data.relationships.operators) {
+      await this.env.addPlatformOperator(this.id(operator));
+    }
+  }
+
+  /**
+   * Club types an operator adds (P1.15 B): each starts with the required
+   * roles; the data renames or extends those and adds the type's own.
+   */
+  private async clubTypes(): Promise<void> {
+    if (this.data.clubTypes.length === 0) return;
+    const operatorKey = this.data.relationships.operators[0];
+    if (!operatorKey) throw new Error("club types need a platform operator in the data");
+    const ctx = {
+      actorKind: "operator" as const,
+      personId: this.id(operatorKey),
+      requestId: SEED_REQUEST,
+    };
+    for (const t of this.data.clubTypes) {
+      let type = await this.s.clubTypes.createType(ctx, {
+        key: t.key,
+        names: t.names,
+        ...(t.descriptions ? { descriptions: t.descriptions } : {}),
+      });
+      for (const r of t.roles) {
+        const existing = type.roles.find((x) => x.scope === r.scope && x.key === r.key);
+        type = existing
+          ? await this.s.clubTypes.updateRole(ctx, type.id, existing.id, {
+              ...(r.names ? { names: r.names } : {}),
+              ...(r.descriptions ? { descriptions: r.descriptions } : {}),
+              ...(r.permissions
+                ? { permissions: [...new Set([...existing.permissions, ...r.permissions])] }
+                : {}),
+            })
+          : await this.s.clubTypes.createRole(ctx, type.id, {
+              key: r.key,
+              scope: r.scope,
+              ...(r.names ? { names: r.names } : {}),
+              ...(r.descriptions ? { descriptions: r.descriptions } : {}),
+              permissions: r.permissions ?? [],
+            });
+      }
+      this.clubTypeIds.set(t.key, type.id);
+    }
+  }
+
   /** The founder creates the club and becomes its first manager and member #1. */
   private async clubs(): Promise<void> {
     for (const c of this.data.clubs) {
@@ -335,6 +386,9 @@ class CoreSeeder {
           slug: c.slug,
           country: c.country,
           joinPolicy: c.joinPolicy,
+          ...(c.clubType && this.clubTypeIds.has(c.clubType)
+            ? { clubTypeId: this.clubTypeIds.get(c.clubType)! }
+            : {}),
         },
         // A grace period while the seed builds the club (P1.15 A3); administrators() ends it.
         { id: c.id, administratorsGraceUntil: new Date(Date.now() + 30 * 86_400_000) },
@@ -782,7 +836,6 @@ class CoreSeeder {
             ${new Date(at.getTime() + 86_400_000)}, ${at}, ${at})`),
       );
     }
-    for (const operator of r.operators) await this.env.addPlatformOperator(this.id(operator));
     for (const g of r.supportGrants) {
       await this.inClub(g.grantedBy, g.club, (tx, clubId) =>
         tx.execute(sql`

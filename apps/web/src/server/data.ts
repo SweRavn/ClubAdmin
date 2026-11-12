@@ -24,6 +24,8 @@ import {
   ClubPrivacySchema,
   ClubProfileViewsSchema,
   ClubSearchResultSchema,
+  ClubTypeListSchema,
+  ClubTypeSchema,
   ClubWaitlistsSchema,
   ConsentTextVersionsSchema,
   DataExportsPageSchema,
@@ -795,5 +797,14 @@ export const getOpsInvoices = cache((query: string) =>
 );
 export const getOpsPayments = cache((query: string) =>
   required(`/api/v1/billing/payments?${query}`, PaymentPageSchema),
+);
+/** The active club types (choosing one when creating a club, P1.15 B). */
+export const getClubTypes = cache(() => required("/api/v1/club-types", ClubTypeListSchema));
+/** Every club type (operators with a second factor); null for everyone else. */
+export const getOpsClubTypes = cache(() =>
+  apiGet("/api/v1/ops/club-types", ClubTypeListSchema, { nullOn: [403] }),
+);
+export const getOpsClubType = cache((clubTypeId: string) =>
+  required(`/api/v1/ops/club-types/${requireId(clubTypeId)}`, ClubTypeSchema),
 );
 export const getOpsPlans = cache(() => required("/api/v1/billing/plans", PlanListSchema));

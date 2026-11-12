@@ -284,3 +284,61 @@ lists and revokes invitations (its own). oasdiff reads the optional fields
 added to each kind of the request body's `oneOf` as removed subschemas; the
 line is in `breaking-changes-allowed.txt`. The demo's link invitation still
 uses the old `group_id` (read as a participant row).
+
+## Part B: club types and templates
+
+**Decision** (maintainer, 2026-11-08: decisions 1, 5 and 6 of the prompt;
+the constraints checked 2026-11-12).
+
+- **Data.** Migration 0036: the global tables `club_types`,
+  `club_type_roles` and `club_type_role_permissions` (history; RLS: everyone
+  logged in reads, operators and system jobs write; a type is deactivated,
+  never deleted). The built-in type `sports_club` ("Idrottsförening") is
+  filled from `app.builtin_role_template()` (the function stays as its
+  source and test reference). `clubs.club_type_id` (every existing club and
+  every club inserted without one: the built-in type) and
+  `club_creation_requests.club_type_id`.
+- **A new club** gets a copy of its type's roles: `app.create_builtin_roles`
+  (the clubs insert trigger) now copies the type's keys, names,
+  descriptions, locked flags, order and permissions. The type is the one
+  chosen (it must be active), else the country pack's `defaultClubType`,
+  else the built-in type; a request keeps it until the operator decides (a
+  type deactivated in between falls back to the default).
+- **Required roles.** Every type has `club_manager` and `chair` (locked, with
+  their locked permissions) and the participant group role `member` (with
+  `group.participate`), which code asks for by key (adding by function,
+  imports, waiting lists, join requests, invitations, hand-over and
+  recovery). `REQUIRED_TEMPLATE_ROLES` in the shared package: a new type is
+  created with them (copied from the built-in type); they can be renamed and
+  given more permissions, but cannot lose the required ones or be removed
+  (`club_type_role_required`).
+- **A type's own keys** (`tournament_director`) need names in sv, en and nb
+  (`club_type_role_names_required`); known keys may use the catalogue's
+  name. The assignment triggers map keys outside the old CHECK lists to
+  `staff` (club roles) and `member` or `other_leader` (group roles, by
+  `group.participate`).
+- **Clubs and their template** (decision 6): the roles list returns the
+  club's type and its template roles with `present`, `archived` or
+  `missing`; "differs from the template" and reset read the club's type
+  (reset also restores the template's names). `POST
+  /clubs/:clubId/roles/from-template` copies a role ("Lägg till från
+  mallen", `club.roles.manage`); a role the club deleted is restored with
+  the template's names and permissions (`role.restored`).
+- **Operators**: built-in permissions `club_types.read` and
+  `club_types.manage` (platform, second factor); `GET /club-types` for
+  everyone logged in; `GET/POST /ops/club-types`, `GET/PATCH
+  /ops/club-types/:clubTypeId`, `POST /ops/club-types/:clubTypeId/roles`,
+  `PATCH` and `DELETE .../roles/:roleId`; audit events `club_type.*`. The
+  operator console gets `/ops/club-types` (the billing pages show only with
+  billing on).
+- **Decision 5 per key**: a later permission is added by template key, to
+  every type's role with that key and to the clubs' roles with that key,
+  never to clubs' own roles or if sensitive.
+
+**Consequences.** The roles page has a fifth statement (the template and the
+archived keys). Clubs keep `club_type_id` for statistics; changing a club's
+type is not offered. Deviations: the country packs only name a default type
+by key (no type names in the packs); the operators' editor uses the same
+permission picker by area as the clubs' editor but no holder preview
+(templates have no holders); the demo chess club is Ekuddens Schackklubb.
+

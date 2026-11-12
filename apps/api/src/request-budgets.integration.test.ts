@@ -269,6 +269,16 @@ const CASES: Case[] = [
     pages: 160,
   },
   {
+    route: "GET /api/v1/club-types",
+    persona: "anna",
+    method: "GET",
+    url: () => "/api/v1/club-types",
+    // P1.15 B: the active club types with their roles (a small global catalogue,
+    // one statement; each role's permissions by its key, about 75 pages).
+    statements: 1,
+    pages: 100,
+  },
+  {
     route: "GET /api/v1/clubs/{clubId}/invitation-options",
     persona: "anna",
     method: "GET",
@@ -296,8 +306,10 @@ const CASES: Case[] = [
     persona: "sara",
     method: "GET",
     url: () => `/api/v1/clubs/${key("svk")}/roles`,
-    statements: 4,
-    pages: 170,
+    // P1.15 B: plus the club type's template (by the club's row and the
+    // template's keys) and the archived roles' keys.
+    statements: 5,
+    pages: 240,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/permissions/{permission}/holders",

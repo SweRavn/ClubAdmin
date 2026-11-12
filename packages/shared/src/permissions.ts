@@ -77,6 +77,9 @@ export const PERMISSIONS = [
   // confirmation, and an operator extending a club's grace period.
   "club.administrators.confirm_suspension",
   "club.administrators.extend_grace",
+  // Club types and their templates (P1.15 B): operators.
+  "club_types.read",
+  "club_types.manage",
   // History and audit (P1.9, ADR 0042): club managers and registrars only.
   "person.history.read",
   "group.history.read",

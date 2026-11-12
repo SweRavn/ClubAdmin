@@ -92,6 +92,8 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "club.managers.reassign": builtIn,
   "club.administrators.confirm_suspension": builtIn,
   "club.administrators.extend_grace": builtIn,
+  "club_types.read": builtIn,
+  "club_types.manage": builtIn,
   "club.create": builtIn,
   "club.creation.decide": builtIn,
   "club.access_state.update": builtIn,

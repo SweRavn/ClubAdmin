@@ -3,6 +3,33 @@
 exports[`demo scenario > creates exactly the clubs, groups and personas of docs/seed-data.md 1`] = `
 {
   "clubs": {
+    "esk": {
+      "activities": {
+        "cancelledSessions": [],
+        "detachedSessions": [],
+        "locations": [],
+        "series": [],
+        "single": [],
+      },
+      "consents": [],
+      "country": "SE",
+      "employments": [],
+      "handovers": [],
+      "invitations": [],
+      "joinPolicy": "approval",
+      "joinRequests": [],
+      "locale": "sv-SE",
+      "managers": [
+        "aron",
+        "britt",
+      ],
+      "memberships": {
+        "active": 2,
+      },
+      "slug": "ekuddens-sk",
+      "supportGrants": [],
+      "timeZone": "Europe/Stockholm",
+    },
     "fil": {
       "activities": {
         "cancelledSessions": [],
@@ -432,6 +459,24 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "svk: registrar",
       ],
     },
+    "aron": {
+      "account": {
+        "email": "aron.nystrom@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "esk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "esk: club_manager",
+      ],
+    },
     "bo": {
       "account": null,
       "clubProtected": [],
@@ -442,6 +487,24 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "pendingGuardianInvitations": 0,
       "protected": false,
       "roles": [],
+    },
+    "britt": {
+      "account": {
+        "email": "britt.sjoberg@example.test",
+        "locale": null,
+      },
+      "clubProtected": [],
+      "groups": [],
+      "guardians": [],
+      "hasBirthDate": true,
+      "memberships": [
+        "esk: active (active)",
+      ],
+      "pendingGuardianInvitations": 0,
+      "protected": false,
+      "roles": [
+        "esk: club_manager",
+      ],
     },
     "camilla": {
       "account": {

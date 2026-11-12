@@ -755,6 +755,10 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
   // editable and adds the role's history panel (with a policy here).
   "public.roles": "a club's roles, not editable before P1.15 part A2 (role history panel)",
   "public.role_permissions": "a role's permissions, shown with the role from P1.15 part A2",
+  "public.club_types":
+    "the club types' catalogue (P1.15 B): global, operators only; changes are in the audit log (club_type.*)",
+  "public.club_type_roles": "a club type's template roles (P1.15 B): with the type",
+  "public.club_type_role_permissions": "a template role's permissions (P1.15 B): with the type",
   "public.invitation_groups":
     "an invitation's groups and roles (P1.15 A4): shown with the invitation in the invitations list",
   "public.administrator_suspensions":

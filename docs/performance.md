@@ -256,6 +256,11 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   rows with the same two statements; accepting reads the invitation's rows
   by `invitation_groups_unique` and adds each group in a savepoint. A group
   owner's invitation list filters the club's invitations by creator.
+  B: the club types' catalogue (`GET /club-types`, one statement: each
+  type's roles by `club_type_roles_key_unique`, their permissions by
+  `club_type_role_permissions_unique`) is small and global. The roles page
+  reads the club's type by the club's row (two more statements: the
+  template and the archived roles' keys).
 - Member register (P1.2, `register-plans.integration.test.ts`: one club with
   10,000 members among 100,000 people, as the club's registrar with row-level
   security): p95 of a 50-row page sorted by name about 80–95 ms, search as you

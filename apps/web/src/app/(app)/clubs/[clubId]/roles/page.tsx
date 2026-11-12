@@ -111,6 +111,7 @@ export default async function RolesPage({ params, searchParams }: Props) {
         {t("administrators.title")}
       </a>
       {query.deleted ? <Notice>{t("rolesAdmin.deleted")}</Notice> : null}
+      {query.copied ? <Notice>{t("rolesAdmin.copied")}</Notice> : null}
       {query.role === "assigned" ? <Notice>{t("rolesAdmin.assigned")}</Notice> : null}
 
       {canManage && registrar && !holdsRegistrar ? (
@@ -148,6 +149,49 @@ export default async function RolesPage({ params, searchParams }: Props) {
           {roles.items.filter((r) => r.scope === "group").map(card)}
         </ul>
       </section>
+
+      {roles.clubType && roles.templateRoles.length > 0 ? (
+        <section aria-labelledby="template" className="space-y-2" data-testid="template-roles">
+          <h2 id="template" className="text-lg font-semibold">
+            {t("rolesAdmin.template", {
+              type:
+                roles.clubType.names[locale.slice(0, 2) as "sv" | "en" | "nb"] ??
+                roles.clubType.names.sv ??
+                roles.clubType.key,
+            })}
+          </h2>
+          <p className="text-sm text-muted">{t("rolesAdmin.templateHint")}</p>
+          <ul className="space-y-2">
+            {roles.templateRoles.map((tr) => (
+              <li
+                key={`${tr.scope}:${tr.key}`}
+                className="flex flex-wrap items-center gap-2"
+                data-testid="template-role"
+              >
+                <span className="font-medium">
+                  {roleName(t, locale, { scope: tr.scope, templateKey: tr.key, names: tr.names })}
+                </span>
+                <span className="text-sm text-muted">
+                  {tr.scope === "club" ? t("rolesAdmin.scopeClub") : t("rolesAdmin.scopeGroup")}
+                  {" · "}
+                  {t(`rolesAdmin.templateStatus.${tr.status}`)}
+                </span>
+                {canManage && tr.status !== "present" ? (
+                  <ActionForm action="copy-template-role" className="ml-auto">
+                    <input type="hidden" name="clubId" value={club.id} />
+                    <input type="hidden" name="scope" value={tr.scope} />
+                    <input type="hidden" name="key" value={tr.key} />
+                    <input type="hidden" name="back" value={`/clubs/${club.id}/roles`} />
+                    <button type="submit" className={secondaryButtonClass}>
+                      {t("rolesAdmin.copyFromTemplate")}
+                    </button>
+                  </ActionForm>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section aria-labelledby="who-can" className="space-y-2">
         <h2 id="who-can" className="text-lg font-semibold">

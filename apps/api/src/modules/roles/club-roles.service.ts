@@ -16,6 +16,8 @@ import {
   type Tx,
 } from "@clubadmin/db";
 import {
+  type CopyTemplateRoleInput,
+  CopyTemplateRoleSchema,
   type CreateRoleInput,
   isRolePermission,
   LOCKED_ROLES,
@@ -28,8 +30,10 @@ import {
 } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
+import { parseInput } from "../../platform/domain/run.ts";
 import { actorPersonId } from "../../platform/domain/run.ts";
 import type { Actor, GroupRef } from "../authorization/index.ts";
+import type { ClubTypeRow, ClubTypesService, TemplateRoleRow } from "../club-types/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import * as repo from "./club-roles.repository.ts";
 import type { RolesService } from "./roles.service.ts";
@@ -84,38 +88,120 @@ function checkPermissions(scope: "club" | "group", permissions: readonly string[
   }
 }
 
+/** Each template role's permissions in the club's type, by the club role's ID. */
+function templatesOf(
+  type: ClubTypeRow | null,
+  roles: readonly ClubRoleRow[],
+): Map<string, string[]> {
+  const byKey = new Map((type?.roles ?? []).map((t) => [`${t.scope}:${t.key}`, t.permissions]));
+  const templates = new Map<string, string[]>();
+  for (const r of roles) {
+    const template = r.templateKey ? byKey.get(`${r.scope}:${r.templateKey}`) : undefined;
+    if (template) templates.set(r.id, template);
+  }
+  return templates;
+}
+
 export class ClubRolesService {
   private readonly db: Database;
   private readonly clubs: ClubsService;
   private readonly roles: RolesService;
+  private readonly clubTypes: ClubTypesService;
 
-  constructor(db: Database, clubs: ClubsService, roles: RolesService) {
+  constructor(db: Database, clubs: ClubsService, roles: RolesService, clubTypes: ClubTypesService) {
     this.db = db;
     this.clubs = clubs;
     this.roles = roles;
+    this.clubTypes = clubTypes;
   }
 
+  /**
+   * The club's roles, the roles administrators gave themselves, each
+   * template role's permissions in the club's type (by role ID, for "differs
+   * from the template"), and the type's template with whether the club has
+   * each role (P1.15 B: compare and copy).
+   */
   listRoles(context: TenantContext): Promise<{
     roles: ClubRoleRow[];
     selfAssignments: ClubAssignmentRow[];
     templates: Map<string, string[]>;
+    clubType: ClubTypeRow | null;
+    templateRoles: (TemplateRoleRow & { status: "present" | "archived" | "missing" })[];
   }> {
     return this.db.withTenant(context, async (tx) => {
-      const [roles, selfAssignments] = await Promise.all([
+      const [roles, selfAssignments, clubType, archived] = await Promise.all([
         repo.listRoles(tx, context.clubId),
         repo.selfAssignments(tx, context.clubId),
+        this.clubTypes.typeOfClubInTx(tx, context.clubId),
+        repo.archivedTemplateKeys(tx, context.clubId),
       ]);
-      return { roles, selfAssignments, templates: await this.templatesOf(tx, roles) };
+      const present = new Set(roles.map((r) => `${r.scope}:${r.templateKey ?? ""}`));
+      return {
+        roles,
+        selfAssignments,
+        templates: templatesOf(clubType, roles),
+        clubType,
+        templateRoles: (clubType?.roles ?? []).map((t) => ({
+          ...t,
+          status: present.has(`${t.scope}:${t.key}`)
+            ? ("present" as const)
+            : archived.has(`${t.scope}:${t.key}`)
+              ? ("archived" as const)
+              : ("missing" as const),
+        })),
+      };
     });
   }
 
-  private async templatesOf(tx: Tx, roles: readonly ClubRoleRow[]): Promise<Map<string, string[]>> {
-    const all = await repo.allTemplatePermissions(tx);
-    const templates = new Map<string, string[]>();
-    for (const r of roles) {
-      if (r.templateKey) templates.set(r.id, all.get(`${r.scope}:${r.templateKey}`) ?? []);
-    }
-    return templates;
+  /**
+   * "Lägg till från mallen" (P1.15 B): copies a role of the club's type into
+   * the club with the template's names, descriptions and permissions. A role
+   * the club deleted (archived, same key) is restored instead; a role the
+   * club has is refused (`template_role_exists`).
+   */
+  copyFromTemplate(context: TenantContext, input: CopyTemplateRoleInput): Promise<ClubRoleRow> {
+    const data = parseInput(CopyTemplateRoleSchema, input);
+    return this.db.withTenant(context, async (tx) => {
+      const type = await this.clubTypes.typeOfClubInTx(tx, context.clubId);
+      const template = type?.roles.find((r) => r.scope === data.scope && r.key === data.key);
+      if (!template) throw new DomainError("not_found");
+      const existing = await repo.roleByTemplateKey(tx, context.clubId, data.scope, data.key);
+      if (existing && !existing.archivedAt) throw new DomainError("template_role_exists");
+      let roleId: string;
+      if (existing) {
+        roleId = existing.id;
+        await repo.restoreRole(tx, roleId);
+        await repo.updateRoleTexts(tx, roleId, {
+          names: template.names,
+          descriptions: template.descriptions,
+        });
+        await repo.removePermissions(
+          tx,
+          roleId,
+          existing.permissions.filter((p) => !template.permissions.includes(p)),
+        );
+        await repo.bumpVersion(tx, roleId);
+      } else {
+        roleId = await repo.insertTemplateRole(tx, {
+          clubId: context.clubId,
+          scope: template.scope,
+          templateKey: template.key,
+          locked: template.locked,
+          names: template.names,
+          descriptions: template.descriptions,
+        });
+      }
+      await repo.addPermissions(tx, context.clubId, roleId, template.permissions);
+      await audit.record(tx, {
+        action: existing ? "role.restored" : "role.created",
+        resourceType: "role",
+        resourceId: roleId,
+        changedFields: existing
+          ? ["archived_at", "names", "descriptions", "permissions"]
+          : ["names", "permissions"],
+      });
+      return (await repo.getRole(tx, context.clubId, roleId))!;
+    });
   }
 
   getRole(context: TenantContext, roleId: string): Promise<ClubRoleRow> {
@@ -194,8 +280,17 @@ export class ClubRolesService {
         : undefined;
       if (input.resetToTemplate) {
         if (!role.templateKey) throw new DomainError("invalid_input");
-        next = await repo.templatePermissions(tx, role.scope, role.templateKey);
-        await repo.updateRoleTexts(tx, roleId, { names: null, descriptions: null });
+        // The club's type's template role (P1.15 B): its permissions and names.
+        const type = await this.clubTypes.typeOfClubInTx(tx, context.clubId);
+        const template = type?.roles.find(
+          (r) => r.scope === role.scope && r.key === role.templateKey,
+        );
+        if (!template) throw new DomainError("not_found");
+        next = [...template.permissions];
+        await repo.updateRoleTexts(tx, roleId, {
+          names: template.names,
+          descriptions: template.descriptions,
+        });
         changed.push("names", "descriptions");
       }
       if (next) {

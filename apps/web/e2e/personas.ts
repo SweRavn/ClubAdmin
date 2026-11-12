@@ -35,9 +35,18 @@ export const PERSONAS = {
   linnea: { id: person(36), name: "Linnea Holm" },
   kari: { id: person(38), name: "Kari Haugen" },
   ulf: { id: person(39), name: "Ulf Ek" },
+  operator: { id: person(20), name: "Platform Operator" },
+  // Club types (P1.15 B): Ekuddens Schackklubb.
+  britt: { id: person(40), name: "Britt Sjöberg" },
 } as const;
 
-export const CLUBS = { svk: club(1), ikn: club(2), fil: club(3), lbtk: club(4) } as const;
+export const CLUBS = {
+  svk: club(1),
+  ikn: club(2),
+  fil: club(3),
+  lbtk: club(4),
+  esk: club(5),
+} as const;
 export const GROUPS = {
   svkF2017: group(1),
   svkHerr: group(3),

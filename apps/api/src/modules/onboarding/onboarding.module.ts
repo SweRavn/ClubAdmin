@@ -5,6 +5,7 @@ import { API_CONFIG, type ApiConfig } from "../../config.ts";
 import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform/infra/database.ts";
 import { AccountsModule, AccountsService } from "../accounts/index.ts";
 import { AuthorizationModule } from "../authorization/index.ts";
+import { ClubTypesModule, ClubTypesService } from "../club-types/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { InvitationsService, JoiningModule } from "../joining/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
@@ -19,6 +20,7 @@ import { OnboardingService } from "./onboarding.service.ts";
     AccountsModule,
     AuthorizationModule,
     ClubsModule,
+    ClubTypesModule,
     JoiningModule,
     MembershipsModule,
     PeopleModule,
@@ -32,6 +34,7 @@ import { OnboardingService } from "./onboarding.service.ts";
         DATABASE,
         API_CONFIG,
         ClubsService,
+        ClubTypesService,
         MembershipsService,
         RolesService,
         PeopleService,
@@ -42,6 +45,7 @@ import { OnboardingService } from "./onboarding.service.ts";
         db: OptionalDatabase,
         config: ApiConfig,
         clubs: ClubsService,
+        clubTypes: ClubTypesService,
         memberships: MembershipsService,
         roles: RolesService,
         people: PeopleService,
@@ -50,6 +54,7 @@ import { OnboardingService } from "./onboarding.service.ts";
       ) =>
         new OnboardingService(requireDatabase(db), {
           clubs,
+          clubTypes,
           memberships,
           roles,
           people,

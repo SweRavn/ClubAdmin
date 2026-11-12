@@ -274,6 +274,8 @@ export const clubCreationRequests = pgTable(
     createdClubId: uuid(),
     /** Who to invite as the second administrator on approval (P1.15 A3); cleared then. */
     secondAdministratorEmail: text(),
+    /** The club type asked for (P1.15 B); null: the default on approval. */
+    clubTypeId: uuid(),
     ...timestamps,
   },
   (t) => [

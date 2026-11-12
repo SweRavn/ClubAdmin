@@ -944,6 +944,14 @@ const CASES: Record<Permission, Case[]> = {
     { name: "chair", actor: chair, resource: clubR, allowed: false },
     { name: "plain member", actor: plainMember, resource: clubR, allowed: false },
   ],
+  "club_types.read": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+  ],
+  "club_types.manage": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+  ],
   "billing.plans.manage": [
     { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
     { name: "club manager", actor: manager, resource: platformR, allowed: false },

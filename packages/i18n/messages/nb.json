@@ -502,7 +502,10 @@
     "create": "Opprett klubben",
     "request": "Send søknaden",
     "secondAdministrator": "Andre administrator (e-post)",
-    "secondAdministratorHint": "En klubb trenger minst to administratorer for å kunne ta imot medlemmer. Personen får en invitasjon når klubben opprettes; du kan også invitere senere."
+    "secondAdministratorHint": "En klubb trenger minst to administratorer for å kunne ta imot medlemmer. Personen får en invitasjon når klubben opprettes; du kan også invitere senere.",
+    "clubType": "Klubbtype",
+    "clubTypeHint": "Klubben får typens roller. Dere kan endre dem etterpå.",
+    "clubTypeRoles": "Roller: {roles}"
   },
   "joinPolicies": {
     "open": "Alle blir med med en gang",
@@ -784,7 +787,14 @@
     "grace_already_extended": "Klubbens frist er allerede forlenget én gang.",
     "no_grace_period": "Klubben har ingen frist å forlenge.",
     "forbidden": "Du har ikke tillatelse til det. Tillatelsene dine kan ha endret seg: last inn siden på nytt for å se hva du kan gjøre nå.",
-    "group_role_not_allowed": "Du kan ikke gi den rollen i gruppen. Uten tillatelsen til å håndtere gruppens medlemmer kan du bare invitere deltakere, og du kan aldri gi tillatelser du ikke har selv."
+    "group_role_not_allowed": "Du kan ikke gi den rollen i gruppen. Uten tillatelsen til å håndtere gruppens medlemmer kan du bare invitere deltakere, og du kan aldri gi tillatelser du ikke har selv.",
+    "club_type_unavailable": "Klubbtypen kan ikke velges.",
+    "club_type_exists": "Det finnes allerede en klubbtype med den nøkkelen.",
+    "club_type_built_in": "Den innebygde klubbtypen kan ikke slås av.",
+    "club_type_role_exists": "Malen har allerede en rolle med den nøkkelen.",
+    "club_type_role_required": "Alle klubbtyper trenger denne rollen: den kan ikke fjernes eller miste de låste tillatelsene.",
+    "club_type_role_names_required": "Rollen trenger navn på svensk, engelsk og norsk.",
+    "template_role_exists": "Klubben har allerede den rollen."
   },
   "memberExport": {
     "columns": {
@@ -3669,7 +3679,16 @@
     "helpGroups": "En grupperolle gjelder i gruppen der den gis, ikke i undergruppene. Gi rollen i hver gruppe der personen skal ha den. Gruppeansvarlige har likevel alltid rettighetene sine også i undergruppene.",
     "helpManagers": "Klubbansvarlige ser alltid hvilke medlemmer som har beskyttet identitet, men ikke opplysningene deres, med mindre de også har en rolle som gir det. Det trengs for å finne alle medlemmer og gi dem roller.",
     "helpSelf": "Den som administrerer roller kan gi hvilken som helst rolle, også til seg selv. Det vises på rollesiden, og de andre administratorene og lederen får beskjed.",
-    "helpEffect": "En endring gjelder med en gang: neste gang noen med rollen åpner en side, avgjør de nye tillatelsene. De som mister en tillatelse får en varsling."
+    "helpEffect": "En endring gjelder med en gang: neste gang noen med rollen åpner en side, avgjør de nye tillatelsene. De som mister en tillatelse får en varsling.",
+    "template": "Malen for {type}",
+    "templateHint": "Klubbtypens roller. Malen endrer aldri klubbens roller av seg selv; legg til en rolle herfra hvis dere mangler den.",
+    "templateStatus": {
+      "present": "finnes i klubben",
+      "archived": "slettet",
+      "missing": "mangler"
+    },
+    "copyFromTemplate": "Legg til fra malen",
+    "copied": "Rollen er lagt til fra malen."
   },
   "administrators": {
     "title": "Administratorer",
@@ -3721,5 +3740,34 @@
     "howThird": "Tre anbefales: da kan to suspendere den tredje uten hjelp.",
     "howSuspend": "En suspensjon bes om av én administrator og bekreftes av en annen (eller lederen når klubben har to). Med to og lederen berørt hjelper plattformens operatør etter den dokumenterte rutinen.",
     "howAdd": "Alle administratorer og lederen får vite når noen blir administrator. Én administrator er nok til å utnevne en til."
+  },
+  "clubTypes": {
+    "title": "Klubbtyper",
+    "intro": "En klubbtype har en mal med roller og tillatelser. En ny klubb får en kopi av typens roller.",
+    "saved": "Lagret.",
+    "builtIn": "Innebygd",
+    "inactive": "Kan ikke velges",
+    "newType": "Ny klubbtype",
+    "newTypeHint": "Typen starter med rollene alle typer må ha: klubbansvarlig, leder og deltakerrollen.",
+    "key": "Nøkkel",
+    "keyHint": "Små bokstaver, sifre og understrek, f.eks. chess_club. Kan ikke endres.",
+    "descriptionSv": "Én setning (svensk)",
+    "descriptionEn": "Én setning (engelsk)",
+    "descriptionNb": "Én setning (norsk)",
+    "create": "Opprett klubbtype",
+    "decision6": "Endringer i malen gjelder bare nye klubber; eksisterende klubber kan kopiere roller fra malen.",
+    "type": "Typen",
+    "sortOrder": "Rekkefølge",
+    "active": "Kan velges når en klubb opprettes",
+    "save": "Lagre typen",
+    "roles": "Malens roller",
+    "rolesHint": "Rollene alle typer må ha kan få nytt navn og flere tillatelser, men ikke miste de låste eller fjernes.",
+    "required": "påkrevd",
+    "roleNames": "Navn (alle tre språk, eller ingen for katalogens navn)",
+    "saveRole": "Lagre rollen",
+    "deleteRole": "Fjern fra malen",
+    "newRole": "Ny rolle i malen",
+    "newRoleHint": "En nøkkel katalogen ikke kjenner trenger navn på alle tre språk. Velg tillatelsene etterpå.",
+    "addRole": "Legg til rollen"
   }
 }

@@ -82,6 +82,13 @@ export const AUDIT_ACTIONS = [
   "role.deleted",
   "role.assigned",
   "role.unassigned",
+  // Club types (P1.15 B): a role copied from the template restored; operators' type changes.
+  "role.restored",
+  "club_type.created",
+  "club_type.updated",
+  "club_type.role.created",
+  "club_type.role.updated",
+  "club_type.role.deleted",
   // At least two administrators (P1.15 A3).
   "administrator.suspension.requested",
   "administrator.suspended",

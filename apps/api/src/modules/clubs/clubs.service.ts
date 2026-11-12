@@ -44,7 +44,7 @@ export class ClubsService {
     tx: Tx,
     clubId: string,
     input: CreateClubInput,
-    options: { administratorsGraceUntil?: Date | null } = {},
+    options: { administratorsGraceUntil?: Date | null; clubTypeId?: string } = {},
   ): Promise<Club> {
     const data = parseInput(CreateClubSchema, input);
     if (!isSupportedCountry(data.country)) throw new DomainError("unsupported_country");
@@ -62,6 +62,8 @@ export class ClubsService {
         organizationNumber: data.organizationNumber ?? null,
         ...(data.joinPolicy ? { joinPolicy: data.joinPolicy } : {}),
         administratorsGraceUntil: options.administratorsGraceUntil ?? null,
+        // Without one, the database gives the built-in type (migration 0036).
+        ...(options.clubTypeId ? { clubTypeId: options.clubTypeId } : {}),
       });
     } catch (error) {
       if (isUniqueViolation(error, "clubs_slug_unique")) throw new DomainError("club_slug_taken");

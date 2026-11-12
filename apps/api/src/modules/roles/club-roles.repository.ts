@@ -175,27 +175,52 @@ export async function archiveRole(tx: Tx, roleId: string): Promise<void> {
   await tx.execute(sql`UPDATE public.roles SET archived_at = now() WHERE id = ${roleId}`);
 }
 
-/** The built-in template's permissions of a template role (the SQL template). */
-export async function templatePermissions(
-  tx: Tx,
-  scope: string,
-  templateKey: string,
-): Promise<string[]> {
-  const { rows } = await tx.execute<{ permission: string }>(sql`
-    SELECT permission FROM app.builtin_role_template()
-    WHERE scope = ${scope} AND template_key = ${templateKey} AND permission IS NOT NULL`);
-  return rows.map((r) => r.permission);
+/** The club's archived roles' template keys, as "scope:key" (P1.15 B). */
+export async function archivedTemplateKeys(tx: Tx, clubId: string): Promise<Set<string>> {
+  const { rows } = await tx.execute<{ scope: string; template_key: string }>(sql`
+    SELECT scope, template_key FROM public.roles
+    WHERE club_id = ${clubId} AND template_key IS NOT NULL AND archived_at IS NOT NULL`);
+  return new Set(rows.map((r) => `${r.scope}:${r.template_key}`));
 }
 
-/** Every template role's permissions, by "scope:key" (one statement). */
-export async function allTemplatePermissions(tx: Tx): Promise<Map<string, string[]>> {
-  const { rows } = await tx.execute<{ scope: string; template_key: string; permissions: string[] }>(
-    sql`
-    SELECT scope, template_key,
-      coalesce(array_agg(permission) FILTER (WHERE permission IS NOT NULL), '{}') AS permissions
-    FROM app.builtin_role_template() GROUP BY scope, template_key`,
-  );
-  return new Map(rows.map((r) => [`${r.scope}:${r.template_key}`, r.permissions]));
+/** The club's role with a template key, archived or not (roles_template_unique). */
+export async function roleByTemplateKey(
+  tx: Tx,
+  clubId: string,
+  scope: string,
+  templateKey: string,
+): Promise<RoleRow | null> {
+  const { rows } = await tx.execute<RawRole>(sql`
+    SELECT ${ROLE_COLUMNS} FROM public.roles r
+    WHERE r.club_id = ${clubId} AND r.scope = ${scope} AND r.template_key = ${templateKey}
+    FOR UPDATE OF r`);
+  return rows[0] ? toRole(rows[0]) : null;
+}
+
+/** A role copied from the club type's template (P1.15 B). */
+export async function insertTemplateRole(
+  tx: Tx,
+  values: {
+    clubId: string;
+    scope: "club" | "group";
+    templateKey: string;
+    locked: boolean;
+    names: Record<string, string> | null;
+    descriptions: Record<string, string> | null;
+  },
+): Promise<string> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    INSERT INTO public.roles (club_id, scope, template_key, locked, names, descriptions, sort_order)
+    VALUES (${values.clubId}, ${values.scope}, ${values.templateKey}, ${values.locked},
+      ${values.names ? JSON.stringify(values.names) : null}::jsonb,
+      ${values.descriptions ? JSON.stringify(values.descriptions) : null}::jsonb,
+      1000 + (SELECT count(*)::int FROM public.roles WHERE club_id = ${values.clubId}))
+    RETURNING id`);
+  return rows[0]!.id;
+}
+
+export async function restoreRole(tx: Tx, roleId: string): Promise<void> {
+  await tx.execute(sql`UPDATE public.roles SET archived_at = NULL WHERE id = ${roleId}`);
 }
 
 /** Open holders of a role: club assignments and group memberships. */

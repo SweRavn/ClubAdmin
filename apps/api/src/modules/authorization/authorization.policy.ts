@@ -643,6 +643,9 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("club.administrators.extend_grace", "club", ({ actor }) => actor.isOperator(), {
     mfa: true,
   }),
+  // Club types and their templates (P1.15 B): operators, with a second factor.
+  definePolicy("club_types.read", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
+  definePolicy("club_types.manage", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

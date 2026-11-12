@@ -10,6 +10,7 @@ import { AccountsService } from "./modules/accounts/index.ts";
 import { ActivitiesService, AttendanceService } from "./modules/activities/index.ts";
 import { AdministratorsService } from "./modules/administrators/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
+import { ClubTypesService } from "./modules/club-types/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
 import { EventsService } from "./modules/events/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
@@ -45,6 +46,8 @@ export interface CoreServices {
   roles: RolesService;
   /** Club-defined roles (P1.15 A2). */
   clubRoles: ClubRolesService;
+  /** Club types and their templates (P1.15 B). */
+  clubTypes: ClubTypesService;
   /** At least two administrators; suspensions (P1.15 A3). */
   administrators: AdministratorsService;
   profiles: ClubProfilesService;
@@ -95,7 +98,8 @@ export function createCoreServices(
     defaultCountry,
     invitationTokenKey: options.invitationTokenKey,
   });
-  const clubRoles = new ClubRolesService(db, clubs, roles);
+  const clubTypes = new ClubTypesService(db);
+  const clubRoles = new ClubRolesService(db, clubs, roles, clubTypes);
   const joinRequests = new JoinRequestsService(db, { clubs, groups, memberships, accounts });
   const invitations = new InvitationsService(db, {
     clubs,
@@ -155,6 +159,7 @@ export function createCoreServices(
     clubs,
     onboarding: new OnboardingService(db, {
       clubs,
+      clubTypes,
       memberships,
       roles,
       people,
@@ -167,6 +172,7 @@ export function createCoreServices(
     invitations,
     roles,
     clubRoles,
+    clubTypes,
     administrators: new AdministratorsService(db),
     profiles,
     groups,

@@ -3310,6 +3310,169 @@
           "status"
         ]
       },
+      "ClubTypeList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClubType"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ClubType": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "names": {
+            "$ref": "#/components/schemas/ClubTypeNames"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/ClubTypeDescriptions"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "builtIn": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClubTypeRole"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "names",
+          "descriptions",
+          "active",
+          "builtIn",
+          "sortOrder",
+          "roles"
+        ]
+      },
+      "ClubTypeNames": {
+        "type": "object",
+        "properties": {
+          "sv": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "en": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "nb": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        },
+        "required": [
+          "sv",
+          "en",
+          "nb"
+        ]
+      },
+      "ClubTypeDescriptions": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "sv": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "en": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "nb": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "ClubTypeRole": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "club",
+              "group"
+            ]
+          },
+          "names": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubTypeNames"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/ClubTypeDescriptions"
+          },
+          "locked": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "scope",
+          "names",
+          "descriptions",
+          "locked",
+          "required",
+          "sortOrder",
+          "permissions"
+        ]
+      },
       "ClubSearchResult": {
         "type": "object",
         "properties": {
@@ -3545,6 +3708,14 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "clubTypeId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "default": null
           }
         },
         "required": [
@@ -3618,6 +3789,10 @@
             "type": "string",
             "maxLength": 254,
             "format": "email"
+          },
+          "clubTypeId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
@@ -9026,6 +9201,37 @@
             "items": {
               "$ref": "#/components/schemas/SelfAssignment"
             }
+          },
+          "clubType": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "key": {
+                "type": "string"
+              },
+              "names": {
+                "$ref": "#/components/schemas/RoleTexts"
+              }
+            },
+            "default": null,
+            "required": [
+              "id",
+              "key",
+              "names"
+            ]
+          },
+          "templateRoles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateRole"
+            },
+            "default": []
           }
         },
         "required": [
@@ -9167,6 +9373,49 @@
           "since"
         ]
       },
+      "TemplateRole": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "club",
+              "group"
+            ]
+          },
+          "names": {
+            "$ref": "#/components/schemas/RoleTexts"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/RoleDescriptions"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "present",
+              "archived",
+              "missing"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "scope",
+          "names",
+          "descriptions",
+          "permissions",
+          "status"
+        ]
+      },
       "CreateRole": {
         "type": "object",
         "properties": {
@@ -9304,6 +9553,28 @@
         "required": [
           "permissions"
         ]
+      },
+      "CopyTemplateRole": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "club",
+              "group"
+            ]
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          }
+        },
+        "required": [
+          "scope",
+          "key"
+        ],
+        "additionalProperties": false
       },
       "SeasonList": {
         "type": "object",
@@ -12577,6 +12848,8 @@
                       "club.managers.reassign",
                       "club.administrators.confirm_suspension",
                       "club.administrators.extend_grace",
+                      "club_types.read",
+                      "club_types.manage",
                       "person.history.read",
                       "group.history.read",
                       "activity.history.read",
@@ -15320,6 +15593,125 @@
         "required": [
           "decision"
         ],
+        "additionalProperties": false
+      },
+      "CreateClubType": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$"
+          },
+          "names": {
+            "$ref": "#/components/schemas/ClubTypeNames"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/ClubTypeDescriptions"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "key",
+          "names"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateClubType": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "$ref": "#/components/schemas/ClubTypeNames"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/ClubTypeDescriptions"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateClubTypeRole": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "club",
+              "group"
+            ]
+          },
+          "names": {
+            "$ref": "#/components/schemas/ClubTypeNames"
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/ClubTypeDescriptions"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolePermission"
+            },
+            "maxItems": 100
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "key",
+          "scope",
+          "permissions"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateClubTypeRole": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClubTypeNames"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "descriptions": {
+            "$ref": "#/components/schemas/ClubTypeDescriptions"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolePermission"
+            },
+            "maxItems": 100
+          },
+          "sortOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
         "additionalProperties": false
       },
       "GraceExtension": {
@@ -19454,6 +19846,72 @@
           },
           "400": {
             "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/club-types": {
+      "get": {
+        "operationId": "ClubTypes_active",
+        "summary": "The active club types with their roles (choosing one when creating a club)",
+        "tags": [
+          "onboarding"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubTypeList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -28687,6 +29145,114 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RolePreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/roles/from-template": {
+      "post": {
+        "operationId": "ClubRoles_fromTemplate",
+        "summary": "Copy a role of the club type's template into the club (a deleted one is restored)",
+        "tags": [
+          "roles"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyTemplateRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
                 }
               }
             }
@@ -42054,6 +42620,712 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MyClubCreationRequests"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/club-types": {
+      "get": {
+        "operationId": "ClubTypes_all",
+        "summary": "Every club type with its template (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club_types.read` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubTypeList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "ClubTypes_create",
+        "summary": "Create a club type; it starts with the roles every type needs (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClubType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/club-types/{clubTypeId}": {
+      "get": {
+        "operationId": "ClubTypes_one",
+        "summary": "A club type with its template (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club_types.read` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubTypeId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "ClubTypes_update",
+        "summary": "Rename, describe, (de)activate or reorder a club type (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubTypeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClubType"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/club-types/{clubTypeId}/roles": {
+      "post": {
+        "operationId": "ClubTypes_createRole",
+        "summary": "Add a role to a club type's template (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubTypeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClubTypeRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ops/club-types/{clubTypeId}/roles/{roleId}": {
+      "delete": {
+        "operationId": "ClubTypes_deleteRole",
+        "summary": "Remove a role from a club type's template; clubs keep theirs (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubTypeId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "roleId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "ClubTypes_updateRole",
+        "summary": "Rename a template role or change its permissions (operators)",
+        "tags": [
+          "ops"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubTypeId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "roleId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClubTypeRole"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClubType"
                 }
               }
             }

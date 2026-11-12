@@ -502,7 +502,10 @@
     "create": "Skapa föreningen",
     "request": "Skicka ansökan",
     "secondAdministrator": "Andra föreningsadministratör (e-post)",
-    "secondAdministratorHint": "En förening behöver minst två administratörer för att kunna ta emot medlemmar. Personen får en inbjudan när föreningen skapas; du kan också bjuda in senare."
+    "secondAdministratorHint": "En förening behöver minst två administratörer för att kunna ta emot medlemmar. Personen får en inbjudan när föreningen skapas; du kan också bjuda in senare.",
+    "clubType": "Föreningstyp",
+    "clubTypeHint": "Föreningen får typens roller. Ni kan ändra dem efteråt.",
+    "clubTypeRoles": "Roller: {roles}"
   },
   "joinPolicies": {
     "open": "Alla går med direkt",
@@ -784,7 +787,14 @@
     "grace_already_extended": "Föreningens tidsfrist har redan förlängts en gång.",
     "no_grace_period": "Föreningen har ingen tidsfrist att förlänga.",
     "forbidden": "Du har inte behörighet till det. Dina behörigheter kan ha ändrats: ladda om sidan för att se vad du kan göra nu.",
-    "group_role_not_allowed": "Du får inte ge den rollen i gruppen. Utan behörigheten att hantera gruppens medlemmar kan du bara bjuda in deltagare, och du kan aldrig ge behörigheter du själv saknar."
+    "group_role_not_allowed": "Du får inte ge den rollen i gruppen. Utan behörigheten att hantera gruppens medlemmar kan du bara bjuda in deltagare, och du kan aldrig ge behörigheter du själv saknar.",
+    "club_type_unavailable": "Föreningstypen kan inte väljas.",
+    "club_type_exists": "Det finns redan en föreningstyp med den nyckeln.",
+    "club_type_built_in": "Den inbyggda föreningstypen kan inte stängas av.",
+    "club_type_role_exists": "Mallen har redan en roll med den nyckeln.",
+    "club_type_role_required": "Rollen krävs i alla föreningstyper och kan inte tas bort eller förlora sina låsta behörigheter.",
+    "club_type_role_names_required": "Rollen behöver namn på svenska, engelska och norska.",
+    "template_role_exists": "Föreningen har redan den rollen."
   },
   "memberExport": {
     "columns": {
@@ -3669,7 +3679,16 @@
     "helpGroups": "En grupproll gäller i gruppen där den ges, inte i dess undergrupper. Ge rollen i varje grupp där personen ska ha den. Gruppansvariga har dock alltid sina rättigheter även i undergrupperna.",
     "helpManagers": "Föreningsansvariga ser alltid vilka medlemmar som har skyddad identitet, men inte deras uppgifter, om de inte också har en roll som ger det. Det behövs för att kunna hitta alla medlemmar och ge dem roller.",
     "helpSelf": "Den som administrerar roller kan ge vilken roll som helst, även till sig själv. Det syns på rollsidan och berättas för de andra administratörerna och ordföranden.",
-    "helpEffect": "En ändring gäller direkt: nästa gång någon med rollen öppnar en sida avgörs det av de nya behörigheterna. De som förlorar en behörighet får en notis."
+    "helpEffect": "En ändring gäller direkt: nästa gång någon med rollen öppnar en sida avgörs det av de nya behörigheterna. De som förlorar en behörighet får en notis.",
+    "template": "Mallen för {type}",
+    "templateHint": "Föreningstypens roller. Mallen ändrar aldrig föreningens roller av sig själv; lägg till en roll härifrån om ni saknar den.",
+    "templateStatus": {
+      "present": "finns i föreningen",
+      "archived": "borttagen",
+      "missing": "saknas"
+    },
+    "copyFromTemplate": "Lägg till från mallen",
+    "copied": "Rollen är tillagd från mallen."
   },
   "administrators": {
     "title": "Föreningsadministratörer",
@@ -3721,5 +3740,34 @@
     "howThird": "Tre rekommenderas: då kan två stänga av den tredje utan hjälp.",
     "howSuspend": "En avstängning begärs av en administratör och bekräftas av en annan (eller ordföranden när föreningen har två). Med två och ordföranden som berörd hjälper plattformens operatör till enligt den dokumenterade rutinen.",
     "howAdd": "Alla administratörer och ordföranden får veta när någon blir administratör. En administratör räcker för att utse en till."
+  },
+  "clubTypes": {
+    "title": "Föreningstyper",
+    "intro": "En föreningstyp har en mall med roller och behörigheter. En ny förening får en kopia av sin typs roller.",
+    "saved": "Sparat.",
+    "builtIn": "Inbyggd",
+    "inactive": "Inte valbar",
+    "newType": "Ny föreningstyp",
+    "newTypeHint": "Typen börjar med rollerna alla typer måste ha: Föreningsansvarig, Ordförande och deltagarrollen.",
+    "key": "Nyckel",
+    "keyHint": "Små bokstäver, siffror och understreck, t.ex. chess_club. Kan inte ändras.",
+    "descriptionSv": "En mening (svenska)",
+    "descriptionEn": "En mening (engelska)",
+    "descriptionNb": "En mening (norska)",
+    "create": "Skapa föreningstyp",
+    "decision6": "Ändringar i mallen påverkar bara nya föreningar; befintliga föreningar kan kopiera roller från mallen.",
+    "type": "Typen",
+    "sortOrder": "Ordning",
+    "active": "Kan väljas när en förening skapas",
+    "save": "Spara typen",
+    "roles": "Mallens roller",
+    "rolesHint": "Rollerna alla typer måste ha kan byta namn och få fler behörigheter, men inte förlora de låsta eller tas bort.",
+    "required": "krävs",
+    "roleNames": "Namn (alla tre språken, eller inga för katalogens namn)",
+    "saveRole": "Spara rollen",
+    "deleteRole": "Ta bort ur mallen",
+    "newRole": "Ny roll i mallen",
+    "newRoleHint": "En nyckel som inte finns i katalogen behöver namn på alla tre språken. Behörigheterna väljer du sedan.",
+    "addRole": "Lägg till rollen"
   }
 }

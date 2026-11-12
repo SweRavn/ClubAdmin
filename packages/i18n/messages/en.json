@@ -502,7 +502,10 @@
     "create": "Create the club",
     "request": "Send the request",
     "secondAdministrator": "Second administrator (email)",
-    "secondAdministratorHint": "A club needs at least two administrators to take members. The person gets an invitation when the club is created; you can also invite later."
+    "secondAdministratorHint": "A club needs at least two administrators to take members. The person gets an invitation when the club is created; you can also invite later.",
+    "clubType": "Club type",
+    "clubTypeHint": "The club gets the type's roles. You can change them afterwards.",
+    "clubTypeRoles": "Roles: {roles}"
   },
   "joinPolicies": {
     "open": "Anyone joins at once",
@@ -784,7 +787,14 @@
     "grace_already_extended": "The club's grace period has already been extended once.",
     "no_grace_period": "The club has no grace period to extend.",
     "forbidden": "You do not have permission for that. Your permissions may have changed: reload the page to see what you can do now.",
-    "group_role_not_allowed": "You may not give that role in the group. Without the permission to manage the group's members you can only invite participants, and you can never give permissions you do not have yourself."
+    "group_role_not_allowed": "You may not give that role in the group. Without the permission to manage the group's members you can only invite participants, and you can never give permissions you do not have yourself.",
+    "club_type_unavailable": "The club type cannot be chosen.",
+    "club_type_exists": "There is already a club type with that key.",
+    "club_type_built_in": "The built-in club type cannot be turned off.",
+    "club_type_role_exists": "The template already has a role with that key.",
+    "club_type_role_required": "Every club type needs this role: it cannot be removed or lose its locked permissions.",
+    "club_type_role_names_required": "The role needs names in Swedish, English and Norwegian.",
+    "template_role_exists": "The club already has that role."
   },
   "memberExport": {
     "columns": {
@@ -3669,7 +3679,16 @@
     "helpGroups": "A group role applies in the group where it is given, not in its subgroups. Give the role in every group where the person should have it. Group owners always keep their rights in the subgroups too.",
     "helpManagers": "Club managers always see which members have protected identity, but not their details, unless they also hold a role that gives them. That is needed to find every member and give them roles.",
     "helpSelf": "Whoever administers roles may give any role, also to themselves. It shows on the roles page and the other administrators and the chair are told.",
-    "helpEffect": "A change applies at once: the next time someone with the role opens a page, the new permissions decide. Those who lose a permission get a notice."
+    "helpEffect": "A change applies at once: the next time someone with the role opens a page, the new permissions decide. Those who lose a permission get a notice.",
+    "template": "The template of {type}",
+    "templateHint": "The club type's roles. The template never changes the club's roles by itself; add a role from here if you are missing it.",
+    "templateStatus": {
+      "present": "in the club",
+      "archived": "deleted",
+      "missing": "missing"
+    },
+    "copyFromTemplate": "Add from the template",
+    "copied": "The role was added from the template."
   },
   "administrators": {
     "title": "Administrators",
@@ -3721,5 +3740,34 @@
     "howThird": "Three are recommended: then two can suspend the third without help.",
     "howSuspend": "A suspension is asked for by one administrator and confirmed by another (or the chair when the club has two). With two and the chair concerned, the platform's operator helps through the documented procedure.",
     "howAdd": "Every administrator and the chair are told when someone becomes an administrator. One administrator is enough to appoint another."
+  },
+  "clubTypes": {
+    "title": "Club types",
+    "intro": "A club type has a template of roles and permissions. A new club gets a copy of its type's roles.",
+    "saved": "Saved.",
+    "builtIn": "Built in",
+    "inactive": "Not selectable",
+    "newType": "New club type",
+    "newTypeHint": "The type starts with the roles every type needs: club manager, chair and the participant role.",
+    "key": "Key",
+    "keyHint": "Lower-case letters, digits and underscores, e.g. chess_club. Cannot be changed.",
+    "descriptionSv": "One sentence (Swedish)",
+    "descriptionEn": "One sentence (English)",
+    "descriptionNb": "One sentence (Norwegian)",
+    "create": "Create club type",
+    "decision6": "Changes to the template only affect new clubs; existing clubs can copy roles from the template.",
+    "type": "The type",
+    "sortOrder": "Order",
+    "active": "Can be chosen when creating a club",
+    "save": "Save the type",
+    "roles": "The template's roles",
+    "rolesHint": "The roles every type needs can be renamed and given more permissions, but cannot lose the locked ones or be removed.",
+    "required": "required",
+    "roleNames": "Names (all three languages, or none for the catalogue's name)",
+    "saveRole": "Save the role",
+    "deleteRole": "Remove from the template",
+    "newRole": "New role in the template",
+    "newRoleHint": "A key the catalogue does not know needs names in all three languages. Choose its permissions afterwards.",
+    "addRole": "Add the role"
   }
 }

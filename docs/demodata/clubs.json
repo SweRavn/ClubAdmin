@@ -1,4 +1,69 @@
 {
+  "clubTypes": [
+    {
+      "key": "chess_club",
+      "names": {
+        "sv": "Schackklubb",
+        "en": "Chess club",
+        "nb": "Sjakklubb"
+      },
+      "descriptions": {
+        "sv": "Styrelse, turneringsledare, spelare och tränare.",
+        "en": "A board, tournament directors, players and coaches.",
+        "nb": "Styre, turneringsledere, spillere og trenere."
+      },
+      "roles": [
+        {
+          "key": "member",
+          "scope": "group",
+          "names": {
+            "sv": "Spelare",
+            "en": "Player",
+            "nb": "Spiller"
+          }
+        },
+        {
+          "key": "head_coach",
+          "scope": "group",
+          "names": {
+            "sv": "Tränare",
+            "en": "Coach",
+            "nb": "Trener"
+          },
+          "permissions": [
+            "group.lead",
+            "group.people.details",
+            "group.activities.read",
+            "group.activities.manage",
+            "activity.responses.read",
+            "activity.attendance.manage",
+            "group.attendance.read"
+          ]
+        },
+        {
+          "key": "tournament_director",
+          "scope": "club",
+          "names": {
+            "sv": "Turneringsledare",
+            "en": "Tournament director",
+            "nb": "Turneringsleder"
+          },
+          "descriptions": {
+            "sv": "Ordnar föreningens turneringar och ser anmälningarna.",
+            "en": "Runs the club's tournaments and sees the registrations.",
+            "nb": "Arrangerer klubbens turneringer og ser påmeldingene."
+          },
+          "permissions": [
+            "club.events.create",
+            "event.read",
+            "event.manage",
+            "event.registrations.read",
+            "club.activities.read"
+          ]
+        }
+      ]
+    }
+  ],
   "clubs": [
     {
       "key": "svk",
@@ -68,6 +133,19 @@
       "foundedAt": "-20d",
       "actor": "ulf",
       "administratorsGraceDays": 12
+    },
+    {
+      "key": "esk",
+      "id": "0199a000-0000-7000-8001-000000000005",
+      "name": "Ekuddens Schackklubb",
+      "shortName": "Ekudden SK",
+      "slug": "ekuddens-sk",
+      "country": "SE",
+      "joinPolicy": "approval",
+      "clubType": "chess_club",
+      "foundedBy": "britt",
+      "foundedAt": "-4y",
+      "actor": "britt"
     }
   ],
   "groups": [

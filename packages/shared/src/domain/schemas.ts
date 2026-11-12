@@ -92,6 +92,11 @@ export const CreateClubSchema = z.object({
    * when the club is created. A club opens for members when it has two.
    */
   secondAdministratorEmail: z.email().max(254).optional(),
+  /**
+   * The club type whose roles the club gets (P1.15 B); without it the
+   * country pack's default type, else the built-in one.
+   */
+  clubTypeId: z.uuid().optional(),
 });
 export type CreateClubInput = z.input<typeof CreateClubSchema>;
 

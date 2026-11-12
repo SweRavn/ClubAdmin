@@ -550,6 +550,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/club-types": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The active club types with their roles (choosing one when creating a club) */
+    get: operations["ClubTypes_active"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs": {
     parameters: {
       query?: never;
@@ -1859,6 +1876,26 @@ export interface paths {
      * @description Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["ClubRoles_preview"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/roles/from-template": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Copy a role of the club type's template into the club (a deleted one is restored)
+     * @description Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["ClubRoles_fromTemplate"];
     delete?: never;
     options?: never;
     head?: never;
@@ -3989,6 +4026,98 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/ops/club-types": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Every club type with its template (operators)
+     * @description Requires permission `club_types.read` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubTypes_all"];
+    put?: never;
+    /**
+     * Create a club type; it starts with the roles every type needs (operators)
+     * @description Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["ClubTypes_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/ops/club-types/{clubTypeId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A club type with its template (operators)
+     * @description Requires permission `club_types.read` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubTypes_one"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Rename, describe, (de)activate or reorder a club type (operators)
+     * @description Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["ClubTypes_update"];
+    trace?: never;
+  };
+  "/api/v1/ops/club-types/{clubTypeId}/roles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Add a role to a club type's template (operators)
+     * @description Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["ClubTypes_createRole"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/ops/club-types/{clubTypeId}/roles/{roleId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Remove a role from a club type's template; clubs keep theirs (operators)
+     * @description Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["ClubTypes_deleteRole"];
+    options?: never;
+    head?: never;
+    /**
+     * Rename a template role or change its permissions (operators)
+     * @description Requires permission `club_types.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["ClubTypes_updateRole"];
+    trace?: never;
+  };
   "/api/v1/ops/clubs/{clubId}/administrators/grace-extension": {
     parameters: {
       query?: never;
@@ -5101,6 +5230,43 @@ export interface components {
       /** @enum {string} */
       status: "attending" | "not_attending";
     };
+    ClubTypeList: {
+      items: components["schemas"]["ClubType"][];
+    };
+    ClubType: {
+      /** Format: uuid */
+      id: string;
+      key: string;
+      names: components["schemas"]["ClubTypeNames"];
+      descriptions: components["schemas"]["ClubTypeDescriptions"];
+      active: boolean;
+      builtIn: boolean;
+      sortOrder: number;
+      roles: components["schemas"]["ClubTypeRole"][];
+    };
+    ClubTypeNames: {
+      sv: string;
+      en: string;
+      nb: string;
+    };
+    ClubTypeDescriptions: {
+      sv?: string;
+      en?: string;
+      nb?: string;
+    } | null;
+    ClubTypeRole: {
+      /** Format: uuid */
+      id: string;
+      key: string;
+      /** @enum {string} */
+      scope: "club" | "group";
+      names: components["schemas"]["ClubTypeNames"] & (Record<string, never> | null);
+      descriptions: components["schemas"]["ClubTypeDescriptions"];
+      locked: boolean;
+      required: boolean;
+      sortOrder: number;
+      permissions: string[];
+    };
     ClubSearchResult: {
       items: components["schemas"]["ClubListing"][];
       /** Format: uuid */
@@ -5160,6 +5326,11 @@ export interface components {
       decisionMessage: string | null;
       /** Format: uuid */
       clubId: string | null;
+      /**
+       * Format: uuid
+       * @default null
+       */
+      clubTypeId: string | null;
     };
     CreateClubRequest: {
       name: string;
@@ -5174,6 +5345,8 @@ export interface components {
       organizationNumber?: string | null;
       /** Format: email */
       secondAdministratorEmail?: string;
+      /** Format: uuid */
+      clubTypeId?: string;
     };
     ClubDetail: components["schemas"]["Club"] & {
       managers: components["schemas"]["PersonSummary"][];
@@ -6685,6 +6858,15 @@ export interface components {
     RoleList: {
       items: components["schemas"]["Role"][];
       selfAssignments: components["schemas"]["SelfAssignment"][];
+      /** @default null */
+      clubType: {
+        /** Format: uuid */
+        id: string;
+        key: string;
+        names: components["schemas"]["RoleTexts"];
+      } | null;
+      /** @default [] */
+      templateRoles: components["schemas"]["TemplateRole"][];
     };
     Role: {
       /** Format: uuid */
@@ -6720,6 +6902,16 @@ export interface components {
       /** Format: date-time */
       since: string;
     };
+    TemplateRole: {
+      key: string;
+      /** @enum {string} */
+      scope: "club" | "group";
+      names: components["schemas"]["RoleTexts"];
+      descriptions: components["schemas"]["RoleDescriptions"];
+      permissions: string[];
+      /** @enum {string} */
+      status: "present" | "archived" | "missing";
+    };
     CreateRole: {
       /** @enum {string} */
       scope: "club" | "group";
@@ -6750,6 +6942,11 @@ export interface components {
     };
     RolePreviewRequest: {
       permissions: components["schemas"]["RolePermission"][];
+    };
+    CopyTemplateRole: {
+      /** @enum {string} */
+      scope: "club" | "group";
+      key: string;
     };
     SeasonList: {
       items: components["schemas"]["Season"][];
@@ -7684,6 +7881,8 @@ export interface components {
           | "club.managers.reassign"
           | "club.administrators.confirm_suspension"
           | "club.administrators.extend_grace"
+          | "club_types.read"
+          | "club_types.manage"
           | "person.history.read"
           | "group.history.read"
           | "activity.history.read"
@@ -8436,6 +8635,33 @@ export interface components {
       /** @enum {string} */
       decision: "approve" | "reject";
       message?: string;
+    };
+    CreateClubType: {
+      key: string;
+      names: components["schemas"]["ClubTypeNames"];
+      descriptions?: components["schemas"]["ClubTypeDescriptions"];
+      sortOrder?: number;
+    };
+    UpdateClubType: {
+      names?: components["schemas"]["ClubTypeNames"];
+      descriptions?: components["schemas"]["ClubTypeDescriptions"];
+      active?: boolean;
+      sortOrder?: number;
+    };
+    CreateClubTypeRole: {
+      key: string;
+      /** @enum {string} */
+      scope: "club" | "group";
+      names?: components["schemas"]["ClubTypeNames"];
+      descriptions?: components["schemas"]["ClubTypeDescriptions"];
+      permissions: components["schemas"]["RolePermission"][];
+      sortOrder?: number;
+    };
+    UpdateClubTypeRole: {
+      names?: components["schemas"]["ClubTypeNames"] & (Record<string, never> | null);
+      descriptions?: components["schemas"]["ClubTypeDescriptions"];
+      permissions?: components["schemas"]["RolePermission"][];
+      sortOrder?: number;
     };
     GraceExtension: {
       /** Format: date-time */
@@ -11132,6 +11358,62 @@ export interface operations {
       };
       /** @description Invalid request */
       400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_active: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubTypeList"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
         headers: {
           [name: string]: unknown;
         };
@@ -17450,6 +17732,86 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["RolePreview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubRoles_fromTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CopyTemplateRole"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Role"];
         };
       };
       /** @description Invalid request */
@@ -27134,6 +27496,543 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MyClubCreationRequests"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_all: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubTypeList"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateClubType"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubType"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_one: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubTypeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubType"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubTypeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateClubType"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubType"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_createRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubTypeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateClubTypeRole"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubType"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_deleteRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubTypeId: string;
+        roleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubType"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubTypes_updateRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubTypeId: string;
+        roleId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateClubTypeRole"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubType"];
         };
       };
       /** @description Invalid request */

@@ -46,6 +46,7 @@ function toRequest(request: ClubCreationRequest): ClubCreationRequestResponse {
     decidedAt: request.decidedAt ? request.decidedAt.toISOString() : null,
     decisionMessage: request.decisionMessage,
     clubId: request.createdClubId,
+    clubTypeId: request.clubTypeId,
   };
 }
 

@@ -38,7 +38,7 @@ describe("docs/demodata", () => {
 
   it("is valid and consistent", () => {
     expect(data.personas.length).toBeGreaterThanOrEqual(25);
-    expect(data.clubs.map((c) => c.key)).toEqual(["svk", "ikn", "fil", "lbtk"]);
+    expect(data.clubs.map((c) => c.key)).toEqual(["svk", "ikn", "fil", "lbtk", "esk"]);
   });
 
   it("uses only .test email addresses", () => {

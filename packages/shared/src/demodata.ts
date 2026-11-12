@@ -139,10 +139,40 @@ export const DemoClubSchema = z.object({
    * left. Without it the club ends the seed with no grace period.
    */
   administratorsGraceDays: z.number().int().positive().optional(),
+  /** The club type (its key, P1.15 B); without it the built-in type. */
+  clubType: z
+    .string()
+    .regex(/^[a-z][a-z0-9_]+$/)
+    .optional(),
 });
 export type DemoClub = z.infer<typeof DemoClubSchema>;
 
+const demoTexts = z.object({ sv: z.string(), en: z.string(), nb: z.string() });
+/** Type and template role keys use `_` (`chess_club`, `head_coach`). */
+const typeKey = z.string().regex(/^[a-z][a-z0-9_]+$/);
+
+/**
+ * A club type the operator adds (P1.15 B). It starts with the required
+ * roles; listed roles rename or extend those, or are added.
+ */
+export const DemoClubTypeSchema = z.object({
+  key: typeKey,
+  names: demoTexts,
+  descriptions: demoTexts.optional(),
+  roles: z.array(
+    z.object({
+      key: typeKey,
+      scope: z.enum(["club", "group"]),
+      names: demoTexts.optional(),
+      descriptions: demoTexts.optional(),
+      permissions: z.array(z.string()).optional(),
+    }),
+  ),
+});
+export type DemoClubType = z.infer<typeof DemoClubTypeSchema>;
+
 export const DemoClubsFileSchema = z.object({
+  clubTypes: z.array(DemoClubTypeSchema).default([]),
   clubs: z.array(DemoClubSchema),
   groups: z.array(DemoGroupSchema),
 });

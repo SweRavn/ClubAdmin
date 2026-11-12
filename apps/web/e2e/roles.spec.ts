@@ -41,3 +41,26 @@ test("the help explains roles; a member sees their own roles", async ({ page }) 
   await mine.getByRole("link", { name: "Så fungerar roller" }).click();
   await expect(page.getByTestId("roles-help")).toContainText("inte i dess undergrupper");
 });
+
+test("a chess club's roles come from its type; the template is shown to compare", async ({
+  page,
+}) => {
+  // P1.15 B: Ekuddens Schackklubb is of the type "Schackklubb".
+  await loginAs(page, PERSONAS.britt, { returnTo: `/clubs/${CLUBS.esk}/roles` });
+  const cards = page.getByTestId("role-card");
+  await expect(cards.filter({ hasText: "Turneringsledare" })).toHaveCount(1);
+  await expect(cards.filter({ hasText: "Spelare" })).toHaveCount(1);
+  const template = page.getByTestId("template-roles");
+  await expect(template).toContainText("Schackklubb");
+  await expect(template.getByTestId("template-role")).toHaveCount(5);
+});
+
+test("the operator sees the club types and a type's template", async ({ page }) => {
+  // P1.15 B: /ops/club-types needs an operator with a second factor.
+  await loginAs(page, PERSONAS.operator, { returnTo: "/ops/club-types", mfa: true });
+  const types = page.getByTestId("club-type");
+  await expect(types.filter({ hasText: "Idrottsförening" })).toHaveCount(1);
+  await types.filter({ hasText: "Schackklubb" }).getByRole("link").click();
+  await expect(page.getByTestId("club-type-role")).toHaveCount(5);
+  await expect(page.getByTestId("club-type-page")).toContainText("Turneringsledare");
+});

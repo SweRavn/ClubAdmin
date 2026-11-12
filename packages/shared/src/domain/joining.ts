@@ -97,6 +97,8 @@ export const ClubCreationRequestSchema = z
     decisionMessage: z.string().nullable(),
     /** The club, once approved. */
     clubId: z.uuid().nullable(),
+    /** The club type asked for (P1.15 B); null: the default. */
+    clubTypeId: z.uuid().nullable().default(null),
   })
   .openapi("ClubCreationRequest");
 export type ClubCreationRequestResponse = z.infer<typeof ClubCreationRequestSchema>;

@@ -87,6 +87,28 @@ function roleNames(form: FormData): Record<string, string> | null {
   return Object.keys(names).length > 0 ? names : null;
 }
 
+/** A club type's or template role's names: all three languages, or null. */
+function typeNames(form: FormData): { sv: string; en: string; nb: string } | null {
+  const sv = text(form, "nameSv").slice(0, 60);
+  const en = text(form, "nameEn").slice(0, 60);
+  const nb = text(form, "nameNb").slice(0, 60);
+  return sv && en && nb ? { sv, en, nb } : null;
+}
+
+/** A club type's one sentence per language (any of them), or undefined. */
+function typeDescriptions(form: FormData): Record<string, string> | undefined {
+  const texts: Record<string, string> = {};
+  for (const [key, field] of [
+    ["sv", "descriptionSv"],
+    ["en", "descriptionEn"],
+    ["nb", "descriptionNb"],
+  ] as const) {
+    const value = text(form, field).slice(0, 300);
+    if (value) texts[key] = value;
+  }
+  return Object.keys(texts).length > 0 ? texts : undefined;
+}
+
 /** The ticked permissions of a role form. */
 const permissionsOf = (form: FormData): string[] =>
   form
@@ -1732,6 +1754,84 @@ const BILLING_ACTIONS: Record<string, FormAction> = {
     },
     done: (form) => withParam(back(form), "saved", "status"),
   },
+  // Club types and their templates (P1.15 B, /ops/club-types).
+  "ops-create-club-type": {
+    call: (form) => {
+      const names = typeNames(form);
+      const key = text(form, "key");
+      return names && /^[a-z][a-z0-9_]{1,39}$/.test(key)
+        ? {
+            path: "/api/v1/ops/club-types",
+            method: "POST",
+            body: { key, names, descriptions: typeDescriptions(form) },
+          }
+        : null;
+    },
+    done: (_form, result) => {
+      const typeId = resultId(result);
+      return typeId ? `/ops/club-types/${typeId}?saved=1` : "/ops/club-types?saved=1";
+    },
+  },
+  "ops-update-club-type": {
+    call: (form) => {
+      const typeId = id(form, "clubTypeId");
+      const names = typeNames(form);
+      const sortOrder = Number.parseInt(text(form, "sortOrder"), 10);
+      return typeId && names
+        ? {
+            path: `/api/v1/ops/club-types/${typeId}`,
+            method: "PATCH",
+            body: {
+              names,
+              descriptions: typeDescriptions(form) ?? null,
+              active: form.get("active") === "on",
+              ...(Number.isFinite(sortOrder) ? { sortOrder } : {}),
+            },
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "ops-create-club-type-role": {
+    call: (form) => {
+      const typeId = id(form, "clubTypeId");
+      const key = text(form, "key");
+      const scope = text(form, "scope");
+      if (!typeId || !/^[a-z][a-z0-9_]{1,39}$/.test(key)) return null;
+      if (scope !== "club" && scope !== "group") return null;
+      const names = typeNames(form);
+      return {
+        path: `/api/v1/ops/club-types/${typeId}/roles`,
+        method: "POST",
+        body: { key, scope, ...(names ? { names } : {}), permissions: permissionsOf(form) },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "ops-update-club-type-role": {
+    call: (form) => {
+      const typeId = id(form, "clubTypeId");
+      const roleId = id(form, "roleId");
+      if (!typeId || !roleId) return null;
+      return {
+        path: `/api/v1/ops/club-types/${typeId}/roles/${roleId}`,
+        method: "PATCH",
+        // Without all three names a template role uses the catalogue's name (known keys).
+        body: { names: typeNames(form), permissions: permissionsOf(form) },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "ops-delete-club-type-role": {
+    call: (form) => {
+      const typeId = id(form, "clubTypeId");
+      const roleId = id(form, "roleId");
+      return typeId && roleId
+        ? { path: `/api/v1/ops/club-types/${typeId}/roles/${roleId}`, method: "DELETE" }
+        : null;
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
   "ops-plan-active": {
     call: (form) => {
       const planId = id(form, "planId");
@@ -1869,6 +1969,7 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
         country: text(form, "country"),
         joinPolicy: optional(text(form, "joinPolicy")),
         secondAdministratorEmail: optional(text(form, "secondAdministratorEmail")),
+        clubTypeId: id(form, "clubTypeId") ?? undefined,
       },
     }),
     done: (_form, result) => {
@@ -1889,6 +1990,22 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
     done: (form) => back(form),
   },
   // Club-defined roles (P1.15 A2).
+  "copy-template-role": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const scope = text(form, "scope");
+      const key = text(form, "key");
+      if (!clubId || (scope !== "club" && scope !== "group") || !/^[a-z0-9_]{2,40}$/.test(key)) {
+        return null;
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/roles/from-template`,
+        method: "POST",
+        body: { scope, key },
+      };
+    },
+    done: (form) => withParam(back(form), "copied", "1"),
+  },
   "create-role": {
     call: (form) => {
       const clubId = id(form, "clubId");

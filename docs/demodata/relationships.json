@@ -288,6 +288,12 @@
       "club": "fil",
       "since": "-2y",
       "by": "lars"
+    },
+    {
+      "person": "aron",
+      "club": "esk",
+      "since": "-3y",
+      "by": "britt"
     }
   ],
   "roles": [
@@ -388,6 +394,13 @@
       "club": "fil",
       "role": "club_manager",
       "since": "-1y"
+    },
+    {
+      "person": "aron",
+      "club": "esk",
+      "role": "club_manager",
+      "since": "-2y",
+      "by": "britt"
     }
   ],
   "groupMemberships": [

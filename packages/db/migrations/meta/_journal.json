@@ -253,6 +253,13 @@
       "when": 1794380005000,
       "tag": "0035_invitation_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794480005000,
+      "tag": "0036_club_types",
+      "breakpoints": true
     }
   ]
 }

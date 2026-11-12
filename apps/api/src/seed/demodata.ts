@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import {
   type DemoClub,
   DemoClubsFileSchema,
+  type DemoClubType,
   type DemoGroup,
   type DemoHistory,
   DemoHistoryFileSchema,
@@ -23,6 +24,7 @@ import {
 
 export interface DemoData {
   personas: DemoPersona[];
+  clubTypes: DemoClubType[];
   clubs: DemoClub[];
   groups: DemoGroup[];
   relationships: DemoRelationships;
@@ -54,9 +56,10 @@ function read<S extends z.ZodType>(dir: string, file: string, schema: S): z.outp
 
 export function loadDemoData(dir: string = demoDataDir()): DemoData {
   const { personas } = read(dir, "personas.json", DemoPersonasFileSchema);
-  const { clubs, groups } = read(dir, "clubs.json", DemoClubsFileSchema);
+  const { clubTypes, clubs, groups } = read(dir, "clubs.json", DemoClubsFileSchema);
   const data: DemoData = {
     personas,
+    clubTypes,
     clubs,
     groups,
     relationships: read(dir, "relationships.json", DemoRelationshipsFileSchema),
@@ -103,9 +106,13 @@ function checkReferences(data: DemoData): void {
     if (!known.has(value)) problems.push(`${where}: unknown ${kind} ${value}`);
   };
   for (const p of data.personas) check("person", p.createdBy, `persona ${p.key}`);
+  const types = new Set(data.clubTypes.map((t) => t.key));
   for (const c of data.clubs) {
     check("person", c.foundedBy, `club ${c.key}`);
     check("person", c.actor, `club ${c.key}`);
+    if (c.clubType && c.clubType !== "sports_club" && !types.has(c.clubType)) {
+      problems.push(`club ${c.key}: unknown club type ${c.clubType}`);
+    }
   }
   for (const g of data.groups) {
     check("club", g.club, `group ${g.key}`);

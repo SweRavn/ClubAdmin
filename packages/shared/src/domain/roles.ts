@@ -68,11 +68,34 @@ export const SelfAssignmentSchema = z
   })
   .openapi("SelfAssignment");
 
+/**
+ * A role of the club type's template (P1.15 B), and whether the club has it:
+ * `present`, `archived` (deleted; copying restores it) or `missing`.
+ */
+export const TemplateRoleSchema = z
+  .object({
+    key: z.string(),
+    scope: RoleScopeSchema,
+    names: RoleTextsSchema.nullable(),
+    descriptions: RoleDescriptionsSchema.nullable(),
+    permissions: z.array(z.string()),
+    status: z.enum(["present", "archived", "missing"]),
+  })
+  .openapi("TemplateRole");
+export type TemplateRole = z.infer<typeof TemplateRoleSchema>;
+
 export const RoleListSchema = z
   .object({
     items: z.array(RoleSchema),
     /** Roles that administrators gave themselves and still hold (shown on the roles page). */
     selfAssignments: z.array(SelfAssignmentSchema),
+    /** The club's type (P1.15 B). */
+    clubType: z
+      .object({ id: z.uuid(), key: z.string(), names: RoleTextsSchema })
+      .nullable()
+      .default(null),
+    /** The type's template roles, to compare and copy ("Lägg till från mallen"). */
+    templateRoles: z.array(TemplateRoleSchema).default([]),
   })
   .openapi("RoleList");
 export type RoleList = z.infer<typeof RoleListSchema>;
@@ -102,6 +125,13 @@ export const UpdateRoleSchema = z
   })
   .openapi("UpdateRole");
 export type UpdateRoleInput = z.infer<typeof UpdateRoleSchema>;
+
+/** Copy a role of the club type's template into the club (P1.15 B). */
+export const CopyTemplateRoleSchema = z
+  .object({ scope: RoleScopeSchema, key: z.string().min(1).max(40) })
+  .strict()
+  .openapi("CopyTemplateRole");
+export type CopyTemplateRoleInput = z.infer<typeof CopyTemplateRoleSchema>;
 
 export const RolePreviewRequestSchema = z
   .object({ permissions: z.array(RolePermissionSchema).max(100) })

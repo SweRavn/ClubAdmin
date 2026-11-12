@@ -108,6 +108,8 @@ export const clubs = pgTable(
     administratorsGraceUntil: timestamp(tz),
     /** When an operator extended the grace period (once per club). */
     administratorsGraceExtendedAt: timestamp(tz),
+    /** The club type it was created from (P1.15 B; global club_types, migration 0036). */
+    clubTypeId: uuid(),
     ...timestamps,
   },
   (t) => [

@@ -28,6 +28,7 @@ import {
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { actorPersonId, parseInput } from "../../platform/domain/run.ts";
 import type { AccountsService } from "../accounts/index.ts";
+import type { ClubTypesService } from "../club-types/index.ts";
 import type { Club, ClubsService } from "../clubs/index.ts";
 import type { MembershipsService } from "../memberships/index.ts";
 import type { PeopleService, Person } from "../people/index.ts";
@@ -58,6 +59,7 @@ const ageOn = (birthDate: string, today: Date): number => {
 export class OnboardingService {
   private readonly db: Database;
   private readonly clubs: ClubsService;
+  private readonly clubTypes: ClubTypesService;
   private readonly memberships: MembershipsService;
   private readonly roles: RolesService;
   private readonly people: PeopleService | undefined;
@@ -69,6 +71,7 @@ export class OnboardingService {
     db: Database,
     deps: {
       clubs: ClubsService;
+      clubTypes: ClubTypesService;
       memberships: MembershipsService;
       roles: RolesService;
       people?: PeopleService;
@@ -80,6 +83,7 @@ export class OnboardingService {
   ) {
     this.db = db;
     this.clubs = deps.clubs;
+    this.clubTypes = deps.clubTypes;
     this.memberships = deps.memberships;
     this.roles = deps.roles;
     this.people = deps.people;
@@ -134,8 +138,11 @@ export class OnboardingService {
     creator: string,
     administratorsGraceUntil: Date | null = null,
   ): Promise<Club> {
+    // The club's type (P1.15 B): its roles are copied by the clubs insert trigger.
+    const clubTypeId = await this.clubTypes.typeForNewClubInTx(tx, input.clubTypeId, input.country);
     const club = await this.clubs.insertClubInTx(tx, clubContext.clubId, input, {
       administratorsGraceUntil,
+      clubTypeId,
     });
     await this.memberships.addMemberInTx(tx, clubContext, creator, undefined, {
       administrator: true,
@@ -211,6 +218,9 @@ export class OnboardingService {
     if (!isSupportedCountry(data.country)) throw new DomainError("unsupported_country");
     return this.db.withActor(context, async (tx) => {
       await accounts.requireReadyForClubsInTx(tx, me);
+      // A chosen type must be active now; the default is decided on approval.
+      if (data.clubTypeId)
+        await this.clubTypes.typeForNewClubInTx(tx, data.clubTypeId, data.country);
       let request: ClubCreationRequest;
       try {
         request = await repo.insertRequest(tx, {
@@ -225,6 +235,7 @@ export class OnboardingService {
           joinPolicy: data.joinPolicy ?? null,
           organizationNumber: data.organizationNumber ?? null,
           secondAdministratorEmail: data.secondAdministratorEmail ?? null,
+          clubTypeId: data.clubTypeId ?? null,
         });
       } catch (error) {
         if (isUniqueViolation(error, "club_creation_requests_pending_unique")) {
@@ -318,6 +329,14 @@ export class OnboardingService {
           organizationNumber: request.organizationNumber,
           ...(request.secondAdministratorEmail
             ? { secondAdministratorEmail: request.secondAdministratorEmail }
+            : {}),
+          // A type deactivated since the request falls back to the default.
+          ...(request.clubTypeId &&
+          (await this.clubTypes
+            .typeForNewClubInTx(tx, request.clubTypeId, request.country)
+            .then(() => true)
+            .catch(() => false))
+            ? { clubTypeId: request.clubTypeId }
             : {}),
         },
         request.requestedByPersonId,

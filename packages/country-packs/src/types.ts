@@ -99,6 +99,11 @@ export interface CountryPack {
    * registry and the pack applies; a pack never widens the registry's limits.
    */
   retentionLimits?: Readonly<Record<string, { min?: number; max?: number }>>;
+  /**
+   * The club type (its key, P1.15 B) a new club of the country gets when the
+   * creator chooses none; without it, the built-in type.
+   */
+  defaultClubType?: string;
 }
 
 /** Age reached during the calendar year of `date` (how grant rules count ages). */

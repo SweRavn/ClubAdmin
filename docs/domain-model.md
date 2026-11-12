@@ -440,6 +440,25 @@ Proposals are `club_manager_handovers` (`from_person_id`, `to_person_id`,
 one open proposal per manager, a new one replaces it. Accepting makes the
 successor manager and ends the proposer's role in one transaction.
 
+### Club types (P1.15 B, ADR 0046)
+
+Global tables (no `club_id`; RLS: everyone logged in reads, operators and
+system jobs write): `club_types (key, names and descriptions per language,
+active, sort_order)`, `club_type_roles (club_type_id, key, scope, names,
+descriptions, locked, sort_order)` and `club_type_role_permissions`, all
+with history. The built-in type `sports_club` (Idrottsförening) is the
+template of P1.15 A1 and cannot be deactivated. `clubs.club_type_id` records
+the type (a club inserted without one gets the built-in type); a creation
+request keeps `club_type_id` until the operator decides. A new club gets a
+copy of its type's roles (`app.create_builtin_roles`, the clubs insert
+trigger); templates never change clubs by themselves (decision 6). Every
+type has the roles the code relies on: `club_manager` and `chair` (locked)
+and the participant group role `member` (`REQUIRED_TEMPLATE_ROLES`). A
+type's own keys fall back to `staff` and `member`/`other_leader` in the old
+`role` and `function` columns. The roles page compares the club's roles
+with its type's template ("differs from the template", reset) and copies a
+missing one ("Lägg till från mallen"; a deleted one is restored).
+
 ### Sign-up and joining (ADR 0018, ADR 0032; P1.1)
 - Anyone can sign up (verified email) without an invitation; this creates an
   `account` + `person` with no club yet. Before any club action the person

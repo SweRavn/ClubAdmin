@@ -11,6 +11,8 @@ import {
   type AssignRoleInput,
   AssignRoleSchema,
   ClubParamsSchema,
+  type CopyTemplateRoleInput,
+  CopyTemplateRoleSchema,
   type CreateRoleInput,
   CreateRoleSchema,
   DeleteRoleQuerySchema,
@@ -224,7 +226,8 @@ export class ClubRolesController {
   async list(@CurrentAuthorization() authz: RequestAuthorization): Promise<RoleList> {
     const { clubId } = resourceOf(authz, "club");
     const context = tenantContext(authz, clubId);
-    const { roles, selfAssignments, templates } = await this.roles.listRoles(context);
+    const { roles, selfAssignments, templates, clubType, templateRoles } =
+      await this.roles.listRoles(context);
     const shown = new Map(
       (
         await this.presenter.present(
@@ -244,7 +247,34 @@ export class ClubRolesController {
           ? [{ assignmentId: a.id, person, roleId: a.roleId, since: a.validFrom.toISOString() }]
           : [];
       }),
+      clubType: clubType ? { id: clubType.id, key: clubType.key, names: clubType.names } : null,
+      templateRoles: templateRoles.map((t) => ({
+        key: t.key,
+        scope: t.scope,
+        names: t.names,
+        descriptions: t.descriptions,
+        permissions: t.permissions,
+        status: t.status,
+      })),
     };
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "clubs/:clubId/roles/from-template",
+    summary: "Copy a role of the club type's template into the club (a deleted one is restored)",
+    tags: ["roles"],
+    access: { permission: "club.roles.manage", resource: "club" },
+    request: { params: ClubParamsSchema, body: CopyTemplateRoleSchema },
+    response: RoleSchema,
+    status: 201,
+  })
+  async fromTemplate(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Body() body: CopyTemplateRoleInput,
+  ): Promise<Role> {
+    const { clubId } = resourceOf(authz, "club");
+    return toRoleResponse(await this.roles.copyFromTemplate(tenantContext(authz, clubId), body));
   }
 
   @Endpoint({

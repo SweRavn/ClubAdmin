@@ -737,6 +737,44 @@
       ],
       "createdAt": "-3y",
       "id": "0199a000-0000-7000-8000-000000000039"
+    },
+    {
+      "key": "britt",
+      "number": 40,
+      "givenName": "Britt",
+      "familyName": "Sjöberg",
+      "age": 58,
+      "birthday": "02-11",
+      "gender": "female",
+      "login": "account",
+      "email": "britt.sjoberg@example.test",
+      "phone": "+46 70 174 06 40",
+      "description": "Founded Ekuddens Schackklubb, a club of the type Schackklubb (P1.15 B): its roles come from that type's template.",
+      "tags": [
+        "club type",
+        "administrator"
+      ],
+      "createdAt": "-4y",
+      "id": "0199a000-0000-7000-8000-000000000040"
+    },
+    {
+      "key": "aron",
+      "number": 41,
+      "givenName": "Aron",
+      "familyName": "Nyström",
+      "age": 36,
+      "birthday": "07-23",
+      "gender": "male",
+      "login": "account",
+      "email": "aron.nystrom@example.test",
+      "phone": "+46 70 174 06 41",
+      "description": "Ekuddens Schackklubb's second administrator next to Britt.",
+      "tags": [
+        "club type",
+        "administrator"
+      ],
+      "createdAt": "-3y",
+      "id": "0199a000-0000-7000-8000-000000000041"
     }
   ]
 }

@@ -1110,6 +1110,44 @@ describe("permission matrix", () => {
     // (and the chair); changes need club.roles.manage with a second factor,
     // which these tokens lack, so even the manager gets 403.
     "GET /api/v1/permissions": { url: () => "/api/v1/permissions", expected: ALL_OK },
+    // Club types (P1.15 B): everyone logged in lists the active ones; operators
+    // edit them with a second factor (these tokens have none: 403 for everyone).
+    "GET /api/v1/club-types": { url: () => "/api/v1/club-types", expected: ALL_OK },
+    "GET /api/v1/ops/club-types": { url: () => "/api/v1/ops/club-types", expected: ALL_FORBIDDEN },
+    "GET /api/v1/ops/club-types/:clubTypeId": {
+      url: () => `/api/v1/ops/club-types/${uuidv7()}`,
+      expected: ALL_FORBIDDEN,
+    },
+    "POST /api/v1/ops/club-types": {
+      url: () => "/api/v1/ops/club-types",
+      expected: ALL_FORBIDDEN,
+      body: { key: "matrix_type", names: { sv: "Matris", en: "Matrix", nb: "Matrise" } },
+    },
+    "PATCH /api/v1/ops/club-types/:clubTypeId": {
+      url: () => `/api/v1/ops/club-types/${uuidv7()}`,
+      expected: ALL_FORBIDDEN,
+      body: { active: false },
+    },
+    "POST /api/v1/ops/club-types/:clubTypeId/roles": {
+      url: () => `/api/v1/ops/club-types/${uuidv7()}/roles`,
+      expected: ALL_FORBIDDEN,
+      body: { key: "matrix_role", scope: "group", permissions: [] },
+    },
+    "PATCH /api/v1/ops/club-types/:clubTypeId/roles/:roleId": {
+      url: () => `/api/v1/ops/club-types/${uuidv7()}/roles/${uuidv7()}`,
+      expected: ALL_FORBIDDEN,
+      body: { permissions: [] },
+    },
+    "DELETE /api/v1/ops/club-types/:clubTypeId/roles/:roleId": {
+      url: () => `/api/v1/ops/club-types/${uuidv7()}/roles/${uuidv7()}`,
+      expected: ALL_FORBIDDEN,
+    },
+    // club.roles.manage needs a second factor: even the manager gets 403 here.
+    "POST /api/v1/clubs/:clubId/roles/from-template": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/roles/from-template`,
+      expected: CLUB_FORBIDDEN,
+      body: { scope: "club", key: "auditor" },
+    },
     "GET /api/v1/me/permissions": {
       url: () => `/api/v1/me/permissions?clubId=${m.clubA.id}`,
       expected: INSIDERS,

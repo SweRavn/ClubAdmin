@@ -115,6 +115,7 @@ email" as `anna.lindqvist@example.test`. Idempotent; run it again after
 | **IK Norrbacka** (IKN) | SE / sv-SE / Europe/Stockholm | Multi-sport: football + floorball sections | `open` | Karin, Göran (two administrators); hand-over from Karin to Peter **pending** his acceptance | Free plan |
 | **Fjordvik Idrettslag** (FIL) | NO / nb-NO / Europe/Oslo | Handball | `invite_only` | Lars, Kari (exactly two: the recommendation of a third shows) | Trial, ends in 10 days |
 | **Lövsta Bordtennisklubb** (Lövsta BTK) | SE / sv-SE / Europe/Stockholm | Table tennis | `approval` | Ulf alone, **within his grace period** (12 days left; P1.15 A3) | — |
+| **Ekuddens Schackklubb** (Ekudden SK) | SE / sv-SE / Europe/Stockholm | Chess (club type **Schackklubb**, P1.15 B) | `approval` | Britt, Aron (two administrators) | — |
 
 SVK has contact details (P1.6b, `contact` in `docs/demodata/clubs.json`):
 `kansli@strandvikens-vk.test`, Idrottsvägen 4, 451 50 Strandviken, the
@@ -189,6 +190,8 @@ club has roughly 10 named/central users plus generated players.
 | 37 | **Göran Lund** | 58 | yes | IKN **club manager** next to Karin (the minimum of two) |
 | 38 | **Kari Haugen** | 44 | yes | Norwegian (nb). FIL **club manager** next to Lars: FIL has exactly two administrators |
 | 39 | **Ulf Ek** | 63 | yes | Founded **Lövsta Bordtennisklubb** and is its only administrator: the grace period's banner and reminders |
+| 40 | **Britt Sjöberg** | 58 | yes | Founded **Ekuddens Schackklubb**, of the club type Schackklubb: its roles came from the type's template (P1.15 B) |
+| 41 | **Aron Nyström** | 36 | yes | Ekudden SK's second administrator next to Britt |
 
 Ahmed is Liam's parent; Liam, like Oskar, was created as a child and got his
 own login (half a year ago). The waiting list of F2017 has five waiting, one
@@ -393,6 +396,18 @@ managers **Lagansvarig** and has its own group role **Materialansvarig**
 work themselves (Anna in SVK, Karin in IKN, Lars in FIL) also hold the registrar role; Sara
 (SVK) does not, which shows the club manager's split: try the roles page
 (`/clubs/<svk>/roles`) as Sara, and "Mina roller" (`/me/roles`) as anyone.
+
+## Club types (P1.15 B)
+
+The built-in type **Idrottsförening** (`sports_club`) is today's template:
+SVK, IKN, FIL and Lövsta BTK have it. The operator adds the type
+**Schackklubb** (`chess_club`): Föreningsansvarig and Ordförande (the locked
+roles), "Spelare" (the participant role `member`), "Tränare" (`head_coach`)
+and its own "Turneringsledare" (`tournament_director`, names in sv, en and
+nb). **Ekuddens Schackklubb** (Britt, Aron) has that type: its roles page
+shows the template to compare and copy from, and has no registrar. Try
+`/ops/club-types` as the operator (with a second factor) and creating a
+club, which asks for the type.
 
 ## At least two administrators (P1.15 A3)
 
