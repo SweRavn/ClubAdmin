@@ -107,9 +107,29 @@ the same kind of thing in several groups or clubs (channels, activities,
 answers to give, documents, duty shifts), the app gives one "Mina …" list
 across them, so nobody has to click through every group.
 
+**Car pooling (ADR 0048)**, for matches, cups and trainings far away:
+
+- The activity's creator (or the series, for trainings) chooses the
+  transport: own transport ("Deltagarna tar sig dit själva", meeting time
+  and place, the car pool opens) or shared transport (a rented bus: only
+  the meeting place).
+- Parents and adult participants offer a car with N seats, or "kan köra om
+  det behövs"; the return trip is a copy of the outward one, editable.
+  Guardians book seats for their children; children book themselves from an
+  age their guardian chooses (default the country pack's, else 13).
+- No adult alone in a car with a single child who is not their own without
+  the guardian's active confirmation, whoever drives.
+- "Mina samåkningar"; leaders see who has no ride.
+- Mileage statistics from the club's distance per location (the driver may
+  correct it): parents share costs, clubs reimburse at a club rate (the
+  country pack's tax-free rate as a guide). Claims are **attested** in a
+  general attestation flow (first the activity's creator, otherwise group
+  or club attesters; never one's own claim) that later serves all expenses;
+  payment in Phase 3.
+
 The rest of the phase: calendar invitations by email with Accept/Decline
 from the native calendar (iMIP, ADR 0021) · message board · bulk email with
-bounce handling · car pooling · documents (statutes, minutes, versions; club
+bounce handling · documents (statutes, minutes, versions; club
 settings taken from adopted governing documents, opt-in per club, ADR 0037)
 · board meetings (agenda, minutes, decisions) · background-check tracking
 (clearances, country packs SE/NO) · LOK-stöd reporting and IdrottOnline
@@ -117,7 +137,8 @@ export · volunteer duty schedules.
 
 ## Phase 3 — Money and content
 
-Team cash desk · member fees, invoicing, Swish/card payments · club budget ·
+Team cash desk · member fees, invoicing, Swish/card payments · paying
+attested expense claims (mileage from car pools first, ADR 0048) · club budget ·
 training plan library (versioning, sharing, copying, licences) · sponsors/ads ·
 public club website pages · facility booking.
 
