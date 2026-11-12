@@ -138,6 +138,28 @@ across them, so nobody has to click through every group.
   or club attesters; never one's own claim) that later serves all expenses;
   payment in Phase 3.
 
+**Documents and meetings (ADR 0049, with ADR 0037):**
+
+- First a **file archive** in folders per club and group (group leaders
+  create folders), versions kept, ClamAV before a file is visible; then
+  **governing documents** written in the app in Markdown (series, drafts,
+  adoption, settings marked in the text, ADR 0037); then **meetings**.
+- **Audiences** decide who sees a folder or document: the whole club
+  (members and their guardians), groups (optionally some roles in them),
+  club roles, or public (any number of documents, both kinds).
+- **Boards and committees are ordinary groups** (kinds `board`,
+  `committee`), members added by hand (adjunct members too); automation
+  later as bots or scripts.
+- **Meetings** are activities of kind `meeting`: calendar, notice and
+  answers as in every group. Agenda items are structured, each with its own
+  Markdown field during the meeting, decisions checked per item, action
+  items; the minutes are assembled into one Markdown document.
+- **Signing in the app** (simple electronic signature with a second factor,
+  the hash of the signed version, audit, a signature page); BankID, Freja
+  and the EU wallet later as `SignatureProvider` plugins.
+- Storage limits set by the operator and, within them, by the club (per
+  group too). "Mina dokument" and a document tab per group.
+
 **New permissions in Phase 2** (proposed; each prompt settles the names
 and adds them to the catalogue, `permission-catalogue.ts`, with the template
 roles that get them by default, P1.15 decision 5):
@@ -153,6 +175,10 @@ roles that get them by default, P1.15 decision 5):
 | `club.expenses.attest` | club | Attest expense claims anywhere in the club | `treasurer` | ADR 0048 |
 | `club.carpools.manage` | club | Delete old car-pool data and statistics; set the mileage rate | `club_manager`, `treasurer` | ADR 0048 |
 | `club.background_checks.manage` | club | Record and follow up leaders' background checks; the club's stricter requirement | `club_manager`, `registrar` | background checks, ADR 0047 |
+| `club.documents.manage` | club | The club's folders and files, their audiences | `club_manager`, `secretary` | ADR 0049 |
+| `group.documents.manage` | group | The group's folders and files | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | ADR 0049 |
+| `club.governing_documents.manage` | club | Draft governing documents, meetings' agendas and minutes | `secretary`, `chair` | ADR 0037, ADR 0049 |
+| `club.governing_documents.adopt` | club | Record a document as adopted (second factor) | `chair`, `secretary` | ADR 0037, ADR 0049 |
 
 Settings that are not permissions: a group's "car-pool statistics public in
 the group" (group leaders), a guardian's age for a child booking seats
@@ -160,9 +186,7 @@ themselves (the guardian).
 
 The rest of the phase: calendar invitations by email with Accept/Decline
 from the native calendar (iMIP, ADR 0021) · message board · bulk email with
-bounce handling · documents (statutes, minutes, versions; club
-settings taken from adopted governing documents, opt-in per club, ADR 0037)
-· board meetings (agenda, minutes, decisions) · background-check tracking
+bounce handling · background-check tracking
 (clearances, country packs SE/NO) · LOK-stöd reporting and IdrottOnline
 export · volunteer duty schedules.
 

@@ -54,3 +54,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0046](0046-club-defined-roles.md) | Club-defined roles: permissions in a catalogue, roles per club | Accepted (P1.15 A1) |
 | [0047](0047-child-safety-in-chat.md) | Child safety in chat: no adult alone with a child, open to guardians, a reviewing bot | Accepted |
 | [0048](0048-car-pooling-and-attestation.md) | Car pooling, mileage and a general attestation flow | Accepted |
+| [0049](0049-documents-meetings-and-signing.md) | Documents, meetings with structured minutes, signing in the app | Accepted |
