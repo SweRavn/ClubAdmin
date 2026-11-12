@@ -33,6 +33,10 @@ as a complement. Nothing here needs anyone to approve anything by hand.
    function (decision 2). For now between children of the same group (groups
    are mostly by age); chats between children of different groups come later
    (decision 3), so the model must not tie a chat to one group (below).
+   Children create channels themselves (the participant role holds
+   `group.channels.create`); a channel a child creates is open to
+   guardians and the group's leaders as in rule 4, like any chat with
+   children.
 4. **Open to guardians, visibly.**
    - A guardian sees which chats their child is in and may join any of them,
      with the whole history; guardians are not added automatically (except

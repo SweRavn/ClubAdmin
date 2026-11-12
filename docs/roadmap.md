@@ -136,7 +136,7 @@ roles that get them by default, P1.15 decision 5):
 
 | Permission | Scope | What it allows | Default template roles | Source |
 |---|---|---|---|---|
-| `group.channels.create` | group | Create chat channels in the group and choose their members | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | chat |
+| `group.channels.create` | group | Create chat channels in the group and choose their members | participants (`member`, children included), group leaders (`head_coach`, `assistant_coach`, `team_manager`), owners of the group | chat; children's channels follow ADR 0047 (visible to guardians and leaders, who may join) |
 | `group.channels.manage` | group | Manage channels others created in the group (members, archiving) | `head_coach`; owners of the group | chat |
 | `club.channels.create` | club | Club-wide channels (the board, all leaders) | `club_manager`, `chair` | chat |
 | `club.safeguarding.handle` | club | Receive reports, read reported chats (two-person rule, logged), close cases | `safeguarding_officer` | ADR 0047 |
