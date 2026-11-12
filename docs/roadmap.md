@@ -48,193 +48,24 @@ Ordered so each package only depends on earlier ones. Prompts:
 
 ## Phase 2 — Communication and compliance
 
-Work packages (proposed order; each gets its prompt just before it starts):
+Chat is a unique selling point and comes first. The decisions of
+2026-11-12 are in the ADRs and the prompts; this table is the overview.
 
-| ID | Work package |
-|---|---|
-| P2.1 | Chat: channels per group, open or closed, real time, "Mina kanaler", push per channel, child safety (ADR 0016, ADR 0047) |
-| P2.2 | Announcements: board in the app, email and push in one message (below) |
-| P2.3 | Car pooling, mileage and a general attestation flow (ADR 0048) |
-| P2.4 | Documents I: file archive, audiences, documents attached to notices (ADR 0049) |
-| P2.5 | Documents II and meetings: governing documents, agendas, minutes, signing in the app (ADR 0037, ADR 0049) |
-| P2.6 | Volunteer duties (ADR 0050) |
-| P2.7 | Plugins for grant reporting and background checks; LOK and LAM plugins ([prompt](prompts/P2.7-reporting-plugins.md), ADR 0051) |
-| P2.8 | Background-check plugins for Sweden and Norway and the tracking screens (ADR 0047, ADR 0051) |
+| ID | Work package | Decisions |
+|---|---|---|
+| [P2.1](prompts/P2.1-chat.md) | Chat: channels per group, open or closed, real time, "Mina kanaler", push per channel, child safety | ADR 0016, ADR 0047, `dpia-chat.md` |
+| [P2.2](prompts/P2.2-announcements.md) | Announcements: the board in the app, email and push in one message | ADR 0039, ADR 0049 (audiences) |
+| [P2.3](prompts/P2.3-car-pooling-and-attestation.md) | Car pooling, mileage and a general attestation flow | ADR 0048 |
+| [P2.4](prompts/P2.4-file-archive.md) | Documents I: file archive, audiences, documents attached to notices | ADR 0049 |
+| [P2.5](prompts/P2.5-governing-documents-and-meetings.md) | Documents II and meetings: governing documents, agendas, minutes, signing in the app | ADR 0037, ADR 0049 |
+| [P2.6](prompts/P2.6-volunteer-duties.md) | Volunteer duties | ADR 0050 |
+| [P2.7](prompts/P2.7-reporting-plugins.md) | Plugins for grant reporting and background checks; LOK and LAM | ADR 0051 |
+| [P2.8](prompts/P2.8-background-check-plugins.md) | Background-check plugins for Sweden and Norway, tracking screens | ADR 0047, ADR 0051 |
 
-**Chat is a unique selling point and comes first in this phase.** What it
-must do (maintainer, 2026-11-12):
-
-- **Built in-house (ADR 0016).** Postgres (messages partitioned by month),
-  the API's WebSocket gateway with Valkey pub/sub between instances, and
-  push; encrypted in transit and at rest, not end to end (moderation and
-  safeguarding review must stay possible).
-- **First revision:** text, reactions, replies and read receipts.
-  - **Editing** a message (a typo) is supported; every edit is kept in the
-    message's history (each version with its time), the message shows that
-    it was edited, and those who may read the chat can see the earlier
-    versions. Nothing an edit replaces is lost (ADR 0047).
-  - **Files and images are prepared, not supported yet:** the data model,
-    API shapes and storage (object storage, as for imports) leave room for
-    attachments on a message, so adding uploads later needs no migration
-    of existing messages; the first revision accepts text only.
-- **Real time.** Messages arrive at once on web and in the app; the
-  `authz.changed` event of P1.15 travels on the same connection. The app keeps working from its cache without a
-  connection (cache first, ADR 0040) and sends queued messages when it is
-  back online.
-- **Channels in every group.** A group has its channels (a default channel
-  for everyone in the group, more as needed). Whoever creates a channel
-  chooses who is in it (people of the group, or a subset, e.g. the coaches
-  or one team's parents); a permission in the role catalogue (P1.15) says
-  who may create channels and manage their members. Protected people are
-  never added without their acceptance (ADR 0022, P1.12). A chat is not
-  owned by one group: its members are its own list, so chats across groups
-  can come later.
-- **Open or closed channels.** The creator chooses: **open** (people of the
-  group see it and may join) or **closed** (only the members the creator
-  or a channel manager adds; others of the group neither see it nor join),
-  e.g. a leaders' channel. The child-safety rules always apply: a closed
-  channel with children in it is still visible to those children's
-  guardians, who may join, and adding a leader still adds them (ADR 0047).
-  A closed channel without children (the leaders, the board) is hidden from
-  everyone else.
-- **Child safety (ADR 0047).** No adult is ever alone with a child: when a
-  leader is in a chat with children, their guardians are added
-  automatically with the whole history. Other adults cannot start direct
-  messages with someone else's child. Children of all ages may chat with
-  each other (for now within their group). Guardians see which chats their
-  child is in and may join any of them; children always see that parents
-  can join and which have; guardians of a group's children see who is in
-  the group's chats. Leaders may join the children's chats of their group.
-  Messages are kept without a time limit; reporting takes one tap. Every
-  country pack flags whether a background check is required to write to
-  children, and a club may require it where its pack does not. The chat
-  prompt describes these rules clearly in the README, the help pages and
-  the privacy notice.
-- **Later:** a reviewing bot that alerts the club's safeguarding officers
-  (rule signals, then classifiers and image checks), never punishes
-  (ADR 0047).
-- **Aggregated views, few clicks.** The app lists the channels the person
-  is in under **"Mina kanaler"** (unread first, the latest message per
-  channel), and each group's page lists its channels. The web app has the
-  same.
-- **Push per channel.** Push notifications in the app, set per channel (all
-  messages, mentions only, off) on top of the notification settings, quiet
-  hours and daily email of P1.7 (ADR 0039).
-- Moderation (reporting, removing messages, muting a member), retention
-  per club, history and audit as for other personal data.
-
-**Aggregation is a general rule**, not only for chat: wherever a person has
-the same kind of thing in several groups or clubs (channels, activities,
-answers to give, documents, duty shifts), the app gives one "Mina …" list
-across them, so nobody has to click through every group.
-
-**Car pooling (ADR 0048)**, for matches, cups and trainings far away:
-
-- The activity's creator (or the series, for trainings) chooses the
-  transport: own transport ("Deltagarna tar sig dit själva", meeting time
-  and place, the car pool opens) or shared transport (a rented bus: only
-  the meeting place).
-- Parents and adult participants offer a car with N seats, or "kan köra om
-  det behövs"; the return trip is a copy of the outward one, editable.
-  Guardians book seats for their children; children book themselves from an
-  age their guardian chooses (default the country pack's, else 13).
-- No adult alone in a car with a single child who is not their own without
-  the guardian's active confirmation, whoever drives.
-- "Mina samåkningar"; leaders see who has no ride.
-- Mileage statistics from the distance stored with each place in the
-  club's list of places (every leader may create and edit places by
-  default; the driver may correct a drive). Members settle among themselves
-  (the statistics public in the group when the group says so) or the club
-  reimburses at a club rate (the country pack's tax-free rate as a guide).
-  Kept until explicitly deleted. Events use the same car pools. Claims are **attested** in a
-  general attestation flow (first the activity's creator, otherwise group
-  or club attesters; never one's own claim) that later serves all expenses;
-  payment in Phase 3.
-
-**Documents and meetings (ADR 0049, with ADR 0037):**
-
-- First a **file archive** in folders per club and group (group leaders
-  create folders), versions kept, ClamAV before a file is visible; then
-  **governing documents** written in the app in Markdown (series, drafts,
-  adoption, settings marked in the text, ADR 0037); then **meetings**.
-- **Audiences** decide who sees a folder or document: the whole club
-  (members and their guardians), groups (optionally some roles in them),
-  club roles, or public (any number of documents, both kinds).
-- **Boards and committees are ordinary groups** (kinds `board`,
-  `committee`), members added by hand (adjunct members too); automation
-  later as bots or scripts.
-- **Meetings** are activities of kind `meeting`: calendar, notice and
-  answers as in every group. Agenda items are structured, each with its own
-  Markdown field during the meeting, decisions checked per item, action
-  items; the minutes are assembled into one Markdown document.
-- **Documents in notices:** any activity's or event's notice (a meeting's
-  agenda, a cup's information) can have documents attached, picked from
-  ClubAdmin or uploaded from the computer (then stored in ClubAdmin);
-  notices always send links, never files, and the recipients may read
-  what is attached.
-- **Signing in the app** (simple electronic signature with a second factor,
-  the hash of the signed version, audit, a signature page); BankID, Freja
-  and the EU wallet later as `SignatureProvider` plugins.
-- Storage limits set by the operator and, within them, by the club (per
-  group too). "Mina dokument" and a document tab per group.
-
-**Volunteer duties (ADR 0050):** the club's duty types (instruction,
-minimum age, background check where needed; qualifications prepared);
-shifts tied to activities and events or on their own, in "Mitt schema";
-a quota per player and season, done by anyone in the family; sign-up and
-assignment by leaders; free swaps; reminders and done/missed; who sees
-whom is a club setting that groups may change either way if the club
-allows; "Mina pass", the group's overview and hours statistics; buying out
-prepared.
-
-**New permissions in Phase 2** (proposed; each prompt settles the names
-and adds them to the catalogue, `permission-catalogue.ts`, with the template
-roles that get them by default, P1.15 decision 5):
-
-| Permission | Scope | What it allows | Default template roles | Source |
-|---|---|---|---|---|
-| `group.channels.create` | group | Create chat channels in the group and choose their members | participants (`member`, children included), group leaders (`head_coach`, `assistant_coach`, `team_manager`), owners of the group | chat; children's channels follow ADR 0047 (visible to guardians and leaders, who may join) |
-| `group.channels.manage` | group | Manage channels others created in the group (members, archiving) | `head_coach`; owners of the group | chat |
-| `club.channels.create` | club | Club-wide channels (the board, all leaders) | `club_manager`, `chair` | chat |
-| `club.safeguarding.handle` | club | Receive reports, read reported chats (two-person rule, logged), close cases | `safeguarding_officer` | ADR 0047 |
-| `club.locations.create` (widened) | club | Create and edit all places, their distance included | every leader in the club (as today: anyone who leads a group) | ADR 0048 |
-| `group.expenses.attest` | group | Attest expense claims in the group (never one's own) | `head_coach`, `team_manager` | ADR 0048 |
-| `club.expenses.attest` | club | Attest expense claims anywhere in the club | `treasurer` | ADR 0048 |
-| `club.carpools.manage` | club | Delete old car-pool data and statistics; set the mileage rate | `club_manager`, `treasurer` | ADR 0048 |
-| `club.background_checks.manage` | club | Record and follow up leaders' background checks; the club's stricter requirement | `club_manager`, `registrar` | background checks, ADR 0047 |
-| `ops.plugins.manage` | platform | Install and enable plugins for the installation (MFA) | operators (built-in) | ADR 0051 |
-| `club.plugins.manage` | club | Enable and configure plugins for the club (MFA) | `club_manager` | ADR 0051 |
-| `club.grants.read` | club | See grant schemes, periods and reports | `registrar`, `treasurer`, `club_manager` | ADR 0051 |
-| `club.grants.report` | club | Lock, export and submit grant reports | `registrar`, `treasurer` | ADR 0051 |
-| `club.documents.manage` | club | The club's folders and files, their audiences | `club_manager`, `secretary` | ADR 0049 |
-| `group.documents.manage` | group | The group's folders and files | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | ADR 0049 |
-| `club.governing_documents.manage` | club | Draft governing documents, meetings' agendas and minutes | `secretary`, `chair` | ADR 0037, ADR 0049 |
-| `club.governing_documents.adopt` | club | Record a document as adopted (second factor) | `chair`, `secretary` | ADR 0037, ADR 0049 |
-| `group.duties.manage` | group | Create, assign and mark duty shifts in the group | group leaders (`head_coach`, `assistant_coach`, `team_manager`); owners of the group | ADR 0050 |
-| `club.duties.manage` | club | Club-level duty shifts, every group | `club_manager` | ADR 0050 |
-| `club.duty_types.manage` | club | The club's catalogue of duty types | `club_manager` | ADR 0050 |
-
-Settings that are not permissions: a group's "car-pool statistics public in
-the group" (group leaders), a guardian's age for a child booking seats
-themselves (the guardian).
-
-**Announcements: the message board and bulk email in one feature.**
-Messages to the whole club or parts of it that do not belong to an
-activity (a newsletter, "the clubhouse is closed", the annual meeting's
-date). The sender chooses the audience (the audiences of ADR 0049: the
-club, groups and roles in them, club roles) and how it reaches people:
-**email**, **push** and/or the **board in the app**, one message with one
-text. The board keeps announcements (pinned, read or unread) and is part of
-the aggregated views; email handles bounces and unsubscribing per P1.7
-(ADR 0039); push follows the recipients' notification settings. To be
-designed in its own prompt.
-
-**Grant reporting and background checks are plugins (ADR 0051)**: they
-differ too much between countries, regions and municipalities for country
-packs. One versioned contract that we and third parties implement; the host
-owns the data and gives a plugin only what it declares; LOK-stöd (with RF's
-2025 rules, which the current pack lacks) and Norway's LAM are the first
-grant plugins; background-check plugins for Sweden and Norway follow.
+Each prompt lists its new permissions with the template roles that get
+them by default (P1.15 decision 5). The order and dependencies are in
+[`prompts/README.md`](prompts/README.md). Later in chat: a reviewing bot
+that alerts the safeguarding officers (ADR 0047).
 
 ## Phase 3 — Money and content
 
@@ -248,11 +79,12 @@ public club website pages · facility booking.
 
 Calendar invitations by email with Accept/Decline from the native calendar
 (iMIP, ADR 0021; lower priority, since the calendar feeds of P1.11 already
-put the schedule in people's calendars with answer links) · Automatic fair distribution of volunteer duties by quota and
-unavailability, and a register of people's qualifications (training,
-licences) for duties and leaders (ADR 0050) · Live streaming and recordings (a video broadcast started from a chat
-channel, e.g. a match sent to everyone in a group, including supporters
-such as a grandparent who is in the group to watch its matches; viewers in the
-channel, recordings kept per the club's retention) · staff time reporting and salary data with
-payroll export · bookkeeping integrations (SIE, Fortnox, Visma) · more country
+put the schedule in people's calendars with answer links) · automatic fair
+distribution of volunteer duties by quota and unavailability, and a
+register of people's qualifications (training, licences) for duties and
+leaders (ADR 0050) · live streaming and recordings (a video broadcast
+started from a chat channel, e.g. a match sent to everyone in a group,
+including supporters such as a grandparent who is in the group to watch its
+matches; recordings kept per the club's retention) · staff time reporting
+and salary data with payroll export · bookkeeping integrations (SIE, Fortnox, Visma) · more country
 packs · federation integrations · public API for third parties.

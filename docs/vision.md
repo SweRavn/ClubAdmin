@@ -45,7 +45,11 @@ A fast, secure, open-source club management system that:
    attendance) are saved on the phone and sent when there is coverage.
 3. **Privacy and safety by design.** Least data, least access, everything audited.
 4. **One person, many contexts.** A person has one account and many memberships.
-5. **Country-agnostic core, country packs at the edge.**
+   **Aggregate across them, few clicks:** wherever a person has the same
+   kind of thing in several groups or clubs (activities, answers to give,
+   chat channels, announcements, car pools, documents, duty shifts), the app
+   gives one "Mina …" list across them, so nobody clicks through every group.
+5. **Country-agnostic core, country packs and plugins at the edge.**
 6. **Open data.** Full export in documented formats. No lock-in.
 7. **Boring, maintainable technology.** One language, one database, few moving parts.
 
