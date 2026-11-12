@@ -101,5 +101,6 @@ words they understand.
 reading along; children's chats are private among children until a parent or
 leader joins, which everyone sees. Keeping messages without a time limit
 needs a DPIA and a stated purpose (safeguarding, the club's record) under
-GDPR's storage limitation; the chat prompt writes it. The bot's languages
+GDPR's storage limitation: the draft is [`dpia-chat.md`](../dpia-chat.md),
+completed by the chat prompt. The bot's languages
 and models are decided when it is built.
