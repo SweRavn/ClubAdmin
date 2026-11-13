@@ -21,6 +21,7 @@ import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WebSocket } from "ws";
 
+import { subscribeToFeatures } from "../../testing/billing.ts";
 import {
   buildClub,
   buildFamily,
@@ -78,6 +79,8 @@ let team: Team;
 
 async function buildTeam(): Promise<Team> {
   const club = await buildClub(s);
+  // CI also runs with billing on: the club's plan includes chat.
+  await subscribeToFeatures(t, [club.id], ["chat"]);
   const group = await s.groups.createGroup(club.ctx, { name: "F2015", kind: "team" });
   const coach = await buildPerson(s);
   const assistant = await buildPerson(s);

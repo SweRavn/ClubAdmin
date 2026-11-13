@@ -127,7 +127,7 @@ beforeAll(async () => {
   );
   treasurerRoleA = roleRows.find((r) => r.template_key === "treasurer")!.id;
   // Calendar feeds need the entitlement when CI runs with billing on (P1.11).
-  await subscribeToFeatures(t, [m.clubA.id, m.clubB.id], ["calendar_feeds"]);
+  await subscribeToFeatures(t, [m.clubA.id, m.clubB.id], ["calendar_feeds", "chat"]);
   await dispatchPending();
 });
 afterAll(async () => {
