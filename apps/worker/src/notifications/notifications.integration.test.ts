@@ -939,6 +939,51 @@ describe("privacy notices (P1.8a)", () => {
     expect(await noticesOf(ids.coach)).toMatchObject([{ type: "chat.member.muted" }]);
   });
 
+  it("chat.message: once per chat until read, to members whose push is on, never the sender (P2.1 C)", async () => {
+    const ids = await team();
+    const chat = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO chats (id, club_id, kind, name, visibility, has_children)
+       VALUES ($2, $1, 'channel', 'F2016', 'open', true)`,
+      [ids.club, chat],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO chat_members (club_id, chat_id, person_id, reason, push) VALUES
+         ($1, $2, $3, 'group', 'all'), ($1, $2, $4, 'group', 'all'), ($1, $2, $5, 'group', 'off')`,
+      [ids.club, chat, ids.coach, ids.anna, ids.mikael],
+    );
+    const send = async (body: string) => {
+      const { rows } = await t.query<{ id: string }>(
+        "admin",
+        `INSERT INTO chat_messages (club_id, chat_id, sender_person_id, body)
+         VALUES ($1, $2, $3, $4) RETURNING id`,
+        [ids.club, chat, ids.coach, body],
+      );
+      const event = await publish(ids.club, "chat.message.created", {
+        clubId: ids.club,
+        chatId: chat,
+        messageId: rows[0]!.id,
+      });
+      await outbox.dispatch(t.db, event, [handler()]);
+      return rows[0]!.id;
+    };
+    await send("Träning 17");
+    const second = await send("Ta med vatten");
+    expect(await noticesOf(ids.anna)).toMatchObject([{ type: "chat.message", subject_id: chat }]);
+    expect(await noticesOf(ids.coach)).toEqual([]);
+    expect(await noticesOf(ids.mikael)).toEqual([]);
+    // Once Anna has read, the next message is news again.
+    await t.query(
+      "admin",
+      "UPDATE chat_members SET last_read_message_id = $3 WHERE chat_id = $1 AND person_id = $2",
+      [chat, ids.anna, second],
+    );
+    await send("Matchen flyttad");
+    expect(await noticesOf(ids.anna)).toHaveLength(2);
+  });
+
   it("assignment.ended reaches the club managers, not the person who stepped down", async () => {
     const ids = await team();
     const event = await publish(ids.club, "assignment.ended", {

@@ -623,7 +623,8 @@ const CASES: Case[] = [
     method: "POST",
     url: () => `/api/v1/clubs/${key("svk")}/chats/${ids.chat}/messages`,
     body: () => ({ body: "Budget" }),
-    statements: 9,
+    // The mute check (P2.1 B) and the outbox event for push (P2.1 C) included.
+    statements: 10,
     pages: 140,
   },
   {

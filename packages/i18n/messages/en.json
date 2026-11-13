@@ -2014,10 +2014,8 @@
         }
       },
       "message": {
-        "moderated": {
-          "title": "One of your messages was hidden",
-          "body": "A message you wrote in a chat in {club} was hidden by the chat's manager or the club's safeguarding officers. Ask them if you wonder why."
-        }
+        "title": "{direct, select, true {New direct message} other {New message in {chatName}}}",
+        "body": "Open the chat in {club} to read it."
       },
       "member": {
         "muted": {
@@ -2036,7 +2034,8 @@
     "club_admin": "Club administration",
     "family": "Family",
     "account": "Your account",
-    "waitlist": "Waiting lists"
+    "waitlist": "Waiting lists",
+    "chat": "Chat"
   },
   "notifications": {
     "title": "Notifications",
@@ -2151,6 +2150,44 @@
       "contact": {
         "title": "Contact",
         "body": "Questions about privacy: {contact}."
+      }
+    },
+    "v2": {
+      "controller": {
+        "title": "Who is responsible",
+        "body": "{club} (organisation number {organizationNumber}) is responsible for the personal data of its members, their guardians and its leaders. ClubAdmin processes the data on the club's behalf."
+      },
+      "data": {
+        "title": "What we keep",
+        "body": "Names, birth dates, the contact details you choose to share with the club, memberships, teams and groups, roles, answers to activities and attendance, registrations to events, and the consents you give."
+      },
+      "purposes": {
+        "title": "Why",
+        "body": "To run the club: membership, teams, activities, communication, annual reports and grant reports. Most of it is needed for your membership; what is optional is based on your consent."
+      },
+      "consents": {
+        "title": "Consents",
+        "body": "The club asks for these consents: {purposes}. You give or withdraw each one separately, at any time, in ClubAdmin. Children under the consent age are represented by their guardians."
+      },
+      "retention": {
+        "title": "How long",
+        "body": "After you leave the club we keep your contact details for {formerMemberMonths} months, then only your member number, your membership dates and type, your groups and roles remain. Answers and attendance are kept for {attendanceMonths} months after the activity. The audit log is kept for {auditMonths} months and the change history for {historyMonths} months. People without a login and without any connection to a club are deleted after {orphanMonths} months."
+      },
+      "recipients": {
+        "title": "Who receives data",
+        "body": "The sports federations the club belongs to, as their rules require, and ClubAdmin's suppliers of hosting, email and push notifications. Data is not sold."
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": "You may see the data the club holds about you, correct it, download it, have it deleted when it is no longer needed, object to processing and withdraw your consents. You may complain to the data protection authority."
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "Questions about privacy: {contact}."
+      },
+      "chat": {
+        "title": "Chat",
+        "body": "If the club uses chat, we keep messages, who is in each chat and why, read markers and reactions. Messages are kept as long as the chat exists; a deleted message is hidden but kept, and earlier versions of edited messages are kept. No adult can be alone with a child in a chat: the child's parents are added automatically and can always see which chats their child is in. Someone who reports something in a chat is unknown to the person reported. The club's safeguarding officers receive reports and read a reported chat only when two of them agree, and every read is logged. Messages older than three years are shown only to those in the chat and, on a report, to the safeguarding officers."
       }
     }
   },
@@ -3963,7 +4000,8 @@
       "unsafe_contact": "An adult wants private contact, secrets or gives gifts",
       "self_harm": "Someone may hurt themselves",
       "other": "Something else"
-    }
+    },
+    "pushOff": "Notifications off"
   },
   "safeguarding": {
     "title": "Safeguarding cases",
@@ -4014,6 +4052,34 @@
     "statuses": {
       "open": "Open",
       "closed": "Closed"
+    }
+  },
+  "chatHelp": {
+    "title": "How chat works",
+    "intro": "In chat you can talk with your team and your leaders. Here is what applies, so that everyone feels safe.",
+    "children": {
+      "title": "If you are a child",
+      "body": "You can chat with your teammates and make your own channels with them.\nIf a leader or another adult writes to you, your parents always join the same chat. No adult may be alone with you in a chat.\nYour parents can see which chats you are in. If they join, everyone in the chat sees it.\nIf something feels wrong, scary or mean: tap “Report”. The person you report will not know it was you. You can also always talk to a parent or leader you trust."
+    },
+    "parents": {
+      "title": "For parents",
+      "body": "On the family page you see which chats your child is in and who is in them. You read the messages only if you join the chat – everyone there then sees that you joined. When a leader or another adult is in a chat with children, the children's parents are added automatically, with the whole history."
+    },
+    "leaders": {
+      "title": "For leaders",
+      "body": "Write to players in the team's channels. If you write directly to a child, the child's parents are added to the chat. Other adults cannot start a chat with someone else's child. If the club requires a criminal record check, you need a valid one to write to children."
+    },
+    "reports": {
+      "title": "Reporting",
+      "body": "Anyone can report a message or a whole chat with one tap. The report goes to the club's safeguarding officers, never to the person reported."
+    },
+    "officers": {
+      "title": "For safeguarding officers",
+      "body": "You see who reported, why and which message – not the chat. To read the chat you ask and another safeguarding officer confirms; then you may both read for a day and every read is logged. The club therefore needs at least two safeguarding officers. You can hide messages, mute someone in the club's chats for a time and close the case; the person concerned is told."
+    },
+    "kept": {
+      "title": "What is kept",
+      "body": "Messages are kept as long as the chat exists. A message you delete is hidden but kept, and earlier versions of edited messages are kept – the club's record if something happens. Notifications of new messages never show the text or who wrote it. Messages older than three years are shown only to those in the chat."
     }
   }
 }

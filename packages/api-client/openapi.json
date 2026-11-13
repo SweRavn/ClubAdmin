@@ -14984,7 +14984,8 @@
                     "club_admin",
                     "family",
                     "account",
-                    "waitlist"
+                    "waitlist",
+                    "chat"
                   ]
                 },
                 "email": {
@@ -15070,7 +15071,8 @@
                     "club_admin",
                     "family",
                     "account",
-                    "waitlist"
+                    "waitlist",
+                    "chat"
                   ]
                 },
                 "email": {
@@ -16442,7 +16444,8 @@
               "club_admin",
               "family",
               "account",
-              "waitlist"
+              "waitlist",
+              "chat"
             ]
           }
         },
@@ -44481,7 +44484,8 @@
                 "club_admin",
                 "family",
                 "account",
-                "waitlist"
+                "waitlist",
+                "chat"
               ]
             },
             "required": false,

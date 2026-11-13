@@ -2014,10 +2014,8 @@
         }
       },
       "message": {
-        "moderated": {
-          "title": "Ett av dina meddelanden har dolts",
-          "body": "Ett meddelande du skrev i en chatt i {club} har dolts av den som ansvarar för chatten eller av föreningens trygghetsansvariga. Hör av dig till dem om du undrar varför."
-        }
+        "title": "{direct, select, true {Nytt direktmeddelande} other {Nytt meddelande i {chatName}}}",
+        "body": "Öppna chatten i {club} för att läsa."
       },
       "member": {
         "muted": {
@@ -2036,7 +2034,8 @@
     "club_admin": "Föreningens administration",
     "family": "Familjen",
     "account": "Ditt konto",
-    "waitlist": "Köer"
+    "waitlist": "Köer",
+    "chat": "Chatt"
   },
   "notifications": {
     "title": "Notiser",
@@ -2151,6 +2150,44 @@
       "contact": {
         "title": "Kontakt",
         "body": "Frågor om personuppgifter: {contact}."
+      }
+    },
+    "v2": {
+      "controller": {
+        "title": "Vem som ansvarar",
+        "body": "{club} (organisationsnummer {organizationNumber}) är personuppgiftsansvarig för uppgifterna om sina medlemmar, deras vårdnadshavare och sina ledare. ClubAdmin behandlar uppgifterna för klubbens räkning."
+      },
+      "data": {
+        "title": "Vad vi sparar",
+        "body": "Namn, födelsedatum, de kontaktuppgifter du väljer att dela med klubben, medlemskap, lag och grupper, uppdrag, svar på aktiviteter och närvaro, anmälningar till evenemang och de samtycken du ger."
+      },
+      "purposes": {
+        "title": "Varför",
+        "body": "För att driva klubben: medlemskap, lag, aktiviteter, kommunikation, årsredovisning och bidragsansökningar. Det mesta behövs för ditt medlemskap; det som är frivilligt bygger på ditt samtycke."
+      },
+      "consents": {
+        "title": "Samtycken",
+        "body": "Klubben ber om dessa samtycken: {purposes}. Du ger eller tar tillbaka vart och ett för sig, när som helst, i ClubAdmin. Barn under samtyckesåldern företräds av sina vårdnadshavare."
+      },
+      "retention": {
+        "title": "Hur länge",
+        "body": "När du lämnat klubben sparar vi dina kontaktuppgifter i {formerMemberMonths} månader, därefter finns bara ditt medlemsnummer, dina medlemsdatum och medlemstyp, dina grupper och uppdrag kvar. Svar och närvaro sparas i {attendanceMonths} månader efter aktiviteten. Granskningsloggen sparas i {auditMonths} månader och ändringshistoriken i {historyMonths} månader. Personer utan inloggning och utan koppling till någon klubb raderas efter {orphanMonths} månader."
+      },
+      "recipients": {
+        "title": "Vem som får uppgifter",
+        "body": "De förbund klubben tillhör, i den omfattning deras regler kräver, och ClubAdmins leverantörer av drift, e-post och pushnotiser. Uppgifter säljs aldrig."
+      },
+      "rights": {
+        "title": "Dina rättigheter",
+        "body": "Du får se vilka uppgifter klubben har om dig, rätta dem, ladda ner dem, få dem raderade när de inte längre behövs, invända mot behandlingen och ta tillbaka dina samtycken. Du kan klaga hos Integritetsskyddsmyndigheten."
+      },
+      "contact": {
+        "title": "Kontakt",
+        "body": "Frågor om personuppgifter: {contact}."
+      },
+      "chat": {
+        "title": "Chatt",
+        "body": "Om föreningen använder chatten sparas meddelanden, vem som är med i varje chatt och varför, läsmarkeringar och reaktioner. Meddelanden sparas så länge chatten finns; ett meddelande som tas bort döljs men sparas, och tidigare versioner av redigerade meddelanden sparas. Ingen vuxen kan vara ensam med ett barn i en chatt: barnets föräldrar läggs till automatiskt och kan alltid se vilka chattar barnet är med i. Den som anmäler något i en chatt är okänd för den som anmäls. Föreningens trygghetsansvariga tar emot anmälningar och läser en anmäld chatt bara när två av dem är överens, och varje läsning loggas. Meddelanden äldre än tre år visas bara för de som är med i chatten och, vid en anmälan, för de trygghetsansvariga."
       }
     }
   },
@@ -3963,7 +4000,8 @@
       "unsafe_contact": "Någon vuxen vill ha privat kontakt, hemligheter eller ger gåvor",
       "self_harm": "Någon kan skada sig själv",
       "other": "Något annat"
-    }
+    },
+    "pushOff": "Notiser av"
   },
   "safeguarding": {
     "title": "Trygghetsärenden",
@@ -4014,6 +4052,34 @@
     "statuses": {
       "open": "Öppet",
       "closed": "Avslutat"
+    }
+  },
+  "chatHelp": {
+    "title": "Så fungerar chatten",
+    "intro": "I chatten kan du prata med ditt lag och dina ledare. Här står vad som gäller, så att alla känner sig trygga.",
+    "children": {
+      "title": "Om du är barn",
+      "body": "Du kan chatta med dina lagkompisar och göra egna kanaler med dem.\nOm en ledare eller en annan vuxen skriver till dig, kommer dina föräldrar alltid med i samma chatt. Ingen vuxen får vara ensam med dig i chatten.\nDina föräldrar kan se vilka chattar du är med i. Om de går med syns det för alla i chatten.\nOm något känns fel, läskigt eller elakt: tryck på ”Anmäl”. Den du anmäler får inte veta att det var du. Du kan också alltid prata med en förälder eller ledare du litar på."
+    },
+    "parents": {
+      "title": "För föräldrar",
+      "body": "Du ser vilka chattar ditt barn är med i och vilka som är med, på familjesidan. Meddelandena läser du bara om du går med i chatten – då ser alla där att du gick med. När en ledare eller en annan vuxen är i en chatt med barn läggs barnens föräldrar till automatiskt, med hela historiken."
+    },
+    "leaders": {
+      "title": "För ledare",
+      "body": "Skriv till spelare i lagets kanaler. Skriver du direkt till ett barn läggs barnets föräldrar till i chatten. Andra vuxna kan inte starta en chatt med någon annans barn. Kräver föreningen ett utdrag ur belastningsregistret behöver du ha ett giltigt för att skriva till barn."
+    },
+    "reports": {
+      "title": "Anmäla",
+      "body": "Alla kan anmäla ett meddelande eller en hel chatt med ett tryck. Anmälan går till föreningens trygghetsansvariga, aldrig till den som anmäls."
+    },
+    "officers": {
+      "title": "För trygghetsansvariga",
+      "body": "Du ser vem som anmält, varför och vilket meddelande – inte chatten. För att läsa chatten ber du om det och en annan trygghetsansvarig bekräftar; därefter kan ni båda läsa i ett dygn och varje läsning loggas. Föreningen behöver därför minst två trygghetsansvariga. Du kan dölja meddelanden, stänga av någon från att skriva i föreningens chattar en tid och avsluta ärendet; den det gäller får veta det."
+    },
+    "kept": {
+      "title": "Vad som sparas",
+      "body": "Meddelanden sparas så länge chatten finns. Tar du bort ett meddelande döljs det men finns kvar, och tidigare versioner av redigerade meddelanden sparas – det är föreningens underlag om något händer. Notiser om nya meddelanden visar aldrig texten eller vem som skrev. Meddelanden äldre än tre år visas bara för dem som är med i chatten."
     }
   }
 }

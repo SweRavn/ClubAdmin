@@ -162,7 +162,10 @@ export default async function ChatPage({ params, searchParams }: Params) {
             {guardiansIn.length > 0
               ? t("chat.childBannerJoined", { names: guardiansIn.map(label).join(", ") })
               : t("chat.childBannerNone")}{" "}
-            <span className="text-muted">{t("chat.leaderRule")}</span>
+            <span className="text-muted">{t("chat.leaderRule")}</span>{" "}
+            <a href="/help/chat" className="underline" data-testid="chat-help-link">
+              {t("chat.safety")}
+            </a>
           </p>
         ) : null}
         {chat.membership?.status === "offered" ? (

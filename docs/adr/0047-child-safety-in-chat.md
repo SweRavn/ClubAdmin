@@ -191,4 +191,9 @@ and models are decided when it is built.
   tracks checks.
 - **Old messages (DPIA):** nothing searches or exports chats to others yet;
   the three-year limit applies when such features come (part C documents it).
-- Push per channel comes with part C.
+- **Push (rule 13, part C):** per channel (`all`, `mentions`: replies to
+  one's own messages until mentions exist, `off`), one notice per chat
+  until the member reads further, push only (category `chat`, never email),
+  and never the text or the sender's name in any chat: stricter than the
+  rule, which asked it for chats with children. The privacy notice template
+  v2 describes chat; clubs move to it when they next publish their notice.

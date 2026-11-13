@@ -2014,10 +2014,8 @@
         }
       },
       "message": {
-        "moderated": {
-          "title": "En av meldingene dine er skjult",
-          "body": "En melding du skrev i en chat i {club} er skjult av den som har ansvar for chatten eller av klubbens trygghetsansvarlige. Ta kontakt med dem hvis du lurer på hvorfor."
-        }
+        "title": "{direct, select, true {Ny direktemelding} other {Ny melding i {chatName}}}",
+        "body": "Åpne chatten i {club} for å lese."
       },
       "member": {
         "muted": {
@@ -2036,7 +2034,8 @@
     "club_admin": "Klubbens administrasjon",
     "family": "Familien",
     "account": "Kontoen din",
-    "waitlist": "Ventelister"
+    "waitlist": "Ventelister",
+    "chat": "Chat"
   },
   "notifications": {
     "title": "Varsler",
@@ -2151,6 +2150,44 @@
       "contact": {
         "title": "Kontakt",
         "body": "Spørsmål om personvern: {contact}."
+      }
+    },
+    "v2": {
+      "controller": {
+        "title": "Hvem som er ansvarlig",
+        "body": "{club} (organisasjonsnummer {organizationNumber}) er behandlingsansvarlig for opplysningene om sine medlemmer, deres foresatte og sine ledere. ClubAdmin behandler opplysningene på vegne av klubben."
+      },
+      "data": {
+        "title": "Hva vi lagrer",
+        "body": "Navn, fødselsdatoer, kontaktopplysningene du velger å dele med klubben, medlemskap, lag og grupper, verv, svar på aktiviteter og oppmøte, påmeldinger til arrangementer og samtykkene du gir."
+      },
+      "purposes": {
+        "title": "Hvorfor",
+        "body": "For å drive klubben: medlemskap, lag, aktiviteter, kommunikasjon, årsrapporter og tilskuddsrapporter. Det meste trengs for medlemskapet ditt; det som er frivillig, bygger på samtykket ditt."
+      },
+      "consents": {
+        "title": "Samtykker",
+        "body": "Klubben ber om disse samtykkene: {purposes}. Du gir eller trekker tilbake hvert enkelt, når som helst, i ClubAdmin. Barn under samtykkealderen representeres av foresatte."
+      },
+      "retention": {
+        "title": "Hvor lenge",
+        "body": "Når du har forlatt klubben, lagrer vi kontaktopplysningene dine i {formerMemberMonths} måneder; deretter er bare medlemsnummer, medlemsdatoer og medlemstype, grupper og verv igjen. Svar og oppmøte lagres i {attendanceMonths} måneder etter aktiviteten. Revisjonsloggen lagres i {auditMonths} måneder og endringshistorikken i {historyMonths} måneder. Personer uten pålogging og uten tilknytning til noen klubb slettes etter {orphanMonths} måneder."
+      },
+      "recipients": {
+        "title": "Hvem som mottar opplysninger",
+        "body": "Forbundene klubben tilhører, i den grad reglene deres krever, og ClubAdmins leverandører av drift, e-post og push-varsler. Opplysninger selges aldri."
+      },
+      "rights": {
+        "title": "Dine rettigheter",
+        "body": "Du kan se hvilke opplysninger klubben har om deg, rette dem, laste dem ned, få dem slettet når de ikke lenger trengs, protestere mot behandlingen og trekke tilbake samtykkene dine. Du kan klage til Datatilsynet."
+      },
+      "contact": {
+        "title": "Kontakt",
+        "body": "Spørsmål om personvern: {contact}."
+      },
+      "chat": {
+        "title": "Chat",
+        "body": "Hvis klubben bruker chat, lagres meldinger, hvem som er med i hver chat og hvorfor, lesemerker og reaksjoner. Meldinger lagres så lenge chatten finnes; en slettet melding skjules men lagres, og tidligere versjoner av redigerte meldinger lagres. Ingen voksen kan være alene med et barn i en chat: barnets foreldre legges til automatisk og kan alltid se hvilke chatter barnet er med i. Den som melder noe i en chat er ukjent for den som meldes. Klubbens trygghetsansvarlige mottar meldinger og leser en meldt chat bare når to av dem er enige, og hver lesing logges. Meldinger eldre enn tre år vises bare for dem som er med i chatten og, ved en melding, for de trygghetsansvarlige."
       }
     }
   },
@@ -3963,7 +4000,8 @@
       "unsafe_contact": "En voksen vil ha privat kontakt, hemmeligheter eller gir gaver",
       "self_harm": "Noen kan skade seg selv",
       "other": "Noe annet"
-    }
+    },
+    "pushOff": "Varsler av"
   },
   "safeguarding": {
     "title": "Trygghetssaker",
@@ -4014,6 +4052,34 @@
     "statuses": {
       "open": "Åpen",
       "closed": "Avsluttet"
+    }
+  },
+  "chatHelp": {
+    "title": "Slik fungerer chatten",
+    "intro": "I chatten kan du snakke med laget ditt og lederne dine. Her står det hva som gjelder, slik at alle føler seg trygge.",
+    "children": {
+      "title": "Hvis du er barn",
+      "body": "Du kan chatte med lagkameratene dine og lage egne kanaler med dem.\nHvis en leder eller en annen voksen skriver til deg, blir foreldrene dine alltid med i samme chat. Ingen voksen får være alene med deg i chatten.\nForeldrene dine kan se hvilke chatter du er med i. Hvis de blir med, ser alle i chatten det.\nHvis noe føles feil, skummelt eller slemt: trykk på «Meld». Den du melder får ikke vite at det var deg. Du kan også alltid snakke med en forelder eller leder du stoler på."
+    },
+    "parents": {
+      "title": "For foreldre",
+      "body": "På familiesiden ser du hvilke chatter barnet ditt er med i og hvem som er med. Meldingene leser du bare hvis du blir med i chatten – da ser alle der at du ble med. Når en leder eller en annen voksen er i en chat med barn, legges barnas foreldre til automatisk, med hele historikken."
+    },
+    "leaders": {
+      "title": "For ledere",
+      "body": "Skriv til spillere i lagets kanaler. Skriver du direkte til et barn, legges barnets foreldre til i chatten. Andre voksne kan ikke starte en chat med andres barn. Krever klubben politiattest, må du ha en gyldig for å skrive til barn."
+    },
+    "reports": {
+      "title": "Melde",
+      "body": "Alle kan melde en melding eller en hel chat med ett trykk. Meldingen går til klubbens trygghetsansvarlige, aldri til den som meldes."
+    },
+    "officers": {
+      "title": "For trygghetsansvarlige",
+      "body": "Du ser hvem som meldte, hvorfor og hvilken melding – ikke chatten. For å lese chatten ber du om det, og en annen trygghetsansvarlig bekrefter; deretter kan dere begge lese i et døgn, og hver lesing logges. Klubben trenger derfor minst to trygghetsansvarlige. Du kan skjule meldinger, stenge noen ute fra å skrive i klubbens chatter en tid og avslutte saken; den det gjelder får vite det."
+    },
+    "kept": {
+      "title": "Hva som lagres",
+      "body": "Meldinger lagres så lenge chatten finnes. En melding du sletter skjules, men lagres, og tidligere versjoner av redigerte meldinger lagres – det er klubbens dokumentasjon hvis noe skjer. Varsler om nye meldinger viser aldri teksten eller hvem som skrev. Meldinger eldre enn tre år vises bare for dem som er med i chatten."
     }
   }
 }

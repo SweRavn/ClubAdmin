@@ -288,6 +288,13 @@
       "when": 1794680005000,
       "tag": "0040_chat_safeguarding",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794690005000,
+      "tag": "0041_chat_notifications",
+      "breakpoints": true
     }
   ]
 }

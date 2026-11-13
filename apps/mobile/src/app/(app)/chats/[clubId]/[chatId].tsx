@@ -215,6 +215,12 @@ function ChatInfo({
           <Muted>{t("chat.leaderRule")}</Muted>
         </View>
       ) : null}
+      {chat.hasChildren ? (
+        // How chat keeps children safe, in words for children (P2.1 part C).
+        <Section title={t("chatHelp.children.title")}>
+          <Body style={{ paddingVertical: theme.space(2) }}>{t("chatHelp.children.body")}</Body>
+        </Section>
+      ) : null}
       {status === "offered" ? (
         <View style={{ gap: theme.space(2) }}>
           <Body>{t("chat.offered")}</Body>

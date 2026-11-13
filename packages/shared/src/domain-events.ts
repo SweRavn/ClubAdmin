@@ -60,6 +60,8 @@ export const DOMAIN_EVENTS = {
   // reports and requests to read; the sender of a moderated message and a
   // muted member are told.
   "chat.report.created": z.object({ clubId: id, reportId: id }),
+  /** A message was sent (P2.1 part C): push to the members per their channel setting. */
+  "chat.message.created": z.object({ clubId: id, chatId: id, messageId: id }),
   "chat.report.read_requested": z.object({ clubId: id, reportId: id, readId: id }),
   "chat.message.moderated": z.object({ clubId: id, chatId: id, messageId: id, personId: id }),
   "chat.member.muted": z.object({ clubId: id, muteId: id, personId: id }),

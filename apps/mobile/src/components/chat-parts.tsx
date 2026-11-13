@@ -78,6 +78,7 @@ export function ChatRow({
           {chat.membership?.status === "offered" ? (
             <RoleBadge tone="accent" label={t("chat.offeredStatus")} />
           ) : null}
+          {chat.membership?.push === "off" ? <RoleBadge label={t("chat.pushOff")} /> : null}
         </View>
         {chat.lastMessageAt ? (
           <Muted>

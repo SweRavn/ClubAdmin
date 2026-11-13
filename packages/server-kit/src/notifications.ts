@@ -275,6 +275,9 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     reportReason: str(p.reportReason),
     children: str(p.children ?? false),
     until: formatWhen(locale, p.until, p.timeZone),
+    /** A chat's name (a channel; never a person's name) and whether it is a direct message. */
+    chatName: str(p.chatName),
+    direct: str(p.direct ?? false),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

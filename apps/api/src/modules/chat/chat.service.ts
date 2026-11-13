@@ -721,7 +721,15 @@ export class ChatService {
       if (!created && (message.senderPersonId !== personId || message.chatId !== chat.chatId)) {
         throw new DomainError("chat_message_conflict");
       }
-      if (created) await repo.markRead(tx, chat.chatId, personId, message.id);
+      if (created) {
+        await repo.markRead(tx, chat.chatId, personId, message.id);
+        // Push to the members (the worker; per their channel setting, P2.1 part C).
+        await outbox.publish(tx, "chat.message.created", {
+          clubId: context.clubId,
+          chatId: chat.chatId,
+          messageId: message.id,
+        });
+      }
       return { message, created };
     });
     if (result.created) {

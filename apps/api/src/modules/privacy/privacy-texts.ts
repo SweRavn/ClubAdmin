@@ -11,7 +11,7 @@ import {
   type ConsentText,
   consentTextKey,
   DEFAULT_CONSENT_TEXT_VERSIONS,
-  PRIVACY_POLICY_SECTIONS,
+  privacyPolicySections,
 } from "@clubadmin/shared";
 
 import type { ConsentTextRow } from "./privacy.repository.ts";
@@ -83,7 +83,7 @@ export function renderPolicy(
     historyMonths: String(values.historyMonths),
     orphanMonths: String(values.orphanMonths),
   };
-  return PRIVACY_POLICY_SECTIONS.map((key) => ({
+  return privacyPolicySections(templateVersion).map((key) => ({
     key,
     title: message(locale, `privacyPolicy.v${templateVersion}.${key}.title`, params),
     body: message(locale, `privacyPolicy.v${templateVersion}.${key}.body`, params),

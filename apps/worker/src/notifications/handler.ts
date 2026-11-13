@@ -184,6 +184,7 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "chat.report.read_requested",
       "chat.message.moderated",
       "chat.member.muted",
+      "chat.message.created",
       ...WAITLIST_EVENTS,
       "club.privacy_policy.published",
       "privacy.export.ready",
@@ -577,6 +578,55 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
                 params: { reportReason: report.reason, children: report.has_children },
                 dedupeKey: `${type}:${payload.readId ?? payload.reportId}`,
               })),
+          );
+          return;
+        }
+        // A new message (P2.1 part C): the chat's active members other than the
+        // sender, per their push setting ("mentions": replies to their own
+        // messages until mentions exist). One notice per chat until the member
+        // reads further (the dedupe key holds their read pointer). Never the
+        // text or the sender's name, in every chat (ADR 0047 rule 13).
+        case "chat.message.created": {
+          const { clubId, chatId, messageId } = DOMAIN_EVENTS["chat.message.created"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{
+            person_id: string;
+            last_read: string | null;
+            name: string | null;
+            kind: string;
+            has_children: boolean;
+          }>(sql`
+            WITH msg AS (
+              SELECT m.sender_person_id,
+                (SELECT r.sender_person_id FROM public.chat_messages r
+                 WHERE r.id = m.reply_to_message_id) AS replied_to
+              FROM public.chat_messages m WHERE m.id = ${messageId}::uuid)
+            SELECT cm.person_id, cm.last_read_message_id AS last_read, c.name, c.kind, c.has_children
+            FROM public.chat_members cm
+            JOIN public.chats c ON c.id = cm.chat_id
+            CROSS JOIN msg
+            WHERE cm.chat_id = ${chatId}::uuid AND cm.status = 'active'
+              AND cm.person_id IS DISTINCT FROM msg.sender_person_id
+              AND (cm.push = 'all' OR (cm.push = 'mentions' AND cm.person_id = msg.replied_to))
+              AND (cm.last_read_message_id IS NULL OR cm.last_read_message_id < ${messageId}::uuid)`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId,
+              type: "chat.message" as const,
+              subjectType: "chat",
+              subjectId: chatId,
+              about: [],
+              params: {
+                chatName: r.kind === "direct" ? null : r.name,
+                direct: r.kind === "direct",
+                children: r.has_children,
+              },
+              dedupeKey: `chat.message:${chatId}:${r.last_read ?? "none"}`,
+            })),
           );
           return;
         }

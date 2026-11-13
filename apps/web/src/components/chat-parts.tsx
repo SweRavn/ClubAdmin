@@ -68,6 +68,7 @@ export async function ChatRow({
           {chat.membership?.status === "offered" ? (
             <RoleBadge label={t("chat.offeredStatus")} />
           ) : null}
+          {chat.membership?.push === "off" ? <RoleBadge label={t("chat.pushOff")} /> : null}
         </span>
         {showContext && context.length > 0 ? (
           <span className="block text-xs text-muted">{context.join(" · ")}</span>

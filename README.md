@@ -39,6 +39,13 @@ that have the capacity to run it.
   ([ADR 0038](docs/adr/0038-events-and-sign-up.md)).
 - **Notifications** in the app, by push and by email, with per-person
   settings ([ADR 0039](docs/adr/0039-notifications.md)).
+- **Chat** in groups and the club, in real time on the web and in the app:
+  open and closed channels, direct messages, edits kept, push per channel.
+  Built for children: no adult is alone with a child (their parents are
+  added), parents see their child's chats and may join visibly, one-tap
+  reports to the club's safeguarding officers, who read a reported chat
+  only when two of them agree ([ADR 0047](docs/adr/0047-child-safety-in-chat.md),
+  [DPIA](docs/dpia-chat.md))
 - **Calendar subscriptions** (iCal) with one-click answer links
   ([ADR 0044](docs/adr/0044-calendar-feeds.md)).
 - **Privacy.** Consents, leaving a club, "download my data", account
@@ -57,7 +64,7 @@ Swedish, English and Norwegian (bokmål); country packs for Sweden and Norway.
 ## Planned
 
 From the [roadmap](docs/roadmap.md): club-defined roles and permissions and
-club types (P1.15); then chat rooms, message board, bulk email, car pooling,
+club types (P1.15); then message board, bulk email, car pooling,
 documents and board meetings, background-check tracking, LOK-stöd reporting
 (Phase 2); team cash desk, member fees and payments, training plan library,
 sponsors, public club pages, facility booking (Phase 3); live streaming,

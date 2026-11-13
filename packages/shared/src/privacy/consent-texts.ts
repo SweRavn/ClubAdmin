@@ -35,7 +35,8 @@ export function parseTextVersion(
 }
 
 /** The privacy policy template's current version (messages `privacyPolicy.v<n>.*`). */
-export const PRIVACY_POLICY_TEMPLATE_VERSION = 1;
+/** v2 (P2.1 part C) adds the chat section (child safety, reports, what is kept). */
+export const PRIVACY_POLICY_TEMPLATE_VERSION = 2;
 
 /** The sections of a policy template, in order (messages `privacyPolicy.v<n>.<section>.title|body`). */
 export const PRIVACY_POLICY_SECTIONS = [
@@ -47,5 +48,13 @@ export const PRIVACY_POLICY_SECTIONS = [
   "recipients",
   "rights",
   "contact",
+  // From template version 2 (P2.1 part C).
+  "chat",
 ] as const;
 export type PrivacyPolicySection = (typeof PRIVACY_POLICY_SECTIONS)[number];
+
+/** The sections a template version has (earlier versions keep theirs). */
+export const privacyPolicySections = (templateVersion: number): readonly PrivacyPolicySection[] =>
+  templateVersion >= 2
+    ? PRIVACY_POLICY_SECTIONS
+    : PRIVACY_POLICY_SECTIONS.filter((s) => s !== "chat");

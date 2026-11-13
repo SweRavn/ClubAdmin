@@ -9041,7 +9041,8 @@ export interface components {
           | "club_admin"
           | "family"
           | "account"
-          | "waitlist";
+          | "waitlist"
+          | "chat";
         /** @enum {string} */
         email: "always" | "no_app" | "never";
         push: boolean;
@@ -9066,7 +9067,8 @@ export interface components {
           | "club_admin"
           | "family"
           | "account"
-          | "waitlist";
+          | "waitlist"
+          | "chat";
         /** @enum {string} */
         email: "always" | "no_app" | "never";
         push: boolean;
@@ -9445,7 +9447,8 @@ export interface components {
         | "club_admin"
         | "family"
         | "account"
-        | "waitlist";
+        | "waitlist"
+        | "chat";
     };
     Unsubscribe: {
       token?: string;
@@ -28698,7 +28701,8 @@ export interface operations {
           | "club_admin"
           | "family"
           | "account"
-          | "waitlist";
+          | "waitlist"
+          | "chat";
       };
       header?: never;
       path?: never;

@@ -1,9 +1,9 @@
 # DPIA: chat (Phase 2)
 
 Data protection impact assessment (GDPR Art. 35) for the chat of Phase 2
-(ADR 0016, ADR 0047). Draft, 2026-11-12, written before the chat is built;
-it is updated when the chat prompt is implemented and again before the
-reviewing bot, chats across groups or video in chat channels are added.
+(ADR 0016, ADR 0047). Draft of 2026-11-12, completed on 2026-11-13 with what
+was built (P2.1, section 9); updated again before the reviewing bot, chats
+across groups or video in chat channels are added.
 
 **Who it is for.** Each club is the controller of its members' chat
 messages; the hosted-service operator is the processor (`gdpr.md`). The
@@ -123,6 +123,41 @@ parents in a pilot club how the rules are understood (CRC Art. 12).
 children's messages, possibly profiling: a new assessment of necessity,
 models in the EU or self-hosted, no training on messages); chats across
 groups or clubs; video broadcasts from chat channels.
+
+## 9. As built (P2.1, 2026-11-13)
+
+- **Tables** (migrations 0037–0041): chats, members (with the reason each
+  one is there), messages partitioned by month, every earlier version of an
+  edited message, reactions, read pointers, reports, reads of reported
+  chats, mutes. Club-owned with row-level security; record history with
+  message texts and report notes redacted.
+- **No adult alone with a child** is enforced in the database
+  (`app.chat_enforce_guardians`) for every change of a chat's members, the
+  group's and the guardianships; direct messages to a child only from
+  their full guardian, a leader of their group or a child of the same
+  group.
+- **Guardians** see their child's chats and who is in them (never the
+  messages unless they join, which everyone in the chat sees).
+- **Reports** reach only the club's safeguarding officers; the reported
+  person never learns who reported. **Reading a reported chat** needs a
+  second officer's confirmation and lasts 24 hours; each page read is an
+  audit event; the policy needs a second factor. A club needs at least two
+  safeguarding officers to read reported chats.
+- **Moderation**: hiding (kept as the record), muting for up to 30 days,
+  closing a case with an outcome; the person is told; every act is audited.
+- **Push** never carries the message text or the sender's name, in any
+  chat (stricter than rule 13, which asked it for chats with children):
+  "Nytt meddelande i <kanal>". Email is never sent for chat messages.
+- **Messages older than three years**: nothing searches or exports chats
+  to anyone outside the chat yet; when such features come they show older
+  messages only to the chat's members and, on a report, to the
+  safeguarding officers.
+- **Background checks**: the hook is called before a leader writes to
+  children or joins a children's chat; it allows until checks are tracked
+  (P2.8).
+- **Erasure** takes the person out of every chat; their messages stay as
+  "a former member's" and the deletion ledger applies it again after a
+  restore.
 
 ## 8. The club's part
 
