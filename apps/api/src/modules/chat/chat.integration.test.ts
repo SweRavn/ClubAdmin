@@ -124,6 +124,27 @@ afterAll(async () => {
 describe("the group's default channel", () => {
   let chatId: string;
 
+  it("does not keep an unused group from being deleted; one with messages does", async () => {
+    const unused = await s.groups.createGroup(team.club.ctx, { name: "Felskapad", kind: "team" });
+    const used = await s.groups.createGroup(team.club.ctx, { name: "Använd", kind: "team" });
+    const manager = team.club.manager.id;
+    for (const g of [unused, used]) {
+      const res = await api(manager, "GET", `${base()}/groups/${g.id}/chats`);
+      expect(res.statusCode).toBe(200);
+    }
+    // Someone wrote in the used group's channel.
+    await t.query(
+      "admin",
+      `INSERT INTO chat_messages (club_id, chat_id, sender_person_id, body)
+       SELECT club_id, id, $2, 'Hej' FROM chats WHERE default_for_group_id = $1`,
+      [used.id, manager],
+    );
+    await s.groups.deleteGroup(team.club.ctx, unused.id);
+    await expect(s.groups.deleteGroup(team.club.ctx, used.id)).rejects.toMatchObject({
+      code: "group_in_use",
+    });
+  });
+
   it("is created on first use with everyone in the group, and the children's guardians", async () => {
     const res = await api(team.coach.id, "GET", `${base()}/groups/${team.groupId}/chats`);
     expect(res.statusCode).toBe(200);

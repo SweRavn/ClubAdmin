@@ -267,6 +267,13 @@
       "when": 1794570005000,
       "tag": "0037_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794660005000,
+      "tag": "0038_chat_group_delete",
+      "breakpoints": true
     }
   ]
 }

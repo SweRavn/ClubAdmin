@@ -146,6 +146,10 @@ and models are decided when it is built.
   chats: the clients never send `X-On-Behalf-Of` on chat and real-time
   paths (`onBehalfApplies`), so "viewing as" a ward still shows the
   guardian's own chats, and the API refuses chat on behalf of anyone.
+- **A group's default channel** is created when the group's page is first
+  opened. A group nobody used can still be deleted: its channel goes with
+  it unless someone wrote in it (migration 0038); otherwise the group is
+  archived, as any group in use.
 - **The app** keeps chats cache first: "Mina kanaler", a chat's members
   and its messages show from the encrypted cache at once. The real-time
   connection is open only while a chat screen is shown and the app is in
