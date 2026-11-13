@@ -32,6 +32,7 @@ export default async function NewChannelPage({ params, searchParams }: Params) {
   return (
     <div className="max-w-xl space-y-4">
       <h1 className="text-2xl font-semibold">{t("chat.newChannel")}</h1>
+      <p className="text-sm text-muted">{t("chat.groupChannelsHint")}</p>
       {group ? <p className="text-muted">{group.name}</p> : null}
       <FormError code={query.error} />
       <ActionForm action="create-channel" className="space-y-4" testId="new-channel-form">

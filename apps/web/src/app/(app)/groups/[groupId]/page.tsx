@@ -447,7 +447,6 @@ async function GroupChannels({
           </a>
         ) : null}
       </div>
-      <p className="text-sm text-muted">{t("chat.groupChannelsHint")}</p>
       <ul className="divide-y divide-border">
         {chats.items.map((chat) => (
           <li key={chat.id}>
