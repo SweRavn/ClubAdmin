@@ -38,10 +38,13 @@ import {
   ConsentTextVersionsSchema,
   DataExportsPageSchema,
   DecisionsPageSchema,
+  DocumentDetailSchema,
   EntitlementsResponseSchema,
   EventDetailSchema,
   EventPageSchema,
   FamilyDuplicatesSchema,
+  FolderContentSchema,
+  FolderPageSchema,
   GroupArchivePreviewSchema,
   GroupAttendanceSchema,
   GroupCalendarSchema,
@@ -76,6 +79,7 @@ import {
   MyClubCreationRequestsSchema,
   MyClubsSchema,
   MyConsentsSchema,
+  MyDocumentPageSchema,
   MyEventsSchema,
   MyGroupsSchema,
   MyHandoversSchema,
@@ -84,6 +88,7 @@ import {
   MyProfileSchema,
   MyWaitlistsSchema,
   MyWardsSchema,
+  NoticeAttachmentListSchema,
   NotificationListSchema,
   NotificationSettingsResponseSchema,
   OpenGroupsSchema,
@@ -112,6 +117,7 @@ import {
   SeriesSchema,
   SessionListSchema,
   SourceResponseSchema,
+  StorageSchema,
   SubscriptionResponseSchema,
   SuspensionReviewSchema,
   TrustedPeopleSchema,
@@ -419,6 +425,10 @@ export async function getSuspensionReview(clubId: string, suspensionId: string) 
 }
 export const getClubRoles = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/roles`, RoleListSchema),
+);
+/** The club's roles, or null without `club.roles.read` (a coach editing a folder's audience). */
+export const getClubRolesIfAllowed = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/roles`, RoleListSchema, { nullOn: [403] }),
 );
 export const getPermissionCatalogue = cache(() =>
   required("/api/v1/permissions", PermissionCatalogueSchema),
@@ -793,6 +803,58 @@ export const getSafeguardingMutes = cache((clubId: string) =>
 export const getWardChats = cache((wardId: string) =>
   required(`/api/v1/me/wards/${requireId(wardId)}/chats?limit=100`, ChatPageSchema),
 );
+
+// The file archive (P2.2, ADR 0049): folders, files, "Mina dokument",
+// notices' documents and the club's storage. Reading is the audience's; a
+// list the viewer may not see is null where the page can do without it.
+export const getClubFolders = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/folders?limit=200`, FolderPageSchema),
+);
+export const getGroupFolders = cache((clubId: string, groupId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/folders?limit=200`,
+    FolderPageSchema,
+    { nullOn: [402, 403, 404] },
+  ),
+);
+export const getFolder = cache((clubId: string, folderId: string, cursor: string | null) => {
+  const query = new URLSearchParams({ limit: "100" });
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(
+    `/api/v1/clubs/${requireId(clubId)}/folders/${requireId(folderId)}?${query}`,
+    FolderContentSchema,
+  );
+});
+export const getDocument = cache((clubId: string, documentId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/documents/${requireId(documentId)}`,
+    DocumentDetailSchema,
+  ),
+);
+export const getMyDocuments = cache((cursor: string | null) => {
+  const query = new URLSearchParams({ limit: "50" });
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(`/api/v1/me/documents?${query}`, MyDocumentPageSchema);
+});
+export const getStorage = cache((clubId: string) =>
+  required(`/api/v1/clubs/${requireId(clubId)}/storage`, StorageSchema),
+);
+/** A notice's documents, or null without the documents feature or access. */
+export const getNoticeAttachments = cache((kind: "activities" | "events", noticeId: string) =>
+  apiGet(`/api/v1/${kind}/${requireId(noticeId)}/attachments`, NoticeAttachmentListSchema, {
+    nullOn: [402, 403, 404],
+  }),
+);
+/** The viewer looked at the club's (no group) or a group's documents: nothing is new there now. */
+export async function markDocumentsSeen(clubId: string, groupId: string | null): Promise<void> {
+  const session = await requireSession();
+  if (session.record.viewingAs) return;
+  await apiFetch(`/api/v1/clubs/${requireId(clubId)}/documents/seen`, session.record, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(groupId ? { groupId } : {}),
+  }).catch(() => null);
+}
 
 // Group administration (P1.10a).
 /** Club members an owner or manager may add (or appoint as owner without `fn`). */

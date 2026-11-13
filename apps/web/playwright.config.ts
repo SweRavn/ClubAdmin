@@ -65,6 +65,12 @@ export default defineConfig({
           testMatch: /administrators\.spec\.ts/,
           dependencies: ["roles"],
         },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["administrators"] },
+        // The file archive (P2.2): uploads a file to IK Norrbacka's F2015.
+        {
+          name: "documents",
+          testMatch: /documents\.spec\.ts/,
+          dependencies: ["administrators"],
+        },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["documents"] },
       ],
 });

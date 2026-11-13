@@ -20,6 +20,7 @@ import {
 } from "../../../../components/action-form.tsx";
 import { ActivityFields } from "../../../../components/activity-fields.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
+import { NoticeDocuments } from "../../../../components/documents.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
 import { recurrenceText, requestLeadText } from "../../../../components/recurrence-summary.ts";
@@ -346,6 +347,8 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           ) : null}
         </p>
       ) : null}
+
+      <NoticeDocuments kind="activities" noticeId={activity.id} clubId={activity.clubId} />
 
       <section aria-labelledby="activity-leaders">
         <h2 id="activity-leaders" className="mb-2 text-lg font-semibold">

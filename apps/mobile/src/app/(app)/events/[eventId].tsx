@@ -17,6 +17,7 @@ import { useFormatter, useTranslations } from "use-intl";
 import { type EventQuestion, useEvent, useRegistration } from "../../../api/queries.ts";
 import { useOnline } from "../../../components/banners.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
+import { NoticeDocuments } from "../../../components/notice-documents.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useIdParam } from "../../../components/route-id.ts";
 import { Body, Button, Loading, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
@@ -87,6 +88,7 @@ function Event({ eventId }: { eventId: string }) {
         <Muted testID="event-counts">{counts}</Muted>
         <Muted>{`${t("events.closesField")}: ${at(e.registrationClosesAt)}`}</Muted>
       </View>
+      <NoticeDocuments kind="events" noticeId={e.id} />
       {e.mine.map((m) => (
         <Person key={m.person.id} event={e} mine={m} at={at} />
       ))}

@@ -3,6 +3,7 @@
 // deterministic generator and the superuser hooks of the seed command.
 
 import type { Database } from "@clubadmin/db";
+import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 
 import type { CoreServices } from "../domain-services.ts";
 import type { DemoData } from "./demodata.ts";
@@ -24,6 +25,8 @@ export interface SeedEnvironment {
   invitationTokenKey?: string | undefined;
   /** CALENDAR_TOKEN_KEY: the demo answer link is printed with it (P1.11). */
   calendarTokenKey?: string | undefined;
+  /** S3_*: demo files are stored, so downloads work (P2.2); without it only their rows. */
+  storage?: ObjectStorage | null;
   /** Where the seed prints what can be tried (demo secrets). */
   log?: (message: string) => void;
 }

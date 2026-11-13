@@ -203,3 +203,31 @@ minutes and signing.
 - **Gap:** the club's full export (decision 10) does not exist yet (only
   the member register's and each person's own export); documents are to
   be part of it when it comes ([#24](https://github.com/SweRavn/ClubAdmin/issues/24)).
+
+## As implemented (P2.2 part C, 2026-11-13)
+
+- **Web.** "Dokument" in the club's menu (with `club.documents.read`) and
+  a link on each group's page: top-level folders, a new folder (the club's
+  for the whole club, a group's for the group), and for those who manage
+  the club's archive its storage page (usage, the operator's limit, the
+  club's and each group's limits). A folder shows its path, to whom it is
+  shown (groups and roles by name, people never), subfolders and files; a
+  file its versions with their scan state and downloads. Those who manage
+  them upload (the web server sends the file to the presigned link; a
+  failure is an error message, never an error page), rename, set a
+  deletion date, change the audience ("as above", the whole club, the
+  group's leaders, chosen groups and club roles, public) and delete (a
+  folder with content only when asked). Downloads go through
+  `/clubs/:clubId/documents/:id/download`, which redirects to the
+  short-lived link. Opening a club's or group's documents marks them seen.
+- **Activities and events** show their documents; those who manage them
+  see to whom attaching shows them, pick from their own documents in the
+  club ("Mina dokument") or upload one to the notices folder.
+- **App.** "Mina dokument" from the home screen, a group's folders on the
+  group screen, a folder screen, and the documents of an activity or an
+  event; a file opens its current version in the browser through a
+  short-lived link (the app keeps no files). Cache first as elsewhere;
+  managing files happens on the web. A `document.added` notice opens
+  "Mina dokument".
+- **Seed** (`apps/api/src/seed/steps/documents.ts`) and request budgets for
+  the read endpoints the apps call.

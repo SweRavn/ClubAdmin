@@ -16,6 +16,7 @@ import {
   secondaryButtonClass,
 } from "../../../../components/action-form.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
+import { NoticeDocuments } from "../../../../components/documents.tsx";
 import { answerText, EventQuestions } from "../../../../components/event-questions.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
@@ -131,6 +132,8 @@ export default async function EventPage({ params, searchParams }: Props) {
           </ul>
         </section>
       ) : null}
+
+      <NoticeDocuments kind="events" noticeId={event.id} clubId={event.clubId} />
 
       {event.mine.length > 0 ? (
         <section aria-labelledby="event-mine" className="space-y-4" data-testid="event-mine">

@@ -101,6 +101,15 @@ export default async function GroupPage({ params, searchParams }: Params) {
           {group.archived ? <RoleBadge label={t("groups.archived")} /> : null}
         </h1>
         <HistoryLink clubId={group.clubId} href={`/groups/${group.id}/history`} />
+        <p className="mt-1 text-sm">
+          <a
+            href={`/groups/${group.id}/documents`}
+            className="underline"
+            data-testid="group-documents-link"
+          >
+            {t("documents.title")}
+          </a>
+        </p>
         {query.saved ? <Notice>{t("groupForm.saved")}</Notice> : null}
         {query.updated ? <Notice>{t("groupForm.updated")}</Notice> : null}
         {query.archived ? <Notice>{t("groupAdmin.archived")}</Notice> : null}

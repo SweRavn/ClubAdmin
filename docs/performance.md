@@ -116,6 +116,14 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   data. The group's channel is created on first use; its members follow the
   group in the worker, never in a read. Real-time events carry IDs only;
   clients fetch the content (one request per event, batched by `after`).
+- Documents (P2.2): a folder lists its documents by name (keyset on the
+  ID) from `documents_folder_idx`; who may read is decided in SQL
+  (`app.document_readable`, the audience functions) for the page's rows,
+  not per row in code. "Mina dokument" (`app.my_documents`) reads the
+  person's clubs one at a time by the published indexes, so its cost
+  follows the person's clubs and groups, not the club's files. Request
+  budgets cover "Mina dokument", the club's and a group's folders, a
+  folder, a file, a download link, a notice's documents and marking seen.
 - "Download my data" (P1.8b): the export is read one part at a time (the
   platform's, then each club's, all by the person's indexes) and deflated
   into a multipart upload, so memory stays bounded by one club's rows. The

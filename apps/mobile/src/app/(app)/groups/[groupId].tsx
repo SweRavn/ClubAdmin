@@ -6,11 +6,17 @@
 // snapshot is blurred (iOS).
 
 import { enumKey } from "@clubadmin/i18n";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
-import { type RosterEntry, useGroup, useGroupChats, useRoster } from "../../../api/queries.ts";
+import {
+  type RosterEntry,
+  useGroup,
+  useGroupChats,
+  useGroupFolders,
+  useRoster,
+} from "../../../api/queries.ts";
 import { ChatRow } from "../../../components/chat-parts.tsx";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
@@ -19,6 +25,7 @@ import { useProtectScreen } from "../../../components/protect-screen.ts";
 import { RoleBadge } from "../../../components/role-badge.tsx";
 import { useIdParam } from "../../../components/route-id.ts";
 import {
+  Body,
   Button,
   EmptyState,
   Loading,
@@ -44,6 +51,8 @@ function Group({ groupId }: { groupId: string }) {
   // The group's channels (P2.1), in parallel with the group; a club without
   // chat answers 403 and the section stays hidden.
   const chats = useGroupChats(group.data?.clubId, groupId);
+  // The group's folders (P2.2); hidden without access or the feature.
+  const folders = useGroupFolders(group.data?.clubId, groupId);
   const entries: RosterEntry[] = roster.data?.pages.flatMap((page) => page.items) ?? [];
   const showsProtected =
     entries.some((e) => e.person.protected) || (group.data?.owners ?? []).some((p) => p.protected);
@@ -65,6 +74,7 @@ function Group({ groupId }: { groupId: string }) {
     void group.refetch();
     void roster.refetch();
     void chats.refetch();
+    void folders.refetch();
   };
   const renderEntry = (
     entry: RosterEntry,
@@ -113,6 +123,20 @@ function Group({ groupId }: { groupId: string }) {
               />
             ))
           )}
+        </Section>
+      ) : null}
+      {folders.data && folders.data.items.length > 0 ? (
+        <Section title={t("documents.title")}>
+          {folders.data.items.map((folder, index, list) => (
+            <Row
+              key={folder.id}
+              onPress={() => router.push(`/documents/${clubId}/${folder.id}`)}
+              last={index === list.length - 1}
+              testID={`group-folder-${folder.id}`}
+            >
+              <Body>{folder.name}</Body>
+            </Row>
+          ))}
         </Section>
       ) : null}
       <Section title={t("group.owners")}>

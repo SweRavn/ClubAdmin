@@ -35,7 +35,15 @@ const BILLING = ["true", "1"].includes((process.env.BILLING_ENABLED ?? "").toLow
 
 let t: TestDatabase;
 let app: TestApp;
-let ids: { activity: string; event: string; chat: string; message: string };
+let ids: {
+  activity: string;
+  event: string;
+  chat: string;
+  message: string;
+  folder: string;
+  document: string;
+  cup: string;
+};
 
 interface Case {
   /** "GET /api/v1/me/schedule" as the app writes it (path parameters in braces). */
@@ -115,6 +123,72 @@ const BILLING_CASES: Case[] = [
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // The file archive (P2.2, ADR 0049): Erik in IK Norrbacka's F2015.
+  {
+    route: "GET /api/v1/me/documents",
+    persona: "erik",
+    method: "GET",
+    url: () => "/api/v1/me/documents",
+    statements: 2,
+    pages: 220,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/folders",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/folders`,
+    statements: 1,
+    pages: 30,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/groups/{groupId}/folders",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/groups/${key("ikn-f2015")}/folders`,
+    statements: 2,
+    pages: 90,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/folders/{folderId}",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/folders/${ids.folder}`,
+    statements: 8,
+    pages: 90,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/documents/{documentId}",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/documents/${ids.document}`,
+    statements: 7,
+    pages: 90,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/documents/{documentId}/download",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/documents/${ids.document}/download`,
+    statements: 5,
+    pages: 80,
+  },
+  {
+    route: "GET /api/v1/activities/{activityId}/attachments",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/activities/${ids.cup}/attachments`,
+    statements: 5,
+    pages: 160,
+  },
+  {
+    route: "POST /api/v1/clubs/{clubId}/documents/seen",
+    persona: "erik",
+    method: "POST",
+    url: () => `/api/v1/clubs/${key("ikn")}/documents/seen`,
+    body: () => ({ groupId: key("ikn-f2015") }),
+    statements: 1,
+    pages: 20,
+  },
   // The club's access state and plan (banners; P1.13 in the apps).
   {
     route: "GET /api/v1/clubs/{clubId}/entitlements",
@@ -771,17 +845,10 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
-  // The file archive (P2.2 part A, ADR 0049): no app calls it yet. The web
-  // and app pages come with part C, which seeds documents and measures the
-  // reads (lists, a folder, a file, downloads) here; the writes stay below.
-  "GET /api/v1/clubs/{clubId}/folders": "measured with the seeded documents (P2.2 part C)",
-  "GET /api/v1/clubs/{clubId}/groups/{groupId}/folders": "as the club's folders (P2.2 part C)",
-  "GET /api/v1/clubs/{clubId}/folders/{folderId}": "as the club's folders (P2.2 part C)",
-  "GET /api/v1/clubs/{clubId}/documents/{documentId}": "as the club's folders (P2.2 part C)",
-  "GET /api/v1/clubs/{clubId}/documents/{documentId}/download":
-    "the file by key and a signed link, no storage call (P2.2 part C)",
+  // The file archive (P2.2, ADR 0049): the reads the pages make are measured
+  // above (CASES); these writes and rarer reads are covered by the documents tests.
   "GET /api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/download":
-    "as the download",
+    "as the current version's download (measured above)",
   "POST /api/v1/clubs/{clubId}/folders": "a rare write: the audience, one insert, audit",
   "POST /api/v1/clubs/{clubId}/groups/{groupId}/folders": "as the club's",
   "POST /api/v1/clubs/{clubId}/folders/{folderId}/folders": "as a top-level folder, plus the path",
@@ -795,14 +862,7 @@ const NOT_HERE: Record<string, string> = {
     "one version by key, audit and outbox",
   "PATCH /api/v1/clubs/{clubId}/documents/{documentId}": "a rare write by key (documents tests)",
   "DELETE /api/v1/clubs/{clubId}/documents/{documentId}": "one update by key, audit and outbox",
-  // Part B: "Mina dokument" and the notices' documents are read by the apps
-  // from part C, which measures them on the seeded documents.
-  "GET /api/v1/me/documents":
-    "per club of the caller: its groups' and its own newest files by the published indexes (P2.2 part C)",
-  "POST /api/v1/clubs/{clubId}/documents/seen": "one upsert by the person's key",
-  "GET /api/v1/activities/{activityId}/attachments":
-    "the notice's documents by its index (P2.2 part C)",
-  "GET /api/v1/events/{eventId}/attachments": "as the activity's (P2.2 part C)",
+  "GET /api/v1/events/{eventId}/attachments": "as the activity's (measured above)",
   "PUT /api/v1/activities/{activityId}/attachments":
     "a rare write: each new document's policy, one delete and one insert, audit",
   "PUT /api/v1/events/{eventId}/attachments": "as the activity's",
@@ -981,6 +1041,9 @@ beforeAll(async () => {
     event: string;
     chat: string;
     message: string;
+    folder: string;
+    document: string;
+    cup: string;
   }>(
     "admin",
     `SELECT
@@ -989,8 +1052,11 @@ beforeAll(async () => {
           AND a.response_mode = 'requested' ORDER BY a.starts_at LIMIT 1) AS activity,
        (SELECT id FROM events WHERE title = 'Höstcupen i Strandviken') AS event,
        (SELECT id FROM chats WHERE default_for_group_id = $1) AS chat,
-       (SELECT last_message_id FROM chats WHERE default_for_group_id = $1) AS message`,
-    [key("svk-f2017")],
+       (SELECT last_message_id FROM chats WHERE default_for_group_id = $1) AS message,
+       (SELECT id FROM document_folders WHERE group_id = $2 AND name = 'Matchschema') AS folder,
+       (SELECT id FROM documents WHERE name = 'Matchschema vår.pdf') AS document,
+       (SELECT id FROM activities WHERE title = 'Vårcupen i Norrbacka') AS cup`,
+    [key("svk-f2017"), key("ikn-f2015")],
   );
   ids = rows[0]!;
   if (process.env.BUDGET_EXPLAIN) {
@@ -1019,6 +1085,12 @@ beforeAll(async () => {
     // Calendar feeds (P1.11) are measured as rendered, not from the cache.
     CALENDAR_TOKEN_KEY: "calendar-token-key-for-tests-0123456789",
     CALENDAR_FEED_CACHE_SECONDS: "0",
+    // Download links are signed offline (P2.2); nothing is fetched from storage.
+    S3_ENDPOINT: "http://127.0.0.1:9",
+    S3_PUBLIC_ENDPOINT: "https://s3.clubadmin.test",
+    S3_REGION: "garage",
+    S3_ACCESS_KEY_ID: "GKtest",
+    S3_SECRET_ACCESS_KEY: "test-secret",
     ...NO_RATE_LIMITS,
   });
   for (const c of CASES) before.set(c.route, await measure(c));

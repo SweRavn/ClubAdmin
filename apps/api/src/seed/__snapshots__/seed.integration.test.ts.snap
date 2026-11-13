@@ -88,6 +88,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
           "match Poolspel innebandy: ikn-f2015",
           "match Seriematch mot Frösö IF: ikn-p2012",
           "match Seriematch mot Östersunds FK P: ikn-p2012",
+          "match Vårcupen i Norrbacka: ikn-f2015",
         ],
       },
       "consents": [

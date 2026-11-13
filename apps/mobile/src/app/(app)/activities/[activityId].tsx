@@ -22,6 +22,7 @@ import {
 } from "../../../api/queries.ts";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
+import { NoticeDocuments } from "../../../components/notice-documents.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useProtectScreen } from "../../../components/protect-screen.ts";
 import { ResponseButtons } from "../../../components/response-buttons.tsx";
@@ -242,6 +243,8 @@ function Activity({ activityId }: { activityId: string }) {
           ) : null}
         </Section>
       ) : null}
+
+      <NoticeDocuments kind="activities" noticeId={activityId} />
 
       <Section title={t("activities.leaders")}>
         {a ? (

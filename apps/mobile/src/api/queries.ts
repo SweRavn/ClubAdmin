@@ -876,3 +876,105 @@ export function useOpenDirectChat() {
       ),
   });
 }
+
+// --- Documents (P2.2, ADR 0049) ---------------------------------------------------
+
+export type DocumentSummary = Schemas["DocumentSummary"];
+export type MyDocument = Schemas["MyDocument"];
+
+/**
+ * "Mina dokument": the newest files of the person's (and their children's)
+ * groups and clubs, the logged-in person's own. Cache first.
+ */
+export function useMyDocuments() {
+  const { api, personId } = useSession();
+  return useInfiniteQuery({
+    queryKey: ["documents", personId, "mine"],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) =>
+      data(
+        await api.GET("/api/v1/me/documents", {
+          params: { query: { limit: 30, ...(pageParam ? { cursor: pageParam } : {}) } },
+        }),
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? null,
+    enabled: personId !== null,
+  });
+}
+
+/** A group's top-level folders (403/402 without access or the feature: the section stays hidden). */
+export function useGroupFolders(clubId: string | undefined, groupId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["documents", personId, "group", groupId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/groups/{groupId}/folders", {
+          params: { path: { clubId: clubId!, groupId }, query: { limit: 100 } },
+        }),
+      ),
+    enabled: personId !== null && clubId !== undefined,
+  });
+}
+
+export function useFolder(clubId: string, folderId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["documents", personId, "folder", folderId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/folders/{folderId}", {
+          params: { path: { clubId, folderId }, query: { limit: 100 } },
+        }),
+      ),
+    enabled: personId !== null,
+  });
+}
+
+/** The documents attached to an activity's or event's notice. */
+export function useNoticeAttachments(kind: "activities" | "events", noticeId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["documents", personId, kind, noticeId],
+    queryFn: async () =>
+      data(
+        kind === "activities"
+          ? await api.GET("/api/v1/activities/{activityId}/attachments", {
+              params: { path: { activityId: noticeId } },
+            })
+          : await api.GET("/api/v1/events/{eventId}/attachments", {
+              params: { path: { eventId: noticeId } },
+            }),
+      ),
+    enabled: personId !== null,
+  });
+}
+
+/** A short-lived download link for a file's current version (opened in the browser). */
+export function useDocumentLink() {
+  const { api } = useSession();
+  return useMutation({
+    mutationFn: async ({ clubId, documentId }: { clubId: string; documentId: string }) =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/documents/{documentId}/download", {
+          params: { path: { clubId, documentId } },
+        }),
+      ),
+  });
+}
+
+/** The person looked at a group's documents: nothing there is new now. */
+export function useMarkDocumentsSeen() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ clubId, groupId }: { clubId: string; groupId: string | null }) => {
+      await api.POST("/api/v1/clubs/{clubId}/documents/seen", {
+        params: { path: { clubId } },
+        body: { groupId },
+      });
+    },
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["documents", personId, "mine"] }),
+  });
+}

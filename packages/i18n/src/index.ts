@@ -133,6 +133,7 @@ export type EnumNamespace =
   | "history.priorityReasons"
   | "waitlist.statuses"
   | "waitlist.removalReasons"
+  | "documents.states"
   | "waitlist.decisionKinds"
   | "calendar.ui.scopes"
   | "protection.sources"

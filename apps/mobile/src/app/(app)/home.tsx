@@ -74,6 +74,11 @@ export default function Home() {
       ) : null}
       <LinkButton label={t("chat.nav")} onPress={() => router.push("/chats")} testID="open-chats" />
       <LinkButton
+        label={t("nav.documents")}
+        onPress={() => router.push("/documents")}
+        testID="open-documents"
+      />
+      <LinkButton
         label={t("mobile.settings")}
         onPress={() => router.push("/settings")}
         testID="open-settings"

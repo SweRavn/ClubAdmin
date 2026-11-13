@@ -279,6 +279,16 @@ schedule (Ola left two years ago).
   something unkind; Erik **reported** it and Karin, the club's
   safeguarding officer, closed the case ("no action", a note about talking
   with Maja and her parents).
+- **Documents** (P2.2, ADR 0049, `apps/api/src/seed/steps/documents.ts`):
+  in IKN Göran keeps the club's folder **"Policyer"** (the whole club) with
+  "Uppförandekod.pdf" and "Trafikpolicy.pdf", the latter **public**. Erik
+  keeps F2015's **"Matchschema"** with "Matchschema vår.pdf" in two
+  versions, and F2015's notices folder **"Kallelser"** with "Cupinfo
+  Vårcupen.pdf", attached to his match **"Vårcupen i Norrbacka"** ten days
+  ahead. The files are small PDFs written as scanned and clean, stored in
+  the object storage when the seed has S3 settings, so downloads work in
+  the demo. Open `/me/documents` as Erik or `/clubs/<ikn>/documents` as
+  Göran.
 - SVK training plan "Volleyboll 9 år — hösttermin" shared publicly; IKN copies it.
 - Club documents: statutes (stadgar), last annual meeting minutes, a board
   meeting with agenda.

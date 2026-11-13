@@ -45,7 +45,9 @@
     "calendar": "Kalender",
     "locations": "Platser",
     "events": "Evenemang",
-    "chat": "Chatt"
+    "chat": "Chatt",
+    "documents": "Mina dokument",
+    "clubDocuments": "Dokument"
   },
   "clubSwitcher": {
     "label": "Förening: {club}",
@@ -828,7 +830,8 @@
     "storage_limit_group_exceeded": "Gruppens lagringsutrymme räcker inte för filen. Ta bort filer eller be föreningen ge gruppen mer utrymme.",
     "storage_limit_invalid": "Gränserna går inte ihop: föreningens gräns får inte vara större än den som gäller för föreningen, och gruppernas gränser får tillsammans inte vara större än föreningens.",
     "delete_after_past": "Raderingsdatumet måste vara efter i dag.",
-    "notice_attachments_full": "Kallelsen har redan så många dokument som går."
+    "notice_attachments_full": "Kallelsen har redan så många dokument som går.",
+    "document_upload_failed": "Filen kunde inte laddas upp. Försök igen."
   },
   "memberExport": {
     "columns": {
@@ -4122,5 +4125,96 @@
       "title": "Vad som sparas",
       "body": "Meddelanden sparas så länge chatten finns. Tar du bort ett meddelande döljs det men finns kvar, och tidigare versioner av redigerade meddelanden sparas – det är föreningens underlag om något händer. Notiser om nya meddelanden visar aldrig texten eller vem som skrev. Meddelanden äldre än tre år visas bara för dem som är med i chatten."
     }
+  },
+  "documents": {
+    "title": "Dokument",
+    "intro": "Klubbens mappar och filer. Du ser de mappar och filer som visas för dig.",
+    "groupIntro": "Gruppens mappar och filer, till exempel matchscheman och kallelser.",
+    "mine": "Mina dokument",
+    "mineIntro": "De senaste filerna från dina (och dina barns) grupper och klubbar. Nya filer är markerade tills du har öppnat gruppens eller klubbens dokument.",
+    "mineEmpty": "Inga dokument ännu.",
+    "new": "Ny",
+    "more": "Visa fler",
+    "noFolders": "Inga mappar ännu.",
+    "emptyFolder": "Mappen är tom.",
+    "newFolder": "Ny mapp",
+    "newSubfolder": "Ny undermapp",
+    "folderName": "Mappens namn",
+    "createFolder": "Skapa mapp",
+    "groupFolderAudience": "Mappen visas för gruppen. Du kan ändra det i mappen efteråt.",
+    "folderSettings": "Mappens inställningar",
+    "documentSettings": "Filens inställningar",
+    "fileName": "Namn",
+    "save": "Spara",
+    "saved": "Sparat.",
+    "deleted": "Borttaget.",
+    "uploaded": "Filen är uppladdad. Den visas när virussökningen är klar.",
+    "deleteFolder": "Ta bort mappen",
+    "deleteFolderContent": "Ta även bort mappens undermappar och filer",
+    "deleteDocument": "Ta bort filen",
+    "deleteAfter": "Ta bort automatiskt",
+    "deleteAfterHelp": "Filen tas bort den dagen. De som hanterar den påminns en vecka innan. Lämna tomt för att behålla den.",
+    "deleteAfterNote": "Tas bort automatiskt {day}.",
+    "download": "Ladda ner",
+    "downloadCurrent": "Ladda ner ({size})",
+    "notReady": "Filen är inte klar än (den laddas upp eller virussöks).",
+    "versions": "Versioner",
+    "version": "Version {number}",
+    "newVersion": "Ny version",
+    "path": "Sökväg",
+    "states": {
+      "uploading": "Laddas upp",
+      "pending": "Virussöks",
+      "clean": "Klar",
+      "infected": "Stoppad: skadlig kod",
+      "failed": "Kunde inte kontrolleras"
+    },
+    "audience": {
+      "legend": "Visas för",
+      "shownTo": "Visas för: {who}",
+      "inherit": "Samma som mappen ovanför",
+      "club": "Hela klubben",
+      "public": "Alla (publik, även utan inloggning)",
+      "leaders": "Gruppens ledare",
+      "custom": "Valda grupper och roller",
+      "guardians": "Vårdnadshavare ser det deras barn ser (om de får klubbens meddelanden).",
+      "group": "{group}",
+      "groupRoles": "{group} ({roles})",
+      "clubRole": "{role}",
+      "aRole": "en roll"
+    },
+    "upload": {
+      "title": "Ladda upp",
+      "file": "Fil",
+      "version": "Fil för den nya versionen",
+      "name": "Namn (frivilligt, annars filens namn)",
+      "notify": "Skicka en notis till dem som ser filen",
+      "help": "Högst {mb} MB. PDF, Office- och OpenDocument-filer, text, CSV och bilder.",
+      "submit": "Ladda upp"
+    },
+    "notice": {
+      "title": "Dokument",
+      "none": "Inga dokument bifogade.",
+      "shownToClub": "Bifogade dokument visas för hela klubben.",
+      "shownToCalledUp": "Bifogade dokument visas för {count, plural, one {# kallad} other {# kallade}} och deras vårdnadshavare.",
+      "shownToGroups": "Bifogade dokument visas för {groups}.",
+      "pick": "Bifoga från dina dokument",
+      "save": "Spara bilagor"
+    },
+    "storage": {
+      "title": "Lagring",
+      "intro": "Hur mycket utrymme klubbens filer använder, och gränser för klubben och för enskilda grupper.",
+      "used": "{used} av {limit} används.",
+      "operator": "Driftens gräns för klubben: {limit}.",
+      "clubLimit": "Klubbens gräns (MB)",
+      "limitHelp": "Lämna tomt för att använda driftens gräns.",
+      "group": "Grupp",
+      "groupUsed": "Använt",
+      "groupLimit": "Gräns (MB)",
+      "groupLimitFor": "Gräns för {group} (MB)"
+    },
+    "folders": "Mappar",
+    "files": "Filer",
+    "openFailed": "Filen kunde inte öppnas. Försök igen."
   }
 }

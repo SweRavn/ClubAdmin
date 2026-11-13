@@ -2089,7 +2089,177 @@ const CALENDAR_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+/**
+ * An audience from the form (P2.2): `audience` is "inherit" (null: the
+ * parent's or folder's), "club", "public", "leaders" (the roles in
+ * `leaderRole` of the group `audienceGroupId`) or "custom" (the groups in
+ * `audienceGroup` and club roles in `audienceRole`); undefined when unset
+ * or empty.
+ */
+function audienceFrom(form: FormData): unknown[] | null | undefined {
+  const mode = text(form, "audience");
+  const ids = (name: string) => [
+    ...new Set(form.getAll(name).filter((v): v is string => typeof v === "string" && isUuid(v))),
+  ];
+  switch (mode) {
+    case "inherit":
+      return null;
+    case "club":
+      return [{ kind: "club" }];
+    case "public":
+      return [{ kind: "public" }];
+    case "leaders": {
+      const groupId = id(form, "audienceGroupId");
+      const roleIds = ids("leaderRole").slice(0, 20);
+      return groupId && roleIds.length > 0
+        ? [{ kind: "group_roles", groupId, roleIds }]
+        : undefined;
+    }
+    case "custom": {
+      const entries = [
+        ...ids("audienceGroup").map((groupId) => ({ kind: "group", groupId })),
+        ...ids("audienceRole").map((roleId) => ({ kind: "club_role", roleId })),
+      ].slice(0, 50);
+      return entries.length > 0 ? entries : undefined;
+    }
+    default:
+      return undefined;
+  }
+}
+
+const MB = 1024 * 1024;
+/** Megabytes from a field: a positive number, null when empty, undefined when invalid. */
+function megabytes(form: FormData, name: string): number | null | undefined {
+  const value = text(form, name).replace(",", ".");
+  if (value === "") return null;
+  const mb = Number(value);
+  return Number.isFinite(mb) && mb > 0 && mb <= 1_000_000 ? Math.round(mb * MB) : undefined;
+}
+
+/** The file archive (P2.2, ADR 0049): folders, files, storage, notices' documents. */
+const DOCUMENT_ACTIONS: Record<string, FormAction> = {
+  "documents-create-folder": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const name = text(form, "name").slice(0, 120);
+      if (!clubId || !name) return null;
+      const audience = audienceFrom(form);
+      if (audience === undefined && text(form, "audience") !== "") return null;
+      const body = { name, ...(audience ? { audience } : {}) };
+      const parentId = id(form, "parentId");
+      const groupId = id(form, "groupId");
+      const path = parentId
+        ? `/api/v1/clubs/${clubId}/folders/${parentId}/folders`
+        : groupId
+          ? `/api/v1/clubs/${clubId}/groups/${groupId}/folders`
+          : `/api/v1/clubs/${clubId}/folders`;
+      return { path, method: "POST", body };
+    },
+    done: (form, result) => {
+      const folderId = (result as { id?: unknown } | null)?.id;
+      const clubId = id(form, "clubId");
+      return typeof folderId === "string" && clubId && isUuid(folderId)
+        ? `/clubs/${clubId}/folders/${folderId}`
+        : withParam(back(form), "created", "1");
+    },
+  },
+  "documents-update-folder": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const folderId = id(form, "folderId");
+      if (!clubId || !folderId) return null;
+      const body: Record<string, unknown> = {};
+      const name = text(form, "name").slice(0, 120);
+      if (name) body.name = name;
+      const audience = audienceFrom(form);
+      if (audience !== undefined) body.audience = audience;
+      if (Object.keys(body).length === 0) return null;
+      return { path: `/api/v1/clubs/${clubId}/folders/${folderId}`, method: "PATCH", body };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "documents-delete-folder": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const folderId = id(form, "folderId");
+      if (!clubId || !folderId) return null;
+      const confirm = text(form, "confirm") === "true" ? "?confirm=true" : "";
+      return { path: `/api/v1/clubs/${clubId}/folders/${folderId}${confirm}`, method: "DELETE" };
+    },
+    done: (form) => withParam(safeReturnTo(text(form, "after"), "/"), "deleted", "1"),
+  },
+  "documents-update": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      if (!clubId || !documentId) return null;
+      const body: Record<string, unknown> = {};
+      const name = text(form, "name").slice(0, 200);
+      if (name) body.name = name;
+      if (form.has("deleteAfter")) {
+        const day = text(form, "deleteAfter");
+        if (day && !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+        body.deleteAfter = day || null;
+      }
+      const audience = audienceFrom(form);
+      if (audience !== undefined) body.audience = audience;
+      if (Object.keys(body).length === 0) return null;
+      return { path: `/api/v1/clubs/${clubId}/documents/${documentId}`, method: "PATCH", body };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "documents-delete": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      if (!clubId || !documentId) return null;
+      return { path: `/api/v1/clubs/${clubId}/documents/${documentId}`, method: "DELETE" };
+    },
+    done: (form) => withParam(safeReturnTo(text(form, "after"), "/"), "deleted", "1"),
+  },
+  "documents-storage": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      const clubLimitBytes = megabytes(form, "clubLimitMb");
+      if (clubLimitBytes === undefined) return null;
+      const groups: { groupId: string; limitBytes: number | null }[] = [];
+      for (const groupId of form.getAll("groupId")) {
+        if (typeof groupId !== "string" || !isUuid(groupId)) continue;
+        const limitBytes = megabytes(form, `groupLimitMb.${groupId}`);
+        if (limitBytes === undefined) return null;
+        groups.push({ groupId, limitBytes });
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/storage`,
+        method: "PUT",
+        body: { clubLimitBytes, groups: groups.slice(0, 200) },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "notice-attachments": {
+    call: (form) => {
+      const kind = oneOf(["activities", "events"] as const, text(form, "kind"));
+      const noticeId = id(form, "noticeId");
+      if (!kind || !noticeId) return null;
+      const documentIds = [
+        ...new Set(
+          form.getAll("documentId").filter((v): v is string => typeof v === "string" && isUuid(v)),
+        ),
+      ].slice(0, 20);
+      return {
+        path: `/api/v1/${kind}/${noticeId}/attachments`,
+        method: "PUT",
+        body: { documentIds },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
+  ...DOCUMENT_ACTIONS,
   ...FAMILY_ACTIONS,
   ...BILLING_ACTIONS,
   ...CALENDAR_ACTIONS,

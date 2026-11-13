@@ -52,6 +52,7 @@ const NOTICE_PARAMS = [
   "undone",
   "saved",
   "deleted",
+  "uploaded",
   "answered",
   "stale",
   "rows",

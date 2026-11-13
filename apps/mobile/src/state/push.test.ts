@@ -8,6 +8,7 @@ describe("appRoute", () => {
     expect(appRoute(`/activities/${id}`)).toBe(`/activities/${id}`);
     expect(appRoute(`/events/${id}`)).toBe(`/events/${id}`);
     expect(appRoute("/me/family")).toBe("/settings/family");
+    expect(appRoute(`/clubs/${id}/documents/${id}`)).toBe("/documents");
     expect(appRoute(`/clubs/${id}/members/exports`)).toBe("/notifications");
     expect(appRoute(`/activities/${id}/../../admin`)).toBe("/notifications");
   });

@@ -16,6 +16,7 @@ import { billingDemoStep, billingInvoicesDemoStep } from "./steps/billing.ts";
 import { calendarDemoStep } from "./steps/calendar.ts";
 import { chatDemoStep } from "./steps/chat.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
+import { documentsDemoStep } from "./steps/documents.ts";
 import { eventsDemoStep } from "./steps/events.ts";
 import { importsDemoStep } from "./steps/imports.ts";
 import { notificationsDemoStep } from "./steps/notifications.ts";
@@ -38,6 +39,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   calendarDemoStep,
   protectionDemoStep,
   chatDemoStep,
+  documentsDemoStep,
 ];
 
 export interface SeedOptions {

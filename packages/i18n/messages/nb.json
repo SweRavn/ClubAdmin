@@ -45,7 +45,9 @@
     "calendar": "Kalender",
     "locations": "Steder",
     "events": "Arrangementer",
-    "chat": "Chat"
+    "chat": "Chat",
+    "documents": "Mine dokumenter",
+    "clubDocuments": "Dokumenter"
   },
   "clubSwitcher": {
     "label": "Klubb: {club}",
@@ -828,7 +830,8 @@
     "storage_limit_group_exceeded": "Gruppens lagringsplass er ikke nok for filen. Slett filer eller be klubben gi gruppen mer plass.",
     "storage_limit_invalid": "Grensene går ikke opp: klubbens grense kan ikke være større enn den som gjelder for klubben, og gruppenes grenser kan til sammen ikke være større enn klubbens.",
     "delete_after_past": "Slettedatoen må være etter i dag.",
-    "notice_attachments_full": "Innkallingen har allerede så mange dokumenter som mulig."
+    "notice_attachments_full": "Innkallingen har allerede så mange dokumenter som mulig.",
+    "document_upload_failed": "Filen kunne ikke lastes opp. Prøv igjen."
   },
   "memberExport": {
     "columns": {
@@ -4122,5 +4125,96 @@
       "title": "Hva som lagres",
       "body": "Meldinger lagres så lenge chatten finnes. En melding du sletter skjules, men lagres, og tidligere versjoner av redigerte meldinger lagres – det er klubbens dokumentasjon hvis noe skjer. Varsler om nye meldinger viser aldri teksten eller hvem som skrev. Meldinger eldre enn tre år vises bare for dem som er med i chatten."
     }
+  },
+  "documents": {
+    "title": "Dokumenter",
+    "intro": "Klubbens mapper og filer. Du ser mappene og filene som vises for deg.",
+    "groupIntro": "Gruppens mapper og filer, for eksempel kampoppsett og innkallinger.",
+    "mine": "Mine dokumenter",
+    "mineIntro": "De nyeste filene fra dine (og barnas) grupper og klubber. Nye filer er merket til du har åpnet gruppens eller klubbens dokumenter.",
+    "mineEmpty": "Ingen dokumenter ennå.",
+    "new": "Ny",
+    "more": "Vis flere",
+    "noFolders": "Ingen mapper ennå.",
+    "emptyFolder": "Mappen er tom.",
+    "newFolder": "Ny mappe",
+    "newSubfolder": "Ny undermappe",
+    "folderName": "Mappens navn",
+    "createFolder": "Opprett mappe",
+    "groupFolderAudience": "Mappen vises for gruppen. Du kan endre det i mappen etterpå.",
+    "folderSettings": "Mappens innstillinger",
+    "documentSettings": "Filens innstillinger",
+    "fileName": "Navn",
+    "save": "Lagre",
+    "saved": "Lagret.",
+    "deleted": "Slettet.",
+    "uploaded": "Filen er lastet opp. Den vises når virussjekken er ferdig.",
+    "deleteFolder": "Slett mappen",
+    "deleteFolderContent": "Slett også mappens undermapper og filer",
+    "deleteDocument": "Slett filen",
+    "deleteAfter": "Slett automatisk",
+    "deleteAfterHelp": "Filen slettes den dagen. De som håndterer den får en påminnelse en uke før. La feltet stå tomt for å beholde den.",
+    "deleteAfterNote": "Slettes automatisk {day}.",
+    "download": "Last ned",
+    "downloadCurrent": "Last ned ({size})",
+    "notReady": "Filen er ikke klar ennå (den lastes opp eller virussjekkes).",
+    "versions": "Versjoner",
+    "version": "Versjon {number}",
+    "newVersion": "Ny versjon",
+    "path": "Sti",
+    "states": {
+      "uploading": "Lastes opp",
+      "pending": "Virussjekkes",
+      "clean": "Klar",
+      "infected": "Stoppet: skadelig kode",
+      "failed": "Kunne ikke kontrolleres"
+    },
+    "audience": {
+      "legend": "Vises for",
+      "shownTo": "Vises for: {who}",
+      "inherit": "Samme som mappen over",
+      "club": "Hele klubben",
+      "public": "Alle (offentlig, også uten innlogging)",
+      "leaders": "Gruppens ledere",
+      "custom": "Valgte grupper og roller",
+      "guardians": "Foresatte ser det barna deres ser (hvis de mottar klubbens meldinger).",
+      "group": "{group}",
+      "groupRoles": "{group} ({roles})",
+      "clubRole": "{role}",
+      "aRole": "en rolle"
+    },
+    "upload": {
+      "title": "Last opp",
+      "file": "Fil",
+      "version": "Fil for den nye versjonen",
+      "name": "Navn (valgfritt, ellers filens navn)",
+      "notify": "Send et varsel til dem som ser filen",
+      "help": "Maks {mb} MB. PDF, Office- og OpenDocument-filer, tekst, CSV og bilder.",
+      "submit": "Last opp"
+    },
+    "notice": {
+      "title": "Dokumenter",
+      "none": "Ingen dokumenter vedlagt.",
+      "shownToClub": "Vedlagte dokumenter vises for hele klubben.",
+      "shownToCalledUp": "Vedlagte dokumenter vises for {count, plural, one {# innkalt} other {# innkalte}} og deres foresatte.",
+      "shownToGroups": "Vedlagte dokumenter vises for {groups}.",
+      "pick": "Legg ved fra dine dokumenter",
+      "save": "Lagre vedlegg"
+    },
+    "storage": {
+      "title": "Lagring",
+      "intro": "Hvor mye plass klubbens filer bruker, og grenser for klubben og for enkeltgrupper.",
+      "used": "{used} av {limit} brukes.",
+      "operator": "Driftens grense for klubben: {limit}.",
+      "clubLimit": "Klubbens grense (MB)",
+      "limitHelp": "La feltet stå tomt for å bruke driftens grense.",
+      "group": "Gruppe",
+      "groupUsed": "Brukt",
+      "groupLimit": "Grense (MB)",
+      "groupLimitFor": "Grense for {group} (MB)"
+    },
+    "folders": "Mapper",
+    "files": "Filer",
+    "openFailed": "Filen kunne ikke åpnes. Prøv igjen."
   }
 }

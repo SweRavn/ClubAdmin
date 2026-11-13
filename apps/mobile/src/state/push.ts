@@ -33,6 +33,9 @@ export function appRoute(link: string): string {
   if (/^\/activities\/[0-9a-f-]{36}$/.test(path)) return path;
   if (/^\/events\/[0-9a-f-]{36}$/.test(path)) return path;
   if (path === "/me/family") return "/settings/family";
+  // A file (P2.2): "Mina dokument", which opens it.
+  if (path === "/me/documents" || /^\/clubs\/[0-9a-f-]{36}\/documents\/[0-9a-f-]{36}$/.test(path))
+    return "/documents";
   return "/notifications";
 }
 

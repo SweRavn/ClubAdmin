@@ -45,7 +45,9 @@
     "calendar": "Calendar",
     "locations": "Locations",
     "events": "Events",
-    "chat": "Chat"
+    "chat": "Chat",
+    "documents": "My documents",
+    "clubDocuments": "Documents"
   },
   "clubSwitcher": {
     "label": "Club: {club}",
@@ -828,7 +830,8 @@
     "storage_limit_group_exceeded": "The group's storage is not enough for the file. Delete files or ask the club to give the group more space.",
     "storage_limit_invalid": "The limits do not add up: the club's limit may not exceed the one that applies to the club, and the groups' limits together may not exceed the club's.",
     "delete_after_past": "The deletion date must be after today.",
-    "notice_attachments_full": "The notice already has as many documents as it can."
+    "notice_attachments_full": "The notice already has as many documents as it can.",
+    "document_upload_failed": "The file could not be uploaded. Please try again."
   },
   "memberExport": {
     "columns": {
@@ -4122,5 +4125,96 @@
       "title": "What is kept",
       "body": "Messages are kept as long as the chat exists. A message you delete is hidden but kept, and earlier versions of edited messages are kept – the club's record if something happens. Notifications of new messages never show the text or who wrote it. Messages older than three years are shown only to those in the chat."
     }
+  },
+  "documents": {
+    "title": "Documents",
+    "intro": "The club's folders and files. You see the folders and files shown to you.",
+    "groupIntro": "The group's folders and files, such as match schedules and notices.",
+    "mine": "My documents",
+    "mineIntro": "The newest files from your (and your children's) groups and clubs. New files are marked until you open the group's or club's documents.",
+    "mineEmpty": "No documents yet.",
+    "new": "New",
+    "more": "Show more",
+    "noFolders": "No folders yet.",
+    "emptyFolder": "The folder is empty.",
+    "newFolder": "New folder",
+    "newSubfolder": "New subfolder",
+    "folderName": "Folder name",
+    "createFolder": "Create folder",
+    "groupFolderAudience": "The folder is shown to the group. You can change that in the folder afterwards.",
+    "folderSettings": "Folder settings",
+    "documentSettings": "File settings",
+    "fileName": "Name",
+    "save": "Save",
+    "saved": "Saved.",
+    "deleted": "Deleted.",
+    "uploaded": "The file is uploaded. It is shown once the virus scan is done.",
+    "deleteFolder": "Delete the folder",
+    "deleteFolderContent": "Also delete the folder's subfolders and files",
+    "deleteDocument": "Delete the file",
+    "deleteAfter": "Delete automatically",
+    "deleteAfterHelp": "The file is deleted on that day. Those who manage it are reminded a week before. Leave empty to keep it.",
+    "deleteAfterNote": "Deleted automatically on {day}.",
+    "download": "Download",
+    "downloadCurrent": "Download ({size})",
+    "notReady": "The file is not ready yet (it is being uploaded or scanned).",
+    "versions": "Versions",
+    "version": "Version {number}",
+    "newVersion": "New version",
+    "path": "Path",
+    "states": {
+      "uploading": "Uploading",
+      "pending": "Being scanned",
+      "clean": "Ready",
+      "infected": "Blocked: malware",
+      "failed": "Could not be checked"
+    },
+    "audience": {
+      "legend": "Shown to",
+      "shownTo": "Shown to: {who}",
+      "inherit": "Same as the folder above",
+      "club": "The whole club",
+      "public": "Everyone (public, also without signing in)",
+      "leaders": "The group's leaders",
+      "custom": "Chosen groups and roles",
+      "guardians": "Guardians see what their children see (if they receive the club's messages).",
+      "group": "{group}",
+      "groupRoles": "{group} ({roles})",
+      "clubRole": "{role}",
+      "aRole": "a role"
+    },
+    "upload": {
+      "title": "Upload",
+      "file": "File",
+      "version": "File for the new version",
+      "name": "Name (optional, otherwise the file's name)",
+      "notify": "Send a notification to those who see the file",
+      "help": "At most {mb} MB. PDF, Office and OpenDocument files, text, CSV and images.",
+      "submit": "Upload"
+    },
+    "notice": {
+      "title": "Documents",
+      "none": "No documents attached.",
+      "shownToClub": "Attached documents are shown to the whole club.",
+      "shownToCalledUp": "Attached documents are shown to {count, plural, one {# person called up} other {# people called up}} and their guardians.",
+      "shownToGroups": "Attached documents are shown to {groups}.",
+      "pick": "Attach from your documents",
+      "save": "Save attachments"
+    },
+    "storage": {
+      "title": "Storage",
+      "intro": "How much space the club's files use, and limits for the club and for single groups.",
+      "used": "{used} of {limit} used.",
+      "operator": "The operator's limit for the club: {limit}.",
+      "clubLimit": "The club's limit (MB)",
+      "limitHelp": "Leave empty to use the operator's limit.",
+      "group": "Group",
+      "groupUsed": "Used",
+      "groupLimit": "Limit (MB)",
+      "groupLimitFor": "Limit for {group} (MB)"
+    },
+    "folders": "Folders",
+    "files": "Files",
+    "openFailed": "The file could not be opened. Please try again."
   }
 }

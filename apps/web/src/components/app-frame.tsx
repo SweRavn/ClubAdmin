@@ -56,6 +56,13 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       label: t("nav.chat"),
       current: pathname.startsWith("/me/chats") || /^\/clubs\/[^/]+\/chats/.test(pathname),
     },
+    // "Mina dokument" (P2.2): the newest files of the viewer's groups and clubs.
+    {
+      key: "documents",
+      href: "/me/documents",
+      label: t("nav.documents"),
+      current: pathname.startsWith("/me/documents"),
+    },
   ];
   if (club) {
     nav.push({
@@ -70,6 +77,17 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         href: `/clubs/${club.id}/events`,
         label: t("nav.events"),
         current: pathname.startsWith(`/clubs/${club.id}/events`) || pathname.startsWith("/events/"),
+      });
+    }
+    if (club.mine?.permissions.includes("club.documents.read")) {
+      nav.push({
+        key: "club-documents",
+        href: `/clubs/${club.id}/documents`,
+        label: t("nav.clubDocuments"),
+        current:
+          pathname.startsWith(`/clubs/${club.id}/documents`) ||
+          pathname.startsWith(`/clubs/${club.id}/folders`) ||
+          pathname.startsWith(`/clubs/${club.id}/storage`),
       });
     }
     if (club.mine?.permissions.includes("club.join_requests.manage")) {

@@ -20,6 +20,7 @@ import {
   withAdminConnection,
 } from "@clubadmin/db/admin";
 import { loadEnvFiles } from "@clubadmin/server-kit";
+import { ObjectStorage, objectStorageConfig } from "@clubadmin/server-kit/object-storage";
 
 import { createCoreServices } from "../domain-services.ts";
 import { FieldEncryption } from "../platform/crypto/field-encryption.ts";
@@ -127,10 +128,21 @@ async function main(command: string | undefined, argv: string[]): Promise<number
     max: 4,
     applicationName: "clubadmin-seed",
   });
+  // Demo files are stored when S3_* is set (pnpm dev:services); downloads then work.
+  const storageConfig = objectStorageConfig({
+    S3_ENDPOINT: process.env.S3_ENDPOINT,
+    S3_PUBLIC_ENDPOINT: process.env.S3_PUBLIC_ENDPOINT,
+    S3_REGION: process.env.S3_REGION ?? "garage",
+    S3_BUCKET_FILES: process.env.S3_BUCKET_FILES ?? "clubadmin-files",
+    S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
+    S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+  });
+  const storage = storageConfig ? new ObjectStorage(storageConfig) : null;
   try {
     await seed(
       {
         db,
+        storage,
         services: createCoreServices(db, {
           encryption: FieldEncryption.fromConfig(process.env),
           // Guardian invitations derive their link from it; emails only go out with the same key.

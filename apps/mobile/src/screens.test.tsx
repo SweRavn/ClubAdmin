@@ -317,6 +317,47 @@ function seededClient() {
     ],
     pageParams: [null],
   });
+  // "Mina dokument" (P2.2): a new clean file and one still being scanned.
+  const file = (id: string, name: string, status: string) => ({
+    id,
+    clubId: SVK,
+    folderId: "0199a000-0000-7000-8005-000000000001",
+    kind: "file",
+    name,
+    current:
+      status === "clean"
+        ? { id: `${id.slice(0, -1)}9`, number: 1, size: 2048, status, fileName: name }
+        : null,
+    latest: status === "clean" ? null : { status },
+    ownAudience: false,
+    updatedAt: "2026-10-20T16:00:00Z",
+    publishedAt: "2026-10-20T16:00:00Z",
+    deleteAfter: null,
+  });
+  client.setQueryData(["documents", ANNA, "mine"], {
+    pages: [
+      {
+        items: [
+          {
+            document: file("0199a000-0000-7000-8006-000000000001", "Matchschema.pdf", "clean"),
+            clubName: "Strandvikens Volleybollklubb",
+            groupId: F2017,
+            groupName: "F2017",
+            isNew: true,
+          },
+          {
+            document: file("0199a000-0000-7000-8006-000000000002", "Kallelse.pdf", "pending"),
+            clubName: "Strandvikens Volleybollklubb",
+            groupId: null,
+            groupName: null,
+            isNew: false,
+          },
+        ],
+        nextCursor: null,
+      },
+    ],
+    pageParams: [null],
+  });
   return client;
 }
 
@@ -413,6 +454,18 @@ describe("screens", () => {
     expect(screen.getByText("A member with protected identity")).toBeTruthy();
     expect(screen.getByText("👍 2")).toBeTruthy();
     expect(screen.getByTestId("chat-input")).toBeTruthy();
+  });
+
+  it("My documents shows the cached files at once, new ones marked and unscanned ones' state", () => {
+    type Module = { default: () => ReactNode };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const Documents = (require("./app/(app)/documents/index.tsx") as Module).default;
+    renderScreen(<Documents />);
+    expect(screen.getByTestId("document-0199a000-0000-7000-8006-000000000001")).toBeTruthy();
+    expect(screen.getByText(/Matchschema\.pdf/)).toBeTruthy();
+    expect(screen.getByText("F2017 · 2 kB")).toBeTruthy();
+    expect(screen.getAllByTestId("document-new")).toHaveLength(1);
+    expect(screen.getByText("Strandvikens Volleybollklubb · Being scanned")).toBeTruthy();
   });
 
   it("an invalid ID in a deep link shows not found", () => {
