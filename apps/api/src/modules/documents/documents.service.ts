@@ -83,7 +83,11 @@ export interface StorageView {
 
 export interface NoticeAttachments {
   items: { document: repo.DocumentRow; attachedAt: Date }[];
-  shownTo: { club: boolean; groups: { id: string; name: string }[]; calledUp: number | null } | null;
+  shownTo: {
+    club: boolean;
+    groups: { id: string; name: string }[];
+    calledUp: number | null;
+  } | null;
 }
 
 /** The notices folder's name in the club's language. */
@@ -528,7 +532,10 @@ export class DocumentsService {
       } = {};
       if (input.deleteAfter !== undefined) {
         // A deletion date is a day after today (the worker deletes on it).
-        if (input.deleteAfter !== null && input.deleteAfter <= new Date().toISOString().slice(0, 10)) {
+        if (
+          input.deleteAfter !== null &&
+          input.deleteAfter <= new Date().toISOString().slice(0, 10)
+        ) {
           throw new DomainError("delete_after_past");
         }
         changes.deleteAfter = input.deleteAfter;
@@ -666,7 +673,8 @@ export class DocumentsService {
       );
       if (input.groups.some((g) => !names.has(g.groupId))) throw new DomainError("not_found");
       await repo.setQuota(tx, context.clubId, null, input.clubLimitBytes);
-      for (const g of input.groups) await repo.setQuota(tx, context.clubId, g.groupId, g.limitBytes);
+      for (const g of input.groups)
+        await repo.setQuota(tx, context.clubId, g.groupId, g.limitBytes);
       const own = await repo.quotas(tx, context.clubId);
       const clubLimit = Math.min(operatorLimit, own.get(null) ?? Infinity);
       const groupLimits = [...own.entries()].filter(([k]) => k !== null).map(([, v]) => v);
@@ -710,7 +718,9 @@ export class DocumentsService {
         (a) => readable === null || (readable.has(a.document.id) && a.document.current !== null),
       );
       return {
-        items: manage ? items : items.map((a) => ({ ...a, document: { ...a.document, latest: null } })),
+        items: manage
+          ? items
+          : items.map((a) => ({ ...a, document: { ...a.document, latest: null } })),
         shownTo: manage ? await repo.noticeReaders(tx, notice) : null,
       };
     });
@@ -777,7 +787,8 @@ export class DocumentsService {
         limit,
       });
       const current = (await repo.noticeAttachments(tx, notice)).map((a) => a.document.id);
-      if (current.length >= NOTICE_ATTACHMENTS_MAX) throw new DomainError("notice_attachments_full");
+      if (current.length >= NOTICE_ATTACHMENTS_MAX)
+        throw new DomainError("notice_attachments_full");
       await repo.setNoticeAttachments(
         tx,
         context.clubId,
@@ -812,7 +823,13 @@ export class DocumentsService {
     );
     // A folder of the same name the club made itself keeps its name.
     for (const name of [base, `${base} (ClubAdmin)`]) {
-      const id = await repo.insertNoticesFolder(tx, { clubId, groupId, name, audienceId, by: personId });
+      const id = await repo.insertNoticesFolder(tx, {
+        clubId,
+        groupId,
+        name,
+        audienceId,
+        by: personId,
+      });
       if (id) return id;
     }
     throw new DomainError("folder_name_taken");

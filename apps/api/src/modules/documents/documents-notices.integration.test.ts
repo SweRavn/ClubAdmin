@@ -223,8 +223,7 @@ describe("documents attached to notices", () => {
       (await api(guardian, "GET", `${base()}/documents/${boardFile}/download`)).statusCode,
     ).toBe(200);
     expect(
-      (await api(outsiderFamily.guardian.id, "GET", `${base()}/documents/${boardFile}`))
-        .statusCode,
+      (await api(outsiderFamily.guardian.id, "GET", `${base()}/documents/${boardFile}`)).statusCode,
     ).toBe(404);
 
     // Detached: no longer readable, and not deleted.
@@ -277,9 +276,7 @@ describe("Mina dokument", () => {
       await api(coach.id, "POST", `${base()}/groups/${teamId}/folders`, { name: "Matchschema" })
     ).json<{ id: string }>().id;
     const schedule = await newFile(coach.id, folder, "Vår.pdf");
-    const page = (
-      await api(family.guardian.id, "GET", "/me/documents")
-    ).json<MyDocumentPage>();
+    const page = (await api(family.guardian.id, "GET", "/me/documents")).json<MyDocumentPage>();
     const item = page.items.find((i) => i.document.id === schedule.documentId);
     expect(item).toMatchObject({ groupName: "F2015", isNew: true, clubName: club.name });
     // The board's file is not listed for the guardian; the chair sees it.
@@ -291,9 +288,7 @@ describe("Mina dokument", () => {
       groupId: teamId,
     });
     expect(seen.statusCode).toBe(204);
-    const later = (
-      await api(family.guardian.id, "GET", "/me/documents")
-    ).json<MyDocumentPage>();
+    const later = (await api(family.guardian.id, "GET", "/me/documents")).json<MyDocumentPage>();
     expect(later.items.find((i) => i.document.id === schedule.documentId)?.isNew).toBe(false);
 
     // Keyset: one at a time, the second page continues after the first.
@@ -328,7 +323,10 @@ describe("the club's storage limits", () => {
       groups: [{ groupId: teamId, limitBytes: 1024 }],
     });
     expect(set.statusCode).toBe(200);
-    expect(set.json<Storage>()).toMatchObject({ limitBytes: 512 * 1024, clubLimitBytes: 512 * 1024 });
+    expect(set.json<Storage>()).toMatchObject({
+      limitBytes: 512 * 1024,
+      clubLimitBytes: 512 * 1024,
+    });
 
     // The team is over its limit now: its uploads are refused.
     const folder = (
@@ -383,9 +381,7 @@ describe("public documents", () => {
     const file = await newFile(manager.id, sub, "Trafikpolicy.pdf");
     const list = await api(null, "GET", `/public/clubs/${club.slug}/documents`);
     expect(list.statusCode).toBe(200);
-    expect(list.json<PublicDocumentList>().items.map((d) => d.name)).toEqual([
-      "Trafikpolicy.pdf",
-    ]);
+    expect(list.json<PublicDocumentList>().items.map((d) => d.name)).toEqual(["Trafikpolicy.pdf"]);
     const link = await api(
       null,
       "GET",

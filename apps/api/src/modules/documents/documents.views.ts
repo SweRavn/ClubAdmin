@@ -4,12 +4,8 @@
 
 import type { DocumentSummary, DocumentVersion, PersonSummary } from "@clubadmin/shared";
 
-import type {
-  PersonPresenter} from "../authorization/index.ts";
-import {
-  type RequestAuthorization,
-  tenantContext,
-} from "../authorization/index.ts";
+import type { PersonPresenter } from "../authorization/index.ts";
+import { type RequestAuthorization, tenantContext } from "../authorization/index.ts";
 import type { PeopleService } from "../people/index.ts";
 import type { DocumentRow, VersionRow } from "./documents.service.ts";
 
