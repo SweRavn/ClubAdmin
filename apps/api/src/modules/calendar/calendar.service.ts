@@ -370,7 +370,12 @@ export class CalendarService {
       const body = await this.render(found, requestId);
       cached = JSON.stringify({
         body,
-        etag: `"${createHash("sha256").update(body).digest("base64url").slice(0, 32)}"`,
+        // DTSTAMP is the time of rendering (METHOD:PUBLISH): leave it out of
+        // the ETag, so the same content answers 304 even when rendered again.
+        etag: `"${createHash("sha256")
+          .update(body.replace(/^DTSTAMP:[^\r\n]*\r?\n/gm, ""))
+          .digest("base64url")
+          .slice(0, 32)}"`,
         at: this.now().toISOString(),
       });
       await this.d.cache?.set(cacheKey, cached, this.cacheSeconds);
