@@ -216,6 +216,16 @@ export default async function FamilyPage({ searchParams }: Props) {
               {ward.clubs?.length ? (
                 <p className="text-sm text-muted">{ward.clubs.map((c) => c.name).join(", ")}</p>
               ) : null}
+              {/* Chat (P2.1 part B, ADR 0047 rule 6): the child's chats and who is in them. */}
+              <p className="text-sm">
+                <a
+                  href={`/me/family/${ward.person.id}/chats`}
+                  className="underline"
+                  data-testid="ward-chats"
+                >
+                  {t("chat.wardChats")}
+                </a>
+              </p>
               <p className="text-sm">
                 {t("family.myRights", {
                   rights: ward.rights.map((r) => t(enumKey("guardianRights", r))).join(", "),

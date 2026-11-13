@@ -158,9 +158,16 @@ describe("tenant isolation of club-owned tables", () => {
         v AS (INSERT INTO chat_message_versions (club_id, message_id, body, written_at)
               SELECT ${a.id}, id, 'Hj', now() FROM msg),
         f AS (INSERT INTO chat_message_attachments (club_id, message_id, object_key, file_name, content_type, size_bytes)
-              SELECT ${a.id}, id, 'chat/fixture', 'a.txt', 'text/plain', 1 FROM msg)
-        INSERT INTO chat_reactions (club_id, message_id, person_id, emoji)
-        SELECT ${a.id}, id, ${member.id}, '👍' FROM msg`);
+              SELECT ${a.id}, id, 'chat/fixture', 'a.txt', 'text/plain', 1 FROM msg),
+        r AS (INSERT INTO chat_reactions (club_id, message_id, person_id, emoji)
+              SELECT ${a.id}, id, ${member.id}, '👍' FROM msg),
+        -- Child safety (P2.1 part B): a report, a request to read, a mute.
+        rep AS (INSERT INTO chat_reports (club_id, chat_id, reporter_person_id, reason)
+                SELECT ${a.id}, id, ${member.id}, 'other' FROM c RETURNING id),
+        rr AS (INSERT INTO chat_report_reads (club_id, report_id, requested_by_person_id)
+               SELECT ${a.id}, id, ${a.manager.id} FROM rep)
+        INSERT INTO chat_mutes (club_id, person_id, muted_by_person_id, until)
+        VALUES (${a.id}, ${member.id}, ${a.manager.id}, now() + interval '1 hour')`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(

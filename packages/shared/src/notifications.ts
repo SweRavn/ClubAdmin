@@ -117,6 +117,13 @@ export const NOTIFICATION_TYPES = {
   },
   "club.administrators.needed": { category: "club_admin", mandatoryEmail: true, immediate: true },
   "club.privacy_policy.updated": { category: "membership" },
+  // Child safety in chat (P2.1 part B): to the safeguarding officers at once
+  // (a report, a request to read that needs a second officer), and to the
+  // person whose message was hidden or who was muted.
+  "chat.report.received": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "chat.report.read_requested": { category: "club_admin", mandatoryEmail: true, immediate: true },
+  "chat.message.moderated": { category: "membership", immediate: true },
+  "chat.member.muted": { category: "membership", immediate: true },
   "family.accepted": { category: "family" },
   "family.own_login_age": { category: "family" },
   "family.adult": { category: "family" },

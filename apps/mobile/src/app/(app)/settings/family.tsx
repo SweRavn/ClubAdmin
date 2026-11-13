@@ -4,7 +4,8 @@
 // rights. Adding, inviting and changing happen on the web.
 
 import { enumKey } from "@clubadmin/i18n";
-import { isLinkedGuardianshipKind, personLabel } from "@clubadmin/shared";
+import { isFullGuardianshipKind, isLinkedGuardianshipKind, personLabel } from "@clubadmin/shared";
+import { router } from "expo-router";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
@@ -13,7 +14,15 @@ import { ErrorView } from "../../../components/error-view.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { ProtectionToggle } from "../../../components/protection-toggle.tsx";
 import { RoleBadge } from "../../../components/role-badge.tsx";
-import { EmptyState, Loading, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
+import {
+  EmptyState,
+  LinkButton,
+  Loading,
+  Muted,
+  Row,
+  Screen,
+  Section,
+} from "../../../components/ui.tsx";
 
 function WardSection({ ward }: { ward: MyWards["wards"][number] }) {
   const t = useTranslations();
@@ -36,6 +45,14 @@ function WardSection({ ward }: { ward: MyWards["wards"][number] }) {
           <ProtectionToggle
             personId={ward.person.id}
             testID={`ward-protection-${ward.person.id}`}
+          />
+        ) : null}
+        {isFullGuardianshipKind(ward.kind) ? (
+          // Chat (P2.1 part B, ADR 0047 rule 6): the child's chats and who is in them.
+          <LinkButton
+            label={t("chat.wardChats")}
+            onPress={() => router.push(`/chats/ward/${ward.person.id}`)}
+            testID={`ward-chats-${ward.person.id}`}
           />
         ) : null}
       </Row>

@@ -217,6 +217,13 @@ export function noticeLink(input: NoticeInput): string {
     // Billing (P1.13): the club's billing page (an invoice opened when given).
     case "club_billing":
       return input.clubId ? `/clubs/${input.clubId}/billing${id ? `?invoice=${id}` : ""}` : "/";
+    // Child safety in chat (P2.1 part B): the case, the chat, one's chats.
+    case "chat_report":
+      return input.clubId && id ? `/clubs/${input.clubId}/safeguarding/${id}` : "/";
+    case "chat":
+      return input.clubId && id ? `/clubs/${input.clubId}/chats/${id}` : "/me/chats";
+    case "chat_mute":
+      return "/me/chats";
     // Calendar subscriptions (P1.11): the person's subscriptions page.
     case "calendar_feed":
       return "/me/calendar";
@@ -264,6 +271,10 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     suspensionReason: str(p.reason),
     self: str(p.self ?? false),
     graceUntil: formatDay(locale, p.graceUntil, p.timeZone),
+    /** Child safety in chat (P2.1 part B): a report's reason code, children in the chat, a mute's end. */
+    reportReason: str(p.reportReason),
+    children: str(p.children ?? false),
+    until: formatWhen(locale, p.until, p.timeZone),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

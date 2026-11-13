@@ -738,6 +738,11 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("chat.join", "chat", ({ actor, resource }) => canJoinChat(actor, resource)),
   definePolicy("chat.post", "chat", ({ actor, resource }) => canPostInChat(actor, resource)),
   definePolicy("chat.manage", "chat", ({ actor, resource }) => canManageChat(actor, resource)),
+  // Child safety (P2.1 part B, ADR 0047 rule 7): the club's safeguarding
+  // officers, with a second factor (they read reported chats).
+  definePolicy("club.safeguarding.handle", "club", holdsInClub("club.safeguarding.handle"), {
+    mfa: true,
+  }),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

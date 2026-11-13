@@ -777,6 +777,14 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "the earlier texts of edited messages: shown with the message to the chat's members",
   "public.chat_message_attachments": "prepared for files on messages; unused (P2.1)",
   "public.chat_reactions": "reactions: shown with the message to the chat's members",
+  // Child safety (P2.1 part B): only the club's safeguarding officers see a
+  // case, on its own page; every step (and every read) is in the audit log.
+  "public.chat_reports":
+    "safeguarding reports: on the case page for the club's safeguarding officers and in the audit log (chat.report.*)",
+  "public.chat_report_reads":
+    "the two-person rule's reads of a reported chat: on the case page and in the audit log",
+  "public.chat_mutes":
+    "who may not write in the club's chats: on the safeguarding page and in the audit log (chat.member.muted)",
 };
 
 const byTable = new Map(HISTORY_POLICY.map((p) => [p.table, p]));

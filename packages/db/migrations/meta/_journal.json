@@ -281,6 +281,13 @@
       "when": 1794670005000,
       "tag": "0039_chat_member_facts_once",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794680005000,
+      "tag": "0040_chat_safeguarding",
+      "breakpoints": true
     }
   ]
 }

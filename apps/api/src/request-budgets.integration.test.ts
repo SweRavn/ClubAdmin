@@ -584,6 +584,15 @@ const CASES: Case[] = [
     statements: 12,
     pages: 150,
   },
+  // A child's chats for their parent (P2.1 part B): Anna for Elsa.
+  {
+    route: "GET /api/v1/me/wards/{personId}/chats",
+    persona: "anna",
+    method: "GET",
+    url: () => `/api/v1/me/wards/${key("elsa")}/chats`,
+    statements: 12,
+    pages: 150,
+  },
   {
     route: "GET /api/v1/clubs/{clubId}/groups/{groupId}/chats",
     persona: "erik",
@@ -790,6 +799,10 @@ const NOT_HERE: Record<string, string> = {
   "PATCH /api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}":
     "the message by key and one version row (chat tests)",
   "DELETE /api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}": "as editing",
+  "POST /api/v1/clubs/{clubId}/chats/{chatId}/reports":
+    "a rare write: the message by key, one insert, audit and outbox (safeguarding tests)",
+  "POST /api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}/moderate":
+    "a rare write by a chat's managers: the message by key, audit and outbox",
   "POST /api/v1/clubs/{clubId}/direct-chats":
     "once per pair; the refusal check and the lookup by both people (chat tests)",
 };

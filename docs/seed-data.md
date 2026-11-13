@@ -275,7 +275,10 @@ schedule (Ola left two years ago).
   Johan's **direct message to Alva**: her mother Sara was added by the
   guardian rule. In IKN F2015 Erik's closed **"Föräldrar"** channel was
   offered to Samira (protected identity), who accepted it; Nadia is in no
-  chat she has not accepted.
+  chat she has not accepted. In IKN F2015's team channel Maja wrote
+  something unkind; Erik **reported** it and Karin, the club's
+  safeguarding officer, closed the case ("no action", a note about talking
+  with Maja and her parents).
 - SVK training plan "Volleyboll 9 år — hösttermin" shared publicly; IKN copies it.
 - Club documents: statutes (stadgar), last annual meeting minutes, a board
   meeting with agenda.

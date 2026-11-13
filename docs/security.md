@@ -306,6 +306,13 @@ later phase. Backup and disaster recovery are in
   the record); a deleted message is hidden, not removed. Sending is limited
   per account (120 a minute). Encrypted in transit and at rest, not end to
   end (moderation and safeguarding review must stay possible).
+- **Safeguarding cases (P2.1 part B).** Reports go to the club's
+  safeguarding officers only (`club.safeguarding.handle`, second factor);
+  the reported person never sees a report. Reading a reported chat needs a
+  second officer's confirmation (two-person rule, 24 hours), and each page
+  read is an audit event; hiding, muting and closing are audited too, and
+  the person concerned is told. Reporting is limited per account (20 an
+  hour).
 - Request body limits and timeouts.
 - **Rate limits** (fixed one-minute windows in Valkey, shared by all API
   instances; in memory without Valkey; `429` problem details with

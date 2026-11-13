@@ -186,6 +186,7 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "chat.join": builtIn,
   "chat.post": builtIn,
   "chat.manage": derived("group.channels.manage"),
+  "club.safeguarding.handle": role("club", "communication", true),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -348,7 +349,8 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
   deputy_board_member: { scope: "club", permissions: BOARD },
   auditor: { scope: "club", permissions: [] },
   nomination_committee: { scope: "club", permissions: [] },
-  safeguarding_officer: { scope: "club", permissions: [] },
+  // Reports and safeguarding cases (P2.1 part B, ADR 0047 rule 7).
+  safeguarding_officer: { scope: "club", permissions: ["club.safeguarding.handle"] },
   communications: { scope: "club", permissions: [] },
   staff: { scope: "club", permissions: [] },
   // Children create channels too (P2.1, ADR 0047: visible to their guardians and leaders).

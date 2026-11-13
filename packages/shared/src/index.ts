@@ -29,6 +29,7 @@ export * from "./domain/protection.ts";
 export * from "./domain/recurrence.ts";
 export * from "./domain/responses.ts";
 export * from "./domain/roles.ts";
+export * from "./domain/safeguarding.ts";
 export * from "./domain/schemas.ts";
 export * from "./domain/waitlists.ts";
 export * from "./domain/zoned-time.ts";

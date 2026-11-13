@@ -29,6 +29,7 @@ import {
   ChatReactionSchema,
   type ChatReadInput,
   ChatReadSchema,
+  ChatReportCreatedSchema,
   type ChatSettingsInput,
   ChatSettingsSchema,
   ChatSummarySchema,
@@ -40,12 +41,16 @@ import {
   type EditChatMessageInput,
   EditChatMessageSchema,
   GroupParamsSchema,
+  ModerateChatMessageSchema,
   type PageQuery,
   PageQuerySchema,
+  type ReportChatInput,
+  ReportChatSchema,
   type SendChatMessageInput,
   SendChatMessageSchema,
   type UpdateChatInput,
   UpdateChatSchema,
+  WardParamsSchema,
   z,
 } from "@clubadmin/shared";
 import { Body, Controller, Param, Query } from "@nestjs/common";
@@ -76,12 +81,15 @@ import {
   toChatMessage,
   toChatSummary,
 } from "./chat.views.ts";
+import { SafeguardingService } from "./safeguarding.service.ts";
 
 const GroupInClubParamsSchema = ClubParamsSchema.merge(GroupParamsSchema);
 const EmptySchema = z.object({}).openapi("Empty");
 
 /** Sending: a per-account budget on top of the global limit (abuse, flooding). */
 const SEND_LIMIT = { max: 120, timeWindowMs: 60_000 };
+/** Reporting: generous for one tap, bounded against flooding the officers. */
+const REPORT_LIMIT = { max: 20, timeWindowMs: 60 * 60_000 };
 
 /** The chat as a resource for the policy helpers, from a list row. */
 function resourceOfRow(
@@ -115,11 +123,18 @@ export class ChatController {
   private readonly chats: ChatService;
   private readonly people: PeopleService;
   private readonly presenter: PersonPresenter;
+  private readonly safeguarding: SafeguardingService;
 
-  constructor(chats: ChatService, people: PeopleService, presenter: PersonPresenter) {
+  constructor(
+    chats: ChatService,
+    people: PeopleService,
+    presenter: PersonPresenter,
+    safeguarding: SafeguardingService,
+  ) {
     this.chats = chats;
     this.people = people;
     this.presenter = presenter;
+    this.safeguarding = safeguarding;
   }
 
   private async summaries(
@@ -654,6 +669,85 @@ export class ChatController {
       body.messageId,
     );
     return {};
+  }
+
+  // --- Child safety (P2.1 part B) ---------------------------------------------------
+
+  @Endpoint({
+    method: "POST",
+    path: "clubs/:clubId/chats/:chatId/reports",
+    summary:
+      "Report a chat or one of its messages to the club's safeguarding officers (the reported person never sees who)",
+    tags: ["chat"],
+    access: { permission: "chat.read", resource: "chat" },
+    request: { params: ChatParamsSchema, body: ReportChatSchema },
+    response: ChatReportCreatedSchema,
+    rateLimit: REPORT_LIMIT,
+  })
+  @RequiresEntitlement("chat")
+  async report(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string; chatId: string },
+    @Body() body: ReportChatInput,
+  ): Promise<{ id: string }> {
+    const id = await this.safeguarding.report(
+      tenantContext(authz, params.clubId),
+      resourceOf(authz, "chat"),
+      body,
+    );
+    return { id };
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "clubs/:clubId/chats/:chatId/messages/:messageId/moderate",
+    summary: "Hide someone's message in a chat one manages (kept, not shown; the sender is told)",
+    tags: ["chat"],
+    access: { permission: "chat.manage", resource: "chat" },
+    request: { params: ChatMessageParamsSchema, body: ModerateChatMessageSchema },
+    response: EmptySchema,
+  })
+  @RequiresEntitlement("chat")
+  async moderate(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string; chatId: string; messageId: string },
+  ): Promise<Record<string, never>> {
+    await this.chats.moderate(
+      tenantContext(authz, params.clubId),
+      resourceOf(authz, "chat"),
+      params.messageId,
+    );
+    return {};
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "me/wards/:personId/chats",
+    summary:
+      "A ward's chats and who is in them, for their parent or legal guardian (never the messages; ADR 0047 rule 6)",
+    tags: ["chat"],
+    access: { authenticated: true },
+    request: { params: WardParamsSchema, query: PageQuerySchema },
+    response: ChatPageSchema,
+  })
+  async wardChats(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { personId: string },
+    @Query() query: PageQuery,
+  ): Promise<ChatPage> {
+    if (authz.actor.onBehalfOf) return { items: [], nextCursor: null };
+    const page = await this.chats.wardChats(authz.context, params.personId, query);
+    const items = await this.summaries(authz, page.rows, page.names);
+    return {
+      // The guardian reads messages only by joining (visibly): no excerpt or
+      // unread count of chats they are not in.
+      items: items.map((chat) =>
+        chat.membership?.status === "active"
+          ? chat
+          : { ...chat, lastMessage: null, unreadCount: 0 },
+      ),
+      nextCursor: page.nextCursor,
+    };
   }
 }
 

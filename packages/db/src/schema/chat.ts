@@ -213,3 +213,83 @@ export const chatReactions = pgTable(
     index("chat_reactions_person_idx").on(t.personId),
   ],
 );
+
+// --- Child safety (P2.1 part B, migration 0040) ---------------------------
+
+/** A report from a chat (one tap; ADR 0047 rule 7). */
+export const chatReports = pgTable(
+  "chat_reports",
+  {
+    id: id(),
+    clubId: clubRef(),
+    chatId: uuid().notNull(),
+    messageId: uuid().references(() => chatMessages.id),
+    reporterPersonId: uuid()
+      .notNull()
+      .references(() => people.id),
+    reportedPersonId: uuid().references(() => people.id),
+    reason: text().notNull(),
+    note: text(),
+    status: text().$type<"open" | "closed">().notNull().default("open"),
+    outcome: text(),
+    outcomeNote: text(),
+    closedByPersonId: uuid().references(() => people.id),
+    closedAt: timestamp(tz),
+    ...timestamps,
+  },
+  (t) => [
+    foreignKey({
+      name: "chat_reports_chat_fk",
+      columns: [t.clubId, t.chatId],
+      foreignColumns: [chats.clubId, chats.id],
+    }),
+    index("chat_reports_club_idx").on(t.clubId, t.status, t.id.desc()),
+    index("chat_reports_chat_idx").on(t.chatId),
+    index("chat_reports_reporter_idx").on(t.reporterPersonId),
+  ],
+);
+
+/** Reading a reported chat under the two-person rule. */
+export const chatReportReads = pgTable(
+  "chat_report_reads",
+  {
+    id: id(),
+    clubId: clubRef(),
+    reportId: uuid()
+      .notNull()
+      .references(() => chatReports.id),
+    requestedByPersonId: uuid()
+      .notNull()
+      .references(() => people.id),
+    confirmedByPersonId: uuid().references(() => people.id),
+    confirmedAt: timestamp(tz),
+    expiresAt: timestamp(tz),
+    ...timestamps,
+  },
+  (t) => [index("chat_report_reads_report_idx").on(t.reportId, t.id)],
+);
+
+/** A member who may not write in the club's chats for a time. */
+export const chatMutes = pgTable(
+  "chat_mutes",
+  {
+    id: id(),
+    clubId: clubRef(),
+    personId: uuid()
+      .notNull()
+      .references(() => people.id),
+    mutedByPersonId: uuid()
+      .notNull()
+      .references(() => people.id),
+    reportId: uuid().references(() => chatReports.id),
+    until: timestamp(tz).notNull(),
+    liftedAt: timestamp(tz),
+    liftedByPersonId: uuid().references(() => people.id),
+    ...timestamps,
+  },
+  (t) => [
+    index("chat_mutes_person_idx")
+      .on(t.personId, t.clubId, t.until)
+      .where(sql`${t.liftedAt} IS NULL`),
+  ],
+);

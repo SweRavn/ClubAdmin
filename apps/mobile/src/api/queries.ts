@@ -819,6 +819,50 @@ export function useChatActions(clubId: string, chatId: string) {
   };
 }
 
+/** A ward's chats for their parent (who is in them, never the messages; P2.1 part B). */
+export function useWardChats(wardId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["chats", personId, "ward", wardId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/me/wards/{personId}/chats", {
+          params: { path: { personId: wardId }, query: { limit: 100 } },
+        }),
+      ),
+    enabled: personId !== null,
+  });
+}
+
+/** One-tap reports and moderation in a chat (P2.1 part B; online only). */
+export function useChatSafety(clubId: string, chatId: string) {
+  const { api, personId } = useSession();
+  const client = useQueryClient();
+  const path = { clubId, chatId };
+  return {
+    report: useMutation({
+      mutationFn: async (input: {
+        messageId?: string;
+        reason: "bullying" | "inappropriate" | "unsafe_contact" | "self_harm" | "other";
+      }) =>
+        data(
+          await api.POST("/api/v1/clubs/{clubId}/chats/{chatId}/reports", {
+            params: { path },
+            body: input,
+          }),
+        ),
+    }),
+    moderate: useMutation({
+      mutationFn: async (messageId: string) =>
+        api.POST("/api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}/moderate", {
+          params: { path: { ...path, messageId } },
+          body: {},
+        }),
+      onSuccess: () => void client.invalidateQueries({ queryKey: ["chat", personId, chatId] }),
+    }),
+  };
+}
+
 /** Opens (or finds) the direct chat with a person; the API applies the rules (ADR 0047). */
 export function useOpenDirectChat() {
   const { api } = useSession();

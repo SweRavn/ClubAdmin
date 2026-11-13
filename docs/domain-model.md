@@ -946,6 +946,14 @@ their own and their wards' memberships and those chats, for "Mina kanaler"):
 - `chat_message_versions`: every earlier text of an edited message.
 - `chat_message_attachments`: prepared for files; unused in the first
   revision. `chat_reactions`: one row per message, person and emoji.
+- Child safety (P2.1 part B, migration 0040): `chat_reports` (a chat or one
+  of its messages, the reporter, the reported sender, a reason code, a note,
+  `open` | `closed` with an outcome); `chat_report_reads` (the two-person
+  rule: one safeguarding officer asks, another confirms, both may read the
+  reported chat for 24 hours; never the same person); `chat_mutes` (a
+  member who may not write in the club's chats until `until`, or lifted).
+  Only `club.safeguarding.handle` (the safeguarding officer's template role)
+  reads them; the reported person never learns who reported.
 
 The child-safety rules are SQL functions (migration 0037) the service and
 the worker call: the **guardian rule** (`app.chat_enforce_guardians`: in a

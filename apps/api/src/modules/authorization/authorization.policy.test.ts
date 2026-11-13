@@ -87,6 +87,11 @@ const handoverR: Resource = {
   toPersonId: successorSet.personId,
 };
 const chair = as({ ...member(), roles: [{ clubId: club, role: "chair" }] }, { mfa: true });
+// Child safety in chat (P2.1 part B): the club's safeguarding officer.
+const safeguardingOfficer = as(
+  { ...member(), roles: [{ clubId: club, role: "safeguarding_officer" }] },
+  { mfa: true },
+);
 // A suspension request (P1.15 A3): `manager` started it against `targetAdmin`.
 const targetAdmin = uuidv7();
 const suspensionR = (administrators: number, requestedBy = uuidv7()): Resource => ({
@@ -1226,6 +1231,13 @@ const CASES: Record<Permission, Case[]> = {
     { name: "coach", actor: coach, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
+  "club.safeguarding.handle": [
+    { name: "safeguarding officer", actor: safeguardingOfficer, resource: clubR, allowed: true },
+    { name: "club manager", actor: manager, resource: clubR, allowed: false },
+    { name: "chair", actor: chair, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
   "club.chats.direct": [
     { name: "member", actor: plainMember, resource: clubR, allowed: true },
     { name: "guardian of a member", actor: parent, resource: clubR, allowed: true },
@@ -1489,6 +1501,7 @@ describe("policies", () => {
       "club.audit.read",
       "club.profile_views.read",
       "club.profile_views.configure",
+      "club.safeguarding.handle",
     ] as const) {
       expect(
         policyFor(permission)!.requiresMfa({ actor: managerWithoutMfa, resource: clubR }),

@@ -56,6 +56,13 @@ export const DOMAIN_EVENTS = {
   // and the chair are told; a confirmed suspension also invalidates the
   // target's relationship sets.
   "administrator.suspension.requested": z.object({ clubId: id, suspensionId: id }),
+  // Child safety in chat (P2.1 part B): the club's safeguarding officers get
+  // reports and requests to read; the sender of a moderated message and a
+  // muted member are told.
+  "chat.report.created": z.object({ clubId: id, reportId: id }),
+  "chat.report.read_requested": z.object({ clubId: id, reportId: id, readId: id }),
+  "chat.message.moderated": z.object({ clubId: id, chatId: id, messageId: id, personId: id }),
+  "chat.member.muted": z.object({ clubId: id, muteId: id, personId: id }),
   "administrator.suspended": z.object({ clubId: id, suspensionId: id, personId: id }),
   /** An open request was cancelled by its initiator or expired: target and initiator are told. */
   "administrator.suspension.closed": z.object({

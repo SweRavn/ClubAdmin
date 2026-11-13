@@ -22,4 +22,13 @@ export const CHAT_PERSON_REFERENCES: readonly PersonReference[] = [
   { table: "public.chat_messages", column: "sender_person_id", clubScoped: true },
   { table: "public.chat_messages", column: "hidden_by_person_id", clubScoped: true },
   { table: "public.chat_reactions", column: "person_id", clubScoped: true },
+  // Child safety (P2.1 part B).
+  { table: "public.chat_reports", column: "reporter_person_id", clubScoped: true },
+  { table: "public.chat_reports", column: "reported_person_id", clubScoped: true },
+  { table: "public.chat_reports", column: "closed_by_person_id", clubScoped: true },
+  { table: "public.chat_report_reads", column: "requested_by_person_id", clubScoped: true },
+  { table: "public.chat_report_reads", column: "confirmed_by_person_id", clubScoped: true },
+  { table: "public.chat_mutes", column: "person_id", clubScoped: true },
+  { table: "public.chat_mutes", column: "muted_by_person_id", clubScoped: true },
+  { table: "public.chat_mutes", column: "lifted_by_person_id", clubScoped: true },
 ];

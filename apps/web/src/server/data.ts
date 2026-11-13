@@ -20,7 +20,11 @@ import {
   ChatDetailSchema,
   ChatListSchema,
   ChatMessagePageSchema,
+  ChatMuteListSchema,
   ChatPageSchema,
+  ChatReportDetailSchema,
+  ChatReportMessagesSchema,
+  ChatReportPageSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
@@ -750,6 +754,44 @@ export const getHistory = cache((path: string, query: string) =>
 );
 export const getAuditEvents = cache((clubId: string, query: string) =>
   historyGet(`/api/v1/clubs/${requireId(clubId)}/audit-events?${query}`, AuditPageSchema),
+);
+
+// Child safety in chat (P2.1 part B): the club's safeguarding officers, with a
+// second factor (historyGet tells the page when one is needed).
+export const getSafeguardingReports = cache(
+  (clubId: string, status: "open" | "closed" | null, cursor: string | null) => {
+    const query = new URLSearchParams({ limit: "50" });
+    if (status) query.set("status", status);
+    if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+    return historyGet(
+      `/api/v1/clubs/${requireId(clubId)}/safeguarding/reports?${query}`,
+      ChatReportPageSchema,
+    );
+  },
+);
+export const getSafeguardingReport = cache((clubId: string, reportId: string) =>
+  historyGet(
+    `/api/v1/clubs/${requireId(clubId)}/safeguarding/reports/${requireId(reportId)}`,
+    ChatReportDetailSchema,
+  ),
+);
+/** The reported chat (each call is a logged read; only with a confirmed request). */
+export const getSafeguardingMessages = cache(
+  (clubId: string, reportId: string, cursor: string | null) => {
+    const query = new URLSearchParams({ limit: "50" });
+    if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+    return historyGet(
+      `/api/v1/clubs/${requireId(clubId)}/safeguarding/reports/${requireId(reportId)}/messages?${query}`,
+      ChatReportMessagesSchema,
+    );
+  },
+);
+export const getSafeguardingMutes = cache((clubId: string) =>
+  historyGet(`/api/v1/clubs/${requireId(clubId)}/safeguarding/mutes`, ChatMuteListSchema),
+);
+/** A ward's chats for their parent or legal guardian (who is in them, not what was said). */
+export const getWardChats = cache((wardId: string) =>
+  required(`/api/v1/me/wards/${requireId(wardId)}/chats?limit=100`, ChatPageSchema),
 );
 
 // Group administration (P1.10a).

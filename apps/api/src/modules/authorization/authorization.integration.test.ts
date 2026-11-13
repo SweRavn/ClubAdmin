@@ -161,6 +161,8 @@ async function get(
 }
 
 const personaId = (persona: MatrixPersona): string => m[persona].id;
+/** An ID nothing has (the policy refuses before the service looks). */
+const SOME_ID = "01900000-0000-7000-8000-000000000000";
 
 describe("permission matrix", () => {
   const ALL_OK = Object.fromEntries(MATRIX_PERSONAS.map((p) => [p, 200])) as Record<
@@ -809,6 +811,68 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/read`,
       expected: { ...CHAT_READERS, owner: 403, coach: 201, member: 201, parent: 201 },
       body: () => ({ messageId: m.messageId }),
+    },
+    // Child safety (P2.1 part B): members report what they read (the owner,
+    // who manages the chat without being in it, has nothing to report);
+    // its managers hide others' messages; safeguarding officers alone handle
+    // cases (no matrix persona holds club.safeguarding.handle).
+    "POST /api/v1/clubs/:clubId/chats/:chatId/reports": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/reports`,
+      expected: { ...CHAT_READERS, owner: 403, coach: 201, member: 201, parent: 201 },
+      body: { reason: "other" },
+    },
+    "POST /api/v1/clubs/:clubId/chats/:chatId/messages/:messageId/moderate": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/messages/${m.hideMessageId}/moderate`,
+      // The coach wrote it (not their own to moderate); the owner manages the chat.
+      expected: { ...CHAT_WRITERS(403), owner: 201 },
+      body: {},
+    },
+    "GET /api/v1/clubs/:clubId/safeguarding/reports": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "GET /api/v1/clubs/:clubId/safeguarding/reports/:reportId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports/${SOME_ID}`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "POST /api/v1/clubs/:clubId/safeguarding/reports/:reportId/reads": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports/${SOME_ID}/reads`,
+      expected: CLUB_FORBIDDEN,
+      body: {},
+    },
+    "POST /api/v1/clubs/:clubId/safeguarding/reports/:reportId/reads/:readId/confirm": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/safeguarding/reports/${SOME_ID}/reads/${SOME_ID}/confirm`,
+      expected: CLUB_FORBIDDEN,
+      body: {},
+    },
+    "GET /api/v1/clubs/:clubId/safeguarding/reports/:reportId/messages": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports/${SOME_ID}/messages`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "POST /api/v1/clubs/:clubId/safeguarding/reports/:reportId/hide": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports/${SOME_ID}/hide`,
+      expected: CLUB_FORBIDDEN,
+      body: () => ({ messageId: m.messageId }),
+    },
+    "POST /api/v1/clubs/:clubId/safeguarding/reports/:reportId/close": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports/${SOME_ID}/close`,
+      expected: CLUB_FORBIDDEN,
+      body: { outcome: "no_action" },
+    },
+    "GET /api/v1/clubs/:clubId/safeguarding/mutes": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/mutes`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "POST /api/v1/clubs/:clubId/safeguarding/mutes": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/mutes`,
+      expected: CLUB_FORBIDDEN,
+      body: () => ({ personId: m.member.id, hours: 1 }),
+    },
+    "DELETE /api/v1/clubs/:clubId/safeguarding/mutes/:muteId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/mutes/${SOME_ID}`,
+      expected: CLUB_FORBIDDEN,
     },
     // Calendar subscriptions (P1.11): readers of the group's or club's calendar.
     "POST /api/v1/groups/:groupId/calendar-feeds": {

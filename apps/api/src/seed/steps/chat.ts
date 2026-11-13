@@ -8,7 +8,9 @@
 //   children's chat "Tjejerna" of Elsa, Alva and Maja that Anna joined, and
 //   Johan's direct message to Alva (her guardians were added);
 // - IKN F2015: Erik's closed "Föräldrar" channel offered to Samira
-//   (protected identity, ADR 0022), who accepted it.
+//   (protected identity, ADR 0022), who accepted it; an unkind message in
+//   the team channel that Erik reported and Karin (safeguarding officer)
+//   closed (P2.1 part B).
 
 import type { TenantContext } from "@clubadmin/db";
 import { sql } from "@clubadmin/db";
@@ -143,6 +145,24 @@ export const chatDemoStep: DemoStep = {
     );
     await chat.send(as("erik", "ikn"), resource("ikn", parents), {
       body: "Vem kan köra till bortamatchen i Gränby på söndag?",
+    });
+
+    // IKN F2015 (P2.1 part B): an unkind message in the team channel, which
+    // Erik reported; Karin, the club's safeguarding officer, closed the case.
+    const team2015 = (await chat.groupChats(as("erik", "ikn"), id("ikn-f2015"))).rows.find(
+      (r) => r.chat.defaultForGroupId === id("ikn-f2015"),
+    )!.chat.id;
+    const unkind = await chat.send(as("maja", "ikn"), resource("ikn", team2015), {
+      body: "Vissa borde inte ens få vara med i laget 🙄",
+    });
+    const report = await env.services.safeguarding.report(
+      as("erik", "ikn"),
+      resource("ikn", team2015),
+      { messageId: unkind.id, reason: "bullying" },
+    );
+    await env.services.safeguarding.close(as("karin", "ikn"), report, {
+      outcome: "no_action",
+      note: "Pratat med Maja och hennes föräldrar. Laget har gått igenom hur vi skriver till varandra.",
     });
   },
 };

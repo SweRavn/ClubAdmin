@@ -3,7 +3,8 @@
 // in it and why (everyone sees it: openness), the children's banner, and
 // what the viewer may do: join (visibly), accept or decline an offer, leave,
 // push setting, and for managers rename, archive and add or remove members.
-import { CHAT_PUSH_SETTINGS, type ChatMember } from "@clubadmin/shared";
+import { enumKey } from "@clubadmin/i18n";
+import { CHAT_PUSH_SETTINGS, CHAT_REPORT_REASONS, type ChatMember } from "@clubadmin/shared";
 import { personLabel, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTimeZone, getTranslations } from "next-intl/server";
 
@@ -104,6 +105,16 @@ export default async function ChatPage({ params, searchParams }: Params) {
     protectedPerson: t("chat.protectedPerson"),
     formerMember: t("chat.formerMember"),
     noMessages: t("chat.noMessages"),
+    report: t("chat.report"),
+    reportTitle: t("chat.reportTitle"),
+    reportReasons: Object.fromEntries(
+      CHAT_REPORT_REASONS.map((r) => [r, t(enumKey("chat.reportReasons", r))]),
+    ),
+    reportSend: t("chat.reportSend"),
+    reportSent: t("chat.reportSent"),
+    moderate: t("chat.moderate"),
+    moderateConfirm: t("chat.moderateConfirm"),
+    muted: t("joinErrors.chat_muted"),
     system: Object.fromEntries(
       (
         [
@@ -196,6 +207,7 @@ export default async function ChatPage({ params, searchParams }: Params) {
             meId={me.personId}
             csrf={session.record.csrf}
             canPost={detail.can.post}
+            canModerate={detail.can.manage}
             initial={page.items}
             initialCursor={page.nextCursor}
             names={names}
@@ -204,6 +216,46 @@ export default async function ChatPage({ params, searchParams }: Params) {
             timeZone={timeZone}
             texts={texts}
           />
+        ) : null}
+        {active || chat.hasChildren ? (
+          <details
+            className="rounded-md border border-border p-3 text-sm"
+            data-testid="chat-report-chat"
+          >
+            <summary className="cursor-pointer">{t("chat.reportChat")}</summary>
+            {query.reported ? (
+              <p role="status" className="mt-2">
+                {t("chat.reportSent")}
+              </p>
+            ) : null}
+            <p className="mt-2 text-muted">{t("chat.reportHelp")}</p>
+            <ActionForm action="report-chat" back={back} className="mt-2 space-y-2">
+              <input type="hidden" name="clubId" value={clubId} />
+              <input type="hidden" name="chatId" value={chatId} />
+              <label className="block">
+                <span className="block">{t("chat.reportTitle")}</span>
+                <select name="reason" className="rounded border border-border bg-bg px-2 py-1">
+                  {CHAT_REPORT_REASONS.map((r) => (
+                    <option key={r} value={r}>
+                      {t(enumKey("chat.reportReasons", r))}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="block">{t("chat.reportNote")}</span>
+                <textarea
+                  name="note"
+                  maxLength={1000}
+                  rows={2}
+                  className="w-full rounded border border-border bg-bg px-2 py-1"
+                />
+              </label>
+              <button type="submit" className={secondaryButtonClass}>
+                {t("chat.reportSend")}
+              </button>
+            </ActionForm>
+          </details>
         ) : null}
       </section>
 

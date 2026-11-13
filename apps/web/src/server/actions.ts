@@ -13,6 +13,8 @@ import {
   ATTENDANCE_STATUSES,
   BOARD_SETTING_KEYS,
   CHAT_PUSH_SETTINGS,
+  CHAT_REPORT_OUTCOMES,
+  CHAT_REPORT_REASONS,
   CLUB_PHONE_NUMBERS_MAX,
   CLUB_SETTINGS,
   type ClubSettingDefinition,
@@ -1387,6 +1389,104 @@ const NOTIFICATION_ACTIONS: Record<string, FormAction> = {
       };
     },
     done: (form) => withParam(back(form), "saved", "1"),
+  },
+  // Child safety (P2.1 part B): a report of a whole chat (guardians, members).
+  "report-chat": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const chatId = id(form, "chatId");
+      const reason = oneOf(CHAT_REPORT_REASONS, text(form, "reason"));
+      if (!clubId || !chatId || !reason) return null;
+      const note = text(form, "note").slice(0, 1000);
+      return {
+        path: `/api/v1/clubs/${clubId}/chats/${chatId}/reports`,
+        method: "POST",
+        body: { reason, ...(note ? { note } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form), "reported", "1"),
+  },
+  // Safeguarding cases (P2.1 part B): the club's safeguarding officers.
+  "safeguarding-request-read": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const reportId = id(form, "reportId");
+      if (!clubId || !reportId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/safeguarding/reports/${reportId}/reads`,
+        method: "POST",
+      };
+    },
+    done: (form) => back(form),
+  },
+  "safeguarding-confirm-read": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const reportId = id(form, "reportId");
+      const readId = id(form, "readId");
+      if (!clubId || !reportId || !readId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/safeguarding/reports/${reportId}/reads/${readId}/confirm`,
+        method: "POST",
+      };
+    },
+    done: (form) => back(form),
+  },
+  "safeguarding-hide": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const reportId = id(form, "reportId");
+      const messageId = id(form, "messageId");
+      if (!clubId || !reportId || !messageId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/safeguarding/reports/${reportId}/hide`,
+        method: "POST",
+        body: { messageId },
+      };
+    },
+    done: (form) => back(form),
+  },
+  "safeguarding-close": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const reportId = id(form, "reportId");
+      const outcome = oneOf(CHAT_REPORT_OUTCOMES, text(form, "outcome"));
+      if (!clubId || !reportId || !outcome) return null;
+      const note = text(form, "note").slice(0, 1000);
+      return {
+        path: `/api/v1/clubs/${clubId}/safeguarding/reports/${reportId}/close`,
+        method: "POST",
+        body: { outcome, ...(note ? { note } : {}) },
+      };
+    },
+    done: (form) => back(form),
+  },
+  "safeguarding-mute": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      const hours = Number.parseInt(text(form, "hours"), 10);
+      if (!clubId || !personId || !Number.isInteger(hours) || hours < 1 || hours > 720) return null;
+      const reportId = id(form, "reportId");
+      return {
+        path: `/api/v1/clubs/${clubId}/safeguarding/mutes`,
+        method: "POST",
+        body: { personId, hours, ...(reportId ? { reportId } : {}) },
+      };
+    },
+    done: (form) => back(form),
+  },
+  "safeguarding-unmute": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const muteId = id(form, "muteId");
+      if (!clubId || !muteId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/safeguarding/mutes/${muteId}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => back(form),
   },
   "update-chat": {
     call: (form) => {

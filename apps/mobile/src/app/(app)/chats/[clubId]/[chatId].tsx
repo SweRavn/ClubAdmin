@@ -9,7 +9,11 @@
 // chat, screenshots are blocked.
 
 import { enumKey } from "@clubadmin/i18n";
-import { CHAT_MESSAGE_MAX_LENGTH, type RealtimeServerEvent } from "@clubadmin/shared";
+import {
+  CHAT_MESSAGE_MAX_LENGTH,
+  CHAT_REPORT_REASONS,
+  type RealtimeServerEvent,
+} from "@clubadmin/shared";
 import { Stack } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -32,6 +36,7 @@ import {
   useChat,
   useChatActions,
   useChatMessages,
+  useChatSafety,
 } from "../../../../api/queries.ts";
 import { useRealtime } from "../../../../api/realtime.ts";
 import { useChatPersonLabel, useChatTitle } from "../../../../components/chat-parts.tsx";
@@ -325,8 +330,10 @@ function Messages({
   const { personId: me } = useSession();
   const messages = useChatMessages(clubId, chatId, true);
   const actions = useChatActions(clubId, chatId);
+  const safety = useChatSafety(clubId, chatId);
   const outbox = useOutbox();
   const pendingWrites = usePendingWrites();
+  const [reporting, setReporting] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [editing, setEditing] = useState<ChatMessage | null>(null);
@@ -536,7 +543,58 @@ function Messages({
                   testID="chat-delete"
                 />
               ) : null}
+              {!mine ? (
+                // Child safety (P2.1 part B): one tap, then why.
+                <LinkButton
+                  label={t("chat.report")}
+                  onPress={() => setReporting(reporting === m.id ? null : m.id)}
+                  testID="chat-report"
+                />
+              ) : null}
+              {!mine && detail.can.manage ? (
+                <LinkButton
+                  label={t("chat.moderate")}
+                  onPress={() =>
+                    Alert.alert(t("chat.moderate"), t("chat.moderateConfirm"), [
+                      { text: t("chat.cancel"), style: "cancel" },
+                      {
+                        text: t("chat.moderate"),
+                        style: "destructive",
+                        onPress: () => {
+                          setSelected(null);
+                          safety.moderate.mutate(m.id);
+                        },
+                      },
+                    ])
+                  }
+                  testID="chat-moderate"
+                />
+              ) : null}
             </View>
+            {reporting === m.id ? (
+              <View style={{ gap: theme.space(1) }} testID="chat-report-reasons">
+                <Muted>{t("chat.reportTitle")}</Muted>
+                {CHAT_REPORT_REASONS.map((reason) => (
+                  <LinkButton
+                    key={reason}
+                    label={t(enumKey("chat.reportReasons", reason))}
+                    onPress={() =>
+                      safety.report.mutate(
+                        { messageId: m.id, reason },
+                        {
+                          onSuccess: () => {
+                            setReporting(null);
+                            setSelected(null);
+                            Alert.alert(t("chat.report"), t("chat.reportSent"));
+                          },
+                        },
+                      )
+                    }
+                    testID={`chat-report-${reason}`}
+                  />
+                ))}
+              </View>
+            ) : null}
           </View>
         ) : null}
       </Pressable>

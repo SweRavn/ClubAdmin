@@ -163,6 +163,32 @@ and models are decided when it is built.
 - **Nothing disappears:** deleting hides; every earlier text is in
   `chat_message_versions`; erasure takes the person out of every chat and
   their messages stay as "a former member's".
-- Reporting, safeguarding cases, moderation by safeguarding officers, the
-  background-check hook and the three-year limit on old messages come with
-  part B; push per channel with part C.
+- **Reporting (rule 7, part B):** a member reports a message or the whole
+  chat with one tap and a reason code (`bullying`, `inappropriate`,
+  `unsafe_contact`, `self_harm`, `other`); a guardian of a child in the chat
+  reports the chat (they do not read it). One does not report one's own
+  message. The officers (`club.safeguarding.handle`, held by the
+  `safeguarding_officer` template role) are told at once; the reported
+  person never sees who reported or that a report exists.
+- **Cases and the two-person rule:** an officer sees the report (who, why,
+  which message) but not the chat. Reading it needs a request by one
+  officer confirmed by another (never the same person, within 72 hours);
+  both may then read for 24 hours, hidden texts included as the record, and
+  every page they read is its own audit event (`chat.report.read`). The
+  policy needs a second factor. A club with one officer cannot read a
+  reported chat; it appoints a second (documented in the help pages).
+- **Moderation (rule 11):** a chat's managers (its creator,
+  `group.channels.manage`) hide others' messages in it; officers hide
+  messages of a chat they read for a case and mute a member in the club's
+  chats for up to 30 days (writing, editing and reacting are refused;
+  reading is not). The person is told (a notice without the text); every
+  act is audited.
+- **Guardians' view (rule 6):** `GET /me/wards/:personId/chats` lists a
+  child's chats for a parent or legal guardian, with who is in them and no
+  excerpt or unread count of chats the guardian is not in.
+- **Background checks (rule 9):** the service calls a hook before a leader
+  joins a children's chat or opens a direct message; it allows until P2.8
+  tracks checks.
+- **Old messages (DPIA):** nothing searches or exports chats to others yet;
+  the three-year limit applies when such features come (part C documents it).
+- Push per channel comes with part C.

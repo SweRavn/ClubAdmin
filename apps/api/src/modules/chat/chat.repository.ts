@@ -170,6 +170,17 @@ export async function myChatPage(
   return { rows: rows.map((r) => ({ chatId: r.id, clubId: r.club_id })), cursorFound: true };
 }
 
+/** The person is a ward of the actor, who is a full guardian (parent, legal guardian). */
+export async function isWardOf(tx: Tx, wardId: string): Promise<boolean> {
+  const { rows } = await tx.execute<{ ok: boolean }>(sql`
+    SELECT EXISTS (
+      SELECT 1 FROM public.guardianships g
+      WHERE g.guardian_person_id = app.current_person_id() AND g.ward_person_id = ${wardId}::uuid
+        AND g.kind IN ('parent', 'legal_guardian') AND g.status = 'active' AND g.valid_to IS NULL
+    ) AS ok`);
+  return rows[0]?.ok ?? false;
+}
+
 /** Chats of one club with their list columns for the person (in the club's context). */
 export async function chatListRows(
   tx: Tx,

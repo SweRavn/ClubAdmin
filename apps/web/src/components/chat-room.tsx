@@ -37,6 +37,15 @@ export interface ChatRoomTexts {
   formerMember: string;
   noMessages: string;
   system: Record<string, string>;
+  /** Child safety (P2.1 part B). */
+  report: string;
+  reportTitle: string;
+  reportReasons: Record<string, string>;
+  reportSend: string;
+  reportSent: string;
+  moderate: string;
+  moderateConfirm: string;
+  muted: string;
 }
 
 interface Props {
@@ -45,6 +54,8 @@ interface Props {
   meId: string;
   csrf: string;
   canPost: boolean;
+  /** The viewer manages the chat: may hide others' messages (rule 11). */
+  canModerate: boolean;
   /** Newest first, as the API pages them. */
   initial: ChatMessage[];
   initialCursor: string | null;
@@ -96,6 +107,9 @@ export function ChatRoom(props: Props) {
   const [versions, setVersions] = useState<Record<string, { body: string; writtenAt: string }[]>>(
     {},
   );
+  const [reporting, setReporting] = useState<string | null>(null);
+  const [reason, setReason] = useState("bullying");
+  const [notice, setNotice] = useState<string | null>(null);
   const socket = useRef<WebSocket | null>(null);
   const bottom = useRef<HTMLDivElement | null>(null);
   const newest = useRef<string | null>(props.initial[0]?.id ?? null);
@@ -111,7 +125,10 @@ export function ChatRoom(props: Props) {
         },
         ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
       });
-      if (!response.ok) throw new Error(String(response.status));
+      if (!response.ok) {
+        const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
+        throw new Error(problem?.detail ?? String(response.status));
+      }
       return response.status === 204 ? null : ((await response.json()) as unknown);
     },
     [csrf],
@@ -251,9 +268,22 @@ export function ChatRoom(props: Props) {
         body: { id, body, ...(reply ? { replyToId: reply.id } : {}) },
       })) as ChatMessage;
       merge([sent]);
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.message === "chat_muted") {
+        // Muted (P2.1 part B): the message is not queued for a resend.
+        setPending((p) => p.filter((x) => x.id !== id));
+        setDraft(body);
+        setNotice(texts.muted);
+        return;
+      }
       setPending((p) => p.map((x) => (x.id === id ? { ...x, failed: true } : x)));
     }
+  };
+
+  const report = async (messageId: string) => {
+    await call(`${base}/reports`, { method: "POST", body: { messageId, reason } });
+    setReporting(null);
+    setNotice(texts.reportSent);
   };
 
   // Failed messages are resent when the connection is back (same ID: never twice).
@@ -295,6 +325,15 @@ export function ChatRoom(props: Props) {
 
   return (
     <div className="flex min-h-[60vh] flex-col gap-3" data-testid="chat-room">
+      {notice ? (
+        <p
+          role="status"
+          className="rounded-md bg-accent-soft px-3 py-1 text-sm"
+          data-testid="chat-notice"
+        >
+          {notice}
+        </p>
+      ) : null}
       {!online ? (
         <p role="status" className="rounded-md bg-protected-soft px-3 py-1 text-sm">
           {texts.offline}
@@ -450,6 +489,59 @@ export function ChatRoom(props: Props) {
                     >
                       {texts.reply}
                     </button>
+                  ) : null}
+                  {!mine && m.kind === "text" && !m.hidden ? (
+                    <button
+                      type="button"
+                      className="text-xs underline"
+                      onClick={() => setReporting(reporting === m.id ? null : m.id)}
+                      data-testid="chat-report"
+                    >
+                      {texts.report}
+                    </button>
+                  ) : null}
+                  {!mine && props.canModerate && m.kind === "text" && m.hidden !== "moderator" ? (
+                    <button
+                      type="button"
+                      className="text-xs underline"
+                      onClick={() => {
+                        if (!window.confirm(texts.moderateConfirm)) return;
+                        void call(`${base}/messages/${m.id}/moderate`, {
+                          method: "POST",
+                          body: {},
+                        }).then(() => refreshOne(m.id));
+                      }}
+                      data-testid="chat-moderate"
+                    >
+                      {texts.moderate}
+                    </button>
+                  ) : null}
+                  {reporting === m.id ? (
+                    <span className="flex w-full flex-wrap items-center gap-2 text-sm">
+                      <label className="flex items-center gap-1">
+                        <span className="sr-only">{texts.reportTitle}</span>
+                        <select
+                          value={reason}
+                          onChange={(e) => setReason(e.target.value)}
+                          className="rounded border border-border bg-bg px-1 py-0.5"
+                          data-testid="chat-report-reason"
+                        >
+                          {Object.entries(texts.reportReasons).map(([key, label]) => (
+                            <option key={key} value={key}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        className="underline"
+                        onClick={() => void report(m.id)}
+                        data-testid="chat-report-send"
+                      >
+                        {texts.reportSend}
+                      </button>
+                    </span>
                   ) : null}
                   {mine && props.canPost ? (
                     <>

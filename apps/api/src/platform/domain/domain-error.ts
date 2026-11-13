@@ -269,6 +269,18 @@ export const DOMAIN_ERRORS = {
   chat_message_hidden: "conflict",
   /** A resent message ID that belongs to another message. */
   chat_message_conflict: "conflict",
+  // Child safety (P2.1 part B).
+  /** A muted member writes nothing in the club's chats until the mute ends. */
+  chat_muted: "forbidden",
+  /** ADR 0047 rule 9: the club requires a valid background check (P2.8). */
+  chat_background_check: "forbidden",
+  /** One does not report one's own message. */
+  chat_report_own: "conflict",
+  /** The request to read is not open, was made by the caller, or lapsed. */
+  chat_read_not_confirmable: "conflict",
+  /** Reading a reported chat needs a request confirmed by a second officer. */
+  chat_read_not_confirmed: "forbidden",
+  chat_report_closed: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

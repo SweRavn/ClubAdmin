@@ -805,7 +805,13 @@
     "chat_direct_members": "En direktemelding har alltid de samme to personene.",
     "chat_guardian_required": "Forelderen må være med så lenge en voksen er med barnet i chatten. Slå av varslene i stedet.",
     "chat_message_hidden": "Meldingen er slettet.",
-    "chat_message_conflict": "Meldingen kunne ikke sendes. Prøv igjen."
+    "chat_message_conflict": "Meldingen kunne ikke sendes. Prøv igjen.",
+    "chat_muted": "Du kan ikke skrive i klubbens chatter akkurat nå. Klubbens trygghetsansvarlige har stengt deg ute en tid.",
+    "chat_background_check": "Klubben krever en gyldig politiattest for at du skal kunne skrive til barn.",
+    "chat_report_own": "Du kan ikke melde din egen melding.",
+    "chat_read_not_confirmable": "Forespørselen kan ikke bekreftes: du gjorde den selv, den er allerede bekreftet eller har gått ut.",
+    "chat_read_not_confirmed": "En annen trygghetsansvarlig må bekrefte før chatten kan leses.",
+    "chat_report_closed": "Saken er allerede avsluttet."
   },
   "memberExport": {
     "columns": {
@@ -1995,6 +2001,30 @@
         "title": "En ny administrator i {club}",
         "body": "Noen har fått rett til å administrere klubben og hvem som får gjøre hva. Kontroller at det stemmer."
       }
+    },
+    "chat": {
+      "report": {
+        "received": {
+          "title": "Ny melding fra en chat i {club}",
+          "body": "Noen har meldt en chat ({reportReason, select, bullying {mobbing eller trusler} inappropriate {upassende innhold} unsafe_contact {utrygg kontakt} self_harm {fare for at noen skader seg selv} other {annet}}){children, select, true {. Det er barn i chatten.} other {.}} Åpne saken. Chatten kan leses når en annen trygghetsansvarlig har bekreftet det."
+        },
+        "read_requested": {
+          "title": "En trygghetsansvarlig vil lese en meldt chat i {club}",
+          "body": "En annen trygghetsansvarlig vil lese chatten i en sak ({reportReason, select, bullying {mobbing eller trusler} inappropriate {upassende innhold} unsafe_contact {utrygg kontakt} self_harm {fare for at noen skader seg selv} other {annet}}). Lesingen krever din eller en annens bekreftelse (topersonsregelen) og logges."
+        }
+      },
+      "message": {
+        "moderated": {
+          "title": "En av meldingene dine er skjult",
+          "body": "En melding du skrev i en chat i {club} er skjult av den som har ansvar for chatten eller av klubbens trygghetsansvarlige. Ta kontakt med dem hvis du lurer på hvorfor."
+        }
+      },
+      "member": {
+        "muted": {
+          "title": "Du kan ikke skrive i chattene i {club} akkurat nå",
+          "body": "Klubbens trygghetsansvarlige har stengt deg ute fra å skrive i klubbens chatter til {until}. Du kan fortsatt lese."
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2577,7 +2607,8 @@
       "club_manager_reassignment": "Ny klubbansvarlig via operatøren",
       "guardian_invitation": "Invitasjon av foresatt",
       "subscription": "Abonnement",
-      "calendar_feed": "Kalenderabonnement"
+      "calendar_feed": "Kalenderabonnement",
+      "chat_report": "en melding fra en chat"
     },
     "statuses": {
       "scheduled": "Planlagt",
@@ -2699,7 +2730,13 @@
       "withdrawn": "trakk tilbake",
       "joined": "ble med i",
       "left": "forlot",
-      "hidden": "skjulte"
+      "hidden": "skjulte",
+      "moderated": "skjulte (moderering)",
+      "read_requested": "ba om å lese",
+      "read_confirmed": "bekreftet lesing av",
+      "read": "leste",
+      "muted": "stengte ute fra chatten",
+      "unmuted": "lot igjen skrive i chatten"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -3616,6 +3653,11 @@
         "name": "Opprette klubbkanaler",
         "description": "Kan opprette chattekanaler for hele klubben, uten kobling til en gruppe, og velge hvem som er med.",
         "example": "Kan for eksempel opprette en kanal for styret eller for alle ledere."
+      },
+      "club_safeguarding_handle": {
+        "name": "Håndtere trygghetssaker",
+        "description": "Mottar meldinger fra chatter, leser en meldt chat når en annen trygghetsansvarlig har bekreftet det, skjuler meldte meldinger, stenger medlemmer ute fra å skrive en tid og avslutter saker. Hver lesing logges.",
+        "example": "For eksempel klubbens trygghetsansvarlige."
       }
     }
   },
@@ -3902,6 +3944,76 @@
     "remove": "Fjern",
     "sendMessage": "Send melding",
     "safety": "Slik fungerer chatten for barn",
-    "live": "Nye meldinger vises med en gang."
+    "live": "Nye meldinger vises med en gang.",
+    "report": "Meld",
+    "reportTitle": "Hvorfor melder du?",
+    "reportSend": "Send meldingen",
+    "reportSent": "Takk. Klubbens trygghetsansvarlige har fått meldingen din. Den du meldte får ikke vite at det var deg.",
+    "reportChat": "Meld chatten",
+    "reportHelp": "Hvis noe i chatten føles feil eller utrygt, kan du melde det. Klubbens trygghetsansvarlige mottar meldingen. Den som meldes får ikke vite hvem som meldte.",
+    "reportNote": "Vil du fortelle mer? (valgfritt)",
+    "moderate": "Skjul",
+    "moderateConfirm": "Skjule meldingen for alle? Den lagres, og den som skrev den får vite at den er skjult.",
+    "wardChats": "Chatter",
+    "wardChatsHelp": "Her ser du hvilke chatter barnet ditt er med i og hvem som er med. Du leser ikke meldingene, men du kan bli med i en chat – da ser alle der at du ble med.",
+    "wardChatsEmpty": "Barnet ditt er ikke med i noen chat.",
+    "reportReasons": {
+      "bullying": "Mobbing, trusler eller trakassering",
+      "inappropriate": "Upassende eller seksuelt innhold",
+      "unsafe_contact": "En voksen vil ha privat kontakt, hemmeligheter eller gir gaver",
+      "self_harm": "Noen kan skade seg selv",
+      "other": "Noe annet"
+    }
+  },
+  "safeguarding": {
+    "title": "Trygghetssaker",
+    "nav": "Trygghet",
+    "intro": "Meldinger fra klubbens chatter. Du ser hvem som meldte og hvorfor, men ikke chatten. For å lese chatten ber du om det, og en annen trygghetsansvarlig bekrefter (topersonsregelen). Hver lesing logges.",
+    "open": "Åpne",
+    "closed": "Avsluttede",
+    "empty": "Ingen saker.",
+    "reportedAt": "Meldt",
+    "reason": "Grunn",
+    "reportedPerson": "Meldt person",
+    "wholeChat": "Hele chatten",
+    "children": "Barn i chatten",
+    "case": "Sak",
+    "reporter": "Meldt av",
+    "note": "Kommentar",
+    "chat": "Chat",
+    "directChat": "Direktemelding",
+    "reads": "Lesing av chatten",
+    "requestRead": "Be om å lese chatten",
+    "requested": "{name} ba om å lese {time}. Venter på en annen trygghetsansvarlig.",
+    "confirmed": "{name} og {other} kan lese til {time}.",
+    "lapsed": "{name} ba {time} (utløpt).",
+    "confirm": "Bekreft – du blir den andre",
+    "messages": "Chatten",
+    "logged": "Du leser chatten under topersonsregelen. Hver lesing logges.",
+    "hiddenRecord": "Skjult – teksten er lagret for saken:",
+    "reportedMessage": "Meldt melding",
+    "hide": "Skjul meldingen",
+    "olderMessages": "Eldre meldinger",
+    "mute": "Steng ute fra å skrive",
+    "muteHours": "Hvor lenge (timer, høyst 720)",
+    "mutes": "Utestengt nå",
+    "mutedUntil": "til {time}",
+    "mutedBy": "av {name}",
+    "noMutes": "Ingen er utestengt.",
+    "unmute": "Opphev",
+    "close": "Avslutt saken",
+    "outcome": "Utfall",
+    "outcomeNote": "Notat (bare for trygghetsansvarlige)",
+    "closedBy": "Avsluttet av {name} {time}",
+    "outcomes": {
+      "no_action": "Ingen tiltak",
+      "message_hidden": "Melding skjult",
+      "member_muted": "Stengt ute fra å skrive",
+      "referred": "Tatt videre (klubbens rutine, politi eller barnevern)"
+    },
+    "statuses": {
+      "open": "Åpen",
+      "closed": "Avsluttet"
+    }
   }
 }

@@ -892,6 +892,53 @@ describe("privacy notices (P1.8a)", () => {
     expect(await noticesOf(ids.anna)).toEqual([]);
   });
 
+  it("chat reports reach the safeguarding officers only; a mute reaches the person (P2.1 B)", async () => {
+    const ids = await team();
+    await t.query(
+      "admin",
+      `INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'safeguarding_officer')`,
+      [ids.club, ids.anna],
+    );
+    const chat = uuidv7();
+    const report = uuidv7();
+    const mute = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO chats (id, club_id, kind, name, visibility, has_children)
+       VALUES ($2, $1, 'channel', 'F2016', 'open', true)`,
+      [ids.club, chat],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO chat_reports (id, club_id, chat_id, reporter_person_id, reason)
+       VALUES ($3, $1, $2, $4, 'bullying')`,
+      [ids.club, chat, report, ids.elsa],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO chat_mutes (id, club_id, person_id, muted_by_person_id, until)
+       VALUES ($3, $1, $2, $4, now() + interval '2 hours')`,
+      [ids.club, ids.coach, mute, ids.anna],
+    );
+    const reported = await publish(ids.club, "chat.report.created", {
+      clubId: ids.club,
+      reportId: report,
+    });
+    await outbox.dispatch(t.db, reported, [handler()]);
+    expect(await noticesOf(ids.anna)).toMatchObject([
+      { type: "chat.report.received", subject_id: report, about_person_ids: [] },
+    ]);
+    // The club manager is no safeguarding officer.
+    expect(await noticesOf(ids.coach)).toEqual([]);
+    const muted = await publish(ids.club, "chat.member.muted", {
+      clubId: ids.club,
+      muteId: mute,
+      personId: ids.coach,
+    });
+    await outbox.dispatch(t.db, muted, [handler()]);
+    expect(await noticesOf(ids.coach)).toMatchObject([{ type: "chat.member.muted" }]);
+  });
+
   it("assignment.ended reaches the club managers, not the person who stepped down", async () => {
     const ids = await team();
     const event = await publish(ids.club, "assignment.ended", {

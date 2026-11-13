@@ -10,10 +10,12 @@ import { RealtimeModule, RealtimePublisher } from "../realtime/index.ts";
 import { ChatController } from "./chat.controller.ts";
 import { ChatGateway } from "./chat.gateway.ts";
 import { ChatService } from "./chat.service.ts";
+import { SafeguardingController } from "./safeguarding.controller.ts";
+import { SafeguardingService } from "./safeguarding.service.ts";
 
 @Module({
   imports: [AuthorizationModule, ClubsModule, GroupsModule, PeopleModule, RealtimeModule],
-  controllers: [ChatController],
+  controllers: [ChatController, SafeguardingController],
   providers: [
     {
       provide: ChatService,
@@ -25,8 +27,14 @@ import { ChatService } from "./chat.service.ts";
         groups: GroupsService,
       ) => new ChatService(requireDatabase(db), { publisher, clubs, groups }),
     },
+    {
+      provide: SafeguardingService,
+      inject: [DATABASE, RealtimePublisher],
+      useFactory: (db: OptionalDatabase, publisher: RealtimePublisher) =>
+        new SafeguardingService(requireDatabase(db), { publisher }),
+    },
     ChatGateway,
   ],
-  exports: [ChatService],
+  exports: [ChatService, SafeguardingService],
 })
 export class ChatModule {}

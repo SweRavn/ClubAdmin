@@ -3,3 +3,4 @@
 export { ChatModule } from "./chat.module.ts";
 export { CHAT_PERSON_REFERENCES } from "./chat.references.ts";
 export { ChatService } from "./chat.service.ts";
+export { SafeguardingService } from "./safeguarding.service.ts";

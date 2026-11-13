@@ -179,6 +179,11 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "administrator.suspension.closed",
       "administrator.added",
       "club.administrators.grace_started",
+      // Child safety in chat (P2.1 part B).
+      "chat.report.created",
+      "chat.report.read_requested",
+      "chat.message.moderated",
+      "chat.member.muted",
       ...WAITLIST_EVENTS,
       "club.privacy_policy.published",
       "privacy.export.ready",
@@ -529,6 +534,92 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `${type}:${suspensionId}`,
             })),
           );
+          return;
+        }
+        // Child safety in chat (P2.1 part B): the safeguarding officers get a
+        // report at once and a request to read (another officer must
+        // confirm); never who reported or what was written.
+        case "chat.report.created":
+        case "chat.report.read_requested": {
+          const type = event.type;
+          const payload =
+            type === "chat.report.read_requested"
+              ? DOMAIN_EVENTS[type].parse(event.payload)
+              : { ...DOMAIN_EVENTS[type].parse(event.payload), readId: null };
+          await useClub(tx, payload.clubId);
+          const { rows } = await tx.execute<{
+            reason: string;
+            has_children: boolean;
+            requested_by: string | null;
+          }>(sql`
+            SELECT r.reason, c.has_children,
+              (SELECT x.requested_by_person_id FROM public.chat_report_reads x
+               WHERE x.id = ${payload.readId}::uuid) AS requested_by
+            FROM public.chat_reports r JOIN public.chats c ON c.id = r.chat_id
+            WHERE r.id = ${payload.reportId}::uuid`);
+          const report = rows[0];
+          if (!report) return;
+          const officers = await tx.execute<{ person_id: string }>(
+            clubHolders(payload.clubId, "club.safeguarding.handle"),
+          );
+          await notify(
+            tx,
+            officers.rows
+              .map((r) => r.person_id)
+              .filter((id) => id !== report.requested_by)
+              .map((recipient) => ({
+                recipientPersonId: recipient,
+                clubId: payload.clubId,
+                type: type === "chat.report.created" ? "chat.report.received" : type,
+                subjectType: "chat_report",
+                subjectId: payload.reportId,
+                about: [],
+                params: { reportReason: report.reason, children: report.has_children },
+                dedupeKey: `${type}:${payload.readId ?? payload.reportId}`,
+              })),
+          );
+          return;
+        }
+        // The sender of a hidden message and a muted member are told (ADR 0047 rule 11).
+        case "chat.message.moderated": {
+          const { clubId, chatId, messageId, personId } = DOMAIN_EVENTS[
+            "chat.message.moderated"
+          ].parse(event.payload);
+          await useClub(tx, clubId);
+          await notify(tx, [
+            {
+              recipientPersonId: personId,
+              clubId,
+              type: "chat.message.moderated",
+              subjectType: "chat",
+              subjectId: chatId,
+              about: [],
+              params: {},
+              dedupeKey: `chat.message.moderated:${messageId}`,
+            },
+          ]);
+          return;
+        }
+        case "chat.member.muted": {
+          const { clubId, muteId, personId } = DOMAIN_EVENTS["chat.member.muted"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{ until: string }>(sql`
+            SELECT until::text FROM public.chat_mutes WHERE id = ${muteId}::uuid`);
+          if (!rows[0]) return;
+          await notify(tx, [
+            {
+              recipientPersonId: personId,
+              clubId,
+              type: "chat.member.muted",
+              subjectType: "chat_mute",
+              subjectId: muteId,
+              about: [],
+              params: { until: new Date(rows[0].until).toISOString() },
+              dedupeKey: `chat.member.muted:${muteId}`,
+            },
+          ]);
           return;
         }
         case "administrator.suspension.closed": {

@@ -11,6 +11,7 @@ import {
   type ActorContext,
   audit,
   type Database,
+  outbox,
   type TenantContext,
   type Tx,
 } from "@clubadmin/db";
@@ -30,6 +31,7 @@ import type { ClubsService } from "../clubs/index.ts";
 import type { GroupsService } from "../groups/index.ts";
 import type { RealtimePublisher } from "../realtime/index.ts";
 import * as repo from "./chat.repository.ts";
+import { activeMute } from "./safeguarding.repository.ts";
 
 export type ChatListRow = repo.ChatListRow;
 export type ChatMemberView = Awaited<ReturnType<typeof repo.members>>[number];
@@ -74,6 +76,15 @@ export function uuidv7Time(id: string): number | null {
   return Number.parseInt(hex.slice(0, 12), 16);
 }
 
+/**
+ * ADR 0047 rule 9: where the club requires a background check, a leader
+ * writes to children and joins children's chats only with a valid one.
+ * Until background checks are tracked (P2.8) the hook allows.
+ */
+export function backgroundCheckAllows(_clubId: string, _personId: string): boolean {
+  return true;
+}
+
 export class ChatService {
   private readonly db: Database;
   private readonly publisher: RealtimePublisher;
@@ -88,6 +99,11 @@ export class ChatService {
     this.publisher = deps.publisher;
     this.clubs = deps.clubs;
     this.groups = deps.groups;
+  }
+
+  /** A muted member writes nothing in the club's chats (P2.1 part B). */
+  private async refuseMuted(tx: Tx, clubId: string, personId: string): Promise<void> {
+    if (await activeMute(tx, clubId, personId)) throw new DomainError("chat_muted");
   }
 
   private async namesInTx(tx: Tx, rows: readonly ChatListRow[]): Promise<ChatNames> {
@@ -118,6 +134,43 @@ export class ChatService {
     const found = await this.db.withActor(context, (tx) =>
       repo.myChatPage(tx, personId, { cursor: page.cursor ?? null, limit: page.limit + 1 }),
     );
+    if (!found.cursorFound) throw new DomainError("invalid_cursor");
+    const items = found.rows.slice(0, page.limit);
+    const byClub = new Map<string, string[]>();
+    for (const r of items) byClub.set(r.clubId, [...(byClub.get(r.clubId) ?? []), r.chatId]);
+    const rows = new Map<string, ChatListRow>();
+    const names: ChatNames = { clubs: new Map(), groups: new Map() };
+    for (const [clubId, chatIds] of byClub) {
+      await this.db.withTenant({ ...context, clubId }, async (tx) => {
+        const list = await repo.chatListRows(tx, chatIds, personId);
+        for (const r of list) rows.set(r.chat.id, r);
+        const n = await this.namesInTx(tx, list);
+        for (const [k, v] of n.clubs) names.clubs.set(k, v);
+        for (const [k, v] of n.groups) names.groups.set(k, v);
+      });
+    }
+    return {
+      rows: items.map((r) => rows.get(r.chatId)).filter((r): r is ChatListRow => !!r),
+      nextCursor: found.rows.length > page.limit ? items.at(-1)!.chatId : null,
+      names,
+    };
+  }
+
+  /**
+   * A ward's chats for their full guardian (ADR 0047 rule 6): which chats
+   * the child is in and who is in them, never the messages. The guardian's
+   * own membership and unread count come with each (they may join).
+   */
+  async wardChats(
+    context: ActorContext,
+    wardId: string,
+    page: { cursor?: string | undefined; limit: number },
+  ): Promise<{ rows: ChatListRow[]; nextCursor: string | null; names: ChatNames }> {
+    const personId = actorPersonId(context);
+    const found = await this.db.withActor(context, async (tx) => {
+      if (!(await repo.isWardOf(tx, wardId))) throw new DomainError("not_found");
+      return repo.myChatPage(tx, wardId, { cursor: page.cursor ?? null, limit: page.limit + 1 });
+    });
     if (!found.cursorFound) throw new DomainError("invalid_cursor");
     const items = found.rows.slice(0, page.limit);
     const byClub = new Map<string, string[]>();
@@ -315,6 +368,9 @@ export class ChatService {
   async openDirect(context: TenantContext, otherId: string): Promise<string> {
     const personId = actorPersonId(context);
     if (otherId === personId) throw new DomainError("chat_self");
+    if (!backgroundCheckAllows(context.clubId, personId)) {
+      throw new DomainError("chat_background_check");
+    }
     const fx = await this.db.withTenant(context, async (tx) => {
       const existing = await repo.findDirect(tx, personId, otherId);
       if (existing) {
@@ -531,6 +587,9 @@ export class ChatService {
     as: "guardian" | "leader" | "self",
   ): Promise<void> {
     const personId = actorPersonId(context);
+    if (as === "leader" && !backgroundCheckAllows(context.clubId, personId)) {
+      throw new DomainError("chat_background_check");
+    }
     const fx = await this.db.withTenant(context, async (tx) => {
       const fx = effects(context.clubId, chat.chatId);
       const member = await repo.findMember(tx, chat.chatId, personId);
@@ -644,6 +703,7 @@ export class ChatService {
       }
     }
     const result = await this.db.withTenant(context, async (tx) => {
+      await this.refuseMuted(tx, context.clubId, personId);
       if (input.replyToId) {
         const target = await repo.findMessage(tx, input.replyToId);
         if (!target || target.chatId !== chat.chatId) throw new DomainError("invalid_input");
@@ -684,6 +744,7 @@ export class ChatService {
   ): Promise<MessageRow> {
     const personId = actorPersonId(context);
     const message = await this.db.withTenant(context, async (tx) => {
+      await this.refuseMuted(tx, context.clubId, personId);
       const message = await repo.findMessage(tx, messageId);
       if (!message || message.chatId !== chat.chatId) throw new DomainError("not_found");
       if (message.senderPersonId !== personId || message.kind !== "text") {
@@ -728,6 +789,44 @@ export class ChatService {
     });
   }
 
+  /**
+   * A chat's managers (its creator, `group.channels.manage`) hide a message
+   * in it (ADR 0047 rule 11): kept, not shown; the sender is told.
+   */
+  async moderate(context: TenantContext, chat: ChatResource, messageId: string): Promise<void> {
+    const personId = actorPersonId(context);
+    const done = await this.db.withTenant(context, async (tx) => {
+      const message = await repo.findMessage(tx, messageId);
+      if (!message || message.chatId !== chat.chatId || message.kind !== "text") {
+        throw new DomainError("not_found");
+      }
+      if (message.senderPersonId === personId) throw new DomainError("not_allowed");
+      if (message.hiddenReason === "moderator") return false;
+      await repo.hideMessage(tx, messageId, personId, "moderator");
+      await audit.record(tx, {
+        action: "chat.message.moderated",
+        resourceType: "chat_message",
+        resourceId: messageId,
+        changedFields: ["hidden_at"],
+      });
+      await outbox.publish(tx, "chat.message.moderated", {
+        clubId: context.clubId,
+        chatId: chat.chatId,
+        messageId,
+        personId: message.senderPersonId!,
+      });
+      return true;
+    });
+    if (done) {
+      await this.publisher.toChat(chat.chatId, {
+        type: "message.updated",
+        clubId: context.clubId,
+        chatId: chat.chatId,
+        messageId,
+      });
+    }
+  }
+
   async react(
     context: TenantContext,
     chat: ChatResource,
@@ -737,6 +836,7 @@ export class ChatService {
   ): Promise<void> {
     const personId = actorPersonId(context);
     const changed = await this.db.withTenant(context, async (tx) => {
+      await this.refuseMuted(tx, context.clubId, personId);
       const message = await repo.findMessage(tx, messageId);
       if (!message || message.chatId !== chat.chatId) throw new DomainError("not_found");
       if (message.kind !== "text" || message.hiddenAt) throw new DomainError("chat_message_hidden");

@@ -805,7 +805,13 @@
     "chat_direct_members": "Ett direktmeddelande har alltid samma två personer.",
     "chat_guardian_required": "Föräldern måste vara med så länge en vuxen är med barnet i chatten. Stäng av notiserna i stället.",
     "chat_message_hidden": "Meddelandet är borttaget.",
-    "chat_message_conflict": "Meddelandet kunde inte skickas. Försök igen."
+    "chat_message_conflict": "Meddelandet kunde inte skickas. Försök igen.",
+    "chat_muted": "Du kan inte skriva i föreningens chattar just nu. Föreningens trygghetsansvariga har stängt av dig en tid.",
+    "chat_background_check": "Föreningen kräver ett giltigt utdrag ur belastningsregistret för att du ska kunna skriva till barn.",
+    "chat_report_own": "Du kan inte anmäla ditt eget meddelande.",
+    "chat_read_not_confirmable": "Begäran kan inte bekräftas: du gjorde den själv, den är redan bekräftad eller har förfallit.",
+    "chat_read_not_confirmed": "En andra trygghetsansvarig måste bekräfta innan chatten kan läsas.",
+    "chat_report_closed": "Ärendet är redan avslutat."
   },
   "memberExport": {
     "columns": {
@@ -1995,6 +2001,30 @@
         "title": "En ny föreningsadministratör i {club}",
         "body": "Någon har fått rätten att administrera föreningen och vem som får göra vad. Kontrollera att det stämmer."
       }
+    },
+    "chat": {
+      "report": {
+        "received": {
+          "title": "Ny anmälan från en chatt i {club}",
+          "body": "Någon har anmält en chatt ({reportReason, select, bullying {mobbning eller hot} inappropriate {olämpligt innehåll} unsafe_contact {otrygg kontakt} self_harm {risk för att någon skadar sig själv} other {annat}}){children, select, true {. Det finns barn i chatten.} other {.}} Öppna ärendet. Chatten kan läsas när en andra trygghetsansvarig har bekräftat det."
+        },
+        "read_requested": {
+          "title": "En trygghetsansvarig vill läsa en anmäld chatt i {club}",
+          "body": "En annan trygghetsansvarig vill läsa chatten i ett ärende ({reportReason, select, bullying {mobbning eller hot} inappropriate {olämpligt innehåll} unsafe_contact {otrygg kontakt} self_harm {risk för att någon skadar sig själv} other {annat}}). Läsningen kräver din eller någon annans bekräftelse (tvåpersonsregeln) och loggas."
+        }
+      },
+      "message": {
+        "moderated": {
+          "title": "Ett av dina meddelanden har dolts",
+          "body": "Ett meddelande du skrev i en chatt i {club} har dolts av den som ansvarar för chatten eller av föreningens trygghetsansvariga. Hör av dig till dem om du undrar varför."
+        }
+      },
+      "member": {
+        "muted": {
+          "title": "Du kan inte skriva i chattarna i {club} just nu",
+          "body": "Föreningens trygghetsansvariga har stängt av dig från att skriva i föreningens chattar till {until}. Du kan fortfarande läsa."
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2577,7 +2607,8 @@
       "club_manager_reassignment": "Ny klubbansvarig via operatören",
       "guardian_invitation": "Inbjudan av vårdnadshavare",
       "subscription": "Abonnemang",
-      "calendar_feed": "Kalenderprenumeration"
+      "calendar_feed": "Kalenderprenumeration",
+      "chat_report": "en anmälan från en chatt"
     },
     "statuses": {
       "scheduled": "Planerad",
@@ -2699,7 +2730,13 @@
       "withdrawn": "drog tillbaka",
       "joined": "gick med i",
       "left": "lämnade",
-      "hidden": "dolde"
+      "hidden": "dolde",
+      "moderated": "dolde (moderering)",
+      "read_requested": "bad att få läsa",
+      "read_confirmed": "bekräftade läsning av",
+      "read": "läste",
+      "muted": "stängde av från chatten",
+      "unmuted": "lät åter skriva i chatten"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -3616,6 +3653,11 @@
         "name": "Skapa föreningskanaler",
         "description": "Kan skapa chattkanaler för hela föreningen, utan koppling till en grupp, och välja vilka som är med.",
         "example": "Kan till exempel skapa en kanal för styrelsen eller för alla ledare."
+      },
+      "club_safeguarding_handle": {
+        "name": "Hantera trygghetsärenden",
+        "description": "Tar emot anmälningar från chattar, läser en anmäld chatt när en andra trygghetsansvarig har bekräftat det, döljer anmälda meddelanden, stänger av medlemmar från att skriva en tid och avslutar ärenden. Varje läsning loggas.",
+        "example": "Till exempel föreningens trygghetsansvarig."
       }
     }
   },
@@ -3902,6 +3944,76 @@
     "remove": "Ta bort",
     "sendMessage": "Skicka meddelande",
     "safety": "Så fungerar chatten för barn",
-    "live": "Nya meddelanden visas direkt."
+    "live": "Nya meddelanden visas direkt.",
+    "report": "Anmäl",
+    "reportTitle": "Varför anmäler du?",
+    "reportSend": "Skicka anmälan",
+    "reportSent": "Tack. Föreningens trygghetsansvariga har fått din anmälan. Den du anmält ser inte att det var du.",
+    "reportChat": "Anmäl chatten",
+    "reportHelp": "Om något i chatten känns fel eller otryggt kan du anmäla det. Föreningens trygghetsansvariga tar emot anmälan. Den som anmäls får inte veta vem som anmälde.",
+    "reportNote": "Vill du berätta mer? (frivilligt)",
+    "moderate": "Dölj",
+    "moderateConfirm": "Dölja meddelandet för alla? Det sparas och den som skrev det får veta att det har dolts.",
+    "wardChats": "Chattar",
+    "wardChatsHelp": "Här ser du vilka chattar ditt barn är med i och vilka som är med. Du läser inte meddelandena, men du kan gå med i en chatt – då ser alla där att du gick med.",
+    "wardChatsEmpty": "Ditt barn är inte med i någon chatt.",
+    "reportReasons": {
+      "bullying": "Mobbning, hot eller trakasserier",
+      "inappropriate": "Olämpligt eller sexuellt innehåll",
+      "unsafe_contact": "Någon vuxen vill ha privat kontakt, hemligheter eller ger gåvor",
+      "self_harm": "Någon kan skada sig själv",
+      "other": "Något annat"
+    }
+  },
+  "safeguarding": {
+    "title": "Trygghetsärenden",
+    "nav": "Trygghet",
+    "intro": "Anmälningar från föreningens chattar. Du ser vem som anmälde och varför, men inte chatten. För att läsa chatten ber du om det och en andra trygghetsansvarig bekräftar (tvåpersonsregeln). Varje läsning loggas.",
+    "open": "Öppna",
+    "closed": "Avslutade",
+    "empty": "Inga ärenden.",
+    "reportedAt": "Anmält",
+    "reason": "Skäl",
+    "reportedPerson": "Anmäld",
+    "wholeChat": "Hela chatten",
+    "children": "Barn i chatten",
+    "case": "Ärende",
+    "reporter": "Anmält av",
+    "note": "Kommentar",
+    "chat": "Chatt",
+    "directChat": "Direktmeddelande",
+    "reads": "Läsning av chatten",
+    "requestRead": "Be om att få läsa chatten",
+    "requested": "{name} bad om att läsa {time}. Väntar på en andra trygghetsansvarig.",
+    "confirmed": "{name} och {other} kan läsa till {time}.",
+    "lapsed": "{name} bad {time} (förfallen).",
+    "confirm": "Bekräfta – du blir den andra",
+    "messages": "Chatten",
+    "logged": "Du läser chatten under tvåpersonsregeln. Varje läsning loggas.",
+    "hiddenRecord": "Dold – texten finns kvar för ärendet:",
+    "reportedMessage": "Anmält meddelande",
+    "hide": "Dölj meddelandet",
+    "olderMessages": "Äldre meddelanden",
+    "mute": "Stäng av från att skriva",
+    "muteHours": "Hur länge (timmar, högst 720)",
+    "mutes": "Avstängda just nu",
+    "mutedUntil": "till {time}",
+    "mutedBy": "av {name}",
+    "noMutes": "Ingen är avstängd.",
+    "unmute": "Häv",
+    "close": "Avsluta ärendet",
+    "outcome": "Utfall",
+    "outcomeNote": "Anteckning (bara för trygghetsansvariga)",
+    "closedBy": "Avslutat av {name} {time}",
+    "outcomes": {
+      "no_action": "Ingen åtgärd",
+      "message_hidden": "Meddelande dolt",
+      "member_muted": "Avstängd från att skriva",
+      "referred": "Gått vidare (föreningens rutin, polis eller socialtjänst)"
+    },
+    "statuses": {
+      "open": "Öppet",
+      "closed": "Avslutat"
+    }
   }
 }

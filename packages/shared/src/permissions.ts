@@ -98,6 +98,9 @@ export const PERMISSIONS = [
   "chat.join",
   "chat.post",
   "chat.manage",
+  // Child safety (P2.1 part B, ADR 0047 rule 7): reports, safeguarding cases
+  // (reading under the two-person rule), hiding reported messages, muting.
+  "club.safeguarding.handle",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

@@ -805,7 +805,13 @@
     "chat_direct_members": "A direct message always has the same two people.",
     "chat_guardian_required": "The parent must stay while an adult is with their child in the chat. Turn notifications off instead.",
     "chat_message_hidden": "The message was deleted.",
-    "chat_message_conflict": "The message could not be sent. Try again."
+    "chat_message_conflict": "The message could not be sent. Try again.",
+    "chat_muted": "You cannot write in the club's chats right now. The club's safeguarding officers have muted you for a time.",
+    "chat_background_check": "The club requires a valid criminal record check for you to write to children.",
+    "chat_report_own": "You cannot report your own message.",
+    "chat_read_not_confirmable": "The request cannot be confirmed: you made it yourself, it is already confirmed or it lapsed.",
+    "chat_read_not_confirmed": "A second safeguarding officer must confirm before the chat can be read.",
+    "chat_report_closed": "The case is already closed."
   },
   "memberExport": {
     "columns": {
@@ -1995,6 +2001,30 @@
         "title": "A new administrator of {club}",
         "body": "Someone was given the right to administer the club and who may do what. Check that this is right."
       }
+    },
+    "chat": {
+      "report": {
+        "received": {
+          "title": "New report from a chat in {club}",
+          "body": "Someone reported a chat ({reportReason, select, bullying {bullying or threats} inappropriate {inappropriate content} unsafe_contact {unsafe contact} self_harm {someone may hurt themselves} other {other}}){children, select, true {. There are children in the chat.} other {.}} Open the case. The chat can be read once a second safeguarding officer confirms it."
+        },
+        "read_requested": {
+          "title": "A safeguarding officer wants to read a reported chat in {club}",
+          "body": "Another safeguarding officer wants to read the chat of a case ({reportReason, select, bullying {bullying or threats} inappropriate {inappropriate content} unsafe_contact {unsafe contact} self_harm {someone may hurt themselves} other {other}}). Reading it needs your or another officer's confirmation (two-person rule) and is logged."
+        }
+      },
+      "message": {
+        "moderated": {
+          "title": "One of your messages was hidden",
+          "body": "A message you wrote in a chat in {club} was hidden by the chat's manager or the club's safeguarding officers. Ask them if you wonder why."
+        }
+      },
+      "member": {
+        "muted": {
+          "title": "You cannot write in the chats of {club} for now",
+          "body": "The club's safeguarding officers have muted you in the club's chats until {until}. You can still read."
+        }
+      }
     }
   },
   "notifyCategories": {
@@ -2577,7 +2607,8 @@
       "club_manager_reassignment": "New club manager by the operator",
       "guardian_invitation": "Guardian invitation",
       "subscription": "Subscription",
-      "calendar_feed": "Calendar subscription"
+      "calendar_feed": "Calendar subscription",
+      "chat_report": "a report from a chat"
     },
     "statuses": {
       "scheduled": "Scheduled",
@@ -2699,7 +2730,13 @@
       "withdrawn": "withdrew",
       "joined": "joined",
       "left": "left",
-      "hidden": "hid"
+      "hidden": "hid",
+      "moderated": "hid (moderation)",
+      "read_requested": "asked to read",
+      "read_confirmed": "confirmed reading of",
+      "read": "read",
+      "muted": "muted in chat",
+      "unmuted": "unmuted in chat"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -3616,6 +3653,11 @@
         "name": "Create club channels",
         "description": "Can create chat channels for the whole club, not tied to a group, and choose who is in them.",
         "example": "For example, can create a channel for the board or for all leaders."
+      },
+      "club_safeguarding_handle": {
+        "name": "Handle safeguarding reports",
+        "description": "Receives reports from chats, reads a reported chat when a second safeguarding officer has confirmed it, hides reported messages, mutes members for a time and closes cases. Every read is logged.",
+        "example": "For example, the club's safeguarding officer."
       }
     }
   },
@@ -3902,6 +3944,76 @@
     "remove": "Remove",
     "sendMessage": "Send a message",
     "safety": "How chat works for children",
-    "live": "New messages appear at once."
+    "live": "New messages appear at once.",
+    "report": "Report",
+    "reportTitle": "Why are you reporting?",
+    "reportSend": "Send the report",
+    "reportSent": "Thank you. The club's safeguarding officers have your report. The person you reported will not know it was you.",
+    "reportChat": "Report the chat",
+    "reportHelp": "If something in the chat feels wrong or unsafe, you can report it. The club's safeguarding officers receive the report. The person reported is not told who reported.",
+    "reportNote": "Want to tell us more? (optional)",
+    "moderate": "Hide",
+    "moderateConfirm": "Hide the message for everyone? It is kept, and its author is told it was hidden.",
+    "wardChats": "Chats",
+    "wardChatsHelp": "Here you see which chats your child is in and who is in them. You do not read the messages, but you can join a chat – everyone there then sees that you joined.",
+    "wardChatsEmpty": "Your child is not in any chat.",
+    "reportReasons": {
+      "bullying": "Bullying, threats or harassment",
+      "inappropriate": "Inappropriate or sexual content",
+      "unsafe_contact": "An adult wants private contact, secrets or gives gifts",
+      "self_harm": "Someone may hurt themselves",
+      "other": "Something else"
+    }
+  },
+  "safeguarding": {
+    "title": "Safeguarding cases",
+    "nav": "Safeguarding",
+    "intro": "Reports from the club's chats. You see who reported and why, not the chat. To read the chat you ask, and a second safeguarding officer confirms (two-person rule). Every read is logged.",
+    "open": "Open",
+    "closed": "Closed",
+    "empty": "No cases.",
+    "reportedAt": "Reported",
+    "reason": "Reason",
+    "reportedPerson": "Reported",
+    "wholeChat": "The whole chat",
+    "children": "Children in the chat",
+    "case": "Case",
+    "reporter": "Reported by",
+    "note": "Comment",
+    "chat": "Chat",
+    "directChat": "Direct message",
+    "reads": "Reading the chat",
+    "requestRead": "Ask to read the chat",
+    "requested": "{name} asked to read {time}. Waiting for a second safeguarding officer.",
+    "confirmed": "{name} and {other} may read until {time}.",
+    "lapsed": "{name} asked {time} (lapsed).",
+    "confirm": "Confirm – you are the second",
+    "messages": "The chat",
+    "logged": "You are reading the chat under the two-person rule. Every read is logged.",
+    "hiddenRecord": "Hidden – the text is kept for the case:",
+    "reportedMessage": "Reported message",
+    "hide": "Hide the message",
+    "olderMessages": "Older messages",
+    "mute": "Mute in chat",
+    "muteHours": "For how long (hours, at most 720)",
+    "mutes": "Muted now",
+    "mutedUntil": "until {time}",
+    "mutedBy": "by {name}",
+    "noMutes": "Nobody is muted.",
+    "unmute": "Lift",
+    "close": "Close the case",
+    "outcome": "Outcome",
+    "outcomeNote": "Note (for safeguarding officers only)",
+    "closedBy": "Closed by {name} {time}",
+    "outcomes": {
+      "no_action": "No action",
+      "message_hidden": "Message hidden",
+      "member_muted": "Muted",
+      "referred": "Taken further (the club's procedure, police or social services)"
+    },
+    "statuses": {
+      "open": "Open",
+      "closed": "Closed"
+    }
   }
 }

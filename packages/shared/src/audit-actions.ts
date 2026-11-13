@@ -193,6 +193,16 @@ export const AUDIT_ACTIONS = [
   "chat.member.accepted",
   "chat.member.declined",
   "chat.message.hidden",
+  // Child safety (P2.1 part B): reports, the two-person rule (every read of
+  // a reported chat is its own event), moderation and mutes.
+  "chat.message.moderated",
+  "chat.report.created",
+  "chat.report.read_requested",
+  "chat.report.read_confirmed",
+  "chat.report.read",
+  "chat.report.closed",
+  "chat.member.muted",
+  "chat.member.unmuted",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

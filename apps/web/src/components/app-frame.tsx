@@ -96,6 +96,15 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         current: pathname.startsWith(`/clubs/${club.id}/invitations`),
       });
     }
+    // Safeguarding cases (P2.1 part B): the club's safeguarding officers.
+    if (club.mine?.permissions.includes("club.safeguarding.handle")) {
+      nav.push({
+        key: "safeguarding",
+        href: `/clubs/${club.id}/safeguarding`,
+        label: t("safeguarding.nav"),
+        current: pathname.startsWith(`/clubs/${club.id}/safeguarding`),
+      });
+    }
     if (club.mine?.permissions.includes("club.activities.read")) {
       nav.push({
         key: "calendar",
