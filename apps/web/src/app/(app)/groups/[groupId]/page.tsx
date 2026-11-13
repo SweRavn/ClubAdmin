@@ -6,6 +6,7 @@ import { enumKey } from "@clubadmin/i18n";
 import { GROUP_FUNCTIONS, type GroupFunction } from "@clubadmin/shared";
 import { EmptyState, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { secondaryButtonClass } from "../../../../components/action-form.tsx";
 import { Agenda, agendaItemOf, weekOffset, weekRange } from "../../../../components/agenda.tsx";
@@ -55,11 +56,9 @@ export default async function GroupPage({ params, searchParams }: Params) {
     getGroupMembers(groupId, limit),
     getGroupCalendarIfAllowed(groupId, range.from, range.to),
   ]);
-  const [club, groups, chats, events] = await Promise.all([
+  const [club, groups, events] = await Promise.all([
     getClub(group.clubId),
     getClubGroups(group.clubId),
-    // Chat (P2.1): the group's channels the viewer may see (null when chat is off).
-    getGroupChatsIfAllowed(group.clubId, group.id),
     // Events (P1.6): for those who see the group's activities.
     calendar ? getGroupEvents(group.id, new Date().toISOString()) : null,
   ]);
@@ -202,30 +201,10 @@ export default async function GroupPage({ params, searchParams }: Params) {
           ) : null}
         </dl>
       </div>
-      {chats && (chats.items.length > 0 || chats.canCreate) ? (
-        <section className="space-y-2" data-testid="group-channels">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold">{t("chat.groupChannels")}</h2>
-            {chats.canCreate && !group.archived ? (
-              <a
-                href={`/clubs/${group.clubId}/chats/new?groupId=${group.id}`}
-                className={secondaryButtonClass}
-                data-testid="group-new-channel"
-              >
-                {t("chat.newChannel")}
-              </a>
-            ) : null}
-          </div>
-          <p className="text-sm text-muted">{t("chat.groupChannelsHint")}</p>
-          <ul className="divide-y divide-border">
-            {chats.items.map((chat) => (
-              <li key={chat.id}>
-                <ChatRow chat={chat} showContext={false} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      {/* Chat (P2.1): streamed, so the page does not wait for the channels. */}
+      <Suspense fallback={null}>
+        <GroupChannels clubId={group.clubId} groupId={group.id} archived={group.archived} />
+      </Suspense>
 
       {events && (events.items.length > 0 || calendar?.canManage) ? (
         <section aria-labelledby="group-events" className="space-y-3">
@@ -436,5 +415,46 @@ export default async function GroupPage({ params, searchParams }: Params) {
         </section>
       ) : null}
     </div>
+  );
+}
+
+/** The group's channels the viewer may see (nothing when chat is off for the club). */
+async function GroupChannels({
+  clubId,
+  groupId,
+  archived,
+}: {
+  clubId: string;
+  groupId: string;
+  archived: boolean;
+}) {
+  const [t, chats] = await Promise.all([
+    getTranslations(),
+    getGroupChatsIfAllowed(clubId, groupId),
+  ]);
+  if (!chats || (chats.items.length === 0 && !chats.canCreate)) return null;
+  return (
+    <section className="space-y-2" data-testid="group-channels">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-lg font-semibold">{t("chat.groupChannels")}</h2>
+        {chats.canCreate && !archived ? (
+          <a
+            href={`/clubs/${clubId}/chats/new?groupId=${groupId}`}
+            className={secondaryButtonClass}
+            data-testid="group-new-channel"
+          >
+            {t("chat.newChannel")}
+          </a>
+        ) : null}
+      </div>
+      <p className="text-sm text-muted">{t("chat.groupChannelsHint")}</p>
+      <ul className="divide-y divide-border">
+        {chats.items.map((chat) => (
+          <li key={chat.id}>
+            <ChatRow chat={chat} showContext={false} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
