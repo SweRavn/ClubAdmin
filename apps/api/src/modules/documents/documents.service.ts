@@ -17,7 +17,14 @@
 // Who may do what is the policies' (folder.*, document.*); the controller
 // passes whether the caller manages the folder.
 
-import { audit, type Database, outbox, type TenantContext, type Tx } from "@clubadmin/db";
+import {
+  type ActorContext,
+  audit,
+  type Database,
+  outbox,
+  type TenantContext,
+  type Tx,
+} from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import {
   type AudienceInput,
@@ -28,9 +35,11 @@ import {
   DOCUMENT_MAX_BYTES,
   DOCUMENT_UPLOAD_SECONDS,
   documentContentType,
+  NOTICE_ATTACHMENTS_MAX,
   type StartUploadInput,
   type UpdateDocumentInput,
   type UpdateFolderInput,
+  type UpdateStorageInput,
   uuidv7,
 } from "@clubadmin/shared";
 
@@ -62,6 +71,26 @@ export interface DocumentDetail {
   path: { id: string; name: string }[];
   audience: repo.AudienceEntryRow[];
   versions: repo.VersionRow[];
+}
+
+export interface StorageView {
+  usedBytes: number;
+  limitBytes: number;
+  operatorLimitBytes: number;
+  clubLimitBytes: number | null;
+  groups: { groupId: string; groupName: string; usedBytes: number; limitBytes: number | null }[];
+}
+
+export interface NoticeAttachments {
+  items: { document: repo.DocumentRow; attachedAt: Date }[];
+  shownTo: { club: boolean; groups: { id: string; name: string }[]; calledUp: number | null } | null;
+}
+
+/** The notices folder's name in the club's language. */
+function noticesFolderName(locale: string): string {
+  if (locale.startsWith("nb") || locale.startsWith("no")) return "Innkallinger";
+  if (locale.startsWith("en")) return "Notices";
+  return "Kallelser";
 }
 
 export interface UploadStarted {
@@ -281,29 +310,54 @@ export class DocumentsService {
     return this.db.withTenant(context, async (tx) => {
       const folder = await repo.lockFolder(tx, folderId);
       if (!folder) throw new DomainError("not_found");
-      await this.reserve(tx, context.clubId, input.size, limit);
-      const documentId = uuidv7();
-      await repo.insertDocument(tx, {
-        id: documentId,
-        clubId: context.clubId,
+      return this.newFile(tx, storage, context.clubId, {
         folderId,
         groupId: folder.groupId,
-        name: input.name ?? input.fileName,
-        createdBy: personId,
-      });
-      await audit.record(tx, {
-        action: "document.created",
-        resourceType: "document",
-        resourceId: documentId,
-      });
-      return this.newVersion(tx, storage, context.clubId, {
-        documentId,
-        groupId: folder.groupId,
-        fileName: input.fileName,
-        size: input.size,
+        input,
         contentType,
         personId,
+        limit,
       });
+    });
+  }
+
+  /** A new file in a folder (the folder locked by the caller): its first version's link. */
+  private async newFile(
+    tx: Tx,
+    storage: ObjectStorage,
+    clubId: string,
+    file: {
+      folderId: string;
+      groupId: string | null;
+      input: StartUploadInput;
+      contentType: string;
+      personId: string;
+      limit: number;
+    },
+  ): Promise<UploadStarted> {
+    await this.reserve(tx, clubId, file.groupId, file.input.size, file.limit);
+    const documentId = uuidv7();
+    await repo.insertDocument(tx, {
+      id: documentId,
+      clubId,
+      folderId: file.folderId,
+      groupId: file.groupId,
+      name: file.input.name ?? file.input.fileName,
+      createdBy: file.personId,
+    });
+    await audit.record(tx, {
+      action: "document.created",
+      resourceType: "document",
+      resourceId: documentId,
+    });
+    return this.newVersion(tx, storage, clubId, {
+      documentId,
+      groupId: file.groupId,
+      fileName: file.input.fileName,
+      size: file.input.size,
+      contentType: file.contentType,
+      personId: file.personId,
+      notify: file.input.notify ?? false,
     });
   }
 
@@ -319,7 +373,7 @@ export class DocumentsService {
     return this.db.withTenant(context, async (tx) => {
       const document = await repo.lockDocument(tx, documentId);
       if (!document) throw new DomainError("not_found");
-      await this.reserve(tx, context.clubId, input.size, limit);
+      await this.reserve(tx, context.clubId, document.groupId, input.size, limit);
       return this.newVersion(tx, storage, context.clubId, {
         documentId,
         groupId: document.groupId,
@@ -327,6 +381,7 @@ export class DocumentsService {
         size: input.size,
         contentType,
         personId,
+        notify: input.notify ?? false,
       });
     });
   }
@@ -361,11 +416,30 @@ export class DocumentsService {
     return { storage: this.storage, contentType };
   }
 
-  /** Refuses an upload that would take the club over its limit (one upload at a time per club). */
-  private async reserve(tx: Tx, clubId: string, size: number, limit: number): Promise<void> {
+  /**
+   * Refuses an upload that would take the club over its limit (the
+   * operator's, or the club's own within it) or a group over the limit the
+   * club gave it. One upload at a time per club.
+   */
+  private async reserve(
+    tx: Tx,
+    clubId: string,
+    groupId: string | null,
+    size: number,
+    operatorLimit: number,
+  ): Promise<void> {
     await repo.lockClubStorage(tx, clubId);
+    const own = await repo.quotas(tx, clubId);
     const usage = await repo.storageUsage(tx, clubId);
-    if (usage.club + size > limit) throw new DomainError("storage_limit_exceeded");
+    if (usage.club + size > Math.min(operatorLimit, own.get(null) ?? Infinity)) {
+      throw new DomainError("storage_limit_exceeded");
+    }
+    const groupLimit = groupId ? own.get(groupId) : undefined;
+    if (groupId && groupLimit !== undefined) {
+      if ((await repo.oneGroupUsage(tx, clubId, groupId)) + size > groupLimit) {
+        throw new DomainError("storage_limit_group_exceeded");
+      }
+    }
   }
 
   private async newVersion(
@@ -379,6 +453,7 @@ export class DocumentsService {
       size: number;
       contentType: string;
       personId: string;
+      notify: boolean;
     },
   ): Promise<UploadStarted> {
     const versionId = uuidv7();
@@ -393,6 +468,7 @@ export class DocumentsService {
       size: input.size,
       contentType: input.contentType,
       uploadedBy: input.personId,
+      notify: input.notify,
     });
     return {
       documentId: input.documentId,
@@ -444,7 +520,20 @@ export class DocumentsService {
       const document = await repo.lockDocument(tx, documentId);
       if (!document) throw new DomainError("not_found");
       const changed: string[] = [];
-      const changes: { name?: string; folderId?: string; audienceId?: string | null } = {};
+      const changes: {
+        name?: string;
+        folderId?: string;
+        audienceId?: string | null;
+        deleteAfter?: string | null;
+      } = {};
+      if (input.deleteAfter !== undefined) {
+        // A deletion date is a day after today (the worker deletes on it).
+        if (input.deleteAfter !== null && input.deleteAfter <= new Date().toISOString().slice(0, 10)) {
+          throw new DomainError("delete_after_past");
+        }
+        changes.deleteAfter = input.deleteAfter;
+        changed.push("delete_after");
+      }
       if (input.name !== undefined) {
         changes.name = input.name;
         changed.push("name");
@@ -522,6 +611,274 @@ export class DocumentsService {
         url: storage.presignDownload(version.objectKey, {
           expiresSeconds: DOCUMENT_DOWNLOAD_SECONDS,
           filename: version.fileName,
+        }),
+        expiresAt: new Date(Date.now() + DOCUMENT_DOWNLOAD_SECONDS * 1000),
+      };
+    });
+  }
+
+  // --- Storage limits (P2.2 part B) --------------------------------------------
+
+  /** The club's storage: used, the limits that apply, and per group. */
+  async storageOf(context: TenantContext): Promise<StorageView> {
+    const operatorLimit = await this.clubLimitBytes(context.clubId);
+    return this.db.withTenant(context, async (tx) => {
+      const usage = await repo.storageUsage(tx, context.clubId);
+      const byGroup = await repo.groupUsage(tx, context.clubId);
+      const own = await repo.quotas(tx, context.clubId);
+      const groupIds = [
+        ...new Set([...byGroup.keys(), ...[...own.keys()].filter((k): k is string => k !== null)]),
+      ];
+      const names = await repo.groupNames(tx, context.clubId, groupIds);
+      const clubLimit = own.get(null) ?? null;
+      return {
+        usedBytes: usage.club,
+        limitBytes: Math.min(operatorLimit, clubLimit ?? Infinity),
+        operatorLimitBytes: operatorLimit,
+        clubLimitBytes: clubLimit,
+        groups: groupIds
+          .map((groupId) => ({
+            groupId,
+            groupName: names.get(groupId) ?? "",
+            usedBytes: byGroup.get(groupId) ?? 0,
+            limitBytes: own.get(groupId) ?? null,
+          }))
+          .sort((a, b) => a.groupName.localeCompare(b.groupName)),
+      };
+    });
+  }
+
+  /**
+   * Sets the club's own limit (within the operator's) and limits per group
+   * (each within the club's; together at most the club's).
+   */
+  async updateStorage(context: TenantContext, input: UpdateStorageInput): Promise<void> {
+    const operatorLimit = await this.clubLimitBytes(context.clubId);
+    await this.db.withTenant(context, async (tx) => {
+      await repo.lockClubStorage(tx, context.clubId);
+      if (input.clubLimitBytes !== null && input.clubLimitBytes > operatorLimit) {
+        throw new DomainError("storage_limit_invalid");
+      }
+      const names = await repo.groupNames(
+        tx,
+        context.clubId,
+        input.groups.map((g) => g.groupId),
+      );
+      if (input.groups.some((g) => !names.has(g.groupId))) throw new DomainError("not_found");
+      await repo.setQuota(tx, context.clubId, null, input.clubLimitBytes);
+      for (const g of input.groups) await repo.setQuota(tx, context.clubId, g.groupId, g.limitBytes);
+      const own = await repo.quotas(tx, context.clubId);
+      const clubLimit = Math.min(operatorLimit, own.get(null) ?? Infinity);
+      const groupLimits = [...own.entries()].filter(([k]) => k !== null).map(([, v]) => v);
+      if (
+        groupLimits.some((l) => l > clubLimit) ||
+        groupLimits.reduce((sum, l) => sum + l, 0) > clubLimit
+      ) {
+        throw new DomainError("storage_limit_invalid");
+      }
+      await audit.record(tx, {
+        action: "documents.storage.updated",
+        resourceType: "club",
+        resourceId: context.clubId,
+        changedFields: ["limit_bytes"],
+      });
+    });
+  }
+
+  // --- Notices (P2.2 part B) -----------------------------------------------------
+
+  /**
+   * The documents attached to a notice: those the caller reads (all for
+   * those who manage the notice), and to whom they are shown (managers).
+   */
+  noticeAttachments(
+    context: TenantContext,
+    notice: repo.Notice,
+    manage: boolean,
+  ): Promise<NoticeAttachments> {
+    const personId = actorPersonId(context);
+    return this.db.withTenant(context, async (tx) => {
+      const all = await repo.noticeAttachments(tx, notice);
+      const readable = manage
+        ? null
+        : await repo.readableDocuments(
+            tx,
+            all.map((a) => a.document.id),
+            personId,
+          );
+      const items = all.filter(
+        (a) => readable === null || (readable.has(a.document.id) && a.document.current !== null),
+      );
+      return {
+        items: manage ? items : items.map((a) => ({ ...a, document: { ...a.document, latest: null } })),
+        shownTo: manage ? await repo.noticeReaders(tx, notice) : null,
+      };
+    });
+  }
+
+  /**
+   * Sets the documents of a notice (the controller checked that the caller
+   * reads each newly attached one). Detaching never deletes a document.
+   */
+  async setNoticeAttachments(
+    context: TenantContext,
+    notice: repo.Notice,
+    documentIds: readonly string[],
+  ): Promise<void> {
+    const personId = actorPersonId(context);
+    await this.db.withTenant(context, async (tx) => {
+      const existing = await repo.existingDocuments(tx, context.clubId, documentIds);
+      if (documentIds.some((id) => !existing.has(id))) throw new DomainError("not_found");
+      const { added, removed } = await repo.setNoticeAttachments(
+        tx,
+        context.clubId,
+        notice,
+        documentIds,
+        personId,
+      );
+      for (const [ids, action] of [
+        [added, "document.notice.added"],
+        [removed, "document.notice.removed"],
+      ] as const) {
+        for (const id of ids) {
+          await audit.record(tx, {
+            action,
+            resourceType: "document",
+            resourceId: id,
+            changedFields: ["activityId" in notice ? "activity_id" : "event_id"],
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * Uploads a file to a notice: stored in the notices folder of the notice's
+   * (first) group or of the club (created with that audience when missing),
+   * through the same scanning, and attached at once.
+   */
+  async startNoticeUpload(
+    context: TenantContext,
+    notice: repo.Notice,
+    input: StartUploadInput,
+  ): Promise<UploadStarted> {
+    const personId = actorPersonId(context);
+    const { storage, contentType } = this.checkUpload(input);
+    const limit = await this.clubLimitBytes(context.clubId);
+    return this.db.withTenant(context, async (tx) => {
+      const groupId = await repo.noticeGroup(tx, notice);
+      const folderId = await this.noticesFolder(tx, context.clubId, groupId, personId);
+      const started = await this.newFile(tx, storage, context.clubId, {
+        folderId,
+        groupId,
+        input,
+        contentType,
+        personId,
+        limit,
+      });
+      const current = (await repo.noticeAttachments(tx, notice)).map((a) => a.document.id);
+      if (current.length >= NOTICE_ATTACHMENTS_MAX) throw new DomainError("notice_attachments_full");
+      await repo.setNoticeAttachments(
+        tx,
+        context.clubId,
+        notice,
+        [...current, started.documentId],
+        personId,
+      );
+      await audit.record(tx, {
+        action: "document.notice.added",
+        resourceType: "document",
+        resourceId: started.documentId,
+        changedFields: ["activityId" in notice ? "activity_id" : "event_id"],
+      });
+      return started;
+    });
+  }
+
+  private async noticesFolder(
+    tx: Tx,
+    clubId: string,
+    groupId: string | null,
+    personId: string,
+  ): Promise<string> {
+    const found = await repo.noticesFolder(tx, clubId, groupId);
+    if (found) return found;
+    const locale = await repo.clubLocale(tx, clubId);
+    const base = noticesFolderName(locale);
+    const audienceId = await repo.insertAudience(
+      tx,
+      clubId,
+      groupId ? [{ kind: "group", groupId }] : [{ kind: "club" }],
+    );
+    // A folder of the same name the club made itself keeps its name.
+    for (const name of [base, `${base} (ClubAdmin)`]) {
+      const id = await repo.insertNoticesFolder(tx, { clubId, groupId, name, audienceId, by: personId });
+      if (id) return id;
+    }
+    throw new DomainError("folder_name_taken");
+  }
+
+  // --- "Mina dokument" (P2.2 part B) ----------------------------------------------
+
+  /** The caller's newest files across their clubs and groups (outside a club). */
+  myDocuments(
+    context: ActorContext,
+    query: { cursor?: string | undefined; limit: number },
+  ): Promise<{ rows: repo.MyDocumentRow[]; nextCursor: string | null }> {
+    return this.db.withActor(context, async (tx) => {
+      // At most limit + 1 per club: merged here, newest first.
+      const rows = (await repo.myDocuments(tx, query.cursor ?? null, query.limit + 1)).sort(
+        (a, b) =>
+          b.document.publishedAt!.getTime() - a.document.publishedAt!.getTime() ||
+          (a.document.id < b.document.id ? 1 : a.document.id > b.document.id ? -1 : 0),
+      );
+      const items = rows.slice(0, query.limit);
+      return {
+        rows: items,
+        nextCursor: rows.length > query.limit ? items.at(-1)!.document.id : null,
+      };
+    });
+  }
+
+  /** The caller looked at the club's (groupId null) or a group's documents. */
+  async markSeen(context: TenantContext, groupId: string | null): Promise<void> {
+    await this.db.withTenant(context, (tx) => repo.markSeen(tx, context.clubId, groupId));
+  }
+
+  // --- Public documents (P2.2 part B) ---------------------------------------------
+
+  /** A club's public files (for its public pages), by its slug. */
+  async publicDocuments(slug: string): Promise<repo.DocumentRow[]> {
+    const clubId = await this.clubOfSlug(slug);
+    return this.db.withSystem("documents:public", { clubId }, (tx) =>
+      repo.publicDocuments(tx, clubId),
+    );
+  }
+
+  /** The club of a slug (a read of clubs alone; its documents are read in its context). */
+  private async clubOfSlug(slug: string): Promise<string> {
+    const clubId = await this.db.withSystem("documents:public", {}, (tx) =>
+      repo.clubBySlug(tx, slug),
+    );
+    if (!clubId) throw new DomainError("not_found");
+    return clubId;
+  }
+
+  /** A download link of a public file's current version. */
+  async publicDownload(
+    slug: string,
+    documentId: string,
+  ): Promise<{ url: string; expiresAt: Date }> {
+    const storage = this.storage;
+    if (!storage) throw new DomainError("documents_storage_unavailable");
+    const clubId = await this.clubOfSlug(slug);
+    return this.db.withSystem("documents:public", { clubId }, async (tx) => {
+      const document = (await repo.publicDocuments(tx, clubId)).find((d) => d.id === documentId);
+      if (!document?.current) throw new DomainError("not_found");
+      return {
+        url: storage.presignDownload(document.current.objectKey, {
+          expiresSeconds: DOCUMENT_DOWNLOAD_SECONDS,
+          filename: document.current.fileName,
         }),
         expiresAt: new Date(Date.now() + DOCUMENT_DOWNLOAD_SECONDS * 1000),
       };

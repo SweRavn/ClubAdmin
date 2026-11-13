@@ -795,6 +795,25 @@ const NOT_HERE: Record<string, string> = {
     "one version by key, audit and outbox",
   "PATCH /api/v1/clubs/{clubId}/documents/{documentId}": "a rare write by key (documents tests)",
   "DELETE /api/v1/clubs/{clubId}/documents/{documentId}": "one update by key, audit and outbox",
+  // Part B: "Mina dokument" and the notices' documents are read by the apps
+  // from part C, which measures them on the seeded documents.
+  "GET /api/v1/me/documents":
+    "per club of the caller: its groups' and its own newest files by the published indexes (P2.2 part C)",
+  "POST /api/v1/clubs/{clubId}/documents/seen": "one upsert by the person's key",
+  "GET /api/v1/activities/{activityId}/attachments":
+    "the notice's documents by its index (P2.2 part C)",
+  "GET /api/v1/events/{eventId}/attachments": "as the activity's (P2.2 part C)",
+  "PUT /api/v1/activities/{activityId}/attachments":
+    "a rare write: each new document's policy, one delete and one insert, audit",
+  "PUT /api/v1/events/{eventId}/attachments": "as the activity's",
+  "POST /api/v1/activities/{activityId}/attachments/uploads":
+    "as an upload, plus the notices folder (found by its index or created once)",
+  "POST /api/v1/events/{eventId}/attachments/uploads": "as the activity's",
+  "GET /api/v1/clubs/{clubId}/storage": "a settings page: usage per group by the usage index",
+  "PUT /api/v1/clubs/{clubId}/storage": "a rare write under the club's storage lock",
+  "GET /api/v1/public/clubs/{slug}/documents":
+    "the club's public pages (Phase 3): its folders' tree and public audiences",
+  "GET /api/v1/public/clubs/{slug}/documents/{documentId}/download": "as the list",
   "PUT /api/v1/people/{personId}/protection":
     "a rare write: one lock, one update, audit and outbox (protection tests)",
   "POST /api/v1/me/calendar-feeds":

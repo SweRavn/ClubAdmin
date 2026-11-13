@@ -10,13 +10,14 @@ import { EntitlementsService } from "../entitlements/index.ts";
 import { PeopleModule } from "../people/index.ts";
 import { DocumentsController } from "./documents.controller.ts";
 import { DocumentsService } from "./documents.service.ts";
+import { NoticeAttachmentsController } from "./notice-attachments.controller.ts";
 
 const GB = 1024 * 1024 * 1024;
 const MB = 1024 * 1024;
 
 @Module({
   imports: [AuthorizationModule, PeopleModule],
-  controllers: [DocumentsController],
+  controllers: [DocumentsController, NoticeAttachmentsController],
   providers: [
     {
       provide: DocumentsService,

@@ -45,6 +45,7 @@ describe("worker", () => {
       "administrators:daily",
       "chat:maintenance",
       "documents:cleanup",
+      "documents:deletion_dates",
     ]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
   });

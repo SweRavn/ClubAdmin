@@ -35,6 +35,50 @@ export interface paths {
     patch: operations["Activities_updateActivity"];
     trace?: never;
   };
+  "/api/v1/activities/{activityId}/attachments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The documents attached to an activity's notice (and to whom they are shown)
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["NoticeAttachments_activityAttachments"];
+    /**
+     * Set the documents attached to an activity's notice (detaching never deletes)
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["NoticeAttachments_setActivityAttachments"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/attachments/uploads": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Upload a document to an activity's notice (stored in the notices folder, scanned)
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["NoticeAttachments_uploadToActivity"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activities/{activityId}/attendance": {
     parameters: {
       query?: never;
@@ -1294,6 +1338,26 @@ export interface paths {
      * @description Requires permission `document.manage` on the document. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["Documents_uploaded"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/documents/seen": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * The caller looked at the club's documents (or a group's): nothing is new there now
+     * @description Requires permission `club.documents.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Documents_seen"];
     delete?: never;
     options?: never;
     head?: never;
@@ -2718,6 +2782,30 @@ export interface paths {
     patch: operations["Clubs_updateSettings"];
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/storage": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's file storage: used, the limits, and per group
+     * @description Requires permission `club.documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Documents_storage"];
+    /**
+     * Set the club's own storage limit and limits per group
+     * @description Requires permission `club.documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Documents_updateStorage"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/subscription": {
     parameters: {
       query?: never;
@@ -2904,6 +2992,50 @@ export interface paths {
      */
     put: operations["Events_setActivities"];
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/events/{eventId}/attachments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The documents attached to an event's notice (and to whom they are shown)
+     * @description Requires permission `event.read` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["NoticeAttachments_eventAttachments"];
+    /**
+     * Set the documents attached to an event's notice (detaching never deletes)
+     * @description Requires permission `event.manage` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["NoticeAttachments_setEventAttachments"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/events/{eventId}/attachments/uploads": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Upload a document to an event's notice (stored in the notices folder, scanned)
+     * @description Requires permission `event.manage` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["NoticeAttachments_uploadToEvent"];
     delete?: never;
     options?: never;
     head?: never;
@@ -4170,6 +4302,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Mina dokument: the newest files of the caller's groups and clubs, new ones marked */
+    get: operations["Documents_myDocuments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/duplicates": {
     parameters: {
       query?: never;
@@ -5141,6 +5290,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/public/clubs/{slug}/documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A club's public documents (for its public pages) */
+    get: operations["Documents_publicDocuments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/public/clubs/{slug}/documents/{documentId}/download": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A short-lived download link of a club's public document */
+    get: operations["Documents_publicDownload"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/realtime/tickets": {
     parameters: {
       query?: never;
@@ -5380,6 +5563,82 @@ export interface components {
       /** Format: date-time */
       respondBy?: string | null;
       requestLead?: components["schemas"]["RequestLead"];
+    };
+    NoticeAttachmentList: {
+      items: components["schemas"]["NoticeAttachment"][];
+      shownTo: {
+        club: boolean;
+        groups: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        }[];
+        calledUp: number | null;
+      } | null;
+      canManage: boolean;
+    };
+    NoticeAttachment: {
+      document: components["schemas"]["DocumentSummary"];
+      /** Format: date-time */
+      attachedAt: string;
+    };
+    DocumentSummary: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      clubId: string;
+      /** Format: uuid */
+      folderId: string;
+      /** @enum {string} */
+      kind: "file" | "governing";
+      name: string;
+      current: components["schemas"]["DocumentVersion"];
+      latest: components["schemas"]["DocumentVersion"];
+      ownAudience: boolean;
+      /** Format: date-time */
+      updatedAt: string;
+      /** Format: date-time */
+      publishedAt?: string | null;
+      /** Format: date */
+      deleteAfter?: string | null;
+    };
+    DocumentVersion: {
+      /** Format: uuid */
+      id: string;
+      number: number;
+      fileName: string;
+      size: number;
+      contentType: string;
+      /** @enum {string} */
+      status: "uploading" | "pending" | "clean" | "infected" | "failed";
+      sha256: string | null;
+      uploadedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** Format: date-time */
+      uploadedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    } | null;
+    SetNoticeAttachments: {
+      documentIds: string[];
+    };
+    UploadStarted: {
+      /** Format: uuid */
+      documentId: string;
+      /** Format: uuid */
+      versionId: string;
+      /** Format: uri */
+      uploadUrl: string;
+      headers: {
+        [key: string]: string;
+      };
+      /** Format: date-time */
+      uploadExpiresAt: string;
+    };
+    StartUpload: {
+      fileName: string;
+      size: number;
+      name?: string;
+      notify?: boolean;
     };
     Attendance: {
       /** Format: uuid */
@@ -6666,38 +6925,6 @@ export interface components {
       versions: components["schemas"]["DocumentVersion"][];
       canManage: boolean;
     };
-    DocumentSummary: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      clubId: string;
-      /** Format: uuid */
-      folderId: string;
-      /** @enum {string} */
-      kind: "file" | "governing";
-      name: string;
-      current: components["schemas"]["DocumentVersion"];
-      latest: components["schemas"]["DocumentVersion"];
-      ownAudience: boolean;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    DocumentVersion: {
-      /** Format: uuid */
-      id: string;
-      number: number;
-      fileName: string;
-      size: number;
-      contentType: string;
-      /** @enum {string} */
-      status: "uploading" | "pending" | "clean" | "infected" | "failed";
-      sha256: string | null;
-      uploadedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
-      /** Format: date-time */
-      uploadedAt: string | null;
-      /** Format: date-time */
-      createdAt: string;
-    } | null;
     AudienceEntry: {
       /** @enum {string} */
       kind: "club" | "group" | "group_roles" | "club_role" | "public";
@@ -6711,6 +6938,8 @@ export interface components {
       /** Format: uuid */
       folderId?: string;
       audience?: components["schemas"]["AudienceInput"];
+      /** Format: date */
+      deleteAfter?: string | null;
     };
     AudienceInput: components["schemas"]["AudienceEntryInput"][] | null;
     AudienceEntryInput:
@@ -6747,23 +6976,9 @@ export interface components {
       /** Format: date-time */
       expiresAt: string;
     };
-    UploadStarted: {
+    DocumentsSeen: {
       /** Format: uuid */
-      documentId: string;
-      /** Format: uuid */
-      versionId: string;
-      /** Format: uri */
-      uploadUrl: string;
-      headers: {
-        [key: string]: string;
-      };
-      /** Format: date-time */
-      uploadExpiresAt: string;
-    };
-    StartUpload: {
-      fileName: string;
-      size: number;
-      name?: string;
+      groupId?: string | null;
     };
     ClubDuplicates: {
       items: {
@@ -8268,6 +8483,27 @@ export interface components {
         [key: string]: unknown;
       };
     };
+    Storage: {
+      usedBytes: number;
+      limitBytes: number;
+      operatorLimitBytes: number;
+      clubLimitBytes: number | null;
+      groups: {
+        /** Format: uuid */
+        groupId: string;
+        groupName: string;
+        usedBytes: number;
+        limitBytes: number | null;
+      }[];
+    };
+    UpdateStorage: {
+      clubLimitBytes: number | null;
+      groups: {
+        /** Format: uuid */
+        groupId: string;
+        limitBytes: number | null;
+      }[];
+    };
     SubscriptionResponse: {
       subscription: components["schemas"]["Subscription"];
     };
@@ -9308,6 +9544,19 @@ export interface components {
       /** Format: date-time */
       expiresAt: string;
     };
+    MyDocumentPage: {
+      items: components["schemas"]["MyDocument"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    MyDocument: {
+      document: components["schemas"]["DocumentSummary"];
+      clubName: string;
+      /** Format: uuid */
+      groupId: string | null;
+      groupName: string | null;
+      isNew: boolean;
+    };
     FamilyDuplicates: {
       pairs: {
         person: {
@@ -9432,7 +9681,8 @@ export interface components {
           | "family"
           | "account"
           | "waitlist"
-          | "chat";
+          | "chat"
+          | "documents";
         /** @enum {string} */
         email: "always" | "no_app" | "never";
         push: boolean;
@@ -9458,7 +9708,8 @@ export interface components {
           | "family"
           | "account"
           | "waitlist"
-          | "chat";
+          | "chat"
+          | "documents";
         /** @enum {string} */
         email: "always" | "no_app" | "never";
         push: boolean;
@@ -9838,7 +10089,8 @@ export interface components {
         | "family"
         | "account"
         | "waitlist"
-        | "chat";
+        | "chat"
+        | "documents";
     };
     Unsubscribe: {
       token?: string;
@@ -10086,6 +10338,19 @@ export interface components {
       description: string | null;
       example: string | null;
     };
+    PublicDocumentList: {
+      items: components["schemas"]["PublicDocument"][];
+    };
+    PublicDocument: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      fileName: string;
+      size: number;
+      contentType: string;
+      /** Format: date-time */
+      publishedAt: string | null;
+    };
     RealtimeTicket: {
       ticket: string;
       url: string;
@@ -10285,6 +10550,242 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Activity"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  NoticeAttachments_activityAttachments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NoticeAttachmentList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  NoticeAttachments_setActivityAttachments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetNoticeAttachments"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NoticeAttachmentList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  NoticeAttachments_uploadToActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["StartUpload"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UploadStarted"];
         };
       };
       /** @description Invalid request */
@@ -16158,6 +16659,84 @@ export interface operations {
       cookie?: never;
     };
     requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Documents_seen: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DocumentsSeen"];
+      };
+    };
     responses: {
       /** @description Done */
       204: {
@@ -23317,6 +23896,162 @@ export interface operations {
       };
     };
   };
+  Documents_storage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Storage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Documents_updateStorage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateStorage"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Storage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Billing_subscription: {
     parameters: {
       query?: never;
@@ -24197,6 +24932,242 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Event"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  NoticeAttachments_eventAttachments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NoticeAttachmentList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  NoticeAttachments_setEventAttachments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetNoticeAttachments"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NoticeAttachmentList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  NoticeAttachments_uploadToEvent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["StartUpload"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["UploadStarted"];
         };
       };
       /** @description Invalid request */
@@ -29854,6 +30825,74 @@ export interface operations {
       };
     };
   };
+  Documents_myDocuments: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyDocumentPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Family_duplicates: {
     parameters: {
       query?: never;
@@ -30353,7 +31392,8 @@ export interface operations {
           | "family"
           | "account"
           | "waitlist"
-          | "chat";
+          | "chat"
+          | "documents";
       };
       header?: never;
       path?: never;
@@ -34249,6 +35289,105 @@ export interface operations {
       };
       /** @description Not allowed */
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Documents_publicDocuments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PublicDocumentList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Documents_publicDownload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentDownload"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
         headers: {
           [name: string]: unknown;
         };

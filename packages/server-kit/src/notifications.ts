@@ -224,6 +224,9 @@ export function noticeLink(input: NoticeInput): string {
       return input.clubId && id ? `/clubs/${input.clubId}/chats/${id}` : "/me/chats";
     case "chat_mute":
       return "/me/chats";
+    // The file archive (P2.2 part B): the file's page.
+    case "document":
+      return input.clubId && id ? `/clubs/${input.clubId}/documents/${id}` : "/me/documents";
     // Calendar subscriptions (P1.11): the person's subscriptions page.
     case "calendar_feed":
       return "/me/calendar";
@@ -249,6 +252,8 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     scheduledFor: formatWhen(locale, p.scheduledFor, p.timeZone),
     place: str(p.place),
     hasPlace: p.place ? "yes" : "no",
+    /** A document's group (P2.2 part B): whether the notice names one. */
+    hasGroup: p.group ? "yes" : "no",
     status: str(p.status),
     change: str(p.change),
     kind: str(p.kind),

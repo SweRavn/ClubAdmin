@@ -214,6 +214,10 @@ export const AUDIT_ACTIONS = [
   "document.version.added",
   "document.version.verified",
   "document.downloaded",
+  // Notices and storage (P2.2 part B).
+  "document.notice.added",
+  "document.notice.removed",
+  "documents.storage.updated",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

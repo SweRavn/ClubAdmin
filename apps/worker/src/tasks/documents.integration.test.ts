@@ -14,7 +14,13 @@ import type { VirusScanner } from "@clubadmin/server-kit/virus-scan";
 import { uuidv7 } from "@clubadmin/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { cleanupDocuments, deleteDocumentObjects, matchesType, scanVersion } from "./documents.ts";
+import {
+  cleanupDocuments,
+  deleteDocumentObjects,
+  matchesType,
+  runDeletionDates,
+  scanVersion,
+} from "./documents.ts";
 
 loadEnvFiles();
 const config = objectStorageConfig({
@@ -233,5 +239,54 @@ describe("matchesType", () => {
     expect(matchesType("text/csv", Buffer.from([0x61, 0x00, 0x62]))).toBe(false);
     expect(matchesType("application/pdf", Buffer.from("MZ"))).toBe(false);
     expect(matchesType("application/x-msdownload", Buffer.from("MZ"))).toBe(false);
+  });
+});
+
+describe("publishing and deletion dates (P2.2 part B)", () => {
+  it("publishes a clean version, and asks for push only when the uploader did", async () => {
+    const quiet = await version(PDF);
+    await scanVersion(deps(), club, quiet.versionId);
+    const loud = await version(PDF);
+    await admin("UPDATE document_versions SET notify = true WHERE id = $1", [loud.versionId]);
+    await scanVersion(deps(), club, loud.versionId);
+    const published = await admin<{ published: boolean }>(
+      "SELECT published_at IS NOT NULL AS published FROM documents WHERE id = $1",
+      [quiet.documentId],
+    );
+    expect(published[0]!.published).toBe(true);
+    const events = await admin<{ document_id: string }>(
+      "SELECT payload->>'documentId' AS document_id FROM outbox.events WHERE type = 'document.published'",
+    );
+    expect(events.map((e) => e.document_id)).toEqual([loud.documentId]);
+  });
+
+  it("tells the uploader a week before and deletes on the day", async () => {
+    const soon = await version(PDF);
+    const due = await version(PDF);
+    const later = await version(PDF);
+    await admin("UPDATE documents SET delete_after = current_date + 5 WHERE id = $1", [
+      soon.documentId,
+    ]);
+    await admin("UPDATE documents SET delete_after = current_date WHERE id = $1", [due.documentId]);
+    await admin("UPDATE documents SET delete_after = current_date + 30 WHERE id = $1", [
+      later.documentId,
+    ]);
+    expect(await runDeletionDates(t.db)).toEqual({ noticed: 1, deleted: 1 });
+    // The notice is sent once.
+    expect(await runDeletionDates(t.db)).toEqual({ noticed: 0, deleted: 0 });
+    const rows = await admin<{ id: string; deleted: boolean; noticed: boolean }>(
+      `SELECT id, deleted_at IS NOT NULL AS deleted, deletion_notice_sent_at IS NOT NULL AS noticed
+       FROM documents WHERE id = ANY($1::uuid[])`,
+      [[soon.documentId, due.documentId, later.documentId]],
+    );
+    const by = new Map(rows.map((r) => [r.id, r]));
+    expect(by.get(soon.documentId)).toMatchObject({ deleted: false, noticed: true });
+    expect(by.get(due.documentId)).toMatchObject({ deleted: true });
+    expect(by.get(later.documentId)).toMatchObject({ deleted: false, noticed: false });
+    const events = await admin<{ type: string }>(
+      "SELECT type FROM outbox.events WHERE payload->>'documentId' = $1 OR payload->'documentIds' ? $1",
+      [due.documentId],
+    );
+    expect(events.map((e) => e.type)).toContain("documents.deleted");
   });
 });

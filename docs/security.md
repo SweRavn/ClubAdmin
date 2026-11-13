@@ -301,7 +301,12 @@ later phase. Backup and disaster recovery are in
   refused file is deleted from storage. Downloads are 5-minute pre-signed
   GETs on the storage's own origin with `Content-Disposition: attachment`;
   downloads of files with an audience narrower than the club are audited.
-  File names and contents never appear in logs (IDs only).
+  File names and contents never appear in logs (IDs only), nor in push
+  or email texts (a document notice names the group or club). Attaching a
+  document to a notice shows it to the notice's readers, so the caller
+  must read it first. Public documents (`/public/clubs/:slug/documents`)
+  are only files whose audience includes `public`, rate limited per
+  address.
 - **Real-time connection (P2.1).** The chat's WebSocket
   (`/api/v1/realtime`) opens only with a single-use ticket (32 random bytes,
   only its SHA-256 stored in Valkey for 60 seconds, consumed on use) issued

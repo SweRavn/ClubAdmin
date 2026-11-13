@@ -19,6 +19,9 @@ export const NOTIFICATION_CATEGORIES = [
   "waitlist",
   // Chat (P2.1 part C): new messages, push only, per channel's setting.
   "chat",
+  // Documents (P2.2 part B): a new document when its uploader asks, and a
+  // file's deletion date coming up (to its uploader).
+  "documents",
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
@@ -46,6 +49,7 @@ export const CATEGORY_DEFAULTS: Record<NotificationCategory, CategoryDefaults> =
   account: { email: "always", push: false },
   waitlist: { email: "no_app", push: true },
   chat: { email: "never", push: true },
+  documents: { email: "no_app", push: true },
 };
 
 export interface NotificationTypeInfo {
@@ -130,6 +134,9 @@ export const NOTIFICATION_TYPES = {
   // A new message in a chat (P2.1 part C): one per chat until it is read,
   // never with the message's text or the sender's name (ADR 0047 rule 13).
   "chat.message": { category: "chat" },
+  // Documents (P2.2 part B): never the file's or folder's name (free text).
+  "document.added": { category: "documents" },
+  "document.deletion_soon": { category: "documents" },
   "family.accepted": { category: "family" },
   "family.own_login_age": { category: "family" },
   "family.adult": { category: "family" },

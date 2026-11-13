@@ -233,6 +233,10 @@ export const DocumentSummarySchema = z
     latest: DocumentVersionSchema.nullable(),
     ownAudience: z.boolean(),
     updatedAt: z.iso.datetime(),
+    /** When the current version became visible (P2.2 part B). */
+    publishedAt: z.iso.datetime().nullable().optional(),
+    /** Deleted automatically on this day (P2.2 part B). */
+    deleteAfter: z.iso.date().nullable().optional(),
   })
   .openapi("DocumentSummary");
 export type DocumentSummary = z.infer<typeof DocumentSummarySchema>;
@@ -275,6 +279,11 @@ export const StartUploadSchema = z
     size: z.number().int().min(1).max(DOCUMENT_MAX_BYTES),
     /** A new file's name in the archive (default: the file name). */
     name: name(200).optional(),
+    /**
+     * Push to the file's readers once it is visible (P2.2 part B; ADR 0049
+     * decision 9: only when the uploader asks).
+     */
+    notify: z.boolean().optional(),
   })
   .strict()
   .openapi("StartUpload");
@@ -299,6 +308,8 @@ export const UpdateDocumentSchema = z
     folderId: z.uuid().optional(),
     /** Null: the folder's audience again. */
     audience: AudienceInputSchema.nullable().optional(),
+    /** Deleted automatically on this day (a notice to the uploader a week before); null: kept. */
+    deleteAfter: z.iso.date().nullable().optional(),
   })
   .strict()
   .openapi("UpdateDocument");
@@ -310,3 +321,136 @@ export const DocumentDownloadSchema = z
 export type DocumentDownload = z.infer<typeof DocumentDownloadSchema>;
 
 export const DocumentCreatedSchema = z.object({ id: z.uuid() }).openapi("DocumentCreated");
+
+// --- Notices (P2.2 part B, ADR 0049 decision 4b) ------------------------------
+
+/** At most this many documents on one notice. */
+export const NOTICE_ATTACHMENTS_MAX = 20;
+
+export const NoticeAttachmentSchema = z
+  .object({
+    document: DocumentSummarySchema,
+    attachedAt: z.iso.datetime(),
+  })
+  .openapi("NoticeAttachment");
+export type NoticeAttachment = z.infer<typeof NoticeAttachmentSchema>;
+
+export const NoticeAttachmentListSchema = z
+  .object({
+    /** The attached documents the caller reads (all of them for those who manage the notice). */
+    items: z.array(NoticeAttachmentSchema),
+    /**
+     * To whom attaching shows a document (those who manage the notice):
+     * the activity's call-up, or its or the event's groups, or the club.
+     */
+    shownTo: z
+      .object({
+        club: z.boolean(),
+        groups: z.array(z.object({ id: z.uuid(), name: z.string() })),
+        /** People called up (an activity with a call-up), else null. */
+        calledUp: z.number().int().nullable(),
+      })
+      .nullable(),
+    canManage: z.boolean(),
+  })
+  .openapi("NoticeAttachmentList");
+export type NoticeAttachmentList = z.infer<typeof NoticeAttachmentListSchema>;
+
+/** The documents attached to a notice (replaces the list; detaching never deletes). */
+export const SetNoticeAttachmentsSchema = z
+  .object({ documentIds: z.array(z.uuid()).max(NOTICE_ATTACHMENTS_MAX) })
+  .strict()
+  .openapi("SetNoticeAttachments");
+export type SetNoticeAttachmentsInput = z.infer<typeof SetNoticeAttachmentsSchema>;
+
+// --- "Mina dokument" ------------------------------------------------------------
+
+export const MyDocumentSchema = z
+  .object({
+    document: DocumentSummarySchema,
+    clubName: z.string(),
+    groupId: z.uuid().nullable(),
+    groupName: z.string().nullable(),
+    /** Published since the person last looked at the club's or group's documents. */
+    isNew: z.boolean(),
+  })
+  .openapi("MyDocument");
+export type MyDocument = z.infer<typeof MyDocumentSchema>;
+
+export const MyDocumentPageSchema = z
+  .object({ items: z.array(MyDocumentSchema), nextCursor: z.uuid().nullable() })
+  .openapi("MyDocumentPage");
+export type MyDocumentPage = z.infer<typeof MyDocumentPageSchema>;
+
+export const MyDocumentsQuerySchema = z.object({
+  cursor: z.uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(30),
+});
+export type MyDocumentsQuery = z.infer<typeof MyDocumentsQuerySchema>;
+
+/** The caller looked at the club's documents (no group) or a group's. */
+export const DocumentsSeenSchema = z
+  .object({ groupId: z.uuid().nullish() })
+  .strict()
+  .openapi("DocumentsSeen");
+export type DocumentsSeenInput = z.infer<typeof DocumentsSeenSchema>;
+
+// --- Storage limits (ADR 0049 decision 6) ---------------------------------------
+
+export const StorageGroupSchema = z.object({
+  groupId: z.uuid(),
+  groupName: z.string(),
+  usedBytes: z.number().int(),
+  /** The club's limit for the group, or null (the club's applies). */
+  limitBytes: z.number().int().nullable(),
+});
+
+export const StorageSchema = z
+  .object({
+    usedBytes: z.number().int(),
+    /** The limit that applies: the club's own, or else the operator's. */
+    limitBytes: z.number().int(),
+    /** The operator's limit (the installation or the plan). */
+    operatorLimitBytes: z.number().int(),
+    /** The club's own limit within the operator's, or null. */
+    clubLimitBytes: z.number().int().nullable(),
+    /** Groups with files or a limit. */
+    groups: z.array(StorageGroupSchema),
+  })
+  .openapi("Storage");
+export type Storage = z.infer<typeof StorageSchema>;
+
+export const UpdateStorageSchema = z
+  .object({
+    clubLimitBytes: z.number().int().positive().nullable(),
+    /** Limits per group (null removes a group's limit); groups not listed keep theirs. */
+    groups: z
+      .array(z.object({ groupId: z.uuid(), limitBytes: z.number().int().positive().nullable() }))
+      .max(200),
+  })
+  .strict()
+  .openapi("UpdateStorage");
+export type UpdateStorageInput = z.infer<typeof UpdateStorageSchema>;
+
+// --- Public documents (the club's public pages, Phase 3) ------------------------
+
+export const PublicClubParamsSchema = z.object({ slug: z.string().min(1).max(100) });
+export const PublicDocumentParamsSchema = PublicClubParamsSchema.extend({
+  documentId: z.uuid(),
+});
+
+export const PublicDocumentSchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string(),
+    fileName: z.string(),
+    size: z.number().int(),
+    contentType: z.string(),
+    publishedAt: z.iso.datetime().nullable(),
+  })
+  .openapi("PublicDocument");
+
+export const PublicDocumentListSchema = z
+  .object({ items: z.array(PublicDocumentSchema) })
+  .openapi("PublicDocumentList");
+export type PublicDocumentList = z.infer<typeof PublicDocumentListSchema>;

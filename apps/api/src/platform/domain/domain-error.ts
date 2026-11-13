@@ -303,6 +303,15 @@ export const DOMAIN_ERRORS = {
   /** The version is not clean (being uploaded or scanned, or refused). */
   document_not_ready: "conflict",
   document_version_not_uploading: "conflict",
+  // P2.2 part B.
+  /** The upload would take a group over the limit the club gave it. */
+  storage_limit_group_exceeded: "conflict",
+  /** A club limit over the operator's, or group limits over the club's. */
+  storage_limit_invalid: "validation",
+  /** A deletion date is a day after today. */
+  delete_after_past: "validation",
+  /** A notice has at most NOTICE_ATTACHMENTS_MAX documents. */
+  notice_attachments_full: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

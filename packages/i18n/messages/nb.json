@@ -824,7 +824,11 @@
     "audience_invalid": "Målgruppen inneholder en gruppe eller rolle som ikke hører til klubben.",
     "document_move_scope": "Filer kan bare flyttes mellom mapper i samme gruppe, eller mellom klubbens egne mapper.",
     "document_not_ready": "Filen kontrolleres fortsatt eller kunne ikke lagres. Prøv igjen om litt.",
-    "document_version_not_uploading": "Opplastingen er allerede fullført eller avbrutt."
+    "document_version_not_uploading": "Opplastingen er allerede fullført eller avbrutt.",
+    "storage_limit_group_exceeded": "Gruppens lagringsplass er ikke nok for filen. Slett filer eller be klubben gi gruppen mer plass.",
+    "storage_limit_invalid": "Grensene går ikke opp: klubbens grense kan ikke være større enn den som gjelder for klubben, og gruppenes grenser kan til sammen ikke være større enn klubbens.",
+    "delete_after_past": "Slettedatoen må være etter i dag.",
+    "notice_attachments_full": "Innkallingen har allerede så mange dokumenter som mulig."
   },
   "memberExport": {
     "columns": {
@@ -2036,6 +2040,16 @@
           "body": "Klubbens trygghetsansvarlige har stengt deg ute fra å skrive i klubbens chatter til {until}. Du kan fortsatt lese."
         }
       }
+    },
+    "document": {
+      "added": {
+        "title": "Nytt dokument {hasGroup, select, yes {i {group}} other {i {club}}}",
+        "body": "Åpne Mine dokumenter for å lese det."
+      },
+      "deletion_soon": {
+        "title": "Et dokument du har lastet opp slettes snart",
+        "body": "Dokumentet i {club} slettes automatisk {date}. Endre eller fjern datoen hvis det skal beholdes."
+      }
     }
   },
   "notifyCategories": {
@@ -2048,7 +2062,8 @@
     "family": "Familien",
     "account": "Kontoen din",
     "waitlist": "Ventelister",
-    "chat": "Chat"
+    "chat": "Chat",
+    "documents": "Dokumenter"
   },
   "notifications": {
     "title": "Varsler",

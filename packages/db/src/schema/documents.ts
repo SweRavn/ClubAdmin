@@ -13,6 +13,8 @@ import type {
 import {
   type AnyPgColumn,
   bigint,
+  boolean,
+  date,
   foreignKey,
   index,
   integer,
@@ -92,6 +94,9 @@ export const documents = pgTable(
     name: text().notNull(),
     audienceId: uuid(),
     currentVersionId: uuid(),
+    publishedAt: timestamp(tz),
+    deleteAfter: date({ mode: "string" }),
+    deletionNoticeSentAt: timestamp(tz),
     createdByPersonId: uuid().references(() => people.id),
     deletedAt: timestamp(tz),
     deletedByPersonId: uuid().references(() => people.id),
@@ -125,6 +130,7 @@ export const documentVersions = pgTable(
     uploadedAt: timestamp(tz),
     scannedAt: timestamp(tz),
     objectDeletedAt: timestamp(tz),
+    notify: boolean().notNull().default(false),
     ...timestamps,
   },
   (t) => [
@@ -138,3 +144,35 @@ export const documentVersions = pgTable(
     }),
   ],
 );
+
+/** A document attached to an activity's or event's notice (P2.2 part B). */
+export const noticeAttachments = pgTable("notice_attachments", {
+  id: id(),
+  clubId: clubRef(),
+  activityId: uuid(),
+  eventId: uuid(),
+  documentId: uuid().notNull(),
+  attachedByPersonId: uuid().references(() => people.id),
+  ...timestamps,
+});
+
+/** The club's own storage limits: the club's (no group) and per group. */
+export const storageQuotas = pgTable("storage_quotas", {
+  id: id(),
+  clubId: clubRef(),
+  groupId: uuid(),
+  limitBytes: bigint({ mode: "number" }).notNull(),
+  ...timestamps,
+});
+
+/** When a person last looked at a club's (no group) or group's documents. */
+export const documentViews = pgTable("document_views", {
+  id: id(),
+  clubId: clubRef(),
+  personId: uuid()
+    .notNull()
+    .references(() => people.id),
+  groupId: uuid(),
+  lastSeenAt: timestamp(tz).notNull(),
+  ...timestamps,
+});

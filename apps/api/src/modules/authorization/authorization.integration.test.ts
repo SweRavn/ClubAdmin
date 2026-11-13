@@ -934,6 +934,51 @@ describe("permission matrix", () => {
         `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}/versions/${m.versionId}/download`,
       expected: FOLDER_READERS,
     },
+    // Part B (P2.2): seeing, storage, notices' documents.
+    "POST /api/v1/clubs/:clubId/documents/seen": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/documents/seen`,
+      expected: Object.fromEntries(
+        MATRIX_PERSONAS.map((p) => [p, p === "outsider" || p === "operator" ? 404 : 204]),
+      ) as Record<MatrixPersona, number>,
+      body: {},
+    },
+    "GET /api/v1/clubs/:clubId/storage": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/storage`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+    },
+    "PUT /api/v1/clubs/:clubId/storage": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/storage`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+      body: { clubLimitBytes: null, groups: [] },
+    },
+    "GET /api/v1/activities/:activityId/attachments": {
+      url: () => `/api/v1/activities/${m.activityId}/attachments`,
+      expected: INSIDERS,
+    },
+    "PUT /api/v1/activities/:activityId/attachments": {
+      url: () => `/api/v1/activities/${m.activityId}/attachments`,
+      expected: TEAM_MANAGERS(200),
+      body: { documentIds: [] },
+    },
+    "POST /api/v1/activities/:activityId/attachments/uploads": {
+      url: () => `/api/v1/activities/${m.activityId}/attachments/uploads`,
+      expected: TEAM_MANAGERS(201),
+      body: { fileName: "matrix-notice.pdf", size: 10 },
+    },
+    "GET /api/v1/events/:eventId/attachments": {
+      url: () => `/api/v1/events/${m.eventId}/attachments`,
+      expected: INSIDERS,
+    },
+    "PUT /api/v1/events/:eventId/attachments": {
+      url: () => `/api/v1/events/${m.eventId}/attachments`,
+      expected: TEAM_MANAGERS(200),
+      body: { documentIds: [] },
+    },
+    "POST /api/v1/events/:eventId/attachments/uploads": {
+      url: () => `/api/v1/events/${m.eventId}/attachments/uploads`,
+      expected: TEAM_MANAGERS(201),
+      body: { fileName: "matrix-notice.pdf", size: 10 },
+    },
     "GET /api/v1/clubs/:clubId/safeguarding/reports": {
       url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports`,
       expected: CLUB_FORBIDDEN,

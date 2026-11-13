@@ -1008,6 +1008,18 @@ Reading follows the audience (or managing); managing is
 .../versions` (a new version), `POST .../versions/:versionId/uploaded`,
 `GET .../download` and `GET .../versions/:versionId/download`.
 
+Part B (migration 0043): `notice_attachments` (an activity's or event's
+notice and a document; the notice's readers read the document while it is
+attached, `app.document_readable`), `storage_quotas` (the club's own
+limit, group null, and per group), `document_views` (when a person last
+looked at a club's or group's documents; no record history) and on
+`documents` `published_at`, `delete_after` and `deletion_notice_sent_at`,
+on versions `notify` (push when visible). Endpoints: `GET|PUT
+/activities/:activityId/attachments` and `/events/:eventId/attachments`
+with `POST .../attachments/uploads`, `GET /me/documents`, `POST
+/clubs/:clubId/documents/seen`, `GET|PUT /clubs/:clubId/storage`, `GET
+/public/clubs/:slug/documents` and its downloads.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

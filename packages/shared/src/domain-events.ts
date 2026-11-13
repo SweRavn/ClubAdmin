@@ -69,6 +69,10 @@ export const DOMAIN_EVENTS = {
   "document.version.uploaded": z.object({ clubId: id, versionId: id }),
   /** Files were deleted (P2.2): the worker deletes their stored objects. */
   "documents.deleted": z.object({ clubId: id, documentIds: z.array(id).min(1).max(1000) }),
+  /** A file's version is visible and its uploader asked for push (P2.2 part B). */
+  "document.published": z.object({ clubId: id, documentId: id, versionId: id }),
+  /** A file is deleted on its deletion date in a week: its uploader is told (P2.2 part B). */
+  "document.deletion_soon": z.object({ clubId: id, documentId: id }),
   "administrator.suspended": z.object({ clubId: id, suspensionId: id, personId: id }),
   /** An open request was cancelled by its initiator or expired: target and initiator are told. */
   "administrator.suspension.closed": z.object({

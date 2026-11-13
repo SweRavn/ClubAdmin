@@ -431,6 +431,8 @@ export interface DocumentRow {
   audienceId: string | null;
   currentVersionId: string | null;
   updatedAt: Date;
+  publishedAt: Date | null;
+  deleteAfter: string | null;
   current: VersionRow | null;
   /** The newest version when it is not the current one. */
   latest: VersionRow | null;
@@ -446,12 +448,15 @@ type DocumentSql = {
   audience_id: string | null;
   current_version_id: string | null;
   updated_at: string;
+  published_at: string | null;
+  delete_after: string | null;
   current: VersionSql | null;
   latest: VersionSql | null;
 };
 
 const DOCUMENT_COLUMNS = sql`d.id, d.club_id, d.folder_id, d.group_id, d.kind, d.name, d.audience_id,
   d.current_version_id, greatest(d.updated_at, coalesce(cv.created_at, d.updated_at))::text AS updated_at,
+  d.published_at::text, d.delete_after::text,
   CASE WHEN cv.id IS NULL THEN NULL ELSE ${VERSION_JSON("cv")} END AS current,
   (SELECT ${VERSION_JSON("lv")} FROM public.document_versions lv
    WHERE lv.document_id = d.id AND lv.id IS DISTINCT FROM d.current_version_id
@@ -468,6 +473,8 @@ const toDocument = (r: DocumentSql): DocumentRow => ({
   audienceId: r.audience_id,
   currentVersionId: r.current_version_id,
   updatedAt: new Date(r.updated_at),
+  publishedAt: r.published_at ? new Date(r.published_at) : null,
+  deleteAfter: r.delete_after,
   current: r.current ? toVersion(r.current) : null,
   latest: r.latest ? toVersion(r.latest) : null,
 });
@@ -559,11 +566,20 @@ export async function insertDocument(
 export async function updateDocument(
   tx: Tx,
   documentId: string,
-  changes: { name?: string; folderId?: string; audienceId?: string | null },
+  changes: {
+    name?: string;
+    folderId?: string;
+    audienceId?: string | null;
+    deleteAfter?: string | null;
+  },
 ): Promise<void> {
   await tx.execute(sql`
     UPDATE public.documents SET
       name = coalesce(${changes.name ?? null}, name),
+      delete_after = CASE WHEN ${changes.deleteAfter !== undefined} THEN ${changes.deleteAfter ?? null}::date
+        ELSE delete_after END,
+      deletion_notice_sent_at = CASE WHEN ${changes.deleteAfter !== undefined} THEN NULL
+        ELSE deletion_notice_sent_at END,
       folder_id = coalesce(${changes.folderId ?? null}::uuid, folder_id),
       audience_id = CASE WHEN ${changes.audienceId !== undefined} THEN ${changes.audienceId ?? null}::uuid
         ELSE audience_id END
@@ -608,16 +624,18 @@ export async function insertVersion(
     size: number;
     contentType: string;
     uploadedBy: string;
+    notify: boolean;
   },
 ): Promise<number> {
   const { rows } = await tx.execute<{ number: number }>(sql`
     INSERT INTO public.document_versions
       (id, club_id, document_id, group_id, number, object_key, file_name, size, content_type,
-       uploaded_by_person_id)
+       uploaded_by_person_id, notify)
     VALUES (${input.id}, ${input.clubId}, ${input.documentId}, ${input.groupId},
       (SELECT coalesce(max(v.number), 0) + 1 FROM public.document_versions v
        WHERE v.document_id = ${input.documentId}::uuid),
-      ${input.objectKey}, ${input.fileName}, ${input.size}, ${input.contentType}, ${input.uploadedBy})
+      ${input.objectKey}, ${input.fileName}, ${input.size}, ${input.contentType}, ${input.uploadedBy},
+      ${input.notify})
     RETURNING number`);
   return rows[0]!.number;
 }
@@ -666,4 +684,305 @@ export async function audienceIncludes(
   const { rows } = await tx.execute<{ ok: boolean }>(sql`
     SELECT app.audience_includes(${audienceId}::uuid, ${personId}::uuid) AS ok`);
   return rows[0]?.ok ?? false;
+}
+
+// --- Storage limits (P2.2 part B) ------------------------------------------------
+
+/** Bytes stored per group of the club (the usage index). */
+export async function groupUsage(tx: Tx, clubId: string): Promise<Map<string, number>> {
+  const { rows } = await tx.execute<{ group_id: string; used: string }>(sql`
+    SELECT v.group_id, sum(v.size)::text AS used FROM public.document_versions v
+    WHERE v.club_id = ${clubId}::uuid AND v.object_deleted_at IS NULL AND v.group_id IS NOT NULL
+    GROUP BY v.group_id`);
+  return new Map(rows.map((r) => [r.group_id, Number(r.used)]));
+}
+
+/** Bytes stored for one group. */
+export async function oneGroupUsage(tx: Tx, clubId: string, groupId: string): Promise<number> {
+  const { rows } = await tx.execute<{ used: string }>(sql`
+    SELECT coalesce(sum(v.size), 0)::text AS used FROM public.document_versions v
+    WHERE v.club_id = ${clubId}::uuid AND v.group_id = ${groupId}::uuid
+      AND v.object_deleted_at IS NULL`);
+  return Number(rows[0]?.used ?? 0);
+}
+
+/** The club's own limits: the club's (key null) and per group. */
+export async function quotas(tx: Tx, clubId: string): Promise<Map<string | null, number>> {
+  const { rows } = await tx.execute<{ group_id: string | null; limit_bytes: string }>(sql`
+    SELECT group_id, limit_bytes::text FROM public.storage_quotas WHERE club_id = ${clubId}::uuid`);
+  return new Map(rows.map((r) => [r.group_id, Number(r.limit_bytes)]));
+}
+
+export async function setQuota(
+  tx: Tx,
+  clubId: string,
+  groupId: string | null,
+  limitBytes: number | null,
+): Promise<void> {
+  if (limitBytes === null) {
+    await tx.execute(sql`
+      DELETE FROM public.storage_quotas
+      WHERE club_id = ${clubId}::uuid AND group_id IS NOT DISTINCT FROM ${groupId}::uuid`);
+    return;
+  }
+  await tx.execute(sql`
+    INSERT INTO public.storage_quotas (club_id, group_id, limit_bytes)
+    VALUES (${clubId}, ${groupId}, ${limitBytes})
+    ON CONFLICT (club_id, coalesce(group_id, '00000000-0000-0000-0000-000000000000'::uuid))
+    DO UPDATE SET limit_bytes = EXCLUDED.limit_bytes`);
+}
+
+export async function groupNames(
+  tx: Tx,
+  clubId: string,
+  groupIds: readonly string[],
+): Promise<Map<string, string>> {
+  if (groupIds.length === 0) return new Map();
+  const { rows } = await tx.execute<{ id: string; name: string }>(sql`
+    SELECT id, name FROM public.groups
+    WHERE club_id = ${clubId}::uuid AND id = ANY(${uuidArray([...new Set(groupIds)])}::uuid[])`);
+  return new Map(rows.map((r) => [r.id, r.name]));
+}
+
+// --- Notices (P2.2 part B) -------------------------------------------------------
+
+export type Notice = { activityId: string } | { eventId: string };
+
+const noticeWhere = (notice: Notice) =>
+  "activityId" in notice
+    ? sql`n.activity_id = ${notice.activityId}::uuid`
+    : sql`n.event_id = ${notice.eventId}::uuid`;
+
+/** The documents attached to a notice, with when they were attached (oldest first). */
+export async function noticeAttachments(
+  tx: Tx,
+  notice: Notice,
+): Promise<{ document: DocumentRow; attachedAt: Date }[]> {
+  const { rows } = await tx.execute<DocumentSql & { attached_at: string }>(sql`
+    SELECT ${DOCUMENT_COLUMNS}, n.created_at::text AS attached_at
+    FROM public.notice_attachments n
+    JOIN public.documents d ON d.id = n.document_id AND d.deleted_at IS NULL
+    LEFT JOIN public.document_versions cv ON cv.id = d.current_version_id
+    WHERE ${noticeWhere(notice)}
+    ORDER BY n.id`);
+  return rows.map((r) => ({ document: toDocument(r), attachedAt: new Date(r.attached_at) }));
+}
+
+/** Of these documents, the ones the person reads (app.document_readable). */
+export async function readableDocuments(
+  tx: Tx,
+  documentIds: readonly string[],
+  personId: string,
+): Promise<Set<string>> {
+  if (documentIds.length === 0) return new Set();
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT id FROM unnest(${uuidArray([...new Set(documentIds)])}::uuid[]) AS ids(id)
+    WHERE app.document_readable(id, ${personId}::uuid)`);
+  return new Set(rows.map((r) => r.id));
+}
+
+/** Of these documents, the club's existing ones (not deleted). */
+export async function existingDocuments(
+  tx: Tx,
+  clubId: string,
+  documentIds: readonly string[],
+): Promise<Set<string>> {
+  if (documentIds.length === 0) return new Set();
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT id FROM public.documents
+    WHERE club_id = ${clubId}::uuid AND deleted_at IS NULL
+      AND id = ANY(${uuidArray([...new Set(documentIds)])}::uuid[])`);
+  return new Set(rows.map((r) => r.id));
+}
+
+/** Replaces a notice's documents; returns the added and removed document IDs. */
+export async function setNoticeAttachments(
+  tx: Tx,
+  clubId: string,
+  notice: Notice,
+  documentIds: readonly string[],
+  by: string,
+): Promise<{ added: string[]; removed: string[] }> {
+  const ids = uuidArray([...new Set(documentIds)]);
+  const { rows: removed } = await tx.execute<{ document_id: string }>(sql`
+    DELETE FROM public.notice_attachments n
+    WHERE ${noticeWhere(notice)} AND NOT (n.document_id = ANY(${ids}::uuid[]))
+    RETURNING n.document_id`);
+  const activityId = "activityId" in notice ? notice.activityId : null;
+  const eventId = "eventId" in notice ? notice.eventId : null;
+  const { rows: added } = await tx.execute<{ document_id: string }>(sql`
+    INSERT INTO public.notice_attachments (club_id, activity_id, event_id, document_id, attached_by_person_id)
+    SELECT ${clubId}, ${activityId}::uuid, ${eventId}::uuid, id, ${by}
+    FROM unnest(${ids}::uuid[]) AS ids(id)
+    WHERE NOT EXISTS (SELECT 1 FROM public.notice_attachments n
+                      WHERE ${noticeWhere(notice)} AND n.document_id = ids.id)
+    RETURNING document_id`);
+  return { added: added.map((r) => r.document_id), removed: removed.map((r) => r.document_id) };
+}
+
+/**
+ * To whom a notice shows its documents: an activity's call-up (count) or
+ * its groups; an event's groups or the whole club. Group names only.
+ */
+export async function noticeReaders(
+  tx: Tx,
+  notice: Notice,
+): Promise<{ club: boolean; groups: { id: string; name: string }[]; calledUp: number | null }> {
+  if ("activityId" in notice) {
+    const { rows } = await tx.execute<{
+      invitees_only: boolean;
+      called_up: number;
+      groups: { id: string; name: string }[] | null;
+    }>(sql`
+      SELECT a.invitees_only,
+        (SELECT count(*)::int FROM public.activity_invitees i WHERE i.activity_id = a.id) AS called_up,
+        (SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.name)
+         FROM public.activity_groups ag JOIN public.groups g ON g.id = ag.group_id
+         WHERE ag.activity_id = a.id) AS groups
+      FROM public.activities a WHERE a.id = ${notice.activityId}::uuid`);
+    const row = rows[0];
+    return {
+      club: false,
+      groups: row?.groups ?? [],
+      calledUp: row?.invitees_only ? row.called_up : null,
+    };
+  }
+  const { rows } = await tx.execute<{
+    audience: string;
+    groups: { id: string; name: string }[] | null;
+  }>(sql`
+    SELECT e.audience,
+      (SELECT jsonb_agg(jsonb_build_object('id', g.id, 'name', g.name) ORDER BY g.name)
+       FROM public.event_groups eg JOIN public.groups g ON g.id = eg.group_id
+       WHERE eg.event_id = e.id) AS groups
+    FROM public.events e WHERE e.id = ${notice.eventId}::uuid`);
+  const row = rows[0];
+  return { club: row?.audience === "club", groups: row?.groups ?? [], calledUp: null };
+}
+
+/** The notices folder of the club (groupId null) or a group, if it exists. */
+export async function noticesFolder(
+  tx: Tx,
+  clubId: string,
+  groupId: string | null,
+): Promise<string | null> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT id FROM public.document_folders
+    WHERE club_id = ${clubId}::uuid AND group_id IS NOT DISTINCT FROM ${groupId}::uuid
+      AND parent_id IS NULL AND purpose = 'notices' AND deleted_at IS NULL
+    ORDER BY id LIMIT 1`);
+  return rows[0]?.id ?? null;
+}
+
+export async function insertNoticesFolder(
+  tx: Tx,
+  input: { clubId: string; groupId: string | null; name: string; audienceId: string; by: string },
+): Promise<string | null> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    INSERT INTO public.document_folders
+      (club_id, group_id, name, audience_id, purpose, created_by_person_id)
+    VALUES (${input.clubId}, ${input.groupId}, ${input.name}, ${input.audienceId}, 'notices', ${input.by})
+    ON CONFLICT DO NOTHING RETURNING id`);
+  return rows[0]?.id ?? null;
+}
+
+/** The first group of an activity or event (by name), or null (none: the club's). */
+export async function noticeGroup(tx: Tx, notice: Notice): Promise<string | null> {
+  const { rows } = await tx.execute<{ group_id: string }>(
+    "activityId" in notice
+      ? sql`SELECT ag.group_id FROM public.activity_groups ag JOIN public.groups g ON g.id = ag.group_id
+            WHERE ag.activity_id = ${notice.activityId}::uuid ORDER BY g.name, g.id LIMIT 1`
+      : sql`SELECT eg.group_id FROM public.event_groups eg JOIN public.groups g ON g.id = eg.group_id
+            WHERE eg.event_id = ${notice.eventId}::uuid ORDER BY g.name, g.id LIMIT 1`,
+  );
+  return rows[0]?.group_id ?? null;
+}
+
+export async function clubLocale(tx: Tx, clubId: string): Promise<string> {
+  const { rows } = await tx.execute<{ default_locale: string }>(sql`
+    SELECT default_locale FROM public.clubs WHERE id = ${clubId}::uuid`);
+  return rows[0]?.default_locale ?? "sv-SE";
+}
+
+// --- "Mina dokument" (P2.2 part B) ----------------------------------------------
+
+export interface MyDocumentRow {
+  document: DocumentRow;
+  clubName: string;
+  groupName: string | null;
+  isNew: boolean;
+}
+
+/** The caller's newest readable files (app.my_documents; outside a club). */
+export async function myDocuments(
+  tx: Tx,
+  cursor: string | null,
+  limit: number,
+): Promise<MyDocumentRow[]> {
+  const { rows } = await tx.execute<{
+    document_id: string;
+    club_id: string;
+    club_name: string;
+    group_id: string | null;
+    group_name: string | null;
+    folder_id: string;
+    name: string;
+    kind: DocumentKind;
+    own_audience: boolean;
+    published_at: string;
+    updated_at: string;
+    delete_after: string | null;
+    current_version: VersionSql;
+    is_new: boolean;
+  }>(sql`
+    SELECT document_id, club_id, club_name, group_id, group_name, folder_id, name, kind,
+      own_audience, published_at::text, updated_at::text, delete_after::text, current_version, is_new
+    FROM app.my_documents(${cursor}::uuid, ${limit})`);
+  return rows.map((r) => {
+    const current = toVersion(r.current_version);
+    return {
+      document: {
+        id: r.document_id,
+        clubId: r.club_id,
+        folderId: r.folder_id,
+        groupId: r.group_id,
+        kind: r.kind,
+        name: r.name,
+        audienceId: r.own_audience ? "own" : null,
+        currentVersionId: current.id,
+        updatedAt: new Date(r.updated_at),
+        publishedAt: new Date(r.published_at),
+        deleteAfter: r.delete_after,
+        current,
+        latest: null,
+      },
+      clubName: r.club_name,
+      groupName: r.group_name,
+      isNew: r.is_new,
+    };
+  });
+}
+
+export async function markSeen(tx: Tx, clubId: string, groupId: string | null): Promise<void> {
+  await tx.execute(sql`SELECT app.mark_documents_seen(${clubId}::uuid, ${groupId}::uuid)`);
+}
+
+// --- Public documents (P2.2 part B) ---------------------------------------------
+
+export async function clubBySlug(tx: Tx, slug: string): Promise<string | null> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT id FROM public.clubs WHERE slug = ${slug}`);
+  return rows[0]?.id ?? null;
+}
+
+/** The club's public files (current version), by name. */
+export async function publicDocuments(tx: Tx, clubId: string): Promise<DocumentRow[]> {
+  const { rows } = await tx.execute<DocumentSql>(sql`
+    SELECT ${DOCUMENT_COLUMNS}
+    FROM app.public_documents(${clubId}::uuid) p
+    JOIN public.documents d ON d.id = p.document_id
+    LEFT JOIN public.document_versions cv ON cv.id = d.current_version_id
+    ORDER BY d.name, d.id
+    LIMIT 500`);
+  return rows.map(toDocument);
 }

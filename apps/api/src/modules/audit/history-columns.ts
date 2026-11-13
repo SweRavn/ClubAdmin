@@ -796,6 +796,10 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
   "public.documents": "a file's name and audience: on the file and in the audit log (document.*)",
   "public.document_versions":
     "a file's versions (uploader, date, size, scan): listed on the file and in the audit log (document.version.*)",
+  "public.notice_attachments":
+    "the documents of a notice: listed with the activity or event and in the audit log (document.notice.*)",
+  "public.storage_quotas":
+    "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };
 
 const byTable = new Map(HISTORY_POLICY.map((p) => [p.table, p]));

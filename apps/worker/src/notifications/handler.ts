@@ -185,6 +185,9 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "chat.message.moderated",
       "chat.member.muted",
       "chat.message.created",
+      // Documents (P2.2 part B).
+      "document.published",
+      "document.deletion_soon",
       ...WAITLIST_EVENTS,
       "club.privacy_policy.published",
       "privacy.export.ready",
@@ -646,6 +649,71 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               about: [],
               params: {},
               dedupeKey: `chat.message.moderated:${messageId}`,
+            },
+          ]);
+          return;
+        }
+        // A new document, when its uploader asked (ADR 0049 decision 9): to
+        // the people its audience includes (with guardians), never naming the
+        // file or folder (free text); the group's name at most.
+        case "document.published": {
+          const { clubId, documentId, versionId } = DOMAIN_EVENTS["document.published"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows: facts } = await tx.execute<{
+            group_name: string | null;
+            uploader: string | null;
+          }>(sql`
+            SELECT g.name AS group_name, v.uploaded_by_person_id AS uploader
+            FROM public.documents d
+            JOIN public.document_versions v ON v.id = ${versionId}::uuid
+            LEFT JOIN public.groups g ON g.id = d.group_id
+            WHERE d.id = ${documentId}::uuid AND d.deleted_at IS NULL`);
+          const fact = facts[0];
+          if (!fact) return;
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM app.audience_people(app.document_audience(${documentId}::uuid))
+            WHERE person_id IS DISTINCT FROM ${fact.uploader}::uuid`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId,
+              type: "document.added" as const,
+              subjectType: "document",
+              subjectId: documentId,
+              about: [],
+              params: { group: fact.group_name ?? "" },
+              dedupeKey: `document.added:${versionId}`,
+            })),
+          );
+          return;
+        }
+        // A file's deletion date is a week away: its uploader is told.
+        case "document.deletion_soon": {
+          const { clubId, documentId } = DOMAIN_EVENTS["document.deletion_soon"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{
+            created_by_person_id: string | null;
+            delete_after: string | null;
+          }>(sql`
+            SELECT created_by_person_id, delete_after::text FROM public.documents
+            WHERE id = ${documentId}::uuid AND deleted_at IS NULL`);
+          const row = rows[0];
+          if (!row?.created_by_person_id || !row.delete_after) return;
+          await notify(tx, [
+            {
+              recipientPersonId: row.created_by_person_id,
+              clubId,
+              type: "document.deletion_soon",
+              subjectType: "document",
+              subjectId: documentId,
+              about: [],
+              params: { date: row.delete_after },
+              dedupeKey: `document.deletion_soon:${documentId}:${row.delete_after}`,
             },
           ]);
           return;

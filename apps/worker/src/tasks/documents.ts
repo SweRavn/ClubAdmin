@@ -14,7 +14,7 @@
 
 import { createHash } from "node:crypto";
 
-import { audit, type Database, type OutboxHandler, sql } from "@clubadmin/db";
+import { audit, type Database, outbox, type OutboxHandler, sql } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import type { VirusScanner } from "@clubadmin/server-kit/virus-scan";
 import { DOMAIN_EVENTS, z } from "@clubadmin/shared";
@@ -91,6 +91,7 @@ interface PendingVersion {
   objectKey: string;
   size: number;
   contentType: string;
+  notify: boolean;
 }
 
 export type ScanOutcome = "clean" | "infected" | "failed" | "skipped";
@@ -111,9 +112,10 @@ export async function scanVersion(
       object_key: string;
       size: string;
       content_type: string;
+      notify: boolean;
       deleted: boolean;
     }>(sql`
-      SELECT v.document_id, v.number, v.object_key, v.size::text, v.content_type,
+      SELECT v.document_id, v.number, v.object_key, v.size::text, v.content_type, v.notify,
         d.deleted_at IS NOT NULL AS deleted
       FROM public.document_versions v JOIN public.documents d ON d.id = v.document_id
       WHERE v.id = ${versionId}::uuid AND v.status = 'pending'`),
@@ -127,6 +129,7 @@ export async function scanVersion(
     objectKey: row.object_key,
     size: Number(row.size),
     contentType: row.content_type,
+    notify: row.notify,
   };
   // The file was deleted meanwhile: its upload is not kept.
   const data = row.deleted
@@ -151,12 +154,21 @@ export async function scanVersion(
       WHERE id = ${versionId}::uuid AND status = 'pending' RETURNING id`);
     if (updated.length === 0) return;
     if (outcome === "clean") {
-      // The newest clean version is the file's current one.
-      await tx.execute(sql`
-        UPDATE public.documents d SET current_version_id = ${versionId}
+      // The newest clean version is the file's current one, published now.
+      const { rows: current } = await tx.execute<{ id: string }>(sql`
+        UPDATE public.documents d SET current_version_id = ${versionId}, published_at = now()
         WHERE d.id = ${version.documentId}::uuid AND d.deleted_at IS NULL
           AND (d.current_version_id IS NULL OR (
-            SELECT c.number FROM public.document_versions c WHERE c.id = d.current_version_id) < ${version.number})`);
+            SELECT c.number FROM public.document_versions c WHERE c.id = d.current_version_id) < ${version.number})
+        RETURNING d.id`);
+      // Push to the file's readers when its uploader asked (ADR 0049 decision 9).
+      if (current.length > 0 && version.notify) {
+        await outbox.publish(tx, "document.published", {
+          clubId,
+          documentId: version.documentId,
+          versionId,
+        });
+      }
     }
     await audit.record(tx, {
       action: "document.version.verified",
@@ -246,5 +258,67 @@ export function cleanupTask(db: Database, storage: ObjectStorage | null): Task {
   return async (_payload, helpers) => {
     const cleaned = await cleanupDocuments(db, storage);
     if (cleaned > 0) helpers.logger.info("document uploads cleaned up", { versions: cleaned });
+  };
+}
+
+/** The notice to the uploader is sent this many days before a deletion date. */
+const DELETION_NOTICE_DAYS = 7;
+
+/**
+ * Deletion dates (P2.2 part B, ADR 0049 decision 8): the uploader is told a
+ * week before; on the day the file is deleted (rows kept, marked deleted;
+ * its objects removed by documents:delete_objects). Dates are UTC days.
+ */
+export async function runDeletionDates(
+  db: Database,
+): Promise<{ noticed: number; deleted: number }> {
+  const { rows } = await db.withSystem("documents:deletion_dates", {}, (tx) =>
+    tx.execute<{ id: string; club_id: string; due: boolean }>(sql`
+      SELECT d.id, d.club_id, d.delete_after <= (now() AT TIME ZONE 'UTC')::date AS due
+      FROM public.documents d
+      WHERE d.delete_after IS NOT NULL AND d.deleted_at IS NULL
+        AND d.delete_after <= (now() AT TIME ZONE 'UTC')::date + ${DELETION_NOTICE_DAYS}::int
+        AND (d.deletion_notice_sent_at IS NULL OR d.delete_after <= (now() AT TIME ZONE 'UTC')::date)
+      ORDER BY d.delete_after, d.id LIMIT 1000`),
+  );
+  const result = { noticed: 0, deleted: 0 };
+  for (const row of rows) {
+    await db.withSystem("documents:deletion_dates", { clubId: row.club_id }, async (tx) => {
+      if (row.due) {
+        const { rows: deleted } = await tx.execute<{ id: string }>(sql`
+          UPDATE public.documents SET deleted_at = now()
+          WHERE id = ${row.id}::uuid AND deleted_at IS NULL RETURNING id`);
+        if (deleted.length === 0) return;
+        await audit.record(tx, {
+          action: "document.deleted",
+          resourceType: "document",
+          resourceId: row.id,
+          changedFields: ["delete_after"],
+        });
+        await outbox.publish(tx, "documents.deleted", {
+          clubId: row.club_id,
+          documentIds: [row.id],
+        });
+        result.deleted++;
+        return;
+      }
+      const { rows: marked } = await tx.execute<{ id: string }>(sql`
+        UPDATE public.documents SET deletion_notice_sent_at = now()
+        WHERE id = ${row.id}::uuid AND deletion_notice_sent_at IS NULL RETURNING id`);
+      if (marked.length === 0) return;
+      await outbox.publish(tx, "document.deletion_soon", {
+        clubId: row.club_id,
+        documentId: row.id,
+      });
+      result.noticed++;
+    });
+  }
+  return result;
+}
+
+export function deletionDatesTask(db: Database): Task {
+  return async (_payload, helpers) => {
+    const result = await runDeletionDates(db);
+    if (result.noticed + result.deleted > 0) helpers.logger.info("document deletion dates", result);
   };
 }

@@ -824,7 +824,11 @@
     "audience_invalid": "The audience contains a group or role that does not belong to the club.",
     "document_move_scope": "Files can only be moved between folders of the same group, or among the club's own folders.",
     "document_not_ready": "The file is still being checked or could not be stored. Try again in a moment.",
-    "document_version_not_uploading": "The upload has already finished or was cancelled."
+    "document_version_not_uploading": "The upload has already finished or was cancelled.",
+    "storage_limit_group_exceeded": "The group's storage is not enough for the file. Delete files or ask the club to give the group more space.",
+    "storage_limit_invalid": "The limits do not add up: the club's limit may not exceed the one that applies to the club, and the groups' limits together may not exceed the club's.",
+    "delete_after_past": "The deletion date must be after today.",
+    "notice_attachments_full": "The notice already has as many documents as it can."
   },
   "memberExport": {
     "columns": {
@@ -2036,6 +2040,16 @@
           "body": "The club's safeguarding officers have muted you in the club's chats until {until}. You can still read."
         }
       }
+    },
+    "document": {
+      "added": {
+        "title": "New document {hasGroup, select, yes {in {group}} other {in {club}}}",
+        "body": "Open My documents to read it."
+      },
+      "deletion_soon": {
+        "title": "A document you uploaded will be deleted soon",
+        "body": "The document in {club} is deleted automatically on {date}. Change or remove the date to keep it."
+      }
     }
   },
   "notifyCategories": {
@@ -2048,7 +2062,8 @@
     "family": "Family",
     "account": "Your account",
     "waitlist": "Waiting lists",
-    "chat": "Chat"
+    "chat": "Chat",
+    "documents": "Documents"
   },
   "notifications": {
     "title": "Notifications",

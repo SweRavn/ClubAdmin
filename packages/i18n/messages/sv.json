@@ -824,7 +824,11 @@
     "audience_invalid": "Målgruppen innehåller en grupp eller roll som inte hör till föreningen.",
     "document_move_scope": "Filer kan bara flyttas mellan mappar i samma grupp eller bland föreningens egna mappar.",
     "document_not_ready": "Filen kontrolleras fortfarande eller kunde inte sparas. Försök igen om en stund.",
-    "document_version_not_uploading": "Uppladdningen är redan avslutad eller avbruten."
+    "document_version_not_uploading": "Uppladdningen är redan avslutad eller avbruten.",
+    "storage_limit_group_exceeded": "Gruppens lagringsutrymme räcker inte för filen. Ta bort filer eller be föreningen ge gruppen mer utrymme.",
+    "storage_limit_invalid": "Gränserna går inte ihop: föreningens gräns får inte vara större än den som gäller för föreningen, och gruppernas gränser får tillsammans inte vara större än föreningens.",
+    "delete_after_past": "Raderingsdatumet måste vara efter i dag.",
+    "notice_attachments_full": "Kallelsen har redan så många dokument som går."
   },
   "memberExport": {
     "columns": {
@@ -2036,6 +2040,16 @@
           "body": "Föreningens trygghetsansvariga har stängt av dig från att skriva i föreningens chattar till {until}. Du kan fortfarande läsa."
         }
       }
+    },
+    "document": {
+      "added": {
+        "title": "Nytt dokument {hasGroup, select, yes {i {group}} other {i {club}}}",
+        "body": "Öppna Mina dokument för att läsa det."
+      },
+      "deletion_soon": {
+        "title": "Ett dokument du laddat upp tas bort snart",
+        "body": "Dokumentet i {club} tas bort automatiskt {date}. Ändra eller ta bort datumet om det ska finnas kvar."
+      }
     }
   },
   "notifyCategories": {
@@ -2048,7 +2062,8 @@
     "family": "Familjen",
     "account": "Ditt konto",
     "waitlist": "Köer",
-    "chat": "Chatt"
+    "chat": "Chatt",
+    "documents": "Dokument"
   },
   "notifications": {
     "title": "Notiser",

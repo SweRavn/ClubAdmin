@@ -390,7 +390,8 @@ export async function loadActivityScope(
 
 /**
  * A folder or file of the archive for its policies (P2.2): its group and
- * whether the audience that applies includes the person (or a ward). Read in
+ * whether the audience that applies includes the person (or a ward); for a
+ * file also through a notice it is attached to (part B). Read in
  * the club as a system read; deleted ones do not exist. IDs only.
  */
 export async function loadDocumentScope(
@@ -411,7 +412,7 @@ export async function loadDocumentScope(
           WHERE f.id = ${ids.folderId}::uuid AND f.deleted_at IS NULL`
       : sql`
           SELECT d.folder_id, d.group_id,
-            app.audience_includes(app.document_audience(d.id), ${personId}::uuid) AS in_audience
+            app.document_readable(d.id, ${personId}::uuid) AS in_audience
           FROM public.documents d
           WHERE d.id = ${ids.documentId}::uuid AND d.deleted_at IS NULL`,
   );

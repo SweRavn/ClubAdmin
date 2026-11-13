@@ -17,8 +17,8 @@ import {
   type DocumentDownload,
   DocumentDownloadSchema,
   DocumentParamsSchema,
-  type DocumentSummary,
-  type DocumentVersion,
+  type DocumentsSeenInput,
+  DocumentsSeenSchema,
   DocumentVersionParamsSchema,
   type FolderContent,
   FolderContentSchema,
@@ -27,15 +27,26 @@ import {
   FolderParamsSchema,
   type FolderSummary,
   GroupFoldersParamsSchema,
+  type MyDocumentPage,
+  MyDocumentPageSchema,
+  type MyDocumentsQuery,
+  MyDocumentsQuerySchema,
   type PageQuery,
   PageQuerySchema,
-  type PersonSummary,
+  PublicClubParamsSchema,
+  type PublicDocumentList,
+  PublicDocumentListSchema,
+  PublicDocumentParamsSchema,
   type StartUploadInput,
   StartUploadSchema,
+  type Storage,
+  StorageSchema,
   type UpdateDocumentInput,
   UpdateDocumentSchema,
   type UpdateFolderInput,
   UpdateFolderSchema,
+  type UpdateStorageInput,
+  UpdateStorageSchema,
   type UploadStarted,
   UploadStartedSchema,
   z,
@@ -57,17 +68,17 @@ import { RequiresEntitlement } from "../entitlements/index.ts";
 import { PeopleService } from "../people/index.ts";
 import {
   type AudienceEntryRow,
-  type DocumentRow,
   DocumentsService,
   type FolderRow,
   type VersionRow,
 } from "./documents.service.ts";
+import { iso, loadUploaders, toDocument, toVersion, type Uploaders } from "./documents.views.ts";
 
 const TAGS = ["documents"];
+/** Public documents: per address, generous for a club's visitors. */
+const PUBLIC_LIMIT = { max: 120, timeWindowMs: 60_000 };
 const FolderCreatedSchema = z.object({ id: z.uuid() }).openapi("FolderCreated");
 const FolderContentQuerySchema = PageQuerySchema;
-
-const iso = (d: Date) => d.toISOString();
 
 const toFolder = (f: FolderRow): FolderSummary => ({
   id: f.id,
@@ -87,37 +98,6 @@ const toAudience = (entries: readonly AudienceEntryRow[]): AudienceEntry[] =>
     groupName: e.groupName,
     roleIds: e.roleIds,
   }));
-
-type Uploaders = Map<string, PersonSummary>;
-
-function toVersion(v: VersionRow, uploaders: Uploaders): DocumentVersion {
-  return {
-    id: v.id,
-    number: v.number,
-    fileName: v.fileName,
-    size: v.size,
-    contentType: v.contentType,
-    status: v.status,
-    sha256: v.sha256,
-    uploadedBy: (v.uploadedByPersonId && uploaders.get(v.uploadedByPersonId)) || null,
-    uploadedAt: v.uploadedAt ? iso(v.uploadedAt) : null,
-    createdAt: iso(v.createdAt),
-  };
-}
-
-function toDocument(d: DocumentRow, uploaders: Uploaders): DocumentSummary {
-  return {
-    id: d.id,
-    clubId: d.clubId,
-    folderId: d.folderId,
-    kind: d.kind,
-    name: d.name,
-    current: d.current ? toVersion(d.current, uploaders) : null,
-    latest: d.latest ? toVersion(d.latest, uploaders) : null,
-    ownAudience: d.audienceId !== null,
-    updatedAt: iso(d.updatedAt),
-  };
-}
 
 @Controller()
 export class DocumentsController {
@@ -139,18 +119,12 @@ export class DocumentsController {
   }
 
   /** The uploaders the caller may see (hidden people are left out). */
-  private async uploaders(
+  private uploaders(
     authz: RequestAuthorization,
     clubId: string,
     versions: readonly (VersionRow | null)[],
   ): Promise<Uploaders> {
-    const ids = [
-      ...new Set(versions.flatMap((v) => (v?.uploadedByPersonId ? [v.uploadedByPersonId] : []))),
-    ];
-    if (ids.length === 0) return new Map();
-    const context = tenantContext(authz, clubId);
-    const rows = await this.people.summaries(context, ids);
-    return new Map((await this.presenter.present(authz, clubId, rows)).map((p) => [p.id, p]));
+    return loadUploaders(this.people, this.presenter, authz, clubId, versions);
   }
 
   // --- Folders ----------------------------------------------------------------
@@ -558,6 +532,153 @@ export class DocumentsController {
       params.documentId,
       params.versionId,
     );
+    return { url: link.url, expiresAt: iso(link.expiresAt) };
+  }
+
+  // --- "Mina dokument" (P2.2 part B) ----------------------------------------------
+
+  @Endpoint({
+    method: "GET",
+    path: "me/documents",
+    summary: "Mina dokument: the newest files of the caller's groups and clubs, new ones marked",
+    tags: TAGS,
+    access: { authenticated: true },
+    request: { query: MyDocumentsQuerySchema },
+    response: MyDocumentPageSchema,
+  })
+  async myDocuments(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Query() query: MyDocumentsQuery,
+  ): Promise<MyDocumentPage> {
+    const page = await this.documents.myDocuments(authz.context, query);
+    // Uploaders are shown per club (each club's view of its members).
+    const byClub = new Map<string, VersionRow[]>();
+    for (const r of page.rows) {
+      const list = byClub.get(r.document.clubId) ?? [];
+      list.push(r.document.current!);
+      byClub.set(r.document.clubId, list);
+    }
+    const uploaders: Uploaders = new Map();
+    for (const [clubId, versions] of byClub) {
+      for (const [id, p] of await this.uploaders(authz, clubId, versions)) uploaders.set(id, p);
+    }
+    return {
+      items: page.rows.map((r) => ({
+        document: toDocument(r.document, uploaders),
+        clubName: r.clubName,
+        groupId: r.document.groupId,
+        groupName: r.groupName,
+        isNew: r.isNew,
+      })),
+      nextCursor: page.nextCursor,
+    };
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "clubs/:clubId/documents/seen",
+    summary: "The caller looked at the club's documents (or a group's): nothing is new there now",
+    tags: TAGS,
+    access: { permission: "club.documents.read", resource: "club" },
+    request: { params: ClubParamsSchema, body: DocumentsSeenSchema },
+    response: z.null(),
+    status: 204,
+  })
+  @RequiresEntitlement("documents")
+  async seen(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string },
+    @Body() body: DocumentsSeenInput,
+  ): Promise<null> {
+    await this.documents.markSeen(tenantContext(authz, params.clubId), body.groupId ?? null);
+    return null;
+  }
+
+  // --- Storage (P2.2 part B) ------------------------------------------------------
+
+  @Endpoint({
+    method: "GET",
+    path: "clubs/:clubId/storage",
+    summary: "The club's file storage: used, the limits, and per group",
+    tags: TAGS,
+    access: { permission: "club.documents.manage", resource: "club" },
+    request: { params: ClubParamsSchema },
+    response: StorageSchema,
+  })
+  @RequiresEntitlement("documents")
+  storage(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string },
+  ): Promise<Storage> {
+    return this.documents.storageOf(tenantContext(authz, params.clubId));
+  }
+
+  @Endpoint({
+    method: "PUT",
+    path: "clubs/:clubId/storage",
+    summary: "Set the club's own storage limit and limits per group",
+    tags: TAGS,
+    access: { permission: "club.documents.manage", resource: "club" },
+    request: { params: ClubParamsSchema, body: UpdateStorageSchema },
+    response: StorageSchema,
+  })
+  @RequiresEntitlement("documents")
+  async updateStorage(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string },
+    @Body() body: UpdateStorageInput,
+  ): Promise<Storage> {
+    const context = tenantContext(authz, params.clubId);
+    await this.documents.updateStorage(context, body);
+    return this.documents.storageOf(context);
+  }
+
+  // --- Public documents (P2.2 part B) ---------------------------------------------
+
+  @Endpoint({
+    method: "GET",
+    path: "public/clubs/:slug/documents",
+    summary: "A club's public documents (for its public pages)",
+    tags: TAGS,
+    access: { public: true },
+    request: { params: PublicClubParamsSchema },
+    response: PublicDocumentListSchema,
+    rateLimit: PUBLIC_LIMIT,
+  })
+  async publicDocuments(@Param() params: { slug: string }): Promise<PublicDocumentList> {
+    const rows = await this.documents.publicDocuments(params.slug);
+    return {
+      items: rows.flatMap((d) =>
+        d.current
+          ? [
+              {
+                id: d.id,
+                name: d.name,
+                fileName: d.current.fileName,
+                size: d.current.size,
+                contentType: d.current.contentType,
+                publishedAt: d.publishedAt ? iso(d.publishedAt) : null,
+              },
+            ]
+          : [],
+      ),
+    };
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "public/clubs/:slug/documents/:documentId/download",
+    summary: "A short-lived download link of a club's public document",
+    tags: TAGS,
+    access: { public: true },
+    request: { params: PublicDocumentParamsSchema },
+    response: DocumentDownloadSchema,
+    rateLimit: PUBLIC_LIMIT,
+  })
+  async publicDownload(
+    @Param() params: { slug: string; documentId: string },
+  ): Promise<DocumentDownload> {
+    const link = await this.documents.publicDownload(params.slug, params.documentId);
     return { url: link.url, expiresAt: iso(link.expiresAt) };
   }
 }

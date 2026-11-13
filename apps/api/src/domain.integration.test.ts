@@ -181,6 +181,15 @@ describe("tenant isolation of club-owned tables", () => {
           size, content_type)
         SELECT ${a.id}, id, ${group.id}, 1, 'documents/fixture/' || id, 'Fixture.pdf', 1,
           'application/pdf' FROM d`);
+      // Part B: the file on the event's notice, a storage limit, a bookmark.
+      await tx.execute(sql`
+        INSERT INTO notice_attachments (club_id, event_id, document_id)
+        SELECT ${a.id}, ${event.event.id}, id FROM documents WHERE club_id = ${a.id} LIMIT 1`);
+      await tx.execute(sql`
+        INSERT INTO storage_quotas (club_id, group_id, limit_bytes) VALUES (${a.id}, ${group.id}, 1000)`);
+      await tx.execute(sql`
+        INSERT INTO document_views (club_id, person_id, group_id, last_seen_at)
+        VALUES (${a.id}, ${member.id}, ${group.id}, now())`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(

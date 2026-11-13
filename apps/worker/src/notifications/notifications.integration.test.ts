@@ -984,6 +984,68 @@ describe("privacy notices (P1.8a)", () => {
     expect(await noticesOf(ids.anna)).toHaveLength(2);
   });
 
+  it("document.added reaches the file's audience with guardians who receive messages, not the uploader (P2.2 B)", async () => {
+    const ids = await team();
+    const { rows: audience } = await t.query<{ id: string }>(
+      "admin",
+      "INSERT INTO audiences (club_id) VALUES ($1) RETURNING id",
+      [ids.club],
+    );
+    await t.query(
+      "admin",
+      "INSERT INTO audience_entries (club_id, audience_id, kind, group_id) VALUES ($1, $2, 'group', $3)",
+      [ids.club, audience[0]!.id, ids.group],
+    );
+    const { rows: folder } = await t.query<{ id: string }>(
+      "admin",
+      `INSERT INTO document_folders (club_id, group_id, name, audience_id)
+       VALUES ($1, $2, 'Matchschema', $3) RETURNING id`,
+      [ids.club, ids.group, audience[0]!.id],
+    );
+    const documentId = uuidv7();
+    const versionId = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO documents (id, club_id, folder_id, group_id, name, created_by_person_id)
+       VALUES ($1, $2, $3, $4, 'Vår.pdf', $5)`,
+      [documentId, ids.club, folder[0]!.id, ids.group, ids.coach],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO document_versions (id, club_id, document_id, group_id, number, object_key, file_name,
+         size, content_type, status, uploaded_by_person_id, notify)
+       VALUES ($1, $2, $3, $4, 1, $6, 'Vår.pdf', 10, 'application/pdf', 'clean', $5, true)`,
+      [versionId, ids.club, documentId, ids.group, ids.coach, `documents/x/${versionId}`],
+    );
+    await t.query(
+      "admin",
+      "UPDATE documents SET current_version_id = $2, published_at = now(), delete_after = current_date + 5 WHERE id = $1",
+      [documentId, versionId],
+    );
+    const event = await publish(ids.club, "document.published", {
+      clubId: ids.club,
+      documentId,
+      versionId,
+    });
+    await outbox.dispatch(t.db, event, [handler()]);
+    for (const person of [ids.anna, ids.mikael, ids.nils]) {
+      expect(await noticesOf(person)).toMatchObject([
+        { type: "document.added", subject_id: documentId },
+      ]);
+    }
+    expect(await noticesOf(ids.gunilla)).toEqual([]);
+    expect(await noticesOf(ids.coach)).toEqual([]);
+
+    const soon = await publish(ids.club, "document.deletion_soon", {
+      clubId: ids.club,
+      documentId,
+    });
+    await outbox.dispatch(t.db, soon, [handler()]);
+    expect(await noticesOf(ids.coach)).toMatchObject([
+      { type: "document.deletion_soon", subject_id: documentId },
+    ]);
+  });
+
   it("assignment.ended reaches the club managers, not the person who stepped down", async () => {
     const ids = await team();
     const event = await publish(ids.club, "assignment.ended", {

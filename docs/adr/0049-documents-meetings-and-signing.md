@@ -159,6 +159,47 @@ minutes and signing.
 - **Deleting** a folder with content needs `?confirm=true`; folders and
   files keep their rows (history, audit) marked deleted, and the worker
   deletes the stored versions (`documents:delete_objects`).
-- Part B adds notice attachments, "Mina dokument", the club's storage
-  settings, deletion dates and public documents; part C the pages, seed
-  and the budgets of the reads.
+- Part C adds the pages, seed and the budgets of the reads.
+
+## As implemented (P2.2 part B, 2026-11-13)
+
+- **Notices** (`notice_attachments`, migration 0043): those who manage an
+  activity or event set its documents (`PUT /activities/:id/attachments`,
+  `PUT /events/:id/attachments`) or upload one
+  (`…/attachments/uploads`). Attaching a document widens who reads it, so
+  the caller must read each newly attached one (its policy). Uploads go to
+  the notices folder (`purpose = notices`, named in the club's language,
+  e.g. "Kallelser") of the notice's first group, or of the club, created
+  with that group's or the club's audience; the same scanning applies.
+  `app.document_readable` adds to the audience the notice's readers while
+  the document is attached: an activity's call-up (or, without one, its
+  groups' members), a published event's groups (or the club), and their
+  guardians whose link receives messages. Detaching never deletes. Those
+  who manage the notice see to whom it shows the documents (groups, the
+  club, or how many are called up; no names).
+- **"Mina dokument"** (`GET /me/documents`): the newest visible files
+  (`published_at`, set when a version becomes current) of the caller's
+  and their wards' groups and of their clubs, that they read, keyset on
+  the ID. `app.my_documents` reads each of the caller's clubs in turn
+  (tenant RLS stays on) by the published indexes; a page may hold fewer
+  files than asked when many are outside the caller's audiences. "New" is
+  per club or group: published after the caller last looked there
+  (`document_views`, `POST /clubs/:clubId/documents/seen`).
+- **Storage limits** (`storage_quotas`, `GET|PUT /clubs/:clubId/storage`):
+  the club's own limit within the operator's, and limits per group, each
+  and together within the club's. Uploads check all three.
+- **Deletion dates** (`documents.delete_after`, set with PATCH): a day
+  after today. The worker's daily `documents:deletion_dates` tells the
+  uploader a week before (`document.deletion_soon`) and deletes the file
+  on the day (UTC), audited, its versions removed from storage.
+- **Push for a new document** only when the uploader asks (`notify` on the
+  upload): when the version becomes current, its audience's people (with
+  guardians who receive messages, never the uploader) get
+  `document.added` in the new category `documents`; the text names the
+  group or club, never the file or folder (free text).
+- **Public documents**: `GET /public/clubs/:slug/documents` and their
+  download links, for the club's public pages (Phase 3): files whose
+  audience (inherited down the folders) includes `public`.
+- **Gap:** the club's full export (decision 10) does not exist yet (only
+  the member register's and each person's own export); documents are to
+  be part of it when it comes ([#24](https://github.com/SweRavn/ClubAdmin/issues/24)).

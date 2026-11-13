@@ -35,7 +35,7 @@ import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { calendarRetentionTask } from "./calendar.ts";
 import { chatMaintenanceTask, syncFamilyTask, syncPersonTask } from "./chat.ts";
-import { cleanupTask, deleteObjectsTask, scanTask } from "./documents.ts";
+import { cleanupTask, deleteObjectsTask, deletionDatesTask, scanTask } from "./documents.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
 import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
@@ -159,6 +159,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     }),
     "documents:delete_objects": deleteObjectsTask(deps.db, deps.storage ?? null),
     "documents:cleanup": cleanupTask(deps.db, deps.storage ?? null),
+    "documents:deletion_dates": deletionDatesTask(deps.db),
     ...billingTasks(deps),
     ...notificationTasks(deps),
     ...privacyTasks(deps),
@@ -245,7 +246,7 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * a club, rows after 24 months, the anonymisation ledger after 13) daily at
  * 05:19 UTC (P1.12); administrators (P1.15 A3: expired suspension requests,
  * grace period reminders) hourly at :11; abandoned document uploads (P2.2)
- * hourly at :29.
+ * hourly at :29; documents' deletion dates daily at 03:23 UTC.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -272,6 +273,7 @@ export const crontab = [
   "11 * * * * administrators:daily ?max=1",
   "47 2 * * * chat:maintenance ?fill=2d",
   "29 * * * * documents:cleanup ?max=1",
+  "23 3 * * * documents:deletion_dates ?fill=2d",
 ].join("\n");
 
 /**
