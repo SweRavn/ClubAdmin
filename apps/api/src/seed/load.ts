@@ -253,17 +253,22 @@ async function seedLoadChat(env: SeedEnvironment): Promise<void> {
     INSERT INTO chat_members (club_id, chat_id, person_id, reason)
       SELECT DISTINCT ON (l.chat_id, gm.person_id) l.club_id, l.chat_id, gm.person_id, 'group'
       FROM lcg l JOIN group_memberships gm ON gm.group_id = l.group_id AND gm.valid_to IS NULL;
+    -- Senders: the first five members of each chat in turn (numbered once).
+    WITH mem AS (
+      SELECT cm.chat_id, cm.person_id,
+             row_number() OVER (PARTITION BY cm.chat_id ORDER BY cm.person_id) AS rn,
+             count(*) OVER (PARTITION BY cm.chat_id) AS n
+      FROM chat_members cm WHERE cm.chat_id IN (SELECT chat_id FROM lcg))
     INSERT INTO chat_messages (club_id, chat_id, sender_person_id, kind, body)
-      SELECT l.club_id, l.chat_id, m.person_id, 'text', 'Meddelande ' || k
+      SELECT l.club_id, l.chat_id, mem.person_id, 'text', 'Meddelande ' || k
       FROM lcg l CROSS JOIN generate_series(1, 60) AS k
-      JOIN LATERAL (SELECT cm.person_id FROM chat_members cm WHERE cm.chat_id = l.chat_id
-                    ORDER BY cm.person_id OFFSET k % 5 LIMIT 1) m ON true;
+      JOIN mem ON mem.chat_id = l.chat_id AND mem.rn = 1 + k % least(mem.n, 5);
     UPDATE chats c SET last_message_id = x.id, last_message_at = x.created_at
       FROM (SELECT DISTINCT ON (chat_id) chat_id, id, created_at FROM chat_messages
             WHERE chat_id IN (SELECT chat_id FROM lcg) ORDER BY chat_id, id DESC) x
       WHERE c.id = x.chat_id;
     COMMIT;
-    ANALYZE;
+    ANALYZE chats, chat_groups, chat_members, chat_messages;
   `);
 }
 

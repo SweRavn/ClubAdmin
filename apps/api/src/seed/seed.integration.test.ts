@@ -478,5 +478,7 @@ describe("minimal and load scenarios", () => {
     } finally {
       await t.drop();
     }
-  });
+    // Seeding 10,000 members takes its time on a shared CI runner; this test
+    // checks what is seeded, not how fast (the demo scenario has its budget).
+  }, 90_000);
 });
