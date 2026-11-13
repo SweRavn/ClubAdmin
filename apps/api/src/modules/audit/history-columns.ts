@@ -785,6 +785,17 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "the two-person rule's reads of a reported chat: on the case page and in the audit log",
   "public.chat_mutes":
     "who may not write in the club's chats: on the safeguarding page and in the audit log (chat.member.muted)",
+  // The file archive (P2.2, ADR 0049): a folder and a file show their own
+  // record (versions with uploader and date, the audience); every change and
+  // the downloads of narrower audiences are in the audit log (document.*).
+  "public.audiences": "an audience's identity: its entries are shown where it is used",
+  "public.audience_entries":
+    "who an audience includes: shown with the folder or file it belongs to",
+  "public.document_folders":
+    "a folder's name and audience: on the folder and in the audit log (document.folder.*)",
+  "public.documents": "a file's name and audience: on the file and in the audit log (document.*)",
+  "public.document_versions":
+    "a file's versions (uploader, date, size, scan): listed on the file and in the audit log (document.version.*)",
 };
 
 const byTable = new Map(HISTORY_POLICY.map((p) => [p.table, p]));

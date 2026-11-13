@@ -811,7 +811,20 @@
     "chat_report_own": "Du kan inte anmäla ditt eget meddelande.",
     "chat_read_not_confirmable": "Begäran kan inte bekräftas: du gjorde den själv, den är redan bekräftad eller har förfallit.",
     "chat_read_not_confirmed": "En andra trygghetsansvarig måste bekräfta innan chatten kan läsas.",
-    "chat_report_closed": "Ärendet är redan avslutat."
+    "chat_report_closed": "Ärendet är redan avslutat.",
+    "documents_storage_unavailable": "Det går inte att ladda upp eller hämta filer just nu. Försök igen senare.",
+    "document_type_not_allowed": "Den filtypen kan inte sparas. Använd till exempel PDF, Word, Excel, PowerPoint, OpenDocument, text, CSV eller bilder.",
+    "document_too_large": "Filen är för stor. Den får vara högst 25 MB.",
+    "storage_limit_exceeded": "Föreningens lagringsutrymme räcker inte för filen. Ta bort filer eller gamla versioner som inte behövs, eller be föreningen om mer utrymme.",
+    "folder_name_taken": "Det finns redan en mapp med det namnet här.",
+    "folder_too_deep": "Mappar kan inte ligga djupare än fem nivåer.",
+    "folder_too_many": "Mappen har redan så många undermappar som går.",
+    "folder_not_empty": "Mappen innehåller filer eller undermappar. Bekräfta att allt i den ska tas bort.",
+    "audience_required": "En mapp på översta nivån måste ha en målgrupp.",
+    "audience_invalid": "Målgruppen innehåller en grupp eller roll som inte hör till föreningen.",
+    "document_move_scope": "Filer kan bara flyttas mellan mappar i samma grupp eller bland föreningens egna mappar.",
+    "document_not_ready": "Filen kontrolleras fortfarande eller kunde inte sparas. Försök igen om en stund.",
+    "document_version_not_uploading": "Uppladdningen är redan avslutad eller avbruten."
   },
   "memberExport": {
     "columns": {
@@ -2645,7 +2658,9 @@
       "guardian_invitation": "Inbjudan av vårdnadshavare",
       "subscription": "Abonnemang",
       "calendar_feed": "Kalenderprenumeration",
-      "chat_report": "en anmälan från en chatt"
+      "chat_report": "en anmälan från en chatt",
+      "document": "Fil",
+      "document_folder": "Mapp"
     },
     "statuses": {
       "scheduled": "Planerad",
@@ -3388,7 +3403,8 @@
       "finance": "Ekonomi",
       "privacy": "Integritet",
       "club": "Föreningen",
-      "communication": "Kommunikation"
+      "communication": "Kommunikation",
+      "documents": "Dokument"
     },
     "permissions": {
       "club_settings_update": {
@@ -3695,6 +3711,16 @@
         "name": "Hantera trygghetsärenden",
         "description": "Tar emot anmälningar från chattar, läser en anmäld chatt när en andra trygghetsansvarig har bekräftat det, döljer anmälda meddelanden, stänger av medlemmar från att skriva en tid och avslutar ärenden. Varje läsning loggas.",
         "example": "Till exempel föreningens trygghetsansvarig."
+      },
+      "club_documents_manage": {
+        "name": "Hantera föreningens dokument",
+        "description": "Kan skapa mappar för hela föreningen, ladda upp filer och nya versioner, bestämma vem som ser dem och ta bort dem. Ser och hanterar också gruppernas dokument.",
+        "example": "Kan till exempel lägga föreningens policyer i en mapp för alla medlemmar och trafikpolicyn som offentlig."
+      },
+      "group_documents_manage": {
+        "name": "Hantera gruppens dokument",
+        "description": "Kan skapa mappar i gruppen, ladda upp filer och nya versioner, bestämma vem som ser dem och ta bort dem.",
+        "example": "Kan till exempel lägga upp lagets matchschema så att spelarna och deras föräldrar ser det."
       }
     }
   },

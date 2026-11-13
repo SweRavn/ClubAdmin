@@ -89,6 +89,11 @@ export const apiConfigSchema = z
     /** Member register exports (P1.2) per person and club, and per club, in 24 hours. */
     MEMBER_EXPORTS_PER_PERSON_DAY: z.coerce.number().int().positive().default(10),
     MEMBER_EXPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(30),
+    /**
+     * The file archive's storage per club in MB (P2.2, ADR 0049 decision 6)
+     * unless the club's plan sets `storage_gb` (billing on).
+     */
+    DOCUMENTS_CLUB_LIMIT_MB: z.coerce.number().int().positive().default(100),
     /** Member imports (P1.3b) started per club in 24 hours. */
     MEMBER_IMPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(20),
     /** Invitations imports send per club in 24 hours (the rest are left out and counted). */

@@ -7,6 +7,7 @@ import {
   objectStorageConfig,
 } from "@clubadmin/server-kit/object-storage";
 import { paymentProvider } from "@clubadmin/server-kit/payments";
+import { virusScanner } from "@clubadmin/server-kit/virus-scan";
 import { run } from "graphile-worker";
 import { Redis } from "ioredis";
 
@@ -102,6 +103,7 @@ const runner = await run({
     historyRetentionMonths: config.HISTORY_RETENTION_MONTHS,
     historyPartitionsAhead: config.HISTORY_PARTITIONS_AHEAD,
     storage,
+    scanner: virusScanner(config),
     billing: billing
       ? {
           settings: billing,
@@ -128,6 +130,7 @@ logger.info(
     mail: config.SMTP_URL ? "smtp" : "off",
     push: pushProvider?.name ?? "off",
     objectStorage: storage ? "s3" : "off",
+    virusScan: config.CLAMAV_HOST ? "clamav" : "off",
   },
   "worker started",
 );

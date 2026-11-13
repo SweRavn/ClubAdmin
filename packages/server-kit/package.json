@@ -16,7 +16,8 @@
     "./object-storage": "./src/object-storage.ts",
     "./notifications": "./src/notifications.ts",
     "./calendar": "./src/calendar.ts",
-    "./payments": "./src/payments.ts"
+    "./payments": "./src/payments.ts",
+    "./virus-scan": "./src/virus-scan.ts"
   },
   "scripts": {
     "lint": "eslint .",

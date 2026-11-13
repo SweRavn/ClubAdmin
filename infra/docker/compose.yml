@@ -205,7 +205,8 @@ services:
       retries: 30
     networks: [backend]
 
-  # Virus scanning for uploads (from Phase 2). Slow to start (downloads
+  # Virus scanning for uploads (P2.2: the worker scans every file before it
+  # is visible; set CLAMAV_HOST=127.0.0.1). Slow to start (downloads
   # signatures), so only started with the "full" profile: pnpm dev:services --full
   clamav:
     image: clamav/clamav:1.5.4@sha256:e19130cdebaeacc71fa46eab3ed6f69941f2f22aa5e08d55e9197f8edf43ce5e

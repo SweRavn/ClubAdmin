@@ -289,6 +289,19 @@ later phase. Backup and disaster recovery are in
   more than 20,000 rows, NUL bytes and broken quoting with a code, never
   evaluates a cell (formulas stay text), and logs IDs and counts only. The
   file's rows are kept sealed (field encryption) until the import is purged.
+- **The file archive (P2.2, ADR 0049).** Uploads start at a folder or a
+  file the caller manages: the API checks the type against the allow list
+  (by extension; the content type is derived, never taken from the client),
+  the size (at most 25 MB) and the club's storage limit (under the club's
+  lock), then signs a PUT for 15 minutes with `content-length` and
+  `content-type` signed, under `documents/<club_id>/`. The version is
+  invisible until the worker has checked that the file is there, of its
+  size and starts like its type (a renamed program is refused), and clamd
+  found nothing (`CLAMAV_HOST`, required in production); an infected or
+  refused file is deleted from storage. Downloads are 5-minute pre-signed
+  GETs on the storage's own origin with `Content-Disposition: attachment`;
+  downloads of files with an audience narrower than the club are audited.
+  File names and contents never appear in logs (IDs only).
 - **Real-time connection (P2.1).** The chat's WebSocket
   (`/api/v1/realtime`) opens only with a single-use ticket (32 random bytes,
   only its SHA-256 stored in Valkey for 60 seconds, consumed on use) issued

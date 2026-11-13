@@ -203,6 +203,17 @@ export const AUDIT_ACTIONS = [
   "chat.report.closed",
   "chat.member.muted",
   "chat.member.unmuted",
+  // The file archive (P2.2, ADR 0049): folders, files, versions, audiences;
+  // downloads of files whose audience is narrower than the club.
+  "document.folder.created",
+  "document.folder.updated",
+  "document.folder.deleted",
+  "document.created",
+  "document.updated",
+  "document.deleted",
+  "document.version.added",
+  "document.version.verified",
+  "document.downloaded",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

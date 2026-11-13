@@ -440,7 +440,11 @@ export class ObjectStorage {
     });
   }
 
-  /** A short-lived download link on the public endpoint, saved under `filename`. */
+  /**
+   * A short-lived download link on the public endpoint, saved as an
+   * attachment under `filename` (an ASCII fallback, and the UTF-8 name per
+   * RFC 6266/5987 when it has other characters, e.g. "Matchschema vår.pdf").
+   */
   presignDownload(key: string, options: { expiresSeconds: number; filename: string }): string {
     return presignGetUrl({
       url: this.objectUrl(key, this.config.publicEndpoint),
@@ -448,11 +452,19 @@ export class ObjectStorage {
       accessKeyId: this.config.accessKeyId,
       secretAccessKey: this.config.secretAccessKey,
       expiresSeconds: options.expiresSeconds,
-      query: {
-        "response-content-disposition": `attachment; filename="${options.filename.replace(/["\\]/g, "")}"`,
-      },
+      query: { "response-content-disposition": contentDisposition(options.filename) },
     });
   }
+}
+
+/** `attachment` with the file name: quotes, backslashes and control characters removed. */
+export function contentDisposition(filename: string): string {
+  // eslint-disable-next-line no-control-regex -- control characters are what is removed
+  const clean = filename.replace(/["\\\u0000-\u001f\u007f]/g, "");
+  const ascii = clean.replace(/[^\x20-\x7e]/g, "_");
+  return ascii === clean
+    ? `attachment; filename="${ascii}"`
+    : `attachment; filename="${ascii}"; filename*=UTF-8''${encodeRfc3986(clean)}`;
 }
 
 function signedHeaders(

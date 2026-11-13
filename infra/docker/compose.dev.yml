@@ -10,6 +10,10 @@ services:
     ports:
       - 127.0.0.1:${VALKEY_PORT:-6379}:6379
 
+  clamav:
+    ports:
+      - 127.0.0.1:${CLAMAV_PORT:-3310}:3310 # clamd (pnpm dev:services --full)
+
   garage:
     ports:
       - 127.0.0.1:${S3_PORT:-3900}:3900 # S3 API

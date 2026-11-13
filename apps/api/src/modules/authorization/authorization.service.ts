@@ -16,6 +16,7 @@ import type { Principal } from "../../platform/http/principal.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
 import {
   canReadChat,
+  canReadDocuments,
   canReadEvent,
   canReadGroupActivities,
   policyFor,
@@ -23,6 +24,7 @@ import {
 import {
   loadActivityScope,
   loadChatScope,
+  loadDocumentScope,
   loadEventScope,
   loadFamilyResourcePerson,
   loadGroupScope,
@@ -39,7 +41,9 @@ import type {
   ChatResource,
   ClubCreationMode,
   ClubResource,
+  DocumentResource,
   EventResource,
+  FolderResource,
   GroupResource,
   HandoverResource,
   PersonResource,
@@ -195,6 +199,10 @@ export class AuthorizationService {
     }
     // Closed chats do not exist for those who may not read them.
     if (resource.kind === "chat") return canReadChat(actor, resource) ? "forbidden" : "not-found";
+    // Folders and files outside one's audience do not exist (P2.2).
+    if (resource.kind === "folder" || resource.kind === "document") {
+      return canReadDocuments(actor, resource) ? "forbidden" : "not-found";
+    }
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
 
@@ -222,7 +230,86 @@ export class AuthorizationService {
         return this.suspensionResource(request);
       case "chat":
         return this.chatResource(authorization, request);
+      case "folder":
+        return this.archiveResource(authorization, request, "folder");
+      case "document":
+        return this.archiveResource(authorization, request, "document");
     }
+  }
+
+  /** A folder or file of the archive within :clubId (P2.2): its group and audience. */
+  private archiveResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+    kind: "folder",
+  ): Promise<FolderResource>;
+  private archiveResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+    kind: "document",
+  ): Promise<DocumentResource>;
+  private async archiveResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+    kind: "folder" | "document",
+  ): Promise<FolderResource | DocumentResource> {
+    const { clubId } = this.clubResource(request);
+    const id = param(request, kind === "folder" ? "folderId" : "documentId");
+    if (!id || !isUuid(id)) throw new ProblemError("not-found");
+    return kind === "folder"
+      ? this.folderResourceOf(authorization.actor, clubId, id)
+      : this.documentResourceOf(authorization.actor, clubId, id);
+  }
+
+  /** A folder as a resource outside the route (a move's target); not-found if missing. */
+  async folderResourceOf(actor: Actor, clubId: string, folderId: string): Promise<FolderResource> {
+    const scope = await this.archiveScope(clubId, { folderId }, actor.personId);
+    return {
+      kind: "folder",
+      clubId,
+      folderId,
+      group: scope.group,
+      inAudience: scope.inAudience,
+    };
+  }
+
+  async documentResourceOf(
+    actor: Actor,
+    clubId: string,
+    documentId: string,
+  ): Promise<DocumentResource> {
+    const scope = await this.archiveScope(clubId, { documentId }, actor.personId);
+    return {
+      kind: "document",
+      clubId,
+      documentId,
+      folderId: scope.folderId,
+      group: scope.group,
+      inAudience: scope.inAudience,
+    };
+  }
+
+  private archiveScope(
+    clubId: string,
+    ids: { folderId: string } | { documentId: string },
+    personId: string,
+  ): Promise<{ folderId: string; group: GroupRef | null; inAudience: boolean }> {
+    return this.db.withSystem("authz:documents", { clubId }, async (tx) => {
+      const scope = await loadDocumentScope(tx, ids, personId);
+      if (!scope) throw new ProblemError("not-found");
+      if (!scope.groupId)
+        return { folderId: scope.folderId, group: null, inAudience: scope.inAudience };
+      const ancestors = await loadGroupScopes(tx, [scope.groupId]);
+      return {
+        folderId: scope.folderId,
+        group: {
+          clubId,
+          groupId: scope.groupId,
+          ancestorIds: ancestors.get(scope.groupId)?.ancestorIds ?? [],
+        },
+        inAudience: scope.inAudience,
+      };
+    });
   }
 
   /**

@@ -101,6 +101,16 @@ export const PERMISSIONS = [
   // Child safety (P2.1 part B, ADR 0047 rule 7): reports, safeguarding cases
   // (reading under the two-person rule), hiding reported messages, muting.
   "club.safeguarding.handle",
+  // The file archive (P2.2, ADR 0049): reading follows the audiences;
+  // managing the club's or a group's folders and files.
+  "club.documents.read",
+  "club.documents.manage",
+  "group.documents.read",
+  "group.documents.manage",
+  "folder.read",
+  "folder.manage",
+  "document.read",
+  "document.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

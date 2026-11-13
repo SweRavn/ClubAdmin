@@ -811,7 +811,20 @@
     "chat_report_own": "You cannot report your own message.",
     "chat_read_not_confirmable": "The request cannot be confirmed: you made it yourself, it is already confirmed or it lapsed.",
     "chat_read_not_confirmed": "A second safeguarding officer must confirm before the chat can be read.",
-    "chat_report_closed": "The case is already closed."
+    "chat_report_closed": "The case is already closed.",
+    "documents_storage_unavailable": "Files cannot be uploaded or downloaded right now. Please try again later.",
+    "document_type_not_allowed": "That file type cannot be stored. Use, for example, PDF, Word, Excel, PowerPoint, OpenDocument, text, CSV or images.",
+    "document_too_large": "The file is too large. It may be at most 25 MB.",
+    "storage_limit_exceeded": "The club's storage is not enough for the file. Delete files or old versions that are no longer needed, or ask the club for more space.",
+    "folder_name_taken": "There is already a folder with that name here.",
+    "folder_too_deep": "Folders cannot be nested more than five levels deep.",
+    "folder_too_many": "The folder already has as many subfolders as it can.",
+    "folder_not_empty": "The folder contains files or subfolders. Confirm that everything in it should be deleted.",
+    "audience_required": "A top-level folder must have an audience.",
+    "audience_invalid": "The audience contains a group or role that does not belong to the club.",
+    "document_move_scope": "Files can only be moved between folders of the same group, or among the club's own folders.",
+    "document_not_ready": "The file is still being checked or could not be stored. Try again in a moment.",
+    "document_version_not_uploading": "The upload has already finished or was cancelled."
   },
   "memberExport": {
     "columns": {
@@ -2645,7 +2658,9 @@
       "guardian_invitation": "Guardian invitation",
       "subscription": "Subscription",
       "calendar_feed": "Calendar subscription",
-      "chat_report": "a report from a chat"
+      "chat_report": "a report from a chat",
+      "document": "File",
+      "document_folder": "Folder"
     },
     "statuses": {
       "scheduled": "Scheduled",
@@ -3388,7 +3403,8 @@
       "finance": "Finance",
       "privacy": "Privacy",
       "club": "The club",
-      "communication": "Communication"
+      "communication": "Communication",
+      "documents": "Documents"
     },
     "permissions": {
       "club_settings_update": {
@@ -3695,6 +3711,16 @@
         "name": "Handle safeguarding reports",
         "description": "Receives reports from chats, reads a reported chat when a second safeguarding officer has confirmed it, hides reported messages, mutes members for a time and closes cases. Every read is logged.",
         "example": "For example, the club's safeguarding officer."
+      },
+      "club_documents_manage": {
+        "name": "Manage the club's documents",
+        "description": "Can create folders for the whole club, upload files and new versions, decide who sees them and delete them. Also sees and manages the groups' documents.",
+        "example": "For example, can put the club's policies in a folder for all members and the traffic policy as public."
+      },
+      "group_documents_manage": {
+        "name": "Manage the group's documents",
+        "description": "Can create folders in the group, upload files and new versions, decide who sees them and delete them.",
+        "example": "For example, can upload the team's match schedule so the players and their parents see it."
       }
     }
   },

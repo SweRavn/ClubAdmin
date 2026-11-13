@@ -114,6 +114,12 @@ beforeAll(async () => {
       DEV_AUTH: "true",
       DEV_AUTH_KEY: TEST_DEV_AUTH_KEY,
       CALENDAR_TOKEN_KEY: "calendar-token-key-for-tests-0123456789",
+      // Upload and download links are signed offline (P2.2); nothing is stored.
+      S3_ENDPOINT: "http://127.0.0.1:9",
+      S3_PUBLIC_ENDPOINT: "https://s3.clubadmin.test",
+      S3_REGION: "garage",
+      S3_ACCESS_KEY_ID: "GKtest",
+      S3_SECRET_ACCESS_KEY: "test-secret",
       // The matrix and the benchmark send many requests from one address.
       ...NO_RATE_LIMITS,
     },
@@ -127,7 +133,7 @@ beforeAll(async () => {
   );
   treasurerRoleA = roleRows.find((r) => r.template_key === "treasurer")!.id;
   // Calendar feeds need the entitlement when CI runs with billing on (P1.11).
-  await subscribeToFeatures(t, [m.clubA.id, m.clubB.id], ["calendar_feeds", "chat"]);
+  await subscribeToFeatures(t, [m.clubA.id, m.clubB.id], ["calendar_feeds", "chat", "documents"]);
   await dispatchPending();
 });
 afterAll(async () => {
@@ -191,6 +197,24 @@ describe("permission matrix", () => {
   const CLUB_FORBIDDEN = { ...ALL_FORBIDDEN, outsider: 404, operator: 404 };
   /** Managers and registrars get `status`, other insiders 403. */
   const ADMINS = (status: number) => ({ ...CLUB_FORBIDDEN, manager: status, registrar: status });
+  /** Team T's folder: its audience and those who manage it read it; others get 404 (P2.2). */
+  const FOLDER_READERS = {
+    ...ALL_NOT_FOUND,
+    manager: 200,
+    owner: 200,
+    coach: 200,
+    member: 200,
+    parent: 200,
+  };
+  /** Those who manage team T's folder get `status`; its other readers 403. */
+  const FOLDER_MANAGERS = (status: number) => ({
+    ...ALL_NOT_FOUND,
+    member: 403,
+    parent: 403,
+    manager: status,
+    owner: status,
+    coach: status,
+  });
   /** Those who manage team T's activities get `status`, other insiders 403. */
   const TEAM_MANAGERS = (status: number) => ({
     ...CLUB_FORBIDDEN,
@@ -827,6 +851,88 @@ describe("permission matrix", () => {
       // The coach wrote it (not their own to moderate); the owner manages the chat.
       expected: { ...CHAT_WRITERS(403), owner: 201 },
       body: {},
+    },
+    // The file archive (P2.2): team T's folder has the team as its audience
+    // (the coach, the member, the protected member and the parent, whose link
+    // receives messages); the club manager and the section's owner manage it
+    // with the coach. Others do not see it (404).
+    "GET /api/v1/clubs/:clubId/folders": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/folders`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/folders": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/folders`,
+      expected: { ...CLUB_FORBIDDEN, manager: 201 },
+      body: { name: "Matrix club folder" },
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/folders": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/folders`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/groups/:groupId/folders": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/folders`,
+      // The first creates it; the name is then taken.
+      expected: { ...CLUB_FORBIDDEN, manager: 201, owner: 409, coach: 409 },
+      body: { name: "Matrix team folder" },
+    },
+    "GET /api/v1/clubs/:clubId/folders/:folderId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/folders/${m.folderId}`,
+      expected: FOLDER_READERS,
+    },
+    "PATCH /api/v1/clubs/:clubId/folders/:folderId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/folders/${m.folderId}`,
+      expected: FOLDER_MANAGERS(204),
+      body: {},
+    },
+    "DELETE /api/v1/clubs/:clubId/folders/:folderId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/folders/${m.folderId}`,
+      // It has files: deleting needs ?confirm=true.
+      expected: FOLDER_MANAGERS(409),
+    },
+    "POST /api/v1/clubs/:clubId/folders/:folderId/folders": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/folders/${m.folderId}/folders`,
+      expected: { ...FOLDER_MANAGERS(409), manager: 201 },
+      body: { name: "Matrix subfolder" },
+    },
+    "POST /api/v1/clubs/:clubId/folders/:folderId/uploads": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/folders/${m.folderId}/uploads`,
+      expected: FOLDER_MANAGERS(201),
+      body: { fileName: "matrix.pdf", size: 10 },
+    },
+    "GET /api/v1/clubs/:clubId/documents/:documentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}`,
+      expected: FOLDER_READERS,
+    },
+    "PATCH /api/v1/clubs/:clubId/documents/:documentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}`,
+      expected: FOLDER_MANAGERS(204),
+      body: {},
+    },
+    "DELETE /api/v1/clubs/:clubId/documents/:documentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/documents/${m.disposableDocumentId}`,
+      // The manager deletes it; for everyone after that it no longer exists.
+      expected: { ...ALL_NOT_FOUND, manager: 204 },
+    },
+    "POST /api/v1/clubs/:clubId/documents/:documentId/versions": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}/versions`,
+      expected: FOLDER_MANAGERS(201),
+      body: { fileName: "matrix-v2.pdf", size: 10 },
+    },
+    "POST /api/v1/clubs/:clubId/documents/:documentId/versions/:versionId/uploaded": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}/versions/${m.versionId}/uploaded`,
+      // Already scanned: nothing to do.
+      expected: FOLDER_MANAGERS(204),
+      body: {},
+    },
+    "GET /api/v1/clubs/:clubId/documents/:documentId/download": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}/download`,
+      expected: FOLDER_READERS,
+    },
+    "GET /api/v1/clubs/:clubId/documents/:documentId/versions/:versionId/download": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}/versions/${m.versionId}/download`,
+      expected: FOLDER_READERS,
     },
     "GET /api/v1/clubs/:clubId/safeguarding/reports": {
       url: () => `/api/v1/clubs/${m.clubA.id}/safeguarding/reports`,
@@ -1578,13 +1684,19 @@ describe("reads", () => {
       "club.join_requests.manage",
       "club.invitations.manage",
       "club.chats.direct",
+      "club.documents.read",
     ]);
     // Listed without a second factor; the endpoints ask for it.
     expect((await permissions(m.manager.id))?.permissions).toEqual(
       expect.arrayContaining(["club.settings.update", "club.roles.manage", "club.members.read"]),
     );
     const member = await permissions(m.member.id);
-    expect(member?.permissions).toEqual(["club.read", "club.events.read", "club.chats.direct"]);
+    expect(member?.permissions).toEqual([
+      "club.read",
+      "club.events.read",
+      "club.chats.direct",
+      "club.documents.read",
+    ]);
     expect(member?.club).toMatchObject({ defaultLocale: "sv-SE", timeZone: "Europe/Stockholm" });
   });
 

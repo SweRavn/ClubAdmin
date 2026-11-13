@@ -101,6 +101,31 @@ export interface ChatResource {
   hasChildren: boolean;
 }
 
+/**
+ * A folder of the file archive (:folderId within :clubId; P2.2, ADR 0049):
+ * the club's or a group's, and whether its audience includes the actor.
+ */
+export interface FolderResource {
+  kind: "folder";
+  clubId: string;
+  folderId: string;
+  /** The group whose folder it is, with its ancestors (none: the club's). */
+  group: GroupRef | null;
+  /** The audience that applies includes the actor (or one of their wards). */
+  inAudience: boolean;
+}
+
+/** A file of the archive (:documentId within :clubId; P2.2), as its folder. */
+export interface DocumentResource {
+  kind: "document";
+  clubId: string;
+  documentId: string;
+  folderId: string;
+  group: GroupRef | null;
+  /** The document's audience (its own or its folder's) includes the actor. */
+  inAudience: boolean;
+}
+
 export interface Resources {
   platform: PlatformResource;
   club: ClubResource;
@@ -111,6 +136,8 @@ export interface Resources {
   event: EventResource;
   administrator_suspension: SuspensionResource;
   chat: ChatResource;
+  folder: FolderResource;
+  document: DocumentResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

@@ -771,6 +771,30 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  // The file archive (P2.2 part A, ADR 0049): no app calls it yet. The web
+  // and app pages come with part C, which seeds documents and measures the
+  // reads (lists, a folder, a file, downloads) here; the writes stay below.
+  "GET /api/v1/clubs/{clubId}/folders": "measured with the seeded documents (P2.2 part C)",
+  "GET /api/v1/clubs/{clubId}/groups/{groupId}/folders": "as the club's folders (P2.2 part C)",
+  "GET /api/v1/clubs/{clubId}/folders/{folderId}": "as the club's folders (P2.2 part C)",
+  "GET /api/v1/clubs/{clubId}/documents/{documentId}": "as the club's folders (P2.2 part C)",
+  "GET /api/v1/clubs/{clubId}/documents/{documentId}/download":
+    "the file by key and a signed link, no storage call (P2.2 part C)",
+  "GET /api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/download":
+    "as the download",
+  "POST /api/v1/clubs/{clubId}/folders": "a rare write: the audience, one insert, audit",
+  "POST /api/v1/clubs/{clubId}/groups/{groupId}/folders": "as the club's",
+  "POST /api/v1/clubs/{clubId}/folders/{folderId}/folders": "as a top-level folder, plus the path",
+  "PATCH /api/v1/clubs/{clubId}/folders/{folderId}": "a rare write by key (documents tests)",
+  "DELETE /api/v1/clubs/{clubId}/folders/{folderId}":
+    "a rare write: the tree by its parent index, audit and outbox (documents tests)",
+  "POST /api/v1/clubs/{clubId}/folders/{folderId}/uploads":
+    "the club's storage lock and usage (its index), two inserts, audit (documents tests)",
+  "POST /api/v1/clubs/{clubId}/documents/{documentId}/versions": "as an upload",
+  "POST /api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/uploaded":
+    "one version by key, audit and outbox",
+  "PATCH /api/v1/clubs/{clubId}/documents/{documentId}": "a rare write by key (documents tests)",
+  "DELETE /api/v1/clubs/{clubId}/documents/{documentId}": "one update by key, audit and outbox",
   "PUT /api/v1/people/{personId}/protection":
     "a rare write: one lock, one update, audit and outbox (protection tests)",
   "POST /api/v1/me/calendar-feeds":

@@ -14,6 +14,7 @@ import { ClubTypesModule } from "./modules/club-types/index.ts";
 // Not in the clubs module's index: it depends on the roles module, which depends on clubs.
 import { ClubsApiModule } from "./modules/clubs/clubs-api.module.ts";
 import { ClubsModule } from "./modules/clubs/index.ts";
+import { DocumentsModule } from "./modules/documents/index.ts";
 import { EventsModule } from "./modules/events/index.ts";
 import { FamiliesModule } from "./modules/families/index.ts";
 import { GroupsModule } from "./modules/groups/index.ts";
@@ -52,6 +53,7 @@ const MODULES = [
   EventsModule,
   CalendarModule,
   ChatModule,
+  DocumentsModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

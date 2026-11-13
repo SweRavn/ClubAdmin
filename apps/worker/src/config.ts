@@ -6,6 +6,7 @@ import {
   objectStorageConfigShape,
 } from "@clubadmin/server-kit/object-storage";
 import { paymentsConfigIssues, paymentsConfigShape } from "@clubadmin/server-kit/payments";
+import { virusScanConfigIssues, virusScanConfigShape } from "@clubadmin/server-kit/virus-scan";
 import { z } from "@clubadmin/shared";
 
 export const workerConfigSchema = z
@@ -14,6 +15,7 @@ export const workerConfigSchema = z
     ...objectStorageConfigShape,
     ...notificationsConfigShape,
     ...paymentsConfigShape,
+    ...virusScanConfigShape,
     /** clubadmin_app connection: jobs and their database work are subject to row-level security. */
     DATABASE_URL: z.string().min(1, "required: the worker stores its jobs in PostgreSQL"),
     /**
@@ -43,6 +45,9 @@ export const workerConfigSchema = z
       });
     }
     for (const issue of [...billingSellerIssues(config), ...paymentsConfigIssues(config)]) {
+      ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
+    }
+    for (const issue of virusScanConfigIssues(config)) {
       ctx.addIssue({ code: "custom", path: [issue.variable], message: issue.message });
     }
     for (const issue of objectStorageConfigIssues(config)) {

@@ -18,7 +18,7 @@ const taskList = createTaskList({
 });
 
 describe("worker", () => {
-  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining and attendance retention, export expiry, import purging, notifications, privacy, waiting-list offers, calendar retention, the profile view log and administrators; every cron task exists", () => {
+  it("schedules heartbeat, history maintenance, the adult-ward check, backup metrics, joining and attendance retention, export expiry, import purging, notifications, privacy, waiting-list offers, calendar retention, the profile view log, administrators, chat and abandoned uploads; every cron task exists", () => {
     const items = parseCrontab(crontab);
     expect(items.map((i) => i.task)).toEqual([
       "heartbeat",
@@ -44,6 +44,7 @@ describe("worker", () => {
       "privacy:profile_views",
       "administrators:daily",
       "chat:maintenance",
+      "documents:cleanup",
     ]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
   });
@@ -51,6 +52,8 @@ describe("worker", () => {
   it("has a task for the jobs database triggers enqueue (outbox, member exports)", () => {
     expect(taskList["outbox:dispatch"]).toBeTypeOf("function");
     expect(taskList["members:export"]).toBeTypeOf("function");
+    expect(taskList["documents:scan"]).toBeTypeOf("function");
+    expect(taskList["documents:delete_objects"]).toBeTypeOf("function");
     expect(taskList["privacy:purge_member"]).toBeTypeOf("function");
     expect(taskList["privacy:protection_changed"]).toBeTypeOf("function");
   });

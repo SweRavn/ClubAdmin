@@ -25,6 +25,7 @@ import {
 import { mailHandler, type MailHandlerOptions } from "./mail.ts";
 import { notificationsHandler, type NotificationsOptions } from "./notifications/handler.ts";
 import { chatHandler } from "./tasks/chat.ts";
+import { documentsHandler } from "./tasks/documents.ts";
 import { privacyHandler } from "./tasks/privacy.ts";
 import { profileViewsHandler } from "./tasks/profile-views.ts";
 
@@ -64,7 +65,12 @@ export function createOutboxHandlers(deps: {
   /** Notifications (P1.7): the inbox always, email and push per the channels. */
   notifications?: NotificationsOptions | undefined;
 }): OutboxHandler[] {
-  const handlers: OutboxHandler[] = [privacyHandler(), profileViewsHandler(), chatHandler()];
+  const handlers: OutboxHandler[] = [
+    privacyHandler(),
+    profileViewsHandler(),
+    chatHandler(),
+    documentsHandler(),
+  ];
   if (deps.mail) handlers.push(mailHandler(deps.mail));
   if (deps.notifications) handlers.push(notificationsHandler(deps.notifications));
   // Without Valkey the API caches nothing across requests, so there is nothing to invalidate.

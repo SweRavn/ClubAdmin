@@ -146,6 +146,19 @@ daily email now, release the held deliveries in `pnpm db:psql`
 needs `PUSH_PROVIDER=expo`, a development build with an EAS project ID and
 `NOTIFICATION_TOKEN_KEY`; the app registers its token after login.
 
+### Files and virus scanning (P2.2)
+
+Uploaded files (the file archive) go straight from the browser or app to
+Garage through pre-signed links and stay invisible until the worker has
+scanned them. Without `CLAMAV_HOST` (the default locally) the worker checks
+the size and type and marks them clean without a virus scan. To scan for
+real, start ClamAV with `pnpm dev:services --full` (it downloads its
+signatures on the first start, which takes a few minutes), set
+`CLAMAV_HOST=127.0.0.1` in `.env.local` and restart the worker; the
+[EICAR test file](https://www.eicar.org/download-anti-malware-testfile/)
+renamed to `.txt` is then refused. Each club may store 100 MB
+(`DOCUMENTS_CLUB_LIMIT_MB`).
+
 ### Request budgets and query plans
 
 `apps/api/src/request-budgets.integration.test.ts` measures what each request

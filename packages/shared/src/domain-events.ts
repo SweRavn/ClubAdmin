@@ -65,6 +65,10 @@ export const DOMAIN_EVENTS = {
   "chat.report.read_requested": z.object({ clubId: id, reportId: id, readId: id }),
   "chat.message.moderated": z.object({ clubId: id, chatId: id, messageId: id, personId: id }),
   "chat.member.muted": z.object({ clubId: id, muteId: id, personId: id }),
+  /** A file version was uploaded (P2.2): the worker scans it before it is visible. */
+  "document.version.uploaded": z.object({ clubId: id, versionId: id }),
+  /** Files were deleted (P2.2): the worker deletes their stored objects. */
+  "documents.deleted": z.object({ clubId: id, documentIds: z.array(id).min(1).max(1000) }),
   "administrator.suspended": z.object({ clubId: id, suspensionId: id, personId: id }),
   /** An open request was cancelled by its initiator or expired: target and initiator are told. */
   "administrator.suspension.closed": z.object({

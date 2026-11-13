@@ -10,7 +10,9 @@ import {
   type ChatResource,
   type ClubResource,
   definePolicy,
+  type DocumentResource,
   type EventResource,
+  type FolderResource,
   type PersonResource,
   type Policy,
   type ResourceKind,
@@ -198,6 +200,26 @@ export function registerAccess(actor: Actor, clubId: string): RegisterAccess | n
 function insiderOfChat(actor: Actor, chat: ChatResource): boolean {
   if (chat.groups.length === 0) return actor.hasClubRelationship(chat.clubId);
   return chat.groups.some((g) => actor.isGroupMember(g.groupId) || actor.ownsGroup(g));
+}
+
+// The file archive (P2.2, ADR 0049 decision 2): its folders and files are
+// read by their audience (checked in SQL by the resource loader) and by
+// those who manage them: the club's by `club.documents.manage`, a group's
+// also by its owners and `group.documents.manage` there. Acting for a ward
+// reads as the ward and manages nothing.
+
+/** Manages the club's archive, or the group's when a group is given. */
+export function canManageDocuments(actor: Actor, clubId: string, group: GroupRef | null): boolean {
+  if (actor.onBehalfOf) return false;
+  if (actor.holds("club.documents.manage", clubId)) return true;
+  return group !== null && (actor.ownsGroup(group) || actor.holds("group.documents.manage", group));
+}
+
+export function canReadDocuments(
+  actor: Actor,
+  resource: FolderResource | DocumentResource,
+): boolean {
+  return resource.inAudience || canManageDocuments(actor, resource.clubId, resource.group);
 }
 
 /** A leader of one of the chat's groups (`group.lead`, P1.15) in a chat with children. */
@@ -743,6 +765,33 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("club.safeguarding.handle", "club", holdsInClub("club.safeguarding.handle"), {
     mfa: true,
   }),
+  // The file archive (P2.2): the lists show what the audiences let the
+  // caller read; managing as canManageDocuments.
+  definePolicy("club.documents.read", "club", ({ actor, resource }) =>
+    actor.hasClubRelationship(resource.clubId),
+  ),
+  definePolicy("club.documents.manage", "club", ({ actor, resource }) =>
+    canManageDocuments(actor, resource.clubId, null),
+  ),
+  definePolicy("group.documents.read", "group", ({ actor, resource }) =>
+    actor.hasClubRelationship(resource.clubId),
+  ),
+  definePolicy(
+    "group.documents.manage",
+    "group",
+    ({ actor, resource }) =>
+      !resource.archived && canManageDocuments(actor, resource.clubId, resource),
+  ),
+  definePolicy("folder.read", "folder", ({ actor, resource }) => canReadDocuments(actor, resource)),
+  definePolicy("folder.manage", "folder", ({ actor, resource }) =>
+    canManageDocuments(actor, resource.clubId, resource.group),
+  ),
+  definePolicy("document.read", "document", ({ actor, resource }) =>
+    canReadDocuments(actor, resource),
+  ),
+  definePolicy("document.manage", "document", ({ actor, resource }) =>
+    canManageDocuments(actor, resource.clubId, resource.group),
+  ),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

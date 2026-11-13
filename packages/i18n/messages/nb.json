@@ -811,7 +811,20 @@
     "chat_report_own": "Du kan ikke melde din egen melding.",
     "chat_read_not_confirmable": "Forespørselen kan ikke bekreftes: du gjorde den selv, den er allerede bekreftet eller har gått ut.",
     "chat_read_not_confirmed": "En annen trygghetsansvarlig må bekrefte før chatten kan leses.",
-    "chat_report_closed": "Saken er allerede avsluttet."
+    "chat_report_closed": "Saken er allerede avsluttet.",
+    "documents_storage_unavailable": "Filer kan ikke lastes opp eller ned akkurat nå. Prøv igjen senere.",
+    "document_type_not_allowed": "Den filtypen kan ikke lagres. Bruk for eksempel PDF, Word, Excel, PowerPoint, OpenDocument, tekst, CSV eller bilder.",
+    "document_too_large": "Filen er for stor. Den kan være på høyst 25 MB.",
+    "storage_limit_exceeded": "Klubbens lagringsplass er ikke nok for filen. Slett filer eller gamle versjoner som ikke trengs, eller be klubben om mer plass.",
+    "folder_name_taken": "Det finnes allerede en mappe med det navnet her.",
+    "folder_too_deep": "Mapper kan ikke ligge dypere enn fem nivåer.",
+    "folder_too_many": "Mappen har allerede så mange undermapper som mulig.",
+    "folder_not_empty": "Mappen inneholder filer eller undermapper. Bekreft at alt i den skal slettes.",
+    "audience_required": "En mappe på øverste nivå må ha en målgruppe.",
+    "audience_invalid": "Målgruppen inneholder en gruppe eller rolle som ikke hører til klubben.",
+    "document_move_scope": "Filer kan bare flyttes mellom mapper i samme gruppe, eller mellom klubbens egne mapper.",
+    "document_not_ready": "Filen kontrolleres fortsatt eller kunne ikke lagres. Prøv igjen om litt.",
+    "document_version_not_uploading": "Opplastingen er allerede fullført eller avbrutt."
   },
   "memberExport": {
     "columns": {
@@ -2645,7 +2658,9 @@
       "guardian_invitation": "Invitasjon av foresatt",
       "subscription": "Abonnement",
       "calendar_feed": "Kalenderabonnement",
-      "chat_report": "en melding fra en chat"
+      "chat_report": "en melding fra en chat",
+      "document": "Fil",
+      "document_folder": "Mappe"
     },
     "statuses": {
       "scheduled": "Planlagt",
@@ -3388,7 +3403,8 @@
       "finance": "Økonomi",
       "privacy": "Personvern",
       "club": "Klubben",
-      "communication": "Kommunikasjon"
+      "communication": "Kommunikasjon",
+      "documents": "Dokumenter"
     },
     "permissions": {
       "club_settings_update": {
@@ -3695,6 +3711,16 @@
         "name": "Håndtere trygghetssaker",
         "description": "Mottar meldinger fra chatter, leser en meldt chat når en annen trygghetsansvarlig har bekreftet det, skjuler meldte meldinger, stenger medlemmer ute fra å skrive en tid og avslutter saker. Hver lesing logges.",
         "example": "For eksempel klubbens trygghetsansvarlige."
+      },
+      "club_documents_manage": {
+        "name": "Håndtere klubbens dokumenter",
+        "description": "Kan opprette mapper for hele klubben, laste opp filer og nye versjoner, bestemme hvem som ser dem og slette dem. Ser og håndterer også gruppenes dokumenter.",
+        "example": "Kan for eksempel legge klubbens retningslinjer i en mappe for alle medlemmer og trafikkretningslinjene som offentlige."
+      },
+      "group_documents_manage": {
+        "name": "Håndtere gruppens dokumenter",
+        "description": "Kan opprette mapper i gruppen, laste opp filer og nye versjoner, bestemme hvem som ser dem og slette dem.",
+        "example": "Kan for eksempel laste opp lagets kampoppsett slik at spillerne og foreldrene deres ser det."
       }
     }
   },

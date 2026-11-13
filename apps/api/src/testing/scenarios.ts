@@ -13,6 +13,7 @@
 
 import { sql } from "@clubadmin/db";
 import type { TestDatabase } from "@clubadmin/db/testing";
+import { uuidv7 } from "@clubadmin/shared";
 
 import type { Group } from "../modules/groups/index.ts";
 import type { Person } from "../modules/people/index.ts";
@@ -59,6 +60,14 @@ export interface MatrixScenario {
   openChatId: string;
   messageId: string;
   hideMessageId: string;
+  /**
+   * The file archive (P2.2): team T's folder (the group's audience) with a
+   * clean file (and its version) and a file to delete.
+   */
+  folderId: string;
+  documentId: string;
+  versionId: string;
+  disposableDocumentId: string;
   outsider: BuiltPerson;
   operator: BuiltPerson;
 }
@@ -214,6 +223,45 @@ export async function buildMatrixScenario(
   const message = await s.chat.send(coachCtx, chatResource, { body: "Matrix message" });
   const hideMessage = await s.chat.send(coachCtx, chatResource, { body: "Matrix to hide" });
 
+  // The file archive (P2.2): files written directly (no object storage here).
+  const folderId = await s.documents.createFolder(
+    coachCtx,
+    { groupId: team.id },
+    { name: "Matrix" },
+  );
+  const file = async (name: string) => {
+    const documentId = uuidv7();
+    const versionId = uuidv7();
+    await t.query(
+      "admin",
+      `INSERT INTO public.documents (id, club_id, folder_id, group_id, name, created_by_person_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [documentId, clubA.id, folderId, team.id, name, coach.id],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO public.document_versions (id, club_id, document_id, group_id, number, object_key,
+         file_name, size, content_type, status, uploaded_by_person_id, uploaded_at, scanned_at)
+       VALUES ($1, $2, $3, $4, 1, $5, $6, 10, 'application/pdf', 'clean', $7, now(), now())`,
+      [
+        versionId,
+        clubA.id,
+        documentId,
+        team.id,
+        `documents/${clubA.id}/${documentId}/${versionId}`,
+        `${name}.pdf`,
+        coach.id,
+      ],
+    );
+    await t.query("admin", "UPDATE public.documents SET current_version_id = $1 WHERE id = $2", [
+      versionId,
+      documentId,
+    ]);
+    return { documentId, versionId };
+  };
+  const document = await file("Matrix schedule");
+  const disposableDocument = await file("Matrix old");
+
   const operator = await buildPerson(s);
   await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
 
@@ -247,6 +295,10 @@ export async function buildMatrixScenario(
     openChatId,
     messageId: message.id,
     hideMessageId: hideMessage.id,
+    folderId,
+    documentId: document.documentId,
+    versionId: document.versionId,
+    disposableDocumentId: disposableDocument.documentId,
     outsider: clubB.manager,
     operator,
   };

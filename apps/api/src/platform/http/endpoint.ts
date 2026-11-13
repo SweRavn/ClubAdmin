@@ -26,7 +26,9 @@ export type EndpointResource =
   | "activity"
   | "event"
   | "administrator_suspension"
-  | "chat";
+  | "chat"
+  | "folder"
+  | "document";
 
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any

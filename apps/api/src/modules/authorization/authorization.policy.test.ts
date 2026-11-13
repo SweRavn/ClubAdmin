@@ -197,6 +197,30 @@ interface Case {
   allowed: boolean;
 }
 
+const secretary = as({ ...member(), roles: [{ clubId: club, role: "secretary" }] });
+const clubFolderR = (inAudience = true): Resource => ({
+  kind: "folder",
+  clubId: club,
+  folderId: uuidv7(),
+  group: null,
+  inAudience,
+});
+const teamFolderR = (inAudience = true): Resource => ({
+  kind: "folder",
+  clubId: club,
+  folderId: uuidv7(),
+  group: { clubId: club, groupId: team, ancestorIds: [section] },
+  inAudience,
+});
+const teamDocumentR = (inAudience = true): Resource => ({
+  kind: "document",
+  clubId: club,
+  documentId: uuidv7(),
+  folderId: uuidv7(),
+  group: { clubId: club, groupId: team, ancestorIds: [section] },
+  inAudience,
+});
+
 const CASES: Record<Permission, Case[]> = {
   "club.read": [
     { name: "member", actor: plainMember, resource: clubR, allowed: true },
@@ -1433,6 +1457,95 @@ const CASES: Record<Permission, Case[]> = {
       name: "coach of another team",
       actor: otherTeamCoach,
       resource: closedChatR(),
+      allowed: false,
+    },
+  ],
+  "club.documents.read": [
+    { name: "member", actor: plainMember, resource: clubR, allowed: true },
+    { name: "guardian of a member", actor: parent, resource: clubR, allowed: true },
+    { name: "outsider", actor: outsider, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.documents.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "secretary", actor: secretary, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "group.documents.read": [
+    { name: "member", actor: plainMember, resource: teamR, allowed: true },
+    { name: "outsider", actor: outsider, resource: teamR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: teamR, allowed: false },
+  ],
+  "group.documents.manage": [
+    { name: "head coach", actor: coach, resource: teamR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: true },
+    { name: "club manager", actor: manager, resource: teamR, allowed: true },
+    { name: "archived group", actor: coach, resource: archivedTeamR, allowed: false },
+    { name: "physio", actor: physio, resource: teamR, allowed: false },
+    { name: "teammate", actor: teammate, resource: teamR, allowed: false },
+    { name: "coach of another team", actor: otherTeamCoach, resource: teamR, allowed: false },
+  ],
+  "folder.read": [
+    { name: "in the audience", actor: teammate, resource: teamFolderR(), allowed: true },
+    { name: "head coach outside it", actor: coach, resource: teamFolderR(false), allowed: true },
+    { name: "secretary outside it", actor: secretary, resource: clubFolderR(false), allowed: true },
+    {
+      name: "member outside it",
+      actor: plainMember,
+      resource: clubFolderR(false),
+      allowed: false,
+    },
+    { name: "teammate outside it", actor: teammate, resource: teamFolderR(false), allowed: false },
+  ],
+  "folder.manage": [
+    { name: "head coach", actor: coach, resource: teamFolderR(), allowed: true },
+    {
+      name: "owner of the parent group",
+      actor: sectionOwner,
+      resource: teamFolderR(),
+      allowed: true,
+    },
+    { name: "secretary: the club's", actor: secretary, resource: clubFolderR(), allowed: true },
+    { name: "head coach: the club's", actor: coach, resource: clubFolderR(), allowed: false },
+    { name: "teammate in the audience", actor: teammate, resource: teamFolderR(), allowed: false },
+    {
+      name: "acting on behalf of a ward",
+      actor: onBehalf,
+      resource: teamFolderR(),
+      allowed: false,
+    },
+  ],
+  "document.read": [
+    { name: "in the audience", actor: parent, resource: teamDocumentR(), allowed: true },
+    { name: "head coach outside it", actor: coach, resource: teamDocumentR(false), allowed: true },
+    {
+      name: "teammate outside it",
+      actor: teammate,
+      resource: teamDocumentR(false),
+      allowed: false,
+    },
+    {
+      name: "manager of another club",
+      actor: otherClubManager,
+      resource: teamDocumentR(false),
+      allowed: false,
+    },
+  ],
+  "document.manage": [
+    { name: "head coach", actor: coach, resource: teamDocumentR(), allowed: true },
+    { name: "club manager", actor: manager, resource: teamDocumentR(), allowed: true },
+    {
+      name: "teammate in the audience",
+      actor: teammate,
+      resource: teamDocumentR(),
+      allowed: false,
+    },
+    {
+      name: "coach of another team",
+      actor: otherTeamCoach,
+      resource: teamDocumentR(),
       allowed: false,
     },
   ],

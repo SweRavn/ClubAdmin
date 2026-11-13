@@ -5,6 +5,7 @@
 import { type Database, type LedgerSettings, outbox, type OutboxHandler, sql } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import type { PaymentProvider } from "@clubadmin/server-kit/payments";
+import type { VirusScanner } from "@clubadmin/server-kit/virus-scan";
 import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
 import type { Redis } from "ioredis";
@@ -34,6 +35,7 @@ import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { calendarRetentionTask } from "./calendar.ts";
 import { chatMaintenanceTask, syncFamilyTask, syncPersonTask } from "./chat.ts";
+import { cleanupTask, deleteObjectsTask, scanTask } from "./documents.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
 import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
@@ -58,6 +60,8 @@ export interface TaskDependencies {
   historyPartitionsAhead: number;
   /** S3_* (member exports); null when not configured. */
   storage?: ObjectStorage | null;
+  /** ClamAV (P2.2): uploaded files are scanned; null outside production when not configured. */
+  scanner?: VirusScanner | null;
   /** DEFAULT_COUNTRY: age rules for wards without clubs (P1.3). */
   defaultCountry?: string;
   /** Notifications (P1.7): delivery by email and push; without it nothing is delivered. */
@@ -148,6 +152,13 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
     "members:purge_imports": purgeMemberImportsTask(deps.db, deps.storage ?? null),
+    "documents:scan": scanTask({
+      db: deps.db,
+      storage: deps.storage ?? null,
+      scanner: deps.scanner ?? null,
+    }),
+    "documents:delete_objects": deleteObjectsTask(deps.db, deps.storage ?? null),
+    "documents:cleanup": cleanupTask(deps.db, deps.storage ?? null),
     ...billingTasks(deps),
     ...notificationTasks(deps),
     ...privacyTasks(deps),
@@ -233,7 +244,8 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * at 05:13 UTC (P1.11); the profile view log (anonymising people who left
  * a club, rows after 24 months, the anonymisation ledger after 13) daily at
  * 05:19 UTC (P1.12); administrators (P1.15 A3: expired suspension requests,
- * grace period reminders) hourly at :11.
+ * grace period reminders) hourly at :11; abandoned document uploads (P2.2)
+ * hourly at :29.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -259,6 +271,7 @@ export const crontab = [
   "19 5 * * * privacy:profile_views ?fill=2d",
   "11 * * * * administrators:daily ?max=1",
   "47 2 * * * chat:maintenance ?fill=2d",
+  "29 * * * * documents:cleanup ?max=1",
 ].join("\n");
 
 /**

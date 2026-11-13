@@ -974,6 +974,40 @@ Erasure takes the person out of every chat; their messages stay, shown as
 reactions), `.../read`, and `POST /realtime/tickets` with the WebSocket
 `/api/v1/realtime`.
 
+### The file archive (P2.2, ADR 0049)
+Club-owned tables (tenant RLS, record history; migration 0042):
+
+- `audiences` and `audience_entries`: who reads something, shared with
+  announcements (P2.3). An entry is `club` (members, their guardians whose
+  link receives messages, the club's leaders and role holders), `group`
+  (the group's members and their guardians), `group_roles` (`group_id` and
+  `role_ids`: e.g. the group's leaders), `club_role` (`role_id`) or
+  `public`. `app.audience_includes(audience, person)` decides it in SQL.
+- `document_folders`: the club's (`group_id` null) or a group's, with
+  `parent_id` (at most five levels), `name` (unique among siblings),
+  `audience_id` (null in a subfolder: its parent's), `purpose` (`files` |
+  `notices`), created and deleted by.
+- `documents`: `folder_id`, `group_id` (the folder's), `kind` (`file` |
+  `governing`, P2.4), `name`, `audience_id` (null: the folder's),
+  `current_version_id` (the newest clean version), created and deleted by.
+- `document_versions`: every version kept: `number`, `object_key`
+  (`documents/<club>/<document>/<version>`), `file_name`, `size`,
+  `content_type`, `sha256`, `status` (`uploading` → `pending` → `clean` |
+  `infected` | `failed`), uploaded by and at, `scanned_at`,
+  `object_deleted_at`. The club's storage use is the sum of the stored
+  versions' sizes.
+
+Reading follows the audience (or managing); managing is
+`club.documents.manage` for the club's archive and every group's,
+`group.documents.manage` or owning the group for a group's. Endpoints:
+`GET|POST /clubs/:clubId/folders`, `GET|POST
+/clubs/:clubId/groups/:groupId/folders`, `GET|PATCH|DELETE
+/clubs/:clubId/folders/:folderId`, `POST .../folders/:folderId/folders`
+(subfolder), `POST .../folders/:folderId/uploads` (a new file),
+`GET|PATCH|DELETE /clubs/:clubId/documents/:documentId`, `POST
+.../versions` (a new version), `POST .../versions/:versionId/uploaded`,
+`GET .../download` and `GET .../versions/:versionId/download`.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

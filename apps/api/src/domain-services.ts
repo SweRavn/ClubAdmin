@@ -5,6 +5,7 @@
 
 import type { Database } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
+import { DOCUMENT_DEFAULT_CLUB_LIMIT_BYTES } from "@clubadmin/shared";
 
 import { AccountsService } from "./modules/accounts/index.ts";
 import { ActivitiesService, AttendanceService } from "./modules/activities/index.ts";
@@ -13,6 +14,7 @@ import { ChatService, SafeguardingService } from "./modules/chat/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubTypesService } from "./modules/club-types/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
+import { DocumentsService } from "./modules/documents/index.ts";
 import { EventsService } from "./modules/events/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
@@ -68,6 +70,8 @@ export interface CoreServices {
   chat: ChatService;
   /** Reports, safeguarding cases and mutes (P2.1 part B). */
   safeguarding: SafeguardingService;
+  /** The file archive (P2.2): the installation's default storage limit per club. */
+  documents: DocumentsService;
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
   leaving: LeavingService;
@@ -149,6 +153,10 @@ export function createCoreServices(
     }),
     safeguarding: new SafeguardingService(db, {
       publisher: new RealtimePublisher(new RealtimeBus(undefined)),
+    }),
+    documents: new DocumentsService(db, {
+      storage: options.storage ?? null,
+      clubLimitBytes: () => Promise.resolve(DOCUMENT_DEFAULT_CLUB_LIMIT_BYTES),
     }),
     consents,
     clubPrivacy: new ClubPrivacyService(db, { clubs }),

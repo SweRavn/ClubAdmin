@@ -281,6 +281,28 @@ export const DOMAIN_ERRORS = {
   /** Reading a reported chat needs a request confirmed by a second officer. */
   chat_read_not_confirmed: "forbidden",
   chat_report_closed: "conflict",
+  // The file archive (P2.2, ADR 0049).
+  /** No object storage is configured (uploads and downloads need it). */
+  documents_storage_unavailable: "unavailable",
+  /** Not on the allow list of file types. */
+  document_type_not_allowed: "unsupported-media-type",
+  document_too_large: "payload-too-large",
+  /** The upload would take the club over its storage limit. */
+  storage_limit_exceeded: "conflict",
+  folder_name_taken: "conflict",
+  folder_too_deep: "conflict",
+  folder_too_many: "conflict",
+  /** A folder with content is deleted only after a confirmation. */
+  folder_not_empty: "conflict",
+  /** A top-level folder always has its own audience. */
+  audience_required: "validation",
+  /** A group or role of the audience is not the club's (or not of the right kind). */
+  audience_invalid: "validation",
+  /** Files move only between folders of the same club or group. */
+  document_move_scope: "conflict",
+  /** The version is not clean (being uploaded or scanned, or refused). */
+  document_not_ready: "conflict",
+  document_version_not_uploading: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

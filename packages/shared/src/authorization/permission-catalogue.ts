@@ -58,6 +58,7 @@ export const PERMISSION_AREAS = [
   "privacy",
   "club",
   "communication",
+  "documents",
 ] as const;
 export type PermissionArea = (typeof PERMISSION_AREAS)[number];
 
@@ -187,6 +188,16 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "chat.post": builtIn,
   "chat.manage": derived("group.channels.manage"),
   "club.safeguarding.handle": role("club", "communication", true),
+  // The file archive (P2.2, ADR 0049): who reads a folder or file is decided
+  // by its audience; managing them by these two.
+  "club.documents.read": builtIn,
+  "club.documents.manage": role("club", "documents"),
+  "group.documents.read": builtIn,
+  "group.documents.manage": role("group", "documents"),
+  "folder.read": builtIn,
+  "folder.manage": derived("group.documents.manage"),
+  "document.read": builtIn,
+  "document.manage": derived("group.documents.manage"),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -324,6 +335,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.account.manage",
       "billing.invoices.read",
       "club.channels.create",
+      "club.documents.manage",
     ],
   },
   registrar: {
@@ -344,7 +356,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.invoices.read",
     ],
   },
-  secretary: { scope: "club", permissions: BOARD },
+  secretary: { scope: "club", permissions: [...BOARD, "club.documents.manage"] },
   board_member: { scope: "club", permissions: BOARD },
   deputy_board_member: { scope: "club", permissions: BOARD },
   auditor: { scope: "club", permissions: [] },
@@ -357,10 +369,21 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
   member: { scope: "group", permissions: ["group.participate", "group.channels.create"] },
   head_coach: {
     scope: "group",
-    permissions: [...PLANNER, "group.channels.create", "group.channels.manage"],
+    permissions: [
+      ...PLANNER,
+      "group.channels.create",
+      "group.channels.manage",
+      "group.documents.manage",
+    ],
   },
-  assistant_coach: { scope: "group", permissions: [...PLANNER, "group.channels.create"] },
-  team_manager: { scope: "group", permissions: [...PLANNER, "group.channels.create"] },
+  assistant_coach: {
+    scope: "group",
+    permissions: [...PLANNER, "group.channels.create", "group.documents.manage"],
+  },
+  team_manager: {
+    scope: "group",
+    permissions: [...PLANNER, "group.channels.create", "group.documents.manage"],
+  },
   physio: { scope: "group", permissions: LEADER },
   other_leader: { scope: "group", permissions: [...LEADER, "activity.responses.read"] },
 };
@@ -391,6 +414,7 @@ export const OWNER_PERMISSIONS: readonly RolePermission[] = [
   "group.consents.read",
   "group.channels.create",
   "group.channels.manage",
+  "group.documents.manage",
 ];
 /**
  * Not powers over others: taking part, counting as a leader, and creating

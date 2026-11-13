@@ -168,6 +168,19 @@ describe("tenant isolation of club-owned tables", () => {
                SELECT ${a.id}, id, ${a.manager.id} FROM rep)
         INSERT INTO chat_mutes (club_id, person_id, muted_by_person_id, until)
         VALUES (${a.id}, ${member.id}, ${a.manager.id}, now() + interval '1 hour')`);
+      // The file archive (P2.2): the group's folder with its audience, a file and a version.
+      await tx.execute(sql`
+        WITH au AS (INSERT INTO audiences (club_id) VALUES (${a.id}) RETURNING id),
+        e AS (INSERT INTO audience_entries (club_id, audience_id, kind, group_id)
+              SELECT ${a.id}, id, 'group', ${group.id} FROM au),
+        f AS (INSERT INTO document_folders (club_id, group_id, name, audience_id)
+              SELECT ${a.id}, ${group.id}, 'Fixture', id FROM au RETURNING id),
+        d AS (INSERT INTO documents (club_id, folder_id, group_id, name)
+              SELECT ${a.id}, id, ${group.id}, 'Fixture.pdf' FROM f RETURNING id)
+        INSERT INTO document_versions (club_id, document_id, group_id, number, object_key, file_name,
+          size, content_type)
+        SELECT ${a.id}, id, ${group.id}, 1, 'documents/fixture/' || id, 'Fixture.pdf', 1,
+          'application/pdf' FROM d`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(

@@ -389,6 +389,39 @@ export async function loadActivityScope(
 }
 
 /**
+ * A folder or file of the archive for its policies (P2.2): its group and
+ * whether the audience that applies includes the person (or a ward). Read in
+ * the club as a system read; deleted ones do not exist. IDs only.
+ */
+export async function loadDocumentScope(
+  tx: Tx,
+  ids: { folderId: string } | { documentId: string },
+  personId: string,
+): Promise<{ folderId: string; groupId: string | null; inAudience: boolean } | null> {
+  const { rows } = await tx.execute<{
+    folder_id: string;
+    group_id: string | null;
+    in_audience: boolean;
+  }>(
+    "folderId" in ids
+      ? sql`
+          SELECT f.id AS folder_id, f.group_id,
+            app.audience_includes(app.folder_audience(f.id), ${personId}::uuid) AS in_audience
+          FROM public.document_folders f
+          WHERE f.id = ${ids.folderId}::uuid AND f.deleted_at IS NULL`
+      : sql`
+          SELECT d.folder_id, d.group_id,
+            app.audience_includes(app.document_audience(d.id), ${personId}::uuid) AS in_audience
+          FROM public.documents d
+          WHERE d.id = ${ids.documentId}::uuid AND d.deleted_at IS NULL`,
+  );
+  const row = rows[0];
+  return row
+    ? { folderId: row.folder_id, groupId: row.group_id, inAudience: row.in_audience }
+    : null;
+}
+
+/**
  * A chat for its policies (P2.1): kind, visibility, state, groups, whether
  * children are active members, and which of the given people (the actor and
  * their wards) are members. Read in the chat's club as a system read; IDs only.

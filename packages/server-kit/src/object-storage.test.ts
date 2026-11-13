@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  contentDisposition,
   ObjectStorage,
   objectStorageConfig,
   objectStorageConfigIssues,
@@ -68,5 +69,15 @@ describe("object storage", () => {
     expect(new URL(url).searchParams.get("X-Amz-Signature")).toBe(
       "aeeed9bbccd4d02ee5c0109b86d86835f995330da4c265957d157751f604d404",
     );
+  });
+});
+
+describe("contentDisposition", () => {
+  it("names the file as an attachment, with the UTF-8 name when it is not ASCII", () => {
+    expect(contentDisposition('plan "v2".pdf')).toBe('attachment; filename="plan v2.pdf"');
+    expect(contentDisposition("Matchschema vår.pdf")).toBe(
+      "attachment; filename=\"Matchschema v_r.pdf\"; filename*=UTF-8''Matchschema%20v%C3%A5r.pdf",
+    );
+    expect(contentDisposition("a\nb.txt")).toBe('attachment; filename="ab.txt"');
   });
 });

@@ -105,3 +105,60 @@ giver) require more, which the plugins will cover; a lawyer should confirm
 this before the hosted service relies on it. Order: the file archive and
 audiences; then governing documents (ADR 0037); then meetings, agendas,
 minutes and signing.
+
+## As implemented (P2.2 part A, 2026-11-13)
+
+- **Audiences** (`audiences`, `audience_entries`, migration 0042) are lists
+  of entries: `club`, `group`, `group_roles` (role IDs of the group's
+  roles), `club_role` (a club role's ID) and `public`. Roles are referred to
+  by their IDs since P1.15 made them club-defined. Who an audience includes
+  is decided in SQL (`app.audience_includes(audience, person)`), by the
+  person's own index entries: their membership, group roles and club
+  roles, and, for the club and group entries, as a guardian of someone
+  included. **Guardians count when their link receives messages**
+  (`receive_messages`): parents and legal guardians always, relatives and
+  others when given that right. A group entry is the group's own members,
+  not its child groups' (pick several groups for several teams), as group
+  permissions are not inherited (P1.15 decision 13).
+- **Folders** belong to the club or a group; a subfolder has its parent's
+  group and inherits its audience unless it has its own (`audience_id`
+  null; `app.folder_audience` walks up). A top-level folder always has one:
+  by default the group, or the whole club. Folders nest at most five deep;
+  names are unique among siblings.
+- **Who manages:** `club.documents.manage` (club managers, secretaries)
+  manages the club's folders and every group's; `group.documents.manage`
+  (head coaches, assistant coaches, team managers) and owning the group
+  manage the group's. The policies are `folder.*` and `document.*`; reading
+  is the audience (checked by the resource loader) or managing. Acting for
+  a ward reads as the ward and manages nothing.
+- **Uploads** start at the folder (`POST …/folders/:folderId/uploads`, a
+  new file) or the file (`POST …/documents/:documentId/versions`), not at
+  one `documents/uploads` endpoint: the authorization of each is its
+  folder's or file's. The link is a pre-signed PUT (15 minutes) of exactly
+  the declared size and content type to
+  `documents/<club_id>/<document_id>/<version_id>`; the client then
+  confirms (`…/versions/:versionId/uploaded`). Types: PDF, Word, Excel,
+  PowerPoint (old and new), OpenDocument, RTF, text, CSV, PNG, JPEG, GIF,
+  WebP, HEIC; at most 25 MB per file.
+- **Scanning** (worker, `documents:scan`): the file must be there, of its
+  declared size, and start like its type (a renamed program is refused);
+  then clamd (`CLAMAV_HOST`, INSTREAM). A clean version becomes the file's
+  current one (the newest clean one); an infected or refused one is
+  deleted from storage and never shown. Without `CLAMAV_HOST` files are
+  not scanned outside production; production refuses to start without it.
+  Abandoned uploads are marked failed after an hour (`documents:cleanup`).
+- **Storage limit:** the club's versions (all kept versions, uploads in
+  progress included) against the plan's `storage_gb` (billing on) or the
+  installation's `DOCUMENTS_CLUB_LIMIT_MB` (default 100 MB); uploads take
+  the club's lock, one at a time. The club's own limits and limits per
+  group come with part B.
+- **Downloads** are pre-signed GETs (5 minutes) on the storage's public
+  endpoint with `Content-Disposition: attachment` (the UTF-8 name per RFC
+  6266); downloads of files whose audience has neither the whole club nor
+  public are audited (`document.downloaded`).
+- **Deleting** a folder with content needs `?confirm=true`; folders and
+  files keep their rows (history, audit) marked deleted, and the worker
+  deletes the stored versions (`documents:delete_objects`).
+- Part B adds notice attachments, "Mina dokument", the club's storage
+  settings, deletion dates and public documents; part C the pages, seed
+  and the budgets of the reads.
