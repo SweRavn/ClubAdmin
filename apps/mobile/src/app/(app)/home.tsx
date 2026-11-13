@@ -74,11 +74,6 @@ export default function Home() {
       ) : null}
       <LinkButton label={t("chat.nav")} onPress={() => router.push("/chats")} testID="open-chats" />
       <LinkButton
-        label={t("nav.documents")}
-        onPress={() => router.push("/documents")}
-        testID="open-documents"
-      />
-      <LinkButton
         label={t("mobile.settings")}
         onPress={() => router.push("/settings")}
         testID="open-settings"
@@ -108,6 +103,12 @@ export default function Home() {
         </Body>
       ) : null}
       <DataAge updatedAt={clubs.dataUpdatedAt} />
+      {/* "Mina dokument" (P2.2): in the screen, the header has no room for it. */}
+      <LinkButton
+        label={t("nav.documents")}
+        onPress={() => router.push("/documents")}
+        testID="open-documents"
+      />
 
       {actingWards.length > 0 ? (
         <Section title={t("viewingAs.label")}>

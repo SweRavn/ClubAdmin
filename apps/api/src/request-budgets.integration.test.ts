@@ -12,6 +12,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
+import { sql } from "@clubadmin/db";
 import { createTestDatabase, type TestDatabase } from "@clubadmin/db/testing";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -1035,6 +1036,16 @@ beforeAll(async () => {
     billingEnabled: BILLING,
   };
   await seed(env, { scenario: "demo", data });
+  // With billing on, IK Norrbacka is on the free plan, which has no file
+  // archive (402): the documents cases measure it on the standard plan.
+  if (BILLING) {
+    await t.db.withSystem("test:budgets", { clubId: key("ikn") }, (tx) =>
+      tx.execute(sql`
+        UPDATE billing.subscriptions
+        SET plan_id = (SELECT id FROM billing.plans WHERE key = 'standard')
+        WHERE club_id = ${key("ikn")}::uuid`),
+    );
+  }
   await t.query("admin", "ANALYZE");
   const { rows } = await t.query<{
     activity: string;
