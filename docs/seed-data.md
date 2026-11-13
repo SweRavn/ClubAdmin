@@ -288,7 +288,8 @@ schedule (Ola left two years ago).
   the seed has no worker, so it writes the inboxes directly (system
   context) with the params the worker would store, and marks its own domain
   events as handled by the worker's `notifications` handler (they are
-  history, not news: starting the worker sends nothing for them). Anna:
+  history, not news: starting the worker sends nothing for them; the chat
+  step, which runs later, does the same for its messages and report). Anna:
   next week's cancelled F2017 Tuesday (about Elsa) and Oskar's call-up for
   an IKN P2012 session, both unread, and an answer reminder for F2017
   (read), plus a phone with push (fake provider, when

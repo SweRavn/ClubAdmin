@@ -164,5 +164,14 @@ export const chatDemoStep: DemoStep = {
       outcome: "no_action",
       note: "Pratat med Maja och hennes föräldrar. Laget har gått igenom hur vi skriver till varandra.",
     });
+
+    // The chats' events are history, not news, like the rest of the seed's
+    // (the notifications step): starting the worker sends nothing for them.
+    await env.db.withSystem("seed:chat", {}, (tx) =>
+      tx.execute(sql`
+        INSERT INTO outbox.deliveries (event_id, handler)
+        SELECT e.id, 'notifications' FROM outbox.events e WHERE e.status <> 'done'
+        ON CONFLICT DO NOTHING`),
+    );
   },
 };
