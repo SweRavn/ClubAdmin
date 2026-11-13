@@ -15,6 +15,7 @@ export * from "./domain/administrators.ts";
 export * from "./domain/attendance.ts";
 export * from "./domain/billing.ts";
 export * from "./domain/calendar.ts";
+export * from "./domain/chat.ts";
 export * from "./domain/club-types.ts";
 export * from "./domain/core.ts";
 export * from "./domain/events.ts";

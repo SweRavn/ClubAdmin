@@ -27,6 +27,7 @@
     "@swc/cli": "catalog:",
     "@swc/core": "catalog:",
     "@types/node": "catalog:",
+    "@types/ws": "catalog:",
     "chokidar": "catalog:",
     "eslint": "catalog:",
     "typescript": "catalog:",
@@ -53,6 +54,7 @@
     "jose": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
+    "ws": "catalog:",
     "zod": "catalog:"
   }
 }

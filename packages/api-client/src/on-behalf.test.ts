@@ -17,6 +17,12 @@ describe("onBehalfApplies", () => {
     ["/api/v1/meta/source", false],
     ["/api/v1/meta/client", false],
     ["/api/v1/dev/tokens", false],
+    ["/api/v1/me/chats", false],
+    ["/api/v1/realtime/tickets", false],
+    ["/api/v1/clubs/c/chats/x/messages", false],
+    ["/api/v1/clubs/c/direct-chats", false],
+    ["/api/v1/clubs/c/groups/g/chats", false],
+    ["/api/v1/clubs/c/groups/g/members", true],
   ])("%s → %s", (path, expected) => {
     expect(onBehalfApplies(path)).toBe(expected);
   });

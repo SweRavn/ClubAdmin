@@ -763,6 +763,20 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "an invitation's groups and roles (P1.15 A4): shown with the invitation in the invitations list",
   "public.administrator_suspensions":
     "the two-person rule's requests (P1.15 A3): on the club's administrators page and in the audit log (administrator.*)",
+  // Chat (P2.1, ADR 0047): a chat shows its own record (members and why,
+  // system messages, every earlier text of an edit); membership changes by
+  // others, joins and hides are in the audit log (chat.*). Message texts
+  // never appear in a history view.
+  "public.chats": "a chat's name and state: on the chat's page and in the audit log (chat.*)",
+  "public.chat_groups": "the groups a chat was made for: on the chat's page",
+  "public.chat_members":
+    "who is in a chat and why: on the chat's page (everyone in it sees it, ADR 0047) and in the audit log",
+  "public.chat_messages":
+    "messages (texts redacted in history): the chat itself is the record; hiding is in the audit log",
+  "public.chat_message_versions":
+    "the earlier texts of edited messages: shown with the message to the chat's members",
+  "public.chat_message_attachments": "prepared for files on messages; unused (P2.1)",
+  "public.chat_reactions": "reactions: shown with the message to the chat's members",
 };
 
 const byTable = new Map(HISTORY_POLICY.map((p) => [p.table, p]));

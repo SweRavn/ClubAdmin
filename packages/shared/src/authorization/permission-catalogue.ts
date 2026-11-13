@@ -41,6 +41,8 @@ export const CAPABILITIES = [
   "group.lead",
   /** The profile's leader tier for the group's members. */
   "group.people.details",
+  /** Managing chat channels others created in the group (P2.1: members, archiving). */
+  "group.channels.manage",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -55,6 +57,7 @@ export const PERMISSION_AREAS = [
   "finance",
   "privacy",
   "club",
+  "communication",
 ] as const;
 export type PermissionArea = (typeof PERMISSION_AREAS)[number];
 
@@ -173,6 +176,16 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "billing.subscriptions.list": builtIn,
   "billing.invoices.list": builtIn,
   "billing.invoices.manage": builtIn,
+  // Communication (P2.1, ADR 0047): who may read, join and write a chat is
+  // decided by its members and the child-safety rules, not by roles.
+  "group.channels.create": role("group", "communication"),
+  "group.channels.manage": role("group", "communication"),
+  "club.channels.create": role("club", "communication"),
+  "club.chats.direct": builtIn,
+  "chat.read": builtIn,
+  "chat.join": builtIn,
+  "chat.post": builtIn,
+  "chat.manage": derived("group.channels.manage"),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -309,13 +322,17 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.subscription.change",
       "billing.account.manage",
       "billing.invoices.read",
+      "club.channels.create",
     ],
   },
   registrar: {
     scope: "club",
     permissions: [...ADMIN, "club.members.routine", "club.roles.read"],
   },
-  chair: { scope: "club", permissions: [...BOARD, "club.managers.claim", "club.roles.read"] },
+  chair: {
+    scope: "club",
+    permissions: [...BOARD, "club.managers.claim", "club.roles.read", "club.channels.create"],
+  },
   vice_chair: { scope: "club", permissions: BOARD },
   treasurer: {
     scope: "club",
@@ -334,10 +351,14 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
   safeguarding_officer: { scope: "club", permissions: [] },
   communications: { scope: "club", permissions: [] },
   staff: { scope: "club", permissions: [] },
-  member: { scope: "group", permissions: ["group.participate"] },
-  head_coach: { scope: "group", permissions: PLANNER },
-  assistant_coach: { scope: "group", permissions: PLANNER },
-  team_manager: { scope: "group", permissions: PLANNER },
+  // Children create channels too (P2.1, ADR 0047: visible to their guardians and leaders).
+  member: { scope: "group", permissions: ["group.participate", "group.channels.create"] },
+  head_coach: {
+    scope: "group",
+    permissions: [...PLANNER, "group.channels.create", "group.channels.manage"],
+  },
+  assistant_coach: { scope: "group", permissions: [...PLANNER, "group.channels.create"] },
+  team_manager: { scope: "group", permissions: [...PLANNER, "group.channels.create"] },
   physio: { scope: "group", permissions: LEADER },
   other_leader: { scope: "group", permissions: [...LEADER, "activity.responses.read"] },
 };
@@ -366,8 +387,18 @@ export const OWNER_PERMISSIONS: readonly RolePermission[] = [
   "group.people.details",
   "person.consents.read",
   "group.consents.read",
+  "group.channels.create",
+  "group.channels.manage",
 ];
-export const NON_POWERS: readonly RolePermission[] = ["group.participate", "group.lead"];
+/**
+ * Not powers over others: taking part, counting as a leader, and creating
+ * chat channels (P2.1: participants, children included, create channels).
+ */
+export const NON_POWERS: readonly RolePermission[] = [
+  "group.participate",
+  "group.lead",
+  "group.channels.create",
+];
 
 /**
  * The club manager's day-to-day permissions that moved to the registrar

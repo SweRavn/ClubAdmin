@@ -11,6 +11,9 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { IntlProvider } from "use-intl";
 
 import type {
+  ChatDetail,
+  ChatMessage,
+  ChatSummary,
   ClientInfo,
   GroupDetail,
   Me,
@@ -27,6 +30,7 @@ const ELSA = "0199a000-0000-7000-8000-000000000003";
 const NADIA = "0199a000-0000-7000-8000-000000000024";
 const SVK = "0199a000-0000-7000-8001-000000000001";
 const F2017 = "0199a000-0000-7000-8002-000000000001";
+const CHANNEL = "0199a000-0000-7000-8003-000000000001";
 
 let mockParams: Record<string, string> = {};
 jest.mock("expo-router", () => {
@@ -42,6 +46,10 @@ jest.mock("expo-router", () => {
     useFocusEffect: () => undefined,
   };
 });
+
+jest.mock("./api/realtime.ts", () => ({
+  useRealtime: () => ({ connected: true, typing: jest.fn() }),
+}));
 
 jest.mock("./state/session.tsx", () => ({
   useSession: () => ({
@@ -212,6 +220,103 @@ function seededClient() {
     flags: {},
   };
   client.setQueryData(["meta", "client"], info);
+  // Chat (P2.1): a group channel with a protected member, a direct message.
+  const chat = (id: string, extra: Partial<ChatSummary>): ChatSummary => ({
+    id,
+    clubId: SVK,
+    clubName: "Strandvikens Volleybollklubb",
+    kind: "channel",
+    name: "F2017",
+    description: null,
+    visibility: "open",
+    groups: [{ id: F2017, name: "F2017" }],
+    defaultForGroupId: F2017,
+    archived: false,
+    counterpart: null,
+    membership: { status: "active", push: "all", lastReadMessageId: null },
+    memberCount: 3,
+    hasChildren: true,
+    unreadCount: 0,
+    lastMessage: null,
+    lastMessageAt: null,
+    ...extra,
+  });
+  const channel = chat(CHANNEL, {
+    unreadCount: 2,
+    lastMessage: {
+      id: "0199a000-0000-7000-8004-000000000002",
+      sender: { kind: "protected" },
+      kind: "text",
+      excerpt: "Glöm inte knäskydden",
+      createdAt: "2026-10-20T17:00:00Z",
+    },
+    lastMessageAt: "2026-10-20T17:00:00Z",
+  });
+  const direct = chat("0199a000-0000-7000-8003-000000000002", {
+    kind: "direct",
+    name: null,
+    visibility: null,
+    groups: [],
+    defaultForGroupId: null,
+    counterpart: { kind: "person", person: summary("c1", "Erik Johansson") },
+    hasChildren: false,
+  });
+  client.setQueryData(["chats", ANNA], {
+    pages: [{ items: [direct, channel], nextCursor: null }],
+    pageParams: [null],
+  });
+  const chatDetail: ChatDetail = {
+    chat: channel,
+    members: [
+      {
+        personId: ANNA,
+        person: { kind: "person", person: summary(ANNA, "Anna Lindqvist") },
+        status: "active",
+        reason: "group",
+        role: "member",
+        child: false,
+        leader: false,
+        guardianOf: [],
+        joinedAt: "2026-10-01T10:00:00Z",
+        lastReadMessageId: null,
+      },
+    ],
+    hiddenMembers: 1,
+    can: { post: true, join: false, leave: false, manage: false },
+  };
+  client.setQueryData(["chat", ANNA, CHANNEL], chatDetail);
+  const message = (id: string, extra: Partial<ChatMessage>): ChatMessage => ({
+    id,
+    chatId: CHANNEL,
+    kind: "text",
+    sender: { kind: "person", person: summary(ANNA, "Anna Lindqvist") },
+    senderId: ANNA,
+    body: "",
+    event: null,
+    replyTo: null,
+    createdAt: "2026-10-20T16:00:00Z",
+    editedAt: null,
+    hidden: null,
+    reactions: [],
+    ...extra,
+  });
+  client.setQueryData(["chat", ANNA, CHANNEL, "messages"], {
+    pages: [
+      {
+        items: [
+          message("0199a000-0000-7000-8004-000000000002", {
+            sender: { kind: "protected" },
+            senderId: null,
+            body: "Glöm inte knäskydden",
+            reactions: [{ emoji: "👍", count: 2, mine: true }],
+          }),
+          message("0199a000-0000-7000-8004-000000000001", { body: "Träning 17:00" }),
+        ],
+        nextCursor: null,
+      },
+    ],
+    pageParams: [null],
+  });
   return client;
 }
 
@@ -284,6 +389,30 @@ describe("screens", () => {
     expect(screen.getAllByText("Match").length).toBeGreaterThan(0);
     expect(screen.getByText("Cancelled: Hallen är upptagen av kommunen")).toBeTruthy();
     expect(screen.getByText("Strandvikens sporthall")).toBeTruthy();
+  });
+
+  it("My channels lists unread first, with people only as the API presented them", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const Chats = (require("./app/(app)/chats/index.tsx") as { default: () => ReactNode }).default;
+    renderScreen(<Chats />);
+    const rows = screen.getAllByTestId(/^chat-0199/);
+    expect(rows[0]?.props.testID).toBe(`chat-${CHANNEL}`);
+    expect(screen.getByText("Erik Johansson")).toBeTruthy();
+    expect(screen.getByText("A member with protected identity: Glöm inte knäskydden")).toBeTruthy();
+    expect(screen.getByTestId(`chat-unread-${CHANNEL}`)).toBeTruthy();
+  });
+
+  it("a chat shows its cached messages at once, oldest at the top", () => {
+    mockParams = { clubId: SVK, chatId: CHANNEL };
+    type Module = { default: () => ReactNode };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const Chat = (require("./app/(app)/chats/[clubId]/[chatId].tsx") as Module).default;
+    renderScreen(<Chat />);
+    expect(screen.getByText("Träning 17:00")).toBeTruthy();
+    expect(screen.getByText("Glöm inte knäskydden")).toBeTruthy();
+    expect(screen.getByText("A member with protected identity")).toBeTruthy();
+    expect(screen.getByText("👍 2")).toBeTruthy();
+    expect(screen.getByTestId("chat-input")).toBeTruthy();
   });
 
   it("an invalid ID in a deep link shows not found", () => {

@@ -74,6 +74,7 @@ const runner = await run({
   logger: graphileLogger(logger),
   taskList: createTaskList({
     db,
+    valkey,
     outboxHandlers: createOutboxHandlers({
       valkey,
       billing: billing

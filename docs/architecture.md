@@ -488,8 +488,17 @@ forbids name fields and name columns elsewhere; the view
   `packages/api-client` and used by web and mobile.
 - Keyset (cursor) pagination, `fields`/`include` parameters to avoid
   over-fetching, ETags + `If-None-Match` on reads.
-- Realtime: one WebSocket per client; server pushes *invalidation events*
-  ("activity 123 changed") and chat messages. Clients refetch through REST.
+- Realtime (P2.1): one WebSocket per client at `/api/v1/realtime`, opened
+  with a single-use ticket (`POST /api/v1/realtime/tickets`, 60 seconds;
+  the web app asks through its BFF, the app with its token), so no token
+  ever travels in a URL. The server pushes *events with IDs only*
+  (`message.created`, `message.updated`, `chat.updated`, `chat.read`,
+  `typing`, `chats.changed`, `authz.changed`); clients fetch the content
+  through REST, where the policies and the person presenter apply. API
+  instances share the events over Valkey pub/sub (`rt:chat:<id>`,
+  `rt:person:<id>`); the worker publishes there too (membership changes,
+  permission changes). Without Valkey (tests, one instance) the events stay
+  in the process.
 - Public API for integrations (federations, accounting) uses the same
   endpoints with OAuth client credentials and scoped API keys per club.
 
@@ -525,6 +534,25 @@ health, OpenAPI, database/Valkey clients); business modules go in
   syntax (no enums, namespaces or parameter properties; `erasableSyntaxOnly`).
 - Import Zod as `import { z } from "@clubadmin/shared"` (it is extended for
   OpenAPI metadata).
+
+### Chat (P2.1, ADR 0016, ADR 0047)
+
+- `modules/chat`: chats (channels in a group or the club, direct messages),
+  their members with the reason they are in them, messages partitioned by
+  month on their UUIDv7 ID (`app.ensure_chat_message_partitions`, kept
+  three months ahead by the worker's daily `chat:maintenance`), every
+  earlier text of an edited message, reactions, read receipts. The gateway
+  (`chat.gateway.ts`) attaches to the HTTP server's upgrade event.
+- The child-safety rules are SQL functions of migration 0037, called by the
+  service and the worker: `app.chat_enforce_guardians` (no adult alone with
+  a child), `app.chat_direct_refusal` (who may write to whom),
+  `app.chat_unaddable` (who may be added), `app.chat_sync_group` (a group's
+  default channel follows the group), `app.chat_member_facts` (child,
+  leader, guardian of whom, shown to everyone in the chat).
+- Policies (`chat.read`, `chat.join`, `chat.post`, `chat.manage`) take a
+  `chat` resource with the actor's and their wards' memberships; a guardian
+  acting on behalf of a ward never reads the ward's chats (guardians join
+  visibly, ADR 0047 rule 6).
 
 ## Worker (`apps/worker`)
 

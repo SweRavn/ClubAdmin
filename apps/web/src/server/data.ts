@@ -17,6 +17,10 @@ import {
   AuditPageSchema,
   BillingAccountResponseSchema,
   CalendarFeedListSchema,
+  ChatDetailSchema,
+  ChatListSchema,
+  ChatMessagePageSchema,
+  ChatPageSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
@@ -232,6 +236,35 @@ export const getNotificationSettings = cache(() =>
 export const getPushDevices = cache(() =>
   required("/api/v1/me/push-devices", PushDeviceListSchema),
 );
+// Chat (P2.1): "Mina kanaler", a group's and the club's channels, a chat and its messages.
+export const getMyChats = cache((cursor: string | null) => {
+  const query = new URLSearchParams({ limit: "100" });
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(`/api/v1/me/chats?${query}`, ChatPageSchema);
+});
+export const getGroupChats = cache((clubId: string, groupId: string) =>
+  required(`/api/v1/clubs/${clubId}/groups/${groupId}/chats`, ChatListSchema),
+);
+/** The group's channels, or null when the viewer may not see them or chat is off for the club. */
+export const getGroupChatsIfAllowed = cache((clubId: string, groupId: string) =>
+  apiGet(`/api/v1/clubs/${clubId}/groups/${groupId}/chats`, ChatListSchema, {
+    nullOn: [403, 404],
+  }),
+);
+export const getClubChannels = cache((clubId: string) =>
+  required(`/api/v1/clubs/${clubId}/chats`, ChatListSchema),
+);
+export const getChat = cache((clubId: string, chatId: string) =>
+  required(`/api/v1/clubs/${clubId}/chats/${chatId}`, ChatDetailSchema),
+);
+export const getChatMessages = cache((clubId: string, chatId: string, cursor: string | null) => {
+  const query = new URLSearchParams({ limit: "50" });
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(
+    `/api/v1/clubs/${clubId}/chats/${chatId}/messages?${query}`,
+    ChatMessagePageSchema,
+  );
+});
 // Privacy (P1.8a).
 export const getMyConsents = cache(() => required("/api/v1/me/consents", MyConsentsSchema));
 // "Download my data" and erasure (P1.8b): always the logged-in person's own.

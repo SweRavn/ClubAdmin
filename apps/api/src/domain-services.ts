@@ -9,6 +9,7 @@ import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import { AccountsService } from "./modules/accounts/index.ts";
 import { ActivitiesService, AttendanceService } from "./modules/activities/index.ts";
 import { AdministratorsService } from "./modules/administrators/index.ts";
+import { ChatService } from "./modules/chat/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubTypesService } from "./modules/club-types/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
@@ -33,6 +34,7 @@ import {
   LeavingService,
   type OutstandingObligationsProvider,
 } from "./modules/privacy/index.ts";
+import { RealtimeBus, RealtimePublisher } from "./modules/realtime/index.ts";
 import { ClubRolesService, RolesService } from "./modules/roles/index.ts";
 import type { FieldEncryption } from "./platform/crypto/field-encryption.ts";
 
@@ -62,6 +64,8 @@ export interface CoreServices {
   activities: ActivitiesService;
   attendance: AttendanceService;
   events: EventsService;
+  /** Chat (P2.1); real-time events stay in this process (no Valkey). */
+  chat: ChatService;
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
   leaving: LeavingService;
@@ -136,6 +140,11 @@ export function createCoreServices(
     activities,
     attendance,
     events,
+    chat: new ChatService(db, {
+      publisher: new RealtimePublisher(new RealtimeBus(undefined)),
+      clubs,
+      groups,
+    }),
     consents,
     clubPrivacy: new ClubPrivacyService(db, { clubs }),
     dataExports: new DataExportsService(db, { storage: options.storage ?? null }),

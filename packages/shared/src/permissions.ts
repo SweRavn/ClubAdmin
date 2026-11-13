@@ -89,6 +89,15 @@ export const PERMISSIONS = [
   "club.audit.read",
   "club.profile_views.read",
   "club.profile_views.configure",
+  // Chat (P2.1, ADR 0047): channels in groups and the club, direct messages,
+  // reading, writing and managing a chat (its members and rules decide).
+  "group.channels.create",
+  "club.channels.create",
+  "club.chats.direct",
+  "chat.read",
+  "chat.join",
+  "chat.post",
+  "chat.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

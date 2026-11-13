@@ -5,10 +5,15 @@
 /**
  * Whether a call is made for the ward while "viewing as" one: everything
  * except the logged-in person's own account (who they are, their wards,
- * sessions and preferences) and public metadata.
+ * sessions and preferences), public metadata, and chat: a chat is always
+ * the logged-in person's own (ADR 0047; a guardian never reads or writes as
+ * a ward, the API refuses chat on behalf of one).
  */
 export function onBehalfApplies(path: string): boolean {
   const pathname = path.split("?")[0]!.replace(/\/+$/, "");
   if (pathname === "/api/v1/me") return false;
+  if (/^\/api\/v1\/(me\/chats|realtime)(\/|$)/.test(pathname)) return false;
+  if (/^\/api\/v1\/clubs\/[^/]+\/(chats|direct-chats|groups\/[^/]+\/chats)(\/|$)/.test(pathname))
+    return false;
   return !/^\/api\/v1\/(me\/(wards|sessions|preferences|security)|meta|dev)(\/|$)/.test(pathname);
 }

@@ -15,7 +15,8 @@ function fakeApi(fail?: ApiError) {
     calls.push({ method, path, init });
     return fail ? Promise.reject(fail) : Promise.resolve({ data: {} });
   };
-  return { api: { PUT: call("PUT"), DELETE: call("DELETE") } as unknown as ApiClient, calls };
+  const api = { PUT: call("PUT"), DELETE: call("DELETE"), POST: call("POST") };
+  return { api: api as unknown as ApiClient, calls };
 }
 
 describe("outbox", () => {
@@ -64,6 +65,33 @@ describe("outbox", () => {
         },
       },
     ]);
+  });
+
+  it("sends a chat message with the ID chosen on the phone, so a resend never doubles it", async () => {
+    const { api, calls } = fakeApi();
+    const write = {
+      kind: "chatMessage" as const,
+      clubId: "0199d2a0-0000-7000-8000-00000000000c",
+      chatId: "0199d2a0-0000-7000-8000-00000000000d",
+      messageId: "0199d2a0-0000-7000-8000-00000000000e",
+      body: "Vi ses kl 17",
+      replyToId: null,
+      key: "k4",
+      madeAt: "2026-10-20T17:08:00.000Z",
+    };
+    await sendWrite(api, write);
+    await sendWrite(api, write);
+    expect(calls).toHaveLength(2);
+    for (const call of calls) {
+      expect(call).toEqual({
+        method: "POST",
+        path: "/api/v1/clubs/{clubId}/chats/{chatId}/messages",
+        init: {
+          params: { path: { clubId: write.clubId, chatId: write.chatId } },
+          body: { id: write.messageId, body: "Vi ses kl 17" },
+        },
+      });
+    }
   });
 
   it("keeps a refused write as a failure with its reason, without retrying it", async () => {

@@ -156,6 +156,20 @@ export default async function PersonPage({ params, searchParams }: Props) {
           href={`/people/${personId}/history?clubId=${profile.club.clubId}`}
         />
       ) : null}
+      {/* Chat (P2.1): a direct message; the API applies the child-safety rules (ADR 0047). */}
+      {profile.club &&
+      personId !== me.personId &&
+      mine.clubs
+        .find((c) => c.club.id === profile.club!.clubId)
+        ?.permissions.includes("club.chats.direct") ? (
+        <ActionForm action="open-direct-chat" testId="send-message">
+          <input type="hidden" name="clubId" value={profile.club.clubId} />
+          <input type="hidden" name="personId" value={personId} />
+          <button type="submit" className={secondaryButtonClass}>
+            {t("chat.sendMessage")}
+          </button>
+        </ActionForm>
+      ) : null}
       {/* Protected identity (P1.12): the viewer is told that views are logged. */}
       {profile.viewsLogged && !profile.protection?.canChangeGlobal ? (
         <p className="rounded-md bg-surface px-3 py-2 text-sm" data-testid="views-logged">

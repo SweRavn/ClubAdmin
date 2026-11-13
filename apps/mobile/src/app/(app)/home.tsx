@@ -72,6 +72,7 @@ export default function Home() {
           testID="open-notifications"
         />
       ) : null}
+      <LinkButton label={t("chat.nav")} onPress={() => router.push("/chats")} testID="open-chats" />
       <LinkButton
         label={t("mobile.settings")}
         onPress={() => router.push("/settings")}

@@ -250,6 +250,25 @@ export const DOMAIN_ERRORS = {
   suspension_not_allowed: "forbidden",
   grace_already_extended: "conflict",
   no_grace_period: "conflict",
+  // Chat (P2.1, ADR 0047)
+  /** Reading or writing messages needs an active membership (guardians join visibly). */
+  chat_not_a_member: "forbidden",
+  /** A direct message to someone else's child, or from a child to an adult outside their groups. */
+  chat_child_protected: "forbidden",
+  chat_self: "validation",
+  /** The person has no relationship to the club. */
+  chat_not_in_club: "validation",
+  /** Someone who is not of the channel's groups (or, for a child adding, not a child of them). */
+  chat_member_not_allowed: "forbidden",
+  /** The group's channel follows the group: its members, name and archiving. */
+  chat_default_channel: "conflict",
+  /** Direct messages keep their two members. */
+  chat_direct_members: "conflict",
+  /** The guardian rule requires this guardian while their child is with another adult. */
+  chat_guardian_required: "conflict",
+  chat_message_hidden: "conflict",
+  /** A resent message ID that belongs to another message. */
+  chat_message_conflict: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

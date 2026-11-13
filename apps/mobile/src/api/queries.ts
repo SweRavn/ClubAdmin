@@ -681,3 +681,154 @@ export function useAccountDeletion() {
   });
   return { schedule, cancel };
 }
+
+// --- Chat (P2.1, ADR 0047) -------------------------------------------------
+
+export type ChatSummary = Schemas["ChatSummary"];
+export type ChatDetail = Schemas["ChatDetail"];
+export type ChatMessage = Schemas["ChatMessage"];
+export type ChatPerson = Schemas["ChatPerson"];
+
+/**
+ * "Mina kanaler": every chat the person is in, across clubs and groups (the
+ * logged-in person's own, never a ward's). Refreshed by real-time events.
+ */
+export function useMyChats() {
+  const { api, personId } = useSession();
+  return useInfiniteQuery({
+    queryKey: ["chats", personId],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) =>
+      data(
+        await api.GET("/api/v1/me/chats", {
+          params: { query: { limit: 100, ...(pageParam ? { cursor: pageParam } : {}) } },
+        }),
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? null,
+    enabled: personId !== null,
+  });
+}
+
+export function useGroupChats(clubId: string | undefined, groupId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["chats", personId, "group", groupId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/groups/{groupId}/chats", {
+          params: { path: { clubId: clubId!, groupId } },
+        }),
+      ),
+    enabled: personId !== null && clubId !== undefined,
+  });
+}
+
+export function useChat(clubId: string, chatId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["chat", personId, chatId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/chats/{chatId}", {
+          params: { path: { clubId, chatId } },
+        }),
+      ),
+    enabled: personId !== null,
+  });
+}
+
+/** A chat's messages, newest first (older pages with the cursor). */
+export function useChatMessages(clubId: string, chatId: string, enabled: boolean) {
+  const { api, personId } = useSession();
+  return useInfiniteQuery({
+    queryKey: ["chat", personId, chatId, "messages"],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/chats/{chatId}/messages", {
+          params: {
+            path: { clubId, chatId },
+            query: { limit: 50, ...(pageParam ? { cursor: pageParam } : {}) },
+          },
+        }),
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? null,
+    enabled: enabled && personId !== null,
+  });
+}
+
+/** Joining, accepting, leaving, push, reactions, edits and hiding: online actions. */
+export function useChatActions(clubId: string, chatId: string) {
+  const { api, personId } = useSession();
+  const client = useQueryClient();
+  const path = { clubId, chatId };
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ["chat", personId, chatId] });
+    void client.invalidateQueries({ queryKey: ["chats", personId] });
+  };
+  return {
+    join: useMutation({
+      mutationFn: async () =>
+        api.POST("/api/v1/clubs/{clubId}/chats/{chatId}/join", { params: { path } }),
+      onSuccess: refresh,
+    }),
+    leave: useMutation({
+      mutationFn: async () =>
+        api.POST("/api/v1/clubs/{clubId}/chats/{chatId}/leave", { params: { path } }),
+      onSuccess: refresh,
+    }),
+    push: useMutation({
+      mutationFn: async (push: "all" | "mentions" | "off") =>
+        api.PUT("/api/v1/clubs/{clubId}/chats/{chatId}/settings", {
+          params: { path },
+          body: { push },
+        }),
+      onSuccess: refresh,
+    }),
+    react: useMutation({
+      mutationFn: async (input: { messageId: string; emoji: string; on: boolean }) =>
+        api.POST("/api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}/reactions", {
+          params: { path: { ...path, messageId: input.messageId } },
+          body: { emoji: input.emoji, on: input.on },
+        }),
+      onSuccess: refresh,
+    }),
+    edit: useMutation({
+      mutationFn: async (input: { messageId: string; body: string }) =>
+        api.PATCH("/api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}", {
+          params: { path: { ...path, messageId: input.messageId } },
+          body: { body: input.body },
+        }),
+      onSuccess: refresh,
+    }),
+    hide: useMutation({
+      mutationFn: async (messageId: string) =>
+        api.DELETE("/api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}", {
+          params: { path: { ...path, messageId } },
+        }),
+      onSuccess: refresh,
+    }),
+    read: useMutation({
+      mutationFn: async (messageId: string) =>
+        api.POST("/api/v1/clubs/{clubId}/chats/{chatId}/read", {
+          params: { path },
+          body: { messageId },
+        }),
+      onSuccess: () => void client.invalidateQueries({ queryKey: ["chats", personId] }),
+    }),
+  };
+}
+
+/** Opens (or finds) the direct chat with a person; the API applies the rules (ADR 0047). */
+export function useOpenDirectChat() {
+  const { api } = useSession();
+  return useMutation({
+    mutationFn: async (input: { clubId: string; personId: string }) =>
+      data(
+        await api.POST("/api/v1/clubs/{clubId}/direct-chats", {
+          params: { path: { clubId: input.clubId } },
+          body: { personId: input.personId },
+        }),
+      ),
+  });
+}

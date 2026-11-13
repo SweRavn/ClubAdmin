@@ -10,6 +10,19 @@ import { checkoutOrigins } from "./server/config.ts";
 import { PATH_HEADER } from "./server/data.ts";
 import { contentSecurityPolicy, newNonce } from "./server/security-headers.ts";
 
+/** The API's WebSocket origin (the chat's real-time connection, P2.1). */
+export const realtimeOrigins = (): string[] => {
+  const url = process.env.PUBLIC_API_URL;
+  try {
+    if (!url) return [];
+    const api = new URL(url);
+    api.protocol = api.protocol === "http:" ? "ws:" : "wss:";
+    return [api.origin];
+  } catch {
+    return [];
+  }
+};
+
 const formActions = (): string[] => {
   const issuer = process.env.AUTH_ISSUER;
   try {
@@ -24,6 +37,7 @@ export function proxy(request: NextRequest): NextResponse {
     nonce: newNonce(),
     development: process.env.NODE_ENV === "development",
     formActions: [...formActions(), ...checkoutOrigins()],
+    connectSources: realtimeOrigins(),
   });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("content-security-policy", csp);

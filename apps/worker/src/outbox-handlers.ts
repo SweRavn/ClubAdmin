@@ -9,7 +9,11 @@ import {
   type LedgerSettings,
   type OutboxHandler,
 } from "@clubadmin/db";
-import { AUTHZ_VERSION_TTL_SECONDS } from "@clubadmin/shared";
+import {
+  AUTHZ_VERSION_TTL_SECONDS,
+  realtimePersonChannel,
+  relationshipVersionKey,
+} from "@clubadmin/shared";
 import type { Redis } from "ioredis";
 
 import {
@@ -20,6 +24,7 @@ import {
 } from "./billing.ts";
 import { mailHandler, type MailHandlerOptions } from "./mail.ts";
 import { notificationsHandler, type NotificationsOptions } from "./notifications/handler.ts";
+import { chatHandler } from "./tasks/chat.ts";
 import { privacyHandler } from "./tasks/privacy.ts";
 import { profileViewsHandler } from "./tasks/profile-views.ts";
 
@@ -32,6 +37,16 @@ export function valkeyCacheVersions(valkey: Redis): CacheVersions {
       const results = await pipeline.exec();
       const failed = results?.find(([error]) => error);
       if (!results || failed) throw failed?.[0] ?? new Error("cache version bump failed");
+      // Open apps refresh what the person may do (P1.15 A2) over the real-time connection (P2.1).
+      const prefix = relationshipVersionKey("");
+      const people = keys.filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
+      await Promise.all(
+        people.map((id) =>
+          valkey
+            .publish(realtimePersonChannel(id), JSON.stringify({ type: "authz.changed" }))
+            .catch(() => 0),
+        ),
+      );
     },
   };
 }
@@ -49,7 +64,7 @@ export function createOutboxHandlers(deps: {
   /** Notifications (P1.7): the inbox always, email and push per the channels. */
   notifications?: NotificationsOptions | undefined;
 }): OutboxHandler[] {
-  const handlers: OutboxHandler[] = [privacyHandler(), profileViewsHandler()];
+  const handlers: OutboxHandler[] = [privacyHandler(), profileViewsHandler(), chatHandler()];
   if (deps.mail) handlers.push(mailHandler(deps.mail));
   if (deps.notifications) handlers.push(notificationsHandler(deps.notifications));
   // Without Valkey the API caches nothing across requests, so there is nothing to invalidate.

@@ -144,7 +144,11 @@ export type EnumNamespace =
   | "billing.invoiceStatuses"
   | "billing.vatNotes"
   | "billing.methods"
-  | "billing.ops.reasons";
+  | "billing.ops.reasons"
+  | "chat.system"
+  | "chat.reasons"
+  | "chat.pushSettings"
+  | "chat.visibilityShort";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

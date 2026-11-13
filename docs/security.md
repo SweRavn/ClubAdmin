@@ -289,6 +289,23 @@ later phase. Backup and disaster recovery are in
   more than 20,000 rows, NUL bytes and broken quoting with a code, never
   evaluates a cell (formulas stay text), and logs IDs and counts only. The
   file's rows are kept sealed (field encryption) until the import is purged.
+- **Real-time connection (P2.1).** The chat's WebSocket
+  (`/api/v1/realtime`) opens only with a single-use ticket (32 random bytes,
+  only its SHA-256 stored in Valkey for 60 seconds, consumed on use) issued
+  to the logged-in person (`POST /realtime/tickets`; never for a ward acted
+  for); tokens never travel in URLs. Browsers must come from `CORS_ORIGINS`
+  (the `Origin` header); at most `REALTIME_MAX_CONNECTIONS_PER_PERSON` (10)
+  connections per person and instance; client frames are at most 1 KB
+  (`typing`, `ping`), typing at most every two seconds per chat and only in
+  chats the person is an active member of. Events carry IDs only; content
+  is fetched through the API with its policies and presenter. Dead
+  connections are closed after a missed ping (30 seconds). The web CSP
+  allows `connect-src` to the API's WebSocket origin (`PUBLIC_API_URL`).
+- **Chat (P2.1, ADR 0047).** Message texts are never logged, never in
+  real-time events, never in record history (redacted; the versions table is
+  the record); a deleted message is hidden, not removed. Sending is limited
+  per account (120 a minute). Encrypted in transit and at rest, not end to
+  end (moderation and safeguarding review must stay possible).
 - Request body limits and timeouts.
 - **Rate limits** (fixed one-minute windows in Valkey, shared by all API
   instances; in memory without Valkey; `429` problem details with

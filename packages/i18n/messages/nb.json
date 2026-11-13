@@ -44,7 +44,8 @@
     "schedule": "Min timeplan",
     "calendar": "Kalender",
     "locations": "Steder",
-    "events": "Arrangementer"
+    "events": "Arrangementer",
+    "chat": "Chat"
   },
   "clubSwitcher": {
     "label": "Klubb: {club}",
@@ -794,7 +795,17 @@
     "club_type_role_exists": "Malen har allerede en rolle med den nøkkelen.",
     "club_type_role_required": "Alle klubbtyper trenger denne rollen: den kan ikke fjernes eller miste de låste tillatelsene.",
     "club_type_role_names_required": "Rollen trenger navn på svensk, engelsk og norsk.",
-    "template_role_exists": "Klubben har allerede den rollen."
+    "template_role_exists": "Klubben har allerede den rollen.",
+    "chat_not_a_member": "Bli med i chatten for å lese og skrive.",
+    "chat_child_protected": "Du kan ikke skrive direkte til andres barn. Barnets ledere og foreldre kan; skriv i gruppens kanal i stedet.",
+    "chat_self": "Du kan ikke sende en melding til deg selv.",
+    "chat_not_in_club": "Personen hører ikke til klubben.",
+    "chat_member_not_allowed": "Noen av dem du valgte kan ikke legges til i denne kanalen.",
+    "chat_default_channel": "Gruppens kanal følger gruppen: medlemmer og navn endres via gruppen.",
+    "chat_direct_members": "En direktemelding har alltid de samme to personene.",
+    "chat_guardian_required": "Forelderen må være med så lenge en voksen er med barnet i chatten. Slå av varslene i stedet.",
+    "chat_message_hidden": "Meldingen er slettet.",
+    "chat_message_conflict": "Meldingen kunne ikke sendes. Prøv igjen."
   },
   "memberExport": {
     "columns": {
@@ -2685,7 +2696,10 @@
       "unsubscribed": "avsluttet abonnementet på",
       "updated": "oppdaterte",
       "verified": "verifiserte",
-      "withdrawn": "trakk tilbake"
+      "withdrawn": "trakk tilbake",
+      "joined": "ble med i",
+      "left": "forlot",
+      "hidden": "skjulte"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -3299,7 +3313,8 @@
       "events": "Arrangementer",
       "finance": "Økonomi",
       "privacy": "Personvern",
-      "club": "Klubben"
+      "club": "Klubben",
+      "communication": "Kommunikasjon"
     },
     "permissions": {
       "club_settings_update": {
@@ -3586,6 +3601,21 @@
         "name": "Se fakturaer",
         "description": "Kan se og laste ned klubbens fakturaer fra ClubAdmin.",
         "example": "Kan for eksempel laste ned en faktura til regnskapet."
+      },
+      "group_channels_create": {
+        "name": "Opprette kanaler i gruppen",
+        "description": "Kan opprette chattekanaler i gruppen og velge hvem som er med. Barnesikkerhetsreglene gjelder alltid.",
+        "example": "Kan for eksempel opprette kanalen «Kampinfo» for hele laget eller en kanal for trenerne."
+      },
+      "group_channels_manage": {
+        "name": "Administrere gruppens kanaler",
+        "description": "Kan endre medlemmer i og arkivere kanaler andre har opprettet i gruppen.",
+        "example": "Kan for eksempel fjerne en spiller som har sluttet fra lagets kanaler."
+      },
+      "club_channels_create": {
+        "name": "Opprette klubbkanaler",
+        "description": "Kan opprette chattekanaler for hele klubben, uten kobling til en gruppe, og velge hvem som er med.",
+        "example": "Kan for eksempel opprette en kanal for styret eller for alle ledere."
       }
     }
   },
@@ -3769,5 +3799,109 @@
     "newRole": "Ny rolle i malen",
     "newRoleHint": "En nøkkel katalogen ikke kjenner trenger navn på alle tre språk. Velg tillatelsene etterpå.",
     "addRole": "Legg til rollen"
+  },
+  "chat": {
+    "nav": "Chat",
+    "title": "Mine kanaler",
+    "empty": "Du er ikke med i noen chat ennå. Gruppenes kanaler finnes på gruppesidene.",
+    "unread": "{count, plural, one {# ulest} other {# uleste}}",
+    "noMessages": "Ingen meldinger ennå",
+    "directWith": "Direktemelding",
+    "groupChannels": "Kanaler",
+    "groupChannelsHint": "Gruppens kanal har alle i gruppen med. Alle i gruppen kan bli med i åpne kanaler; lukkede ser bare de som er lagt til.",
+    "newChannel": "Ny kanal",
+    "clubChannels": "Klubbens kanaler",
+    "name": "Navn",
+    "description": "Beskrivelse (valgfri)",
+    "visibility": "Hvem ser kanalen?",
+    "visibilities": {
+      "open": "Åpen: alle i gruppen ser den og kan bli med",
+      "closed": "Lukket: bare de du legger til"
+    },
+    "visibilityShort": {
+      "open": "Åpen",
+      "closed": "Lukket"
+    },
+    "everyone": "Legg til alle i gruppen",
+    "chooseMembers": "Velg hvem som er med",
+    "create": "Opprett kanalen",
+    "defaultChannel": "Gruppens kanal",
+    "archived": "Arkivert",
+    "members": "Med i chatten",
+    "hiddenMembers": "{count, plural, one {# person med beskyttet identitet} other {# personer med beskyttet identitet}}",
+    "reasons": {
+      "creator": "opprettet chatten",
+      "added": "lagt til",
+      "joined": "ble med",
+      "group": "med i gruppen",
+      "guardian_auto": "forelder, lagt til automatisk",
+      "guardian_joined": "forelder, ble med",
+      "leader_joined": "leder, ble med"
+    },
+    "offeredStatus": "tilbudt, har ikke svart",
+    "child": "barn",
+    "leader": "leder",
+    "guardianOf": "forelder til {names}",
+    "system": {
+      "created": "{names} opprettet chatten",
+      "joined": "{names} ble med",
+      "left": "{names} forlot chatten",
+      "added": "{names} ble lagt til",
+      "removed": "{names} ble fjernet",
+      "guardians_added": "Foreldre ble lagt til fordi en voksen er med barna: {names}",
+      "renamed": "{names} ga chatten nytt navn",
+      "archived": "{names} arkiverte chatten"
+    },
+    "someone": "noen",
+    "protectedPerson": "Et medlem med beskyttet identitet",
+    "formerMember": "Et tidligere medlem",
+    "edited": "redigert",
+    "hiddenBySender": "Meldingen ble slettet.",
+    "hiddenByModerator": "Meldingen ble skjult av klubbens trygghetsansvarlige.",
+    "reply": "Svar",
+    "replyingTo": "Svarer {name}",
+    "cancel": "Avbryt",
+    "edit": "Rediger",
+    "save": "Lagre",
+    "delete": "Slett",
+    "deleteConfirm": "Slette meldingen? Den skjules for alle, men lagres (barnesikkerhet).",
+    "versions": "Tidligere versjoner",
+    "react": "Reager",
+    "placeholder": "Skriv en melding",
+    "send": "Send",
+    "sending": "Sendes…",
+    "failed": "Kunne ikke sendes. Prøver igjen når du er tilkoblet.",
+    "typing": "{name} skriver…",
+    "connected": "Tilkoblet",
+    "offline": "Ikke tilkoblet – meldinger vises når forbindelsen er tilbake",
+    "readBy": "{count, plural, one {Lest av #} other {Lest av #}}",
+    "loadOlder": "Vis eldre meldinger",
+    "childBanner": "Barn er med i denne chatten. Foreldrene kan se hvem som er med og bli med når som helst – det ser alle her.",
+    "childBannerJoined": "Foreldre som er med: {names}.",
+    "childBannerNone": "Ingen forelder har blitt med.",
+    "leaderRule": "Når en leder eller en annen voksen er med barn, legges barnas foreldre til automatisk.",
+    "notMember": "Du ser hvem som er med i chatten. For å lese meldingene blir du med – det ser alle i chatten.",
+    "offered": "Du har fått tilbud om å bli med i chatten. Andre ser deg ikke før du takker ja.",
+    "join": "Bli med",
+    "joinAsGuardian": "Bli med som forelder",
+    "joinAsLeader": "Bli med som leder",
+    "accept": "Takk ja",
+    "decline": "Takk nei",
+    "leave": "Forlat chatten",
+    "push": "Varsler",
+    "pushSettings": {
+      "all": "Alle meldinger",
+      "mentions": "Bare når jeg nevnes",
+      "off": "Av"
+    },
+    "manage": "Administrer",
+    "rename": "Gi nytt navn",
+    "archive": "Arkiver",
+    "unarchive": "Gjenopprett",
+    "addMembers": "Legg til",
+    "remove": "Fjern",
+    "sendMessage": "Send melding",
+    "safety": "Slik fungerer chatten for barn",
+    "live": "Nye meldinger vises med en gang."
   }
 }

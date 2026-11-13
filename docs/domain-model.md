@@ -918,6 +918,54 @@ only by the person, their family and the clubs they belong to.
 | Signed-up person without club | Own profile, add children, search clubs, send join requests, join waiting lists, create a club (if allowed) |
 | Platform operator | Nothing in club data, unless the club grants time-limited support access |
 
+### Chat (P2.1, ADR 0016, ADR 0047)
+Club-owned tables (tenant RLS; outside a club context a person reads only
+their own and their wards' memberships and those chats, for "Mina kanaler"):
+
+- `chats`: `kind` (`channel` | `direct`), `name`, `description`,
+  `visibility` (`open`: the people of its groups see it and may join;
+  `closed`: only those added), `default_for_group_id` (a group's channel:
+  everyone in the group, created on first use, archived with the group),
+  `created_by_person_id`, `archived_at`/`archived_by_person_id`,
+  `has_children` (kept by the guardian rule), `last_message_id`/`_at`.
+- `chat_groups`: the groups a chat was made for (none for direct messages
+  and club channels). A chat is not owned by a group: its members are its
+  own list, so chats across groups need no new model.
+- `chat_members`: one row per chat and person: `status` (`active`;
+  `offered`: a protected person who has not accepted, ADR 0022; `left`),
+  `reason` (`creator`, `added`, `joined`, `group`, `guardian_auto`,
+  `guardian_joined`, `leader_joined`; everyone in the chat sees it), `role`
+  (`owner` | `member`), `push` (`all` | `mentions` | `off`), the read
+  pointer (`last_read_message_id`, no record history).
+- `chat_messages`: partitioned by month on the UUIDv7 `id`; `kind` (`text`
+  | `system`: an event with IDs, e.g. guardians added), `body` (≤ 4000,
+  redacted in record history), `reply_to_message_id`, `edited_at`,
+  `hidden_at`/`hidden_by_person_id`/`hidden_reason` (`sender` |
+  `moderator`): a deleted message is hidden, never removed (ADR 0047).
+  A client may choose a message's UUIDv7 (± 7 days) so a resend is safe.
+- `chat_message_versions`: every earlier text of an edited message.
+- `chat_message_attachments`: prepared for files; unused in the first
+  revision. `chat_reactions`: one row per message, person and emoji.
+
+The child-safety rules are SQL functions (migration 0037) the service and
+the worker call: the **guardian rule** (`app.chat_enforce_guardians`: in a
+chat with a child and an adult who is not a full guardian of a child in it,
+or who leads a group a child in it is in, every full guardian of every
+child member is a member, `guardian_auto`; they leave when it no longer
+holds and cannot leave while it holds); **direct messages**
+(`app.chat_direct_refusal`: adults with adults; to a child only their full
+guardian, a leader of the child's group, or a child of the same group); and
+**who may be added** (`app.chat_unaddable`: people of the channel's groups
+or full guardians of them; a child adds only children of their groups).
+Erasure takes the person out of every chat; their messages stay, shown as
+"a former member". Endpoints: `GET /me/chats`, `GET|POST
+/clubs/:clubId/groups/:groupId/chats`, `GET|POST /clubs/:clubId/chats`,
+`POST /clubs/:clubId/direct-chats`, `GET|PATCH
+/clubs/:clubId/chats/:chatId`, `.../members`, `.../join`, `.../leave`,
+`.../settings`, `.../messages` (pages, send, edit, hide, versions,
+reactions), `.../read`, and `POST /realtime/tickets` with the WebSocket
+`/api/v1/realtime`.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission
@@ -988,6 +1036,13 @@ each role the permissions listed here.
 | `person.consents.read` | person (`?clubId`) | the person, full guardians, club managers, registrars; status only for owners and leaders of the person's groups (P1.8a) |
 | `person.consents.manage` | person (`?clubId`) | the person (from the consent age), full guardians (giving below the consent age, withdrawing until the adult age, their own contact purposes), registrars and club managers (a paper consent with a note, withdrawing on request) |
 | `group.consents.read` | group | the group's leaders and owners (also of parent groups), club managers, registrars |
+| `group.channels.create` | group | holders of `group.channels.create` (template: `member` (children too), `head_coach`, `assistant_coach`, `team_manager`) and owners; never acting on behalf (P2.1) |
+| `club.channels.create` | club | holders (template: `club_manager`, `chair`) (P2.1) |
+| `club.chats.direct` | club | insiders, not acting on behalf; the service applies the direct-message rules (P2.1, ADR 0047) |
+| `chat.read` | chat | its members (also offered), full guardians of a member, the people of its groups for open channels, its managers, and leaders of its groups when children are in it; messages for active members only; 404 for everyone else (P2.1) |
+| `chat.join` | chat | the people of its groups for open channels, full guardians of a member, leaders of its groups when children are in it, someone offered it (P2.1) |
+| `chat.post` | chat | active members while it is not archived (P2.1) |
+| `chat.manage` | chat | its creator while in it, owners of its groups and holders of `group.channels.manage` there (`head_coach`); club channels: holders of `club.channels.create`; never direct messages (P2.1) |
 
 Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
 `/me/preferences`, `/me/profile`, `/me/join-requests`,
@@ -1025,5 +1080,9 @@ shared them with it (`club_profiles.shared_fields`).
 - `consent_age` (SE: 13) for data processing based on consent.
 - `own_account_min_age` (default 13) — younger children have no login and no email.
 - `adult_age` (18) — guardians' default rights end.
-- Chat: no one-to-one chat between an adult and a minor unless a guardian is a
-  participant; leaders can moderate group rooms.
+- Chat (P2.1, ADR 0047): no adult alone with a child. When a leader or another
+  adult who is not their guardian is in a chat with a child, the child's
+  full guardians are added with the whole history; other adults cannot
+  start a direct message with someone else's child; children chat with
+  children of their groups; guardians see their child's chats and who is
+  in them and may join visibly. Rules in "Chat" above.

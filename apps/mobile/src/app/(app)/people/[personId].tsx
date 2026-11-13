@@ -4,18 +4,19 @@
 
 import { enumKey } from "@clubadmin/i18n";
 import { isUuid } from "@clubadmin/shared";
-import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 import { useFormatter, useTranslations } from "use-intl";
 
-import { useClubGroups, usePerson } from "../../../api/queries.ts";
+import { useClubGroups, useMyClubs, useOpenDirectChat, usePerson } from "../../../api/queries.ts";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useProtectScreen } from "../../../components/protect-screen.ts";
 import { RoleBadge } from "../../../components/role-badge.tsx";
 import { useIdParam } from "../../../components/route-id.ts";
-import { Body, Loading, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
+import { Body, Button, Loading, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
+import { useSession } from "../../../state/session.tsx";
 import { useTheme } from "../../../theme.ts";
 import NotFound from "../../+not-found.tsx";
 
@@ -32,6 +33,9 @@ function Person({ personId, clubId }: { personId: string; clubId: string | null 
   const theme = useTheme();
   const profile = usePerson(personId, clubId);
   const groups = useClubGroups(profile.data?.club?.clubId ?? clubId);
+  const { personId: me, viewingAs } = useSession();
+  const myClubs = useMyClubs();
+  const openChat = useOpenDirectChat();
   useProtectScreen(profile.data?.person.protected === true, `person-${personId}`);
 
   if (!profile.data) {
@@ -86,6 +90,17 @@ function Person({ personId, clubId }: { personId: string; clubId: string | null 
     });
   }
 
+  // A direct message (P2.1): only as oneself, with the permission in the club.
+  const chatClubId = p.club?.clubId ?? null;
+  const canMessage =
+    chatClubId !== null &&
+    !viewingAs &&
+    personId !== me &&
+    (myClubs.data?.clubs
+      .find((c) => c.club.id === chatClubId)
+      ?.permissions.includes("club.chats.direct") ??
+      false);
+
   return (
     <Screen
       refreshing={profile.isRefetching}
@@ -95,6 +110,21 @@ function Person({ personId, clubId }: { personId: string; clubId: string | null 
       <Stack.Screen options={{ title: t("person.title") }} />
       <PersonName person={p.person} />
       <DataAge updatedAt={profile.dataUpdatedAt} />
+      {canMessage ? (
+        <Button
+          label={t("chat.sendMessage")}
+          kind="secondary"
+          busy={openChat.isPending}
+          onPress={() =>
+            openChat.mutate(
+              { clubId: chatClubId, personId },
+              { onSuccess: (chat) => router.push(`/chats/${chat.clubId}/${chat.id}`) },
+            )
+          }
+          testID="send-message"
+        />
+      ) : null}
+      {openChat.isError ? <ErrorView error={openChat.error} /> : null}
       {rows.length > 0 ? (
         <Section title={t("person.title")}>
           {rows.map((row, index) => (

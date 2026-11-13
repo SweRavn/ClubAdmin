@@ -10,7 +10,8 @@ import { Stack } from "expo-router";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
 
-import { type RosterEntry, useGroup, useRoster } from "../../../api/queries.ts";
+import { type RosterEntry, useGroup, useGroupChats, useRoster } from "../../../api/queries.ts";
+import { ChatRow } from "../../../components/chat-parts.tsx";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
@@ -40,6 +41,9 @@ function Group({ groupId }: { groupId: string }) {
   const theme = useTheme();
   const group = useGroup(groupId);
   const roster = useRoster(groupId);
+  // The group's channels (P2.1), in parallel with the group; a club without
+  // chat answers 403 and the section stays hidden.
+  const chats = useGroupChats(group.data?.clubId, groupId);
   const entries: RosterEntry[] = roster.data?.pages.flatMap((page) => page.items) ?? [];
   const showsProtected =
     entries.some((e) => e.person.protected) || (group.data?.owners ?? []).some((p) => p.protected);
@@ -60,6 +64,7 @@ function Group({ groupId }: { groupId: string }) {
   const refresh = () => {
     void group.refetch();
     void roster.refetch();
+    void chats.refetch();
   };
   const renderEntry = (
     entry: RosterEntry,
@@ -94,6 +99,22 @@ function Group({ groupId }: { groupId: string }) {
         {group.data.sport ? <RoleBadge label={group.data.sport} /> : null}
       </View>
       <DataAge updatedAt={roster.dataUpdatedAt || group.dataUpdatedAt} />
+      {chats.data ? (
+        <Section title={t("chat.groupChannels")}>
+          {chats.data.items.length === 0 ? (
+            <Muted style={{ paddingVertical: theme.space(2) }}>{t("chat.groupChannelsHint")}</Muted>
+          ) : (
+            chats.data.items.map((chat, index, list) => (
+              <ChatRow
+                key={chat.id}
+                chat={chat}
+                showContext={false}
+                last={index === list.length - 1}
+              />
+            ))
+          )}
+        </Section>
+      ) : null}
       <Section title={t("group.owners")}>
         {group.data.owners.length === 0 ? (
           <EmptyState title={t("group.noOwners")} />

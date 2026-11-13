@@ -12,6 +12,7 @@ import {
   ATTENDANCE_ROLES,
   ATTENDANCE_STATUSES,
   BOARD_SETTING_KEYS,
+  CHAT_PUSH_SETTINGS,
   CLUB_PHONE_NUMBERS_MAX,
   CLUB_SETTINGS,
   type ClubSettingDefinition,
@@ -1314,6 +1315,123 @@ const clock = (value: string) => (/^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? valu
 /** Notifications (P1.7): the inbox, settings and phones of the logged-in person. */
 const NOTIFICATION_ACTIONS: Record<string, FormAction> = {
   /** Opens a notice (marks it read, then goes where it leads) or marks all read up to one. */
+  // Chat (P2.1, ADR 0047): creating channels, direct messages, joining and leaving.
+  "create-channel": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const groupId = id(form, "groupId");
+      const name = text(form, "name").slice(0, 80);
+      const visibility = text(form, "visibility") === "open" ? "open" : "closed";
+      if (!clubId || !name) return null;
+      const memberIds = form
+        .getAll("memberId")
+        .filter((v): v is string => typeof v === "string" && isUuid(v));
+      const body = {
+        name,
+        description: optional(text(form, "description").slice(0, 500)) ?? null,
+        visibility,
+        memberIds,
+        ...(groupId ? { everyone: form.get("everyone") === "on" } : {}),
+      };
+      return groupId
+        ? { path: `/api/v1/clubs/${clubId}/groups/${groupId}/chats`, method: "POST", body }
+        : { path: `/api/v1/clubs/${clubId}/chats`, method: "POST", body };
+    },
+    done: (form, result) => {
+      const created = resultId(result);
+      const clubId = id(form, "clubId");
+      return created && clubId ? `/clubs/${clubId}/chats/${created}` : back(form);
+    },
+  },
+  "open-direct-chat": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      if (!clubId || !personId) return null;
+      return { path: `/api/v1/clubs/${clubId}/direct-chats`, method: "POST", body: { personId } };
+    },
+    done: (form, result) => {
+      const created = resultId(result);
+      const clubId = id(form, "clubId");
+      return created && clubId ? `/clubs/${clubId}/chats/${created}` : back(form);
+    },
+  },
+  "join-chat": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const chatId = id(form, "chatId");
+      if (!clubId || !chatId) return null;
+      return { path: `/api/v1/clubs/${clubId}/chats/${chatId}/join`, method: "POST" };
+    },
+    done: (form) => back(form),
+  },
+  "leave-chat": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const chatId = id(form, "chatId");
+      if (!clubId || !chatId) return null;
+      return { path: `/api/v1/clubs/${clubId}/chats/${chatId}/leave`, method: "POST" };
+    },
+    done: (form) => safeReturnTo(text(form, "to"), "/me/chats"),
+  },
+  "chat-settings": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const chatId = id(form, "chatId");
+      const push = oneOf(CHAT_PUSH_SETTINGS, text(form, "push"));
+      if (!clubId || !chatId || !push) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/chats/${chatId}/settings`,
+        method: "PUT",
+        body: { push },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "update-chat": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const chatId = id(form, "chatId");
+      if (!clubId || !chatId) return null;
+      const body: Record<string, unknown> = {};
+      const name = text(form, "name").slice(0, 80);
+      if (name) body.name = name;
+      const archived = text(form, "archived");
+      if (archived === "true" || archived === "false") body.archived = archived === "true";
+      if (Object.keys(body).length === 0) return null;
+      return { path: `/api/v1/clubs/${clubId}/chats/${chatId}`, method: "PATCH", body };
+    },
+    done: (form) => back(form),
+  },
+  "add-chat-members": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const chatId = id(form, "chatId");
+      const personIds = form
+        .getAll("memberId")
+        .filter((v): v is string => typeof v === "string" && isUuid(v));
+      if (!clubId || !chatId || personIds.length === 0) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/chats/${chatId}/members`,
+        method: "POST",
+        body: { personIds },
+      };
+    },
+    done: (form) => back(form),
+  },
+  "remove-chat-member": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const chatId = id(form, "chatId");
+      const personId = id(form, "personId");
+      if (!clubId || !chatId || !personId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/chats/${chatId}/members/${personId}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => back(form),
+  },
   "read-notifications": {
     call: (form) => {
       const notice = id(form, "id");

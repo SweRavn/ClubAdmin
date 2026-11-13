@@ -7,6 +7,7 @@ import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
 import type { PaymentProvider } from "@clubadmin/server-kit/payments";
 import { z } from "@clubadmin/shared";
 import type { Task, TaskList } from "graphile-worker";
+import type { Redis } from "ioredis";
 
 import {
   billingDailyTask,
@@ -32,6 +33,7 @@ import { administratorsTask } from "./administrators.ts";
 import { attendanceRetentionTask } from "./attendance.ts";
 import { backupMetricsTask } from "./backup-metrics.ts";
 import { calendarRetentionTask } from "./calendar.ts";
+import { chatMaintenanceTask, syncFamilyTask, syncPersonTask } from "./chat.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
 import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
@@ -49,6 +51,8 @@ import { waitlistOffersTask } from "./waitlists.ts";
 
 export interface TaskDependencies {
   db: Database;
+  /** Valkey (P2.1): chat changes are published to open apps; without it nothing is. */
+  valkey?: Redis | undefined;
   outboxHandlers: readonly OutboxHandler[];
   historyRetentionMonths: number;
   historyPartitionsAhead: number;
@@ -135,6 +139,9 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "joining:retention": joiningRetentionTask(deps.db),
     "waitlists:offers": waitlistOffersTask(deps.db),
     "calendar:retention": calendarRetentionTask(deps.db),
+    "chat:sync_person": syncPersonTask(deps.db, deps.valkey),
+    "chat:sync_family": syncFamilyTask(deps.db, deps.valkey),
+    "chat:maintenance": chatMaintenanceTask(deps.db, deps.valkey),
     "privacy:anonymize_profile_views": anonymizeProfileViewsTask(deps.db),
     "privacy:profile_views": profileViewsRetentionTask(deps.db),
     "attendance:retention": attendanceRetentionTask(deps.db),
@@ -251,6 +258,7 @@ export const crontab = [
   "13 5 * * * calendar:retention ?fill=2d",
   "19 5 * * * privacy:profile_views ?fill=2d",
   "11 * * * * administrators:daily ?max=1",
+  "47 2 * * * chat:maintenance ?fill=2d",
 ].join("\n");
 
 /**

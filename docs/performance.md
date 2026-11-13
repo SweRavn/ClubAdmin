@@ -104,6 +104,18 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   `activities_reminder_idx`, and daily retention from the creation
   indexes.
 
+- Chat (P2.1): "Mina kanaler" finds a page of the person's chats by their
+  own memberships (`chat_members_person_idx`), then reads each club's
+  columns in that club (the latest message by `chats.last_message_id`: one
+  partition; unread counts stop at 99). A chat's messages are pages of
+  `chat_messages_chat_idx` (`chat_id, id DESC`) in every month's partition;
+  `after` and `cursor` bound the ID range, so old months are pruned. The
+  members' facts (child, leader, guardian of whom) are looked up per
+  member by their own index entries (`app.chat_member_facts`): a join let
+  the planner scan `group_memberships` and `people`, which grew with the
+  data. The group's channel is created on first use; its members follow the
+  group in the worker, never in a read. Real-time events carry IDs only;
+  clients fetch the content (one request per event, batched by `after`).
 - "Download my data" (P1.8b): the export is read one part at a time (the
   platform's, then each club's, all by the person's indexes) and deflated
   into a multipart upload, so memory stays bounded by one club's rows. The

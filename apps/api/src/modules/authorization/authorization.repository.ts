@@ -387,3 +387,53 @@ export async function loadActivityScope(
   const row = rows[0];
   return row ? { clubId: row.club_id, groupIds: row.group_ids } : null;
 }
+
+/**
+ * A chat for its policies (P2.1): kind, visibility, state, groups, whether
+ * children are active members, and which of the given people (the actor and
+ * their wards) are members. Read in the chat's club as a system read; IDs only.
+ */
+export async function loadChatScope(
+  tx: Tx,
+  chatId: string,
+  personIds: readonly string[],
+): Promise<{
+  chatKind: "channel" | "direct";
+  visibility: "open" | "closed" | null;
+  archived: boolean;
+  createdByPersonId: string | null;
+  defaultForGroupId: string | null;
+  groupIds: string[];
+  hasChildren: boolean;
+  members: { personId: string; status: "active" | "offered" }[];
+} | null> {
+  const { rows } = await tx.execute<{
+    kind: "channel" | "direct";
+    visibility: "open" | "closed" | null;
+    archived: boolean;
+    created_by_person_id: string | null;
+    default_for_group_id: string | null;
+    group_ids: string[];
+    has_children: boolean;
+    members: { personId: string; status: "active" | "offered" }[] | null;
+  }>(sql`
+    SELECT s.kind, s.visibility, s.archived, s.created_by_person_id, s.default_for_group_id,
+      s.group_ids, s.has_children,
+      (SELECT jsonb_agg(jsonb_build_object('personId', cm.person_id, 'status', cm.status))
+       FROM public.chat_members cm
+       WHERE cm.chat_id = ${chatId} AND cm.status <> 'left'
+         AND cm.person_id = ANY(${uuidArray(personIds)})) AS members
+    FROM app.chat_scope(${chatId}::uuid) s`);
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    chatKind: row.kind,
+    visibility: row.visibility,
+    archived: row.archived,
+    createdByPersonId: row.created_by_person_id,
+    defaultForGroupId: row.default_for_group_id,
+    groupIds: row.group_ids,
+    hasChildren: row.has_children,
+    members: row.members ?? [],
+  };
+}

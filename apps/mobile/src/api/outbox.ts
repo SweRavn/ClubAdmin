@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// The offline outbox (P1.5, ADR 0035): answers and attendance marks taken
-// without coverage are TanStack Query mutations that pause while offline,
-// are persisted with the account's encrypted query cache and run when the
+// The offline outbox (P1.5, ADR 0035): answers, attendance marks and chat
+// messages (P2.1) taken without coverage are TanStack Query mutations that
+// pause while offline, are persisted with the account's encrypted query cache and run when the
 // phone is online again, one after another in the order they were made
 // (one mutation scope). Each write carries an Idempotency-Key and the time
 // it was made: the API's writes are idempotent by content, marks are
@@ -30,6 +30,17 @@ export type OutboxWrite =
       madeAt: string;
     }
   | {
+      /** A chat message (P2.1): its UUIDv7 is chosen here, so a resend never doubles it. */
+      kind: "chatMessage";
+      clubId: string;
+      chatId: string;
+      messageId: string;
+      body: string;
+      replyToId?: string | null;
+      key: string;
+      madeAt: string;
+    }
+  | {
       kind: "attendance";
       activityId: string;
       marks: {
@@ -45,7 +56,8 @@ export type OutboxWrite =
 export interface OutboxFailure {
   key: string;
   kind: OutboxWrite["kind"];
-  activityId: string;
+  /** The activity, for answers and marks. */
+  activityId?: string;
   /** The problem's detail code (translated with joinErrors), or "failed". */
   code: string;
 }
@@ -53,11 +65,23 @@ export interface OutboxFailure {
 /** Writes without key and time, as the screens make them. */
 export type NewOutboxWrite =
   | Omit<Extract<OutboxWrite, { kind: "response" }>, "key" | "madeAt">
+  | Omit<Extract<OutboxWrite, { kind: "chatMessage" }>, "key" | "madeAt">
   | Omit<Extract<OutboxWrite, { kind: "attendance" }>, "key" | "madeAt">;
 
 /** Sends one write (also when the outbox replays it after a restart). */
 export async function sendWrite(api: ApiClient, write: OutboxWrite): Promise<unknown> {
   const headers = { "idempotency-key": write.key };
+  if (write.kind === "chatMessage") {
+    const result = await api.POST("/api/v1/clubs/{clubId}/chats/{chatId}/messages", {
+      params: { path: { clubId: write.clubId, chatId: write.chatId } },
+      body: {
+        id: write.messageId,
+        body: write.body,
+        ...(write.replyToId ? { replyToId: write.replyToId } : {}),
+      },
+    });
+    return result.data;
+  }
   if (write.kind === "attendance") {
     const result = await api.PUT("/api/v1/activities/{activityId}/attendance", {
       params: { path: { activityId: write.activityId } },
@@ -104,10 +128,20 @@ export function registerOutbox(client: QueryClient, api: ApiClient): void {
           : "failed";
       client.setQueryData<OutboxFailure[]>(FAILURES_KEY, (list = []) => [
         ...list,
-        { key: write.key, kind: write.kind, activityId: write.activityId, code },
+        {
+          key: write.key,
+          kind: write.kind,
+          ...(write.kind === "chatMessage" ? {} : { activityId: write.activityId }),
+          code,
+        },
       ]);
     },
     onSettled: (_data, _error, write) => {
+      if (write.kind === "chatMessage") {
+        void client.invalidateQueries({ queryKey: ["chat"] });
+        void client.invalidateQueries({ queryKey: ["chats"] });
+        return;
+      }
       void client.invalidateQueries({ queryKey: ["schedule"] });
       void client.invalidateQueries({ queryKey: ["activity", write.activityId] });
       void client.invalidateQueries({ queryKey: ["responses", write.activityId] });

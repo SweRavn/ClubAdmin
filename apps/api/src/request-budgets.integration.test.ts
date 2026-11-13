@@ -35,7 +35,7 @@ const BILLING = ["true", "1"].includes((process.env.BILLING_ENABLED ?? "").toLow
 
 let t: TestDatabase;
 let app: TestApp;
-let ids: { activity: string; event: string };
+let ids: { activity: string; event: string; chat: string; message: string };
 
 interface Case {
   /** "GET /api/v1/me/schedule" as the app writes it (path parameters in braces). */
@@ -574,6 +574,66 @@ const CASES: Case[] = [
     statements: 2,
     pages: 10,
   },
+  // Chat (P2.1): "Mina kanaler", a group's channels, a chat and its pages,
+  // sending, read receipts. SVK F2017's team channel as Erik.
+  {
+    route: "GET /api/v1/me/chats",
+    persona: "anna",
+    method: "GET",
+    url: () => "/api/v1/me/chats",
+    statements: 12,
+    pages: 150,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/groups/{groupId}/chats",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/groups/${key("svk-f2017")}/chats`,
+    statements: 9,
+    pages: 160,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/chats/{chatId}",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/chats/${ids.chat}`,
+    statements: 11,
+    pages: 350,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/chats/{chatId}/messages",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/chats/${ids.chat}/messages`,
+    statements: 7,
+    pages: 60,
+  },
+  {
+    route: "POST /api/v1/clubs/{clubId}/chats/{chatId}/messages",
+    persona: "erik",
+    method: "POST",
+    url: () => `/api/v1/clubs/${key("svk")}/chats/${ids.chat}/messages`,
+    body: () => ({ body: "Budget" }),
+    statements: 9,
+    pages: 140,
+  },
+  {
+    route: "POST /api/v1/clubs/{clubId}/chats/{chatId}/read",
+    persona: "anna",
+    method: "POST",
+    url: () => `/api/v1/clubs/${key("svk")}/chats/${ids.chat}/read`,
+    body: () => ({ messageId: ids.message }),
+    statements: 5,
+    pages: 50,
+  },
+  {
+    route: "POST /api/v1/realtime/tickets",
+    persona: "anna",
+    method: "POST",
+    url: () => "/api/v1/realtime/tickets",
+    statements: 2,
+    pages: 20,
+  },
   // Privacy (P1.8a).
   {
     route: "GET /api/v1/me/consents",
@@ -721,6 +781,17 @@ const NOT_HERE: Record<string, string> = {
   "DELETE /api/v1/people/{personId}/consents/{purpose}": "as giving one",
   "POST /api/v1/me/clubs/{clubId}/leave": "once per membership; privacy tests",
   "DELETE /api/v1/me/clubs/{clubId}/assignments/{assignmentId}": "once per assignment",
+  "POST /api/v1/clubs/{clubId}/chats/{chatId}/join":
+    "once per chat; the membership upsert and the guardian rule (chat tests)",
+  "POST /api/v1/clubs/{clubId}/chats/{chatId}/leave": "as joining",
+  "PUT /api/v1/clubs/{clubId}/chats/{chatId}/settings": "one member row by key",
+  "POST /api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}/reactions":
+    "one row by key in the message's partition",
+  "PATCH /api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}":
+    "the message by key and one version row (chat tests)",
+  "DELETE /api/v1/clubs/{clubId}/chats/{chatId}/messages/{messageId}": "as editing",
+  "POST /api/v1/clubs/{clubId}/direct-chats":
+    "once per pair; the refusal check and the lookup by both people (chat tests)",
 };
 
 interface Measure {
@@ -848,13 +919,20 @@ beforeAll(async () => {
   };
   await seed(env, { scenario: "demo", data });
   await t.query("admin", "ANALYZE");
-  const { rows } = await t.query<{ activity: string; event: string }>(
+  const { rows } = await t.query<{
+    activity: string;
+    event: string;
+    chat: string;
+    message: string;
+  }>(
     "admin",
     `SELECT
        (SELECT a.id FROM activities a JOIN activity_groups ag ON ag.activity_id = a.id
         WHERE ag.group_id = $1 AND a.status = 'scheduled' AND a.starts_at > now()
           AND a.response_mode = 'requested' ORDER BY a.starts_at LIMIT 1) AS activity,
-       (SELECT id FROM events WHERE title = 'Höstcupen i Strandviken') AS event`,
+       (SELECT id FROM events WHERE title = 'Höstcupen i Strandviken') AS event,
+       (SELECT id FROM chats WHERE default_for_group_id = $1) AS chat,
+       (SELECT last_message_id FROM chats WHERE default_for_group_id = $1) AS message`,
     [key("svk-f2017")],
   );
   ids = rows[0]!;

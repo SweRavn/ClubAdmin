@@ -15,9 +15,16 @@ export interface CspOptions {
   development: boolean;
   /** Origins forms may submit or redirect to besides this site (the identity provider's logout). */
   formActions: readonly string[];
+  /** Origins scripts may connect to besides this site (the chat's WebSocket on the API, P2.1). */
+  connectSources?: readonly string[];
 }
 
-export function contentSecurityPolicy({ nonce, development, formActions }: CspOptions): string {
+export function contentSecurityPolicy({
+  nonce,
+  development,
+  formActions,
+  connectSources = [],
+}: CspOptions): string {
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": [
@@ -30,7 +37,7 @@ export function contentSecurityPolicy({ nonce, development, formActions }: CspOp
     "style-src": ["'self'", ...(development ? ["'unsafe-inline'"] : [`'nonce-${nonce}'`])],
     "img-src": ["'self'", "data:", "blob:"],
     "font-src": ["'self'"],
-    "connect-src": ["'self'", ...(development ? ["ws:", "wss:"] : [])],
+    "connect-src": ["'self'", ...connectSources, ...(development ? ["ws:", "wss:"] : [])],
     "object-src": ["'none'"],
     "base-uri": ["'none'"],
     "form-action": ["'self'", ...formActions],

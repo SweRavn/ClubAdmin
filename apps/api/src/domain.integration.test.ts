@@ -144,13 +144,34 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO club_privacy_policies (club_id, version, template_version, settings, effective_from)
         VALUES (${a.id}, 1, 1, '{}', current_date)`);
+      // Chat (P2.1): a channel of the group with a member, a message, an
+      // earlier version, a prepared attachment and a reaction.
+      await tx.execute(sql`
+        WITH c AS (
+          INSERT INTO chats (club_id, kind, name, visibility) VALUES (${a.id}, 'channel', 'Fixture', 'open')
+          RETURNING id),
+        g AS (INSERT INTO chat_groups (club_id, chat_id, group_id) SELECT ${a.id}, id, ${group.id} FROM c),
+        m AS (INSERT INTO chat_members (club_id, chat_id, person_id, reason)
+              SELECT ${a.id}, id, ${member.id}, 'creator' FROM c),
+        msg AS (INSERT INTO chat_messages (club_id, chat_id, sender_person_id, body)
+                SELECT ${a.id}, id, ${member.id}, 'Hej' FROM c RETURNING id),
+        v AS (INSERT INTO chat_message_versions (club_id, message_id, body, written_at)
+              SELECT ${a.id}, id, 'Hj', now() FROM msg),
+        f AS (INSERT INTO chat_message_attachments (club_id, message_id, object_key, file_name, content_type, size_bytes)
+              SELECT ${a.id}, id, 'chat/fixture', 'a.txt', 'text/plain', 1 FROM msg)
+        INSERT INTO chat_reactions (club_id, message_id, person_id, emoji)
+        SELECT ${a.id}, id, ${member.id}, '👍' FROM msg`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(
       "admin",
-      `SELECT table_name FROM information_schema.columns
-       WHERE table_schema = 'public' AND column_name = 'club_id' AND is_nullable = 'NO'
-       ORDER BY table_name`,
+      // Partitions (chat messages, P2.1) are reached only through their table.
+      `SELECT c.table_name FROM information_schema.columns c
+       JOIN pg_class r ON r.relname = c.table_name
+       JOIN pg_namespace n ON n.oid = r.relnamespace AND n.nspname = c.table_schema
+       WHERE c.table_schema = 'public' AND c.column_name = 'club_id' AND c.is_nullable = 'NO'
+         AND NOT r.relispartition
+       ORDER BY c.table_name`,
     );
     expect(tables.length).toBeGreaterThanOrEqual(14);
     const outsider = actor((await buildPerson(c.s)).id, b.id);

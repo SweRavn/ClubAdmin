@@ -111,6 +111,9 @@ catalogs:
     '@types/react-dom':
       specifier: ^19.2.0
       version: 19.3.0
+    '@types/ws':
+      specifier: ^8.18.0
+      version: 8.18.2
     chokidar:
       specifier: ^5.0.0
       version: 5.0.0
@@ -210,6 +213,9 @@ catalogs:
     vitest:
       specifier: ^5.0.0
       version: 5.0.4
+    ws:
+      specifier: ^8.22.0
+      version: 8.22.0
     zod:
       specifier: ^4.0.0
       version: 4.6.7
@@ -321,6 +327,9 @@ importers:
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
+      ws:
+        specifier: 'catalog:'
+        version: 8.22.0
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -337,6 +346,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.2
+      '@types/ws':
+        specifier: 'catalog:'
+        version: 8.18.2
       chokidar:
         specifier: 'catalog:'
         version: 5.0.0
@@ -3912,6 +3924,9 @@ packages:
 
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
+
+  '@types/ws@8.18.2':
+    resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -11378,6 +11393,10 @@ snapshots:
   '@types/stack-utils@2.0.3': {}
 
   '@types/tough-cookie@4.0.5': {}
+
+  '@types/ws@8.18.2':
+    dependencies:
+      '@types/node': 24.19.2
 
   '@types/yargs-parser@21.0.3': {}
 

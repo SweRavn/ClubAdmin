@@ -44,7 +44,8 @@
     "schedule": "Mitt schema",
     "calendar": "Kalender",
     "locations": "Platser",
-    "events": "Evenemang"
+    "events": "Evenemang",
+    "chat": "Chatt"
   },
   "clubSwitcher": {
     "label": "Förening: {club}",
@@ -794,7 +795,17 @@
     "club_type_role_exists": "Mallen har redan en roll med den nyckeln.",
     "club_type_role_required": "Rollen krävs i alla föreningstyper och kan inte tas bort eller förlora sina låsta behörigheter.",
     "club_type_role_names_required": "Rollen behöver namn på svenska, engelska och norska.",
-    "template_role_exists": "Föreningen har redan den rollen."
+    "template_role_exists": "Föreningen har redan den rollen.",
+    "chat_not_a_member": "Gå med i chatten för att läsa och skriva.",
+    "chat_child_protected": "Du kan inte skriva direkt till någon annans barn. Barnets ledare och föräldrar kan; skriv i gruppens kanal i stället.",
+    "chat_self": "Du kan inte skicka ett meddelande till dig själv.",
+    "chat_not_in_club": "Personen hör inte till föreningen.",
+    "chat_member_not_allowed": "Någon av dem du valde kan inte läggas till i den här kanalen.",
+    "chat_default_channel": "Gruppens kanal följer gruppen: dess medlemmar och namn ändras via gruppen.",
+    "chat_direct_members": "Ett direktmeddelande har alltid samma två personer.",
+    "chat_guardian_required": "Föräldern måste vara med så länge en vuxen är med barnet i chatten. Stäng av notiserna i stället.",
+    "chat_message_hidden": "Meddelandet är borttaget.",
+    "chat_message_conflict": "Meddelandet kunde inte skickas. Försök igen."
   },
   "memberExport": {
     "columns": {
@@ -2685,7 +2696,10 @@
       "unsubscribed": "avslutade prenumerationen på",
       "updated": "uppdaterade",
       "verified": "verifierade",
-      "withdrawn": "drog tillbaka"
+      "withdrawn": "drog tillbaka",
+      "joined": "gick med i",
+      "left": "lämnade",
+      "hidden": "dolde"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -3299,7 +3313,8 @@
       "events": "Evenemang",
       "finance": "Ekonomi",
       "privacy": "Integritet",
-      "club": "Föreningen"
+      "club": "Föreningen",
+      "communication": "Kommunikation"
     },
     "permissions": {
       "club_settings_update": {
@@ -3586,6 +3601,21 @@
         "name": "Se fakturor",
         "description": "Kan se och ladda ner föreningens fakturor från ClubAdmin.",
         "example": "Kan till exempel ladda ner en faktura till bokföringen."
+      },
+      "group_channels_create": {
+        "name": "Skapa kanaler i gruppen",
+        "description": "Kan skapa chattkanaler i gruppen och välja vilka som är med. Barnsäkerhetsreglerna gäller alltid.",
+        "example": "Kan till exempel skapa kanalen ”Matchinfo” för hela laget eller en kanal för tränarna."
+      },
+      "group_channels_manage": {
+        "name": "Hantera gruppens kanaler",
+        "description": "Kan ändra medlemmar i och arkivera kanaler som andra skapat i gruppen.",
+        "example": "Kan till exempel ta bort en spelare som slutat ur lagets kanaler."
+      },
+      "club_channels_create": {
+        "name": "Skapa föreningskanaler",
+        "description": "Kan skapa chattkanaler för hela föreningen, utan koppling till en grupp, och välja vilka som är med.",
+        "example": "Kan till exempel skapa en kanal för styrelsen eller för alla ledare."
       }
     }
   },
@@ -3769,5 +3799,109 @@
     "newRole": "Ny roll i mallen",
     "newRoleHint": "En nyckel som inte finns i katalogen behöver namn på alla tre språken. Behörigheterna väljer du sedan.",
     "addRole": "Lägg till rollen"
+  },
+  "chat": {
+    "nav": "Chatt",
+    "title": "Mina kanaler",
+    "empty": "Du är inte med i någon chatt ännu. Gruppernas kanaler finns på gruppsidorna.",
+    "unread": "{count, plural, one {# oläst} other {# olästa}}",
+    "noMessages": "Inga meddelanden ännu",
+    "directWith": "Direktmeddelande",
+    "groupChannels": "Kanaler",
+    "groupChannelsHint": "Gruppens kanal har alla i gruppen med. Öppna kanaler kan alla i gruppen gå med i; slutna syns bara för de som lagts till.",
+    "newChannel": "Ny kanal",
+    "clubChannels": "Föreningens kanaler",
+    "name": "Namn",
+    "description": "Beskrivning (valfri)",
+    "visibility": "Vem ser kanalen?",
+    "visibilities": {
+      "open": "Öppen: alla i gruppen ser den och kan gå med",
+      "closed": "Sluten: bara de du lägger till"
+    },
+    "visibilityShort": {
+      "open": "Öppen",
+      "closed": "Sluten"
+    },
+    "everyone": "Lägg till alla i gruppen",
+    "chooseMembers": "Välj vilka som är med",
+    "create": "Skapa kanalen",
+    "defaultChannel": "Gruppens kanal",
+    "archived": "Arkiverad",
+    "members": "Med i chatten",
+    "hiddenMembers": "{count, plural, one {# person med skyddad identitet} other {# personer med skyddad identitet}}",
+    "reasons": {
+      "creator": "skapade chatten",
+      "added": "tillagd",
+      "joined": "gick med",
+      "group": "med i gruppen",
+      "guardian_auto": "förälder, tillagd automatiskt",
+      "guardian_joined": "förälder, gick med",
+      "leader_joined": "ledare, gick med"
+    },
+    "offeredStatus": "erbjuden, har inte svarat",
+    "child": "barn",
+    "leader": "ledare",
+    "guardianOf": "förälder till {names}",
+    "system": {
+      "created": "{names} skapade chatten",
+      "joined": "{names} gick med",
+      "left": "{names} lämnade",
+      "added": "{names} lades till",
+      "removed": "{names} togs bort",
+      "guardians_added": "Föräldrar lades till eftersom en vuxen är med barn: {names}",
+      "renamed": "{names} bytte namn på chatten",
+      "archived": "{names} arkiverade chatten"
+    },
+    "someone": "någon",
+    "protectedPerson": "En medlem med skyddad identitet",
+    "formerMember": "En tidigare medlem",
+    "edited": "redigerat",
+    "hiddenBySender": "Meddelandet togs bort.",
+    "hiddenByModerator": "Meddelandet har dolts av föreningens trygghetsansvariga.",
+    "reply": "Svara",
+    "replyingTo": "Svarar {name}",
+    "cancel": "Avbryt",
+    "edit": "Redigera",
+    "save": "Spara",
+    "delete": "Ta bort",
+    "deleteConfirm": "Ta bort meddelandet? Det döljs för alla men sparas (barnsäkerhet).",
+    "versions": "Tidigare versioner",
+    "react": "Reagera",
+    "placeholder": "Skriv ett meddelande",
+    "send": "Skicka",
+    "sending": "Skickas…",
+    "failed": "Kunde inte skickas. Försöker igen när du är ansluten.",
+    "typing": "{name} skriver…",
+    "connected": "Ansluten",
+    "offline": "Ej ansluten – meddelanden visas när anslutningen är tillbaka",
+    "readBy": "{count, plural, one {Läst av #} other {Läst av #}}",
+    "loadOlder": "Visa äldre meddelanden",
+    "childBanner": "Barn är med i den här chatten. Barnens föräldrar kan se vilka som är med och gå med när som helst – då syns det här för alla.",
+    "childBannerJoined": "Föräldrar som är med: {names}.",
+    "childBannerNone": "Ingen förälder har gått med.",
+    "leaderRule": "När en ledare eller annan vuxen är med barn läggs barnens föräldrar till automatiskt.",
+    "notMember": "Du ser vem som är med i chatten. För att läsa meddelandena går du med – det syns för alla i chatten.",
+    "offered": "Du har erbjudits att gå med i chatten. Andra ser dig inte förrän du tackar ja.",
+    "join": "Gå med",
+    "joinAsGuardian": "Gå med som förälder",
+    "joinAsLeader": "Gå med som ledare",
+    "accept": "Tacka ja",
+    "decline": "Tacka nej",
+    "leave": "Lämna chatten",
+    "push": "Notiser",
+    "pushSettings": {
+      "all": "Alla meddelanden",
+      "mentions": "Bara när jag nämns",
+      "off": "Av"
+    },
+    "manage": "Hantera",
+    "rename": "Byt namn",
+    "archive": "Arkivera",
+    "unarchive": "Återställ",
+    "addMembers": "Lägg till",
+    "remove": "Ta bort",
+    "sendMessage": "Skicka meddelande",
+    "safety": "Så fungerar chatten för barn",
+    "live": "Nya meddelanden visas direkt."
   }
 }

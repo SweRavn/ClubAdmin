@@ -2,9 +2,13 @@
 // Public interface of the authorization module (ADR 0006, ADR 0022).
 export { AuthorizationModule } from "./authorization.module.ts";
 export {
+  canJoinChat,
   canLeadGroupActivities,
+  canManageChat,
   canManageEvent,
   canManageGroupActivities,
+  canPostInChat,
+  canReadChat,
   canReadEvent,
   canReadGroupActivities,
   canReadGroupMembers,
@@ -21,6 +25,7 @@ export { EndpointPolicyCheck, endpointPolicyProblems } from "./endpoint-policies
 export { PersonVisibility, type Visibility } from "./person-visibility.service.ts";
 export type {
   ActivityResource,
+  ChatResource,
   ClubResource,
   EventResource,
   GroupResource,

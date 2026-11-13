@@ -208,6 +208,16 @@ describe("permission matrix", () => {
     relative: 403,
   };
   const EVENT_READERS_FORBIDDEN = ACTIVITY_READERS_FORBIDDEN;
+  /** The closed chat "Matrix": its members and the owner who manages it; nobody else sees it. */
+  const CHAT_READERS = { ...ALL_NOT_FOUND, owner: 200, coach: 200, member: 200, parent: 200 };
+  /** Writing in "Matrix": its members get `status`; the owner (not in it) 403. */
+  const CHAT_WRITERS = (status: number) => ({
+    ...ALL_NOT_FOUND,
+    owner: 403,
+    coach: status,
+    member: status,
+    parent: status,
+  });
   const RANGE = `from=${encodeURIComponent(new Date().toISOString())}&to=${encodeURIComponent(
     new Date(Date.now() + 120 * 86_400_000).toISOString(),
   )}`;
@@ -688,6 +698,117 @@ describe("permission matrix", () => {
     "GET /api/v1/groups/:groupId/activities": {
       url: () => `/api/v1/groups/${m.team.id}/activities?${RANGE}`,
       expected: INSIDERS,
+    },
+    // Chat (P2.1, ADR 0047). The closed channel "Matrix" has the coach (its
+    // creator), the member, the child and, by the guardian rule, the parent;
+    // the section's owner manages it without being in it; the club manager is
+    // not in it and does not see it. "Matrix open" is open to team T.
+    "GET /api/v1/me/chats": { url: () => "/api/v1/me/chats", expected: ALL_OK },
+    "POST /api/v1/realtime/tickets": {
+      url: () => "/api/v1/realtime/tickets",
+      expected: Object.fromEntries(MATRIX_PERSONAS.map((p) => [p, 201])) as Record<
+        MatrixPersona,
+        number
+      >,
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/chats": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/chats`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/groups/:groupId/chats": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/chats`,
+      expected: { ...CLUB_FORBIDDEN, owner: 201, coach: 201, member: 201 },
+      body: { name: "Matrix new", visibility: "closed" },
+    },
+    "GET /api/v1/clubs/:clubId/chats": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/chats": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats`,
+      expected: { ...CLUB_FORBIDDEN, manager: 201 },
+      body: { name: "Matrix board", visibility: "closed" },
+    },
+    "POST /api/v1/clubs/:clubId/direct-chats": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/direct-chats`,
+      // Adults write to adults; the member to themselves is refused (400).
+      expected: {
+        ...ALL_NOT_FOUND,
+        manager: 201,
+        registrar: 201,
+        owner: 201,
+        coach: 201,
+        member: 400,
+        parent: 201,
+        relative: 201,
+      },
+      body: () => ({ personId: m.member.id }),
+    },
+    "GET /api/v1/clubs/:clubId/chats/:chatId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}`,
+      expected: CHAT_READERS,
+    },
+    "PATCH /api/v1/clubs/:clubId/chats/:chatId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}`,
+      expected: { ...CHAT_READERS, member: 403, parent: 403 },
+      body: { description: "Matrix description" },
+    },
+    "POST /api/v1/clubs/:clubId/chats/:chatId/members": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/members`,
+      expected: { ...CHAT_READERS, owner: 201, coach: 201, member: 403, parent: 403 },
+      body: () => ({ personIds: [m.member.id] }),
+    },
+    "DELETE /api/v1/clubs/:clubId/chats/:chatId/members/:personId": {
+      // Someone not in the chat: those who may get the service's 404.
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/members/${m.registrar.id}`,
+      expected: { ...CHAT_READERS, owner: 404, coach: 404, member: 403, parent: 403 },
+    },
+    "POST /api/v1/clubs/:clubId/chats/:chatId/join": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.openChatId}/join`,
+      // The coach is in it already; the parent is not of team T.
+      expected: { ...ALL_NOT_FOUND, owner: 201, coach: 403, member: 201 },
+    },
+    "POST /api/v1/clubs/:clubId/chats/:chatId/leave": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.openChatId}/leave`,
+      expected: { ...ALL_NOT_FOUND, owner: 201, coach: 201, member: 201 },
+    },
+    "PUT /api/v1/clubs/:clubId/chats/:chatId/settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/settings`,
+      expected: { ...CHAT_READERS, owner: 403 },
+      body: { push: "mentions" },
+    },
+    "GET /api/v1/clubs/:clubId/chats/:chatId/messages": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/messages`,
+      expected: { ...CHAT_READERS, owner: 403 },
+    },
+    "POST /api/v1/clubs/:clubId/chats/:chatId/messages": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/messages`,
+      expected: CHAT_WRITERS(201),
+      body: { body: "Matrix hello" },
+    },
+    "PATCH /api/v1/clubs/:clubId/chats/:chatId/messages/:messageId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/messages/${m.messageId}`,
+      // Only the sender edits.
+      expected: { ...CHAT_WRITERS(403), coach: 200 },
+      body: { body: "Matrix message, edited" },
+    },
+    "GET /api/v1/clubs/:clubId/chats/:chatId/messages/:messageId/versions": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/messages/${m.messageId}/versions`,
+      expected: { ...CHAT_READERS, owner: 403 },
+    },
+    "POST /api/v1/clubs/:clubId/chats/:chatId/messages/:messageId/reactions": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/messages/${m.messageId}/reactions`,
+      expected: CHAT_WRITERS(201),
+      body: { emoji: "👍", on: true },
+    },
+    "DELETE /api/v1/clubs/:clubId/chats/:chatId/messages/:messageId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/messages/${m.hideMessageId}`,
+      expected: { ...CHAT_WRITERS(403), coach: 200 },
+    },
+    "POST /api/v1/clubs/:clubId/chats/:chatId/read": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/chats/${m.chatId}/read`,
+      expected: { ...CHAT_READERS, owner: 403, coach: 201, member: 201, parent: 201 },
+      body: () => ({ messageId: m.messageId }),
     },
     // Calendar subscriptions (P1.11): readers of the group's or club's calendar.
     "POST /api/v1/groups/:groupId/calendar-feeds": {
@@ -1392,13 +1513,14 @@ describe("reads", () => {
       "club.waitlists.read",
       "club.join_requests.manage",
       "club.invitations.manage",
+      "club.chats.direct",
     ]);
     // Listed without a second factor; the endpoints ask for it.
     expect((await permissions(m.manager.id))?.permissions).toEqual(
       expect.arrayContaining(["club.settings.update", "club.roles.manage", "club.members.read"]),
     );
     const member = await permissions(m.member.id);
-    expect(member?.permissions).toEqual(["club.read", "club.events.read"]);
+    expect(member?.permissions).toEqual(["club.read", "club.events.read", "club.chats.direct"]);
     expect(member?.club).toMatchObject({ defaultLocale: "sv-SE", timeZone: "Europe/Stockholm" });
   });
 

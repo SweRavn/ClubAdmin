@@ -159,6 +159,32 @@ const playerInTeam = (options: { protected?: boolean } = {}) =>
     groups: [{ personId: player, groupId: team, function: "member", ancestorIds: [section] }],
   });
 
+// Chats (P2.1): `coach` and `teammate` are in `team`; `parent` is a full guardian of `ward`.
+const chatR = (overrides: Partial<Extract<Resource, { kind: "chat" }>> = {}): Resource => ({
+  kind: "chat",
+  clubId: club,
+  chatId: uuidv7(),
+  chatKind: "channel",
+  visibility: "open",
+  archived: false,
+  createdByPersonId: null,
+  defaultForGroupId: null,
+  groups: [{ clubId: club, groupId: team, ancestorIds: [section] }],
+  membership: null,
+  wardMembers: [],
+  hasChildren: false,
+  ...overrides,
+});
+const closedChatR = (overrides: Partial<Extract<Resource, { kind: "chat" }>> = {}) =>
+  chatR({ visibility: "closed", ...overrides });
+const clubChannelR = chatR({ groups: [], visibility: "closed" });
+const directR = (membership: "active" | null) =>
+  chatR({ chatKind: "direct", visibility: null, groups: [], membership });
+const memberChild = as({
+  ...member(),
+  groups: [{ clubId: club, groupId: team, function: "member" }],
+});
+
 interface Case {
   name: string;
   actor: Actor;
@@ -1177,6 +1203,226 @@ const CASES: Record<Permission, Case[]> = {
     { name: "platform operator", actor: operatorWithoutGrant, resource: clubR, allowed: true },
     { name: "club manager", actor: manager, resource: clubR, allowed: false },
     { name: "chair", actor: chair, resource: clubR, allowed: false },
+  ],
+  "group.channels.create": [
+    { name: "a player (children too)", actor: teammate, resource: teamR, allowed: true },
+    { name: "the coach", actor: coach, resource: teamR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: true },
+    { name: "archived group", actor: coach, resource: archivedTeamR, allowed: false },
+    {
+      name: "member of the club, not the group",
+      actor: plainMember,
+      resource: teamR,
+      allowed: false,
+    },
+    { name: "guardian of a player", actor: parent, resource: teamR, allowed: false },
+    { name: "acting on behalf of a ward", actor: onBehalf, resource: teamR, allowed: false },
+    { name: "coach of another team", actor: otherTeamCoach, resource: teamR, allowed: false },
+  ],
+  "club.channels.create": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "chair", actor: chair, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.chats.direct": [
+    { name: "member", actor: plainMember, resource: clubR, allowed: true },
+    { name: "guardian of a member", actor: parent, resource: clubR, allowed: true },
+    { name: "acting on behalf of a ward", actor: onBehalf, resource: clubR, allowed: false },
+    { name: "outsider", actor: outsider, resource: clubR, allowed: false },
+    {
+      name: "operator without grant",
+      actor: operatorWithoutGrant,
+      resource: clubR,
+      allowed: false,
+    },
+  ],
+  "chat.read": [
+    {
+      name: "member",
+      actor: plainMember,
+      resource: closedChatR({ membership: "active" }),
+      allowed: true,
+    },
+    {
+      name: "offered (protected)",
+      actor: plainMember,
+      resource: closedChatR({ membership: "offered" }),
+      allowed: true,
+    },
+    {
+      name: "open channel, someone of the group",
+      actor: teammate,
+      resource: chatR(),
+      allowed: true,
+    },
+    {
+      name: "guardian of a member (rule 6)",
+      actor: parent,
+      resource: closedChatR({ wardMembers: [ward] }),
+      allowed: true,
+    },
+    {
+      name: "the group's leader, children in it",
+      actor: coach,
+      resource: closedChatR({ hasChildren: true }),
+      allowed: true,
+    },
+    {
+      name: "manager of the group's channels",
+      actor: coach,
+      resource: closedChatR(),
+      allowed: true,
+    },
+    { name: "club channel: club manager", actor: manager, resource: clubChannelR, allowed: true },
+    {
+      name: "closed channel, someone of the group",
+      actor: teammate,
+      resource: closedChatR(),
+      allowed: false,
+    },
+    {
+      name: "open channel, not of the group",
+      actor: plainMember,
+      resource: chatR(),
+      allowed: false,
+    },
+    { name: "direct message of others", actor: coach, resource: directR(null), allowed: false },
+    {
+      name: "coach of another team",
+      actor: otherTeamCoach,
+      resource: closedChatR({ hasChildren: true }),
+      allowed: false,
+    },
+    {
+      name: "acting on behalf of a member",
+      actor: onBehalf,
+      resource: closedChatR({ membership: "active" }),
+      allowed: false,
+    },
+  ],
+  "chat.join": [
+    {
+      name: "open channel, someone of the group",
+      actor: teammate,
+      resource: chatR(),
+      allowed: true,
+    },
+    {
+      name: "accepting an offer",
+      actor: plainMember,
+      resource: closedChatR({ membership: "offered" }),
+      allowed: true,
+    },
+    {
+      name: "guardian of a member, closed channel",
+      actor: parent,
+      resource: closedChatR({ wardMembers: [ward] }),
+      allowed: true,
+    },
+    {
+      name: "the group's leader, children in it",
+      actor: coach,
+      resource: closedChatR({ hasChildren: true }),
+      allowed: true,
+    },
+    {
+      name: "already a member",
+      actor: teammate,
+      resource: chatR({ membership: "active" }),
+      allowed: false,
+    },
+    {
+      name: "closed channel, someone of the group",
+      actor: teammate,
+      resource: closedChatR(),
+      allowed: false,
+    },
+    { name: "archived", actor: teammate, resource: chatR({ archived: true }), allowed: false },
+    { name: "direct message", actor: coach, resource: directR(null), allowed: false },
+    {
+      name: "leader, no children in it",
+      actor: memberChild,
+      resource: closedChatR(),
+      allowed: false,
+    },
+    { name: "acting on behalf of a ward", actor: onBehalf, resource: chatR(), allowed: false },
+  ],
+  "chat.post": [
+    { name: "member", actor: teammate, resource: chatR({ membership: "active" }), allowed: true },
+    {
+      name: "direct message member",
+      actor: plainMember,
+      resource: directR("active"),
+      allowed: true,
+    },
+    {
+      name: "offered, not accepted",
+      actor: plainMember,
+      resource: chatR({ membership: "offered" }),
+      allowed: false,
+    },
+    {
+      name: "archived",
+      actor: teammate,
+      resource: chatR({ membership: "active", archived: true }),
+      allowed: false,
+    },
+    { name: "not a member (open channel)", actor: teammate, resource: chatR(), allowed: false },
+    {
+      name: "guardian, not joined",
+      actor: parent,
+      resource: chatR({ wardMembers: [ward] }),
+      allowed: false,
+    },
+    {
+      name: "acting on behalf of a member",
+      actor: onBehalf,
+      resource: chatR({ membership: "active" }),
+      allowed: false,
+    },
+  ],
+  "chat.manage": [
+    {
+      name: "creator in the chat",
+      actor: teammate,
+      resource: chatR({ membership: "active", createdByPersonId: teammate.personId }),
+      allowed: true,
+    },
+    {
+      name: "head coach (group.channels.manage)",
+      actor: coach,
+      resource: closedChatR(),
+      allowed: true,
+    },
+    {
+      name: "owner of the parent group",
+      actor: sectionOwner,
+      resource: closedChatR(),
+      allowed: true,
+    },
+    { name: "club channel: club manager", actor: manager, resource: clubChannelR, allowed: true },
+    {
+      name: "creator who left",
+      actor: teammate,
+      resource: chatR({ createdByPersonId: teammate.personId }),
+      allowed: false,
+    },
+    {
+      name: "member, not creator",
+      actor: teammate,
+      resource: chatR({ membership: "active" }),
+      allowed: false,
+    },
+    { name: "direct message", actor: coach, resource: directR("active"), allowed: false },
+    { name: "club channel: coach", actor: coach, resource: clubChannelR, allowed: false },
+    {
+      name: "coach of another team",
+      actor: otherTeamCoach,
+      resource: closedChatR(),
+      allowed: false,
+    },
   ],
   "ops.backup.read": [
     { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },

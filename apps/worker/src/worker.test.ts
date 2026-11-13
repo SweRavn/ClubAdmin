@@ -43,6 +43,7 @@ describe("worker", () => {
       "calendar:retention",
       "privacy:profile_views",
       "administrators:daily",
+      "chat:maintenance",
     ]);
     for (const item of items) expect(taskList[item.task]).toBeTypeOf("function");
   });

@@ -173,7 +173,7 @@ club has roughly 10 named/central users plus generated players.
 | 20 | **Platform Operator** | — | yes | Operator account with **no** club access; one time-limited support grant to IKN |
 | 21 | **Emma Svensson** | 29 | yes | **Signed up without invitation, no club yet** → onboarding screen (find club / create club) |
 | 22 | **Henrik Malm** | 36 | yes | Self-signed-up, added his son **Viktor Malm** (8, no login, no email) via "Add child"; Viktor is **#2 on SVK F2017's waiting list**, which also created a pending club join request |
-| 23 | **Samira Karimi** | 39 | yes | Guardian of Nadia; **protected identity** (global, self-set); sees in Nadia's **access log** who opened her profile (P1.12); the chat room acceptance waits for chat (Phase 2) |
+| 23 | **Samira Karimi** | 39 | yes | Guardian of Nadia; **protected identity** (global, self-set); sees in Nadia's **access log** who opened her profile (P1.12); accepted IKN F2015's "Föräldrar" chat (P2.1) |
 | 24 | **Nadia Karimi** | 11 | no | IKN F2015; **protected identity** set by Samira → invisible to other members, crossed-camera icon for leaders/managers, not in chats, no photo/stream tagging; her **access log** shows Erik twice last week and Karin yesterday |
 | 25 | **Jonas Karimi** | 41 | yes | Second guardian of Nadia, **invited** as guardian by Samira (pending), prompted to enable protection |
 | 26 | **Camilla Dahl** | 40 | yes | Mother of Sofie; applied for her in FIL (join request with J2014 as preferred group) |
@@ -264,8 +264,18 @@ schedule (Ola left two years ago).
   "Avslutningsfest" for all of IKN in 20 days (80 places, moving up
   automatically; food preferences and number of adults), with Samira's
   sign-up of Nadia. A car pool for the cup comes with a later prompt.
-- Chat rooms per group: "Ledare", "Föräldrar", "Spelare" (players room only for
-  groups where players have accounts); protected persons only where accepted.
+- **Chat** (P2.1, ADR 0047, `apps/api/src/seed/steps/chat.ts`, written through
+  the chat service as the personas): every group's default channel (everyone
+  in the group; where a leader is with children, the children's parents are
+  added automatically). In SVK F2017's channel Erik moves Thursday's
+  training (and edits the time), Anna answers him (a reply), Sara and Johan
+  react, Sara reminds about the kiosk. Erik's closed **"Ledare"** channel
+  with Johan and Sara. **"Tjejerna"**: Maja's closed children's chat with
+  Elsa and Alva, which Anna joined as a parent (shown to the children).
+  Johan's **direct message to Alva**: her mother Sara was added by the
+  guardian rule. In IKN F2015 Erik's closed **"Föräldrar"** channel was
+  offered to Samira (protected identity), who accepted it; Nadia is in no
+  chat she has not accepted.
 - SVK training plan "Volleyboll 9 år — hösttermin" shared publicly; IKN copies it.
 - Club documents: statutes (stadgar), last annual meeting minutes, a board
   meeting with agenda.
@@ -433,6 +443,6 @@ eight ahead (256,000 activities with their calendar entries). Responses and
 attendance (P1.5): marks for each team's six latest past sessions (members
 and leaders, about 0.8 million) and answers from half of the children to the
 next four. More
-years of activities, and chat messages (10 million), are added by their
-modules. Used by
+years of activities are added by their modules. Chat (P2.1): every load
+group's default channel with its members and 60 messages. Used by
 the performance tests (`performance.md`).

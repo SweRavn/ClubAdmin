@@ -58,3 +58,15 @@ describe("content security policy", () => {
     );
   });
 });
+
+describe("the chat's WebSocket (P2.1)", () => {
+  it("lets scripts connect to the API's WebSocket origin only", () => {
+    const csp = contentSecurityPolicy({
+      nonce: "n",
+      development: false,
+      formActions: [],
+      connectSources: ["wss://api.example"],
+    });
+    expect(csp).toContain("connect-src 'self' wss://api.example;");
+  });
+});

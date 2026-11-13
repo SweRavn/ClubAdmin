@@ -18,6 +18,7 @@ import { actorPersonId, type Context, hasClub, runAs } from "../../platform/doma
 import { ACTIVITY_PERSON_REFERENCES } from "../activities/index.ts";
 import { ADMINISTRATOR_PERSON_REFERENCES } from "../administrators/index.ts";
 import { CALENDAR_PERSON_REFERENCES } from "../calendar/index.ts";
+import { CHAT_PERSON_REFERENCES } from "../chat/index.ts";
 import {
   CLUB_PROFILE_PERSON_REFERENCES,
   type ClubProfilesService,
@@ -46,6 +47,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...MEMBERS_PERSON_REFERENCES,
   ...ACTIVITY_PERSON_REFERENCES,
   ...EVENT_PERSON_REFERENCES,
+  ...CHAT_PERSON_REFERENCES,
   ...PRIVACY_PERSON_REFERENCES,
 ];
 

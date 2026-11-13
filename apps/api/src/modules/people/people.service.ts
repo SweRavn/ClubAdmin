@@ -262,6 +262,19 @@ export class PeopleService {
     );
   }
 
+  /**
+   * Members and senders of a chat (P2.1), read without the viewer's person
+   * policy: everyone in a chat sees who else is in it (ADR 0047), and former
+   * members stay its authors. Only for IDs of a chat the caller may read; pass
+   * the rows to PersonPresenter (protected identity) and show erased people
+   * as former members.
+   */
+  chatPeople(
+    personIds: readonly string[],
+  ): Promise<(repo.PersonSummaryRow & { erased: boolean })[]> {
+    return this.db.withSystem("chat:people", {}, (tx) => repo.findHistoryPeople(tx, personIds));
+  }
+
   /** People by ID without an actor (DEV_AUTH persona picker only). */
   listForDevelopment(personIds: readonly string[]): Promise<Person[]> {
     return this.db.withSystem("dev:personas", {}, async (tx) =>

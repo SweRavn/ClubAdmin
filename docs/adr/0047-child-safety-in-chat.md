@@ -113,3 +113,52 @@ needs a DPIA and a stated purpose (safeguarding, the club's record) under
 GDPR's storage limitation: the draft is [`dpia-chat.md`](../dpia-chat.md),
 completed by the chat prompt. The bot's languages
 and models are decided when it is built.
+
+## As implemented (P2.1 part A, 2026-11-13)
+
+- **The guardian rule** is a SQL function (`app.chat_enforce_guardians`,
+  migration 0037) the chat service runs after every change to a chat's
+  members and the worker after group and guardianship changes. "Adults who
+  count" are adult members who are not a full guardian (parent, legal
+  guardian) of a child in the chat, **or** who lead a group a child in the
+  chat is in: a coach who is also a parent still brings the other
+  children's guardians in; a parent who joins their child's chat does not.
+  Guardians the rule added (`guardian_auto`) cannot leave or be removed
+  while it holds (they can turn push off), and leave by themselves when it
+  no longer holds (the leader left, the child turned 18: the worker rechecks
+  daily). A system message tells everyone which guardians were added.
+- **Children** are members below the club's country pack's adult age with a
+  known birth date (`chats.has_children` kept by the rule). People without a
+  birth date count as adults.
+- **Direct messages** (`app.chat_direct_refusal`): adults with adults; to a
+  child only their full guardian, a leader of a group the child is in, or a
+  child of one of the child's groups; a child to children of their groups,
+  their guardians and their groups' leaders. Anything else is
+  `chat_child_protected`.
+- **Whom a channel may hold** (`app.chat_unaddable`): people of its groups
+  or full guardians of them ("the team's parents"); for club channels anyone
+  related to the club. A child adds only children who share one of the
+  channel's groups with them.
+- **Guardians' insight** (rule 6): the `chat.read` policy lets a full
+  guardian of a member see the chat and who is in it (also closed ones), not
+  the messages; joining (`guardian_joined`) shows them to everyone. A
+  guardian acting on behalf of the child never reads or writes the child's
+  chats: the clients never send `X-On-Behalf-Of` on chat and real-time
+  paths (`onBehalfApplies`), so "viewing as" a ward still shows the
+  guardian's own chats, and the API refuses chat on behalf of anyone.
+- **The app** keeps chats cache first: "Mina kanaler", a chat's members
+  and its messages show from the encrypted cache at once. The real-time
+  connection is open only while a chat screen is shown and the app is in
+  the foreground; its events (IDs only) mark the cached data stale.
+  Messages go through the outbox with a UUIDv7 chosen on the phone, so they
+  wait for coverage and a resend never posts twice.
+- **Leaders** of a chat's groups see and may join children's chats of their
+  group (`leader_joined`); the guardian rule then adds the guardians.
+- **Protected people** are offered a chat (`offered`), never added, also as
+  guardians the rule needs; declining is final (not offered again).
+- **Nothing disappears:** deleting hides; every earlier text is in
+  `chat_message_versions`; erasure takes the person out of every chat and
+  their messages stay as "a former member's".
+- Reporting, safeguarding cases, moderation by safeguarding officers, the
+  background-check hook and the three-year limit on old messages come with
+  part B; push per channel with part C.

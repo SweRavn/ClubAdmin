@@ -8,6 +8,7 @@ import { AdministratorsModule } from "./modules/administrators/index.ts";
 import { AuditModule } from "./modules/audit/index.ts";
 import { BackupsModule } from "./modules/backups/index.ts";
 import { CalendarModule } from "./modules/calendar/index.ts";
+import { ChatModule } from "./modules/chat/index.ts";
 import { ClubProfilesModule } from "./modules/club-profiles/index.ts";
 import { ClubTypesModule } from "./modules/club-types/index.ts";
 // Not in the clubs module's index: it depends on the roles module, which depends on clubs.
@@ -50,6 +51,7 @@ const MODULES = [
   ActivitiesModule,
   EventsModule,
   CalendarModule,
+  ChatModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

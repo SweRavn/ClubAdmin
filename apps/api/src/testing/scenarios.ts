@@ -50,6 +50,15 @@ export interface MatrixScenario {
   eventId: string;
   cancelEventId: string;
   draftEventId: string;
+  /**
+   * Chats of team T (P2.1): a closed channel of the coach with the member and
+   * the child (the parent is added by the guardian rule), an open channel of
+   * the coach alone, and two of the coach's messages (to edit, to hide).
+   */
+  chatId: string;
+  openChatId: string;
+  messageId: string;
+  hideMessageId: string;
   outsider: BuiltPerson;
   operator: BuiltPerson;
 }
@@ -172,6 +181,39 @@ export async function buildMatrixScenario(
   const cancelEvent = await event("Matrix camp", true);
   const draftEvent = await event("Matrix party", false);
 
+  // Chats of team T (P2.1).
+  const coachCtx = { ...a, personId: coach.id };
+  const chatId = await s.chat.createChannel(coachCtx, {
+    name: "Matrix",
+    visibility: "closed",
+    memberIds: [member.id, child.id],
+    everyone: false,
+    groupId: team.id,
+  });
+  const openChatId = await s.chat.createChannel(coachCtx, {
+    name: "Matrix open",
+    visibility: "open",
+    memberIds: [],
+    everyone: false,
+    groupId: team.id,
+  });
+  const chatResource = {
+    kind: "chat" as const,
+    clubId: clubA.id,
+    chatId,
+    chatKind: "channel" as const,
+    visibility: "closed" as const,
+    archived: false,
+    createdByPersonId: coach.id,
+    defaultForGroupId: null,
+    groups: [{ clubId: clubA.id, groupId: team.id, ancestorIds: [section.id] }],
+    membership: "active" as const,
+    wardMembers: [],
+    hasChildren: true,
+  };
+  const message = await s.chat.send(coachCtx, chatResource, { body: "Matrix message" });
+  const hideMessage = await s.chat.send(coachCtx, chatResource, { body: "Matrix to hide" });
+
   const operator = await buildPerson(s);
   await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
 
@@ -201,6 +243,10 @@ export async function buildMatrixScenario(
     eventId: matrixEvent.event.id,
     cancelEventId: cancelEvent.event.id,
     draftEventId: draftEvent.event.id,
+    chatId,
+    openChatId,
+    messageId: message.id,
+    hideMessageId: hideMessage.id,
     outsider: clubB.manager,
     operator,
   };

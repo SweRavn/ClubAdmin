@@ -14,9 +14,15 @@ import type { FastifyRequest } from "fastify";
 
 import type { Principal } from "../../platform/http/principal.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
-import { canReadEvent, canReadGroupActivities, policyFor } from "./authorization.policy.ts";
+import {
+  canReadChat,
+  canReadEvent,
+  canReadGroupActivities,
+  policyFor,
+} from "./authorization.policy.ts";
 import {
   loadActivityScope,
+  loadChatScope,
   loadEventScope,
   loadFamilyResourcePerson,
   loadGroupScope,
@@ -30,6 +36,7 @@ import {
 import type { AuthorizationCache } from "./authorization-cache.ts";
 import type {
   ActivityResource,
+  ChatResource,
   ClubCreationMode,
   ClubResource,
   EventResource,
@@ -186,6 +193,8 @@ export class AuthorizationService {
     if (resource.kind === "event") {
       return canReadEvent(actor, resource) ? "forbidden" : "not-found";
     }
+    // Closed chats do not exist for those who may not read them.
+    if (resource.kind === "chat") return canReadChat(actor, resource) ? "forbidden" : "not-found";
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
 
@@ -211,7 +220,59 @@ export class AuthorizationService {
         return this.eventResource(authorization, request);
       case "administrator_suspension":
         return this.suspensionResource(request);
+      case "chat":
+        return this.chatResource(authorization, request);
     }
+  }
+
+  /**
+   * A chat within :clubId (P2.1): its scope, its groups with their
+   * ancestors, and the actor's and their wards' memberships (system read in
+   * the club; IDs only).
+   */
+  private async chatResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+  ): Promise<ChatResource> {
+    const { clubId } = this.clubResource(request);
+    const chatId = param(request, "chatId");
+    if (!chatId || !isUuid(chatId)) throw new ProblemError("not-found");
+    return this.chatResourceOf(authorization.actor, clubId, chatId);
+  }
+
+  /** A chat as a resource outside a request (the real-time connection); not-found if missing. */
+  async chatResourceOf(actor: Actor, clubId: string, chatId: string): Promise<ChatResource> {
+    const wards = actor.onBehalfOf
+      ? []
+      : actor.relationships.wards
+          .filter((w) => actor.isFullGuardianOf(w.personId))
+          .map((w) => w.personId);
+    return this.db.withSystem("authz:chat", { clubId }, async (tx) => {
+      const scope = await loadChatScope(tx, chatId, [actor.personId, ...wards]);
+      if (!scope) throw new ProblemError("not-found");
+      const ancestors = await loadGroupScopes(tx, scope.groupIds);
+      const own = scope.members.find((m) => m.personId === actor.personId);
+      return {
+        kind: "chat" as const,
+        clubId,
+        chatId,
+        chatKind: scope.chatKind,
+        visibility: scope.visibility,
+        archived: scope.archived,
+        createdByPersonId: scope.createdByPersonId,
+        defaultForGroupId: scope.defaultForGroupId,
+        groups: scope.groupIds.map((groupId) => ({
+          clubId,
+          groupId,
+          ancestorIds: ancestors.get(groupId)?.ancestorIds ?? [],
+        })),
+        membership: own ? own.status : null,
+        wardMembers: scope.members
+          .filter((m) => m.personId !== actor.personId && m.status === "active")
+          .map((m) => m.personId),
+        hasChildren: scope.hasChildren,
+      };
+    });
   }
 
   /** A suspension request with the club's number of administrators (P1.15 A3). */

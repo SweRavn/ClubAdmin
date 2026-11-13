@@ -260,6 +260,13 @@
       "when": 1794480005000,
       "tag": "0036_club_types",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794570005000,
+      "tag": "0037_chat",
+      "breakpoints": true
     }
   ]
 }

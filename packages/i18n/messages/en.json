@@ -44,7 +44,8 @@
     "schedule": "My schedule",
     "calendar": "Calendar",
     "locations": "Locations",
-    "events": "Events"
+    "events": "Events",
+    "chat": "Chat"
   },
   "clubSwitcher": {
     "label": "Club: {club}",
@@ -794,7 +795,17 @@
     "club_type_role_exists": "The template already has a role with that key.",
     "club_type_role_required": "Every club type needs this role: it cannot be removed or lose its locked permissions.",
     "club_type_role_names_required": "The role needs names in Swedish, English and Norwegian.",
-    "template_role_exists": "The club already has that role."
+    "template_role_exists": "The club already has that role.",
+    "chat_not_a_member": "Join the chat to read and write.",
+    "chat_child_protected": "You cannot write directly to someone else's child. The child's leaders and parents can; write in the group's channel instead.",
+    "chat_self": "You cannot send a message to yourself.",
+    "chat_not_in_club": "The person does not belong to the club.",
+    "chat_member_not_allowed": "Someone you chose cannot be added to this channel.",
+    "chat_default_channel": "The group's channel follows the group: its members and name change with the group.",
+    "chat_direct_members": "A direct message always has the same two people.",
+    "chat_guardian_required": "The parent must stay while an adult is with their child in the chat. Turn notifications off instead.",
+    "chat_message_hidden": "The message was deleted.",
+    "chat_message_conflict": "The message could not be sent. Try again."
   },
   "memberExport": {
     "columns": {
@@ -2685,7 +2696,10 @@
       "unsubscribed": "unsubscribed from",
       "updated": "updated",
       "verified": "verified",
-      "withdrawn": "withdrew"
+      "withdrawn": "withdrew",
+      "joined": "joined",
+      "left": "left",
+      "hidden": "hid"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -3299,7 +3313,8 @@
       "events": "Events",
       "finance": "Finance",
       "privacy": "Privacy",
-      "club": "The club"
+      "club": "The club",
+      "communication": "Communication"
     },
     "permissions": {
       "club_settings_update": {
@@ -3586,6 +3601,21 @@
         "name": "See invoices",
         "description": "Can see and download the club's invoices from ClubAdmin.",
         "example": "For example, can download an invoice for the accounts."
+      },
+      "group_channels_create": {
+        "name": "Create channels in the group",
+        "description": "Can create chat channels in the group and choose who is in them. The child-safety rules always apply.",
+        "example": "For example, can create a “Match info” channel for the whole team or a channel for the coaches."
+      },
+      "group_channels_manage": {
+        "name": "Manage the group's channels",
+        "description": "Can change the members of, and archive, channels others created in the group.",
+        "example": "For example, can remove a player who has left from the team's channels."
+      },
+      "club_channels_create": {
+        "name": "Create club channels",
+        "description": "Can create chat channels for the whole club, not tied to a group, and choose who is in them.",
+        "example": "For example, can create a channel for the board or for all leaders."
       }
     }
   },
@@ -3769,5 +3799,109 @@
     "newRole": "New role in the template",
     "newRoleHint": "A key the catalogue does not know needs names in all three languages. Choose its permissions afterwards.",
     "addRole": "Add the role"
+  },
+  "chat": {
+    "nav": "Chat",
+    "title": "My channels",
+    "empty": "You are not in any chat yet. Each group's channels are on its page.",
+    "unread": "{count, plural, one {# unread} other {# unread}}",
+    "noMessages": "No messages yet",
+    "directWith": "Direct message",
+    "groupChannels": "Channels",
+    "groupChannelsHint": "The group's channel has everyone in the group. Anyone in the group can join open channels; closed ones are seen only by those added.",
+    "newChannel": "New channel",
+    "clubChannels": "Club channels",
+    "name": "Name",
+    "description": "Description (optional)",
+    "visibility": "Who sees the channel?",
+    "visibilities": {
+      "open": "Open: everyone in the group sees it and can join",
+      "closed": "Closed: only the people you add"
+    },
+    "visibilityShort": {
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "everyone": "Add everyone in the group",
+    "chooseMembers": "Choose who is in it",
+    "create": "Create the channel",
+    "defaultChannel": "Group channel",
+    "archived": "Archived",
+    "members": "In this chat",
+    "hiddenMembers": "{count, plural, one {# person with protected identity} other {# people with protected identity}}",
+    "reasons": {
+      "creator": "created the chat",
+      "added": "added",
+      "joined": "joined",
+      "group": "in the group",
+      "guardian_auto": "parent, added automatically",
+      "guardian_joined": "parent, joined",
+      "leader_joined": "leader, joined"
+    },
+    "offeredStatus": "offered, has not answered",
+    "child": "child",
+    "leader": "leader",
+    "guardianOf": "parent of {names}",
+    "system": {
+      "created": "{names} created the chat",
+      "joined": "{names} joined",
+      "left": "{names} left",
+      "added": "{names} were added",
+      "removed": "{names} were removed",
+      "guardians_added": "Parents were added because an adult is with the children: {names}",
+      "renamed": "{names} renamed the chat",
+      "archived": "{names} archived the chat"
+    },
+    "someone": "someone",
+    "protectedPerson": "A member with protected identity",
+    "formerMember": "A former member",
+    "edited": "edited",
+    "hiddenBySender": "The message was deleted.",
+    "hiddenByModerator": "The message was hidden by the club's safeguarding officers.",
+    "reply": "Reply",
+    "replyingTo": "Replying to {name}",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "save": "Save",
+    "delete": "Delete",
+    "deleteConfirm": "Delete the message? It is hidden for everyone but kept (child safety).",
+    "versions": "Earlier versions",
+    "react": "React",
+    "placeholder": "Write a message",
+    "send": "Send",
+    "sending": "Sending…",
+    "failed": "Could not be sent. Retrying when you are connected.",
+    "typing": "{name} is typing…",
+    "connected": "Connected",
+    "offline": "Not connected – messages appear when the connection is back",
+    "readBy": "{count, plural, one {Read by #} other {Read by #}}",
+    "loadOlder": "Show older messages",
+    "childBanner": "Children are in this chat. Their parents can see who is in it and join at any time – everyone here then sees it.",
+    "childBannerJoined": "Parents in the chat: {names}.",
+    "childBannerNone": "No parent has joined.",
+    "leaderRule": "When a leader or another adult is with children, the children's parents are added automatically.",
+    "notMember": "You see who is in the chat. To read the messages, join – everyone in the chat sees that you did.",
+    "offered": "You have been offered to join this chat. Others do not see you until you accept.",
+    "join": "Join",
+    "joinAsGuardian": "Join as a parent",
+    "joinAsLeader": "Join as a leader",
+    "accept": "Accept",
+    "decline": "Decline",
+    "leave": "Leave the chat",
+    "push": "Notifications",
+    "pushSettings": {
+      "all": "Every message",
+      "mentions": "Only when mentioned",
+      "off": "Off"
+    },
+    "manage": "Manage",
+    "rename": "Rename",
+    "archive": "Archive",
+    "unarchive": "Restore",
+    "addMembers": "Add",
+    "remove": "Remove",
+    "sendMessage": "Send a message",
+    "safety": "How chat works for children",
+    "live": "New messages appear at once."
   }
 }

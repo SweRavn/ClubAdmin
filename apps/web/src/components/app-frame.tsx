@@ -49,6 +49,13 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       label: t("nav.schedule"),
       current: pathname.startsWith("/schedule") || pathname.startsWith("/activit"),
     },
+    // "Mina kanaler" (P2.1): every chat across clubs and groups.
+    {
+      key: "chat",
+      href: "/me/chats",
+      label: t("nav.chat"),
+      current: pathname.startsWith("/me/chats") || /^\/clubs\/[^/]+\/chats/.test(pathname),
+    },
   ];
   if (club) {
     nav.push({

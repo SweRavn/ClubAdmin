@@ -181,6 +181,18 @@ export const AUDIT_ACTIONS = [
   "guardianship.invitation.accepted",
   "guardianship.adult.decided",
   "backup.restore.verified",
+  // Chat (P2.1, ADR 0047): membership changes made by others, joins by
+  // guardians and leaders, hidden messages, archiving. Message texts never.
+  "chat.created",
+  "chat.updated",
+  "chat.archived",
+  "chat.member.added",
+  "chat.member.removed",
+  "chat.member.joined",
+  "chat.member.left",
+  "chat.member.accepted",
+  "chat.member.declined",
+  "chat.message.hidden",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

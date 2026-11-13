@@ -7,6 +7,7 @@
 import { type Permission, PERMISSIONS, type RegisterAccess } from "@clubadmin/shared";
 
 import {
+  type ChatResource,
   type ClubResource,
   definePolicy,
   type EventResource,
@@ -184,6 +185,71 @@ export function canReadEvent(actor: Actor, event: EventResource): boolean {
 export function registerAccess(actor: Actor, clubId: string): RegisterAccess | null {
   if (!actor.holds("club.members.read", clubId)) return null;
   return actor.holds("club.people.details", clubId) ? "full" : "limited";
+}
+
+// --- Chat (P2.1, ADR 0047) ----------------------------------------------------
+//
+// Who may read, join, write and manage a chat follows from its members and
+// the child-safety rules, not from roles alone. A guardian acting on behalf
+// of a ward (X-On-Behalf-Of) never reads or writes the ward's chats: guardians
+// join visibly in their own name (rule 6).
+
+/** Someone of the chat's groups (any role, or owning one); for club channels, anyone related to the club. */
+function insiderOfChat(actor: Actor, chat: ChatResource): boolean {
+  if (chat.groups.length === 0) return actor.hasClubRelationship(chat.clubId);
+  return chat.groups.some((g) => actor.isGroupMember(g.groupId) || actor.ownsGroup(g));
+}
+
+/** A leader of one of the chat's groups (`group.lead`, P1.15) in a chat with children. */
+function leadsChildrensChat(actor: Actor, chat: ChatResource): boolean {
+  return chat.hasChildren && chat.groups.some((g) => actor.holds("group.lead", g));
+}
+
+/**
+ * Who manages a channel (its members, name, archiving): its creator while in
+ * it; owners of its groups and holders of `group.channels.manage` there; for
+ * club channels holders of `club.channels.create`. Direct messages have no
+ * manager.
+ */
+export function canManageChat(actor: Actor, chat: ChatResource): boolean {
+  if (actor.onBehalfOf || chat.chatKind === "direct") return false;
+  if (chat.createdByPersonId === actor.personId && chat.membership === "active") return true;
+  if (chat.groups.length === 0) return actor.holds("club.channels.create", chat.clubId);
+  return chat.groups.some((g) => actor.ownsGroup(g) || actor.holds("group.channels.manage", g));
+}
+
+/**
+ * Who sees a chat and who is in it: its members (also offered ones), full
+ * guardians of a member (rule 6), people of its groups for open channels,
+ * its managers, and leaders of its groups when children are in it. Messages
+ * are for active members only (the chat service).
+ */
+export function canReadChat(actor: Actor, chat: ChatResource): boolean {
+  if (actor.onBehalfOf) return false;
+  if (chat.membership !== null || chat.wardMembers.length > 0) return true;
+  if (chat.chatKind === "channel" && chat.visibility === "open" && insiderOfChat(actor, chat)) {
+    return true;
+  }
+  return canManageChat(actor, chat) || leadsChildrensChat(actor, chat);
+}
+
+/**
+ * Who may join (or accept an offer): open channels for the people of their
+ * groups; any chat their child is in for full guardians (rule 6); children's
+ * chats of their group for its leaders (rule 6; the guardian rule then adds
+ * the children's guardians).
+ */
+export function canJoinChat(actor: Actor, chat: ChatResource): boolean {
+  if (actor.onBehalfOf || chat.archived || chat.membership === "active") return false;
+  if (chat.membership === "offered") return true;
+  if (chat.chatKind === "direct") return false;
+  if (chat.visibility === "open" && insiderOfChat(actor, chat)) return true;
+  return chat.wardMembers.length > 0 || leadsChildrensChat(actor, chat);
+}
+
+/** Active members write while the chat is not archived. */
+export function canPostInChat(actor: Actor, chat: ChatResource): boolean {
+  return !actor.onBehalfOf && chat.membership === "active" && !chat.archived;
 }
 
 /** The permission held through a club role (club-scope policies, P1.15). */
@@ -646,6 +712,32 @@ export const POLICIES: readonly Policy[] = [
   // Club types and their templates (P1.15 B): operators, with a second factor.
   definePolicy("club_types.read", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
   definePolicy("club_types.manage", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
+  // Chat (P2.1, ADR 0047). Who is added, and the child-safety rules, are
+  // checked by the chat service; these decide who may ask.
+  definePolicy(
+    "group.channels.create",
+    "group",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      !resource.archived &&
+      (actor.ownsGroup(resource) || actor.holds("group.channels.create", resource)),
+  ),
+  definePolicy(
+    "club.channels.create",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.channels.create", resource.clubId),
+  ),
+  // Direct messages: anyone related to the club asks; the service applies rules 3 and 4.
+  definePolicy(
+    "club.chats.direct",
+    "club",
+    ({ actor, resource }) => !actor.onBehalfOf && actor.hasClubRelationship(resource.clubId),
+  ),
+  definePolicy("chat.read", "chat", ({ actor, resource }) => canReadChat(actor, resource)),
+  definePolicy("chat.join", "chat", ({ actor, resource }) => canJoinChat(actor, resource)),
+  definePolicy("chat.post", "chat", ({ actor, resource }) => canPostInChat(actor, resource)),
+  definePolicy("chat.manage", "chat", ({ actor, resource }) => canManageChat(actor, resource)),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

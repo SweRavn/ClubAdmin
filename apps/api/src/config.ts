@@ -23,6 +23,10 @@ export const apiConfigSchema = z
     API_HOST: z.string().default("0.0.0.0"),
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
     PUBLIC_WEB_URL: z.url().default("https://clubadmin.localhost"),
+    /** The API's public URL (P2.1: the real-time WebSocket URL handed to clients). */
+    PUBLIC_API_URL: z.url().default("https://api.clubadmin.localhost"),
+    /** Real-time connections per person and API instance (P2.1). */
+    REALTIME_MAX_CONNECTIONS_PER_PERSON: z.coerce.number().int().min(1).max(100).default(10),
     /**
      * Signs the answer links in calendar feeds (P1.11, at least 32
      * characters). Without it feeds are not offered; production refuses to

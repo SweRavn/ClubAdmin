@@ -51,6 +51,7 @@ catalog:
   "@types/pg": ^8.15.0
   "@types/react": ^19.2.0
   "@types/react-dom": ^19.2.0
+  "@types/ws": ^8.18.0
   # Needed by `swc --watch` (optional peer dependency of @swc/cli)
   chokidar: ^5.0.0
   dependency-cruiser: ^18.0.0
@@ -87,6 +88,7 @@ catalog:
   typescript-eslint: ^8.70.0
   unplugin-swc: ^2.0.0
   vitest: ^5.0.0
+  ws: ^8.22.0
   zod: ^4.0.0
 # The mobile app's React must equal the version its React Native release
 # renders with (Expo SDK 57: React 19.2.3), which may lag the web's.

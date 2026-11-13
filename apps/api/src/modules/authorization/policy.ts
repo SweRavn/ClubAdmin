@@ -77,6 +77,30 @@ export interface SuspensionResource {
   administrators: number;
 }
 
+/**
+ * A chat (:chatId within :clubId; P2.1, ADR 0047) with its groups and the
+ * memberships of the actor and their wards in it.
+ */
+export interface ChatResource {
+  kind: "chat";
+  clubId: string;
+  chatId: string;
+  chatKind: "channel" | "direct";
+  visibility: "open" | "closed" | null;
+  archived: boolean;
+  createdByPersonId: string | null;
+  /** The group's default channel (everyone in the group). */
+  defaultForGroupId: string | null;
+  /** The groups it was made for, with their ancestors (none for direct messages and club channels). */
+  groups: readonly GroupRef[];
+  /** The actor's membership: active, offered (protected identity) or none. */
+  membership: "active" | "offered" | null;
+  /** Wards of the actor (full guardian) who are active members (ADR 0047 rule 6). */
+  wardMembers: readonly string[];
+  /** Children are active members (ADR 0047). */
+  hasChildren: boolean;
+}
+
 export interface Resources {
   platform: PlatformResource;
   club: ClubResource;
@@ -86,6 +110,7 @@ export interface Resources {
   activity: ActivityResource;
   event: EventResource;
   administrator_suspension: SuspensionResource;
+  chat: ChatResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

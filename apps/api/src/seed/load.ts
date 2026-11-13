@@ -232,6 +232,39 @@ export async function seedLoad(env: SeedEnvironment, clubs: number): Promise<voi
     ANALYZE;
   `);
   if (env.billingEnabled) await seedLoadBilling(env);
+  await seedLoadChat(env);
+}
+
+/**
+ * Chat (P2.1): every load group's default channel with its members and 60
+ * messages, so the chat queries are measured on volume (ADR 0040).
+ */
+async function seedLoadChat(env: SeedEnvironment): Promise<void> {
+  await env.admin(`
+    BEGIN;
+    SELECT set_config('app.actor_kind', 'system_job', true), set_config('app.request_id', 'job:seed:load', true);
+    CREATE TEMP TABLE lcg ON COMMIT DROP AS
+      SELECT g.id AS group_id, g.club_id, g.name, uuidv7() AS chat_id
+      FROM groups g JOIN clubs c ON c.id = g.club_id
+      WHERE c.slug LIKE 'load-%' AND NOT EXISTS (SELECT 1 FROM chats x WHERE x.default_for_group_id = g.id);
+    INSERT INTO chats (id, club_id, kind, name, visibility, default_for_group_id)
+      SELECT chat_id, club_id, 'channel', name, 'open', group_id FROM lcg;
+    INSERT INTO chat_groups (club_id, chat_id, group_id) SELECT club_id, chat_id, group_id FROM lcg;
+    INSERT INTO chat_members (club_id, chat_id, person_id, reason)
+      SELECT DISTINCT ON (l.chat_id, gm.person_id) l.club_id, l.chat_id, gm.person_id, 'group'
+      FROM lcg l JOIN group_memberships gm ON gm.group_id = l.group_id AND gm.valid_to IS NULL;
+    INSERT INTO chat_messages (club_id, chat_id, sender_person_id, kind, body)
+      SELECT l.club_id, l.chat_id, m.person_id, 'text', 'Meddelande ' || k
+      FROM lcg l CROSS JOIN generate_series(1, 60) AS k
+      JOIN LATERAL (SELECT cm.person_id FROM chat_members cm WHERE cm.chat_id = l.chat_id
+                    ORDER BY cm.person_id OFFSET k % 5 LIMIT 1) m ON true;
+    UPDATE chats c SET last_message_id = x.id, last_message_at = x.created_at
+      FROM (SELECT DISTINCT ON (chat_id) chat_id, id, created_at FROM chat_messages
+            WHERE chat_id IN (SELECT chat_id FROM lcg) ORDER BY chat_id, id DESC) x
+      WHERE c.id = x.chat_id;
+    COMMIT;
+    ANALYZE;
+  `);
 }
 
 /**
