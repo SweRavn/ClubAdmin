@@ -71,8 +71,9 @@ export async function seed(
         `core: ${data.personas.length} personas, ${data.clubs.length} clubs, ${data.groups.length} groups`,
       );
       for (const step of DEMO_STEPS) {
+        const started = performance.now();
         await step.run(full, data, result);
-        log(`${step.name}: done`);
+        log(`${step.name}: done (${((performance.now() - started) / 1000).toFixed(1)} s)`);
       }
       // The demo invitations can be tried at once (fixed secrets, development data).
       for (const i of data.relationships.invitations) {
