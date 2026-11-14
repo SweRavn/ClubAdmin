@@ -2,14 +2,14 @@
 
 ## Two ways to run ClubAdmin
 
-|              | Hosted service                          | Self-hosted                                           |
-| ------------ | --------------------------------------- | ----------------------------------------------------- |
-| Who runs it  | The project operator                    | A federation, municipality, large club or company     |
-| Target users | Most clubs (no technical skills needed) | Organisations with their own IT operations            |
-| Tenancy      | Many clubs in one installation          | One or many clubs                                     |
-| Billing      | Optional; can charge clubs              | Off by default (`BILLING_ENABLED=false`)              |
-| Updates      | Continuous                              | Tagged releases, semantic versioning, migration notes |
-| Support      | Operator                                | Community / own staff                                 |
+| | Hosted service | Self-hosted |
+|---|---|---|
+| Who runs it | The project operator | A federation, municipality, large club or company |
+| Target users | Most clubs (no technical skills needed) | Organisations with their own IT operations |
+| Tenancy | Many clubs in one installation | One or many clubs |
+| Billing | Optional; can charge clubs | Off by default (`BILLING_ENABLED=false`) |
+| Updates | Continuous | Tagged releases, semantic versioning, migration notes |
+| Support | Operator | Community / own staff |
 
 Both run the **same code and the same images**. Nothing in the hosted service is
 closed source (AGPL-3.0).
@@ -19,16 +19,16 @@ closed source (AGPL-3.0).
 Everything is configured by environment variables (documented in
 `.env.example`). Key flags:
 
-| Variable               | Default                                 | Meaning                                                                                                                                                                                              |
-| ---------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DEPLOYMENT_MODE`      | `self_hosted`                           | `hosted` enables public club sign-up, operator console                                                                                                                                               |
-| `BILLING_ENABLED`      | `false`                                 | Enables plans, subscriptions, invoices, payment provider                                                                                                                                             |
-| `USER_SIGNUP`          | `open`                                  | `open`: anyone can create an account; `invite_only`: accounts only via invitation                                                                                                                    |
-| `CLUB_CREATION`        | `open` if hosted, else `operators_only` | `open`: any signed-up person can create a club and becomes its manager; `approval`: operator approves new clubs; `operators_only`                                                                    |
-| `DEFAULT_COUNTRY`      | `SE`                                    | Country pack for new clubs                                                                                                                                                                           |
-| `FEATURE_*`            | `true`                                  | Turn a feature off for the whole installation: `FEATURE_CHAT`, `FEATURE_CALENDAR_FEEDS`, `FEATURE_STREAMING`, `FEATURE_DOCUMENTS`, `FEATURE_FINANCE`, `FEATURE_SPONSORS`. Its routes then answer 404 |
-| `BILLING_DEFAULT_PLAN` | `free`                                  | Billing on: plan key for clubs without a (current) subscription, and the plan of a new club's trial                                                                                                  |
-| `BILLING_TRIAL_DAYS`   | `30`                                    | Billing on, hosted: length of the trial a new club starts with                                                                                                                                       |
+| Variable | Default | Meaning |
+|---|---|---|
+| `DEPLOYMENT_MODE` | `self_hosted` | `hosted` enables public club sign-up, operator console |
+| `BILLING_ENABLED` | `false` | Enables plans, subscriptions, invoices, payment provider |
+| `USER_SIGNUP` | `open` | `open`: anyone can create an account; `invite_only`: accounts only via invitation |
+| `CLUB_CREATION` | `open` if hosted, else `operators_only` | `open`: any signed-up person can create a club and becomes its manager; `approval`: operator approves new clubs; `operators_only` |
+| `DEFAULT_COUNTRY` | `SE` | Country pack for new clubs |
+| `FEATURE_*` | `true` | Turn a feature off for the whole installation: `FEATURE_CHAT`, `FEATURE_CALENDAR_FEEDS`, `FEATURE_STREAMING`, `FEATURE_DOCUMENTS`, `FEATURE_FINANCE`, `FEATURE_SPONSORS`. Its routes then answer 404 |
+| `BILLING_DEFAULT_PLAN` | `free` | Billing on: plan key for clubs without a (current) subscription, and the plan of a new club's trial |
+| `BILLING_TRIAL_DAYS` | `30` | Billing on, hosted: length of the trial a new club starts with |
 
 ## Billing module design
 
@@ -41,9 +41,10 @@ Billing must be easy to ignore. It is built in two layers (ADR 0013, ADR 0031):
    tables (CLAUDE.md rule 11). The catalogue is in
    `packages/shared/src/entitlements.ts`:
 
-   | Features                                                                  | Limits                                                           |
-   | ------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+   | Features | Limits |
+   |---|---|
    | `chat`, `calendar_feeds`, `streaming`, `documents`, `finance`, `sponsors` | `members_max`, `storage_gb`, `streaming_hours` (null: unlimited) |
+
    - With billing disabled (`FlagsEntitlements`), every feature enabled by its
      `FEATURE_*` flag is granted, with no limits.
    - With billing enabled (`PlanEntitlements`), entitlements come from the
@@ -59,7 +60,6 @@ Billing must be easy to ignore. It is built in two layers (ADR 0013, ADR 0031):
      subscription status or access state, on all instances through Valkey.
    - `GET /api/v1/clubs/:clubId/entitlements` (anyone related to the club)
      lets apps adapt their UI.
-
 2. **Club access state** (always present): `clubs.access_state` is `active`,
    `read_only` or `suspended`. Read-only clubs refuse every change
    (`409 club-read-only`); suspended clubs refuse everything
@@ -143,16 +143,16 @@ Billing must be easy to ignore. It is built in two layers (ADR 0013, ADR 0031):
 
 ### Seller configuration (billing on)
 
-| Variable                                                                                                                | Meaning                                                                                  |
-| ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `BILLING_SELLER_NAME`, `_ORGANIZATION_NUMBER`, `_STREET`, `_POSTAL_CODE`, `_CITY`, `_BANKGIRO`                          | Required in production with billing on (the API and worker refuse to start without them) |
-| `BILLING_SELLER_VAT_NUMBER`, `_EMAIL`, `_COUNTRY` (default `SE`), `_F_TAX`                                              | Printed on invoices ("Godkänd för F-skatt")                                              |
-| `BILLING_INVOICE_PREFIX` (default `CA-`), `BILLING_VAT_RATE_BP` (2500), `BILLING_PAYMENT_TERMS_DAYS` (30)               | Number series, VAT rate, payment terms                                                   |
-| `BILLING_TERMS_VERSION`, `BILLING_TERMS_URL`                                                                            | The terms a club manager accepts when choosing a paid plan                               |
-| `BILLING_TRIAL_PLAN`, `BILLING_TRIAL_DAYS`                                                                              | The trial                                                                                |
-| `BILLING_INVOICE_EMAIL_LINK` (default false)                                                                            | Invoice emails also link to the billing page                                             |
-| `BILLING_CARD_PROVIDER` (`stripe`; `fake` outside production), `BILLING_CARD_SECRET_KEY`, `BILLING_CARD_WEBHOOK_SECRET` | Card payments (part B); keys required with `stripe`                                      |
-| `BILLING_CHECKOUT_ORIGINS` (web)                                                                                        | The provider's hosted pages (CSP `form-action`, redirects)                               |
+| Variable | Meaning |
+|---|---|
+| `BILLING_SELLER_NAME`, `_ORGANIZATION_NUMBER`, `_STREET`, `_POSTAL_CODE`, `_CITY`, `_BANKGIRO` | Required in production with billing on (the API and worker refuse to start without them) |
+| `BILLING_SELLER_VAT_NUMBER`, `_EMAIL`, `_COUNTRY` (default `SE`), `_F_TAX` | Printed on invoices ("Godkänd för F-skatt") |
+| `BILLING_INVOICE_PREFIX` (default `CA-`), `BILLING_VAT_RATE_BP` (2500), `BILLING_PAYMENT_TERMS_DAYS` (30) | Number series, VAT rate, payment terms |
+| `BILLING_TERMS_VERSION`, `BILLING_TERMS_URL` | The terms a club manager accepts when choosing a paid plan |
+| `BILLING_TRIAL_PLAN`, `BILLING_TRIAL_DAYS` | The trial |
+| `BILLING_INVOICE_EMAIL_LINK` (default false) | Invoice emails also link to the billing page |
+| `BILLING_CARD_PROVIDER` (`stripe`; `fake` outside production), `BILLING_CARD_SECRET_KEY`, `BILLING_CARD_WEBHOOK_SECRET` | Card payments (part B); keys required with `stripe` |
+| `BILLING_CHECKOUT_ORIGINS` (web) | The provider's hosted pages (CSP `form-action`, redirects) |
 
 Development and tests use a fictional seller (`DEMO_SELLER`); the maintainer
 supplies the real values before the hosted service charges anyone.
@@ -164,7 +164,7 @@ but not member data; row-level security enforces both). The billing tables
 reference no person (a test guards this). Operator actions are audited
 (`billing.subscription.*`, `club.access_state.changed`).
 
-Note: _member fees_ (clubs charging their own members) are a separate feature in
+Note: *member fees* (clubs charging their own members) are a separate feature in
 the `finance` module, available regardless of `BILLING_ENABLED`.
 
 CI runs the API integration suite twice, with billing off and on. With

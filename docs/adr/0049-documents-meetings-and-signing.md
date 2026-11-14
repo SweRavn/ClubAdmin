@@ -57,17 +57,17 @@ offer free qualified signatures for non-professional use.
      document (one § per item) in the series of the group (e.g. board
      minutes). Markdown stays the format of every text; the structure
      (items, decisions, actions) lives in tables around it.
-     4b. **Documents attached to notices.** Any activity or event (a meeting's
-     agenda, a match's schedule, a cup's information) can have documents
-     attached to its notice (call-up). The creator picks a document already
-     in ClubAdmin or uploads one from the computer; an upload is stored in
-     ClubAdmin too (the group's or club's folder for notices, through the
-     same scanning as every file). Notices never carry files: email, push
-     and the app send links to the documents in ClubAdmin, opened after
-     login. Being invited lets a person read the documents attached to that
-     notice (the attachment adds the notice's recipients to the document's
-     audience for as long as it is attached); the creator sees which
-     documents are attached and to whom they are thereby shown.
+4b. **Documents attached to notices.** Any activity or event (a meeting's
+   agenda, a match's schedule, a cup's information) can have documents
+   attached to its notice (call-up). The creator picks a document already
+   in ClubAdmin or uploads one from the computer; an upload is stored in
+   ClubAdmin too (the group's or club's folder for notices, through the
+   same scanning as every file). Notices never carry files: email, push
+   and the app send links to the documents in ClubAdmin, opened after
+   login. Being invited lets a person read the documents attached to that
+   notice (the attachment adds the notice's recipients to the document's
+   audience for as long as it is attached); the creator sees which
+   documents are attached and to whom they are thereby shown.
 5. **Signing in the app (simple level, strong evidence).** Approving
    ("justera") and signing are done in ClubAdmin: a recent login with a
    second factor, the SHA-256 hash of exactly the version signed, a

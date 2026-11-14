@@ -116,7 +116,7 @@ the API refuses them; a Zitadel-side revocation for login-v1 sessions would
 make the deny list unnecessary. The development variant must never be
 published (it trusts the local CA and has the persona picker). The about
 screen's licence list is generated from the lockfile and checked in CI.
-_Amended by ADR 0039 (P1.7):_ the app adds `expo-notifications`; with a
+*Amended by ADR 0039 (P1.7):* the app adds `expo-notifications`; with a
 server that has push it asks for permission after login, registers its
 Expo push token on the account and removes it on logout, and keeps the
 token's device ID (not the token) in its settings storage. Universal

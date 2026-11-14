@@ -89,7 +89,6 @@ system, and the catalogue must not grow by hundreds of hand-written sentences.
   adding non-transactional migrations now.
 
 **Consequences.**
-
 - About 245 new message keys (labels of 66 columns, 40 kinds of record, 46
   verbs, 19 own sentences, statuses, categories and the views), not one
   sentence per action and column.

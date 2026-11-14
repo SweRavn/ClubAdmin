@@ -65,8 +65,8 @@ activity, maintained by the worker from domain events) and a rolling
     activity);
   - the table is excluded from record history (derived from `activities`
     and `activity_groups`, which have it; `history-exclusions.ts`).
-    Measured: a guardian's schedule over two clubs answers in about 6 ms p95
-    with 1,600 teams and 64,000 activities (`schedule-plans.integration.test.ts`).
+  Measured: a guardian's schedule over two clubs answers in about 6 ms p95
+  with 1,600 teams and 64,000 activities (`schedule-plans.integration.test.ts`).
 - **No inheritance down the group tree.** An activity belongs to the groups
   it names; a joint training of two teams names both, and its creator must
   manage each (`group_not_managed`).
@@ -156,7 +156,7 @@ be asked "are you coming?" a chosen time before each session.
 - **Removing dates.** `POST /activity-series/:id/skipped-dates` with a date
   or a range adds every date of the pattern in it to `skip_dates` and
   removes the sessions as deleting one does; `DELETE
-…/skipped-dates/:date` brings one back: a session cancelled when the date
+  …/skipped-dates/:date` brings one back: a session cancelled when the date
   was removed is restored, otherwise made again. Not in the past.
 - **Answer requests** (`request_lead`, on series and single activities): N
   days before at a local time, or N hours before the start. Each session

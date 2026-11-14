@@ -61,27 +61,27 @@ meeting time and place, and locations have coordinates (ADR 0034).
      its members see per person how far and how often they drove and rode,
      per period; otherwise the statistics are seen by the drivers
      themselves and by attesters and the group's leaders.
-9. **Kept until deleted.** Car pools, drives and the statistics are kept
-   until someone deletes them explicitly (a driver their own offers before
-   the trip; the club's attesters or administrators older data); no
-   automatic deletion. Attested claims follow accounting rules. Erasing a
-   person anonymises them in drives and statistics (the deletion ledger
-   applies it again after a restore, ADR 0047).
-10. **Events** use the same tables: an event session has a transport mode
+10. **Kept until deleted.** Car pools, drives and the statistics are kept
+    until someone deletes them explicitly (a driver their own offers before
+    the trip; the club's attesters or administrators older data); no
+    automatic deletion. Attested claims follow accounting rules. Erasing a
+    person anonymises them in drives and statistics (the deletion ledger
+    applies it again after a restore, ADR 0047).
+11. **Events** use the same tables: an event session has a transport mode
     and car pools like an activity.
-11. **A general attestation flow**, built for car-pool claims first and for
-    other expenses later (receipts, purchases in Phase 3):
-    - A claim (`expense_claims`: kind, amount, lines, the person, the
-      activity or group it belongs to) goes first to **whoever created the
-      activity**, if they may attest; otherwise to those who hold the
-      permission.
-    - Permissions in the catalogue (P1.15): attesting in a group
-      (`group.expenses.attest`, group scope) and in the club
-      (`club.expenses.attest`, club scope).
-    - As is customary: nobody attests their own claim; every decision is
-      audited (approve, reject with a reason); the claimant is told.
-    - The flow is generic (kinds, routing, permissions), so new expense
-      kinds plug in without a new flow.
+9. **A general attestation flow**, built for car-pool claims first and for
+   other expenses later (receipts, purchases in Phase 3):
+   - A claim (`expense_claims`: kind, amount, lines, the person, the
+     activity or group it belongs to) goes first to **whoever created the
+     activity**, if they may attest; otherwise to those who hold the
+     permission.
+   - Permissions in the catalogue (P1.15): attesting in a group
+     (`group.expenses.attest`, group scope) and in the club
+     (`club.expenses.attest`, club scope).
+   - As is customary: nobody attests their own claim; every decision is
+     audited (approve, reject with a reason); the claimant is told.
+   - The flow is generic (kinds, routing, permissions), so new expense
+     kinds plug in without a new flow.
 
 **Consequences.** Leaders see who can drive and who lacks a ride; members
 settle or the club reimburses on the same numbers; clubs get attested

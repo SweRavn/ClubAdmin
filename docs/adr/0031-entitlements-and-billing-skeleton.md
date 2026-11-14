@@ -38,7 +38,7 @@ optional without the schema differing between installations.
   and jobs (trigger on `clubs.access_state`).
 - **Operators act as operators.** Operator endpoints run their transactions
   with actor kind `operator`; `app.is_platform_operator()` (registered
-  operator _and_ acting as one) opens the billing tables to them in
+  operator *and* acting as one) opens the billing tables to them in
   row-level security. The same person acting as a member sees nothing.
 - **Same schema everywhere.** The `billing` schema is created by migration
   0006 in every installation and stays empty with billing off; only the

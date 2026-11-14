@@ -9,9 +9,8 @@ one, any bug in a global query could expose every person in the system, and a
 "my clubs" query was impossible because a transaction only sees one club.
 
 **Decision.**
-
 - **Global tables have RLS enabled** (not forced). Policies call `SECURITY
-DEFINER` helpers in schema `app`, owned by the migration role, which read
+  DEFINER` helpers in schema `app`, owned by the migration role, which read
   `guardianships` without recursing into its own policies:
   - `app.can_see_person(id, created_by)`: the person, their creator, their
     guardians, wards and co-guardians, and in a club transaction the club's

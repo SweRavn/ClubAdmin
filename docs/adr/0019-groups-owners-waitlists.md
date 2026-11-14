@@ -8,7 +8,6 @@ are full and need a fair waiting list that the people running the group can
 manage without involving the board.
 
 **Decision.**
-
 - Replace "teams" with a generic **`groups`** entity with a `kind` and an
   optional `parent_group_id` (sections are groups of kind `section`). The UI
   term is configurable per club and kind.

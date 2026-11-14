@@ -45,37 +45,37 @@ with two entries:
 
 ### The platform's part
 
-| Section               | Rows                                                                                                                                          |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `person`              | The person: name, birth date, gender, protected identity, phone, address; `personalIdentityNumber` (`country`, `value`) when stored           |
-| `account`             | Login email, language, time zone, theme, notification settings (never the identity provider's subject or session handles)                     |
-| `pushDevices`         | Phones with notifications: service, platform, app variant, last used, turned off (never the token)                                            |
-| `calendarFeeds`       | Calendar subscriptions (P1.11): scope, club and group, the chosen people, label, last fetched, revoked and why (never the secret or its hash) |
-| `guardianships`       | Family links where the subject is the guardian or the child: kind, rights, status, period, the decision at the adult age                      |
-| `guardianInvitations` | Family invitations the subject sent (without the invited address)                                                                             |
-| `notifications`       | The inbox of the last 90 days: type, category, what it is about, read                                                                         |
-| `dataExports`         | Requests for the subject's data (also this one)                                                                                               |
-| `erasureRequests`     | Account deletion and erasure requests concerning the subject                                                                                  |
-| `history`             | Record history of the person row and the account (secrets, hashes and email addresses removed)                                                |
+| Section | Rows |
+|---|---|
+| `person` | The person: name, birth date, gender, protected identity, phone, address; `personalIdentityNumber` (`country`, `value`) when stored |
+| `account` | Login email, language, time zone, theme, notification settings (never the identity provider's subject or session handles) |
+| `pushDevices` | Phones with notifications: service, platform, app variant, last used, turned off (never the token) |
+| `calendarFeeds` | Calendar subscriptions (P1.11): scope, club and group, the chosen people, label, last fetched, revoked and why (never the secret or its hash) |
+| `guardianships` | Family links where the subject is the guardian or the child: kind, rights, status, period, the decision at the adult age |
+| `guardianInvitations` | Family invitations the subject sent (without the invited address) |
+| `notifications` | The inbox of the last 90 days: type, category, what it is about, read |
+| `dataExports` | Requests for the subject's data (also this one) |
+| `erasureRequests` | Account deletion and erasure requests concerning the subject |
+| `history` | Record history of the person row and the account (secrets, hashes and email addresses removed) |
 
 ### A club's part
 
-| Section              | Rows                                                                                                           |
-| -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `clubProfile`        | Member number, fields shared with the club, emergency contacts, protected in the club (never the club's notes) |
-| `memberships`        | Status, type, period                                                                                           |
-| `groupMemberships`   | Group, function, period                                                                                        |
-| `roles`              | Club roles and who gave them                                                                                   |
-| `employments`        | Employment in the club                                                                                         |
-| `consents`           | Purpose, text version, how and by whom given, withdrawn; `text`: the text agreed to, in the file's language    |
-| `joinRequests`       | Applications, the person's message and the club's answer                                                       |
-| `waitingLists`       | Waiting-list places with the applicant's note (never the owner's)                                              |
-| `responses`          | Answers to activities, with the activity's title and start                                                     |
-| `attendance`         | Attendance marks                                                                                               |
-| `callUps`            | Call-ups                                                                                                       |
-| `eventRegistrations` | Sign-ups with answers; `sensitiveAnswers` decrypted (only in this file)                                        |
-| `invitationsSent`    | Club invitations the subject sent (without addresses)                                                          |
-| `history`            | Record history of the rows above (the club's notes, addresses and secrets removed)                             |
+| Section | Rows |
+|---|---|
+| `clubProfile` | Member number, fields shared with the club, emergency contacts, protected in the club (never the club's notes) |
+| `memberships` | Status, type, period |
+| `groupMemberships` | Group, function, period |
+| `roles` | Club roles and who gave them |
+| `employments` | Employment in the club |
+| `consents` | Purpose, text version, how and by whom given, withdrawn; `text`: the text agreed to, in the file's language |
+| `joinRequests` | Applications, the person's message and the club's answer |
+| `waitingLists` | Waiting-list places with the applicant's note (never the owner's) |
+| `responses` | Answers to activities, with the activity's title and start |
+| `attendance` | Attendance marks |
+| `callUps` | Call-ups |
+| `eventRegistrations` | Sign-ups with answers; `sensitiveAnswers` decrypted (only in this file) |
+| `invitationsSent` | Club invitations the subject sent (without addresses) |
+| `history` | Record history of the rows above (the club's notes, addresses and secrets removed) |
 
 ## Not included
 

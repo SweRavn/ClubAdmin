@@ -178,7 +178,7 @@ the club's history and the audit log (`role.*`).
   and the chair; the `administrators:daily` job (hourly) reminds them after
   14 and 25 days and tells them when the club needs an administrator; an
   operator extends a grace period once (`POST
-/ops/clubs/:clubId/administrators/grace-extension`, audited). A club
+  /ops/clubs/:clubId/administrators/grace-extension`, audited). A club
   reaching two leaves its grace period (`app.end_administrators_grace`, at
   commit). A new club has none: the creation form (and the creation
   request) takes the second administrator's email, invited to the club
@@ -321,13 +321,13 @@ the constraints checked 2026-11-12).
   club's type and its template roles with `present`, `archived` or
   `missing`; "differs from the template" and reset read the club's type
   (reset also restores the template's names). `POST
-/clubs/:clubId/roles/from-template` copies a role ("Lägg till från
+  /clubs/:clubId/roles/from-template` copies a role ("Lägg till från
   mallen", `club.roles.manage`); a role the club deleted is restored with
   the template's names and permissions (`role.restored`).
 - **Operators**: built-in permissions `club_types.read` and
   `club_types.manage` (platform, second factor); `GET /club-types` for
   everyone logged in; `GET/POST /ops/club-types`, `GET/PATCH
-/ops/club-types/:clubTypeId`, `POST /ops/club-types/:clubTypeId/roles`,
+  /ops/club-types/:clubTypeId`, `POST /ops/club-types/:clubTypeId/roles`,
   `PATCH` and `DELETE .../roles/:roleId`; audit events `club_type.*`. The
   operator console gets `/ops/club-types` (the billing pages show only with
   billing on).
@@ -341,3 +341,4 @@ type is not offered. Deviations: the country packs only name a default type
 by key (no type names in the packs); the operators' editor uses the same
 permission picker by area as the clubs' editor but no holder preview
 (templates have no holders); the demo chess club is Ekuddens Schackklubb.
+

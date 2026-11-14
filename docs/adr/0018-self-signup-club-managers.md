@@ -10,8 +10,7 @@ or more managers, and the manager role must be transferable.
 
 **Decision.**
 
-_Sign-up_
-
+*Sign-up*
 - Anyone can create an account (email verification required; passkey or
   password + optional MFA via Zitadel). The account creates a `person`.
 - After sign-up the person can (a) accept a pending invitation, (b) search for a
@@ -20,25 +19,22 @@ _Sign-up_
   work or a privacy-friendly challenge on suspicious traffic, email verification
   before any club action.
 
-_Joining a club_ — each club chooses a `join_policy`:
-
+*Joining a club* — each club chooses a `join_policy`:
 - `open`: membership becomes active immediately,
 - `approval` (default): a join request that a manager or registrar approves,
 - `invite_only`: club is not listed in search; joining only via invitation link
   or code.
-  A person can apply for themselves and for their children (guardian), giving
-  team preferences as a hint.
+A person can apply for themselves and for their children (guardian), giving
+team preferences as a hint.
 
-_Creating a club_
-
+*Creating a club*
 - Controlled by `CLUB_CREATION`: `open` (default when `DEPLOYMENT_MODE=hosted`),
   `approval` (operator approves), `operators_only` (default for self-hosted).
 - The creator becomes the club's first **club manager** and an active member.
 - With billing enabled, a new club starts on the configured default plan or
   trial.
 
-_Club managers_
-
+*Club managers*
 - `club_manager` is a club-level role assignment like the others
   (`domain-model.md`): full administrative rights in that club, MFA required.
 - A club can have **any number of managers**.

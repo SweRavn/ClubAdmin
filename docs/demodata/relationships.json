@@ -44,7 +44,9 @@
       "kind": "relative",
       "via": "addGuardian",
       "by": "sara",
-      "rights": ["view_schedule"]
+      "rights": [
+        "view_schedule"
+      ]
     },
     {
       "guardian": "lars",
@@ -122,7 +124,9 @@
       "guardian": "bo",
       "ward": "emma",
       "kind": "contact_person",
-      "rights": ["receive_messages"],
+      "rights": [
+        "receive_messages"
+      ],
       "via": "linked",
       "by": "emma"
     },
@@ -522,7 +526,9 @@
         "en": "Equipment manager",
         "nb": "Materialansvarlig"
       },
-      "permissions": ["group.activities.manage"],
+      "permissions": [
+        "group.activities.manage"
+      ],
       "holders": [
         {
           "person": "lars",
@@ -534,7 +540,9 @@
       "club": "fil",
       "scope": "group",
       "template": "team_manager",
-      "remove": ["person.consents.read"]
+      "remove": [
+        "person.consents.read"
+      ]
     }
   ],
   "handovers": [
@@ -604,22 +612,31 @@
     {
       "person": "anna",
       "club": "svk",
-      "fields": ["phone", "address"]
+      "fields": [
+        "phone",
+        "address"
+      ]
     },
     {
       "person": "erik",
       "club": "svk",
-      "fields": ["phone"]
+      "fields": [
+        "phone"
+      ]
     },
     {
       "person": "johan",
       "club": "svk",
-      "fields": ["phone"]
+      "fields": [
+        "phone"
+      ]
     },
     {
       "person": "ahmed",
       "club": "ikn",
-      "fields": ["phone"]
+      "fields": [
+        "phone"
+      ]
     }
   ],
   "clubProtection": [],
@@ -628,13 +645,17 @@
       "person": "viktor",
       "club": "svk",
       "requestedBy": "henrik",
-      "preferredGroups": ["svk-f2017"]
+      "preferredGroups": [
+        "svk-f2017"
+      ]
     },
     {
       "person": "sofie",
       "club": "fil",
       "requestedBy": "camilla",
-      "preferredGroups": ["fil-j2014"]
+      "preferredGroups": [
+        "fil-j2014"
+      ]
     },
     {
       "person": "gunilla",
@@ -676,7 +697,9 @@
       "expiresIn": "+30d"
     }
   ],
-  "operators": ["operator"],
+  "operators": [
+    "operator"
+  ],
   "supportGrants": [
     {
       "operator": "operator",
@@ -690,7 +713,12 @@
     {
       "club": "svk",
       "requestedBy": "sara",
-      "columns": ["name", "memberNumber", "membershipType", "groups"],
+      "columns": [
+        "name",
+        "memberNumber",
+        "membershipType",
+        "groups"
+      ],
       "rowCount": 14,
       "at": "-3d"
     }

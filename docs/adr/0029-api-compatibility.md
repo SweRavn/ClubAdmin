@@ -9,7 +9,6 @@ opposite case: a new app from the store meets an older server. Without rules,
 every API change either breaks installed apps or forces an app-store update.
 
 **Decision.**
-
 - **Within `/api/v1` the API only grows.** Allowed at any time: new endpoints,
   new optional response fields, new optional query parameters and request
   fields, new problem types, and new values in enums (group kinds, roles and

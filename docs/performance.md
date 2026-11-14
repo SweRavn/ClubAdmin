@@ -41,28 +41,27 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 
 ## Budgets
 
-| Measure                                            | Budget                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API read endpoints, p95 server time                | < 100 ms (< 50 ms for "my schedule", "my teams")                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| API write endpoints, p95                           | < 200 ms                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Database queries per request                       | ≤ 5 typical, never proportional to result size (no N+1)                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Web: Largest Contentful Paint, mid-range phone, 4G | < 1.5 s (cached) / < 2.5 s (cold)                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Web: Interaction to Next Paint                     | < 200 ms                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Web: initial JS for member pages                   | < 150 KB compressed                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Mobile: cold start to usable schedule              | < 2 s; cached data shown immediately                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Chat message delivery (online recipient)           | < 300 ms                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Calendar feed (`.ics`) request, p95                | < 50 ms (served from precomputed schedule, ETag/`304`)                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Backups                                            | No effect on the API budgets above (pgBackRest with 2 processes, zstd); measured under the load scenario: [#14](https://github.com/SweRavn/ClubAdmin/issues/14)                                                                                                                                                                                                                                                                                                            |
-| Restore (RTO planning)                             | < 30 minutes for a 10 GB database (docs/operations/backup-restore.md)                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Waiting lists (P1.10b)                             | The owners' list of a group with 500 entries < 100 ms (order index, keyset); the summary one grouped statement; `/me/waitlists` with positions < 50 ms (one `app.waitlist_positions` call); offer, admit, accept < 200 ms; `waitlists:offers` set-based, one statement to expire and one to offer per club with work, < 1 s on the load scenario; query plans in `waitlist-plans.integration.test.ts`, request budgets for the reads                                       |
-| Calendar feeds (P1.11)                             | A feed (`GET /cal/<secret>.ics`) < 50 ms p95: one lookup by hash, the owner's relationship set from Valkey, one schedule statement for the family (up to 3,000 entries, 30 days back and 370 ahead) or one read of `schedule_entries` by group or club, rendered body cached 60 s in Valkey (`CALENDAR_FEED_CACHE_SECONDS`), `ETag`/`304`; `last_fetched_at` written at most hourly; `calendar:retention` two statements on partial indexes                                |
-| Protected identity (P1.12)                         | The flag PUTs < 150 ms (one lock, one update, audit and outbox); a profile view adds one upsert (`app.record_profile_view`); the person's access log < 50 ms for 50 rows (one function call on `profile_views_viewed_idx`, roles and names per club on the page); the club log < 100 ms for 50 rows with 100,000 rows in the club (`profile_views_club_idx`; query plans in `profile-views-plans.integration.test.ts`); anonymising a leaver one statement per role column |
-| History panels, first page (P1.9)                  | < 300 ms p95; club-wide changes and the audit log < 500 ms p95 (volume tests, Nightly; ADR 0042)                                                                                                                                                                                                                                                                                                                                                                           |
+| Measure | Budget |
+|---|---|
+| API read endpoints, p95 server time | < 100 ms (< 50 ms for "my schedule", "my teams") |
+| API write endpoints, p95 | < 200 ms |
+| Database queries per request | ≤ 5 typical, never proportional to result size (no N+1) |
+| Web: Largest Contentful Paint, mid-range phone, 4G | < 1.5 s (cached) / < 2.5 s (cold) |
+| Web: Interaction to Next Paint | < 200 ms |
+| Web: initial JS for member pages | < 150 KB compressed |
+| Mobile: cold start to usable schedule | < 2 s; cached data shown immediately |
+| Chat message delivery (online recipient) | < 300 ms |
+| Calendar feed (`.ics`) request, p95 | < 50 ms (served from precomputed schedule, ETag/`304`) |
+| Backups | No effect on the API budgets above (pgBackRest with 2 processes, zstd); measured under the load scenario: [#14](https://github.com/SweRavn/ClubAdmin/issues/14) |
+| Restore (RTO planning) | < 30 minutes for a 10 GB database (docs/operations/backup-restore.md) |
+| Waiting lists (P1.10b) | The owners' list of a group with 500 entries < 100 ms (order index, keyset); the summary one grouped statement; `/me/waitlists` with positions < 50 ms (one `app.waitlist_positions` call); offer, admit, accept < 200 ms; `waitlists:offers` set-based, one statement to expire and one to offer per club with work, < 1 s on the load scenario; query plans in `waitlist-plans.integration.test.ts`, request budgets for the reads |
+| Calendar feeds (P1.11) | A feed (`GET /cal/<secret>.ics`) < 50 ms p95: one lookup by hash, the owner's relationship set from Valkey, one schedule statement for the family (up to 3,000 entries, 30 days back and 370 ahead) or one read of `schedule_entries` by group or club, rendered body cached 60 s in Valkey (`CALENDAR_FEED_CACHE_SECONDS`), `ETag`/`304`; `last_fetched_at` written at most hourly; `calendar:retention` two statements on partial indexes |
+| Protected identity (P1.12) | The flag PUTs < 150 ms (one lock, one update, audit and outbox); a profile view adds one upsert (`app.record_profile_view`); the person's access log < 50 ms for 50 rows (one function call on `profile_views_viewed_idx`, roles and names per club on the page); the club log < 100 ms for 50 rows with 100,000 rows in the club (`profile_views_club_idx`; query plans in `profile-views-plans.integration.test.ts`); anonymising a leaver one statement per role column |
+| History panels, first page (P1.9) | < 300 ms p95; club-wide changes and the audit log < 500 ms p95 (volume tests, Nightly; ADR 0042) |
 
 ## Design rules
 
 ### Database
-
 - Every query on a club table filters on `club_id` first; composite indexes
   start with `club_id`.
 - Keyset pagination only (no `OFFSET` on large tables).
@@ -77,7 +76,6 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   10,000-member register).
 
 ### API
-
 - Permission set loaded once per request, cached in Valkey with version
   invalidation.
 - Response shaping: endpoints return what the screen needs (`include=`), not
@@ -151,7 +149,6 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   `id IN (subquery)` scanned the whole table).
 
 ### Web
-
 - React Server Components and streaming for first load; client components only
   where interactive.
 - TanStack Query for client cache; optimistic updates for common actions
@@ -163,7 +160,6 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   the member bundle.
 
 ### Mobile
-
 - Persisted query cache (MMKV, encrypted per account; ADR 0028): the app
   shows the last known data instantly, refreshes in background.
 - Screens request what they need in parallel (Home: `/me`, `/me/clubs`,
@@ -179,31 +175,31 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   (`DATABASE_POOL_MAX=1`): statements and pages per request. At the time of
   writing (pages before → after the extra data):
 
-  | Request                                                               | Statements | Pages                                  |
-  | --------------------------------------------------------------------- | ---------- | -------------------------------------- |
-  | `GET /me` (with a pending deletion, P1.8b)                            | 3          | 3 → 4                                  |
-  | `GET /me/clubs`, `/me/groups`, `/me/wards`                            | 1–3        | 6–15 → 14–32                           |
-  | `GET /me/schedule` (four weeks)                                       | 4          | 84 → 163                               |
-  | `GET /me/events`                                                      | 17         | 134 → 264 (was 940 before the rewrite) |
-  | `GET /me/notifications`, unread count                                 | 4, 1       | 5 → 9, 1 → 3                           |
-  | `GET /activities/:id`                                                 | 7          | 61 → 99                                |
-  | `GET /activities/:id/responses` (leaders)                             | 6          | 133 → 240                              |
-  | `GET /events/:id`                                                     | 14         | 76 → 128                               |
-  | `PUT` an answer                                                       | 9          | 105 → 166                              |
-  | `GET /me/consents` (P1.8a)                                            | 4          | 51 → 107                               |
-  | `GET /me/data-exports` (P1.8b)                                        | 2          | 3 → 4                                  |
-  | `GET /me/account/deletion` (P1.8b)                                    | 3          | 42 → 63                                |
-  | `GET /me/wards/{personId}/erasure` (P1.8b)                            | 4          | 40 → 58                                |
-  | `GET /groups/:id/consents` (a team)                                   | 5          | 176 → 290                              |
-  | `GET /people/:id/consents`, `PUT` a consent                           | 7, 6       | 36, 35 → 36, 34                        |
-  | Club privacy page, policy, decisions, texts                           | 2–6        | 3–9 → 4–12                             |
-  | Assignments, leave preview                                            | 4, 5       | 6, 8 → 9, 12                           |
-  | History of a member, group, activity (P1.9)                           | 8, 6, 7    | 334 → 713, 154 → 193, 95 → 138         |
-  | Club-wide changes, audit log (P1.9)                                   | 4, 4       | 40 → 51, 20 → 33                       |
-  | `GET /me/calendar-feeds` (P1.11)                                      | 2          | 3 → 4                                  |
-  | `GET /people/:id` (with the view log and the protection state, P1.12) | 7          | 67 → 86                                |
-  | `GET /people/:id/access-log`, `GET /clubs/:id/profile-views` (P1.12)  | 3, 4       | 15 → 16, 9 → 20                        |
-  | A "My schedule" feed, a group feed (rendered, no cache; P1.11)        | 6, 10      | 138 → 227, 174 → 305                   |
+  | Request | Statements | Pages |
+  |---|---|---|
+  | `GET /me` (with a pending deletion, P1.8b) | 3 | 3 → 4 |
+  | `GET /me/clubs`, `/me/groups`, `/me/wards` | 1–3 | 6–15 → 14–32 |
+  | `GET /me/schedule` (four weeks) | 4 | 84 → 163 |
+  | `GET /me/events` | 17 | 134 → 264 (was 940 before the rewrite) |
+  | `GET /me/notifications`, unread count | 4, 1 | 5 → 9, 1 → 3 |
+  | `GET /activities/:id` | 7 | 61 → 99 |
+  | `GET /activities/:id/responses` (leaders) | 6 | 133 → 240 |
+  | `GET /events/:id` | 14 | 76 → 128 |
+  | `PUT` an answer | 9 | 105 → 166 |
+  | `GET /me/consents` (P1.8a) | 4 | 51 → 107 |
+  | `GET /me/data-exports` (P1.8b) | 2 | 3 → 4 |
+  | `GET /me/account/deletion` (P1.8b) | 3 | 42 → 63 |
+  | `GET /me/wards/{personId}/erasure` (P1.8b) | 4 | 40 → 58 |
+  | `GET /groups/:id/consents` (a team) | 5 | 176 → 290 |
+  | `GET /people/:id/consents`, `PUT` a consent | 7, 6 | 36, 35 → 36, 34 |
+  | Club privacy page, policy, decisions, texts | 2–6 | 3–9 → 4–12 |
+  | Assignments, leave preview | 4, 5 | 6, 8 → 9, 12 |
+  | History of a member, group, activity (P1.9) | 8, 6, 7 | 334 → 713, 154 → 193, 95 → 138 |
+  | Club-wide changes, audit log (P1.9) | 4, 4 | 40 → 51, 20 → 33 |
+  | `GET /me/calendar-feeds` (P1.11) | 2 | 3 → 4 |
+  | `GET /people/:id` (with the view log and the protection state, P1.12) | 7 | 67 → 86 |
+  | `GET /people/:id/access-log`, `GET /clubs/:id/profile-views` (P1.12) | 3, 4 | 15 → 16, 9 → 20 |
+  | A "My schedule" feed, a group feed (rendered, no cache; P1.11) | 6, 10 | 138 → 227, 174 → 305 |
 
   History reads go to their own pool (ADR 0042); their pages are mostly one
   index probe per record and monthly partition, bounded by the panel's scope
@@ -214,7 +210,7 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 
 - History and audit on volume (P1.9, ADR 0042; Nightly and by hand, not
   CI): `pnpm db:reset --scenario load && pnpm db:seed --history-volume &&
-pnpm --filter @clubadmin/api test:volume`. Storklubben with two years of
+  pnpm --filter @clubadmin/api test:volume`. Storklubben with two years of
   history (5 million rows) and audit events (500,000): no sequential scans
   of history partitions or the audit log, the club index newest first over
   the partitions, a 90-day period prunes partitions, and the time budgets
@@ -317,7 +313,7 @@ pnpm --filter @clubadmin/api test:volume`. Storklubben with two years of
   50 ms; the test allows 75 ms); it is one statement over the reader's open
   group memberships and `schedule_entries (group_id, starts_at)`. The group
   calendar reads the same index, the club calendar `activities (club_id,
-starts_at)`; the query plans have no sequential scan of `activities`,
+  starts_at)`; the query plans have no sequential scan of `activities`,
   `activity_groups`, `schedule_entries` or `group_memberships`. A series is
   created with all its sessions in three statements (sessions, their groups,
   calendar entries); changing it is a comparison by date and one statement
@@ -334,7 +330,7 @@ starts_at)`; the query plans have no sequential scan of `activities`,
   first ten sessions and attendance for eight, 320,000 answers and 256,000
   marks): "My schedule" with each person's answer about 8 ms p95 (the
   answers are a subquery of the same statement on `activity_responses
-(person_id, activity_id)`; call-ups, ADR 0036, add a check on
+  (person_id, activity_id)`; call-ups, ADR 0036, add a check on
   `activity_invitees (person_id, activity_id)` that runs only for entries
   with `invitees_only`). The roster with its answers and a group's
   attendance summary have no sequential scan of `activity_responses`,
@@ -353,7 +349,7 @@ starts_at)`; the query plans have no sequential scan of `activities`,
   and 80 in the queue (`events.integration.test.ts`). Lists and "My events"
   are keyset pages by `(starts_at, id)` on `events (club_id, starts_at)`;
   counts per page are one grouped statement on `event_registrations
-(club_id, event_id, status, queued_at)`, a person's registrations use
+  (club_id, event_id, status, queued_at)`, a person's registrations use
   `(person_id, event_id)`, offers to expire the partial index on
   `offer_expires_at`. The load scenario has a cup per club with the first
   team signed up. Timing and query-plan tests for the event endpoints are
@@ -374,7 +370,7 @@ starts_at)`; the query plans have no sequential scan of `activities`,
   `member_import_rows (import_id, status, row_number)`.
 - Seeding (P0.8): `pnpm db:reset` with the demo scenario about 7 s including
   the build (budget 15 s; the seed itself about 4 s); `pnpm db:reset --scenario
-load` (1,000 clubs, 200,000 people, plus one club of 10,000 members for the
+  load` (1,000 clubs, 200,000 people, plus one club of 10,000 members for the
   register, 256,000 activities since P1.4, attendance and answers since P1.5) about 410 s locally (budget 10 minutes,
   nightly workflow). The nightly job only seeds so far; measuring the budgets
   against that data is [#10](https://github.com/SweRavn/ClubAdmin/issues/10).

@@ -49,7 +49,7 @@ notifications package (P1.7).
   club.
 
 **Consequences.** P1.7 builds preferences, push and in-app notifications on
-the same events and handler pattern (ADR 0039). _Amended by ADR 0039:_ the
+the same events and handler pattern (ADR 0039). *Amended by ADR 0039:* the
 templates stay in the `email` namespace; the account-bound emails become
 notices of the new pipeline with the same text and an unsubscribe footer,
 and only the invitation emails to addresses without an account remain in
