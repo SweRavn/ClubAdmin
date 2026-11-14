@@ -71,6 +71,12 @@ export default defineConfig({
           testMatch: /documents\.spec\.ts/,
           dependencies: ["administrators"],
         },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["documents"] },
+        // Announcements (P2.3): Göran writes one to IK Norrbacka's board.
+        {
+          name: "announcements",
+          testMatch: /announcements\.spec\.ts/,
+          dependencies: ["documents"],
+        },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["announcements"] },
       ],
 });

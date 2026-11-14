@@ -26,6 +26,8 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
     "append-only list of (person, club) anonymisations; must survive restores unchanged (P1.12)",
   "app.administrator_minimum_exceptions":
     "transaction-local markers of a confirmed suspension or an erasure (P1.15 A3): owner-only (no application role has a privilege), cleared on the next use, IDs only",
+  "public.announcement_reads":
+    "who read an announcement and when (P2.3): written once per person, IDs and times only",
   "public.document_views":
     "when a person last looked at a club's or group's documents (P2.2): a bookmark rewritten on every visit, IDs and times only",
   "public.member_import_rows":

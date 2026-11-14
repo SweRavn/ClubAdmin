@@ -103,6 +103,14 @@ export default async function GroupPage({ params, searchParams }: Params) {
         <HistoryLink clubId={group.clubId} href={`/groups/${group.id}/history`} />
         <p className="mt-1 text-sm">
           <a
+            href={`/groups/${group.id}/announcements`}
+            className="underline"
+            data-testid="group-announcements-link"
+          >
+            {t("announcements.title")}
+          </a>
+          {" · "}
+          <a
             href={`/groups/${group.id}/documents`}
             className="underline"
             data-testid="group-documents-link"

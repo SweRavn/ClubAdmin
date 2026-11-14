@@ -9,6 +9,7 @@ import {
   addChildInput,
   addMemberFormInput,
   ADMISSION_MODES,
+  ANNOUNCEMENT_CHANNELS,
   ATTENDANCE_ROLES,
   ATTENDANCE_STATUSES,
   BOARD_SETTING_KEYS,
@@ -2136,6 +2137,125 @@ function megabytes(form: FormData, name: string): number | null | undefined {
   return Number.isFinite(mb) && mb > 0 && mb <= 1_000_000 ? Math.round(mb * MB) : undefined;
 }
 
+/**
+ * An announcement's fields from the composer (P2.3): title, body, the
+ * channels ticked, important, pin and expiry days (to the end of the day in
+ * the club's time zone) and the sending time (local, in the club's time
+ * zone). Empty dates clear; undefined when a value is invalid.
+ */
+function announcementFields(form: FormData): Record<string, unknown> | undefined {
+  const zone = text(form, "timeZone") || "Europe/Stockholm";
+  const day = (name: string): string | null | undefined => {
+    const value = text(form, name);
+    if (!value) return null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+    return zonedTime(value, "23:59", zone)?.toISOString();
+  };
+  const fields: Record<string, unknown> = {};
+  const title = text(form, "title").slice(0, 150);
+  const body = text(form, "body").slice(0, 10_000);
+  if (form.has("title")) fields.title = title;
+  if (form.has("body")) fields.body = body;
+  if (form.has("channelsShown")) {
+    fields.channels = ANNOUNCEMENT_CHANNELS.filter((c) => form.getAll("channel").includes(c));
+    fields.important = text(form, "important") === "true";
+  }
+  for (const [field, name] of [
+    ["pinnedUntil", "pinnedUntil"],
+    ["expiresAt", "expiresAt"],
+  ] as const) {
+    if (!form.has(name)) continue;
+    const value = day(name);
+    if (value === undefined) return undefined;
+    fields[field] = value;
+  }
+  if (form.has("scheduledAt")) {
+    const value = text(form, "scheduledAt");
+    if (value) {
+      const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/.exec(value);
+      const at = match ? zonedTime(match[1]!, match[2]!, zone) : null;
+      if (!at) return undefined;
+      fields.scheduledAt = at.toISOString();
+    } else {
+      fields.scheduledAt = null;
+    }
+  }
+  const audience = audienceFrom(form);
+  if (audience === undefined && text(form, "audience") !== "") return undefined;
+  if (audience) fields.audience = audience;
+  return fields;
+}
+
+/** Announcements (P2.3, ADR 0053): write, send or schedule, edit, withdraw, delete. */
+const ANNOUNCEMENT_ACTIONS: Record<string, FormAction> = {
+  "announcements-create": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const fields = announcementFields(form);
+      if (!clubId || !fields || !fields.title || !fields.body) return null;
+      const action = text(form, "send");
+      const groupId = id(form, "groupId");
+      const body = { ...fields, send: action === "send" || action === "schedule" };
+      if (action !== "schedule") delete (body as { scheduledAt?: unknown }).scheduledAt;
+      return {
+        path: groupId
+          ? `/api/v1/clubs/${clubId}/groups/${groupId}/announcements`
+          : `/api/v1/clubs/${clubId}/announcements`,
+        method: "POST",
+        body,
+      };
+    },
+    done: (form, result) => {
+      const createdId = (result as { id?: unknown } | null)?.id;
+      const clubId = id(form, "clubId");
+      return typeof createdId === "string" && clubId && isUuid(createdId)
+        ? `/clubs/${clubId}/announcements/${createdId}?saved=1`
+        : withParam(back(form), "created", "1");
+    },
+  },
+  "announcements-update": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const announcementId = id(form, "announcementId");
+      const fields = announcementFields(form);
+      if (!clubId || !announcementId || !fields) return null;
+      const action = text(form, "send");
+      const body: Record<string, unknown> = { ...fields };
+      if (action === "send" || action === "schedule") body.send = true;
+      if (action === "draft") body.send = false;
+      if (action === "send") delete body.scheduledAt;
+      if (Object.keys(body).length === 0) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/announcements/${announcementId}`,
+        method: "PATCH",
+        body,
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "announcements-withdraw": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const announcementId = id(form, "announcementId");
+      if (!clubId || !announcementId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/announcements/${announcementId}/withdraw`,
+        method: "POST",
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "announcements-delete": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const announcementId = id(form, "announcementId");
+      if (!clubId || !announcementId) return null;
+      return { path: `/api/v1/clubs/${clubId}/announcements/${announcementId}`, method: "DELETE" };
+    },
+    done: (form) => withParam(safeReturnTo(text(form, "after"), "/"), "deleted", "1"),
+  },
+};
+
 /** The file archive (P2.2, ADR 0049): folders, files, storage, notices' documents. */
 const DOCUMENT_ACTIONS: Record<string, FormAction> = {
   "documents-create-folder": {
@@ -2259,6 +2379,7 @@ const DOCUMENT_ACTIONS: Record<string, FormAction> = {
 };
 
 export const FORM_ACTIONS: Record<string, FormAction> = {
+  ...ANNOUNCEMENT_ACTIONS,
   ...DOCUMENT_ACTIONS,
   ...FAMILY_ACTIONS,
   ...BILLING_ACTIONS,

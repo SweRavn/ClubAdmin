@@ -17,6 +17,7 @@ import type { PersonReference } from "../../platform/domain/person-references.ts
 import { actorPersonId, type Context, hasClub, runAs } from "../../platform/domain/run.ts";
 import { ACTIVITY_PERSON_REFERENCES } from "../activities/index.ts";
 import { ADMINISTRATOR_PERSON_REFERENCES } from "../administrators/index.ts";
+import { ANNOUNCEMENT_PERSON_REFERENCES } from "../announcements/index.ts";
 import { CALENDAR_PERSON_REFERENCES } from "../calendar/index.ts";
 import { CHAT_PERSON_REFERENCES } from "../chat/index.ts";
 import {
@@ -50,6 +51,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...EVENT_PERSON_REFERENCES,
   ...CHAT_PERSON_REFERENCES,
   ...DOCUMENT_PERSON_REFERENCES,
+  ...ANNOUNCEMENT_PERSON_REFERENCES,
   ...PRIVACY_PERSON_REFERENCES,
 ];
 

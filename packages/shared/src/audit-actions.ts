@@ -218,6 +218,12 @@ export const AUDIT_ACTIONS = [
   "document.notice.added",
   "document.notice.removed",
   "documents.storage.updated",
+  // Announcements (P2.3, ADR 0053).
+  "announcement.created",
+  "announcement.published",
+  "announcement.updated",
+  "announcement.withdrawn",
+  "announcement.deleted",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

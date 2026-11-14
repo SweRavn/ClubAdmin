@@ -22,6 +22,8 @@ export const NOTIFICATION_CATEGORIES = [
   // Documents (P2.2 part B): a new document when its uploader asks, and a
   // file's deletion date coming up (to its uploader).
   "documents",
+  // Announcements (P2.3, ADR 0053): the club's and groups' messages.
+  "announcements",
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
@@ -50,6 +52,7 @@ export const CATEGORY_DEFAULTS: Record<NotificationCategory, CategoryDefaults> =
   waitlist: { email: "no_app", push: true },
   chat: { email: "never", push: true },
   documents: { email: "no_app", push: true },
+  announcements: { email: "no_app", push: true },
 };
 
 export interface NotificationTypeInfo {
@@ -137,6 +140,10 @@ export const NOTIFICATION_TYPES = {
   // Documents (P2.2 part B): never the file's or folder's name (free text).
   "document.added": { category: "documents" },
   "document.deletion_soon": { category: "documents" },
+  // Announcements (P2.3, ADR 0053): emailed at once; important ones to
+  // everyone whatever their settings (never to an address that bounced).
+  "announcement.sent": { category: "announcements", immediate: true },
+  "announcement.important": { category: "announcements", mandatoryEmail: true, immediate: true },
   "family.accepted": { category: "family" },
   "family.own_login_age": { category: "family" },
   "family.adult": { category: "family" },

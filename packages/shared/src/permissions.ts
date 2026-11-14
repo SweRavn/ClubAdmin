@@ -111,6 +111,13 @@ export const PERMISSIONS = [
   "folder.manage",
   "document.read",
   "document.manage",
+  // Announcements (P2.3, ADR 0053): sending to the club or a group; reading
+  // follows the audiences.
+  "club.announcements.send",
+  "group.announcements.send",
+  "group.announcements.read",
+  "announcement.read",
+  "announcement.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

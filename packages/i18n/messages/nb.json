@@ -47,7 +47,9 @@
     "events": "Arrangementer",
     "chat": "Chat",
     "documents": "Mine dokumenter",
-    "clubDocuments": "Dokumenter"
+    "clubDocuments": "Dokumenter",
+    "announcements": "Oppslagstavlen",
+    "clubAnnouncements": "Kunngjøringer"
   },
   "clubSwitcher": {
     "label": "Klubb: {club}",
@@ -831,7 +833,13 @@
     "storage_limit_invalid": "Grensene går ikke opp: klubbens grense kan ikke være større enn den som gjelder for klubben, og gruppenes grenser kan til sammen ikke være større enn klubbens.",
     "delete_after_past": "Slettedatoen må være etter i dag.",
     "notice_attachments_full": "Innkallingen har allerede så mange dokumenter som mulig.",
-    "document_upload_failed": "Filen kunne ikke lastes opp. Prøv igjen."
+    "document_upload_failed": "Filen kunne ikke lastes opp. Prøv igjen.",
+    "announcement_withdrawn": "Kunngjøringen er trukket tilbake og kan ikke endres.",
+    "announcement_already_sent": "Kunngjøringen er allerede sendt: bare tittel, tekst, festing og sluttdato kan endres.",
+    "audience_outside_group": "En gruppekunngjøring kan bare sendes til gruppen eller roller i den.",
+    "announcement_email_limit": "Klubben har sendt så mange kunngjøringer på e-post som den kan i dag. Send uten e-post eller vent til i morgen.",
+    "announcement_expiry_past": "Sluttdatoen må være i fremtiden.",
+    "announcement_schedule_past": "Tidspunktet for utsendelsen må være i fremtiden."
   },
   "memberExport": {
     "columns": {
@@ -2053,7 +2061,18 @@
         "title": "Et dokument du har lastet opp slettes snart",
         "body": "Dokumentet i {club} slettes automatisk {date}. Endre eller fjern datoen hvis det skal beholdes."
       }
-    }
+    },
+    "announcement": {
+      "sent": {
+        "title": "Ny kunngjøring fra {from}",
+        "body": "Åpne kunngjøringen for å lese den."
+      },
+      "important": {
+        "title": "Viktig kunngjøring fra {from}",
+        "body": "Åpne kunngjøringen for å lese den."
+      }
+    },
+    "announcementFrom": "Kunngjøring fra {from}"
   },
   "notifyCategories": {
     "schedule": "Timeplan",
@@ -2066,7 +2085,8 @@
     "account": "Kontoen din",
     "waitlist": "Ventelister",
     "chat": "Chat",
-    "documents": "Dokumenter"
+    "documents": "Dokumenter",
+    "announcements": "Kunngjøringer"
   },
   "notifications": {
     "title": "Varsler",
@@ -2678,7 +2698,8 @@
       "calendar_feed": "Kalenderabonnement",
       "chat_report": "en melding fra en chat",
       "document": "Fil",
-      "document_folder": "Mappe"
+      "document_folder": "Mappe",
+      "announcement": "Kunngjøring"
     },
     "statuses": {
       "scheduled": "Planlagt",
@@ -3739,6 +3760,16 @@
         "name": "Håndtere gruppens dokumenter",
         "description": "Kan opprette mapper i gruppen, laste opp filer og nye versjoner, bestemme hvem som ser dem og slette dem.",
         "example": "Kan for eksempel laste opp lagets kampoppsett slik at spillerne og foreldrene deres ser det."
+      },
+      "club_announcements_send": {
+        "name": "Sende kunngjøringer til klubben",
+        "description": "Kan skrive kunngjøringer til hele klubben, til grupper eller til roller, velge om de vises på oppslagstavlen, sendes med push og e-post, og planlegge, endre og trekke dem tilbake.",
+        "example": "Kan for eksempel kalle inn alle medlemmer til årsmøtet som en viktig kunngjøring med e-post."
+      },
+      "group_announcements_send": {
+        "name": "Sende kunngjøringer til gruppen",
+        "description": "Kan skrive kunngjøringer til gruppens medlemmer og deres foresatte, eller til roller i gruppen, og planlegge, endre og trekke dem tilbake.",
+        "example": "Kan for eksempel gi laget beskjed med push om at banen er stengt denne uken."
       }
     }
   },
@@ -4216,5 +4247,67 @@
     "folders": "Mapper",
     "files": "Filer",
     "openFailed": "Filen kunne ikke åpnes. Prøv igjen."
+  },
+  "announcements": {
+    "title": "Kunngjøringer",
+    "board": "Oppslagstavlen",
+    "boardIntro": "Kunngjøringer fra dine (og barnas) klubber og grupper. Festede ligger øverst; uleste er merket.",
+    "empty": "Ingen kunngjøringer akkurat nå.",
+    "groupEmpty": "Gruppen har ingen kunngjøringer akkurat nå.",
+    "archive": "Klubbens kunngjøringer",
+    "archiveIntro": "Alle kunngjøringer klubben har skrevet: utkast, planlagte, sendte og tilbaketrukne.",
+    "archiveEmpty": "Ingen kunngjøringer ennå.",
+    "new": "Ny kunngjøring",
+    "more": "Vis flere",
+    "unsent": "Utkast og planlagte",
+    "unread": "Ulest",
+    "pinned": "Festet",
+    "important": "Viktig",
+    "edited": "redigert",
+    "unknownSender": "Ukjent avsender",
+    "saved": "Lagret.",
+    "deleted": "Kunngjøringen er slettet.",
+    "manage": "Håndter kunngjøringen",
+    "edit": "Endre",
+    "withdraw": "Trekk tilbake",
+    "delete": "Slett",
+    "scheduledFor": "sendes {when}",
+    "reach": "Når {recipients} personer: {email} har e-postadresse, {app} har appen.",
+    "pushPreview": "Push-varselet sier: «{text}» (aldri kunngjøringens tekst).",
+    "statuses": {
+      "draft": "Utkast",
+      "scheduled": "Planlagt",
+      "sent": "Sendt",
+      "withdrawn": "Trukket tilbake"
+    },
+    "channels": {
+      "board": "Oppslagstavlen",
+      "push": "Push",
+      "email": "E-post"
+    },
+    "stats": {
+      "recipients": "Mottakere",
+      "read": "Har lest",
+      "push": "Push",
+      "email": "E-post",
+      "delivery": "{sent} sendt, {queued} venter, {skipped} hoppet over, {failed} mislyktes"
+    },
+    "form": {
+      "title": "Tittel",
+      "body": "Tekst",
+      "bodyHelp": "Du kan bruke **fet**, *kursiv*, lister (- eller 1.) og lenker [tekst](https://…). Ikke skriv noe du ikke vil at alle mottakere skal lese.",
+      "channels": "Hvordan kunngjøringen når frem",
+      "pushHelp": "Push-varselet viser bare hvem kunngjøringen er fra, aldri tittelen eller teksten.",
+      "important": "Viktig (for eksempel innkalling til årsmøte)",
+      "importantHelp": "Viktige kunngjøringer sendes på e-post til alle, også dem som har slått av kunngjøringer.",
+      "pinnedUntil": "Festet øverst til og med",
+      "expiresAt": "Vises på tavlen til og med",
+      "scheduledAt": "Send kl. (la stå tomt for å sende nå)",
+      "scheduledHelp": "Tid i klubbens tidssone ({zone}).",
+      "sendNow": "Send nå",
+      "schedule": "Planlegg",
+      "saveDraft": "Lagre utkast",
+      "saveSent": "Lagre endringer"
+    }
   }
 }

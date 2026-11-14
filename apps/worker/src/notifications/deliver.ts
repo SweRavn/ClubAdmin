@@ -340,6 +340,48 @@ function listHeaders(deps: DeliveryDependencies, row: DueRow): Record<string, st
   };
 }
 
+/**
+ * An announcement's email (P2.3, ADR 0053): its title and Markdown body as
+ * written (the email is plain text), from the group or club, with a link;
+ * nothing once it is withdrawn or deleted. Its text is the sender's: no
+ * names are added.
+ */
+async function announcementEmail(
+  deps: DeliveryDependencies,
+  tx: Tx,
+  row: DueRow,
+  locale: Locale,
+): Promise<MailMessage | null> {
+  if (!row.subject_id) return null;
+  const { rows } = await tx.execute<{ title: string; body: string }>(sql`
+    SELECT a.title, a.body FROM public.announcements a
+    WHERE a.id = ${row.subject_id}::uuid AND a.sent_at IS NOT NULL AND a.withdrawn_at IS NULL`);
+  const announcement = rows[0];
+  if (!announcement) return null;
+  const text = renderNotice(locale, {
+    type: row.type,
+    clubId: row.club_id,
+    clubName: row.club_name,
+    subjectType: row.subject_type,
+    subjectId: row.subject_id,
+    params: row.params,
+  });
+  const from = typeof row.params.from === "string" ? row.params.from : (row.club_name ?? "");
+  const lines = [
+    message(locale, "notify.announcementFrom", { from }),
+    announcement.title,
+    announcement.body,
+    new URL(text.link, deps.webUrl).toString(),
+  ];
+  return {
+    to: row.email,
+    subject: `${from}: ${announcement.title}`,
+    text: `${lines.join("\n\n")}\n\n-- \n${footer(deps, row, locale)}\n`,
+    messageId: `${row.dedupe_key}.${row.recipient_person_id}`,
+    headers: listHeaders(deps, row),
+  };
+}
+
 /** One notice as an email (null: nothing to send any more). */
 async function noticeEmail(
   deps: DeliveryDependencies,
@@ -361,6 +403,9 @@ async function noticeEmail(
       messageId: `${row.dedupe_key}.${row.recipient_person_id}`,
       headers: listHeaders(deps, row),
     };
+  }
+  if (row.type === "announcement.sent" || row.type === "announcement.important") {
+    return announcementEmail(deps, tx, row, locale);
   }
   let to = row.email;
   if (row.type === "account.email.changed") {

@@ -104,3 +104,14 @@ must hold at the moment something is shown, not at the moment it was sent.
   recipients and the `activity.responses.read` policy is replaced by
   recipient tests per type in the worker (the worker cannot import the
   API's policies).
+
+## Amendment (P2.3, ADR 0053, 2026-11-14)
+
+- New category `announcements` (defaults: email `no_app`, push on) with the
+  types `announcement.sent` and `announcement.important` (both immediate;
+  important ones mandatory by email). Their email carries the sender's
+  title and body: the one place where free text written by a person
+  reaches a notice, and only by email.
+- Push for an announcement never carries its text, only whom it is from;
+  reading the announcement marks its notice read (and the reverse counts on
+  the board).

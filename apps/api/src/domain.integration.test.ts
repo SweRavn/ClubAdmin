@@ -190,6 +190,13 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO document_views (club_id, person_id, group_id, last_seen_at)
         VALUES (${a.id}, ${member.id}, ${group.id}, now())`);
+      // Announcements (P2.3): one sent to the group's audience, read by the member.
+      await tx.execute(sql`
+        WITH an AS (INSERT INTO announcements (club_id, group_id, audience_id, title, body, channels, sent_at)
+                    SELECT ${a.id}, ${group.id}, audience_id, 'Fixture', 'Text', '{board}', now()
+                    FROM document_folders WHERE club_id = ${a.id} LIMIT 1 RETURNING id)
+        INSERT INTO announcement_reads (club_id, announcement_id, person_id)
+        SELECT ${a.id}, id, ${member.id} FROM an`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(

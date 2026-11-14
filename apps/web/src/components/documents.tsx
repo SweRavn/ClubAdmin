@@ -152,6 +152,8 @@ export async function AudienceFields({
   groups,
   roles,
   groupId,
+  allowPublic = true,
+  groupOnly = false,
 }: {
   /** The entries that apply now (to preselect). */
   current: readonly AudienceEntry[];
@@ -161,6 +163,10 @@ export async function AudienceFields({
   roles: readonly Role[] | null;
   /** The folder's group: offers "the group's leaders". */
   groupId: string | null;
+  /** Offer "public" (not for announcements, P2.3). */
+  allowPublic?: boolean;
+  /** Only within the group (a group's announcement): no club or club roles. */
+  groupOnly?: boolean;
 }) {
   const [t, locale] = await Promise.all([getTranslations(), getLocale()]);
   const kinds = new Set(current.map((e) => e.kind));
@@ -182,7 +188,7 @@ export async function AudienceFields({
   const leaderRoles = (roles ?? []).filter(
     (r) => r.scope === "group" && r.permissions.includes("group.lead"),
   );
-  const clubRoles = (roles ?? []).filter((r) => r.scope === "club");
+  const clubRoles = groupOnly ? [] : (roles ?? []).filter((r) => r.scope === "club");
   const option = (value: string, label: string) => (
     <label className="flex items-center gap-2">
       <input type="radio" name="audience" value={value} defaultChecked={mode === value} />
@@ -193,7 +199,7 @@ export async function AudienceFields({
     <fieldset className="space-y-2" data-testid="audience-fields">
       <legend className="text-sm font-medium">{t("documents.audience.legend")}</legend>
       {inherit ? option("inherit", t("documents.audience.inherit")) : null}
-      {option("club", t("documents.audience.club"))}
+      {groupOnly ? null : option("club", t("documents.audience.club"))}
       {groupId && leaderRoles.length > 0 ? (
         <>
           {option("leaders", t("documents.audience.leaders"))}
@@ -228,7 +234,7 @@ export async function AudienceFields({
           </label>
         ))}
       </div>
-      {option("public", t("documents.audience.public"))}
+      {allowPublic ? option("public", t("documents.audience.public")) : null}
       <p className="text-xs text-muted">{t("documents.audience.guardians")}</p>
     </fieldset>
   );

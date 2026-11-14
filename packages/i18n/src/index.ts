@@ -134,6 +134,7 @@ export type EnumNamespace =
   | "waitlist.statuses"
   | "waitlist.removalReasons"
   | "documents.states"
+  | "announcements.statuses"
   | "waitlist.decisionKinds"
   | "calendar.ui.scopes"
   | "protection.sources"

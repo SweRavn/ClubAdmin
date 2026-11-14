@@ -56,6 +56,15 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       label: t("nav.chat"),
       current: pathname.startsWith("/me/chats") || /^\/clubs\/[^/]+\/chats/.test(pathname),
     },
+    // "Anslagstavlan" (P2.3): the announcements of the viewer's clubs and groups.
+    {
+      key: "announcements",
+      href: "/me/announcements",
+      label: t("nav.announcements"),
+      current:
+        pathname.startsWith("/me/announcements") ||
+        /^\/clubs\/[^/]+\/announcements\/[0-9a-f-]{36}/.test(pathname),
+    },
     // "Mina dokument" (P2.2): the newest files of the viewer's groups and clubs.
     {
       key: "documents",
@@ -77,6 +86,16 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         href: `/clubs/${club.id}/events`,
         label: t("nav.events"),
         current: pathname.startsWith(`/clubs/${club.id}/events`) || pathname.startsWith("/events/"),
+      });
+    }
+    if (club.mine?.permissions.includes("club.announcements.send")) {
+      nav.push({
+        key: "club-announcements",
+        href: `/clubs/${club.id}/announcements`,
+        label: t("nav.clubAnnouncements"),
+        current:
+          pathname === `/clubs/${club.id}/announcements` ||
+          pathname.startsWith(`/clubs/${club.id}/announcements/new`),
       });
     }
     if (club.mine?.permissions.includes("club.documents.read")) {

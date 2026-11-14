@@ -58,3 +58,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0050](0050-volunteer-duties.md) | Volunteer duties: shifts, quotas per player, sign-up and swaps; automation later | Accepted |
 | [0051](0051-reporting-plugins.md) | Plugins for grant reporting and background checks | Accepted |
 | [0052](0052-assigned-tasks.md) | Assigned tasks: one system for duty shifts and meeting action items | Accepted |
+| [0053](0053-announcements.md) | Announcements: one message, chosen channels, no text in push | Accepted |

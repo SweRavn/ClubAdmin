@@ -7,6 +7,7 @@
 import { type Permission, PERMISSIONS, type RegisterAccess } from "@clubadmin/shared";
 
 import {
+  type AnnouncementResource,
   type ChatResource,
   type ClubResource,
   definePolicy,
@@ -220,6 +221,31 @@ export function canReadDocuments(
   resource: FolderResource | DocumentResource,
 ): boolean {
   return resource.inAudience || canManageDocuments(actor, resource.clubId, resource.group);
+}
+
+// Announcements (P2.3, ADR 0053): read by their audience (checked in SQL by
+// the resource loader); sent to the club by `club.announcements.send`, to a
+// group also by its owners and `group.announcements.send` there. Their
+// writer and those who could send them manage them. Acting for a ward reads
+// as the ward and sends nothing.
+
+/** Sends announcements to the club, or to the group when a group is given. */
+export function canSendAnnouncements(
+  actor: Actor,
+  clubId: string,
+  group: GroupRef | null,
+): boolean {
+  if (actor.onBehalfOf) return false;
+  if (actor.holds("club.announcements.send", clubId)) return true;
+  return (
+    group !== null && (actor.ownsGroup(group) || actor.holds("group.announcements.send", group))
+  );
+}
+
+export function canManageAnnouncement(actor: Actor, resource: AnnouncementResource): boolean {
+  if (actor.onBehalfOf) return false;
+  if (resource.createdByPersonId === actor.personId) return true;
+  return canSendAnnouncements(actor, resource.clubId, resource.group);
 }
 
 /** A leader of one of the chat's groups (`group.lead`, P1.15) in a chat with children. */
@@ -791,6 +817,27 @@ export const POLICIES: readonly Policy[] = [
   ),
   definePolicy("document.manage", "document", ({ actor, resource }) =>
     canManageDocuments(actor, resource.clubId, resource.group),
+  ),
+  // Announcements (P2.3): boards show what the audiences let the caller read.
+  definePolicy("club.announcements.send", "club", ({ actor, resource }) =>
+    canSendAnnouncements(actor, resource.clubId, null),
+  ),
+  definePolicy(
+    "group.announcements.send",
+    "group",
+    ({ actor, resource }) =>
+      !resource.archived && canSendAnnouncements(actor, resource.clubId, resource),
+  ),
+  definePolicy("group.announcements.read", "group", ({ actor, resource }) =>
+    actor.hasClubRelationship(resource.clubId),
+  ),
+  definePolicy(
+    "announcement.read",
+    "announcement",
+    ({ actor, resource }) => resource.inAudience || canManageAnnouncement(actor, resource),
+  ),
+  definePolicy("announcement.manage", "announcement", ({ actor, resource }) =>
+    canManageAnnouncement(actor, resource),
   ),
 ];
 

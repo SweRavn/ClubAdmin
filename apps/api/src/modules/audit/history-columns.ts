@@ -798,6 +798,11 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "a file's versions (uploader, date, size, scan): listed on the file and in the audit log (document.version.*)",
   "public.notice_attachments":
     "the documents of a notice: listed with the activity or event and in the audit log (document.notice.*)",
+  // Announcements (P2.3, ADR 0053): shown on their own page and in the
+  // archive (sender, sent, edited, withdrawn); every change is in the audit
+  // log (announcement.*).
+  "public.announcements":
+    "an announcement's text, audience and channels: on its page and in the archive, changes in the audit log (announcement.*)",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

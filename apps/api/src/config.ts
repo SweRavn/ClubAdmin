@@ -94,6 +94,11 @@ export const apiConfigSchema = z
      * unless the club's plan sets `storage_gb` (billing on).
      */
     DOCUMENTS_CLUB_LIMIT_MB: z.coerce.number().int().positive().default(100),
+    /**
+     * Announcement emails per club in 24 hours (P2.3, ADR 0053); 0 or unset:
+     * no limit. Over it the email channel is refused before sending.
+     */
+    ANNOUNCEMENT_EMAILS_PER_CLUB_DAY: z.coerce.number().int().min(0).default(0),
     /** Member imports (P1.3b) started per club in 24 hours. */
     MEMBER_IMPORTS_PER_CLUB_DAY: z.coerce.number().int().positive().default(20),
     /** Invitations imports send per club in 24 hours (the rest are left out and counted). */

@@ -142,6 +142,9 @@ async function graceOf(tx: Tx, clubId: string): Promise<Date | null> {
   return rows[0]?.grace_until ? new Date(rows[0].grace_until) : null;
 }
 
+/** Notices created per statement for an announcement's audience (P2.3). */
+const ANNOUNCEMENT_BATCH = 1000;
+
 /** The waiting-list events that become notices (P1.10a, P1.10b). */
 const WAITLIST_EVENTS = [
   "waitlist.entry.created",
@@ -188,6 +191,9 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       // Documents (P2.2 part B).
       "document.published",
       "document.deletion_soon",
+      // Announcements (P2.3).
+      "announcement.sent",
+      "announcement.withdrawn",
       ...WAITLIST_EVENTS,
       "club.privacy_policy.published",
       "privacy.export.ready",
@@ -716,6 +722,81 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `document.deletion_soon:${documentId}:${row.delete_after}`,
             },
           ]);
+          return;
+        }
+        // An announcement was sent (P2.3, ADR 0053): its audience's people
+        // (with guardians who receive messages, never its writer) get a
+        // notice by the channels it chose, in batches; push never carries
+        // its text (only the group's or club's name). Board-only ones are
+        // counted, nothing is sent. The counts go on the announcement.
+        case "announcement.sent": {
+          const { clubId, announcementId } = DOMAIN_EVENTS["announcement.sent"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows: facts } = await tx.execute<{
+            audience_id: string;
+            channels: string[];
+            important: boolean;
+            writer: string | null;
+            from_name: string;
+            withdrawn: boolean;
+          }>(sql`
+            SELECT a.audience_id, a.channels, a.important, a.created_by_person_id AS writer,
+              coalesce(g.name, c.name) AS from_name, a.withdrawn_at IS NOT NULL AS withdrawn
+            FROM public.announcements a
+            JOIN public.clubs c ON c.id = a.club_id
+            LEFT JOIN public.groups g ON g.id = a.group_id
+            WHERE a.id = ${announcementId}::uuid AND a.sent_at IS NOT NULL`);
+          const fact = facts[0];
+          if (!fact || fact.withdrawn) return;
+          const { rows: people } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM app.audience_people(${fact.audience_id}::uuid)
+            WHERE person_id IS DISTINCT FROM ${fact.writer}::uuid`);
+          const push = fact.channels.includes("push");
+          const email = fact.channels.includes("email");
+          if (push || email) {
+            const channels = {
+              push: options.channels.push && push,
+              email: options.channels.email && email,
+            };
+            const type = fact.important ? "announcement.important" : "announcement.sent";
+            for (let i = 0; i < people.length; i += ANNOUNCEMENT_BATCH) {
+              await createNotices(
+                tx,
+                people.slice(i, i + ANNOUNCEMENT_BATCH).map((r) => ({
+                  recipientPersonId: r.person_id,
+                  clubId,
+                  type,
+                  subjectType: "announcement",
+                  subjectId: announcementId,
+                  about: [],
+                  params: { from: fact.from_name },
+                  dedupeKey: `announcement:${announcementId}`,
+                })),
+                { channels, now: at },
+              );
+            }
+          }
+          await tx.execute(sql`
+            UPDATE public.announcements a SET recipient_count = ${people.length},
+              email_count = (SELECT count(*)::int FROM public.notifications n
+                JOIN public.notification_deliveries d ON d.notification_id = n.id
+                WHERE n.subject_type = 'announcement' AND n.subject_id = a.id AND d.channel = 'email'),
+              push_count = (SELECT count(DISTINCT n.id)::int FROM public.notifications n
+                JOIN public.notification_deliveries d ON d.notification_id = n.id
+                WHERE n.subject_type = 'announcement' AND n.subject_id = a.id AND d.channel = 'push')
+            WHERE a.id = ${announcementId}::uuid`);
+          return;
+        }
+        // Withdrawn or deleted (P2.3): what is not delivered yet is not.
+        case "announcement.withdrawn": {
+          const { announcementId } = DOMAIN_EVENTS["announcement.withdrawn"].parse(event.payload);
+          await tx.execute(sql`
+            UPDATE public.notification_deliveries d SET status = 'skipped', skip_reason = 'obsolete'
+            FROM public.notifications n
+            WHERE d.notification_id = n.id AND n.subject_type = 'announcement'
+              AND n.subject_id = ${announcementId}::uuid AND d.status IN ('queued', 'held')`);
           return;
         }
         case "chat.member.muted": {

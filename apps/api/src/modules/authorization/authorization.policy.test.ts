@@ -221,6 +221,27 @@ const teamDocumentR = (inAudience = true): Resource => ({
   inAudience,
 });
 
+const teamAnnouncementR = (
+  inAudience = true,
+  createdByPersonId: string | null = null,
+): Resource => ({
+  kind: "announcement",
+  clubId: club,
+  announcementId: uuidv7(),
+  group: { clubId: club, groupId: team, ancestorIds: [section] },
+  inAudience,
+  createdByPersonId,
+});
+const clubAnnouncementR = (inAudience = true): Resource => ({
+  kind: "announcement",
+  clubId: club,
+  announcementId: uuidv7(),
+  group: null,
+  inAudience,
+  createdByPersonId: null,
+});
+const communications = as({ ...member(), roles: [{ clubId: club, role: "communications" }] });
+
 const CASES: Record<Permission, Case[]> = {
   "club.read": [
     { name: "member", actor: plainMember, resource: clubR, allowed: true },
@@ -1546,6 +1567,78 @@ const CASES: Record<Permission, Case[]> = {
       name: "coach of another team",
       actor: otherTeamCoach,
       resource: teamDocumentR(),
+      allowed: false,
+    },
+  ],
+  "club.announcements.send": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "secretary", actor: secretary, resource: clubR, allowed: true },
+    { name: "communications", actor: communications, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "group.announcements.send": [
+    { name: "head coach", actor: coach, resource: teamR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: true },
+    { name: "club manager", actor: manager, resource: teamR, allowed: true },
+    { name: "archived group", actor: coach, resource: archivedTeamR, allowed: false },
+    { name: "physio", actor: physio, resource: teamR, allowed: false },
+    { name: "teammate", actor: teammate, resource: teamR, allowed: false },
+    { name: "coach of another team", actor: otherTeamCoach, resource: teamR, allowed: false },
+  ],
+  "group.announcements.read": [
+    { name: "member", actor: plainMember, resource: teamR, allowed: true },
+    { name: "outsider", actor: outsider, resource: teamR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: teamR, allowed: false },
+  ],
+  "announcement.read": [
+    { name: "in the audience", actor: parent, resource: teamAnnouncementR(), allowed: true },
+    {
+      name: "head coach outside it",
+      actor: coach,
+      resource: teamAnnouncementR(false),
+      allowed: true,
+    },
+    {
+      name: "teammate outside it",
+      actor: teammate,
+      resource: teamAnnouncementR(false),
+      allowed: false,
+    },
+    {
+      name: "member outside a club one",
+      actor: plainMember,
+      resource: clubAnnouncementR(false),
+      allowed: false,
+    },
+    {
+      name: "manager of another club",
+      actor: otherClubManager,
+      resource: teamAnnouncementR(false),
+      allowed: false,
+    },
+  ],
+  "announcement.manage": [
+    { name: "head coach", actor: coach, resource: teamAnnouncementR(), allowed: true },
+    { name: "club manager", actor: manager, resource: clubAnnouncementR(), allowed: true },
+    {
+      name: "its writer",
+      actor: teammate,
+      resource: teamAnnouncementR(true, teammate.personId),
+      allowed: true,
+    },
+    {
+      name: "teammate in the audience",
+      actor: teammate,
+      resource: teamAnnouncementR(),
+      allowed: false,
+    },
+    { name: "head coach: the club's", actor: coach, resource: clubAnnouncementR(), allowed: false },
+    {
+      name: "acting on behalf of a ward",
+      actor: onBehalf,
+      resource: teamAnnouncementR(),
       allowed: false,
     },
   ],

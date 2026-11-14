@@ -13,10 +13,12 @@ import { useTranslations } from "use-intl";
 import {
   type RosterEntry,
   useGroup,
+  useGroupAnnouncements,
   useGroupChats,
   useGroupFolders,
   useRoster,
 } from "../../../api/queries.ts";
+import { AnnouncementRow } from "../../../components/announcements.tsx";
 import { ChatRow } from "../../../components/chat-parts.tsx";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
@@ -53,6 +55,8 @@ function Group({ groupId }: { groupId: string }) {
   const chats = useGroupChats(group.data?.clubId, groupId);
   // The group's folders (P2.2); hidden without access or the feature.
   const folders = useGroupFolders(group.data?.clubId, groupId);
+  // The group's board (P2.3): pinned and the newest few.
+  const board = useGroupAnnouncements(group.data?.clubId, groupId);
   const entries: RosterEntry[] = roster.data?.pages.flatMap((page) => page.items) ?? [];
   const showsProtected =
     entries.some((e) => e.person.protected) || (group.data?.owners ?? []).some((p) => p.protected);
@@ -75,6 +79,7 @@ function Group({ groupId }: { groupId: string }) {
     void roster.refetch();
     void chats.refetch();
     void folders.refetch();
+    void board.refetch();
   };
   const renderEntry = (
     entry: RosterEntry,
@@ -123,6 +128,13 @@ function Group({ groupId }: { groupId: string }) {
               />
             ))
           )}
+        </Section>
+      ) : null}
+      {board.data && board.data.pinned.length + board.data.items.length > 0 ? (
+        <Section title={t("announcements.title")}>
+          {[...board.data.pinned, ...board.data.items].map((a, index, list) => (
+            <AnnouncementRow key={a.id} announcement={a} last={index === list.length - 1} />
+          ))}
         </Section>
       ) : null}
       {folders.data && folders.data.items.length > 0 ? (

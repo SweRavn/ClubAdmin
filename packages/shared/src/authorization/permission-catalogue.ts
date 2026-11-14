@@ -198,6 +198,13 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "folder.manage": derived("group.documents.manage"),
   "document.read": builtIn,
   "document.manage": derived("group.documents.manage"),
+  // Announcements (P2.3, ADR 0053): who reads one is decided by its
+  // audience; sending by these two (a group's also by its owners).
+  "club.announcements.send": role("club", "communication"),
+  "group.announcements.send": role("group", "communication"),
+  "group.announcements.read": builtIn,
+  "announcement.read": builtIn,
+  "announcement.manage": derived("group.announcements.send"),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -336,6 +343,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.invoices.read",
       "club.channels.create",
       "club.documents.manage",
+      "club.announcements.send",
     ],
   },
   registrar: {
@@ -344,7 +352,13 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
   },
   chair: {
     scope: "club",
-    permissions: [...BOARD, "club.managers.claim", "club.roles.read", "club.channels.create"],
+    permissions: [
+      ...BOARD,
+      "club.managers.claim",
+      "club.roles.read",
+      "club.channels.create",
+      "club.announcements.send",
+    ],
   },
   vice_chair: { scope: "club", permissions: BOARD },
   treasurer: {
@@ -356,14 +370,17 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.invoices.read",
     ],
   },
-  secretary: { scope: "club", permissions: [...BOARD, "club.documents.manage"] },
+  secretary: {
+    scope: "club",
+    permissions: [...BOARD, "club.documents.manage", "club.announcements.send"],
+  },
   board_member: { scope: "club", permissions: BOARD },
   deputy_board_member: { scope: "club", permissions: BOARD },
   auditor: { scope: "club", permissions: [] },
   nomination_committee: { scope: "club", permissions: [] },
   // Reports and safeguarding cases (P2.1 part B, ADR 0047 rule 7).
   safeguarding_officer: { scope: "club", permissions: ["club.safeguarding.handle"] },
-  communications: { scope: "club", permissions: [] },
+  communications: { scope: "club", permissions: ["club.announcements.send"] },
   staff: { scope: "club", permissions: [] },
   // Children create channels too (P2.1, ADR 0047: visible to their guardians and leaders).
   member: { scope: "group", permissions: ["group.participate", "group.channels.create"] },
@@ -374,15 +391,26 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "group.channels.create",
       "group.channels.manage",
       "group.documents.manage",
+      "group.announcements.send",
     ],
   },
   assistant_coach: {
     scope: "group",
-    permissions: [...PLANNER, "group.channels.create", "group.documents.manage"],
+    permissions: [
+      ...PLANNER,
+      "group.channels.create",
+      "group.documents.manage",
+      "group.announcements.send",
+    ],
   },
   team_manager: {
     scope: "group",
-    permissions: [...PLANNER, "group.channels.create", "group.documents.manage"],
+    permissions: [
+      ...PLANNER,
+      "group.channels.create",
+      "group.documents.manage",
+      "group.announcements.send",
+    ],
   },
   physio: { scope: "group", permissions: LEADER },
   other_leader: { scope: "group", permissions: [...LEADER, "activity.responses.read"] },
@@ -415,6 +443,7 @@ export const OWNER_PERMISSIONS: readonly RolePermission[] = [
   "group.channels.create",
   "group.channels.manage",
   "group.documents.manage",
+  "group.announcements.send",
 ];
 /**
  * Not powers over others: taking part, counting as a leader, and creating

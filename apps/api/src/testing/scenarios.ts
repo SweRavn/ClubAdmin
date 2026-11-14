@@ -68,6 +68,13 @@ export interface MatrixScenario {
   documentId: string;
   versionId: string;
   disposableDocumentId: string;
+  /**
+   * Announcements (P2.3): three sent by the coach to team T (one to read
+   * and edit, one to withdraw, one to delete).
+   */
+  announcementId: string;
+  withdrawAnnouncementId: string;
+  deleteAnnouncementId: string;
   outsider: BuiltPerson;
   operator: BuiltPerson;
 }
@@ -262,6 +269,23 @@ export async function buildMatrixScenario(
   const document = await file("Matrix schedule");
   const disposableDocument = await file("Matrix old");
 
+  // Announcements (P2.3): sent by the coach to team T, on the board only.
+  const announce = (title: string) =>
+    s.announcements.create(
+      coachCtx,
+      { groupId: team.id },
+      {
+        title,
+        body: "Matrix",
+        channels: ["board"],
+        important: false,
+        send: true,
+      },
+    );
+  const announcementId = await announce("Matrix notice");
+  const withdrawAnnouncementId = await announce("Matrix withdraw");
+  const deleteAnnouncementId = await announce("Matrix delete");
+
   const operator = await buildPerson(s);
   await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
 
@@ -299,6 +323,9 @@ export async function buildMatrixScenario(
     documentId: document.documentId,
     versionId: document.versionId,
     disposableDocumentId: disposableDocument.documentId,
+    announcementId,
+    withdrawAnnouncementId,
+    deleteAnnouncementId,
     outsider: clubB.manager,
     operator,
   };

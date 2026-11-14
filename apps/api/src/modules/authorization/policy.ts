@@ -126,6 +126,21 @@ export interface DocumentResource {
   inAudience: boolean;
 }
 
+/**
+ * An announcement (:announcementId within :clubId; P2.3, ADR 0053): the
+ * club's or a group's, whether the actor (or a ward) reads it (sent, not
+ * withdrawn, in its audience) and who wrote it.
+ */
+export interface AnnouncementResource {
+  kind: "announcement";
+  clubId: string;
+  announcementId: string;
+  /** The group whose announcement it is, with its ancestors (none: the club's). */
+  group: GroupRef | null;
+  inAudience: boolean;
+  createdByPersonId: string | null;
+}
+
 export interface Resources {
   platform: PlatformResource;
   club: ClubResource;
@@ -138,6 +153,7 @@ export interface Resources {
   chat: ChatResource;
   folder: FolderResource;
   document: DocumentResource;
+  announcement: AnnouncementResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

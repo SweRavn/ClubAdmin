@@ -279,6 +279,15 @@ schedule (Ola left two years ago).
   something unkind; Erik **reported** it and Karin, the club's
   safeguarding officer, closed the case ("no action", a note about talking
   with Maja and her parents).
+- **Announcements** (P2.3, ADR 0053, `apps/api/src/seed/steps/announcements.ts`,
+  through the announcements service as the personas): in IKN Göran called
+  the whole club to the **annual meeting** (important, board, push and
+  email, pinned for a month); Erik told F2015 that **the pitch is closed**
+  this week (board and push); Göran's **newsletter** is scheduled for next
+  week. Anna (Oskar's parent) read the F2015 one: the annual meeting is her
+  unread announcement. Their events are history: starting the worker sends
+  no notices for them. Open `/me/announcements` as Anna or
+  `/clubs/<ikn>/announcements` as Göran.
 - **Documents** (P2.2, ADR 0049, `apps/api/src/seed/steps/documents.ts`):
   in IKN Göran keeps the club's folder **"Policyer"** (the whole club) with
   "Uppförandekod.pdf" and "Trafikpolicy.pdf", the latter **public**. Erik

@@ -15,6 +15,7 @@ import type { FastifyRequest } from "fastify";
 import type { Principal } from "../../platform/http/principal.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
 import {
+  canManageAnnouncement,
   canReadChat,
   canReadDocuments,
   canReadEvent,
@@ -23,6 +24,7 @@ import {
 } from "./authorization.policy.ts";
 import {
   loadActivityScope,
+  loadAnnouncementScope,
   loadChatScope,
   loadDocumentScope,
   loadEventScope,
@@ -38,6 +40,7 @@ import {
 import type { AuthorizationCache } from "./authorization-cache.ts";
 import type {
   ActivityResource,
+  AnnouncementResource,
   ChatResource,
   ClubCreationMode,
   ClubResource,
@@ -203,6 +206,12 @@ export class AuthorizationService {
     if (resource.kind === "folder" || resource.kind === "document") {
       return canReadDocuments(actor, resource) ? "forbidden" : "not-found";
     }
+    // Announcements outside one's audience do not exist (P2.3).
+    if (resource.kind === "announcement") {
+      return resource.inAudience || canManageAnnouncement(actor, resource)
+        ? "forbidden"
+        : "not-found";
+    }
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
 
@@ -234,7 +243,41 @@ export class AuthorizationService {
         return this.archiveResource(authorization, request, "folder");
       case "document":
         return this.archiveResource(authorization, request, "document");
+      case "announcement":
+        return this.announcementResource(authorization, request);
     }
+  }
+
+  /** An announcement within :clubId (P2.3): its group, writer and whether the actor reads it. */
+  private async announcementResource(
+    authorization: RequestAuthorization,
+    request: FastifyRequest,
+  ): Promise<AnnouncementResource> {
+    const { clubId } = this.clubResource(request);
+    const announcementId = param(request, "announcementId");
+    if (!announcementId || !isUuid(announcementId)) throw new ProblemError("not-found");
+    const personId = authorization.actor.personId;
+    return this.db.withSystem("authz:announcements", { clubId }, async (tx) => {
+      const scope = await loadAnnouncementScope(tx, announcementId, personId);
+      if (!scope) throw new ProblemError("not-found");
+      let group: GroupRef | null = null;
+      if (scope.groupId) {
+        const ancestors = await loadGroupScopes(tx, [scope.groupId]);
+        group = {
+          clubId,
+          groupId: scope.groupId,
+          ancestorIds: ancestors.get(scope.groupId)?.ancestorIds ?? [],
+        };
+      }
+      return {
+        kind: "announcement",
+        clubId,
+        announcementId,
+        group,
+        inAudience: scope.inAudience,
+        createdByPersonId: scope.createdByPersonId,
+      };
+    });
   }
 
   /** A folder or file of the archive within :clubId (P2.2): its group and audience. */

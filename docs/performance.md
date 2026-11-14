@@ -116,6 +116,15 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   data. The group's channel is created on first use; its members follow the
   group in the worker, never in a read. Real-time events carry IDs only;
   clients fetch the content (one request per event, batched by `after`).
+- Announcements (P2.3): "Anslagstavlan" (`app.my_announcements`) reads the
+  person's clubs one at a time and, in each, a page of the club's and of
+  each of the person's groups' announcements from the board indexes
+  (`announcements_club_board_idx`, `announcements_group_board_idx`) before
+  the audience check; a group's board starts from the group. Club and group
+  names are looked up by primary key per row (a join let the planner scan
+  `clubs` and `groups`, which grew with the data). Fan-out happens in the
+  worker in batches of 1,000 notices. Request budgets cover the board, a
+  group's board, one announcement and marking it read.
 - Documents (P2.2): a folder lists its documents by name (keyset on the
   ID) from `documents_folder_idx`; who may read is decided in SQL
   (`app.document_readable`, the audience functions) for the page's rows,

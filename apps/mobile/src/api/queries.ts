@@ -978,3 +978,74 @@ export function useMarkDocumentsSeen() {
       void queryClient.invalidateQueries({ queryKey: ["documents", personId, "mine"] }),
   });
 }
+
+// --- Announcements (P2.3, ADR 0053) -----------------------------------------------
+
+export type Announcement = Schemas["Announcement"];
+export type AnnouncementBoard = Schemas["AnnouncementBoard"];
+
+/**
+ * "Anslagstavlan": pinned announcements and the newest of the person's (and
+ * their children's) clubs and groups, the logged-in person's own. Cache first.
+ */
+export function useMyAnnouncements() {
+  const { api, personId } = useSession();
+  return useInfiniteQuery({
+    queryKey: ["announcements", personId, "board"],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) =>
+      data(
+        await api.GET("/api/v1/me/announcements", {
+          params: { query: { limit: 20, ...(pageParam ? { cursor: pageParam } : {}) } },
+        }),
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? null,
+    enabled: personId !== null,
+  });
+}
+
+/** A group's board (the first page); hidden without access. */
+export function useGroupAnnouncements(clubId: string | undefined, groupId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["announcements", personId, "group", groupId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/groups/{groupId}/announcements", {
+          params: { path: { clubId: clubId!, groupId }, query: { limit: 10 } },
+        }),
+      ),
+    enabled: personId !== null && clubId !== undefined,
+  });
+}
+
+export function useAnnouncement(clubId: string, announcementId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["announcements", personId, "one", announcementId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/announcements/{announcementId}", {
+          params: { path: { clubId, announcementId } },
+        }),
+      ),
+    enabled: personId !== null,
+  });
+}
+
+/** The person read an announcement: its board and inbox marks follow. */
+export function useMarkAnnouncementRead() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ clubId, announcementId }: { clubId: string; announcementId: string }) => {
+      await api.POST("/api/v1/clubs/{clubId}/announcements/{announcementId}/read", {
+        params: { path: { clubId, announcementId } },
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["announcements", personId, "board"] });
+      void queryClient.invalidateQueries({ queryKey: ["me", personId, "notifications"] });
+    },
+  });
+}

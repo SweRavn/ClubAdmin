@@ -1020,6 +1020,26 @@ with `POST .../attachments/uploads`, `GET /me/documents`, `POST
 /clubs/:clubId/documents/seen`, `GET|PUT /clubs/:clubId/storage`, `GET
 /public/clubs/:slug/documents` and its downloads.
 
+### Announcements (P2.3, ADR 0053)
+Club-owned tables (tenant RLS; migration 0044):
+
+- `announcements`: the club's (`group_id` null) or a group's; `audience_id`
+  (an ADR 0049 audience, never `public`), `title`, `body` (Markdown subset),
+  `channels` (`board`, `push`, `email`), `important`, `pinned_until`,
+  `expires_at`, `scheduled_at`, `sent_at`, `edited_at`, `withdrawn_at` and
+  by whom, `created_by_person_id`, and the counts when sent
+  (`recipient_count`, `email_count`, `push_count`). Record history.
+- `announcement_reads`: who read which, and when (no record history).
+
+Status: a draft (nothing sent, no time), scheduled (`scheduled_at`), sent
+(`sent_at`), withdrawn. `app.announcement_readable(announcement, person)`
+(sent, not withdrawn, in its audience), `app.announcement_read` (a read
+mark or its read notice), `app.my_announcements` (the board across the
+person's clubs and groups), `app.entries_people`/`app.entries_reach` (an
+audience given as entries, before it is stored). Sending publishes
+`announcement.sent`; the worker turns it into notices of the category
+`announcements` (ADR 0039), and `announcements:due` sends scheduled ones.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

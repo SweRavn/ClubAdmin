@@ -4,6 +4,7 @@ export { AuthorizationModule } from "./authorization.module.ts";
 export {
   canJoinChat,
   canLeadGroupActivities,
+  canManageAnnouncement,
   canManageChat,
   canManageDocuments,
   canManageEvent,
@@ -15,6 +16,7 @@ export {
   canReadGroupActivities,
   canReadGroupMembers,
   canRespondInGroup,
+  canSendAnnouncements,
   clubPermissions,
   permits,
   type ProfileAccess,
@@ -27,6 +29,7 @@ export { EndpointPolicyCheck, endpointPolicyProblems } from "./endpoint-policies
 export { PersonVisibility, type Visibility } from "./person-visibility.service.ts";
 export type {
   ActivityResource,
+  AnnouncementResource,
   ChatResource,
   ClubResource,
   DocumentResource,

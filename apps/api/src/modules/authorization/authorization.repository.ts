@@ -423,6 +423,38 @@ export async function loadDocumentScope(
 }
 
 /**
+ * An announcement for its policies (P2.3): its group, writer, and whether
+ * the person (or a ward whose link receives messages) reads it. System read
+ * in the club.
+ */
+export async function loadAnnouncementScope(
+  tx: Tx,
+  announcementId: string,
+  personId: string,
+): Promise<{
+  groupId: string | null;
+  inAudience: boolean;
+  createdByPersonId: string | null;
+} | null> {
+  const { rows } = await tx.execute<{
+    group_id: string | null;
+    in_audience: boolean;
+    created_by_person_id: string | null;
+  }>(sql`
+    SELECT a.group_id, a.created_by_person_id,
+      app.announcement_readable(a.id, ${personId}::uuid) AS in_audience
+    FROM public.announcements a WHERE a.id = ${announcementId}::uuid`);
+  const row = rows[0];
+  return row
+    ? {
+        groupId: row.group_id,
+        inAudience: row.in_audience,
+        createdByPersonId: row.created_by_person_id,
+      }
+    : null;
+}
+
+/**
  * A chat for its policies (P2.1): kind, visibility, state, groups, whether
  * children are active members, and which of the given people (the actor and
  * their wards) are members. Read in the chat's club as a system read; IDs only.

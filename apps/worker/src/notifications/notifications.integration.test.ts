@@ -11,6 +11,7 @@ import { uuidv7 } from "@clubadmin/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { memoryMailProvider } from "../mail.ts";
+import { runDueAnnouncements } from "../tasks/announcements.ts";
 import {
   deliverDigests,
   deliverEmails,
@@ -1173,4 +1174,168 @@ describe("waiting-list notices (P1.10a)", () => {
       }
     },
   );
+});
+
+describe("announcements (P2.3)", () => {
+  /** An announcement of team F2016 by its coach, sent (or scheduled), to the group. */
+  async function announcement(
+    x: Awaited<ReturnType<typeof team>>,
+    options: { channels: string[]; important?: boolean; scheduledAt?: Date } = {
+      channels: ["board", "push", "email"],
+    },
+  ): Promise<string> {
+    const audience = uuidv7();
+    const id = uuidv7();
+    await t.query("admin", "INSERT INTO audiences (id, club_id) VALUES ($1, $2)", [
+      audience,
+      x.club,
+    ]);
+    await t.query(
+      "admin",
+      "INSERT INTO audience_entries (club_id, audience_id, kind, group_id) VALUES ($1, $2, 'group', $3)",
+      [x.club, audience, x.group],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO announcements (id, club_id, group_id, audience_id, title, body, channels, important,
+         scheduled_at, sent_at, created_by_person_id)
+       VALUES ($1, $2, $3, $4, 'Planen är stängd', 'Ingen träning **tisdag**.', $5, $6, $7, $8, $9)`,
+      [
+        id,
+        x.club,
+        x.group,
+        audience,
+        `{${options.channels.join(",")}}`,
+        options.important ?? false,
+        options.scheduledAt ?? null,
+        options.scheduledAt ? null : new Date(),
+        x.coach,
+      ],
+    );
+    return id;
+  }
+  const noon = () => {
+    const at = new Date();
+    at.setUTCHours(11, 0, 0, 0);
+    return at;
+  };
+
+  it("reaches the group and the guardians who receive messages, never the writer; email has the text", async () => {
+    const x = await team();
+    const id = await announcement(x);
+    const event = await publish(x.club, "announcement.sent", {
+      clubId: x.club,
+      announcementId: id,
+    });
+    await outbox.dispatch(t.db, event, [handler(noon())]);
+    for (const p of [x.anna, x.mikael, x.nils]) {
+      expect((await noticesOf(p)).map((n) => [n.type, n.subject_id])).toEqual([
+        ["announcement.sent", id],
+      ]);
+    }
+    expect(await noticesOf(x.gunilla)).toEqual([]);
+    expect(await noticesOf(x.coach)).toEqual([]);
+    // Anna has the app: push only (no_app); Mikael has none: email at once.
+    expect(await deliveriesOf(x.anna)).toEqual([
+      { channel: "push", status: "queued", digest: false },
+    ]);
+    expect(await deliveriesOf(x.mikael)).toEqual([
+      { channel: "email", status: "queued", digest: false },
+    ]);
+    const { rows } = await t.query<{
+      recipient_count: number;
+      email_count: number;
+      push_count: number;
+    }>(
+      "admin",
+      "SELECT recipient_count, email_count, push_count FROM announcements WHERE id = $1",
+      [id],
+    );
+    // Elsa, Anna, Mikael and Nils (the coach wrote it).
+    expect(rows[0]).toEqual({ recipient_count: 4, email_count: 2, push_count: 1 });
+
+    const { deps, mail, push } = delivery();
+    // Delivered by the same clock the notices were created with.
+    const later = new Date(Math.max(Date.now(), noon().getTime()) + 1000);
+    await deliverEmails(deps, later);
+    const toMikael = mail.sent.find((m) => m.to.includes(x.mikael.slice(-12)))!;
+    expect(toMikael.subject).toBe("F2016: Planen är stängd");
+    expect(toMikael.text).toContain("Announcement from F2016");
+    expect(toMikael.text).toContain("Ingen träning **tisdag**.");
+    expect(toMikael.headers?.["List-Unsubscribe"]).toBeDefined();
+    // Push carries no text of the announcement.
+    await deliverPush(deps, later);
+    const pushed = JSON.stringify(push.sent);
+    expect(pushed).toContain("F2016");
+    expect(pushed).not.toContain("Planen");
+  });
+
+  it("emails an important one whatever the category setting", async () => {
+    const x = await team();
+    await t.query(
+      "admin",
+      `UPDATE accounts SET notification_settings = '{"categories":{"announcements":{"email":"never"}}}'
+       WHERE person_id = ANY($1)`,
+      [[x.anna, x.mikael]],
+    );
+    const id = await announcement(x, { channels: ["board", "email"], important: true });
+    const event = await publish(x.club, "announcement.sent", {
+      clubId: x.club,
+      announcementId: id,
+    });
+    await outbox.dispatch(t.db, event, [handler(noon())]);
+    expect(await deliveriesOf(x.anna)).toEqual([
+      { channel: "email", status: "queued", digest: false },
+    ]);
+    expect(await deliveriesOf(x.mikael)).toEqual([
+      { channel: "email", status: "queued", digest: false },
+    ]);
+    expect((await noticesOf(x.anna))[0]?.type).toBe("announcement.important");
+  });
+
+  it("stops what is not delivered when withdrawn", async () => {
+    const x = await team();
+    const id = await announcement(x, { channels: ["email"] });
+    const sent = await publish(x.club, "announcement.sent", { clubId: x.club, announcementId: id });
+    await outbox.dispatch(t.db, sent, [handler(noon())]);
+    await t.query("admin", "UPDATE announcements SET withdrawn_at = now() WHERE id = $1", [id]);
+    const withdrawn = await publish(x.club, "announcement.withdrawn", {
+      clubId: x.club,
+      announcementId: id,
+    });
+    await outbox.dispatch(t.db, withdrawn, [handler(noon())]);
+    expect(await deliveriesOf(x.mikael)).toEqual([
+      { channel: "email", status: "skipped", digest: false },
+    ]);
+  });
+
+  it("sends scheduled ones when their time has come", async () => {
+    const x = await team();
+    const due = await announcement(x, {
+      channels: ["board"],
+      scheduledAt: new Date(Date.now() - 60_000),
+    });
+    const later = await announcement(x, {
+      channels: ["board"],
+      scheduledAt: new Date(Date.now() + DAY),
+    });
+    expect(await runDueAnnouncements(t.db)).toBeGreaterThanOrEqual(1);
+    const { rows } = await t.query<{ id: string; sent: boolean }>(
+      "admin",
+      "SELECT id, sent_at IS NOT NULL AS sent FROM announcements WHERE id = ANY($1) ORDER BY id",
+      [[due, later]],
+    );
+    expect(new Map(rows.map((r) => [r.id, r.sent]))).toEqual(
+      new Map([
+        [due, true],
+        [later, false],
+      ]),
+    );
+    const { rows: events } = await t.query<{ type: string }>(
+      "admin",
+      "SELECT type FROM outbox.events WHERE payload->>'announcementId' = $1",
+      [due],
+    );
+    expect(events.map((e) => e.type)).toEqual(["announcement.sent"]);
+  });
 });

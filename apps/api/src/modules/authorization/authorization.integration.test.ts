@@ -934,6 +934,70 @@ describe("permission matrix", () => {
         `/api/v1/clubs/${m.clubA.id}/documents/${m.documentId}/versions/${m.versionId}/download`,
       expected: FOLDER_READERS,
     },
+    // Announcements (P2.3): team T's (sent by the coach) are read by the
+    // team's audience and by those who send to the team (the club manager,
+    // the section's owner, the coach); others do not see them (404).
+    "GET /api/v1/clubs/:clubId/groups/:groupId/announcements": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/announcements`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/announcements/archive": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/announcements/archive`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "POST /api/v1/clubs/:clubId/groups/:groupId/announcements": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/announcements`,
+      expected: TEAM_MANAGERS(201),
+      body: { title: "Matrix draft", body: "Draft", channels: ["board"] },
+    },
+    "POST /api/v1/clubs/:clubId/groups/:groupId/announcements/preview": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/announcements/preview`,
+      expected: TEAM_MANAGERS(200),
+      body: () => ({ audience: [{ kind: "group", groupId: m.team.id }] }),
+    },
+    "GET /api/v1/clubs/:clubId/announcements": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+    },
+    "POST /api/v1/clubs/:clubId/announcements": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements`,
+      expected: { ...CLUB_FORBIDDEN, manager: 201 },
+      body: { title: "Matrix club draft", body: "Draft", channels: ["board"] },
+    },
+    "POST /api/v1/clubs/:clubId/announcements/preview": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements/preview`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+      body: { audience: [{ kind: "club" }] },
+    },
+    "GET /api/v1/clubs/:clubId/announcements/:announcementId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements/${m.announcementId}`,
+      expected: FOLDER_READERS,
+    },
+    "POST /api/v1/clubs/:clubId/announcements/:announcementId/read": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements/${m.announcementId}/read`,
+      expected: Object.fromEntries(
+        Object.entries(FOLDER_READERS).map(([p, code]) => [p, code === 200 ? 204 : code]),
+      ) as Record<MatrixPersona, number>,
+    },
+    "PATCH /api/v1/clubs/:clubId/announcements/:announcementId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements/${m.announcementId}`,
+      expected: FOLDER_MANAGERS(204),
+      body: { pinnedUntil: null },
+    },
+    "GET /api/v1/clubs/:clubId/announcements/:announcementId/recipients": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements/${m.announcementId}/recipients`,
+      expected: FOLDER_MANAGERS(200),
+    },
+    "POST /api/v1/clubs/:clubId/announcements/:announcementId/withdraw": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements/${m.withdrawAnnouncementId}/withdraw`,
+      // The manager withdraws it; its readers no longer see it, its senders still manage it.
+      expected: { ...ALL_NOT_FOUND, manager: 204, owner: 204, coach: 204 },
+    },
+    "DELETE /api/v1/clubs/:clubId/announcements/:announcementId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/announcements/${m.deleteAnnouncementId}`,
+      // The manager deletes it; for everyone after that it no longer exists.
+      expected: { ...ALL_NOT_FOUND, manager: 204 },
+    },
     // Part B (P2.2): seeing, storage, notices' documents.
     "POST /api/v1/clubs/:clubId/documents/seen": {
       url: () => `/api/v1/clubs/${m.clubA.id}/documents/seen`,

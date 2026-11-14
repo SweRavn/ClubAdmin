@@ -103,7 +103,12 @@ export default function Home() {
         </Body>
       ) : null}
       <DataAge updatedAt={clubs.dataUpdatedAt} />
-      {/* "Mina dokument" (P2.2): in the screen, the header has no room for it. */}
+      {/* "Anslagstavlan" (P2.3) and "Mina dokument" (P2.2): in the screen, the header has no room. */}
+      <LinkButton
+        label={t("announcements.board")}
+        onPress={() => router.push("/announcements")}
+        testID="open-announcements"
+      />
       <LinkButton
         label={t("nav.documents")}
         onPress={() => router.push("/documents")}

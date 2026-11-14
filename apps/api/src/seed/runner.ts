@@ -11,6 +11,7 @@ import { Generator } from "./generator.ts";
 import { seedLoad } from "./load.ts";
 import { seedMinimal } from "./minimal.ts";
 import { activitiesDemoStep } from "./steps/activities.ts";
+import { announcementsDemoStep } from "./steps/announcements.ts";
 import { attendanceDemoStep } from "./steps/attendance.ts";
 import { billingDemoStep, billingInvoicesDemoStep } from "./steps/billing.ts";
 import { calendarDemoStep } from "./steps/calendar.ts";
@@ -40,6 +41,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   protectionDemoStep,
   chatDemoStep,
   documentsDemoStep,
+  announcementsDemoStep,
 ];
 
 export interface SeedOptions {

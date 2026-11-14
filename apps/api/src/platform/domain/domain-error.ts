@@ -294,6 +294,13 @@ export const DOMAIN_ERRORS = {
   folder_too_many: "conflict",
   /** A folder with content is deleted only after a confirmation. */
   folder_not_empty: "conflict",
+  // Announcements (P2.3, ADR 0053).
+  announcement_withdrawn: "conflict",
+  announcement_already_sent: "conflict",
+  audience_outside_group: "validation",
+  announcement_email_limit: "conflict",
+  announcement_expiry_past: "validation",
+  announcement_schedule_past: "validation",
   /** A top-level folder always has its own audience. */
   audience_required: "validation",
   /** A group or role of the audience is not the club's (or not of the right kind). */

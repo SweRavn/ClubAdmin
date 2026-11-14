@@ -224,6 +224,11 @@ export function noticeLink(input: NoticeInput): string {
       return input.clubId && id ? `/clubs/${input.clubId}/chats/${id}` : "/me/chats";
     case "chat_mute":
       return "/me/chats";
+    // Announcements (P2.3): the announcement's page.
+    case "announcement":
+      return input.clubId && id
+        ? `/clubs/${input.clubId}/announcements/${id}`
+        : "/me/announcements";
     // The file archive (P2.2 part B): the file's page.
     case "document":
       return input.clubId && id ? `/clubs/${input.clubId}/documents/${id}` : "/me/documents";
@@ -283,6 +288,8 @@ export function renderNotice(locale: Locale, input: NoticeInput): NoticeText {
     /** A chat's name (a channel; never a person's name) and whether it is a direct message. */
     chatName: str(p.chatName),
     direct: str(p.direct ?? false),
+    /** An announcement's sender (P2.3): the group's or the club's name, never its text. */
+    from: str(p.from) || (input.clubName ?? "ClubAdmin"),
   };
   const key = isNotificationType(input.type) ? input.type : "unknown";
   const title =

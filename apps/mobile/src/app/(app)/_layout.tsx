@@ -63,6 +63,11 @@ export default function SignedInLayout() {
         <Stack.Screen name="chats/index" options={{ title: t("chat.title") }} />
         <Stack.Screen name="chats/[clubId]/[chatId]" options={{ title: t("chat.nav") }} />
         <Stack.Screen name="chats/ward/[personId]" options={{ title: t("chat.wardChats") }} />
+        <Stack.Screen name="announcements/index" options={{ title: t("announcements.board") }} />
+        <Stack.Screen
+          name="announcements/[clubId]/[announcementId]"
+          options={{ title: t("announcements.title") }}
+        />
         <Stack.Screen name="documents/index" options={{ title: t("documents.mine") }} />
         <Stack.Screen
           name="documents/[clubId]/[folderId]"

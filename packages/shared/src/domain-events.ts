@@ -73,6 +73,10 @@ export const DOMAIN_EVENTS = {
   "document.published": z.object({ clubId: id, documentId: id, versionId: id }),
   /** A file is deleted on its deletion date in a week: its uploader is told (P2.2 part B). */
   "document.deletion_soon": z.object({ clubId: id, documentId: id }),
+  /** An announcement was sent (P2.3): the worker resolves its audience into notices. */
+  "announcement.sent": z.object({ clubId: id, announcementId: id }),
+  /** An announcement was withdrawn or deleted (P2.3): what is not delivered yet is not. */
+  "announcement.withdrawn": z.object({ clubId: id, announcementId: id }),
   "administrator.suspended": z.object({ clubId: id, suspensionId: id, personId: id }),
   /** An open request was cancelled by its initiator or expired: target and initiator are told. */
   "administrator.suspension.closed": z.object({

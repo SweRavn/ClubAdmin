@@ -44,6 +44,7 @@ let ids: {
   folder: string;
   document: string;
   cup: string;
+  announcement: string;
 };
 
 interface Case {
@@ -124,6 +125,39 @@ const BILLING_CASES: Case[] = [
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // Announcements (P2.3, ADR 0053): Erik in IK Norrbacka's F2015.
+  {
+    route: "GET /api/v1/me/announcements",
+    persona: "erik",
+    method: "GET",
+    url: () => "/api/v1/me/announcements",
+    statements: 3,
+    pages: 260,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/groups/{groupId}/announcements",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/groups/${key("ikn-f2015")}/announcements`,
+    statements: 4,
+    pages: 90,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/announcements/{announcementId}",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/announcements/${ids.announcement}`,
+    statements: 5,
+    pages: 80,
+  },
+  {
+    route: "POST /api/v1/clubs/{clubId}/announcements/{announcementId}/read",
+    persona: "erik",
+    method: "POST",
+    url: () => `/api/v1/clubs/${key("ikn")}/announcements/${ids.announcement}/read`,
+    statements: 4,
+    pages: 50,
+  },
   // The file archive (P2.2, ADR 0049): Erik in IK Norrbacka's F2015.
   {
     route: "GET /api/v1/me/documents",
@@ -1055,6 +1089,7 @@ beforeAll(async () => {
     folder: string;
     document: string;
     cup: string;
+    announcement: string;
   }>(
     "admin",
     `SELECT
@@ -1066,7 +1101,8 @@ beforeAll(async () => {
        (SELECT last_message_id FROM chats WHERE default_for_group_id = $1) AS message,
        (SELECT id FROM document_folders WHERE group_id = $2 AND name = 'Matchschema') AS folder,
        (SELECT id FROM documents WHERE name = 'Matchschema vår.pdf') AS document,
-       (SELECT id FROM activities WHERE title = 'Vårcupen i Norrbacka') AS cup`,
+       (SELECT id FROM activities WHERE title = 'Vårcupen i Norrbacka') AS cup,
+       (SELECT id FROM announcements WHERE title = 'Planen är stängd den här veckan') AS announcement`,
     [key("svk-f2017"), key("ikn-f2015")],
   );
   ids = rows[0]!;

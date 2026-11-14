@@ -28,7 +28,8 @@ export type EndpointResource =
   | "administrator_suspension"
   | "chat"
   | "folder"
-  | "document";
+  | "document"
+  | "announcement";
 
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any

@@ -358,6 +358,54 @@ function seededClient() {
     ],
     pageParams: [null],
   });
+  // "Anslagstavlan" (P2.3): a pinned club announcement and an unread group one.
+  const announcement = (id: string, extra: Record<string, unknown>) => ({
+    id,
+    clubId: SVK,
+    clubName: "Strandvikens Volleybollklubb",
+    groupId: null,
+    groupName: null,
+    title: "",
+    body: "",
+    channels: ["board"],
+    important: false,
+    status: "sent",
+    pinned: false,
+    pinnedUntil: null,
+    expiresAt: null,
+    scheduledAt: null,
+    sentAt: "2026-10-20T16:00:00Z",
+    editedAt: null,
+    sender: null,
+    read: true,
+    canManage: false,
+    ...extra,
+  });
+  client.setQueryData(["announcements", ANNA, "board"], {
+    pages: [
+      {
+        pinned: [
+          announcement("0199a000-0000-7000-8007-000000000001", {
+            title: "Årsmöte 12 mars",
+            body: "**Välkomna** till årsmötet.",
+            important: true,
+            pinned: true,
+          }),
+        ],
+        items: [
+          announcement("0199a000-0000-7000-8007-000000000002", {
+            title: "Planen är stängd",
+            body: "Ingen träning tisdag.",
+            groupId: F2017,
+            groupName: "F2017",
+            read: false,
+          }),
+        ],
+        nextCursor: null,
+      },
+    ],
+    pageParams: [null],
+  });
   return client;
 }
 
@@ -466,6 +514,18 @@ describe("screens", () => {
     expect(screen.getByText("F2017 · 2 kB")).toBeTruthy();
     expect(screen.getAllByTestId("document-new")).toHaveLength(1);
     expect(screen.getByText("Strandvikens Volleybollklubb · Being scanned")).toBeTruthy();
+  });
+
+  it("the notice board shows the cached announcements at once, pinned on top, unread marked", () => {
+    type Module = { default: () => ReactNode };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const Board = (require("./app/(app)/announcements/index.tsx") as Module).default;
+    renderScreen(<Board />);
+    const rows = screen.getAllByTestId(/^announcement-0199/);
+    expect(rows[0]?.props.testID).toBe("announcement-0199a000-0000-7000-8007-000000000001");
+    expect(screen.getByText("Årsmöte 12 mars")).toBeTruthy();
+    expect(screen.getByText("Välkomna till årsmötet.")).toBeTruthy();
+    expect(screen.getAllByTestId("announcement-unread")).toHaveLength(1);
   });
 
   it("an invalid ID in a deep link shows not found", () => {

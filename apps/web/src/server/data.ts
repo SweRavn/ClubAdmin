@@ -11,6 +11,12 @@ import {
   ActivityPageSchema,
   AdministratorsOverviewSchema,
   AdultGuardiansSchema,
+  AnnouncementArchiveSchema,
+  AnnouncementBoardSchema,
+  AnnouncementDetailSchema,
+  type AnnouncementPreview,
+  AnnouncementPreviewSchema,
+  AnnouncementRecipientsSchema,
   AssignableRolesSchema,
   AssignmentsSchema,
   AttendanceSchema,
@@ -854,6 +860,79 @@ export async function markDocumentsSeen(clubId: string, groupId: string | null):
     headers: { "content-type": "application/json" },
     body: JSON.stringify(groupId ? { groupId } : {}),
   }).catch(() => null);
+}
+
+// Announcements (P2.3, ADR 0053).
+/** "Anslagstavlan": pinned, then the newest of the viewer's clubs and groups. */
+export const getMyAnnouncements = cache((cursor: string | null) => {
+  const query = new URLSearchParams({ limit: "20" });
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(`/api/v1/me/announcements?${query}`, AnnouncementBoardSchema);
+});
+/** A group's board, or null without a relationship with its club. */
+export const getGroupAnnouncements = cache(
+  (clubId: string, groupId: string, cursor: string | null) => {
+    const query = new URLSearchParams({ limit: "20" });
+    if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+    return apiGet(
+      `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/announcements?${query}`,
+      AnnouncementBoardSchema,
+      { nullOn: [403, 404] },
+    );
+  },
+);
+export const getAnnouncement = cache((clubId: string, announcementId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/announcements/${requireId(announcementId)}`,
+    AnnouncementDetailSchema,
+  ),
+);
+/** The club's archive (groupId null) or a group's, for their senders. */
+export const getAnnouncementArchive = cache(
+  (clubId: string, groupId: string | null, cursor: string | null) => {
+    const query = new URLSearchParams({ limit: "30" });
+    if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+    const path = groupId
+      ? `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/announcements/archive`
+      : `/api/v1/clubs/${requireId(clubId)}/announcements`;
+    return required(`${path}?${query}`, AnnouncementArchiveSchema);
+  },
+);
+export const getAnnouncementRecipients = cache((clubId: string, announcementId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/announcements/${requireId(announcementId)}/recipients`,
+    AnnouncementRecipientsSchema,
+    { nullOn: [403, 404] },
+  ),
+);
+/** The composer's counts for an audience (null when they cannot be had). */
+export async function previewAnnouncement(
+  clubId: string,
+  groupId: string | null,
+  audience: unknown[],
+): Promise<AnnouncementPreview | null> {
+  const session = await requireSession();
+  const path = groupId
+    ? `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/announcements/preview`
+    : `/api/v1/clubs/${requireId(clubId)}/announcements/preview`;
+  const res = await apiFetch(path, session.record, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ audience }),
+  }).catch(() => null);
+  if (!res?.ok) return null;
+  const parsed = AnnouncementPreviewSchema.safeParse(await res.json().catch(() => null));
+  return parsed.success ? parsed.data : null;
+}
+/** The viewer read an announcement (not while viewing as a ward). */
+export async function markAnnouncementRead(clubId: string, announcementId: string): Promise<void> {
+  const session = await requireSession();
+  if (session.record.viewingAs) return;
+  await apiFetch(
+    `/api/v1/clubs/${requireId(clubId)}/announcements/${requireId(announcementId)}/read`,
+    session.record,
+    { method: "POST" },
+  ).catch(() => null);
 }
 
 // Group administration (P1.10a).
