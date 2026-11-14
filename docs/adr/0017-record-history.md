@@ -20,7 +20,7 @@ addition to `audit_events`.
   (`person`, `operator`, `system_job`, `migration`, `db_role`), `request_id`,
   `transaction_id`, `db_role`, `changed_at`.
 - A single generic trigger function `history.capture()` attached `AFTER
-  INSERT OR UPDATE OR DELETE` to every table. It reads the actor from the same
+INSERT OR UPDATE OR DELETE` to every table. It reads the actor from the same
   transaction-local settings the app already sets for RLS
   (`app.person_id`, `app.on_behalf_of`, `app.request_id`, `app.actor_kind`). Changes
   made outside the app (operator SQL, migrations) are still captured, with
@@ -37,10 +37,10 @@ addition to `audit_events`.
 - **Sensitive columns** (field-level encrypted values) are stored as the
   ciphertext, or with `options.redact` as `"[changed]"` markers only.
 - **Access:** RLS on `club_id`. Club managers see history for their club's
-  records; anyone who can view a record can see *who* changed it and *which*
+  records; anyone who can view a record can see _who_ changed it and _which_
   fields; old/new **values** of restricted fields follow the field-level
   permissions of the current record. Operators see global-table history.
-  *Amended by ADR 0042 (P1.9):* only those who hold the record's history
+  _Amended by ADR 0042 (P1.9):_ only those who hold the record's history
   permission read it: club managers and registrars (panels), club managers
   with a second factor (the club-wide view and the audit log). The person
   gets the history of their own rows through "download my data".
@@ -57,8 +57,9 @@ addition to `audit_events`.
   P1.9 as pages of their own, ADR 0042).
 
 **Implementation notes (P0.4).**
+
 - The helper is the SQL function `history.enable_history(table, redact, skip_insert)`,
-  called from migrations; it creates three *statement-level* triggers with
+  called from migrations; it creates three _statement-level_ triggers with
   transition tables, so bulk changes are captured with one set-based insert per
   statement instead of one per row.
 - Redacted columns are stored as `"[changed]"` in inserts, updates and deletes.
@@ -66,6 +67,7 @@ addition to `audit_events`.
   as a safety net and moves rows out of it when it creates a month's partition.
 
 **Consequences.**
+
 - Every write costs one extra insert in the same transaction (small; measured in
   the load scenario against `performance.md` budgets).
 - Storage grows; monthly partitions and retention keep it bounded.

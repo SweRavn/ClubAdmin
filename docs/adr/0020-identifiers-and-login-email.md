@@ -8,6 +8,7 @@ until they get their own login. Records need a stable identifier that is not
 the email.
 
 **Decision.**
+
 - **Internal identifier:** a database-generated ID for every row, never the
   email. We use **UUIDv7** rather than an integer sequence:
   - it is time-ordered like a running number, so index performance is as good;

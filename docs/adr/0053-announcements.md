@@ -78,7 +78,7 @@ losing activity notices, except the notices a club is obliged to send.
   (the board; write), `GET …/announcements/archive` and `POST …/preview`
   for the group's senders; `GET|POST /clubs/:clubId/announcements` (the
   club's archive; write) and `POST …/preview`; `GET|PATCH|DELETE
-  /clubs/:clubId/announcements/:id`, `POST …/read`, `POST …/withdraw`,
+/clubs/:clubId/announcements/:id`, `POST …/read`, `POST …/withdraw`,
   `GET …/recipients`.
 - Web: "Anslagstavlan", the club's archive, the composer (audience,
   channels, important, pin, expiry, sending time in the club's time zone),

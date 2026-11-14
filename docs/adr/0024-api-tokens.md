@@ -14,6 +14,7 @@ Zitadel to the API on every token issuance, fragile) and the userinfo
 endpoint (a network call, no `amr`).
 
 **Decision.**
+
 - Clients send the access token as `Authorization: Bearer` and the ID token
   issued with it in `X-Id-Token`. The API verifies both (issuer, audience =
   the Zitadel project, signature through a cached JWKS) and accepts the ID

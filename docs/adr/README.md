@@ -4,58 +4,58 @@ Short records of significant decisions, in the format: Context, Decision,
 Consequences. Status is one of Proposed, Accepted, Superseded by NNNN.
 Never rewrite an accepted ADR; supersede it with a new one.
 
-| ADR | Title | Status |
-|---|---|---|
-| [0001](0001-record-decisions.md) | Record architecture decisions | Accepted |
-| [0002](0002-typescript-monorepo.md) | TypeScript monorepo (pnpm + Turborepo) | Accepted |
-| [0003](0003-modular-monolith.md) | Modular monolith on NestJS + Fastify | Accepted |
-| [0004](0004-postgresql-rls-multitenancy.md) | PostgreSQL, Drizzle, shared-schema multi-tenancy with RLS | Accepted |
-| [0005](0005-identity-zitadel.md) | Authentication via Zitadel (OIDC) | Accepted |
-| [0006](0006-authorization.md) | In-process relationship-based authorization | Accepted |
-| [0007](0007-rest-openapi.md) | REST + OpenAPI from Zod; WebSocket for realtime | Accepted |
-| [0008](0008-clients-nextjs-expo.md) | Next.js for web, Expo for iOS/Android | Accepted |
-| [0009](0009-jobs-in-postgres.md) | Background jobs in Postgres (Graphile Worker) | Accepted |
-| [0010](0010-valkey.md) | Valkey for cache, rate limiting and pub/sub | Accepted |
-| [0011](0011-object-storage.md) | S3-compatible object storage | Accepted |
-| [0012](0012-licensing-contributions.md) | AGPL-3.0, dependency allow list, DCO, app-store permission | Accepted |
-| [0013](0013-hosting-billing.md) | Hosted + self-hosted from the same code; optional billing | Accepted |
-| [0014](0014-backup-strategy.md) | Backups: pgBackRest, immutable off-site copies | Accepted |
-| [0015](0015-country-packs.md) | Country packs for country-specific rules | Accepted |
-| [0016](0016-own-chat.md) | Build chat in-house instead of Matrix | Accepted |
-| [0017](0017-record-history.md) | Change history for every database record | Accepted |
-| [0018](0018-self-signup-club-managers.md) | Self sign-up, club creation and club managers | Accepted |
-| [0019](0019-groups-owners-waitlists.md) | Groups, group owners and waiting lists | Accepted |
-| [0020](0020-identifiers-and-login-email.md) | Identifiers, login email and people without email | Accepted |
-| [0021](0021-calendar-subscriptions.md) | Calendar subscriptions and answering from the phone's calendar | Accepted |
-| [0022](0022-protected-identity.md) | Protected identity | Accepted |
-| [0023](0023-global-tables-rls.md) | Row-level security for global tables and own relationships | Accepted |
-| [0024](0024-api-tokens.md) | API tokens: JWT access token plus the bound ID token | Accepted |
-| [0025](0025-authorization-engine.md) | Authorization engine: relationship sets, resource scopes and visibility | Accepted |
-| [0026](0026-demo-data-location.md) | Demo data as data files in `docs/demodata/`, seeded by the API app | Accepted |
-| [0027](0027-web-performance-budgets-in-ci.md) | Web shell: production build, CSP with Trusted Types, performance budgets in CI | Accepted |
-| [0028](0028-mobile-app.md) | Mobile app: login, development tokens, encrypted cache, updates and per-account rate limits | Accepted |
-| [0029](0029-api-compatibility.md) | API compatibility: `/api/v1` only grows | Accepted |
-| [0030](0030-backup-implementation.md) | Backups: one PostgreSQL image, ledger outside the backups, erasure core in SQL | Accepted |
-| [0031](0031-entitlements-and-billing-skeleton.md) | Entitlements service, club access state and the billing skeleton | Accepted |
-| [0032](0032-joining-and-transactional-email.md) | Joining: join requests, invitation secrets, cross-club lookups and transactional email | Accepted |
-| [0033](0033-member-imports.md) | Member imports: jobs in the API process, CSV only, staging rows | Accepted |
-| [0034](0034-activities-and-schedule.md) | Activities: materialised series and a per-group schedule read model | Accepted |
-| [0035](0035-responses-and-attendance.md) | Responses and attendance: separate records, a roster by date, an offline outbox | Accepted |
-| [0036](0036-call-ups.md) | Call-ups: only the people called up take part in an activity | Accepted |
-| [0037](0037-governing-documents-and-settings.md) | Governing documents: club settings taken from adopted documents | Accepted (Phase 2) |
-| [0038](0038-events-and-sign-up.md) | Events with sign-up: a container linked to activities through call-ups | Accepted |
-| [0039](0039-notifications.md) | Notifications: a recipient-owned inbox, rendered when read, delivered by the worker | Accepted |
-| [0040](0040-responsiveness.md) | Responsiveness: request budgets independent of hardware, one connection per request, cache-first apps | Accepted |
-| [0041](0041-privacy.md) | Privacy: consents per purpose, leaving without open assignments, board-decided settings, retention as its own role | Accepted |
-| [0042](0042-history-views.md) | History views: who reads history, the column policy, isolation from the everyday paths | Accepted |
-| [0043](0043-waiting-lists.md) | Waiting lists: capacity, offers, admission and positions | Accepted |
-| [0044](0044-calendar-feeds.md) | Calendar feeds: secret URLs served by the API, signed answer links behind a confirmation | Accepted |
-| [0045](0045-billing-invoices-and-dunning.md) | Billing: invoices issued by ClubAdmin, calendar periods, VAT by seller, dunning to read-only | Accepted |
-| [0046](0046-club-defined-roles.md) | Club-defined roles: permissions in a catalogue, roles per club | Accepted (P1.15 A1) |
-| [0047](0047-child-safety-in-chat.md) | Child safety in chat: no adult alone with a child, open to guardians, a reviewing bot | Accepted |
-| [0048](0048-car-pooling-and-attestation.md) | Car pooling, mileage and a general attestation flow | Accepted |
-| [0049](0049-documents-meetings-and-signing.md) | Documents, meetings with structured minutes, signing in the app | Accepted |
-| [0050](0050-volunteer-duties.md) | Volunteer duties: shifts, quotas per player, sign-up and swaps; automation later | Accepted |
-| [0051](0051-reporting-plugins.md) | Plugins for grant reporting and background checks | Accepted |
-| [0052](0052-assigned-tasks.md) | Assigned tasks: one system for duty shifts and meeting action items | Accepted |
-| [0053](0053-announcements.md) | Announcements: one message, chosen channels, no text in push | Accepted |
+| ADR                                               | Title                                                                                                              | Status              |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------- |
+| [0001](0001-record-decisions.md)                  | Record architecture decisions                                                                                      | Accepted            |
+| [0002](0002-typescript-monorepo.md)               | TypeScript monorepo (pnpm + Turborepo)                                                                             | Accepted            |
+| [0003](0003-modular-monolith.md)                  | Modular monolith on NestJS + Fastify                                                                               | Accepted            |
+| [0004](0004-postgresql-rls-multitenancy.md)       | PostgreSQL, Drizzle, shared-schema multi-tenancy with RLS                                                          | Accepted            |
+| [0005](0005-identity-zitadel.md)                  | Authentication via Zitadel (OIDC)                                                                                  | Accepted            |
+| [0006](0006-authorization.md)                     | In-process relationship-based authorization                                                                        | Accepted            |
+| [0007](0007-rest-openapi.md)                      | REST + OpenAPI from Zod; WebSocket for realtime                                                                    | Accepted            |
+| [0008](0008-clients-nextjs-expo.md)               | Next.js for web, Expo for iOS/Android                                                                              | Accepted            |
+| [0009](0009-jobs-in-postgres.md)                  | Background jobs in Postgres (Graphile Worker)                                                                      | Accepted            |
+| [0010](0010-valkey.md)                            | Valkey for cache, rate limiting and pub/sub                                                                        | Accepted            |
+| [0011](0011-object-storage.md)                    | S3-compatible object storage                                                                                       | Accepted            |
+| [0012](0012-licensing-contributions.md)           | AGPL-3.0, dependency allow list, DCO, app-store permission                                                         | Accepted            |
+| [0013](0013-hosting-billing.md)                   | Hosted + self-hosted from the same code; optional billing                                                          | Accepted            |
+| [0014](0014-backup-strategy.md)                   | Backups: pgBackRest, immutable off-site copies                                                                     | Accepted            |
+| [0015](0015-country-packs.md)                     | Country packs for country-specific rules                                                                           | Accepted            |
+| [0016](0016-own-chat.md)                          | Build chat in-house instead of Matrix                                                                              | Accepted            |
+| [0017](0017-record-history.md)                    | Change history for every database record                                                                           | Accepted            |
+| [0018](0018-self-signup-club-managers.md)         | Self sign-up, club creation and club managers                                                                      | Accepted            |
+| [0019](0019-groups-owners-waitlists.md)           | Groups, group owners and waiting lists                                                                             | Accepted            |
+| [0020](0020-identifiers-and-login-email.md)       | Identifiers, login email and people without email                                                                  | Accepted            |
+| [0021](0021-calendar-subscriptions.md)            | Calendar subscriptions and answering from the phone's calendar                                                     | Accepted            |
+| [0022](0022-protected-identity.md)                | Protected identity                                                                                                 | Accepted            |
+| [0023](0023-global-tables-rls.md)                 | Row-level security for global tables and own relationships                                                         | Accepted            |
+| [0024](0024-api-tokens.md)                        | API tokens: JWT access token plus the bound ID token                                                               | Accepted            |
+| [0025](0025-authorization-engine.md)              | Authorization engine: relationship sets, resource scopes and visibility                                            | Accepted            |
+| [0026](0026-demo-data-location.md)                | Demo data as data files in `docs/demodata/`, seeded by the API app                                                 | Accepted            |
+| [0027](0027-web-performance-budgets-in-ci.md)     | Web shell: production build, CSP with Trusted Types, performance budgets in CI                                     | Accepted            |
+| [0028](0028-mobile-app.md)                        | Mobile app: login, development tokens, encrypted cache, updates and per-account rate limits                        | Accepted            |
+| [0029](0029-api-compatibility.md)                 | API compatibility: `/api/v1` only grows                                                                            | Accepted            |
+| [0030](0030-backup-implementation.md)             | Backups: one PostgreSQL image, ledger outside the backups, erasure core in SQL                                     | Accepted            |
+| [0031](0031-entitlements-and-billing-skeleton.md) | Entitlements service, club access state and the billing skeleton                                                   | Accepted            |
+| [0032](0032-joining-and-transactional-email.md)   | Joining: join requests, invitation secrets, cross-club lookups and transactional email                             | Accepted            |
+| [0033](0033-member-imports.md)                    | Member imports: jobs in the API process, CSV only, staging rows                                                    | Accepted            |
+| [0034](0034-activities-and-schedule.md)           | Activities: materialised series and a per-group schedule read model                                                | Accepted            |
+| [0035](0035-responses-and-attendance.md)          | Responses and attendance: separate records, a roster by date, an offline outbox                                    | Accepted            |
+| [0036](0036-call-ups.md)                          | Call-ups: only the people called up take part in an activity                                                       | Accepted            |
+| [0037](0037-governing-documents-and-settings.md)  | Governing documents: club settings taken from adopted documents                                                    | Accepted (Phase 2)  |
+| [0038](0038-events-and-sign-up.md)                | Events with sign-up: a container linked to activities through call-ups                                             | Accepted            |
+| [0039](0039-notifications.md)                     | Notifications: a recipient-owned inbox, rendered when read, delivered by the worker                                | Accepted            |
+| [0040](0040-responsiveness.md)                    | Responsiveness: request budgets independent of hardware, one connection per request, cache-first apps              | Accepted            |
+| [0041](0041-privacy.md)                           | Privacy: consents per purpose, leaving without open assignments, board-decided settings, retention as its own role | Accepted            |
+| [0042](0042-history-views.md)                     | History views: who reads history, the column policy, isolation from the everyday paths                             | Accepted            |
+| [0043](0043-waiting-lists.md)                     | Waiting lists: capacity, offers, admission and positions                                                           | Accepted            |
+| [0044](0044-calendar-feeds.md)                    | Calendar feeds: secret URLs served by the API, signed answer links behind a confirmation                           | Accepted            |
+| [0045](0045-billing-invoices-and-dunning.md)      | Billing: invoices issued by ClubAdmin, calendar periods, VAT by seller, dunning to read-only                       | Accepted            |
+| [0046](0046-club-defined-roles.md)                | Club-defined roles: permissions in a catalogue, roles per club                                                     | Accepted (P1.15 A1) |
+| [0047](0047-child-safety-in-chat.md)              | Child safety in chat: no adult alone with a child, open to guardians, a reviewing bot                              | Accepted            |
+| [0048](0048-car-pooling-and-attestation.md)       | Car pooling, mileage and a general attestation flow                                                                | Accepted            |
+| [0049](0049-documents-meetings-and-signing.md)    | Documents, meetings with structured minutes, signing in the app                                                    | Accepted            |
+| [0050](0050-volunteer-duties.md)                  | Volunteer duties: shifts, quotas per player, sign-up and swaps; automation later                                   | Accepted            |
+| [0051](0051-reporting-plugins.md)                 | Plugins for grant reporting and background checks                                                                  | Accepted            |
+| [0052](0052-assigned-tasks.md)                    | Assigned tasks: one system for duty shifts and meeting action items                                                | Accepted            |
+| [0053](0053-announcements.md)                     | Announcements: one message, chosen channels, no text in push                                                       | Accepted            |

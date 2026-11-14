@@ -28,9 +28,9 @@ Sections 1–4 prepare the emulator and are the same for both.
    Windows. It is only needed for the Android SDK and the emulator: **do not
    open the ClubAdmin repository in it.** Opening it from WSL makes Android
    Studio hang on "Detecting project structure" (it reads the whole
-   repository, `node_modules` included). If you already did, use *File →
-   Close Project*; the welcome screen has *More Actions → Virtual Device
-   Manager*.
+   repository, `node_modules` included). If you already did, use _File →
+   Close Project_; the welcome screen has _More Actions → Virtual Device
+   Manager_.
 2. The emulator needs the processor's virtualisation through Windows'
    hypervisor (WSL already uses it):
    - Press the Windows key, type **"Turn Windows features on or off"**
@@ -52,10 +52,10 @@ In Android Studio's **Device Manager**:
 2. Choose a system image with **API 34 or 35**, **Google APIs**, **x86_64**
    (arm64 on Apple Silicon). **Not "Google Play"**: Play images do not allow
    `adb root`, which the next steps need. Avoid the newest preview levels.
-   Download it with the arrow next to it, then *Next → Finish*.
+   Download it with the arrow next to it, then _Next → Finish_.
 3. Start it with ▶ once to check that it boots (the first boot takes a few
-   minutes). If it does not: ⋮ → *Cold Boot Now*, or set *Graphics* to
-   *Software* in the device's settings (pencil → *Show Advanced Settings*).
+   minutes). If it does not: ⋮ → _Cold Boot Now_, or set _Graphics_ to
+   _Software_ in the device's settings (pencil → _Show Advanced Settings_).
 4. Check in **PowerShell** that Windows sees it:
 
    ```powershell
@@ -163,8 +163,8 @@ Every CI run on `main` keeps the app it tested as the artifact
 (persona picker, trusts the local certificate), with its JavaScript bundled
 (no Metro), for x86_64 emulators.
 
-**In the browser:** GitHub → *Actions* → workflow **CI** → the latest green
-run on `main` → *Artifacts* → **clubadmin-android-development** (a zip file;
+**In the browser:** GitHub → _Actions_ → workflow **CI** → the latest green
+run on `main` → _Artifacts_ → **clubadmin-android-development** (a zip file;
 you must be logged in to GitHub). Unzip it to get `app-release.apk`, then in
 WSL:
 
@@ -290,14 +290,14 @@ maestro test -e APP_ID=org.clubadmin.app.dev -e APP_SCHEME=clubadmin-dev \
 
 ## Troubleshooting
 
-| What you see | Why | What to do |
-|---|---|---|
-| "Emulator failed to connect within 5 minutes" | Windows Hypervisor Platform is off | Section 1, step 2 |
-| Android Studio spins on "Detecting project structure" | The repository is open in Android Studio | *File → Close Project*; it is not needed |
-| `pnpm dev:trust-ca --android` fails at `adb root` | WSL's `adb` does not see the emulator, or a "Google Play" image | Section 3; a Google APIs image (section 2) |
-| `adb remount` says to reboot | First time with `-writable-system` | `adb reboot`, `adb wait-for-device`, `adb root`, `adb remount` |
-| The app cannot reach the server, `ping` does not resolve | Emulator started without `-writable-system`, or the hosts entry is missing | Section 4a |
-| The app cannot reach the server, the name resolves | Port forwarding lost after the emulator restarted, or the services/API not running | `pnpm dev:trust-ca --android`; `pnpm dev` |
-| Certificate error in the emulator's Chrome | Caddy's certificate not in the emulator (or Caddy's data was deleted) | `pnpm dev:trust-ca --android` |
-| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | A build signed differently is installed | `adb uninstall org.clubadmin.app.dev` |
-| The build takes hours | WSL short of memory or cores | Section 6b; no `--clean` on rebuilds |
+| What you see                                             | Why                                                                                | What to do                                                     |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| "Emulator failed to connect within 5 minutes"            | Windows Hypervisor Platform is off                                                 | Section 1, step 2                                              |
+| Android Studio spins on "Detecting project structure"    | The repository is open in Android Studio                                           | _File → Close Project_; it is not needed                       |
+| `pnpm dev:trust-ca --android` fails at `adb root`        | WSL's `adb` does not see the emulator, or a "Google Play" image                    | Section 3; a Google APIs image (section 2)                     |
+| `adb remount` says to reboot                             | First time with `-writable-system`                                                 | `adb reboot`, `adb wait-for-device`, `adb root`, `adb remount` |
+| The app cannot reach the server, `ping` does not resolve | Emulator started without `-writable-system`, or the hosts entry is missing         | Section 4a                                                     |
+| The app cannot reach the server, the name resolves       | Port forwarding lost after the emulator restarted, or the services/API not running | `pnpm dev:trust-ca --android`; `pnpm dev`                      |
+| Certificate error in the emulator's Chrome               | Caddy's certificate not in the emulator (or Caddy's data was deleted)              | `pnpm dev:trust-ca --android`                                  |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE`                     | A build signed differently is installed                                            | `adb uninstall org.clubadmin.app.dev`                          |
+| The build takes hours                                    | WSL short of memory or cores                                                       | Section 6b; no `--clean` on rebuilds                           |

@@ -11,6 +11,7 @@ and their relationships are referred to in bug reports, tests and manual
 testing.
 
 **Decision.**
+
 - **The demo data is data, under `docs/demodata/`:** JSON files (no new
   dependency) for clubs, groups, personas with their fixed UUIDs, family
   relationships, memberships, roles, waiting lists, the replayed history and

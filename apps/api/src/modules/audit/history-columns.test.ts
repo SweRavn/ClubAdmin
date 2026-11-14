@@ -84,7 +84,34 @@ describe("audit catalogue", () => {
     });
     expect(missingIn([...new Set(keys)], "string")).toEqual({ sv: [], en: [] });
     expect(AUDIT_ACTION_SENTENCES.every((a) => AUDIT_ACTIONS.includes(a))).toBe(true);
-    expect(AUDIT_VERBS.length).toBeLessThan(60);
+    // A guard against a catalogue that drifts, not a technical limit (ADR 0042).
+    expect(AUDIT_VERBS.length).toBeLessThanOrEqual(80);
+  });
+
+  it("gives every verb its own text, except approved synonyms", () => {
+    // Verbs whose texts are the same on purpose (the action, not the verb, differs).
+    const synonyms: Partial<Record<"sv" | "en", readonly (readonly string[])[]>> = {
+      sv: [
+        ["completed", "finished"],
+        ["deleted", "removed", "unassigned"],
+        ["recorded", "registered"],
+      ],
+    };
+    for (const locale of ["sv", "en"] as const) {
+      const verbs = (catalogues[locale] as unknown as { audit: { verbs: Record<string, string> } })
+        .audit.verbs;
+      const byText = new Map<string, string[]>();
+      for (const verb of AUDIT_VERBS) {
+        const text = verbs[verb];
+        if (text) byText.set(text, [...(byText.get(text) ?? []), verb]);
+      }
+      const approved = new Set((synonyms[locale] ?? []).map((g) => [...g].sort().join(",")));
+      const duplicates = [...byText.values()]
+        .filter((group) => group.length > 1)
+        .map((group) => [...group].sort().join(","))
+        .filter((group) => !approved.has(group));
+      expect(duplicates, locale).toEqual([]);
+    }
   });
 
   it("names every resource and category", () => {

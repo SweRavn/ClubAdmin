@@ -40,7 +40,7 @@ must hold at the moment something is shown, not at the moment it was sent.
 - **Fan-out in the outbox, idempotent.** The worker's `notifications`
   outbox handler resolves recipients with one statement per question (no
   N+1), inserts notices with `ON CONFLICT (recipient_person_id,
-  dedupe_key) DO NOTHING` and their deliveries in the handler's
+dedupe_key) DO NOTHING` and their deliveries in the handler's
   transaction. A redelivered event or retried job creates nothing twice.
   Changes to activities and series are **debounced** with a Graphile job
   (`job_key`, `job_key_mode = replace`, 10 minutes; late "not coming" 5
@@ -68,7 +68,7 @@ must hold at the moment something is shown, not at the moment it was sent.
   account stay in `mail`. This amends ADR 0032's consequence that "moves the
   templates": they stay where they are.
 - **Unsubscribe links** are `accountId.category.HMAC-SHA256(
-  NOTIFICATION_TOKEN_KEY, "unsubscribe:<account>:<category>")`, never
+NOTIFICATION_TOKEN_KEY, "unsubscribe:<account>:<category>")`, never
   stored; rotating the key invalidates old links. Emails carry
   `List-Unsubscribe` with one-click (RFC 8058) to
   `POST /api/v1/notifications/unsubscribe`, and a web page asks before

@@ -89,6 +89,7 @@ system, and the catalogue must not grow by hundreds of hand-written sentences.
   adding non-transactional migrations now.
 
 **Consequences.**
+
 - About 245 new message keys (labels of 66 columns, 40 kinds of record, 46
   verbs, 19 own sentences, statuses, categories and the views), not one
   sentence per action and column.
@@ -97,3 +98,16 @@ system, and the catalogue must not grow by hundreds of hand-written sentences.
 - A replica can lag a few seconds behind; the panels say so in their help.
 - Exports of the audit log and the history are an issue for later
   (`security.md`, "Audit").
+
+## Amendment (2026-11-14): the verb catalogue
+
+The composed verbs reached the limit of the first version (fewer than 60,
+when about 45 were expected). Verbs are display only: an audit row stores
+the whole action, the verb is taken from its last segment when shown, and
+no table, index, constraint or filter holds verbs, so more verbs cost only
+their texts (and a check that "{actor} {verb} {resource}" reads right).
+The test now allows at most 80 verbs and adds what the limit was really
+for: every verb has its own text in sv and en, except synonyms approved by
+name (sv: completed/finished "slutförde", deleted/removed/unassigned "tog
+bort", recorded/registered "registrerade"). A new verb is added when no
+existing one says the same; a near-duplicate fails the test.

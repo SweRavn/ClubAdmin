@@ -7,6 +7,7 @@ stores impose terms the FSF considers incompatible with (A)GPL. The maintainer
 has no plans to relicense.
 
 **Decision.**
+
 - `AGPL-3.0-only` for all code in this repository.
 - An additional permission under AGPL section 7
   (`LICENSE-APP-STORE-EXCEPTION.md`) allows distributing the client apps through

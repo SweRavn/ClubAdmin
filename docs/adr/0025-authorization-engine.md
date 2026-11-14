@@ -10,6 +10,7 @@ acting for a ward may do, when a denial is 404 rather than 403, how operators
 with support access fit in, and how protected sets stay current.
 
 **Decision.**
+
 - **Relationship set.** One statement (`authorization.repository.ts`), run as
   the person, reads their open memberships, roles, group functions, direct
   group ownerships, current employments, unrevoked support grants, operator
@@ -45,7 +46,7 @@ with support access fit in, and how protected sets stay current.
   the ward, limited to the ward's club memberships and plain group
   memberships: a guardian never exercises the ward's roles, ownerships,
   leader functions or employments. Services get `{ personId: guardian,
-  onBehalfOf: ward }`, so history and audit record both.
+onBehalfOf: ward }`, so history and audit record both.
 - **Operators.** No club access without a grant (`support_access_grants`,
   time-limited, revocable). With one, and a login with a second factor, an
   operator reads the club, its groups and rosters; protected persons stay

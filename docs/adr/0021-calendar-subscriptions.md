@@ -33,6 +33,7 @@ Calendar data must never expose members with protected identity.
    after levels 1–2 are in use.
 
 **Privacy rules for all levels.**
+
 - Calendar data contains only: title, time, place, group name, status,
   answer links. **No attendee lists, no other people's names**, so protected
   persons cannot leak through calendars.
@@ -45,6 +46,7 @@ in the hosted service, an IMAP/LMTP mailbox for self-hosters). Answer-link
 tokens are bounded in time (valid until the activity has passed).
 
 **Amendment (2026-11-07, P1.11, ADR 0044).**
+
 - Level 1 is implemented with the scopes `my_schedule`, `group` and `club`
   (the club calendar for those who read it: managers, registrars, the
   board). "The club's public calendar" (`club_public`) waits for public

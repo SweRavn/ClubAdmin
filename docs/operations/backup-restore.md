@@ -2,26 +2,26 @@
 
 ## Targets (hosted service)
 
-| Metric | Target |
-|---|---|
-| RPO (max data loss), database | ≤ 5 minutes (continuous WAL archiving) |
-| RPO, files (object storage) | ≤ 1 hour |
-| RTO (time to restore service) | ≤ 4 hours for full loss of the primary site |
-| Point-in-time recovery window | 30 days |
-| Backup retention | Daily for 35 days, monthly for 12 months (see GDPR note) |
-| Restore tests | Automated weekly restore to a scratch environment; manual full DR drill twice a year |
+| Metric                        | Target                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| RPO (max data loss), database | ≤ 5 minutes (continuous WAL archiving)                                               |
+| RPO, files (object storage)   | ≤ 1 hour                                                                             |
+| RTO (time to restore service) | ≤ 4 hours for full loss of the primary site                                          |
+| Point-in-time recovery window | 30 days                                                                              |
+| Backup retention              | Daily for 35 days, monthly for 12 months (see GDPR note)                             |
+| Restore tests                 | Automated weekly restore to a scratch environment; manual full DR drill twice a year |
 
 Self-hosters get the same tooling with configurable targets.
 
 ## What is backed up
 
-| Data | Method |
-|---|---|
+| Data                                 | Method                                                                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | PostgreSQL (app + Zitadel databases) | **pgBackRest**: weekly full, daily differential, continuous WAL archive. Encrypted (AES-256) and compressed before upload. |
-| Object storage (documents, images) | Versioned bucket + scheduled replication (rclone) to a second provider |
-| Configuration | Infrastructure as code in a private ops repo; secrets in SOPS-encrypted files |
-| Encryption keys | Master keys stored in two separate places (secret store + offline sealed copy held by two people) |
-| Audit stream | Written to separate append-only storage |
+| Object storage (documents, images)   | Versioned bucket + scheduled replication (rclone) to a second provider                                                     |
+| Configuration                        | Infrastructure as code in a private ops repo; secrets in SOPS-encrypted files                                              |
+| Encryption keys                      | Master keys stored in two separate places (secret store + offline sealed copy held by two people)                          |
+| Audit stream                         | Written to separate append-only storage                                                                                    |
 
 ## Protection against breach and ransomware
 
@@ -77,12 +77,12 @@ Each scenario has a step-by-step runbook in
 DR drill and, where possible, in CI. Every runbook ends with the
 deletion-ledger replay and `pnpm ops:verify-backup`.
 
-| # | Runbook |
-|---|---|
-| 1 | [One club's data from a point in time](../../infra/backup/runbooks/01-single-club.md) |
-| 2 | [Point-in-time recovery after a bad migration](../../infra/backup/runbooks/02-point-in-time-recovery.md) |
-| 3 | [Total loss of the primary site](../../infra/backup/runbooks/03-total-site-loss.md) |
-| 4 | [Breach](../../infra/backup/runbooks/04-breach.md) |
+| #   | Runbook                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------- |
+| 1   | [One club's data from a point in time](../../infra/backup/runbooks/01-single-club.md)                    |
+| 2   | [Point-in-time recovery after a bad migration](../../infra/backup/runbooks/02-point-in-time-recovery.md) |
+| 3   | [Total loss of the primary site](../../infra/backup/runbooks/03-total-site-loss.md)                      |
+| 4   | [Breach](../../infra/backup/runbooks/04-breach.md)                                                       |
 
 RTO planning: restoring a 10 GB database takes under 30 minutes (target;
 measured restores are tracked in

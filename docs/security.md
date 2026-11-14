@@ -7,26 +7,27 @@ later phase. Backup and disaster recovery are in
 
 ## Threat model (summary)
 
-| Threat | Example | Main controls |
-|---|---|---|
-| Cross-tenant leak | Bug lets club B read club A's members | Authorization module + RLS + tenant-isolation tests on every endpoint |
-| Privilege escalation inside a club | Player edits roles; parent sees other children's data | Deny-by-default policies, relationship-based permissions, policy tests |
-| Fake sign-ups / spam clubs | Bots creating accounts and clubs | Email verification, rate limits, `CLUB_CREATION` policy, abandoned-club archiving |
-| Account takeover | Phished admin password | IdP with passkeys, mandatory MFA for elevated roles, rate limiting, breach-password check, session revocation |
-| Malicious insider (club) | Leader exports all members' data | Least privilege, field-level scoping, export audit + alerts, rate limits on bulk reads |
-| Malicious/compromised operator | Platform staff browsing data | No default operator access, time-limited support grants approved by the club, all operator actions audited, separate DB role |
-| Exposure of a person with protected identity | Name in a roster, chat, photo, calendar feed or history view reveals a protected member | Central `PersonVisibility` service on every person-bearing output, no attendee names in calendar data, explicit chat acceptance, access log on profile views (ADR 0022) |
-| Calendar feed URL leaks | Shared or forwarded `.ics` link | Secret per-person tokens (hashed), revocable and regenerable, no other people's names in feeds, answer links bound to one feed, person, occurrence and answer, behind a confirmation page; paths redacted from logs and traces (P1.11, ADR 0044) |
-| Grooming / unsafe contact | Adult contacts a child privately | No adult–minor 1:1 chat without guardian, reporting, moderation, audit |
-| Injection / XSS / CSRF | Stored XSS in a message | Parameterised queries (Drizzle), output encoding (React), strict CSP, sanitised rich text, SameSite cookies + CSRF tokens on BFF |
-| Malicious upload | Malware in a document | Type allow list, size limits, ClamAV scan, serve from separate domain, `Content-Disposition: attachment` |
-| Supply-chain attack | Compromised npm package | Lockfile, pinned versions, Renovate with delay, `pnpm` with lifecycle scripts disabled by default, OSV/Trivy scans, signed images, SBOM |
-| Ransomware / destructive breach | Attacker deletes DB and backups | Immutable (object-lock) off-site backups with separate credentials, see backup doc |
-| Denial of service | Login flooding, scraping | Rate limiting in Valkey, CDN, request size limits, timeouts |
+| Threat                                       | Example                                                                                 | Main controls                                                                                                                                                                                                                                    |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cross-tenant leak                            | Bug lets club B read club A's members                                                   | Authorization module + RLS + tenant-isolation tests on every endpoint                                                                                                                                                                            |
+| Privilege escalation inside a club           | Player edits roles; parent sees other children's data                                   | Deny-by-default policies, relationship-based permissions, policy tests                                                                                                                                                                           |
+| Fake sign-ups / spam clubs                   | Bots creating accounts and clubs                                                        | Email verification, rate limits, `CLUB_CREATION` policy, abandoned-club archiving                                                                                                                                                                |
+| Account takeover                             | Phished admin password                                                                  | IdP with passkeys, mandatory MFA for elevated roles, rate limiting, breach-password check, session revocation                                                                                                                                    |
+| Malicious insider (club)                     | Leader exports all members' data                                                        | Least privilege, field-level scoping, export audit + alerts, rate limits on bulk reads                                                                                                                                                           |
+| Malicious/compromised operator               | Platform staff browsing data                                                            | No default operator access, time-limited support grants approved by the club, all operator actions audited, separate DB role                                                                                                                     |
+| Exposure of a person with protected identity | Name in a roster, chat, photo, calendar feed or history view reveals a protected member | Central `PersonVisibility` service on every person-bearing output, no attendee names in calendar data, explicit chat acceptance, access log on profile views (ADR 0022)                                                                          |
+| Calendar feed URL leaks                      | Shared or forwarded `.ics` link                                                         | Secret per-person tokens (hashed), revocable and regenerable, no other people's names in feeds, answer links bound to one feed, person, occurrence and answer, behind a confirmation page; paths redacted from logs and traces (P1.11, ADR 0044) |
+| Grooming / unsafe contact                    | Adult contacts a child privately                                                        | No adult–minor 1:1 chat without guardian, reporting, moderation, audit                                                                                                                                                                           |
+| Injection / XSS / CSRF                       | Stored XSS in a message                                                                 | Parameterised queries (Drizzle), output encoding (React), strict CSP, sanitised rich text, SameSite cookies + CSRF tokens on BFF                                                                                                                 |
+| Malicious upload                             | Malware in a document                                                                   | Type allow list, size limits, ClamAV scan, serve from separate domain, `Content-Disposition: attachment`                                                                                                                                         |
+| Supply-chain attack                          | Compromised npm package                                                                 | Lockfile, pinned versions, Renovate with delay, `pnpm` with lifecycle scripts disabled by default, OSV/Trivy scans, signed images, SBOM                                                                                                          |
+| Ransomware / destructive breach              | Attacker deletes DB and backups                                                         | Immutable (object-lock) off-site backups with separate credentials, see backup doc                                                                                                                                                               |
+| Denial of service                            | Login flooding, scraping                                                                | Rate limiting in Valkey, CDN, request size limits, timeouts                                                                                                                                                                                      |
 
 ## Controls
 
 ### Identity and sessions
+
 - Zitadel (OIDC). Passkeys preferred; TOTP fallback. MFA mandatory for
   elevated roles (enforced by the API: `@RequireMfa`, from the `amr` claim of
   the ID token bound to the access token, ADR 0024).
@@ -75,6 +76,7 @@ later phase. Backup and disaster recovery are in
   self-hosted deployment, in both API and web (tests).
 
 ### Authorization
+
 - Deny by default: the API refuses to start (and the test suite fails) if a
   route has no `@Endpoint`, or an endpoint's permission has no policy.
 - Relationship-based policies (see `domain-model.md`, "Permissions"), each
@@ -180,6 +182,7 @@ later phase. Backup and disaster recovery are in
   login); the web holds no person cache.
 
 ### Billing (P1.13, billing on only)
+
 - Club managers choose plans with a second factor; club managers and
   treasurers keep the billing details (MFA). They write only their club's
   billing details and the selection columns of its subscription (a guard
@@ -204,6 +207,7 @@ later phase. Backup and disaster recovery are in
   (`BILLING_CHECKOUT_ORIGINS`) and action redirects go only there.
 
 ### Data protection
+
 - TLS 1.3 everywhere (Caddy), HSTS preload, internal traffic on a private
   network; database connections use TLS.
 - Encryption at rest: encrypted volumes; backups encrypted client-side before
@@ -265,6 +269,7 @@ later phase. Backup and disaster recovery are in
   validation errors and database constraint errors are never echoed (tests).
 
 ### Application hardening
+
 - Strict Content Security Policy with a fresh nonce per request (the web
   app's proxy, `apps/web/src/server/security-headers.ts`): scripts and styles
   only with the nonce (`'strict-dynamic'`), no `unsafe-inline` or
@@ -337,18 +342,18 @@ later phase. Backup and disaster recovery are in
   `Retry-After`; requests are let through if Valkey is unreachable, except
   account creation above). Defaults, all configurable (`RATE_LIMIT_*`):
 
-  | Counted per | Applies to | Default per minute |
-  |---|---|---|
-  | Client IP | Requests without a valid login (no token, or a rejected one) | 300 |
-  | Account | Every authenticated request (a guardian acting for a ward uses the guardian's budget) | 600 |
-  | Client IP | Authenticated requests: backstop against token stuffing from one address | 6,000 |
-  | Club | Bulk reads (`bulkRead` endpoints: rosters, the member register) | 1,200 |
-  | Account | Bulk reads | 240 |
-  | Account, per hour | Joining (`accountLimit: "joining"`): club search, join requests, invitation acceptance, club creation (anti-abuse, ADR 0018) | 120 |
-  | Client IP | Public invitation lookup (`GET /invitations/lookup`): guessing codes | 20 |
-  | Person and club, per 24 hours | Member register exports (`MEMBER_EXPORTS_PER_PERSON_DAY`; per club `MEMBER_EXPORTS_PER_CLUB_DAY`, 30) | 10 |
-  | Club, per 24 hours | Member imports started (`MEMBER_IMPORTS_PER_CLUB_DAY`) | 20 |
-  | Club, per 24 hours | Invitations sent by imports (`MEMBER_IMPORT_INVITATIONS_PER_CLUB_DAY`; the rest are left out and counted) | 2,000 |
+  | Counted per                   | Applies to                                                                                                                   | Default per minute |
+  | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+  | Client IP                     | Requests without a valid login (no token, or a rejected one)                                                                 | 300                |
+  | Account                       | Every authenticated request (a guardian acting for a ward uses the guardian's budget)                                        | 600                |
+  | Client IP                     | Authenticated requests: backstop against token stuffing from one address                                                     | 6,000              |
+  | Club                          | Bulk reads (`bulkRead` endpoints: rosters, the member register)                                                              | 1,200              |
+  | Account                       | Bulk reads                                                                                                                   | 240                |
+  | Account, per hour             | Joining (`accountLimit: "joining"`): club search, join requests, invitation acceptance, club creation (anti-abuse, ADR 0018) | 120                |
+  | Client IP                     | Public invitation lookup (`GET /invitations/lookup`): guessing codes                                                         | 20                 |
+  | Person and club, per 24 hours | Member register exports (`MEMBER_EXPORTS_PER_PERSON_DAY`; per club `MEMBER_EXPORTS_PER_CLUB_DAY`, 30)                        | 10                 |
+  | Club, per 24 hours            | Member imports started (`MEMBER_IMPORTS_PER_CLUB_DAY`)                                                                       | 20                 |
+  | Club, per 24 hours            | Invitations sent by imports (`MEMBER_IMPORT_INVITATIONS_PER_CLUB_DAY`; the rest are left out and counted)                    | 2,000              |
 
   Sizing: a web page view makes about five API calls (`/me`, `/me/clubs`,
   `/me/wards`, the page's own data), a mobile cold start about six (`/me`,
@@ -359,10 +364,12 @@ later phase. Backup and disaster recovery are in
   address (`X-Forwarded-For`, the API trusts it as a proxy), so the per-IP
   limits apply to browsers, not to the web server. The local environment uses
   the same defaults.
+
 - Secrets via environment/secret store (SOPS + age for the hosted
   infrastructure); never in the repository; rotated on staff changes.
 
 ### Audit
+
 - Append-only `audit_events` table: actor, on-behalf-of, club, action,
   resource, before/after field names (not values for sensitive fields), IP hash,
   request id, timestamp.
@@ -392,6 +399,7 @@ later phase. Backup and disaster recovery are in
   burst of history reads cannot take the database from everyone else.
 
 ### Development process
+
 - Branch protection, required review, CI: lint, typecheck, tests, licence check,
   dependency scanning (OSV-Scanner), container scanning (Trivy),
   static analysis (CodeQL), secret scanning. Vulnerabilities without a usable

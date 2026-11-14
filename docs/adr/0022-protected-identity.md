@@ -3,12 +3,13 @@
 **Status:** Accepted. Implemented in P0.7; details in [ADR 0025](0025-authorization-engine.md).
 
 **Context.** Some members live under protected personal data (in Sweden
-*skyddade personuppgifter*) or for other reasons must not be exposed to
+_skyddade personuppgifter_) or for other reasons must not be exposed to
 other members, in photos or streams. Systems like SportAdmin show a crossed-out
 camera next to such members, and they are invisible to other users. Leaks can
 put people in danger, so the rule must be impossible to forget in new features.
 
 **Decision.**
+
 - Effective protection = global flag on the person (set by person/guardian)
   OR club-level flag (set by a club manager). Details in `domain-model.md`.
 - **One central `PersonVisibility` service** decides, for a viewer and a person
@@ -39,6 +40,7 @@ join-request applicants; nobody else sees applicants, and the waiting count
 includes them. Applicants see only their own position and the count.
 
 **Amendment (2026-11-07, P1.12).**
+
 - **Flags in the UI.** The person or a full guardian turns the global flag on
   with one confirmation and off behind a recent login; a guardian may remove
   a child's flag only if they set it (or the one who did is no longer a full

@@ -9,6 +9,7 @@ every check, which conflicts with performance budgets, and add a service for
 self-hosters.
 
 **Decision.** An `authorization` module in the API:
+
 - relationships are read from the core tables (memberships, roles, team
   memberships, guardianships, employments) into a per-person relationship set,
   one query, cached in Valkey with a version counter bumped on change;

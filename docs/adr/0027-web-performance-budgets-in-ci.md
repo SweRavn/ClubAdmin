@@ -26,6 +26,7 @@ things got in the way:
   instead of an SPDX identifier (the LICENSE file is BSD-3-Clause).
 
 **Decision.**
+
 - **Production builds use webpack** (`next build --webpack`, the web app's
   `build` script); `next dev` keeps Turbopack. Revisit when Turbopack
   supports Trusted Types.

@@ -26,16 +26,16 @@ information about suspected crimes.
 
 ## 2. The processing
 
-| | |
-|---|---|
-| Purposes | (1) Communication within the club's activities: teams, groups, the board, parents. (2) **Children's safety in mixed environments**: children and adults (leaders, parents, supporters) use the same chat; no adult may be alone with a child, guardians can see and join their children's chats, and incidents can be reported and investigated, also long afterwards. (3) The club's record of what was communicated. |
-| Data subjects | Members of all ages including children under 13; guardians; leaders; supporters in groups (e.g. a grandparent); club officers. |
-| Data | Message text and every earlier version of an edited message (images and files later: the first revision is text only); reactions, replies, read receipts; chat membership (who is in which chat, joined and left when, why: group, guardian, leader); reports and their handling; access logs of guardians, leaders and safeguarding officers reading chats. |
-| Possibly sensitive content | Health ("jag är sjuk"), family matters, suspected crimes, protected identities (ADR 0022). Not asked for; may occur. |
-| Recipients | The chat's members; a child's guardians (when they join, with the whole history); the group's leaders (when they join, which adds the children's guardians); the club's safeguarding officers for reported or flagged chats; no one outside the club. |
-| Processors | The hosting provider (EU); the push service (Expo, when `PUSH_PROVIDER=expo`: device token, title and a body without message text for chats with children, see 6). No AI or moderation provider (the bot is later and gets its own update of this DPIA). |
-| Location | EU/EEA only. |
-| Retention | Messages are kept **without a time limit** (ADR 0047, decision of the maintainer); hidden, not removed, when the sender deletes them. Erasure of a person anonymises the sender ("a former member"); the text stays. Applied again after a restore through the deletion ledger. |
+|                            |                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Purposes                   | (1) Communication within the club's activities: teams, groups, the board, parents. (2) **Children's safety in mixed environments**: children and adults (leaders, parents, supporters) use the same chat; no adult may be alone with a child, guardians can see and join their children's chats, and incidents can be reported and investigated, also long afterwards. (3) The club's record of what was communicated. |
+| Data subjects              | Members of all ages including children under 13; guardians; leaders; supporters in groups (e.g. a grandparent); club officers.                                                                                                                                                                                                                                                                                         |
+| Data                       | Message text and every earlier version of an edited message (images and files later: the first revision is text only); reactions, replies, read receipts; chat membership (who is in which chat, joined and left when, why: group, guardian, leader); reports and their handling; access logs of guardians, leaders and safeguarding officers reading chats.                                                           |
+| Possibly sensitive content | Health ("jag är sjuk"), family matters, suspected crimes, protected identities (ADR 0022). Not asked for; may occur.                                                                                                                                                                                                                                                                                                   |
+| Recipients                 | The chat's members; a child's guardians (when they join, with the whole history); the group's leaders (when they join, which adds the children's guardians); the club's safeguarding officers for reported or flagged chats; no one outside the club.                                                                                                                                                                  |
+| Processors                 | The hosting provider (EU); the push service (Expo, when `PUSH_PROVIDER=expo`: device token, title and a body without message text for chats with children, see 6). No AI or moderation provider (the bot is later and gets its own update of this DPIA).                                                                                                                                                               |
+| Location                   | EU/EEA only.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Retention                  | Messages are kept **without a time limit** (ADR 0047, decision of the maintainer); hidden, not removed, when the sender deletes them. Erasure of a person anonymises the sender ("a former member"); the text stays. Applied again after a restore through the deletion ledger.                                                                                                                                        |
 
 ## 3. Legal basis
 
@@ -60,45 +60,45 @@ information about suspected crimes.
 
 ## 4. Necessity and proportionality
 
-| Question | Answer |
-|---|---|
-| Why a chat at all? | Teams already chat, mostly in WhatsApp or Snapchat groups where leaders and children meet without any insight for guardians, without reporting and without the club's control. A club chat with the rules below is safer than the alternatives in use. |
-| Why guardians' insight? | It is the established safeguarding practice in sport (SafeSport, scouting's "two-deep", "Trygg idrott"): communication between adults and children must be open and observable. Adding guardians automatically keeps it simple for everyone. |
+| Question                                | Answer                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Why a chat at all?                      | Teams already chat, mostly in WhatsApp or Snapchat groups where leaders and children meet without any insight for guardians, without reporting and without the club's control. A club chat with the rules below is safer than the alternatives in use.                                                                                                                                                                                                                                  |
+| Why guardians' insight?                 | It is the established safeguarding practice in sport (SafeSport, scouting's "two-deep", "Trygg idrott"): communication between adults and children must be open and observable. Adding guardians automatically keeps it simple for everyone.                                                                                                                                                                                                                                            |
 | Why keep messages without a time limit? | Abuse of children is often disclosed years later. In Sweden the limitation period for the most serious sexual crimes against children was abolished in 2020, so evidence may matter decades afterwards. A fixed deletion date would destroy exactly the material an investigation needs. **This is the weakest point of the assessment** (storage limitation, Art. 5(1)(e)); the mitigations in 6 limit who can read old messages, and the club reviews the decision every three years. |
-| Why not end-to-end encryption? | It would make guardians' insight, reporting and safeguarding review impossible (ADR 0016). Messages are encrypted in transit and at rest. |
-| Minimisation | No phone numbers or addresses in chat profiles; names through the person-visibility rules (protected identity, ADR 0022); no location; no message text in push for chats with children; read receipts limited to the chat's members. |
-| Transparency | The privacy notice, the help pages and the README describe the rules (ADR 0047); children see them in the app in words they understand. |
-| Rights | Access and portability: the person's own messages are in "Download my data". Rectification: editing own messages, the edit history kept. Erasure: anonymisation as above, explained beforehand. Objection: a person may leave chats; a child's guardian can see and join, not remove the child silently. |
+| Why not end-to-end encryption?          | It would make guardians' insight, reporting and safeguarding review impossible (ADR 0016). Messages are encrypted in transit and at rest.                                                                                                                                                                                                                                                                                                                                               |
+| Minimisation                            | No phone numbers or addresses in chat profiles; names through the person-visibility rules (protected identity, ADR 0022); no location; no message text in push for chats with children; read receipts limited to the chat's members.                                                                                                                                                                                                                                                    |
+| Transparency                            | The privacy notice, the help pages and the README describe the rules (ADR 0047); children see them in the app in words they understand.                                                                                                                                                                                                                                                                                                                                                 |
+| Rights                                  | Access and portability: the person's own messages are in "Download my data". Rectification: editing own messages, the edit history kept. Erasure: anonymisation as above, explained beforehand. Objection: a person may leave chats; a child's guardian can see and join, not remove the child silently.                                                                                                                                                                                |
 
 ## 5. Risks
 
 Likelihood and severity before the measures (L: low, M: medium, H: high).
 
-| # | Risk to the data subjects | L | S |
-|---|---|---|---|
-| R1 | An adult grooms a child through private messages | M | H |
-| R2 | A breach exposes children's messages (larger with unlimited retention) | L | H |
-| R3 | Guardians or leaders read children's social chats in a way children did not expect (chilling effect, CRC Art. 16) | M | M |
-| R4 | A protected person's identity or whereabouts is revealed through chat membership or messages | L | H |
-| R5 | Bullying between children in their own chats | H | M |
-| R6 | Message text on a locked phone screen reveals a child's messages to others | M | M |
-| R7 | Officers misuse access to old messages (curiosity, conflicts, discipline unrelated to safety) | L | M |
-| R8 | Erasure is incomplete: names written in other people's messages stay | M | L |
-| R9 | Function creep: chats used to monitor members for other purposes | L | M |
+| #   | Risk to the data subjects                                                                                         | L   | S   |
+| --- | ----------------------------------------------------------------------------------------------------------------- | --- | --- |
+| R1  | An adult grooms a child through private messages                                                                  | M   | H   |
+| R2  | A breach exposes children's messages (larger with unlimited retention)                                            | L   | H   |
+| R3  | Guardians or leaders read children's social chats in a way children did not expect (chilling effect, CRC Art. 16) | M   | M   |
+| R4  | A protected person's identity or whereabouts is revealed through chat membership or messages                      | L   | H   |
+| R5  | Bullying between children in their own chats                                                                      | H   | M   |
+| R6  | Message text on a locked phone screen reveals a child's messages to others                                        | M   | M   |
+| R7  | Officers misuse access to old messages (curiosity, conflicts, discipline unrelated to safety)                     | L   | M   |
+| R8  | Erasure is incomplete: names written in other people's messages stay                                              | M   | L   |
+| R9  | Function creep: chats used to monitor members for other purposes                                                  | L   | M   |
 
 ## 6. Measures
 
-| Risk | Measures (ADR 0047 unless stated) |
-|---|---|
-| R1 | No adult alone with a child: guardians added automatically, with the whole history, whenever a leader is in a chat with a child; other adults cannot start direct messages with someone else's child; a background check required by the country pack's flag or the club's stricter setting before a leader writes to children; nothing disappears; one-tap reporting to the safeguarding officers. |
-| R2 | Row-level security per club; encryption in transit and at rest; EU hosting; access by role only; backups encrypted and destroyed after 12 months (ADR 0014); breach routines in `security.md`. Messages older than three years are readable by their members and, on a report, the safeguarding officers; they are not shown in searches or exports to others. |
-| R3 | Openness instead of secrecy: children always see that parents can join and which have joined; guardians see who is in their child's group's chats, not the messages, until they join visibly; leaders join visibly (adding guardians); no scanning of messages; the rules explained to children in the app. |
-| R4 | Protected people are never added without accepting (ADR 0022, P1.12); names only through `PersonPresenter`; membership lists respect person visibility. |
-| R5 | Reporting; guardians' and leaders' insight; club policy and leaders' guidance. The reviewing bot (later) adds a nudge before a hurtful message. |
-| R6 | For chats with children, push shows "Nytt meddelande i <kanal>" without text; the lock-screen setting of P1.7 applies to every chat. |
-| R7 | Reading a reported chat follows a two-person rule (ADR 0046 A3); every read by someone not in the chat is logged and shown in the audit log; purpose limited to safety, written in the club's policy. |
-| R8 | Explained before erasure; a person may ask the club to edit messages that name them (rectification). |
-| R9 | Purpose limitation in the policy and the privacy notice; no analytics on message content; this DPIA is updated before any new use (the bot, cross-group chats, video). |
+| Risk | Measures (ADR 0047 unless stated)                                                                                                                                                                                                                                                                                                                                                                   |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1   | No adult alone with a child: guardians added automatically, with the whole history, whenever a leader is in a chat with a child; other adults cannot start direct messages with someone else's child; a background check required by the country pack's flag or the club's stricter setting before a leader writes to children; nothing disappears; one-tap reporting to the safeguarding officers. |
+| R2   | Row-level security per club; encryption in transit and at rest; EU hosting; access by role only; backups encrypted and destroyed after 12 months (ADR 0014); breach routines in `security.md`. Messages older than three years are readable by their members and, on a report, the safeguarding officers; they are not shown in searches or exports to others.                                      |
+| R3   | Openness instead of secrecy: children always see that parents can join and which have joined; guardians see who is in their child's group's chats, not the messages, until they join visibly; leaders join visibly (adding guardians); no scanning of messages; the rules explained to children in the app.                                                                                         |
+| R4   | Protected people are never added without accepting (ADR 0022, P1.12); names only through `PersonPresenter`; membership lists respect person visibility.                                                                                                                                                                                                                                             |
+| R5   | Reporting; guardians' and leaders' insight; club policy and leaders' guidance. The reviewing bot (later) adds a nudge before a hurtful message.                                                                                                                                                                                                                                                     |
+| R6   | For chats with children, push shows "Nytt meddelande i <kanal>" without text; the lock-screen setting of P1.7 applies to every chat.                                                                                                                                                                                                                                                                |
+| R7   | Reading a reported chat follows a two-person rule (ADR 0046 A3); every read by someone not in the chat is logged and shown in the audit log; purpose limited to safety, written in the club's policy.                                                                                                                                                                                               |
+| R8   | Explained before erasure; a person may ask the club to edit messages that name them (rectification).                                                                                                                                                                                                                                                                                                |
+| R9   | Purpose limitation in the policy and the privacy notice; no analytics on message content; this DPIA is updated before any new use (the bot, cross-group chats, video).                                                                                                                                                                                                                              |
 
 ## 7. Residual risk and conclusion
 
@@ -161,13 +161,13 @@ groups or clubs; video broadcasts from chat channels.
 
 ## 8. The club's part
 
-| | |
-|---|---|
-| Club | |
-| Safeguarding officers | |
-| Data protection contact | |
-| Country pack / background checks required | |
-| Club's stricter background-check setting | |
-| Reviewed by | |
-| Adopted (date, decision) | |
-| Next review (at most three years) | |
+|                                           |     |
+| ----------------------------------------- | --- |
+| Club                                      |     |
+| Safeguarding officers                     |     |
+| Data protection contact                   |     |
+| Country pack / background checks required |     |
+| Club's stricter background-check setting  |     |
+| Reviewed by                               |     |
+| Adopted (date, decision)                  |     |
+| Next review (at most three years)         |     |

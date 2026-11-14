@@ -161,10 +161,7 @@
       "capacity": 12,
       "admissionMode": "waitlist",
       "waitlistVisiblePublicly": true,
-      "owners": [
-        "erik",
-        "sara"
-      ],
+      "owners": ["erik", "sara"],
       "generated": {
         "count": 7,
         "ageFrom": 9,
@@ -180,9 +177,7 @@
       "kind": "training_group",
       "sport": "volleyball",
       "admissionMode": "direct",
-      "owners": [
-        "sara"
-      ],
+      "owners": ["sara"],
       "generated": {
         "count": 6,
         "ageFrom": 7,
@@ -199,9 +194,7 @@
       "genderCategory": "male",
       "sport": "volleyball",
       "admissionMode": "direct",
-      "owners": [
-        "johan"
-      ],
+      "owners": ["johan"],
       "generated": {
         "count": 4,
         "ageFrom": 20,
@@ -218,9 +211,7 @@
       "name": "Fotboll",
       "kind": "section",
       "sport": "football",
-      "owners": [
-        "karin"
-      ]
+      "owners": ["karin"]
     },
     {
       "key": "ikn-p2012",
@@ -233,9 +224,7 @@
       "genderCategory": "male",
       "sport": "football",
       "admissionMode": "direct",
-      "owners": [
-        "ahmed"
-      ],
+      "owners": ["ahmed"],
       "generated": {
         "count": 6,
         "ageFrom": 14,
@@ -280,9 +269,7 @@
       "name": "Styrelsen",
       "kind": "board",
       "admissionMode": "closed",
-      "owners": [
-        "karin"
-      ]
+      "owners": ["karin"]
     },
     {
       "key": "fil-j2014",
@@ -294,9 +281,7 @@
       "genderCategory": "female",
       "sport": "handball",
       "admissionMode": "direct",
-      "owners": [
-        "lars"
-      ],
+      "owners": ["lars"],
       "generated": {
         "count": 5,
         "ageFrom": 12,
@@ -312,9 +297,7 @@
       "kind": "team",
       "sport": "handball",
       "admissionMode": "direct",
-      "owners": [
-        "lars"
-      ],
+      "owners": ["lars"],
       "generated": {
         "count": 4,
         "ageFrom": 35,

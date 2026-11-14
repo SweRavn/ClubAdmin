@@ -19,11 +19,7 @@
         "country": "SE"
       },
       "description": "SVK chair and club manager; parent of Elsa (SVK) and Oskar (IKN).",
-      "tags": [
-        "board",
-        "club manager",
-        "parent in two clubs"
-      ],
+      "tags": ["board", "club manager", "parent in two clubs"],
       "createdAt": "-15y"
     },
     {
@@ -45,10 +41,7 @@
         "country": "SE"
       },
       "description": "Parent of Elsa and Oskar, separate household from Anna.",
-      "tags": [
-        "parent",
-        "divorced parents"
-      ],
+      "tags": ["parent", "divorced parents"],
       "createdAt": "-15y"
     },
     {
@@ -65,9 +58,7 @@
       "createdBy": "anna",
       "createdAt": "-9y",
       "description": "SVK F2017 player, no login; managed by her guardians. Moved from Minivolley half a year ago.",
-      "tags": [
-        "child without login"
-      ]
+      "tags": ["child without login"]
     },
     {
       "key": "oskar",
@@ -83,10 +74,7 @@
       "createdBy": "anna",
       "createdAt": "-8y",
       "description": "IKN P2012 player with his own login since last year; created by Anna as a child without email.",
-      "tags": [
-        "teen with own login",
-        "guardians"
-      ]
+      "tags": ["teen with own login", "guardians"]
     },
     {
       "key": "erik",
@@ -101,10 +89,7 @@
       "email": "erik.johansson@example.test",
       "phone": "+46 70 174 06 07",
       "description": "SVK F2017 head coach and owner, IKN F2015 assistant coach, parent of Maja.",
-      "tags": [
-        "leader in two clubs",
-        "parent"
-      ],
+      "tags": ["leader in two clubs", "parent"],
       "createdAt": "-15y"
     },
     {
@@ -121,9 +106,7 @@
       "createdBy": "erik",
       "createdAt": "-10y",
       "description": "Plays in SVK F2017 and IKN F2015.",
-      "tags": [
-        "child in two clubs"
-      ]
+      "tags": ["child in two clubs"]
     },
     {
       "key": "sara",
@@ -138,12 +121,7 @@
       "email": "sara.ahmed@example.test",
       "phone": "+46 70 174 06 09",
       "description": "SVK club manager, treasurer, F2017 team manager and owner; parent of Alva.",
-      "tags": [
-        "club manager",
-        "treasurer",
-        "several roles",
-        "parent"
-      ],
+      "tags": ["club manager", "treasurer", "several roles", "parent"],
       "createdAt": "-15y"
     },
     {
@@ -160,9 +138,7 @@
       "createdBy": "sara",
       "createdAt": "-9y",
       "description": "SVK F2017 player without photo consent.",
-      "tags": [
-        "no photo consent"
-      ]
+      "tags": ["no photo consent"]
     },
     {
       "key": "gunilla",
@@ -177,10 +153,7 @@
       "email": "gunilla.berg@example.test",
       "phone": "+46 70 174 06 15",
       "description": "Grandmother of Alva: relative with view-only rights.",
-      "tags": [
-        "relative",
-        "view only"
-      ],
+      "tags": ["relative", "view only"],
       "createdAt": "-15y"
     },
     {
@@ -196,10 +169,7 @@
       "email": "johan.nilsson@example.test",
       "phone": "+46 70 174 06 10",
       "description": "SVK registrar (the full member register without manager rights), Herr senior player and owner, F2017 assistant coach; applied to SVK and was approved by Anna last year.",
-      "tags": [
-        "leader",
-        "player"
-      ],
+      "tags": ["leader", "player"],
       "createdAt": "-15y"
     },
     {
@@ -215,11 +185,7 @@
       "email": "lars.haugen@example.test",
       "locale": "nb",
       "description": "FIL club manager (founded the club), board member and J2014 head coach; also plays in SVK Herr senior (membership paused) and supports IKN.",
-      "tags": [
-        "norwegian",
-        "last manager",
-        "person in three clubs"
-      ],
+      "tags": ["norwegian", "last manager", "person in three clubs"],
       "createdAt": "-15y"
     },
     {
@@ -236,9 +202,7 @@
       "createdBy": "lars",
       "createdAt": "-12y",
       "description": "Daughter of Lars, FIL J2014 player.",
-      "tags": [
-        "child"
-      ]
+      "tags": ["child"]
     },
     {
       "key": "karin",
@@ -253,11 +217,7 @@
       "email": "karin.ek@example.test",
       "phone": "+46 70 174 06 11",
       "description": "IKN club manager and safeguarding officer, employed part-time as club administrator; proposed handing over to Peter.",
-      "tags": [
-        "club manager",
-        "staff",
-        "safeguarding"
-      ],
+      "tags": ["club manager", "staff", "safeguarding"],
       "createdAt": "-15y"
     },
     {
@@ -273,10 +233,7 @@
       "email": "ahmed.yilmaz@example.test",
       "phone": "+46 70 174 06 12",
       "description": "IKN P2012 head coach and owner, parent of Liam.",
-      "tags": [
-        "coach",
-        "parent"
-      ],
+      "tags": ["coach", "parent"],
       "createdAt": "-15y"
     },
     {
@@ -294,10 +251,7 @@
       "createdAt": "-14y",
       "locale": "en",
       "description": "IKN P2012 player with his own login; English user interface.",
-      "tags": [
-        "teen with own login",
-        "english"
-      ]
+      "tags": ["teen with own login", "english"]
     },
     {
       "key": "peter",
@@ -312,10 +266,7 @@
       "email": "peter.sund@example.test",
       "phone": "+46 70 174 06 13",
       "description": "IKN treasurer; founded SVK and was its manager and board member until he handed over to Anna last year; Karin proposed handing IKN over to him.",
-      "tags": [
-        "historic roles",
-        "pending hand-over"
-      ],
+      "tags": ["historic roles", "pending hand-over"],
       "createdAt": "-15y"
     },
     {
@@ -330,9 +281,7 @@
       "login": "invited",
       "email": "nora.lund@example.test",
       "description": "Invited by Anna to join SVK as a leader; the invitation is not accepted yet (no person until she accepts).",
-      "tags": [
-        "pending invitation"
-      ]
+      "tags": ["pending invitation"]
     },
     {
       "key": "sofie",
@@ -348,9 +297,7 @@
       "createdBy": "camilla",
       "createdAt": "-12y",
       "description": "Applied to FIL (J2014) through her mother; awaiting approval.",
-      "tags": [
-        "applied"
-      ]
+      "tags": ["applied"]
     },
     {
       "key": "ola",
@@ -364,10 +311,7 @@
       "login": "account",
       "email": "ola.former@example.test",
       "description": "Left SVK two years ago; due for anonymisation.",
-      "tags": [
-        "former member",
-        "retention"
-      ],
+      "tags": ["former member", "retention"],
       "createdAt": "-6y"
     },
     {
@@ -382,10 +326,7 @@
       "login": "account",
       "email": "platform.operator@example.test",
       "description": "Platform operator: no club access except a time-limited support grant from IKN.",
-      "tags": [
-        "operator",
-        "support access"
-      ],
+      "tags": ["operator", "support access"],
       "createdAt": "-1y"
     },
     {
@@ -400,10 +341,7 @@
       "login": "account",
       "email": "emma.svensson@example.test",
       "description": "Signed up without an invitation and has no club yet.",
-      "tags": [
-        "no club",
-        "onboarding"
-      ],
+      "tags": ["no club", "onboarding"],
       "createdAt": "-1mo"
     },
     {
@@ -419,10 +357,7 @@
       "email": "henrik.malm@example.test",
       "phone": "+46 70 174 06 14",
       "description": "Signed up himself and added his son Viktor, who waits for SVK F2017.",
-      "tags": [
-        "parent",
-        "waiting list"
-      ],
+      "tags": ["parent", "waiting list"],
       "createdAt": "-8mo"
     },
     {
@@ -438,10 +373,7 @@
       "email": "samira.karimi@example.test",
       "protectedIdentity": true,
       "description": "Guardian of Nadia, protected identity (set by herself).",
-      "tags": [
-        "protected identity",
-        "parent"
-      ],
+      "tags": ["protected identity", "parent"],
       "createdAt": "-15y"
     },
     {
@@ -459,10 +391,7 @@
       "createdAt": "-11y",
       "protectedIdentity": true,
       "description": "IKN F2015 player with protected identity set by Samira: hidden from other members, crossed-camera icon for leaders and managers.",
-      "tags": [
-        "protected identity",
-        "child"
-      ]
+      "tags": ["protected identity", "child"]
     },
     {
       "key": "jonas",
@@ -477,9 +406,7 @@
       "email": "jonas.karimi@example.test",
       "phone": "+46 70 174 06 16",
       "description": "Invited by Samira as Nadia's second guardian (not accepted yet).",
-      "tags": [
-        "pending co-guardian"
-      ],
+      "tags": ["pending co-guardian"],
       "createdAt": "-15y"
     },
     {
@@ -494,10 +421,7 @@
       "login": "account",
       "email": "camilla.dahl@example.test",
       "description": "Mother of Sofie; applied for her in FIL.",
-      "tags": [
-        "parent",
-        "join request"
-      ],
+      "tags": ["parent", "join request"],
       "createdAt": "-1mo"
     },
     {
@@ -514,10 +438,7 @@
       "createdBy": "henrik",
       "createdAt": "-8y",
       "description": "Son of Henrik, number 2 on SVK F2017's waiting list (also a pending join request).",
-      "tags": [
-        "child",
-        "waiting list"
-      ]
+      "tags": ["child", "waiting list"]
     },
     {
       "key": "vera",
@@ -533,10 +454,7 @@
       "createdBy": "sara",
       "createdAt": "-13y",
       "description": "Alva's sister, 13 and without login: Sara can give her her own login.",
-      "tags": [
-        "child without login",
-        "own-login age"
-      ]
+      "tags": ["child without login", "own-login age"]
     },
     {
       "key": "elsa-duplicate",
@@ -552,9 +470,7 @@
       "createdBy": "mikael",
       "createdAt": "-2mo",
       "description": "Elsa added a second time by Mikael (no clubs): Anna and Mikael see the merge notice.",
-      "tags": [
-        "duplicate"
-      ]
+      "tags": ["duplicate"]
     },
     {
       "key": "nils",
@@ -569,10 +485,7 @@
       "phone": "+46 70 174 06 30",
       "createdAt": "-3mo",
       "description": "Alva's neighbour who drives to training: contact person without login, linked by Sara (schedule and messages).",
-      "tags": [
-        "contact person",
-        "no login"
-      ]
+      "tags": ["contact person", "no login"]
     },
     {
       "key": "bo",
@@ -587,10 +500,7 @@
       "phone": "+46 70 174 06 31",
       "createdAt": "-1mo",
       "description": "Emma's LSS contact person, linked by Emma herself (schedule and messages).",
-      "tags": [
-        "contact person",
-        "adult's helper"
-      ]
+      "tags": ["contact person", "adult's helper"]
     },
     {
       "key": "tilde",
@@ -606,10 +516,7 @@
       "createdBy": "ahmed",
       "createdAt": "-18y",
       "description": "Liam's sister in IKN, just 18: decides which of her guardians keep access.",
-      "tags": [
-        "adult age",
-        "decision"
-      ]
+      "tags": ["adult age", "decision"]
     },
     {
       "key": "leyla",
@@ -625,9 +532,7 @@
       "phone": "+46 70 174 06 33",
       "createdAt": "-10y",
       "description": "Tilde's mother, invited by Ahmed as second guardian.",
-      "tags": [
-        "parent"
-      ]
+      "tags": ["parent"]
     },
     {
       "key": "petra",
@@ -642,10 +547,7 @@
       "phone": "+46 70 174 06 34",
       "createdAt": "-1y",
       "description": "Recorded by Johan (SVK registrar) as Maja's mother from a paper application; ended by Anna with a reason (court decision).",
-      "tags": [
-        "paper form",
-        "ended guardianship"
-      ]
+      "tags": ["paper form", "ended guardianship"]
     },
     {
       "key": "mats",
@@ -659,9 +561,7 @@
       "email": "mats.berg@example.test",
       "phone": "+46 70 174 06 35",
       "description": "SVK club manager, the third administrator: with three, two can suspend the third without outside help (P1.15 A3).",
-      "tags": [
-        "administrator"
-      ],
+      "tags": ["administrator"],
       "createdAt": "-10y",
       "id": "0199a000-0000-7000-8000-000000000035"
     },
@@ -677,9 +577,7 @@
       "email": "linnea.holm@example.test",
       "phone": "+46 70 174 06 36",
       "description": "Was an SVK club manager until Anna and Sara suspended her last week after a suspected break-in (compromised, demoted to an ordinary member).",
-      "tags": [
-        "suspended administrator"
-      ],
+      "tags": ["suspended administrator"],
       "createdAt": "-8y",
       "id": "0199a000-0000-7000-8000-000000000036"
     },
@@ -695,9 +593,7 @@
       "email": "goran.lund@example.test",
       "phone": "+46 70 174 06 37",
       "description": "IKN club manager next to Karin: IKN has the minimum of two administrators.",
-      "tags": [
-        "administrator"
-      ],
+      "tags": ["administrator"],
       "createdAt": "-12y",
       "id": "0199a000-0000-7000-8000-000000000037"
     },
@@ -714,9 +610,7 @@
       "phone": "+47 412 06 038",
       "locale": "nb",
       "description": "FIL club manager next to Lars: FIL has exactly two administrators and sees the recommendation of a third.",
-      "tags": [
-        "administrator"
-      ],
+      "tags": ["administrator"],
       "createdAt": "-5y",
       "id": "0199a000-0000-7000-8000-000000000038"
     },
@@ -732,9 +626,7 @@
       "email": "ulf.ek@example.test",
       "phone": "+46 70 174 06 39",
       "description": "Founded Lövsta Bordtennisklubb, a small club with one administrator within its grace period: it must appoint a second.",
-      "tags": [
-        "grace period"
-      ],
+      "tags": ["grace period"],
       "createdAt": "-3y",
       "id": "0199a000-0000-7000-8000-000000000039"
     },
@@ -750,10 +642,7 @@
       "email": "britt.sjoberg@example.test",
       "phone": "+46 70 174 06 40",
       "description": "Founded Ekuddens Schackklubb, a club of the type Schackklubb (P1.15 B): its roles come from that type's template.",
-      "tags": [
-        "club type",
-        "administrator"
-      ],
+      "tags": ["club type", "administrator"],
       "createdAt": "-4y",
       "id": "0199a000-0000-7000-8000-000000000040"
     },
@@ -769,10 +658,7 @@
       "email": "aron.nystrom@example.test",
       "phone": "+46 70 174 06 41",
       "description": "Ekuddens Schackklubb's second administrator next to Britt.",
-      "tags": [
-        "club type",
-        "administrator"
-      ],
+      "tags": ["club type", "administrator"],
       "createdAt": "-3y",
       "id": "0199a000-0000-7000-8000-000000000041"
     }

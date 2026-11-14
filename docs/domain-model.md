@@ -13,7 +13,7 @@ their prompts and extend this file.
 2. **Email is the login, and only people who log in have one.** A login email
    is unique across the whole system. Children without a login have **no email
    at all**; their guardians are contacted instead.
-3. **Everything a person *is* in a club is a relationship** with a validity
+3. **Everything a person _is_ in a club is a relationship** with a validity
    period: membership, role, group function, employment, guardianship.
    Ending a relationship sets `valid_to`; history is kept (needed for LOK-stöd,
    annual reports, audit) until the retention period expires.
@@ -61,6 +61,7 @@ erDiagram
 ## Entities
 
 ### `people` (global)
+
 `id` (UUIDv7), `given_name`, `family_name`, `birth_date` (age rules: LOK,
 child protection, consent age; unknown for people who signed up themselves
 until onboarding asks, P1.1), `gender` (optional, some grant reports),
@@ -74,10 +75,12 @@ duplicate), `created_by_person_id`.
 **No email column.** Email belongs to the account.
 
 ### `accounts` (global, optional per person)
+
 Login identity: `person_id` (unique), `email` (unique, case-insensitive,
 stored normalised: trimmed, lower-case), `email_verified_at`, `idp_subject`,
 `locale`, `time_zone`, `theme`, `notification_settings`.
 No password data (that lives in Zitadel).
+
 - One account per person, one person per account.
 - Changing email requires verifying the new address; the old address is
   notified.
@@ -85,6 +88,7 @@ No password data (that lives in Zitadel).
   impossible, and there is no "contact email" field on persons to put it in.
 
 ### Children without login, and giving them one later
+
 - A guardian adds a child via **"Add child"**: name, birth date, optional
   personal identity number. This creates a `person` with no account and a
   `guardianship` (`kind = parent`) to the creator.
@@ -146,6 +150,7 @@ No password data (that lives in Zitadel).
   `receive_messages`.
 
 ### `clubs`
+
 `id`, `name`, `short_name`, `slug`, `country`, `default_locale`, `time_zone`,
 `currency`, `organization_number`, `federation_ids` (JSON, e.g. IdrottOnline),
 `address`, `logo`, `status` (active, suspended, archived), `join_policy`,
@@ -160,6 +165,7 @@ are shown to people related to the club; club managers change them on the
 settings page (with a second factor).
 
 ### `club_profiles`
+
 What a club sees about a person: **member number** (running number per club,
 human-friendly, shown on lists and exports; assigned by a trigger under the
 club row's lock), `shared_fields` (which of the person's own fields, such as
@@ -169,6 +175,7 @@ below). Photo and other consents are rows in `consents`. The profile is
 created with the first membership and kept when the person leaves.
 
 ### `club_memberships`
+
 Person ↔ club. `status` (active, paused, left; `applied` is legacy, no
 longer written, see below), `membership_type` (active, supporting, honorary,
 family), `valid_from`, `valid_to` (set exactly when `status = left`). Joining
@@ -182,6 +189,7 @@ club's time zone (its groups and roles end at once), and the last club
 manager's membership cannot end.
 
 ### The member register (P1.2)
+
 `app.register_entries` lists, per club, everyone who is or was a member, with
 their current membership (or their last, if they left); `applied` is never
 listed. It joins people only through the club's memberships and profiles
@@ -204,6 +212,7 @@ The sort key is computed in the database from rows the viewer may read;
 names never leave it except through the person presenter.
 
 ### `member_exports`
+
 A CSV export of the register (club-owned): `requested_by_person_id`, `status`
 (queued, ready, failed, expired), `filter` (the register filter: IDs and enum
 values only), `columns`, `include_protected`, `row_count`, `object_key`
@@ -217,6 +226,7 @@ it (a pre-signed link valid five minutes); `members:expire_exports` deletes
 the file after 24 hours and keeps the row as a record.
 
 ### Adding and importing members (P1.3b)
+
 Registrars (and club managers with a second factor, `club.members.add`) add
 a member by hand: the person (no email, ADR 0020), the profile (the fields
 given are shared with the club; protected identity is the club-level flag
@@ -276,6 +286,7 @@ second factor; confirming needs a login within 15 minutes; ADR 0033):
   is cancelled. The import record keeps its counts.
 
 ### `groups` (ADR 0019)
+
 `id`, `club_id`, `parent_group_id` (optional hierarchy: section → team), `kind`
 (`section`, `team`, `training_group`, `age_group`, `committee`, `board`,
 `volunteers`, `other`), `name`, `sport`, `birth_year_from/to`,
@@ -313,6 +324,7 @@ Multi-sport sections are groups of kind `section`; the earlier
 `section_admin` role is simply an owner of a section group.
 
 ### `group_memberships`
+
 Person ↔ group with a **group role** (`role_id`, P1.15, ADR 0046). The
 built-in template's group roles are today's functions: `member`
 (player/participant), `head_coach`, `assistant_coach`, `team_manager`,
@@ -323,8 +335,10 @@ rows). `participates` and `leads` say whether the role holds
 schedule, rosters, attendance and recipients). `valid_from`/`valid_to`.
 
 ### `group_owners`
+
 Person ↔ group, administrative ownership: edit the group, manage its members
 and functions, run its waiting list, manage its chat rooms and calendar.
+
 - A group can have **several owners** (or none; club managers can always act).
 - **Club managers assign and remove group owners.** Club setting
   `owners_can_appoint_co_owners` (default off) lets owners add co-owners.
@@ -334,6 +348,7 @@ and functions, run its waiting list, manage its chat rooms and calendar.
   `valid_from`, `valid_to`.
 
 ### Waiting lists (ADR 0019, ADR 0043)
+
 `group_waitlist_entries`: `group_id`, `person_id`, `requested_by_person_id`
 (e.g. guardian), `status` (`waiting`, `offered`, `accepted`, `declined`,
 `expired`, `admitted`, `withdrawn`, `removed`), `queued_at`, `priority` with
@@ -345,6 +360,7 @@ information), `owner_note` (owners only, never shown to the applicant),
 (a code), `join_request_id` (the pending join request made with a
 non-member's application). Groups have `waitlist_auto_offer`; a group
 membership added past people waiting has `queue_bypass_reason` (P1.10b).
+
 - **Applying:** a member, or a guardian with `act_on_behalf` for a child,
   applies to a group with `admission_mode = waitlist` or `direct` (P1.14:
   also with free places; an owner admits the application with one click,
@@ -391,6 +407,7 @@ membership added past people waiting has `queue_bypass_reason` (P1.10b).
   positions through `app.waitlist_positions`, in one transaction.
 
 ### `club_role_assignments`
+
 Club-level roles (`role_id`, P1.15, ADR 0046). The built-in template's club
 roles: `chair`, `vice_chair`, `treasurer`, `secretary`, `board_member`,
 `deputy_board_member`, `auditor`, `nomination_committee`, `club_manager`,
@@ -399,6 +416,7 @@ roles: `chair`, `vice_chair`, `treasurer`, `secretary`, `board_member`,
 `assigned_by_person_id`, `ended_by_person_id`.
 
 ### `roles` and `role_permissions` (P1.15, ADR 0046)
+
 A club's roles: `scope` (`club` or `group`), `template_key` (the template
 role it comes from), `locked` (the club manager and the chair), names and
 descriptions per language (NULL: the catalogue's text), `version`. Each
@@ -460,6 +478,7 @@ with its type's template ("differs from the template", reset) and copies a
 missing one ("Lägg till från mallen"; a deleted one is restored).
 
 ### Sign-up and joining (ADR 0018, ADR 0032; P1.1)
+
 - Anyone can sign up (verified email) without an invitation; this creates an
   `account` + `person` with no club yet. Before any club action the person
   completes their profile (birth date, for age rules; `PUT /me/profile`).
@@ -508,6 +527,7 @@ missing one ("Lägg till från mallen"; a deleted one is restored).
   mobile screens ([#17](https://github.com/SweRavn/ClubAdmin/issues/17)).
 
 ### `guardianships` (global, confirmed per club)
+
 `guardian_person_id`, `ward_person_id`, `kind` (`parent`, `legal_guardian`,
 `relative`, `contact_person`, `step_parent`, `foster_parent`), `rights` (flags: `act_on_behalf`,
 `receive_messages`, `view_schedule`, `sign_up`, `see_medical`), `status`
@@ -521,6 +541,7 @@ it from a paper form), `ended_reason` (a club manager ended a full
 guardian's guardianship; never in audit events), `own_login_age_notified_at`.
 A ward can have any number of guardians (one open guardianship per guardian
 and ward).
+
 - `parent`/`legal_guardian` have full rights.
 - **Relatives** (grandparent, older sibling, aunt) and **contact persons**
   (a neighbour who drives, a family-home contact, an LSS contact person or
@@ -557,9 +578,11 @@ and ward).
   that club.
 
 ### Protected identity (ADR 0022)
-For people with protected personal data (in Sweden *skyddade
-personuppgifter*: sekretessmarkering, skyddad folkbokföring), and anyone else
+
+For people with protected personal data (in Sweden _skyddade
+personuppgifter_: sekretessmarkering, skyddad folkbokföring), and anyone else
 who must not be exposed.
+
 - **Effective flag** = `people.protected_identity` (set by the person, or by a
   guardian for a child; applies in all clubs) **or**
   `club_profiles.protected_identity_club` (set by a club manager when the club
@@ -603,7 +626,7 @@ who must not be exposed.
 - **Chat and other shared spaces (rules for Phase 2 chat, ADR 0022):** a
   protected person is never added to a room automatically, also not by
   joining a group or when protection is removed later; the room's owner may
-  *offer* the room; the person, or a full guardian for a child below
+  _offer_ the room; the person, or a full guardian for a child below
   `consent_age`, accepts or declines, optionally with a display name per club
   (never their real name if they choose one); the room's members then see
   them only by that name or the real name, as chosen; leaving, or
@@ -631,11 +654,13 @@ who must not be exposed.
   rows go after 24 months.
 
 ### `employments`
+
 Person employed by a club: `title`, `starts_on`/`ends_on`, `employment_type`
 (permanent, fixed_term, hourly, volunteer_stipend), `hours_per_week`. Salary data
 lives in the `staff` module (later phase) with stricter access.
 
 ### `consents` (P1.8a, ADR 0041)
+
 Purpose-based consents, each given and withdrawn on its own for the whole
 club: photo and video publication, streaming, marketing, sharing with
 federations, and the contact purposes `contacts_group` (the phone the
@@ -657,6 +682,7 @@ and contact purposes do not apply to a protected person and end when the
 flag is set.
 
 ### Board decisions and the privacy policy (P1.8a, ADR 0037, ADR 0041)
+
 Settings the club's board decides (`decidedBy: board` in the settings
 registry, `packages/shared` `club-settings.ts`: former members' period,
 attendance retention, the consents asked, reconfirming on a new text)
@@ -669,6 +695,7 @@ notice. Decisions, texts and policies are immutable; every insider reads
 them.
 
 ### Leaving a club (P1.8a)
+
 A member leaves themselves (`POST /me/clubs/:clubId/leave`); a minor's full
 guardians leave for them. Refused while the person holds an assignment in
 the club (a club role, a leader function, a group ownership: they step
@@ -682,6 +709,7 @@ otherwise it runs `former_member_retention_months` after the end. Club
 managers and registrars get the notice `membership.left`.
 
 ### Activities and "My schedule" (P1.4, ADR 0034)
+
 - `locations` (club-owned): name (unique among the club's unarchived
   locations, case-insensitive), address, optional coordinates (both or
   neither; the map link is OpenStreetMap), directions,
@@ -729,6 +757,7 @@ managers and registrars get the notice `membership.left`.
   leaders of its groups through the person presenter.
 
 ### Responses and attendance (P1.5, ADR 0035)
+
 - `activities.response_mode` (`none`, `optional`, `requested`; by kind:
   trainings optional, matches and meetings requested, other none) and
   `respond_by`; a series has the mode and `respond_by_minutes` before each
@@ -774,6 +803,7 @@ managers and registrars get the notice `membership.left`.
   the leaders see them as hints.
 
 ### Events with sign-up (P1.6, ADR 0038)
+
 - `events` (club-owned): a sign-up container for some groups
   (`event_groups`) or the whole club (`audience`), `status` (`draft`,
   `published`, `cancelled` with `cancelled_reason`), the period, a place,
@@ -783,7 +813,7 @@ managers and registrars get the notice `membership.left`.
   `waitlist_mode` (`none`, `auto`, `offer`; default `offer` for group
   events, `auto` for club events), `offer_reply_hours` (default 24) and
   `questions` (JSONB, at most 20: `{ id, type, label, required,
-  sensitive, options? }`, types short and long text, one or several
+sensitive, options? }`, types short and long text, one or several
   choices, number, yes/no). Only the title and the start are required
   (P1.6b): without an end the event ends at the end of the start day in the
   club's time zone (23:59), sign-up closes at the start; an end before the
@@ -820,8 +850,10 @@ managers and registrars get the notice `membership.left`.
   clears a person's answers and scrubs them from history.
 
 ### Notifications (P1.7, ADR 0039)
+
 Global, recipient-owned tables (row-level security on the person, not the
 club; only the worker writes):
+
 - `notifications`: the inbox. `recipient_person_id`, `club_id` (nullable,
   for display, retention and erasure), `category`, `type` (the catalogue in
   `packages/shared/src/notifications.ts`), `subject_type`/`subject_id`,
@@ -851,6 +883,7 @@ the activity's groups for late "not coming") is in the prompt's catalogue,
 docs/prompts/P1.7-notifications.md.
 
 ### `calendar_feeds` (ADR 0021, ADR 0044)
+
 Personal, secret, revocable iCalendar subscription URLs (P1.11), a global
 table owned by `person_id` (RLS: the owner and system jobs; the fetch finds
 one row by hash through `app.find_calendar_feed`). Columns: `scope`
@@ -871,6 +904,7 @@ gained `sequence`, `meet_place`, `address`, `latitude` and `longitude` for
 the feeds.
 
 ### Record history (ADR 0017)
+
 Every table has a trigger writing to `history.record_changes`: table, record
 id, operation, changed columns with old/new values, actor, on-behalf-of,
 request id, time. Separate from `audit_events`, which record business-level
@@ -889,6 +923,7 @@ in "download my data". What each column shows is the history view policy
 columns and only while the viewer may see the field on the current record.
 
 ### Platform tables
+
 `platform_operators` (`person_id`, validity; written only by operator
 tooling), `support_access_grants` (club-owned: `operator_person_id`,
 `granted_by_person_id`, `reason`, `expires_at`, `revoked_at`; time-limited,
@@ -904,21 +939,22 @@ only by the person, their family and the clubs they belong to.
 
 ## Effective permissions (examples)
 
-| Situation | Can |
-|---|---|
-| Owner of group G | Edit G, manage members and functions, run G's waiting list, manage G's chat rooms and calendar |
-| `head_coach` of group G | Edit G's activities, take attendance, message G's members and their guardians, see contact details of G's members (including protected members, with icon) |
-| `member` in G, age 15 with account | See G's schedule, respond, join G's chat rooms; sees other members except protected ones |
-| `parent` of member P | Everything P can do, on P's behalf; add children; plus guardian-only rooms |
-| `relative` of P with `view_schedule` | See P's schedule only |
-| `treasurer` of club C | Club finance, fees; with MFA |
-| `board_member` of C | Board documents, meetings; member list (limited fields) |
-| `safeguarding_officer` / `club_manager` | Background-check status of leaders; with MFA |
-| `club_manager` of C | Everything in C's administration: settings, roles (incl. other managers and group owners), members, join requests, waiting lists, history; with MFA |
-| Signed-up person without club | Own profile, add children, search clubs, send join requests, join waiting lists, create a club (if allowed) |
-| Platform operator | Nothing in club data, unless the club grants time-limited support access |
+| Situation                               | Can                                                                                                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Owner of group G                        | Edit G, manage members and functions, run G's waiting list, manage G's chat rooms and calendar                                                             |
+| `head_coach` of group G                 | Edit G's activities, take attendance, message G's members and their guardians, see contact details of G's members (including protected members, with icon) |
+| `member` in G, age 15 with account      | See G's schedule, respond, join G's chat rooms; sees other members except protected ones                                                                   |
+| `parent` of member P                    | Everything P can do, on P's behalf; add children; plus guardian-only rooms                                                                                 |
+| `relative` of P with `view_schedule`    | See P's schedule only                                                                                                                                      |
+| `treasurer` of club C                   | Club finance, fees; with MFA                                                                                                                               |
+| `board_member` of C                     | Board documents, meetings; member list (limited fields)                                                                                                    |
+| `safeguarding_officer` / `club_manager` | Background-check status of leaders; with MFA                                                                                                               |
+| `club_manager` of C                     | Everything in C's administration: settings, roles (incl. other managers and group owners), members, join requests, waiting lists, history; with MFA        |
+| Signed-up person without club           | Own profile, add children, search clubs, send join requests, join waiting lists, create a club (if allowed)                                                |
+| Platform operator                       | Nothing in club data, unless the club grants time-limited support access                                                                                   |
 
 ### Chat (P2.1, ADR 0016, ADR 0047)
+
 Club-owned tables (tenant RLS; outside a club context a person reads only
 their own and their wards' memberships and those chats, for "Mina kanaler"):
 
@@ -975,6 +1011,7 @@ reactions), `.../read`, and `POST /realtime/tickets` with the WebSocket
 `/api/v1/realtime`.
 
 ### The file archive (P2.2, ADR 0049)
+
 Club-owned tables (tenant RLS, record history; migration 0042):
 
 - `audiences` and `audience_entries`: who reads something, shared with
@@ -1021,6 +1058,7 @@ with `POST .../attachments/uploads`, `GET /me/documents`, `POST
 /public/clubs/:slug/documents` and its downloads.
 
 ### Announcements (P2.3, ADR 0053)
+
 Club-owned tables (tenant RLS; migration 0044):
 
 - `announcements`: the club's (`group_id` null) or a group's; `audience_id`
@@ -1055,68 +1093,68 @@ for permissions (`actor.holds(permission, club | group)`), never for role
 names; the role names below are those of the built-in template, which gives
 each role the permissions listed here.
 
-| Permission | Resource | Allowed for |
-|---|---|---|
-| `club.read` | club | insiders |
-| `club.settings.update` | club | club managers, with MFA |
-| `club.roles.manage` | club | club managers, with MFA |
-| `club.members.read` | club | the member register (P1.2): club managers and registrars (full), the board roles (limited); see "The member register" |
-| `club.members.manage` | club | registrars; club managers with MFA (pause, resume, end, change type) |
-| `club.members.export` | club | club managers and registrars, with MFA and a login in the last 15 minutes |
-| `group.read` | group | insiders; archived groups only managers, registrars and owners |
-| `group.update` | group | club managers, owners |
-| `group.owners.manage` | group | club managers; owners if the club allows co-owners |
-| `group.members.read` | group | managers, registrars, owners; for active groups also everyone in the group, guardians (with `act_on_behalf`) of its members, support access |
-| `group.members.manage` | group | club managers, owners |
-| `group.waitlist.manage` | group | the waiting list (P1.10b): club managers, owners of the group or a parent group (archived groups: club managers only); not leaders who are not owners, registrars, members or guardians |
-| `club.waitlists.read` | club | all waiting lists and the out-of-turn decisions: club managers and registrars; not owners or board roles |
-| `person.profile.read` | person (`?clubId`) | the person and their guardians with `act_on_behalf`; in the club: managers and registrars, owners and leaders of the person's groups, and (unless the person is protected) people in the same group, their guardians, support access |
-| `person.profile.update` | person | the person, guardians with `act_on_behalf` |
-| `person.protection.set` | person | global flag: the person, guardians with `act_on_behalf` (the service requires a parent or legal guardian); club flag (`?clubId`): club managers, with MFA |
-| `person.guardians.read` | person (`:personId`) | the ward, any active guardian of the ward (relatives see names only, no invitations) |
-| `person.guardians.manage` | person (`:personId`, or the ward of `:guardianshipId`/`:invitationId`) | full guardians with `act_on_behalf`, the ward themselves (the service allows relatives and contact persons only, from `consent_age`); never a relative, never on behalf of someone |
-| `person.merge` | person (`:personId`, the kept person of `:mergeId`; `?clubId`) | a full guardian (the service requires one of both people); a club manager with MFA for two members of the club |
-| `person.own_login.invite` | person (`?clubId`) | full guardians; club managers and registrars of a club the person is a member of |
-| `club.guardians.manage` | club | club managers, registrars; ending a full guardian's guardianship only a club manager with MFA and a reason |
-| `group.activities.read` | group | the group calendar (P1.4): club managers and registrars, owners, everyone in the group (any function), guardians of its members with `view_schedule` |
-| `group.activities.manage` | group (not archived) | adding activities and series: club managers, owners, head and assistant coaches, team managers |
-| `activity.read` | activity (`:activityId`, `:seriesId`) | readers of any of its groups (as `group.activities.read`); others in the club 403, outside it 404 |
-| `activity.manage` | activity | those who manage every one of its groups (as `group.activities.manage`) |
-| `club.activities.read` | club | the club calendar and double bookings: club managers, registrars, the board roles |
-| `club.locations.manage` | club | club managers |
-| `activity.respond` | activity | members of one of its groups and guardians with `sign_up` of one (P1.5); the controller limits whom (the caller, those wards), the service the roster |
-| `activity.responses.read` | activity | the leaders' list of answers: those who manage one of its groups and `other_leader`; not physios, members or guardians |
-| `activity.attendance.manage` | activity | taking attendance: as `activity.responses.read`, club managers and registrars; after the lock only club managers and registrars (corrections) |
-| `group.attendance.read` | group | a group's attendance summary: its leaders and owners (also of parent groups), club managers, registrars |
-| `ops.backup.read` | platform (the installation, no IDs) | platform operators (in a self-hosted installation its administrators), with MFA: `GET /api/v1/ops/backup-status` |
-| `club.access_state.update` | club | platform operators, with MFA (read-only and suspended clubs, also with billing off) |
-| `billing.plans.read` | platform | platform operators, with MFA (billing on only) |
-| `billing.subscription.read` | club | club managers and treasurers; platform operators with MFA (billing on only) |
-| `billing.subscription.manage` | club | platform operators, with MFA (billing on only): assign a plan, change the status, extend or end a trial |
-| `billing.subscription.change` | club | club managers, with MFA, not on behalf of someone (billing on only): choose a plan, cancel, resume |
-| `billing.account.manage` | club | club managers and treasurers, with MFA, not on behalf (billing on only): billing details, payment method |
-| `billing.invoices.read` | club | club managers and treasurers; platform operators with MFA (billing on only): invoices, credit notes, PDFs |
-| `billing.plans.manage` | platform | platform operators, with MFA (billing on only): create and change plans and prices |
-| `billing.subscriptions.list` | platform | platform operators, with MFA (billing on only): every club's subscription (club name and country only) |
-| `billing.invoices.list` | platform | platform operators, with MFA (billing on only): invoices and payments of every club, CSV exports |
-| `billing.invoices.manage` | platform | platform operators, with MFA (billing on only): bank payments, credit notes, resends |
-| `club.create` | platform | anyone logged in with `CLUB_CREATION` `open` or `approval` (then a request); only platform operators, with MFA, with `operators_only`. The service also requires a verified email and a completed profile |
-| `club.creation.decide` | platform | platform operators, with MFA |
-| `club.join_requests.manage` | club | club managers, registrars |
-| `club.invitations.manage` | club | club managers, registrars (a role preset also needs `club.roles.manage`) |
-| `club.handover.respond` | handover | the proposed successor (accept, decline) and the proposer (cancel); nobody else learns that it exists |
-| `club.managers.claim` | club | the board chair, with MFA, when the club has no active manager |
-| `club.managers.reassign` | club | platform operators, with MFA (reason recorded; no access to club data) |
-| `person.consents.read` | person (`?clubId`) | the person, full guardians, club managers, registrars; status only for owners and leaders of the person's groups (P1.8a) |
-| `person.consents.manage` | person (`?clubId`) | the person (from the consent age), full guardians (giving below the consent age, withdrawing until the adult age, their own contact purposes), registrars and club managers (a paper consent with a note, withdrawing on request) |
-| `group.consents.read` | group | the group's leaders and owners (also of parent groups), club managers, registrars |
-| `group.channels.create` | group | holders of `group.channels.create` (template: `member` (children too), `head_coach`, `assistant_coach`, `team_manager`) and owners; never acting on behalf (P2.1) |
-| `club.channels.create` | club | holders (template: `club_manager`, `chair`) (P2.1) |
-| `club.chats.direct` | club | insiders, not acting on behalf; the service applies the direct-message rules (P2.1, ADR 0047) |
-| `chat.read` | chat | its members (also offered), full guardians of a member, the people of its groups for open channels, its managers, and leaders of its groups when children are in it; messages for active members only; 404 for everyone else (P2.1) |
-| `chat.join` | chat | the people of its groups for open channels, full guardians of a member, leaders of its groups when children are in it, someone offered it (P2.1) |
-| `chat.post` | chat | active members while it is not archived (P2.1) |
-| `chat.manage` | chat | its creator while in it, owners of its groups and holders of `group.channels.manage` there (`head_coach`); club channels: holders of `club.channels.create`; never direct messages (P2.1) |
+| Permission                    | Resource                                                               | Allowed for                                                                                                                                                                                                                          |
+| ----------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `club.read`                   | club                                                                   | insiders                                                                                                                                                                                                                             |
+| `club.settings.update`        | club                                                                   | club managers, with MFA                                                                                                                                                                                                              |
+| `club.roles.manage`           | club                                                                   | club managers, with MFA                                                                                                                                                                                                              |
+| `club.members.read`           | club                                                                   | the member register (P1.2): club managers and registrars (full), the board roles (limited); see "The member register"                                                                                                                |
+| `club.members.manage`         | club                                                                   | registrars; club managers with MFA (pause, resume, end, change type)                                                                                                                                                                 |
+| `club.members.export`         | club                                                                   | club managers and registrars, with MFA and a login in the last 15 minutes                                                                                                                                                            |
+| `group.read`                  | group                                                                  | insiders; archived groups only managers, registrars and owners                                                                                                                                                                       |
+| `group.update`                | group                                                                  | club managers, owners                                                                                                                                                                                                                |
+| `group.owners.manage`         | group                                                                  | club managers; owners if the club allows co-owners                                                                                                                                                                                   |
+| `group.members.read`          | group                                                                  | managers, registrars, owners; for active groups also everyone in the group, guardians (with `act_on_behalf`) of its members, support access                                                                                          |
+| `group.members.manage`        | group                                                                  | club managers, owners                                                                                                                                                                                                                |
+| `group.waitlist.manage`       | group                                                                  | the waiting list (P1.10b): club managers, owners of the group or a parent group (archived groups: club managers only); not leaders who are not owners, registrars, members or guardians                                              |
+| `club.waitlists.read`         | club                                                                   | all waiting lists and the out-of-turn decisions: club managers and registrars; not owners or board roles                                                                                                                             |
+| `person.profile.read`         | person (`?clubId`)                                                     | the person and their guardians with `act_on_behalf`; in the club: managers and registrars, owners and leaders of the person's groups, and (unless the person is protected) people in the same group, their guardians, support access |
+| `person.profile.update`       | person                                                                 | the person, guardians with `act_on_behalf`                                                                                                                                                                                           |
+| `person.protection.set`       | person                                                                 | global flag: the person, guardians with `act_on_behalf` (the service requires a parent or legal guardian); club flag (`?clubId`): club managers, with MFA                                                                            |
+| `person.guardians.read`       | person (`:personId`)                                                   | the ward, any active guardian of the ward (relatives see names only, no invitations)                                                                                                                                                 |
+| `person.guardians.manage`     | person (`:personId`, or the ward of `:guardianshipId`/`:invitationId`) | full guardians with `act_on_behalf`, the ward themselves (the service allows relatives and contact persons only, from `consent_age`); never a relative, never on behalf of someone                                                   |
+| `person.merge`                | person (`:personId`, the kept person of `:mergeId`; `?clubId`)         | a full guardian (the service requires one of both people); a club manager with MFA for two members of the club                                                                                                                       |
+| `person.own_login.invite`     | person (`?clubId`)                                                     | full guardians; club managers and registrars of a club the person is a member of                                                                                                                                                     |
+| `club.guardians.manage`       | club                                                                   | club managers, registrars; ending a full guardian's guardianship only a club manager with MFA and a reason                                                                                                                           |
+| `group.activities.read`       | group                                                                  | the group calendar (P1.4): club managers and registrars, owners, everyone in the group (any function), guardians of its members with `view_schedule`                                                                                 |
+| `group.activities.manage`     | group (not archived)                                                   | adding activities and series: club managers, owners, head and assistant coaches, team managers                                                                                                                                       |
+| `activity.read`               | activity (`:activityId`, `:seriesId`)                                  | readers of any of its groups (as `group.activities.read`); others in the club 403, outside it 404                                                                                                                                    |
+| `activity.manage`             | activity                                                               | those who manage every one of its groups (as `group.activities.manage`)                                                                                                                                                              |
+| `club.activities.read`        | club                                                                   | the club calendar and double bookings: club managers, registrars, the board roles                                                                                                                                                    |
+| `club.locations.manage`       | club                                                                   | club managers                                                                                                                                                                                                                        |
+| `activity.respond`            | activity                                                               | members of one of its groups and guardians with `sign_up` of one (P1.5); the controller limits whom (the caller, those wards), the service the roster                                                                                |
+| `activity.responses.read`     | activity                                                               | the leaders' list of answers: those who manage one of its groups and `other_leader`; not physios, members or guardians                                                                                                               |
+| `activity.attendance.manage`  | activity                                                               | taking attendance: as `activity.responses.read`, club managers and registrars; after the lock only club managers and registrars (corrections)                                                                                        |
+| `group.attendance.read`       | group                                                                  | a group's attendance summary: its leaders and owners (also of parent groups), club managers, registrars                                                                                                                              |
+| `ops.backup.read`             | platform (the installation, no IDs)                                    | platform operators (in a self-hosted installation its administrators), with MFA: `GET /api/v1/ops/backup-status`                                                                                                                     |
+| `club.access_state.update`    | club                                                                   | platform operators, with MFA (read-only and suspended clubs, also with billing off)                                                                                                                                                  |
+| `billing.plans.read`          | platform                                                               | platform operators, with MFA (billing on only)                                                                                                                                                                                       |
+| `billing.subscription.read`   | club                                                                   | club managers and treasurers; platform operators with MFA (billing on only)                                                                                                                                                          |
+| `billing.subscription.manage` | club                                                                   | platform operators, with MFA (billing on only): assign a plan, change the status, extend or end a trial                                                                                                                              |
+| `billing.subscription.change` | club                                                                   | club managers, with MFA, not on behalf of someone (billing on only): choose a plan, cancel, resume                                                                                                                                   |
+| `billing.account.manage`      | club                                                                   | club managers and treasurers, with MFA, not on behalf (billing on only): billing details, payment method                                                                                                                             |
+| `billing.invoices.read`       | club                                                                   | club managers and treasurers; platform operators with MFA (billing on only): invoices, credit notes, PDFs                                                                                                                            |
+| `billing.plans.manage`        | platform                                                               | platform operators, with MFA (billing on only): create and change plans and prices                                                                                                                                                   |
+| `billing.subscriptions.list`  | platform                                                               | platform operators, with MFA (billing on only): every club's subscription (club name and country only)                                                                                                                               |
+| `billing.invoices.list`       | platform                                                               | platform operators, with MFA (billing on only): invoices and payments of every club, CSV exports                                                                                                                                     |
+| `billing.invoices.manage`     | platform                                                               | platform operators, with MFA (billing on only): bank payments, credit notes, resends                                                                                                                                                 |
+| `club.create`                 | platform                                                               | anyone logged in with `CLUB_CREATION` `open` or `approval` (then a request); only platform operators, with MFA, with `operators_only`. The service also requires a verified email and a completed profile                            |
+| `club.creation.decide`        | platform                                                               | platform operators, with MFA                                                                                                                                                                                                         |
+| `club.join_requests.manage`   | club                                                                   | club managers, registrars                                                                                                                                                                                                            |
+| `club.invitations.manage`     | club                                                                   | club managers, registrars (a role preset also needs `club.roles.manage`)                                                                                                                                                             |
+| `club.handover.respond`       | handover                                                               | the proposed successor (accept, decline) and the proposer (cancel); nobody else learns that it exists                                                                                                                                |
+| `club.managers.claim`         | club                                                                   | the board chair, with MFA, when the club has no active manager                                                                                                                                                                       |
+| `club.managers.reassign`      | club                                                                   | platform operators, with MFA (reason recorded; no access to club data)                                                                                                                                                               |
+| `person.consents.read`        | person (`?clubId`)                                                     | the person, full guardians, club managers, registrars; status only for owners and leaders of the person's groups (P1.8a)                                                                                                             |
+| `person.consents.manage`      | person (`?clubId`)                                                     | the person (from the consent age), full guardians (giving below the consent age, withdrawing until the adult age, their own contact purposes), registrars and club managers (a paper consent with a note, withdrawing on request)    |
+| `group.consents.read`         | group                                                                  | the group's leaders and owners (also of parent groups), club managers, registrars                                                                                                                                                    |
+| `group.channels.create`       | group                                                                  | holders of `group.channels.create` (template: `member` (children too), `head_coach`, `assistant_coach`, `team_manager`) and owners; never acting on behalf (P2.1)                                                                    |
+| `club.channels.create`        | club                                                                   | holders (template: `club_manager`, `chair`) (P2.1)                                                                                                                                                                                   |
+| `club.chats.direct`           | club                                                                   | insiders, not acting on behalf; the service applies the direct-message rules (P2.1, ADR 0047)                                                                                                                                        |
+| `chat.read`                   | chat                                                                   | its members (also offered), full guardians of a member, the people of its groups for open channels, its managers, and leaders of its groups when children are in it; messages for active members only; 404 for everyone else (P2.1)  |
+| `chat.join`                   | chat                                                                   | the people of its groups for open channels, full guardians of a member, leaders of its groups when children are in it, someone offered it (P2.1)                                                                                     |
+| `chat.post`                   | chat                                                                   | active members while it is not archived (P2.1)                                                                                                                                                                                       |
+| `chat.manage`                 | chat                                                                   | its creator while in it, owners of its groups and holders of `group.channels.manage` there (`head_coach`); club channels: holders of `club.channels.create`; never direct messages (P2.1)                                            |
 
 Endpoints for "my" data (`/me`, `/me/clubs`, `/me/groups`, `/me/wards`,
 `/me/preferences`, `/me/profile`, `/me/join-requests`,
@@ -1141,13 +1179,13 @@ functions or employments); history and audit record both.
 (`profileAccess`). Phone, address and gender reach a club only if the person
 shared them with it (`club_profiles.shared_fields`).
 
-| Viewer | Fields |
-|---|---|
-| The person, guardian with `act_on_behalf` | everything: birth date, gender, phone, address, club profile (member number, membership, groups), guardians with phone numbers |
-| `club.people.details` in the club (club manager, registrar) | birth date; shared phone, gender and address; member number, membership, groups; guardians with phone numbers |
-| Owner of one of the person's groups, or `group.people.details` in one (its leaders) | birth date, shared phone, member number, groups, guardians with phone numbers |
-| Same group, their guardians, support access | name only (never a protected person); the shared phone with the person's `contacts_group` or `contacts_club` consent, and guardians who gave theirs (P1.8a) |
-| Anyone else in the club | nothing, or with the person's `contacts_club` consent the name and shared phone (never a protected person) |
+| Viewer                                                                              | Fields                                                                                                                                                      |
+| ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The person, guardian with `act_on_behalf`                                           | everything: birth date, gender, phone, address, club profile (member number, membership, groups), guardians with phone numbers                              |
+| `club.people.details` in the club (club manager, registrar)                         | birth date; shared phone, gender and address; member number, membership, groups; guardians with phone numbers                                               |
+| Owner of one of the person's groups, or `group.people.details` in one (its leaders) | birth date, shared phone, member number, groups, guardians with phone numbers                                                                               |
+| Same group, their guardians, support access                                         | name only (never a protected person); the shared phone with the person's `contacts_group` or `contacts_club` consent, and guardians who gave theirs (P1.8a) |
+| Anyone else in the club                                                             | nothing, or with the person's `contacts_club` consent the name and shared phone (never a protected person)                                                  |
 
 ## Age and child-safety rules (configured per country pack)
 
