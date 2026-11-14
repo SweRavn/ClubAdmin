@@ -77,6 +77,35 @@ public club website pages · facility booking.
 
 ## Phase 4 — Heavy and specialised
 
+**Tournaments and match reporting.** A club sets up a tournament (a cup or
+a short series), built on events and their sign-up (ADR 0038):
+
+- **Fields and slots:** the venue's fields or courts (places, ADR 0034;
+  facility booking from Phase 3 when it exists) with the times they are
+  free and the match length per class.
+- **Teams:** the club's own groups and guest teams from other clubs
+  (registered through the event's sign-up, contact person by email;
+  ClubAdmin clubs can enter their own teams directly), sorted into classes
+  (age, gender, level).
+- **Format:** group stages and knockout rounds per class; seeding or a
+  draw; a generated schedule over the fields and slots without clashes
+  (no team twice at once, rest between matches), adjustable by hand.
+- **Scoring:** rules per sport and class (points for a win, draw and loss,
+  sets or periods, tie-breakers such as goal difference, goals scored and
+  head-to-head; age classes where results are not shown, as federations
+  require for younger children).
+- **Results:** reported per match from the app by the match official or
+  the team leaders (the other side confirms; the tournament's organisers
+  correct), live standings and brackets in the app and on the club's
+  public pages (Phase 3), notices to the teams' members when a schedule
+  changes.
+- **Match reports** for the club's own matches (activities of kind `match`,
+  in tournaments or not): the result, who played, scorers and notes,
+  feeding the team's statistics; names only through the PersonPresenter,
+  players with protected identity never listed publicly (ADR 0022).
+- Officials, referees and the score table are volunteer duties (ADR 0050).
+  Needs an ADR and a prompt before it is built.
+
 Calendar invitations by email with Accept/Decline from the native calendar
 (iMIP, ADR 0021; lower priority, since the calendar feeds of P1.11 already
 put the schedule in people's calendars with answer links) · automatic fair
