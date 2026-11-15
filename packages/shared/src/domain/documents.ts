@@ -129,8 +129,23 @@ export type DocumentVersionStatus = (typeof DOCUMENT_VERSION_STATUSES)[number];
 export const DOCUMENT_KINDS = ["file", "governing"] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 
-export const FOLDER_PURPOSES = ["files", "notices"] as const;
+/** `series`: a series of governing documents (P2.4, ADR 0049 decision 1B). */
+export const FOLDER_PURPOSES = ["files", "notices", "series"] as const;
 export type FolderPurpose = (typeof FOLDER_PURPOSES)[number];
+
+/** The kinds of series of governing documents (P2.4). */
+export const SERIES_KINDS = [
+  "statutes",
+  "annual_meeting_minutes",
+  "board_minutes",
+  "policies",
+  "other",
+] as const;
+export type SeriesKind = (typeof SERIES_KINDS)[number];
+
+/** A governing document: drafted, adopted, superseded by another, or archived (never deleted once adopted). */
+export const GOVERNING_STATUSES = ["draft", "adopted", "superseded", "archived"] as const;
+export type GoverningStatus = (typeof GOVERNING_STATUSES)[number];
 
 const name = (max: number) =>
   z
@@ -182,6 +197,8 @@ export const FolderSummarySchema = z
     parentId: z.uuid().nullable(),
     name: z.string(),
     purpose: z.enum(FOLDER_PURPOSES),
+    /** A series' kind (purpose `series`, P2.4). */
+    seriesKind: z.enum(SERIES_KINDS).nullable().optional(),
     /** The folder has its own audience (otherwise its parent's applies). */
     ownAudience: z.boolean(),
     createdAt: z.iso.datetime(),
@@ -224,6 +241,8 @@ export const DocumentSummarySchema = z
     folderId: z.uuid(),
     kind: z.enum(DOCUMENT_KINDS),
     name: z.string(),
+    /** A governing document's status (kind `governing`, P2.4). */
+    governingStatus: z.enum(GOVERNING_STATUSES).nullable().optional(),
     /** The latest clean version (none until the first scan is clean). */
     current: DocumentVersionSchema.nullable(),
     /**

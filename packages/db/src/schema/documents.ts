@@ -9,6 +9,8 @@ import type {
   DocumentKind,
   DocumentVersionStatus,
   FolderPurpose,
+  GoverningStatus,
+  SeriesKind,
 } from "@clubadmin/shared";
 import {
   type AnyPgColumn,
@@ -68,6 +70,8 @@ export const documentFolders = pgTable(
     name: text().notNull(),
     audienceId: uuid(),
     purpose: text().$type<FolderPurpose>().notNull().default("files"),
+    /** A series' kind (purpose `series`, P2.4). */
+    seriesKind: text().$type<SeriesKind>(),
     createdByPersonId: uuid().references(() => people.id),
     deletedAt: timestamp(tz),
     deletedByPersonId: uuid().references(() => people.id),
@@ -91,6 +95,9 @@ export const documents = pgTable(
     folderId: uuid().notNull(),
     groupId: uuid(),
     kind: text().$type<DocumentKind>().notNull().default("file"),
+    /** A governing document's status (kind `governing`, P2.4). */
+    governingStatus: text().$type<GoverningStatus>(),
+    supersededByDocumentId: uuid(),
     name: text().notNull(),
     audienceId: uuid(),
     currentVersionId: uuid(),
@@ -120,7 +127,8 @@ export const documentVersions = pgTable(
     documentId: uuid().notNull(),
     groupId: uuid(),
     number: integer().notNull(),
-    objectKey: text().notNull(),
+    /** None: a governing document's Markdown version (P2.4). */
+    objectKey: text(),
     fileName: text().notNull(),
     size: bigint({ mode: "number" }).notNull(),
     contentType: text().notNull(),
@@ -131,6 +139,14 @@ export const documentVersions = pgTable(
     scannedAt: timestamp(tz),
     objectDeletedAt: timestamp(tz),
     notify: boolean().notNull().default(false),
+    /** A governing document's text (Markdown, P2.4). */
+    body: text(),
+    adoptedOn: date({ mode: "string" }),
+    effectiveFrom: date({ mode: "string" }),
+    adoptedActivityId: uuid(),
+    adoptedEventId: uuid(),
+    adoptedByPersonId: uuid().references(() => people.id),
+    adoptedAt: timestamp(tz),
     ...timestamps,
   },
   (t) => [

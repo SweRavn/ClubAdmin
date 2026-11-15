@@ -50,6 +50,7 @@ export function toDocument(d: DocumentRow, uploaders: Uploaders): DocumentSummar
     clubId: d.clubId,
     folderId: d.folderId,
     kind: d.kind,
+    governingStatus: d.governingStatus,
     name: d.name,
     current: d.current ? toVersion(d.current, uploaders) : null,
     latest: d.latest ? toVersion(d.latest, uploaders) : null,

@@ -68,47 +68,66 @@ export class ClubPrivacyService {
    * one in effect today is applied in this transaction.
    */
   recordDecision(context: TenantContext, input: RecordDecisionInput): Promise<Decision> {
+    return this.db.withTenant(context, (tx) => this.recordDecisionInTx(tx, context, input));
+  }
+
+  /** Today in the club's time zone (the latest day a decision may be dated). */
+  async clubTodayInTx(tx: Tx, clubId: string): Promise<string> {
+    const club = await this.clubs.getClubInTx(tx, clubId);
+    return localDate(this.now(), club.timeZone);
+  }
+
+  /**
+   * recordDecision in the caller's transaction: adopting a governing
+   * document (P2.4) records the settings its text marks, pointing at the
+   * adopted version.
+   */
+  async recordDecisionInTx(
+    tx: Tx,
+    context: TenantContext,
+    input: RecordDecisionInput,
+    documentVersionId: string | null = null,
+  ): Promise<Decision> {
     const by = actorPersonId(context);
-    return this.db.withTenant(context, async (tx) => {
-      const data = parseInput(RecordDecisionSchema, input);
-      const club = await this.clubs.lockClubInTx(tx, context.clubId);
-      const keys = Object.keys(data.settings);
-      if (keys.length === 0) throw new DomainError("decision_invalid");
-      const settings: Record<string, unknown> = {};
-      for (const key of keys) {
-        if (!(BOARD_SETTING_KEYS as readonly string[]).includes(key)) {
-          throw new DomainError("decision_invalid");
-        }
-        const parsed = settingValueSchema(
-          key as BoardSettingKey,
-          packLimits(club.country, key),
-        ).safeParse(data.settings[key]);
-        if (!parsed.success) throw new DomainError("decision_invalid");
-        settings[key] = parsed.data;
-      }
-      const today = localDate(this.now(), club.timeZone);
-      const effectiveFrom = data.effectiveFrom ?? data.decidedOn;
-      if (data.decidedOn > today || effectiveFrom < data.decidedOn) {
+    const data = parseInput(RecordDecisionSchema, input);
+    const club = await this.clubs.lockClubInTx(tx, context.clubId);
+    const keys = Object.keys(data.settings);
+    if (keys.length === 0) throw new DomainError("decision_invalid");
+    const settings: Record<string, unknown> = {};
+    for (const key of keys) {
+      if (!(BOARD_SETTING_KEYS as readonly string[]).includes(key)) {
         throw new DomainError("decision_invalid");
       }
-      const decision = await repo.insertDecision(tx, {
-        clubId: context.clubId,
-        body: data.body,
-        decidedOn: data.decidedOn,
-        reference: data.reference,
-        effectiveFrom,
-        settings,
-        recordedByPersonId: by,
-      });
-      await audit.record(tx, {
-        action: "club.settings.decided",
-        resourceType: "club_setting_decision",
-        resourceId: decision.id,
-        changedFields: keys,
-      });
-      if (effectiveFrom <= today) await applyDecisionInTx(tx, decision.id);
-      return (await repo.findDecision(tx, decision.id))!;
+      const parsed = settingValueSchema(
+        key as BoardSettingKey,
+        packLimits(club.country, key),
+      ).safeParse(data.settings[key]);
+      if (!parsed.success) throw new DomainError("decision_invalid");
+      settings[key] = parsed.data;
+    }
+    const today = localDate(this.now(), club.timeZone);
+    const effectiveFrom = data.effectiveFrom ?? data.decidedOn;
+    if (data.decidedOn > today || effectiveFrom < data.decidedOn) {
+      throw new DomainError("decision_invalid");
+    }
+    const decision = await repo.insertDecision(tx, {
+      clubId: context.clubId,
+      body: data.body,
+      decidedOn: data.decidedOn,
+      reference: data.reference,
+      effectiveFrom,
+      settings,
+      recordedByPersonId: by,
+      documentVersionId,
     });
+    await audit.record(tx, {
+      action: "club.settings.decided",
+      resourceType: "club_setting_decision",
+      resourceId: decision.id,
+      changedFields: keys,
+    });
+    if (effectiveFrom <= today) await applyDecisionInTx(tx, decision.id);
+    return (await repo.findDecision(tx, decision.id))!;
   }
 
   decisions(

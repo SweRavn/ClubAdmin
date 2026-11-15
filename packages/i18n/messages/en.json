@@ -839,7 +839,18 @@
     "audience_outside_group": "A group's announcement can only go to the group or roles in it.",
     "announcement_email_limit": "The club has sent as many announcements by email as it may today. Send without email or wait until tomorrow.",
     "announcement_expiry_past": "The end date must be in the future.",
-    "announcement_schedule_past": "The sending time must be in the future."
+    "announcement_schedule_past": "The sending time must be in the future.",
+    "folder_series": "A series holds governing documents only, no files or subfolders.",
+    "document_governing": "Governing documents are changed on the document's own page.",
+    "document_adopted": "Adopted governing documents cannot be deleted or changed, only superseded or archived.",
+    "series_not_found": "The series does not exist.",
+    "governing_draft_changed": "The draft changed since you opened it. Read the latest version and try again.",
+    "governing_no_draft": "There is no draft to adopt.",
+    "governing_setting_invalid": "A marked setting is not one the board or the annual meeting decides, or its value is not allowed.",
+    "governing_decision_body_required": "The text decides settings: choose who made the decision.",
+    "governing_dates_invalid": "The day of adoption cannot be in the future, and the document cannot apply before that day.",
+    "governing_meeting_invalid": "The meeting does not exist in the club.",
+    "governing_supersede_invalid": "Only another adopted governing document of the club can be superseded."
   },
   "memberExport": {
     "columns": {
@@ -2827,7 +2838,9 @@
       "read_confirmed": "confirmed reading of",
       "read": "read",
       "muted": "muted in chat",
-      "unmuted": "unmuted in chat"
+      "unmuted": "unmuted in chat",
+      "adopted": "adopted",
+      "superseded": "superseded"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -3770,6 +3783,16 @@
         "name": "Send announcements to the group",
         "description": "Can write announcements to the group's members and their guardians, or to roles in the group, and schedule, edit and withdraw them.",
         "example": "For example, can tell the team by push that the pitch is closed this week."
+      },
+      "club_governing_documents_manage": {
+        "name": "Write the club's governing documents",
+        "description": "Can create series (statutes, minutes, policies), write and change drafts of governing documents in Markdown, mark the settings a text decides, archive adopted documents and delete drafts that were never adopted.",
+        "example": "For example, can write the proposal for new statutes before the annual meeting."
+      },
+      "club_governing_documents_adopt": {
+        "name": "Record governing documents as adopted",
+        "description": "Can record that a draft was adopted (date, meeting and when it applies from). The version is locked and the settings the text marks become the club's decision. Needs a login with a second factor.",
+        "example": "For example, can record that the annual meeting adopted the new statutes, so that the retention period they set applies."
       }
     }
   },

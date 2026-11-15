@@ -319,6 +319,29 @@ export const DOMAIN_ERRORS = {
   delete_after_past: "validation",
   /** A notice has at most NOTICE_ATTACHMENTS_MAX documents. */
   notice_attachments_full: "conflict",
+  // Governing documents (P2.4, ADR 0049 decision 1B).
+  /** Series hold governing documents only, at the top level. */
+  folder_series: "conflict",
+  /** A governing document changes through its own endpoints (not the file archive's). */
+  document_governing: "conflict",
+  /** Adopted documents (and their series) are archived, never deleted or changed. */
+  document_adopted: "conflict",
+  /** Not a series of governing documents. */
+  series_not_found: "not-found",
+  /** The version to adopt is no longer the draft (it changed, or was adopted). */
+  governing_draft_changed: "conflict",
+  /** The document has no draft to adopt. */
+  governing_no_draft: "conflict",
+  /** A settings marker names no board setting, or its value is not allowed. */
+  governing_setting_invalid: "validation",
+  /** The text marks settings: the decision's body is needed. */
+  governing_decision_body_required: "validation",
+  /** The adoption's dates: adopted today or earlier, effective on or after it. */
+  governing_dates_invalid: "validation",
+  /** The meeting is not the club's. */
+  governing_meeting_invalid: "validation",
+  /** Only another adopted governing document of the club is superseded. */
+  governing_supersede_invalid: "validation",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

@@ -1368,6 +1368,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/document-series": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The series of governing documents of the club (or a group) the caller reads
+     * @description Requires permission `club.documents.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Governing_series"];
+    put?: never;
+    /**
+     * Create a series of governing documents (default audience: the club, or the group)
+     * @description Requires permission `club.governing_documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Governing_createSeries"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/documents/{documentId}": {
     parameters: {
       query?: never;
@@ -1646,6 +1670,114 @@ export interface paths {
      * @description Requires permission `folder.manage` on the folder. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["Documents_startUpload"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/governing-documents": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Draft a governing document in a series
+     * @description Requires permission `club.governing_documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Governing_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/governing-documents/{documentId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A governing document: the text in force, the draft (managers) and its versions
+     * @description Requires permission `document.read` on the document. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Governing_document"];
+    put?: never;
+    post?: never;
+    /**
+     * Delete a draft that was never adopted
+     * @description Requires permission `club.governing_documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Governing_remove"];
+    options?: never;
+    head?: never;
+    /**
+     * Rename a governing document and save its draft (a new draft after an adoption)
+     * @description Requires permission `club.governing_documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["Governing_update"];
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/governing-documents/{documentId}/adopt": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Record the draft as adopted (locks it; writes the settings it marks); needs MFA
+     * @description Requires permission `club.governing_documents.adopt` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Governing_adopt"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/governing-documents/{documentId}/archive": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Archive an adopted governing document (kept, no longer in force)
+     * @description Requires permission `club.governing_documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Governing_archive"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/governing-documents/{documentId}/versions/{versionId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One version's text (readers: adopted versions), for comparing versions
+     * @description Requires permission `document.read` on the document. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Governing_version"];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -5805,6 +5937,8 @@ export interface components {
       /** @enum {string} */
       kind: "file" | "governing";
       name: string;
+      /** @enum {string|null} */
+      governingStatus?: "draft" | "adopted" | "superseded" | "archived" | null;
       current: components["schemas"]["DocumentVersion"];
       latest: components["schemas"]["DocumentVersion"];
       ownAudience: boolean;
@@ -7261,6 +7395,38 @@ export interface components {
       /** Format: uuid */
       personId: string;
     };
+    DocumentSeriesPage: {
+      items: components["schemas"]["DocumentSeries"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+      canManage: boolean;
+    };
+    DocumentSeries: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      clubId: string;
+      /** Format: uuid */
+      groupId: string | null;
+      name: string;
+      /** @enum {string} */
+      seriesKind: "statutes" | "annual_meeting_minutes" | "board_minutes" | "policies" | "other";
+      /** Format: date-time */
+      createdAt: string;
+    };
+    DocumentSeriesCreated: {
+      /** Format: uuid */
+      id: string;
+    };
+    CreateDocumentSeries: {
+      name: string;
+      /** @enum {string} */
+      seriesKind: "statutes" | "annual_meeting_minutes" | "board_minutes" | "policies" | "other";
+      /** Format: uuid */
+      groupId?: string | null;
+      audience?: components["schemas"]["AudienceInput"];
+    };
+    AudienceInput: components["schemas"]["AudienceEntryInput"][] | null;
     DocumentDetail: {
       document: components["schemas"]["DocumentSummary"];
       path: {
@@ -7280,7 +7446,6 @@ export interface components {
       /** Format: date */
       deleteAfter?: string | null;
     };
-    AudienceInput: components["schemas"]["AudienceEntryInput"][] | null;
     DocumentDownload: {
       /** Format: uri */
       url: string;
@@ -7473,7 +7638,10 @@ export interface components {
       parentId: string | null;
       name: string;
       /** @enum {string} */
-      purpose: "files" | "notices";
+      purpose: "files" | "notices" | "series";
+      /** @enum {string|null} */
+      seriesKind?:
+        "statutes" | "annual_meeting_minutes" | "board_minutes" | "policies" | "other" | null;
       ownAudience: boolean;
       /** Format: date-time */
       createdAt: string;
@@ -7503,6 +7671,100 @@ export interface components {
     UpdateFolder: {
       name?: string;
       audience?: components["schemas"]["AudienceInput"];
+    };
+    GoverningDocumentCreated: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      versionId: string;
+    };
+    CreateGoverningDocument: {
+      /** Format: uuid */
+      seriesId: string;
+      name: string;
+      body: string;
+    };
+    GoverningDocument: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      clubId: string;
+      /** Format: uuid */
+      groupId: string | null;
+      series: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+        /** @enum {string} */
+        seriesKind: "statutes" | "annual_meeting_minutes" | "board_minutes" | "policies" | "other";
+      };
+      name: string;
+      /** @enum {string} */
+      status: "draft" | "adopted" | "superseded" | "archived";
+      current: components["schemas"]["GoverningVersionText"];
+      draft: components["schemas"]["GoverningVersionText"];
+      versions: components["schemas"]["GoverningVersion"][];
+      supersededBy: components["schemas"]["GoverningDocumentRef"];
+      supersedes: components["schemas"]["GoverningDocumentRef"][];
+      audience: components["schemas"]["AudienceEntry"][];
+      canManage: boolean;
+      canAdopt: boolean;
+    };
+    GoverningVersionText: components["schemas"]["GoverningVersion"] &
+      ({
+        body: string;
+      } | null);
+    GoverningAdoption: {
+      /** Format: date */
+      adoptedOn: string;
+      /** Format: date */
+      effectiveFrom: string;
+      meeting: components["schemas"]["AdoptingMeeting"];
+      recordedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** Format: date-time */
+      recordedAt: string;
+    } | null;
+    AdoptingMeeting: {
+      /** @enum {string} */
+      kind: "activity" | "event";
+      /** Format: uuid */
+      id: string;
+    } | null;
+    GoverningVersion: {
+      /** Format: uuid */
+      id: string;
+      number: number;
+      sha256: string | null;
+      editedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** Format: date-time */
+      createdAt: string;
+      adoption: components["schemas"]["GoverningAdoption"];
+    };
+    GoverningDocumentRef: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+    } | null;
+    GoverningDraftSaved: {
+      /** Format: uuid */
+      versionId: string | null;
+    };
+    UpdateGoverningDocument: {
+      name?: string;
+      body?: string;
+    };
+    AdoptGoverningDocument: {
+      /** Format: uuid */
+      versionId: string;
+      /** Format: date */
+      adoptedOn: string;
+      /** Format: date */
+      effectiveFrom?: string | null;
+      meeting?: components["schemas"]["AdoptingMeeting"];
+      /** @enum {string|null} */
+      decisionBody?: "board" | "annual_meeting" | "extra_meeting" | null;
+      reference?: string | null;
+      supersedes?: string[];
     };
     GroupList: {
       items: components["schemas"]["Group"][];
@@ -9735,6 +9997,8 @@ export interface components {
           | "group.announcements.read"
           | "announcement.read"
           | "announcement.manage"
+          | "club.governing_documents.manage"
+          | "club.governing_documents.adopt"
         )[];
       }[];
     };
@@ -17202,6 +17466,166 @@ export interface operations {
       };
     };
   };
+  Governing_series: {
+    parameters: {
+      query?: {
+        groupId?: string;
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentSeriesPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_createSeries: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateDocumentSeries"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentSeriesCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Documents_document: {
     parameters: {
       query?: never;
@@ -18638,6 +19062,551 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["UploadStarted"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateGoverningDocument"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GoverningDocumentCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_document: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GoverningDocument"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateGoverningDocument"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GoverningDraftSaved"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_adopt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AdoptGoverningDocument"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_archive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_version: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GoverningVersionText"];
         };
       };
       /** @description Invalid request */

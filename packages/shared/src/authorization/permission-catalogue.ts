@@ -205,6 +205,10 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "group.announcements.read": builtIn,
   "announcement.read": builtIn,
   "announcement.manage": derived("group.announcements.send"),
+  // Governing documents (P2.4): read by their series' audience; drafted and
+  // adopted by these two (adopting sets settings the text marks).
+  "club.governing_documents.manage": role("club", "documents"),
+  "club.governing_documents.adopt": role("club", "documents", true),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -358,6 +362,8 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "club.roles.read",
       "club.channels.create",
       "club.announcements.send",
+      "club.governing_documents.manage",
+      "club.governing_documents.adopt",
     ],
   },
   vice_chair: { scope: "club", permissions: BOARD },
@@ -372,7 +378,13 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
   },
   secretary: {
     scope: "club",
-    permissions: [...BOARD, "club.documents.manage", "club.announcements.send"],
+    permissions: [
+      ...BOARD,
+      "club.documents.manage",
+      "club.announcements.send",
+      "club.governing_documents.manage",
+      "club.governing_documents.adopt",
+    ],
   },
   board_member: { scope: "club", permissions: BOARD },
   deputy_board_member: { scope: "club", permissions: BOARD },

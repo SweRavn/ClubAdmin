@@ -205,7 +205,9 @@ export async function deleteDocumentObjects(
       SELECT v.id, v.object_key FROM public.document_versions v
       JOIN public.documents d ON d.id = v.document_id
       WHERE v.document_id = ANY(${`{${documentIds.join(",")}}`}::uuid[])
-        AND d.deleted_at IS NOT NULL AND v.object_deleted_at IS NULL`),
+        AND d.deleted_at IS NOT NULL AND v.object_deleted_at IS NULL
+        -- A governing document's Markdown versions (P2.4) have no object.
+        AND v.object_key IS NOT NULL`),
   );
   for (const row of rows) {
     await storage.deleteObject(row.object_key);

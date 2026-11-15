@@ -75,6 +75,16 @@ export interface MatrixScenario {
   announcementId: string;
   withdrawAnnouncementId: string;
   deleteAnnouncementId: string;
+  /**
+   * Governing documents (P2.4): a series of club A for the whole club with
+   * an adopted document (read and drafted again), one to archive and a draft
+   * to delete. The registrar also holds the governing permissions here.
+   */
+  governingSeriesId: string;
+  governingId: string;
+  governingVersionId: string;
+  archiveGoverningId: string;
+  draftGoverningId: string;
   outsider: BuiltPerson;
   operator: BuiltPerson;
 }
@@ -286,6 +296,38 @@ export async function buildMatrixScenario(
   const withdrawAnnouncementId = await announce("Matrix withdraw");
   const deleteAnnouncementId = await announce("Matrix delete");
 
+  // Governing documents (P2.4): the registrar drafts and adopts in club A.
+  await t.query(
+    "admin",
+    `INSERT INTO role_permissions (club_id, role_id, permission)
+     SELECT r.club_id, r.id, p FROM roles r,
+       unnest(ARRAY['club.governing_documents.manage', 'club.governing_documents.adopt']) AS p
+     WHERE r.club_id = $1 AND r.template_key = 'registrar'`,
+    [clubA.id],
+  );
+  await t.query("admin", "UPDATE roles SET version = version + 1 WHERE club_id = $1", [clubA.id]);
+  const governingSeriesId = await s.governing.createSeries(a, {
+    name: "Matrix statutes",
+    seriesKind: "statutes",
+  });
+  const governing = async (name: string, adopt: boolean) => {
+    const created = await s.governing.create(a, {
+      seriesId: governingSeriesId,
+      name,
+      body: `# ${name}`,
+    });
+    if (adopt) {
+      await s.governing.adopt(a, created.id, {
+        versionId: created.versionId,
+        adoptedOn: new Date().toISOString().slice(0, 10),
+      });
+    }
+    return created;
+  };
+  const adoptedGoverning = await governing("Matrix adopted", true);
+  const archiveGoverning = await governing("Matrix archive", true);
+  const draftGoverning = await governing("Matrix draft", false);
+
   const operator = await buildPerson(s);
   await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
 
@@ -326,6 +368,11 @@ export async function buildMatrixScenario(
     announcementId,
     withdrawAnnouncementId,
     deleteAnnouncementId,
+    governingSeriesId,
+    governingId: adoptedGoverning.id,
+    governingVersionId: adoptedGoverning.versionId,
+    archiveGoverningId: archiveGoverning.id,
+    draftGoverningId: draftGoverning.id,
     outsider: clubB.manager,
     operator,
   };

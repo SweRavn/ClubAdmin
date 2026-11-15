@@ -118,6 +118,10 @@ export const PERMISSIONS = [
   "group.announcements.read",
   "announcement.read",
   "announcement.manage",
+  // Governing documents (P2.4, ADR 0049 decision 1B): drafting series,
+  // documents and templates; recording a document as adopted (MFA).
+  "club.governing_documents.manage",
+  "club.governing_documents.adopt",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

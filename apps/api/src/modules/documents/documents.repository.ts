@@ -12,6 +12,8 @@ import type {
   DocumentKind,
   DocumentVersionStatus,
   FolderPurpose,
+  GoverningStatus,
+  SeriesKind,
 } from "@clubadmin/shared";
 
 const uuidArray = (ids: readonly string[]) => `{${ids.join(",")}}`;
@@ -166,6 +168,7 @@ export interface FolderRow {
   name: string;
   audienceId: string | null;
   purpose: FolderPurpose;
+  seriesKind: SeriesKind | null;
   createdAt: Date;
 }
 
@@ -177,11 +180,12 @@ type FolderSql = {
   name: string;
   audience_id: string | null;
   purpose: FolderPurpose;
+  series_kind: SeriesKind | null;
   created_at: string;
 };
 
 const FOLDER_COLUMNS = sql`f.id, f.club_id, f.group_id, f.parent_id, f.name, f.audience_id, f.purpose,
-  f.created_at::text`;
+  f.series_kind, f.created_at::text`;
 
 const toFolder = (r: FolderSql): FolderRow => ({
   id: r.id,
@@ -191,6 +195,7 @@ const toFolder = (r: FolderSql): FolderRow => ({
   name: r.name,
   audienceId: r.audience_id,
   purpose: r.purpose,
+  seriesKind: r.series_kind,
   createdAt: new Date(r.created_at),
 });
 
@@ -203,12 +208,15 @@ export async function insertFolder(
     name: string;
     audienceId: string | null;
     createdBy: string;
+    /** A series of governing documents (P2.4): top level only. */
+    seriesKind?: SeriesKind;
   },
 ): Promise<string | null> {
   const { rows } = await tx.execute<{ id: string }>(sql`
-    INSERT INTO public.document_folders (club_id, group_id, parent_id, name, audience_id, created_by_person_id)
+    INSERT INTO public.document_folders
+      (club_id, group_id, parent_id, name, audience_id, created_by_person_id, purpose, series_kind)
     VALUES (${input.clubId}, ${input.groupId}, ${input.parentId}, ${input.name}, ${input.audienceId},
-      ${input.createdBy})
+      ${input.createdBy}, ${input.seriesKind ? "series" : "files"}, ${input.seriesKind ?? null})
     ON CONFLICT DO NOTHING
     RETURNING id`);
   return rows[0]?.id ?? null;
@@ -318,6 +326,14 @@ export async function childCounts(
   return rows[0]!;
 }
 
+/** Whether a series has a governing document that was ever adopted (P2.4). */
+export async function seriesHasAdopted(tx: Tx, folderId: string): Promise<boolean> {
+  const { rows } = await tx.execute<{ found: boolean }>(sql`
+    SELECT EXISTS (SELECT 1 FROM public.documents d
+      WHERE d.folder_id = ${folderId}::uuid AND d.governing_status <> 'draft') AS found`);
+  return rows[0]?.found ?? false;
+}
+
 /** Renames a folder; false when a sibling already has the name. */
 export async function renameFolder(tx: Tx, folderId: string, name: string): Promise<boolean> {
   const { rows } = await tx.execute<{ taken: boolean }>(sql`
@@ -372,7 +388,8 @@ export interface VersionRow {
   id: string;
   documentId: string;
   number: number;
-  objectKey: string;
+  /** None: a governing document's Markdown version (P2.4), no stored object. */
+  objectKey: string | null;
   fileName: string;
   size: number;
   contentType: string;
@@ -387,7 +404,7 @@ type VersionSql = {
   id: string;
   document_id: string;
   number: number;
-  object_key: string;
+  object_key: string | null;
   file_name: string;
   size: string;
   content_type: string;
@@ -427,6 +444,7 @@ export interface DocumentRow {
   folderId: string;
   groupId: string | null;
   kind: DocumentKind;
+  governingStatus: GoverningStatus | null;
   name: string;
   audienceId: string | null;
   currentVersionId: string | null;
@@ -444,6 +462,7 @@ type DocumentSql = {
   folder_id: string;
   group_id: string | null;
   kind: DocumentKind;
+  governing_status: GoverningStatus | null;
   name: string;
   audience_id: string | null;
   current_version_id: string | null;
@@ -454,7 +473,7 @@ type DocumentSql = {
   latest: VersionSql | null;
 };
 
-const DOCUMENT_COLUMNS = sql`d.id, d.club_id, d.folder_id, d.group_id, d.kind, d.name, d.audience_id,
+const DOCUMENT_COLUMNS = sql`d.id, d.club_id, d.folder_id, d.group_id, d.kind, d.governing_status, d.name, d.audience_id,
   d.current_version_id, greatest(d.updated_at, coalesce(cv.created_at, d.updated_at))::text AS updated_at,
   d.published_at::text, d.delete_after::text,
   CASE WHEN cv.id IS NULL THEN NULL ELSE ${VERSION_JSON("cv")} END AS current,
@@ -469,6 +488,7 @@ const toDocument = (r: DocumentSql): DocumentRow => ({
   folderId: r.folder_id,
   groupId: r.group_id,
   kind: r.kind,
+  governingStatus: r.governing_status ?? null,
   name: r.name,
   audienceId: r.audience_id,
   currentVersionId: r.current_version_id,
@@ -531,18 +551,32 @@ export async function lockDocument(
   folderId: string;
   groupId: string | null;
   audienceId: string | null;
+  kind: DocumentKind;
+  governingStatus: GoverningStatus | null;
+  name: string;
 } | null> {
   const { rows } = await tx.execute<{
     id: string;
     folder_id: string;
     group_id: string | null;
     audience_id: string | null;
+    kind: DocumentKind;
+    governing_status: GoverningStatus | null;
+    name: string;
   }>(sql`
-    SELECT id, folder_id, group_id, audience_id FROM public.documents
+    SELECT id, folder_id, group_id, audience_id, kind, governing_status, name FROM public.documents
     WHERE id = ${documentId}::uuid AND deleted_at IS NULL FOR UPDATE`);
   const row = rows[0];
   return row
-    ? { id: row.id, folderId: row.folder_id, groupId: row.group_id, audienceId: row.audience_id }
+    ? {
+        id: row.id,
+        folderId: row.folder_id,
+        groupId: row.group_id,
+        audienceId: row.audience_id,
+        kind: row.kind,
+        governingStatus: row.governing_status,
+        name: row.name,
+      }
     : null;
 }
 
@@ -947,6 +981,8 @@ export async function myDocuments(
         folderId: r.folder_id,
         groupId: r.group_id,
         kind: r.kind,
+        // "Mina dokument" shows a document's text in force, not its status.
+        governingStatus: null,
         name: r.name,
         audienceId: r.own_audience ? "own" : null,
         currentVersionId: current.id,

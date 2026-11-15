@@ -15,7 +15,7 @@ import { ChatService, SafeguardingService } from "./modules/chat/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubTypesService } from "./modules/club-types/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
-import { DocumentsService } from "./modules/documents/index.ts";
+import { DocumentsService, GoverningService } from "./modules/documents/index.ts";
 import { EventsService } from "./modules/events/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
@@ -73,6 +73,7 @@ export interface CoreServices {
   safeguarding: SafeguardingService;
   /** The file archive (P2.2): the installation's default storage limit per club. */
   documents: DocumentsService;
+  governing: GoverningService;
   announcements: AnnouncementsService;
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
@@ -143,6 +144,7 @@ export function createCoreServices(
   const attendance = new AttendanceService(db, { clubs, people, memberships });
   const events = new EventsService(db, { clubs, activities, attendance, encryption });
   const consents = new ConsentsService(db, { clubs });
+  const clubPrivacy = new ClubPrivacyService(db, { clubs });
   return {
     encryption,
     activities,
@@ -162,7 +164,8 @@ export function createCoreServices(
       clubLimitBytes: () => Promise.resolve(DOCUMENT_DEFAULT_CLUB_LIMIT_BYTES),
     }),
     consents,
-    clubPrivacy: new ClubPrivacyService(db, { clubs }),
+    clubPrivacy,
+    governing: new GoverningService(db, { privacy: clubPrivacy }),
     dataExports: new DataExportsService(db, { storage: options.storage ?? null }),
     erasure: new ErasureService(db, {
       graceDays: options.erasureGraceDays ?? 14,

@@ -195,6 +195,11 @@ describe("permission matrix", () => {
   >;
   // Club insiders without the permission: 403; outsiders and the operator (no grant): 404.
   const CLUB_FORBIDDEN = { ...ALL_FORBIDDEN, outsider: 404, operator: 404 };
+  /**
+   * A club document for the whole club (P2.4): members, leaders and the
+   * guardians whose link receives messages (not the relative's).
+   */
+  const CLUB_AUDIENCE = { ...INSIDERS, relative: 404 };
   /** Managers and registrars get `status`, other insiders 403. */
   const ADMINS = (status: number) => ({ ...CLUB_FORBIDDEN, manager: status, registrar: status });
   /** Team T's folder: its audience and those who manage it read it; others get 404 (P2.2). */
@@ -998,6 +1003,50 @@ describe("permission matrix", () => {
       // The manager deletes it; for everyone after that it no longer exists.
       expected: { ...ALL_NOT_FOUND, manager: 204 },
     },
+    // Governing documents (P2.4): club A's series is for the whole club; the
+    // registrar holds the governing permissions in this scenario. Adopting
+    // needs MFA, which no matrix token has (403 for everyone in the club).
+    "GET /api/v1/clubs/:clubId/document-series": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/document-series`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/document-series": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/document-series`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 201 },
+      body: { name: "Matrix policies", seriesKind: "policies" },
+    },
+    "POST /api/v1/clubs/:clubId/governing-documents": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 201 },
+      body: () => ({ seriesId: m.governingSeriesId, name: "Matrix new", body: "Text" }),
+    },
+    "GET /api/v1/clubs/:clubId/governing-documents/:documentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.governingId}`,
+      expected: CLUB_AUDIENCE,
+    },
+    "GET /api/v1/clubs/:clubId/governing-documents/:documentId/versions/:versionId": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.governingId}/versions/${m.governingVersionId}`,
+      expected: CLUB_AUDIENCE,
+    },
+    "PATCH /api/v1/clubs/:clubId/governing-documents/:documentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.governingId}`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 200 },
+      body: { body: "# Matrix adopted\n\nChanged." },
+    },
+    "POST /api/v1/clubs/:clubId/governing-documents/:documentId/adopt": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.governingId}/adopt`,
+      expected: CLUB_FORBIDDEN,
+      body: () => ({ versionId: m.governingVersionId, adoptedOn: "2026-01-01" }),
+    },
+    "POST /api/v1/clubs/:clubId/governing-documents/:documentId/archive": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.archiveGoverningId}/archive`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 204 },
+    },
+    "DELETE /api/v1/clubs/:clubId/governing-documents/:documentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.draftGoverningId}`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 204 },
+    },
     // Part B (P2.2): seeing, storage, notices' documents.
     "POST /api/v1/clubs/:clubId/documents/seen": {
       url: () => `/api/v1/clubs/${m.clubA.id}/documents/seen`,
@@ -1794,6 +1843,9 @@ describe("reads", () => {
       "club.invitations.manage",
       "club.chats.direct",
       "club.documents.read",
+      // Given to the registrar by the matrix scenario (P2.4).
+      "club.governing_documents.manage",
+      "club.governing_documents.adopt",
     ]);
     // Listed without a second factor; the endpoints ask for it.
     expect((await permissions(m.manager.id))?.permissions).toEqual(

@@ -376,6 +376,8 @@ export async function insertDecision(
     effectiveFrom: string;
     settings: Record<string, unknown>;
     recordedByPersonId: string;
+    /** The adopted governing document's version that marks these settings (P2.4). */
+    documentVersionId?: string | null;
   },
 ): Promise<DecisionRow> {
   const [inserted] = await tx.insert(clubSettingDecisions).values(row).returning();
@@ -399,6 +401,7 @@ function decisionRow(r: Record<string, unknown>): DecisionRow {
     appliedAt: r.applied_at ? new Date(r.applied_at as string) : null,
     recordedByPersonId: r.recorded_by_person_id as string,
     recordedAt: new Date(r.recorded_at as string),
+    documentVersionId: (r.document_version_id as string | null) ?? null,
     createdAt: new Date(r.created_at as string),
     updatedAt: new Date(r.updated_at as string),
   };
@@ -406,7 +409,7 @@ function decisionRow(r: Record<string, unknown>): DecisionRow {
 
 const decisionColumns = sql`id, club_id, body, decided_on::text AS decided_on, reference,
   effective_from::text AS effective_from, settings, applied_at, recorded_by_person_id, recorded_at,
-  created_at, updated_at`;
+  document_version_id, created_at, updated_at`;
 
 export async function findDecision(tx: Tx, id: string): Promise<DecisionRow | null> {
   const { rows } = await tx.execute<Record<string, unknown>>(

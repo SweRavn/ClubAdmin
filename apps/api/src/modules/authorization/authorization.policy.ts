@@ -836,6 +836,20 @@ export const POLICIES: readonly Policy[] = [
     "announcement",
     ({ actor, resource }) => resource.inAudience || canManageAnnouncement(actor, resource),
   ),
+  // Governing documents (P2.4): read through document.read (the series'
+  // audience); drafting and adopting by these two, never acting for a ward.
+  definePolicy(
+    "club.governing_documents.manage",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.governing_documents.manage", resource.clubId),
+  ),
+  definePolicy(
+    "club.governing_documents.adopt",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.governing_documents.adopt", resource.clubId),
+  ),
   definePolicy("announcement.manage", "announcement", ({ actor, resource }) =>
     canManageAnnouncement(actor, resource),
   ),

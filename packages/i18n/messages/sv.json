@@ -839,7 +839,18 @@
     "audience_outside_group": "Ett gruppanslag kan bara skickas till gruppen eller roller i den.",
     "announcement_email_limit": "Föreningen har skickat så många anslag med e-post som går i dag. Skicka utan e-post eller vänta till i morgon.",
     "announcement_expiry_past": "Slutdatumet måste vara i framtiden.",
-    "announcement_schedule_past": "Tiden för utskicket måste vara i framtiden."
+    "announcement_schedule_past": "Tiden för utskicket måste vara i framtiden.",
+    "folder_series": "En serie innehåller bara styrdokument, inga filer eller undermappar.",
+    "document_governing": "Styrdokument ändras på dokumentets egen sida.",
+    "document_adopted": "Antagna styrdokument kan inte tas bort eller ändras, bara ersättas eller arkiveras.",
+    "series_not_found": "Serien finns inte.",
+    "governing_draft_changed": "Utkastet har ändrats sedan du öppnade det. Läs den senaste versionen och försök igen.",
+    "governing_no_draft": "Det finns inget utkast att anta.",
+    "governing_setting_invalid": "En markerad inställning är inte en som styrelsen eller årsmötet beslutar om, eller har ett värde som inte är tillåtet.",
+    "governing_decision_body_required": "Texten bestämmer inställningar: välj vem som fattade beslutet.",
+    "governing_dates_invalid": "Dagen för antagandet kan inte vara i framtiden, och dokumentet kan inte gälla före den dagen.",
+    "governing_meeting_invalid": "Mötet finns inte i föreningen.",
+    "governing_supersede_invalid": "Bara ett annat antaget styrdokument i föreningen kan ersättas."
   },
   "memberExport": {
     "columns": {
@@ -2827,7 +2838,9 @@
       "read_confirmed": "bekräftade läsning av",
       "read": "läste",
       "muted": "stängde av från chatten",
-      "unmuted": "lät åter skriva i chatten"
+      "unmuted": "lät åter skriva i chatten",
+      "adopted": "antog",
+      "superseded": "ersatte"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -3770,6 +3783,16 @@
         "name": "Skicka anslag till gruppen",
         "description": "Kan skriva anslag till gruppens medlemmar och deras vårdnadshavare, eller till roller i gruppen, och schemalägga, ändra och återkalla dem.",
         "example": "Kan till exempel meddela laget med push att planen är stängd den här veckan."
+      },
+      "club_governing_documents_manage": {
+        "name": "Skriva föreningens styrdokument",
+        "description": "Kan skapa serier (stadgar, protokoll, policyer), skriva och ändra utkast till styrdokument i Markdown, markera de inställningar en text bestämmer, arkivera antagna dokument och ta bort utkast som aldrig antagits.",
+        "example": "Kan till exempel skriva förslaget till nya stadgar inför årsmötet."
+      },
+      "club_governing_documents_adopt": {
+        "name": "Registrera antagna styrdokument",
+        "description": "Kan registrera att ett utkast har antagits (datum, möte och när det gäller från). Versionen låses och de inställningar texten markerar blir föreningens beslut. Kräver inloggning med en andra faktor.",
+        "example": "Kan till exempel registrera att årsmötet antog de nya stadgarna, så att gallringstiden de anger börjar gälla."
       }
     }
   },

@@ -224,6 +224,11 @@ export const AUDIT_ACTIONS = [
   "announcement.updated",
   "announcement.withdrawn",
   "announcement.deleted",
+  // Governing documents (P2.4): adopted (the version locked), superseded by
+  // another document, archived; drafts use document.created/updated.
+  "document.adopted",
+  "document.superseded",
+  "document.archived",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

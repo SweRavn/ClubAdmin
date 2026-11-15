@@ -165,3 +165,31 @@ export function settingValueSchema(
       return z.email().max(254).nullable();
   }
 }
+
+/**
+ * A settings marker's value as written in a governing document (P2.4,
+ * `{{setting key = value}}`) for its setting's type: a whole number, yes/no
+ * (`true`, `ja`, `yes`, `nei` …), consent purposes separated by commas, an
+ * option's key, or an address (empty: none). Undefined when it cannot be
+ * read; settingValueSchema then checks the limits.
+ */
+export function settingMarkerValue(key: ClubSettingKey, raw: string): unknown {
+  const definition: ClubSettingDefinition = CLUB_SETTINGS[key];
+  const value = raw.trim();
+  switch (definition.type) {
+    case "integer":
+      return /^\d{1,6}$/.test(value) ? Number(value) : undefined;
+    case "boolean": {
+      const word = value.toLowerCase();
+      if (["true", "yes", "ja", "1"].includes(word)) return true;
+      if (["false", "no", "nej", "nei", "0"].includes(word)) return false;
+      return undefined;
+    }
+    case "purposes":
+      return value === "" ? [] : value.split(",").map((part) => part.trim());
+    case "enum":
+      return value;
+    case "email":
+      return value === "" ? null : value;
+  }
+}

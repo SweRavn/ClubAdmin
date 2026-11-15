@@ -161,6 +161,7 @@ export class DocumentsService {
       if ("parentId" in where) {
         const parent = await repo.lockFolder(tx, where.parentId);
         if (!parent) throw new DomainError("not_found");
+        if (parent.purpose === "series") throw new DomainError("folder_series");
         if ((await repo.folderPath(tx, parent.id)).length >= DOCUMENT_FOLDER_MAX_DEPTH) {
           throw new DomainError("folder_too_deep");
         }
@@ -285,6 +286,10 @@ export class DocumentsService {
     await this.db.withTenant(context, async (tx) => {
       const folder = await repo.lockFolder(tx, folderId);
       if (!folder) throw new DomainError("not_found");
+      // A series with an adopted document stays (ADR 0049 decision 1B: archived, never deleted).
+      if (folder.purpose === "series" && (await repo.seriesHasAdopted(tx, folderId))) {
+        throw new DomainError("document_adopted");
+      }
       const counts = await repo.childCounts(tx, folderId);
       if (!confirm && counts.folders + counts.documents > 0) {
         throw new DomainError("folder_not_empty");
@@ -314,6 +319,7 @@ export class DocumentsService {
     return this.db.withTenant(context, async (tx) => {
       const folder = await repo.lockFolder(tx, folderId);
       if (!folder) throw new DomainError("not_found");
+      if (folder.purpose === "series") throw new DomainError("folder_series");
       return this.newFile(tx, storage, context.clubId, {
         folderId,
         groupId: folder.groupId,
@@ -377,6 +383,7 @@ export class DocumentsService {
     return this.db.withTenant(context, async (tx) => {
       const document = await repo.lockDocument(tx, documentId);
       if (!document) throw new DomainError("not_found");
+      if (document.kind === "governing") throw new DomainError("document_governing");
       await this.reserve(tx, context.clubId, document.groupId, input.size, limit);
       return this.newVersion(tx, storage, context.clubId, {
         documentId,
@@ -523,6 +530,8 @@ export class DocumentsService {
     await this.db.withTenant(context, async (tx) => {
       const document = await repo.lockDocument(tx, documentId);
       if (!document) throw new DomainError("not_found");
+      // A governing document changes through its own endpoints (P2.4).
+      if (document.kind === "governing") throw new DomainError("document_governing");
       const changed: string[] = [];
       const changes: {
         name?: string;
@@ -549,6 +558,7 @@ export class DocumentsService {
         const target = await repo.findFolder(tx, input.folderId);
         if (!target) throw new DomainError("not_found");
         if (target.groupId !== document.groupId) throw new DomainError("document_move_scope");
+        if (target.purpose === "series") throw new DomainError("folder_series");
         changes.folderId = target.id;
         changed.push("folder_id");
       }
@@ -578,6 +588,10 @@ export class DocumentsService {
     await this.db.withTenant(context, async (tx) => {
       const document = await repo.lockDocument(tx, documentId);
       if (!document) throw new DomainError("not_found");
+      // A governing document once adopted is archived, never deleted (ADR 0049 decision 1B).
+      if (document.governingStatus !== null && document.governingStatus !== "draft") {
+        throw new DomainError("document_adopted");
+      }
       await repo.deleteDocument(tx, documentId, personId);
       await audit.record(tx, {
         action: "document.deleted",
@@ -607,6 +621,9 @@ export class DocumentsService {
       const version = versionId ? await repo.findVersion(tx, versionId) : document.current;
       if (!version || version.documentId !== documentId) throw new DomainError("not_found");
       if (version.status !== "clean") throw new DomainError("document_not_ready");
+      // A governing document's text is read in the app, not downloaded.
+      if (version.objectKey === null) throw new DomainError("document_governing");
+      const objectKey = version.objectKey;
       if (await repo.audienceIsNarrow(tx, document.effectiveAudienceId)) {
         await audit.record(tx, {
           action: "document.downloaded",
@@ -615,7 +632,7 @@ export class DocumentsService {
         });
       }
       return {
-        url: storage.presignDownload(version.objectKey, {
+        url: storage.presignDownload(objectKey, {
           expiresSeconds: DOCUMENT_DOWNLOAD_SECONDS,
           filename: version.fileName,
         }),
@@ -891,9 +908,10 @@ export class DocumentsService {
     const clubId = await this.clubOfSlug(slug);
     return this.db.withSystem("documents:public", { clubId }, async (tx) => {
       const document = (await repo.publicDocuments(tx, clubId)).find((d) => d.id === documentId);
-      if (!document?.current) throw new DomainError("not_found");
+      const objectKey = document?.current?.objectKey;
+      if (!document?.current || !objectKey) throw new DomainError("not_found");
       return {
-        url: storage.presignDownload(document.current.objectKey, {
+        url: storage.presignDownload(objectKey, {
           expiresSeconds: DOCUMENT_DOWNLOAD_SECONDS,
           filename: document.current.fileName,
         }),

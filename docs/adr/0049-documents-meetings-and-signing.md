@@ -231,3 +231,40 @@ minutes and signing.
   "Mina dokument".
 - **Seed** (`apps/api/src/seed/steps/documents.ts`) and request budgets for
   the read endpoints the apps call.
+
+## As implemented (P2.4 part A, 2026-11-15)
+
+- **Series are folders** (`document_folders.purpose = 'series'`,
+  `series_kind`), top level only, of the club or a group; audiences, "Mina
+  dokument" and the archive's listings work unchanged. The archive's own
+  endpoints refuse files, subfolders and moves into a series
+  (`folder_series`), and changes to governing documents
+  (`document_governing`).
+- **Governing documents** are Markdown versions in `document_versions`
+  (`body`, no stored object; file name, size and SHA-256 describe the
+  text). The draft (the newest version not adopted) is edited in place; an
+  edit after an adoption starts a new draft. Readers see adopted versions
+  only; a never-adopted draft is invisible to them.
+- **Adoption** (`club.governing_documents.adopt`, MFA) names the draft
+  version it adopts (a stale version is `governing_draft_changed`), the
+  date (not in the future in the club's time zone), the effective date,
+  optionally the meeting (an activity or an event of the club), and the
+  documents it supersedes. The adoption data are stored on the version (not
+  the document, as the prompt sketched), so each adopted version keeps its
+  own date and meeting. A trigger locks an adopted version's text and
+  adoption.
+- **Settings markers** `{{setting key = value}}` (parsed only for governing
+  documents, `settingMarkers` in the shared Markdown parser) must name a
+  board setting (ADR 0037) with a readable value; adopting records them
+  through `ClubPrivacyService.recordDecisionInTx` in the same transaction
+  (the decision's body is required then), with `document_version_id`, and
+  applies them when in effect. A key that is not a board setting, a value
+  out of range or one key with two values is `governing_setting_invalid`.
+- **Never deleted once adopted**: `DELETE` takes drafts only; adopted
+  documents are superseded or archived (`document_adopted` otherwise), and a
+  series with an adopted document is not deleted.
+- The shared Markdown subset gains headings (`#` to `###`), and an
+  underscore inside a word stays text (as in CommonMark).
+- Meetings, minutes, tasks (part B) and signing, push on adoption and the
+  web and app screens (part C) follow.
+

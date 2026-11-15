@@ -8,8 +8,11 @@ import { OBJECT_STORAGE, type OptionalObjectStorage } from "../../platform/infra
 import { AuthorizationModule } from "../authorization/index.ts";
 import { EntitlementsService } from "../entitlements/index.ts";
 import { PeopleModule } from "../people/index.ts";
+import { ClubPrivacyService } from "../privacy/index.ts";
 import { DocumentsController } from "./documents.controller.ts";
 import { DocumentsService } from "./documents.service.ts";
+import { GoverningController } from "./governing.controller.ts";
+import { GoverningService } from "./governing.service.ts";
 import { NoticeAttachmentsController } from "./notice-attachments.controller.ts";
 
 const GB = 1024 * 1024 * 1024;
@@ -17,7 +20,7 @@ const MB = 1024 * 1024;
 
 @Module({
   imports: [AuthorizationModule, PeopleModule],
-  controllers: [DocumentsController, NoticeAttachmentsController],
+  controllers: [DocumentsController, NoticeAttachmentsController, GoverningController],
   providers: [
     {
       provide: DocumentsService,
@@ -38,7 +41,14 @@ const MB = 1024 * 1024;
           },
         }),
     },
+    {
+      // Governing documents (P2.4): adopting records board decisions (ClubPrivacyService, global).
+      provide: GoverningService,
+      inject: [DATABASE, ClubPrivacyService],
+      useFactory: (db: OptionalDatabase, privacy: ClubPrivacyService) =>
+        new GoverningService(requireDatabase(db), { privacy }),
+    },
   ],
-  exports: [DocumentsService],
+  exports: [DocumentsService, GoverningService],
 })
 export class DocumentsModule {}

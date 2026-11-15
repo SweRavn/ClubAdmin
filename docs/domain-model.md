@@ -1020,6 +1020,25 @@ with `POST .../attachments/uploads`, `GET /me/documents`, `POST
 /clubs/:clubId/documents/seen`, `GET|PUT /clubs/:clubId/storage`, `GET
 /public/clubs/:slug/documents` and its downloads.
 
+Governing documents (P2.4 part A, migration 0045): a series is a
+top-level folder of the purpose `series` with a `series_kind`
+(`statutes`, `annual_meeting_minutes`, `board_minutes`, `policies`,
+`other`). Its documents are of the kind `governing` with
+`governing_status` (`draft` | `adopted` | `superseded` | `archived`) and
+`superseded_by_document_id`. Their versions are Markdown: `body` instead
+of an `object_key` (the file name, size and `sha256` describe the text,
+`status` is `clean`), and an adopted version carries `adopted_on`,
+`effective_from`, the meeting (`adopted_activity_id` or
+`adopted_event_id`), `adopted_by_person_id` and `adopted_at`; a trigger
+refuses changes to an adopted version's text. `current_version_id` is the
+version in force; a draft is the newest version not adopted. Settings the
+text marks (`{{setting key = value}}`) become a `club_setting_decisions`
+row with `document_version_id`. Endpoints: `GET|POST
+/clubs/:clubId/document-series`, `POST /clubs/:clubId/governing-documents`,
+`GET|PATCH|DELETE .../governing-documents/:documentId` (DELETE: drafts
+never adopted), `GET .../versions/:versionId`, `POST .../adopt` (MFA) and
+`POST .../archive`.
+
 ### Announcements (P2.3, ADR 0053)
 Club-owned tables (tenant RLS; migration 0044):
 

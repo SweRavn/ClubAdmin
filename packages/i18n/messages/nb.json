@@ -839,7 +839,18 @@
     "audience_outside_group": "En gruppekunngjøring kan bare sendes til gruppen eller roller i den.",
     "announcement_email_limit": "Klubben har sendt så mange kunngjøringer på e-post som den kan i dag. Send uten e-post eller vent til i morgen.",
     "announcement_expiry_past": "Sluttdatoen må være i fremtiden.",
-    "announcement_schedule_past": "Tidspunktet for utsendelsen må være i fremtiden."
+    "announcement_schedule_past": "Tidspunktet for utsendelsen må være i fremtiden.",
+    "folder_series": "En serie inneholder bare styringsdokumenter, ingen filer eller undermapper.",
+    "document_governing": "Styringsdokumenter endres på dokumentets egen side.",
+    "document_adopted": "Vedtatte styringsdokumenter kan ikke slettes eller endres, bare erstattes eller arkiveres.",
+    "series_not_found": "Serien finnes ikke.",
+    "governing_draft_changed": "Utkastet er endret siden du åpnet det. Les den nyeste versjonen og prøv igjen.",
+    "governing_no_draft": "Det finnes ikke noe utkast å vedta.",
+    "governing_setting_invalid": "En markert innstilling er ikke en som styret eller årsmøtet bestemmer, eller har en verdi som ikke er tillatt.",
+    "governing_decision_body_required": "Teksten bestemmer innstillinger: velg hvem som fattet vedtaket.",
+    "governing_dates_invalid": "Datoen for vedtaket kan ikke være i fremtiden, og dokumentet kan ikke gjelde før den datoen.",
+    "governing_meeting_invalid": "Møtet finnes ikke i klubben.",
+    "governing_supersede_invalid": "Bare et annet vedtatt styringsdokument i klubben kan erstattes."
   },
   "memberExport": {
     "columns": {
@@ -2827,7 +2838,9 @@
       "read_confirmed": "bekreftet lesing av",
       "read": "leste",
       "muted": "stengte ute fra chatten",
-      "unmuted": "lot igjen skrive i chatten"
+      "unmuted": "lot igjen skrive i chatten",
+      "adopted": "vedtok",
+      "superseded": "erstattet"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -3770,6 +3783,16 @@
         "name": "Sende kunngjøringer til gruppen",
         "description": "Kan skrive kunngjøringer til gruppens medlemmer og deres foresatte, eller til roller i gruppen, og planlegge, endre og trekke dem tilbake.",
         "example": "Kan for eksempel gi laget beskjed med push om at banen er stengt denne uken."
+      },
+      "club_governing_documents_manage": {
+        "name": "Skrive klubbens styringsdokumenter",
+        "description": "Kan opprette serier (vedtekter, protokoller, retningslinjer), skrive og endre utkast til styringsdokumenter i Markdown, markere innstillingene en tekst bestemmer, arkivere vedtatte dokumenter og slette utkast som aldri ble vedtatt.",
+        "example": "Kan for eksempel skrive forslaget til nye vedtekter før årsmøtet."
+      },
+      "club_governing_documents_adopt": {
+        "name": "Registrere vedtatte styringsdokumenter",
+        "description": "Kan registrere at et utkast er vedtatt (dato, møte og når det gjelder fra). Versjonen låses, og innstillingene teksten markerer blir klubbens vedtak. Krever innlogging med en andre faktor.",
+        "example": "Kan for eksempel registrere at årsmøtet vedtok de nye vedtektene, slik at lagringstiden de angir gjelder."
       }
     }
   },

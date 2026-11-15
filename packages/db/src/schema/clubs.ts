@@ -495,6 +495,8 @@ export const clubSettingDecisions = pgTable(
     appliedAt: timestamp(tz),
     recordedByPersonId: personRef(),
     recordedAt: timestamp(tz).notNull().defaultNow(),
+    /** The adopted governing document's version that marked these settings (P2.4). */
+    documentVersionId: uuid(),
     ...timestamps,
   },
   (t) => [

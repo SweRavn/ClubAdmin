@@ -4,3 +4,4 @@ export * as audiences from "./audiences.ts";
 export { DocumentsModule } from "./documents.module.ts";
 export { DOCUMENT_PERSON_REFERENCES } from "./documents.references.ts";
 export { DocumentsService } from "./documents.service.ts";
+export { GoverningService } from "./governing.service.ts";

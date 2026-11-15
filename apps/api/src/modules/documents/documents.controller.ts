@@ -87,6 +87,7 @@ const toFolder = (f: FolderRow): FolderSummary => ({
   parentId: f.parentId,
   name: f.name,
   purpose: f.purpose,
+  seriesKind: f.seriesKind,
   ownAudience: f.audienceId !== null,
   createdAt: iso(f.createdAt),
 });
