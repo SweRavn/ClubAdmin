@@ -21,6 +21,7 @@ import { FamiliesModule } from "./modules/families/index.ts";
 import { GroupsModule } from "./modules/groups/index.ts";
 import { GuardianshipsModule } from "./modules/guardianships/index.ts";
 import { JoiningModule } from "./modules/joining/index.ts";
+import { MeetingsModule } from "./modules/meetings/index.ts";
 import { MembersModule } from "./modules/members/index.ts";
 import { MembershipsModule } from "./modules/memberships/index.ts";
 import { NotificationsModule } from "./modules/notifications/index.ts";
@@ -56,6 +57,7 @@ const MODULES = [
   ChatModule,
   DocumentsModule,
   AnnouncementsModule,
+  MeetingsModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

@@ -197,6 +197,25 @@ describe("tenant isolation of club-owned tables", () => {
                     FROM document_folders WHERE club_id = ${a.id} LIMIT 1 RETURNING id)
         INSERT INTO announcement_reads (club_id, announcement_id, person_id)
         SELECT ${a.id}, id, ${member.id} FROM an`);
+      // Meetings and tasks (P2.4 part B): the event's agenda with a decision,
+      // a paper and an action item, its minutes, and a template.
+      await tx.execute(sql`
+        WITH i AS (INSERT INTO meeting_agenda_items (club_id, event_id, position, title)
+                   VALUES (${a.id}, ${event.event.id}, 1, 'Fixture') RETURNING id),
+        d AS (INSERT INTO meeting_decisions (club_id, item_id, position, text)
+              SELECT ${a.id}, id, 1, 'Beslut' FROM i),
+        p AS (INSERT INTO agenda_item_documents (club_id, item_id, document_id)
+              SELECT ${a.id}, i.id, doc.id FROM i,
+                (SELECT id FROM documents WHERE club_id = ${a.id} LIMIT 1) doc),
+        m AS (INSERT INTO meeting_minutes (club_id, event_id, document_id)
+              SELECT ${a.id}, ${event.event.id}, id FROM documents WHERE club_id = ${a.id} LIMIT 1),
+        tk AS (INSERT INTO tasks (club_id, kind, title, source_agenda_item_id)
+               SELECT ${a.id}, 'action_item', 'Fixture', id FROM i RETURNING id)
+        INSERT INTO task_assignments (club_id, task_id, person_id)
+        SELECT ${a.id}, id, ${member.id} FROM tk`);
+      await tx.execute(sql`
+        INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
+        VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);
     });
 
     const { rows: tables } = await c.t.query<{ table_name: string }>(

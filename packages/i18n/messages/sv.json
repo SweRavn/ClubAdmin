@@ -850,7 +850,11 @@
     "governing_decision_body_required": "Texten bestämmer inställningar: välj vem som fattade beslutet.",
     "governing_dates_invalid": "Dagen för antagandet kan inte vara i framtiden, och dokumentet kan inte gälla före den dagen.",
     "governing_meeting_invalid": "Mötet finns inte i föreningen.",
-    "governing_supersede_invalid": "Bara ett annat antaget styrdokument i föreningen kan ersättas."
+    "governing_supersede_invalid": "Bara ett annat antaget styrdokument i föreningen kan ersättas.",
+    "agenda_template_name_taken": "Två mallar kan inte ha samma namn.",
+    "agenda_person_invalid": "Föredragande och ansvariga måste vara medlemmar i föreningen.",
+    "agenda_empty": "Dagordningen har inga punkter att sammanställa.",
+    "minutes_series_required": "Välj vilken serie protokollet ska ligga i."
   },
   "memberExport": {
     "columns": {
@@ -2840,7 +2844,8 @@
       "muted": "stängde av från chatten",
       "unmuted": "lät åter skriva i chatten",
       "adopted": "antog",
-      "superseded": "ersatte"
+      "superseded": "ersatte",
+      "assembled": "sammanställde"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -4332,5 +4337,12 @@
       "saveDraft": "Spara utkast",
       "saveSent": "Spara ändringar"
     }
+  },
+  "minutes": {
+    "name": "Protokoll {meeting}, {date}",
+    "heading": "Protokoll: {meeting}",
+    "decisions": "Beslut",
+    "actions": "Åtgärder",
+    "actionDue": "{action} (senast {date})"
   }
 }

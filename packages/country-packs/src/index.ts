@@ -7,11 +7,13 @@ import { SE } from "./se/index.ts";
 import type { CountryPack } from "./types.ts";
 
 export type {
+  AgendaTemplateDefault,
   AgeRules,
   CountryPack,
   GrantRules,
   GrantSession,
   LocaleDefaults,
+  MeetingKind,
   MemberImportRules,
   ParsedPersonalId,
   PersonalIdFormat,

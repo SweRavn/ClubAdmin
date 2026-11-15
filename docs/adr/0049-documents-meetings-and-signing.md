@@ -268,3 +268,40 @@ minutes and signing.
 - Meetings, minutes, tasks (part B) and signing, push on adoption and the
   web and app screens (part C) follow.
 
+## As implemented (P2.4 part B, 2026-11-15)
+
+- **Agendas** (`meeting_agenda_items`, migration 0046) belong to an
+  activity (a board's meeting) or an event (the annual meeting), exactly
+  one. The agenda is read with the activity or event (`activity.read`,
+  `event.read`) and replaced as a whole by whoever may edit it
+  (`activity.manage`, `event.manage`): items in order (kept by ID), their
+  presenter (a member of the club), minutes (Markdown), decisions
+  (`meeting_decisions`), papers (`agenda_item_documents`, read by the
+  meeting's readers through `app.notice_reader`, as notices' documents)
+  and action items. One editor at a time per meeting (an advisory lock).
+  The paths follow the existing activity and event routes,
+  `/activities/:activityId/agenda` and `/events/:eventId/agenda` (the
+  club follows from the resource), not `/clubs/:clubId/...` as the prompt
+  sketched.
+- **Templates**: the country packs carry default agendas (SE: årsmöte
+  after RF's normalstadgar, styrelsemöte; NO: årsmøte after NIF's
+  lovnorm, styremøte); the club keeps its own (`agenda_templates`),
+  replaced as a whole with `club.governing_documents.manage`. A client
+  fills an agenda from a template by sending its items.
+- **Minutes** (`POST .../minutes`) assemble one Markdown document of the
+  items (a heading, one § per item with its minutes, decisions and action
+  items) as a governing document in the series given the first time
+  (`meeting_minutes` links the meeting to it); assembling again saves its
+  draft, or a new draft after an adoption. The text never names people
+  (ADR 0022): action items show their due date, the agenda shows who.
+  Headings are the club's language (`minutes.*` messages).
+- **Tasks** (ADR 0052): `tasks` (kind `action_item`, the meeting's group)
+  and `task_assignments` (status `planned` | `done` | `missed`, who marked
+  it). Removing an agenda item removes its action items. "Mina uppgifter"
+  (`GET /me/tasks`, `app.my_tasks`) lists the caller's and their wards'
+  assignments across clubs, open or closed, by day; the assignee marks one
+  (`POST /me/task-assignments/:id/status`), and the meeting's editors set
+  statuses on the agenda.
+- Signing, push on adoption, the screens, seed and budgets follow in
+  part C.
+

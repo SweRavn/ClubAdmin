@@ -31,5 +31,41 @@ export const NO: CountryPack = {
       isoDate(year, 12, 26),
     ].sort();
   },
+  agendaTemplates: [
+    {
+      // Norges idrettsforbunds lovnorm for idrettslag (årsmøte).
+      key: "no.annual_meeting",
+      meetingKind: "annual_meeting",
+      name: "Årsmøte",
+      items: [
+        { title: "Godkjenne de stemmeberettigede" },
+        { title: "Godkjenne innkallingen" },
+        { title: "Godkjenne saklisten" },
+        { title: "Godkjenne forretningsorden" },
+        { title: "Velge dirigent, referent og to medlemmer til å underskrive protokollen" },
+        { title: "Behandle idrettslagets årsberetning" },
+        { title: "Behandle idrettslagets regnskap" },
+        { title: "Behandle forslag og saker" },
+        { title: "Fastsette medlemskontingent" },
+        { title: "Vedta idrettslagets budsjett" },
+        { title: "Behandle idrettslagets organisasjonsplan" },
+        { title: "Valg" },
+      ],
+    },
+    {
+      key: "no.board_meeting",
+      meetingKind: "board_meeting",
+      name: "Styremøte",
+      items: [
+        { title: "Godkjenning av innkalling og saksliste" },
+        { title: "Godkjenning av protokoll fra forrige møte" },
+        { title: "Økonomi" },
+        { title: "Orienteringssaker" },
+        { title: "Vedtakssaker" },
+        { title: "Eventuelt" },
+        { title: "Neste møte" },
+      ],
+    },
+  ],
   memberImport: { dateOrder: "dmy", sources: [] },
 };

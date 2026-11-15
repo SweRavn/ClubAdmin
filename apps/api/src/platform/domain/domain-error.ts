@@ -342,6 +342,15 @@ export const DOMAIN_ERRORS = {
   governing_meeting_invalid: "validation",
   /** Only another adopted governing document of the club is superseded. */
   governing_supersede_invalid: "validation",
+  // Meetings and tasks (P2.4 part B).
+  /** Two of the club's agenda templates would have the same name. */
+  agenda_template_name_taken: "conflict",
+  /** A presenter or assignee is not a member of the club. */
+  agenda_person_invalid: "validation",
+  /** Minutes are assembled from an agenda with items. */
+  agenda_empty: "conflict",
+  /** The first time, the minutes need a series to go in. */
+  minutes_series_required: "validation",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

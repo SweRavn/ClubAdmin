@@ -803,6 +803,22 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
   // log (announcement.*).
   "public.announcements":
     "an announcement's text, audience and channels: on its page and in the archive, changes in the audit log (announcement.*)",
+  // Meetings and tasks (P2.4 part B): shown on the meeting's agenda and in
+  // "Mina uppgifter"; every change is in the audit log (meeting.*, task.*).
+  "public.agenda_templates":
+    "the club's agenda templates: on the templates page and in the audit log (meeting.templates.updated)",
+  "public.meeting_agenda_items":
+    "a meeting's agenda items and minutes: on the meeting's agenda and in the audit log (meeting.agenda.updated)",
+  "public.meeting_decisions":
+    "a meeting's decisions: on the agenda and in the minutes, changes in the audit log (meeting.agenda.updated)",
+  "public.agenda_item_documents":
+    "an agenda item's papers: listed on the agenda, changes in the audit log (meeting.agenda.updated)",
+  "public.meeting_minutes":
+    "which governing document a meeting's minutes are: on the agenda and in the audit log (meeting.minutes.assembled)",
+  "public.tasks":
+    "action items: on the meeting's agenda and in Mina uppgifter, changes in the audit log (meeting.agenda.updated)",
+  "public.task_assignments":
+    "who was given a task and whether it is done: on the agenda and in Mina uppgifter, in the audit log (task.assignment.*)",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

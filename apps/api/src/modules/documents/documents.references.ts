@@ -8,6 +8,8 @@ export const DOCUMENT_PERSON_REFERENCES: readonly PersonReference[] = [
   { table: "public.documents", column: "created_by_person_id", clubScoped: true },
   { table: "public.documents", column: "deleted_by_person_id", clubScoped: true },
   { table: "public.document_versions", column: "uploaded_by_person_id", clubScoped: true },
+  // Governing documents (P2.4): who recorded an adoption.
+  { table: "public.document_versions", column: "adopted_by_person_id", clubScoped: true },
   // Part B.
   { table: "public.notice_attachments", column: "attached_by_person_id", clubScoped: true },
   {

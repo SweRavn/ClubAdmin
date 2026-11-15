@@ -33,3 +33,12 @@ notification paths and two ways of marking things done.
 **Consequences.** One list for the person, one marking and reminder flow;
 duty automation (Phase 4) and quotas work on the same rows. ADR 0050's
 "Mina pass" is "Mina uppgifter".
+
+## As implemented (P2.4 part B, 2026-11-15)
+
+`tasks` and `task_assignments` (migration 0046) with the kind
+`action_item`, written from a meeting's agenda; "Mina uppgifter" is
+`GET /me/tasks` (open or closed, by due date) and an assignee marks their
+own task with `POST /me/task-assignments/:id/status`. Duty shifts (P2.6)
+add their kind and fields to the same tables.
+

@@ -179,98 +179,113 @@ export class GoverningService {
   }
 
   /** A new governing document in a series: a draft with its first version. */
-  async create(
+  create(
+    context: TenantContext,
+    input: CreateGoverningDocumentInput,
+  ): Promise<{ id: string; versionId: string }> {
+    return this.db.withTenant(context, (tx) => this.createInTx(tx, context, input));
+  }
+
+  /** create in the caller's transaction (minutes assembled from a meeting, P2.4 part B). */
+  async createInTx(
+    tx: Tx,
     context: TenantContext,
     input: CreateGoverningDocumentInput,
   ): Promise<{ id: string; versionId: string }> {
     const personId = actorPersonId(context);
-    return this.db.withTenant(context, async (tx) => {
-      const series = await docs.lockFolder(tx, input.seriesId);
-      if (!series || series.purpose !== "series") throw new DomainError("series_not_found");
-      const id = uuidv7();
-      const versionId = uuidv7();
-      await repo.insertGoverning(tx, {
-        id,
-        clubId: context.clubId,
-        folderId: series.id,
-        groupId: series.groupId,
-        name: input.name,
-        createdBy: personId,
-      });
-      await repo.insertTextVersion(tx, {
-        id: versionId,
-        clubId: context.clubId,
-        documentId: id,
-        groupId: series.groupId,
-        fileName: fileNameOf(input.name),
-        body: input.body,
-        by: personId,
-      });
-      await audit.record(tx, {
-        action: "document.created",
-        resourceType: "document",
-        resourceId: id,
-      });
-      return { id, versionId };
+    const series = await docs.lockFolder(tx, input.seriesId);
+    if (!series || series.purpose !== "series") throw new DomainError("series_not_found");
+    const id = uuidv7();
+    const versionId = uuidv7();
+    await repo.insertGoverning(tx, {
+      id,
+      clubId: context.clubId,
+      folderId: series.id,
+      groupId: series.groupId,
+      name: input.name,
+      createdBy: personId,
     });
+    await repo.insertTextVersion(tx, {
+      id: versionId,
+      clubId: context.clubId,
+      documentId: id,
+      groupId: series.groupId,
+      fileName: fileNameOf(input.name),
+      body: input.body,
+      by: personId,
+    });
+    await audit.record(tx, {
+      action: "document.created",
+      resourceType: "document",
+      resourceId: id,
+    });
+    return { id, versionId };
   }
 
   /**
    * Renames the document and saves the draft's text; when the latest
    * version is adopted, the text starts a new draft version.
    */
-  async update(
+  update(
+    context: TenantContext,
+    documentId: string,
+    input: UpdateGoverningDocumentInput,
+  ): Promise<{ versionId: string | null }> {
+    return this.db.withTenant(context, (tx) => this.updateInTx(tx, context, documentId, input));
+  }
+
+  /** update in the caller's transaction (minutes assembled again, P2.4 part B). */
+  async updateInTx(
+    tx: Tx,
     context: TenantContext,
     documentId: string,
     input: UpdateGoverningDocumentInput,
   ): Promise<{ versionId: string | null }> {
     const personId = actorPersonId(context);
-    return this.db.withTenant(context, async (tx) => {
-      const document = await this.lockGoverning(tx, documentId);
-      if (document.governingStatus === "superseded" || document.governingStatus === "archived") {
-        throw new DomainError("document_adopted");
-      }
-      const changed: string[] = [];
-      const name = input.name ?? document.name;
-      if (input.name !== undefined && input.name !== document.name) {
-        await docs.updateDocument(tx, documentId, { name: input.name });
-        changed.push("name");
-      }
-      let versionId: string | null = null;
-      if (input.body !== undefined) {
-        const latest = (await repo.textVersions(tx, documentId))[0];
-        if (latest && latest.adoptedOn === null) {
-          await repo.updateDraftText(tx, {
-            versionId: latest.id,
-            fileName: fileNameOf(name),
-            body: input.body,
-            by: personId,
-          });
-          versionId = latest.id;
-        } else {
-          versionId = uuidv7();
-          await repo.insertTextVersion(tx, {
-            id: versionId,
-            clubId: context.clubId,
-            documentId,
-            groupId: document.groupId,
-            fileName: fileNameOf(name),
-            body: input.body,
-            by: personId,
-          });
-        }
-        changed.push("body");
-      }
-      if (changed.length > 0) {
-        await audit.record(tx, {
-          action: "document.updated",
-          resourceType: "document",
-          resourceId: documentId,
-          changedFields: changed,
+    const document = await this.lockGoverning(tx, documentId);
+    if (document.governingStatus === "superseded" || document.governingStatus === "archived") {
+      throw new DomainError("document_adopted");
+    }
+    const changed: string[] = [];
+    const name = input.name ?? document.name;
+    if (input.name !== undefined && input.name !== document.name) {
+      await docs.updateDocument(tx, documentId, { name: input.name });
+      changed.push("name");
+    }
+    let versionId: string | null = null;
+    if (input.body !== undefined) {
+      const latest = (await repo.textVersions(tx, documentId))[0];
+      if (latest && latest.adoptedOn === null) {
+        await repo.updateDraftText(tx, {
+          versionId: latest.id,
+          fileName: fileNameOf(name),
+          body: input.body,
+          by: personId,
+        });
+        versionId = latest.id;
+      } else {
+        versionId = uuidv7();
+        await repo.insertTextVersion(tx, {
+          id: versionId,
+          clubId: context.clubId,
+          documentId,
+          groupId: document.groupId,
+          fileName: fileNameOf(name),
+          body: input.body,
+          by: personId,
         });
       }
-      return { versionId };
-    });
+      changed.push("body");
+    }
+    if (changed.length > 0) {
+      await audit.record(tx, {
+        action: "document.updated",
+        resourceType: "document",
+        resourceId: documentId,
+        changedFields: changed,
+      });
+    }
+    return { versionId };
   }
 
   /**

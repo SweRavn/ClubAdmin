@@ -850,7 +850,11 @@
     "governing_decision_body_required": "Teksten bestemmer innstillinger: velg hvem som fattet vedtaket.",
     "governing_dates_invalid": "Datoen for vedtaket kan ikke være i fremtiden, og dokumentet kan ikke gjelde før den datoen.",
     "governing_meeting_invalid": "Møtet finnes ikke i klubben.",
-    "governing_supersede_invalid": "Bare et annet vedtatt styringsdokument i klubben kan erstattes."
+    "governing_supersede_invalid": "Bare et annet vedtatt styringsdokument i klubben kan erstattes.",
+    "agenda_template_name_taken": "To maler kan ikke ha samme navn.",
+    "agenda_person_invalid": "Saksbehandlere og ansvarlige må være medlemmer av klubben.",
+    "agenda_empty": "Sakslisten har ingen saker å sammenstille.",
+    "minutes_series_required": "Velg hvilken serie protokollen skal ligge i."
   },
   "memberExport": {
     "columns": {
@@ -2840,7 +2844,8 @@
       "muted": "stengte ute fra chatten",
       "unmuted": "lot igjen skrive i chatten",
       "adopted": "vedtok",
-      "superseded": "erstattet"
+      "superseded": "erstattet",
+      "assembled": "sammenstilte"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -4332,5 +4337,12 @@
       "saveDraft": "Lagre utkast",
       "saveSent": "Lagre endringer"
     }
+  },
+  "minutes": {
+    "name": "Protokoll {meeting}, {date}",
+    "heading": "Protokoll: {meeting}",
+    "decisions": "Vedtak",
+    "actions": "Oppfølgingspunkter",
+    "actionDue": "{action} (innen {date})"
   }
 }

@@ -35,6 +35,30 @@ export interface paths {
     patch: operations["Activities_updateActivity"];
     trace?: never;
   };
+  "/api/v1/activities/{activityId}/agenda": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A meeting's agenda: items, minutes, decisions, papers and action items
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Meetings_activityAgenda"];
+    /**
+     * Replace a meeting's agenda (items kept by ID)
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Meetings_putActivityAgenda"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activities/{activityId}/attachments": {
     parameters: {
       query?: never;
@@ -161,6 +185,26 @@ export interface paths {
      */
     put: operations["Attendance_setInvitees"];
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/minutes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Assemble the meeting's minutes into a governing document (its draft)
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Meetings_activityMinutes"];
     delete?: never;
     options?: never;
     head?: never;
@@ -786,6 +830,30 @@ export interface paths {
      * @description Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     post: operations["Administrators_start"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/agenda-templates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's agenda templates and its country pack's defaults
+     * @description Requires permission `club.documents.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Meetings_templates"];
+    /**
+     * Replace the club's agenda templates
+     * @description Requires permission `club.governing_documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Meetings_putTemplates"];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -3326,6 +3394,30 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/events/{eventId}/agenda": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The annual (or an extra) meeting's agenda
+     * @description Requires permission `event.read` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Meetings_eventAgenda"];
+    /**
+     * Replace the annual meeting's agenda (items kept by ID)
+     * @description Requires permission `event.manage` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Meetings_putEventAgenda"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/events/{eventId}/attachments": {
     parameters: {
       query?: never;
@@ -3404,6 +3496,26 @@ export interface paths {
     get: operations["Audit_eventHistory"];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/events/{eventId}/minutes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Assemble the annual meeting's minutes into a governing document (its draft)
+     * @description Requires permission `event.manage` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Meetings_eventMinutes"];
     delete?: never;
     options?: never;
     head?: never;
@@ -4990,6 +5102,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/task-assignments/{assignmentId}/status": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark one of my (or my ward's) tasks done, missed or planned again */
+    post: operations["Meetings_setMyTaskStatus"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/tasks": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Mina uppgifter: the tasks of the caller and their wards, by day */
+    get: operations["Meetings_myTasks"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/trusted-people": {
     parameters: {
       query?: never;
@@ -5909,6 +6055,83 @@ export interface components {
       respondBy?: string | null;
       requestLead?: components["schemas"]["RequestLead"];
     };
+    Agenda: {
+      meeting: components["schemas"]["MeetingRef"];
+      items: components["schemas"]["AgendaItem"][];
+      /** Format: uuid */
+      minutesDocumentId: string | null;
+      canEdit: boolean;
+    };
+    MeetingRef: {
+      /** @enum {string} */
+      kind: "activity" | "event";
+      /** Format: uuid */
+      id: string;
+      title: string;
+    };
+    AgendaItem: {
+      /** Format: uuid */
+      id: string;
+      position: number;
+      title: string;
+      presenter: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      durationMinutes: number | null;
+      minutes: string | null;
+      decisions: {
+        /** Format: uuid */
+        id: string;
+        text: string;
+      }[];
+      papers: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+      }[];
+      actions: components["schemas"]["ActionItem"][];
+    };
+    ActionItem: {
+      /** Format: uuid */
+      taskId: string;
+      title: string;
+      description: string | null;
+      /** Format: date */
+      dueDate: string | null;
+      assignees: components["schemas"]["ActionAssignee"][];
+    };
+    ActionAssignee: {
+      /** Format: uuid */
+      assignmentId: string;
+      person: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** @enum {string} */
+      status: "planned" | "done" | "missed";
+    };
+    PutAgenda: {
+      items: {
+        /** Format: uuid */
+        id?: string;
+        title: string;
+        /** Format: uuid */
+        presenterPersonId?: string | null;
+        durationMinutes?: number | null;
+        minutes?: string | null;
+        decisions?: string[];
+        paperIds?: string[];
+        actions?: {
+          /** Format: uuid */
+          taskId?: string;
+          title: string;
+          description?: string | null;
+          /** Format: date */
+          dueDate?: string | null;
+          assignees: {
+            /** Format: uuid */
+            personId: string;
+            /** @enum {string} */
+            status?: "planned" | "done" | "missed";
+          }[];
+        }[];
+      }[];
+    };
     NoticeAttachmentList: {
       items: components["schemas"]["NoticeAttachment"][];
       shownTo: {
@@ -6258,6 +6481,16 @@ export interface components {
     SetInviteesRequest: {
       inviteesOnly: boolean;
       personIds: string[];
+    };
+    MinutesAssembled: {
+      /** Format: uuid */
+      documentId: string;
+      /** Format: uuid */
+      versionId: string;
+    };
+    AssembleMinutes: {
+      /** Format: uuid */
+      seriesId?: string;
     };
     ResponseList: {
       items: components["schemas"]["ActivityResponse"][];
@@ -6844,6 +7077,33 @@ export interface components {
       reason: "compromised" | "left_task" | "other";
       note?: string;
       demote?: boolean;
+    };
+    AgendaTemplateList: {
+      items: components["schemas"]["AgendaTemplate"][];
+      canManage: boolean;
+    };
+    AgendaTemplate: {
+      /** Format: uuid */
+      id: string | null;
+      packKey: string | null;
+      /** @enum {string} */
+      meetingKind: "annual_meeting" | "extra_meeting" | "board_meeting" | "other";
+      name: string;
+      items: components["schemas"]["AgendaTemplateItem"][];
+    };
+    AgendaTemplateItem: {
+      title: string;
+      durationMinutes?: number | null;
+    };
+    PutAgendaTemplates: {
+      templates: {
+        /** Format: uuid */
+        id?: string;
+        /** @enum {string} */
+        meetingKind: "annual_meeting" | "extra_meeting" | "board_meeting" | "other";
+        name: string;
+        items: components["schemas"]["AgendaTemplateItem"][];
+      }[];
     };
     AnnouncementArchive: {
       items: components["schemas"]["Announcement"][];
@@ -10487,6 +10747,43 @@ export interface components {
        */
       client: "web" | "mobile";
     };
+    SetTaskStatus: {
+      /** @enum {string} */
+      status: "planned" | "done" | "missed";
+    };
+    MyTaskPage: {
+      items: components["schemas"]["MyTask"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    MyTask: {
+      /** Format: uuid */
+      assignmentId: string;
+      /** Format: uuid */
+      taskId: string;
+      /** Format: uuid */
+      clubId: string;
+      clubName: string;
+      /** Format: uuid */
+      groupId: string | null;
+      groupName: string | null;
+      /** @enum {string} */
+      kind: "action_item";
+      title: string;
+      description: string | null;
+      /** Format: date */
+      dueDate: string | null;
+      /** Format: date-time */
+      startsAt: string | null;
+      /** Format: date-time */
+      endsAt: string | null;
+      person: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** @enum {string} */
+      status: "planned" | "done" | "missed";
+      /** Format: date-time */
+      markedAt: string | null;
+      meeting: components["schemas"]["MeetingRef"] & (Record<string, never> | null);
+    };
     TrustedPeople: {
       canLink: boolean;
       people: components["schemas"]["GuardianEntry"][];
@@ -11197,6 +11494,162 @@ export interface operations {
       };
     };
   };
+  Meetings_activityAgenda: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Agenda"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_putActivityAgenda: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutAgenda"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Agenda"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   NoticeAttachments_activityAttachments: {
     parameters: {
       query?: never;
@@ -11846,6 +12299,86 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Invitees"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_activityMinutes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AssembleMinutes"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MinutesAssembled"];
         };
       };
       /** @description Invalid request */
@@ -14543,6 +15076,162 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdministratorSuspension"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_templates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgendaTemplateList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_putTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutAgendaTemplates"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgendaTemplateList"];
         };
       };
       /** @description Invalid request */
@@ -27303,6 +27992,162 @@ export interface operations {
       };
     };
   };
+  Meetings_eventAgenda: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Agenda"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_putEventAgenda: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutAgenda"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Agenda"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   NoticeAttachments_eventAttachments: {
     parameters: {
       query?: never;
@@ -27640,6 +28485,86 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HistoryPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_eventMinutes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AssembleMinutes"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MinutesAssembled"];
         };
       };
       /** @description Invalid request */
@@ -34617,6 +35542,144 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_setMyTaskStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        assignmentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetTaskStatus"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Meetings_myTasks: {
+    parameters: {
+      query?: {
+        status?: "open" | "closed";
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyTaskPage"];
+        };
       };
       /** @description Invalid request */
       400: {

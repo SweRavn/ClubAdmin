@@ -1039,6 +1039,28 @@ row with `document_version_id`. Endpoints: `GET|POST
 never adopted), `GET .../versions/:versionId`, `POST .../adopt` (MFA) and
 `POST .../archive`.
 
+### Meetings and tasks (P2.4 part B, ADR 0049, ADR 0052)
+Club-owned tables (tenant RLS, record history; migration 0046):
+
+- `agenda_templates`: the club's own (`meeting_kind`, `name`, `items`
+  JSON); the country pack's defaults are not stored.
+- `meeting_agenda_items`: an activity's or an event's (exactly one),
+  `position`, `title`, `presenter_person_id`, `duration_minutes`,
+  `minutes` (Markdown); `meeting_decisions` (per item, in order) and
+  `agenda_item_documents` (papers, read like a notice's documents).
+- `meeting_minutes`: the governing document a meeting's minutes were
+  assembled into (one per meeting).
+- `tasks` (`kind` `action_item`, `group_id`, `title`, `description`,
+  `due_date` or `starts_at`/`ends_at`, `needed`, the source: an agenda
+  item, an activity or an event) and `task_assignments` (`person_id`,
+  `counts_for_person_id`, `source`, `status` `planned` | `done` |
+  `missed`, marked by and at).
+
+Endpoints: `GET|PUT /clubs/:clubId/agenda-templates`, `GET|PUT
+/activities/:activityId/agenda` and `/events/:eventId/agenda`, `POST
+.../minutes`, `GET /me/tasks` (`app.my_tasks`) and `POST
+/me/task-assignments/:assignmentId/status`.
+
 ### Announcements (P2.3, ADR 0053)
 Club-owned tables (tenant RLS; migration 0044):
 

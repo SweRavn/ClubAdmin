@@ -77,6 +77,22 @@ export interface GrantRules {
   check(session: GrantSession): string[];
 }
 
+/** Kinds of meetings an agenda template is for (P2.4). */
+export type MeetingKind = "annual_meeting" | "extra_meeting" | "board_meeting" | "other";
+
+/**
+ * A country's default agenda (P2.4, ADR 0049 decision 3): the items a club's
+ * own templates start from, in the country's language (the national sports
+ * confederation's standard statutes).
+ */
+export interface AgendaTemplateDefault {
+  /** Stable key, e.g. "se.annual_meeting". */
+  key: string;
+  meetingKind: MeetingKind;
+  name: string;
+  items: readonly { title: string; durationMinutes?: number }[];
+}
+
 export interface CountryPack {
   /** ISO 3166-1 alpha-2. */
   code: string;
@@ -104,6 +120,8 @@ export interface CountryPack {
    * creator chooses none; without it, the built-in type.
    */
   defaultClubType?: string;
+  /** Default agendas for the club's meetings (P2.4); none: the club writes its own. */
+  agendaTemplates?: readonly AgendaTemplateDefault[];
 }
 
 /** Age reached during the calendar year of `date` (how grant rules count ages). */

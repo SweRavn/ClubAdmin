@@ -1047,6 +1047,47 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.draftGoverningId}`,
       expected: { ...CLUB_FORBIDDEN, registrar: 204 },
     },
+    // Meetings (P2.4 part B): an agenda is read with the activity or event
+    // and edited by whoever manages it; minutes need a series the first
+    // time (400 for those allowed, as the matrix gives none). Templates are
+    // read in the club and replaced with the governing permission.
+    "GET /api/v1/clubs/:clubId/agenda-templates": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/agenda-templates`,
+      expected: INSIDERS,
+    },
+    "PUT /api/v1/clubs/:clubId/agenda-templates": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/agenda-templates`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 200 },
+      body: { templates: [] },
+    },
+    "GET /api/v1/activities/:activityId/agenda": {
+      url: () => `/api/v1/activities/${m.activityId}/agenda`,
+      expected: INSIDERS,
+    },
+    "PUT /api/v1/activities/:activityId/agenda": {
+      url: () => `/api/v1/activities/${m.activityId}/agenda`,
+      expected: TEAM_MANAGERS(200),
+      body: { items: [{ title: "Matrix item" }] },
+    },
+    "POST /api/v1/activities/:activityId/minutes": {
+      url: () => `/api/v1/activities/${m.activityId}/minutes`,
+      expected: TEAM_MANAGERS(400),
+      body: {},
+    },
+    "GET /api/v1/events/:eventId/agenda": {
+      url: () => `/api/v1/events/${m.eventId}/agenda`,
+      expected: INSIDERS,
+    },
+    "PUT /api/v1/events/:eventId/agenda": {
+      url: () => `/api/v1/events/${m.eventId}/agenda`,
+      expected: TEAM_MANAGERS(200),
+      body: { items: [{ title: "Matrix item" }] },
+    },
+    "POST /api/v1/events/:eventId/minutes": {
+      url: () => `/api/v1/events/${m.eventId}/minutes`,
+      expected: TEAM_MANAGERS(400),
+      body: {},
+    },
     // Part B (P2.2): seeing, storage, notices' documents.
     "POST /api/v1/clubs/:clubId/documents/seen": {
       url: () => `/api/v1/clubs/${m.clubA.id}/documents/seen`,

@@ -68,6 +68,51 @@ export const SE: CountryPack = {
       return codes;
     },
   },
+  agendaTemplates: [
+    {
+      // Riksidrottsförbundets normalstadgar för idrottsföreningar (årsmöte).
+      key: "se.annual_meeting",
+      meetingKind: "annual_meeting",
+      name: "Årsmöte",
+      items: [
+        { title: "Mötets öppnande" },
+        { title: "Fastställande av röstlängd för mötet" },
+        { title: "Val av ordförande och sekreterare för mötet" },
+        { title: "Val av protokolljusterare och rösträknare" },
+        { title: "Fråga om mötet har utlysts på rätt sätt" },
+        { title: "Fastställande av föredragningslista" },
+        { title: "Styrelsens verksamhetsberättelse och årsredovisning" },
+        { title: "Revisorernas berättelse" },
+        { title: "Fråga om ansvarsfrihet för styrelsen" },
+        { title: "Fastställande av medlemsavgifter" },
+        { title: "Fastställande av verksamhetsplan och budget" },
+        { title: "Behandling av styrelsens förslag och motioner" },
+        { title: "Val av föreningens ordförande" },
+        { title: "Val av övriga ledamöter i styrelsen" },
+        { title: "Val av revisorer" },
+        { title: "Val av valberedning" },
+        { title: "Övriga frågor" },
+        { title: "Mötets avslutande" },
+      ],
+    },
+    {
+      key: "se.board_meeting",
+      meetingKind: "board_meeting",
+      name: "Styrelsemöte",
+      items: [
+        { title: "Mötets öppnande" },
+        { title: "Val av justerare" },
+        { title: "Godkännande av dagordningen" },
+        { title: "Föregående protokoll" },
+        { title: "Ekonomi" },
+        { title: "Rapporter" },
+        { title: "Beslutsärenden" },
+        { title: "Övriga frågor" },
+        { title: "Nästa möte" },
+        { title: "Mötets avslutande" },
+      ],
+    },
+  ],
   memberImport: {
     dateOrder: "dmy",
     sources: [

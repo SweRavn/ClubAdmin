@@ -28,6 +28,7 @@ import { DOCUMENT_PERSON_REFERENCES } from "../documents/index.ts";
 import { EVENT_PERSON_REFERENCES } from "../events/index.ts";
 import { GROUP_PERSON_REFERENCES } from "../groups/index.ts";
 import { GUARDIANSHIP_PERSON_REFERENCES } from "../guardianships/index.ts";
+import { MEETING_PERSON_REFERENCES } from "../meetings/index.ts";
 import { MEMBERS_PERSON_REFERENCES } from "../members/index.ts";
 import { JOINING_PERSON_REFERENCES, MEMBERSHIP_PERSON_REFERENCES } from "../memberships/index.ts";
 import type { PeopleService } from "../people/index.ts";
@@ -52,6 +53,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...CHAT_PERSON_REFERENCES,
   ...DOCUMENT_PERSON_REFERENCES,
   ...ANNOUNCEMENT_PERSON_REFERENCES,
+  ...MEETING_PERSON_REFERENCES,
   ...PRIVACY_PERSON_REFERENCES,
 ];
 

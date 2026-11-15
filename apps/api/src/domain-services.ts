@@ -24,6 +24,7 @@ import {
   JoinRequestsService,
   WaitlistsService,
 } from "./modules/joining/index.ts";
+import { MeetingsService } from "./modules/meetings/index.ts";
 import { MemberImportsService, MemberIntakeService } from "./modules/members/index.ts";
 import { MembershipsService } from "./modules/memberships/index.ts";
 import { OnboardingService } from "./modules/onboarding/index.ts";
@@ -74,6 +75,7 @@ export interface CoreServices {
   /** The file archive (P2.2): the installation's default storage limit per club. */
   documents: DocumentsService;
   governing: GoverningService;
+  meetings: MeetingsService;
   announcements: AnnouncementsService;
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
@@ -145,6 +147,7 @@ export function createCoreServices(
   const events = new EventsService(db, { clubs, activities, attendance, encryption });
   const consents = new ConsentsService(db, { clubs });
   const clubPrivacy = new ClubPrivacyService(db, { clubs });
+  const governing = new GoverningService(db, { privacy: clubPrivacy });
   return {
     encryption,
     activities,
@@ -165,7 +168,8 @@ export function createCoreServices(
     }),
     consents,
     clubPrivacy,
-    governing: new GoverningService(db, { privacy: clubPrivacy }),
+    governing,
+    meetings: new MeetingsService(db, { clubs, memberships, governing }),
     dataExports: new DataExportsService(db, { storage: options.storage ?? null }),
     erasure: new ErasureService(db, {
       graceDays: options.erasureGraceDays ?? 14,
