@@ -1049,3 +1049,68 @@ export function useMarkAnnouncementRead() {
     },
   });
 }
+
+// --- Governing documents and tasks (P2.4) ------------------------------------------
+
+/** "Mina uppgifter": my and my children's open tasks (or the closed ones), by day. */
+export function useMyTasks(status: "open" | "closed") {
+  const { api, personId } = useSession();
+  return useInfiniteQuery({
+    queryKey: ["tasks", personId, status],
+    initialPageParam: null as string | null,
+    queryFn: async ({ pageParam }) =>
+      data(
+        await api.GET("/api/v1/me/tasks", {
+          params: { query: { status, limit: 50, ...(pageParam ? { cursor: pageParam } : {}) } },
+        }),
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? null,
+    enabled: personId !== null,
+  });
+}
+
+/** Marks one of my (or my child's) tasks done or not done; the lists follow. */
+export function useSetTaskStatus() {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      assignmentId,
+      status,
+    }: {
+      assignmentId: string;
+      status: "planned" | "done" | "missed";
+    }) => {
+      await api.POST("/api/v1/me/task-assignments/{assignmentId}/status", {
+        params: { path: { assignmentId } },
+        body: { status },
+      });
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["tasks", personId] }),
+  });
+}
+
+/** Documents waiting for my signature (signing happens on the web, with a second factor). */
+export function useMySignatureRequests() {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["documents", personId, "signatures"],
+    queryFn: async () => data(await api.GET("/api/v1/me/signature-requests")),
+    enabled: personId !== null,
+  });
+}
+
+/** A governing document: the text in force (and a draft for its signers). */
+export function useGoverningDocument(clubId: string, documentId: string) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["documents", personId, "governing", documentId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/governing-documents/{documentId}", {
+          params: { path: { clubId, documentId } },
+        }),
+      ),
+    enabled: personId !== null,
+  });
+}

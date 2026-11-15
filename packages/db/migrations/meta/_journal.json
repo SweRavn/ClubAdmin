@@ -330,6 +330,13 @@
       "when": 1794820000000,
       "tag": "0046_meetings_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1794830000000,
+      "tag": "0047_document_signatures",
+      "breakpoints": true
     }
   ]
 }

@@ -153,7 +153,13 @@ export type EnumNamespace =
   | "chat.visibilityShort"
   | "chat.reportReasons"
   | "safeguarding.outcomes"
-  | "safeguarding.statuses";
+  | "safeguarding.statuses"
+  | "governing.seriesKinds"
+  | "governing.statuses"
+  | "governing.signerRoles"
+  | "governing.decisionBodies"
+  | "meetings.statuses"
+  | "tasks.statuses";
 
 /**
  * The message key for an enum value from the API. A newer server may send a

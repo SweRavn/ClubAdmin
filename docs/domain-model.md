@@ -1039,6 +1039,14 @@ row with `document_version_id`. Endpoints: `GET|POST
 never adopted), `GET .../versions/:versionId`, `POST .../adopt` (MFA) and
 `POST .../archive`.
 
+Signing (P2.4 part C, migration 0047): `document_signatures` (a version's
+named signers with their role, and once signed the provider, level,
+SHA-256 and time; a signed row is locked) and on versions
+`signature_page_object_key` (the PDF the worker makes when everyone has
+signed). Endpoints: `PUT .../documents/:documentId/versions/:versionId/signers`,
+`POST .../signatures` (MFA, recent login), `GET .../signature-page` and
+`GET /me/signature-requests`.
+
 ### Meetings and tasks (P2.4 part B, ADR 0049, ADR 0052)
 Club-owned tables (tenant RLS, record history; migration 0046):
 

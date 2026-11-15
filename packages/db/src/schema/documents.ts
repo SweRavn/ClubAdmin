@@ -147,6 +147,9 @@ export const documentVersions = pgTable(
     adoptedEventId: uuid(),
     adoptedByPersonId: uuid().references(() => people.id),
     adoptedAt: timestamp(tz),
+    /** The signature page the worker made (P2.4 part C). */
+    signaturePageObjectKey: text(),
+    signaturePageMadeAt: timestamp(tz),
     ...timestamps,
   },
   (t) => [

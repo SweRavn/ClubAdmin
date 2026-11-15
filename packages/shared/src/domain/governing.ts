@@ -98,6 +98,25 @@ export const GoverningAdoptionSchema = z
   .openapi("GoverningAdoption");
 export type GoverningAdoption = z.infer<typeof GoverningAdoptionSchema>;
 
+export const SIGNER_ROLES = ["chair", "secretary", "adjuster", "other"] as const;
+export type SignerRole = (typeof SIGNER_ROLES)[number];
+
+export const GoverningSignerSchema = z
+  .object({
+    signatureId: z.uuid(),
+    /** None: hidden (protected identity). */
+    person: PersonSummarySchema.nullable(),
+    role: z.enum(SIGNER_ROLES),
+    /** Set once signed, with the level (`simple`) and the provider. */
+    signedAt: z.iso.datetime().nullable(),
+    level: z.enum(["simple"]).nullable(),
+    provider: z.string().nullable(),
+    /** The caller is this signer and may sign now. */
+    mine: z.boolean(),
+  })
+  .openapi("GoverningSigner");
+export type GoverningSigner = z.infer<typeof GoverningSignerSchema>;
+
 export const GoverningVersionSchema = z
   .object({
     id: z.uuid(),
@@ -109,6 +128,10 @@ export const GoverningVersionSchema = z
     createdAt: z.iso.datetime(),
     /** Set once adopted (the version is then locked). */
     adoption: GoverningAdoptionSchema.nullable(),
+    /** Who is to sign it and who has (P2.4 part C). */
+    signers: z.array(GoverningSignerSchema),
+    /** The signature page (PDF) exists: every signer signed. */
+    signaturePage: z.boolean(),
   })
   .openapi("GoverningVersion");
 export type GoverningVersion = z.infer<typeof GoverningVersionSchema>;
@@ -194,3 +217,44 @@ export type AdoptGoverningDocumentInput = z.infer<typeof AdoptGoverningDocumentS
 export const GoverningDocumentCreatedSchema = z
   .object({ id: z.uuid(), versionId: z.uuid() })
   .openapi("GoverningDocumentCreated");
+
+// --- Signing (P2.4 part C) -------------------------------------------------------
+
+export const SignatureVersionParamsSchema = z.object({
+  clubId: z.uuid(),
+  documentId: z.uuid(),
+  versionId: z.uuid(),
+});
+
+export const PutSignersSchema = z
+  .object({
+    /** The signers of the version: signed ones stay, unsigned ones not given are removed. */
+    signers: z.array(z.object({ personId: z.uuid(), role: z.enum(SIGNER_ROLES) }).strict()).max(10),
+  })
+  .strict()
+  .openapi("PutSigners");
+export type PutSignersInput = z.infer<typeof PutSignersSchema>;
+
+export const SignedSchema = z
+  .object({ signedAt: z.iso.datetime(), sha256: z.string(), level: z.enum(["simple"]) })
+  .openapi("Signed");
+
+export const MySignatureRequestSchema = z
+  .object({
+    signatureId: z.uuid(),
+    clubId: z.uuid(),
+    clubName: z.string(),
+    documentId: z.uuid(),
+    documentName: z.string(),
+    versionId: z.uuid(),
+    versionNumber: z.number().int(),
+    role: z.enum(SIGNER_ROLES),
+    requestedAt: z.iso.datetime(),
+  })
+  .openapi("MySignatureRequest");
+export type MySignatureRequest = z.infer<typeof MySignatureRequestSchema>;
+
+export const MySignatureRequestListSchema = z
+  .object({ items: z.array(MySignatureRequestSchema) })
+  .openapi("MySignatureRequestList");
+export type MySignatureRequestList = z.infer<typeof MySignatureRequestListSchema>;

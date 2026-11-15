@@ -77,6 +77,12 @@ export default defineConfig({
           testMatch: /announcements\.spec\.ts/,
           dependencies: ["documents"],
         },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["announcements"] },
+        // Governing documents and meetings (P2.4): IK Norrbacka's statutes and board.
+        {
+          name: "governing",
+          testMatch: /governing\.spec\.ts/,
+          dependencies: ["announcements"],
+        },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["governing"] },
       ],
 });

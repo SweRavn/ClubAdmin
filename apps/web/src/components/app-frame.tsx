@@ -65,6 +65,13 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         pathname.startsWith("/me/announcements") ||
         /^\/clubs\/[^/]+\/announcements\/[0-9a-f-]{36}/.test(pathname),
     },
+    // "Mina uppgifter" (P2.4): the viewer's and their children's action items.
+    {
+      key: "tasks",
+      href: "/me/tasks",
+      label: t("nav.tasks"),
+      current: pathname.startsWith("/me/tasks"),
+    },
     // "Mina dokument" (P2.2): the newest files of the viewer's groups and clubs.
     {
       key: "documents",
@@ -107,6 +114,15 @@ export async function AppFrame({ children }: { children: ReactNode }) {
           pathname.startsWith(`/clubs/${club.id}/documents`) ||
           pathname.startsWith(`/clubs/${club.id}/folders`) ||
           pathname.startsWith(`/clubs/${club.id}/storage`),
+      });
+    }
+    // Governing documents (P2.4): the club's series, read by its members.
+    if (club.mine?.permissions.includes("club.documents.read")) {
+      nav.push({
+        key: "governing",
+        href: `/clubs/${club.id}/governing`,
+        label: t("nav.governing"),
+        current: pathname.startsWith(`/clubs/${club.id}/governing`),
       });
     }
     if (club.mine?.permissions.includes("club.join_requests.manage")) {

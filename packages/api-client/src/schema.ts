@@ -1548,6 +1548,66 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/signature-page": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A short-lived link to the version's signature page (PDF)
+     * @description Requires permission `document.read` on the document. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Governing_signaturePage"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/signatures": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Sign a version as one of its named signers (recent login with a second factor)
+     * @description Requires permission `document.read` on the document. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Governing_sign"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/signers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Name who signs a governing document's version (signed ones stay)
+     * @description Requires permission `club.governing_documents.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Governing_putSigners"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/uploaded": {
     parameters: {
       query?: never;
@@ -5102,6 +5162,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/signature-requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Documents waiting for my signature, across my clubs */
+    get: operations["Governing_mySignatureRequests"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/task-assignments/{assignmentId}/status": {
     parameters: {
       query?: never;
@@ -7712,6 +7789,21 @@ export interface components {
       /** Format: date-time */
       expiresAt: string;
     };
+    Signed: {
+      /** Format: date-time */
+      signedAt: string;
+      sha256: string;
+      /** @enum {string} */
+      level: "simple";
+    };
+    PutSigners: {
+      signers: {
+        /** Format: uuid */
+        personId: string;
+        /** @enum {string} */
+        role: "chair" | "secretary" | "adjuster" | "other";
+      }[];
+    };
     DocumentsSeen: {
       /** Format: uuid */
       groupId?: string | null;
@@ -7990,6 +8082,19 @@ export interface components {
       /** Format: uuid */
       id: string;
     } | null;
+    GoverningSigner: {
+      /** Format: uuid */
+      signatureId: string;
+      person: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** @enum {string} */
+      role: "chair" | "secretary" | "adjuster" | "other";
+      /** Format: date-time */
+      signedAt: string | null;
+      /** @enum {string|null} */
+      level: "simple" | null;
+      provider: string | null;
+      mine: boolean;
+    };
     GoverningVersion: {
       /** Format: uuid */
       id: string;
@@ -7999,6 +8104,8 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
       adoption: components["schemas"]["GoverningAdoption"];
+      signers: components["schemas"]["GoverningSigner"][];
+      signaturePage: boolean;
     };
     GoverningDocumentRef: {
       /** Format: uuid */
@@ -10746,6 +10853,26 @@ export interface components {
        * @enum {string}
        */
       client: "web" | "mobile";
+    };
+    MySignatureRequestList: {
+      items: components["schemas"]["MySignatureRequest"][];
+    };
+    MySignatureRequest: {
+      /** Format: uuid */
+      signatureId: string;
+      /** Format: uuid */
+      clubId: string;
+      clubName: string;
+      /** Format: uuid */
+      documentId: string;
+      documentName: string;
+      /** Format: uuid */
+      versionId: string;
+      versionNumber: number;
+      /** @enum {string} */
+      role: "chair" | "secretary" | "adjuster" | "other";
+      /** Format: date-time */
+      requestedAt: string;
     };
     SetTaskStatus: {
       /** @enum {string} */
@@ -18725,6 +18852,242 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["DocumentDownload"];
         };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_signaturePage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DocumentDownload"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_sign: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Signed"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_putSigners: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        documentId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutSigners"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Invalid request */
       400: {
@@ -35550,6 +35913,62 @@ export interface operations {
         };
         content: {
           "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Governing_mySignatureRequests: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MySignatureRequestList"];
         };
       };
       /** @description Not logged in */

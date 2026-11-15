@@ -23,6 +23,7 @@ import { ClubTime } from "../../../../components/club-time.tsx";
 import { NoticeDocuments } from "../../../../components/documents.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
+import { AgendaLink } from "../../../../components/meetings.tsx";
 import { recurrenceText, requestLeadText } from "../../../../components/recurrence-summary.ts";
 import { ResponseButtons, ResponseForm } from "../../../../components/response-buttons.tsx";
 import {
@@ -349,6 +350,9 @@ export default async function ActivityPage({ params, searchParams }: Props) {
       ) : null}
 
       <NoticeDocuments kind="activities" noticeId={activity.id} clubId={activity.clubId} />
+      {activity.kind === "meeting" ? (
+        <AgendaLink href={`/activities/${activity.id}/agenda`} />
+      ) : null}
 
       <section aria-labelledby="activity-leaders">
         <h2 id="activity-leaders" className="mb-2 text-lg font-semibold">

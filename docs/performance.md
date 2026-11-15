@@ -116,6 +116,14 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   data. The group's channel is created on first use; its members follow the
   group in the worker, never in a read. Real-time events carry IDs only;
   clients fetch the content (one request per event, batched by `after`).
+- Governing documents and tasks (P2.4): "Mina uppgifter" (`app.my_tasks`)
+  and "Väntar på min signatur" (`app.my_signature_requests`) read the
+  person's clubs one at a time from the person's own index entries
+  (`task_assignments_person_idx`, `document_signatures_signer_idx`); a
+  meeting's agenda is one query set (items, decisions, papers, action
+  items by the meeting's indexes). Request budgets cover "Mina
+  uppgifter", marking a task, the signatures waiting and a governing
+  document.
 - Announcements (P2.3): "Anslagstavlan" (`app.my_announcements`) reads the
   person's clubs one at a time and, in each, a page of the club's and of
   each of the person's groups' announcements from the board indexes

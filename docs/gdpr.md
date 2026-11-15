@@ -111,6 +111,12 @@
 - Guardians exercise rights for children below the consent age; teenagers get
   increasing control as they approach adulthood (country pack rules).
 
+**Governing documents and minutes (P2.4).** Adopted governing documents
+and signed minutes are records of the club's decisions: erasure does not
+rewrite their text or remove their signatures (the person's own record is
+anonymised; the minutes never name people, as the agenda shows who does
+what). The club's privacy notice says so.
+
 ## Retention defaults (Sweden, configurable)
 
 | Data | Default |

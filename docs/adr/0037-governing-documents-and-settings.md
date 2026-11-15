@@ -77,3 +77,17 @@ can tell which decision a setting rests on.
   taken from documents.
 - A club that turns governing documents off keeps the current values,
   with every source back to `manual`.
+
+## As implemented (P2.4, 2026-11-15)
+
+Settings are marked in a governing document's Markdown as
+`{{setting key = value}}` (parsed only for governing documents). Adopting
+the document records one board decision (`club_setting_decisions`, the
+body chosen on adoption, `document_version_id` pointing at the adopted
+version) through the same validation as a decision recorded by hand
+(`ClubPrivacyService.recordDecisionInTx`, in the adoption's transaction),
+applied at once when in effect. A marker naming a setting the board does
+not decide, or a value outside the registry's and the country pack's
+limits, refuses the adoption (`governing_setting_invalid`). The per-setting
+`source` column and the warning when a document and a manual change
+disagree are not built yet: a later manual decision simply follows.

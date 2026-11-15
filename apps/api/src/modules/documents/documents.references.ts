@@ -10,6 +10,9 @@ export const DOCUMENT_PERSON_REFERENCES: readonly PersonReference[] = [
   { table: "public.document_versions", column: "uploaded_by_person_id", clubScoped: true },
   // Governing documents (P2.4): who recorded an adoption.
   { table: "public.document_versions", column: "adopted_by_person_id", clubScoped: true },
+  // Signing (P2.4 part C): a signature stays the signer's; who named them.
+  { table: "public.document_signatures", column: "signer_person_id", clubScoped: true },
+  { table: "public.document_signatures", column: "requested_by_person_id", clubScoped: true },
   // Part B.
   { table: "public.notice_attachments", column: "attached_by_person_id", clubScoped: true },
   {

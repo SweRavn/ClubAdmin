@@ -13,6 +13,7 @@ import {
   CreateDocumentSeriesSchema,
   type CreateGoverningDocumentInput,
   CreateGoverningDocumentSchema,
+  DocumentDownloadSchema,
   type DocumentSeriesPage,
   DocumentSeriesPageSchema,
   type DocumentSeriesQuery,
@@ -25,7 +26,13 @@ import {
   GoverningVersionParamsSchema,
   type GoverningVersionText,
   GoverningVersionTextSchema,
+  type MySignatureRequestList,
+  MySignatureRequestListSchema,
   type PersonSummary,
+  type PutSignersInput,
+  PutSignersSchema,
+  SignatureVersionParamsSchema,
+  SignedSchema,
   type UpdateGoverningDocumentInput,
   UpdateGoverningDocumentSchema,
   z,
@@ -41,11 +48,14 @@ import {
   tenantContext,
 } from "../authorization/index.ts";
 import { RequiresEntitlement } from "../entitlements/index.ts";
-import { RequireMfa } from "../identity/index.ts";
+import { RecentAuth, RequireMfa } from "../identity/index.ts";
 import { PeopleService } from "../people/index.ts";
+import type { SignatureRow } from "./governing.repository.ts";
 import { GoverningService, type TextVersionRow } from "./governing.service.ts";
 
 const TAGS = ["documents"];
+/** Signing needs a login with a second factor at most this many minutes old. */
+const SIGNING_RECENT_MINUTES = 10;
 const SeriesCreatedSchema = z.object({ id: z.uuid() }).openapi("DocumentSeriesCreated");
 const DraftSavedSchema = z
   .object({ versionId: z.uuid().nullable() })
@@ -74,13 +84,15 @@ export class GoverningController {
     authz: RequestAuthorization,
     clubId: string,
     versions: readonly TextVersionRow[],
+    signatures: ReadonlyMap<string, readonly SignatureRow[]> = new Map(),
   ): Promise<Map<string, PersonSummary>> {
     const ids = [
-      ...new Set(
-        versions.flatMap((v) =>
+      ...new Set([
+        ...versions.flatMap((v) =>
           [v.editedByPersonId, v.adoptedByPersonId].filter((id): id is string => id !== null),
         ),
-      ),
+        ...[...signatures.values()].flat().map((x) => x.signerPersonId),
+      ]),
     ];
     if (ids.length === 0) return new Map();
     const rows = await this.people.summaries(tenantContext(authz, clubId), ids);
@@ -186,13 +198,21 @@ export class GoverningController {
       params.documentId,
       manage,
     );
-    const persons = await this.persons(authz, params.clubId, [
-      ...view.versions,
-      ...(view.current ? [view.current] : []),
-      ...(view.draft ? [view.draft] : []),
-    ]);
+    const persons = await this.persons(
+      authz,
+      params.clubId,
+      [
+        ...view.versions,
+        ...(view.current ? [view.current] : []),
+        ...(view.draft ? [view.draft] : []),
+      ],
+      view.signatures,
+    );
+    const me = authz.actor.personId;
+    const version = (v: TextVersionRow) =>
+      toVersion(v, persons, view.signatures.get(v.id) ?? [], me);
     const withText = (v: TextVersionRow): GoverningVersionText => ({
-      ...toVersion(v, persons),
+      ...version(v),
       body: v.body ?? "",
     });
     return {
@@ -208,7 +228,7 @@ export class GoverningController {
       status: view.document.governingStatus ?? "draft",
       current: view.current ? withText(view.current) : null,
       draft: view.draft ? withText(view.draft) : null,
-      versions: view.versions.map((v) => toVersion(v, persons)),
+      versions: view.versions.map(version),
       supersededBy: view.supersededBy,
       supersedes: view.supersedes,
       audience: view.audience.map((e) => ({
@@ -246,7 +266,7 @@ export class GoverningController {
       this.canManage(authz, params.clubId),
     );
     const persons = await this.persons(authz, params.clubId, [version]);
-    return { ...toVersion(version, persons), body: version.body ?? "" };
+    return { ...toVersion(version, persons, [], authz.actor.personId), body: version.body ?? "" };
   }
 
   @Endpoint({
@@ -325,9 +345,105 @@ export class GoverningController {
     await this.governing.delete(tenantContext(authz, params.clubId), params.documentId);
     return null;
   }
+
+  // --- Signing (P2.4 part C) ----------------------------------------------------
+
+  @Endpoint({
+    method: "PUT",
+    path: "clubs/:clubId/documents/:documentId/versions/:versionId/signers",
+    summary: "Name who signs a governing document's version (signed ones stay)",
+    tags: TAGS,
+    access: { permission: "club.governing_documents.manage", resource: "club" },
+    request: { params: SignatureVersionParamsSchema, body: PutSignersSchema },
+    response: z.null(),
+    status: 204,
+  })
+  @RequiresEntitlement("documents")
+  async putSigners(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string; documentId: string; versionId: string },
+    @Body() body: PutSignersInput,
+  ): Promise<null> {
+    await this.governing.putSigners(
+      tenantContext(authz, params.clubId),
+      params.documentId,
+      params.versionId,
+      body,
+    );
+    return null;
+  }
+
+  @RequireMfa()
+  @RecentAuth(SIGNING_RECENT_MINUTES)
+  @Endpoint({
+    method: "POST",
+    path: "clubs/:clubId/documents/:documentId/versions/:versionId/signatures",
+    summary: "Sign a version as one of its named signers (recent login with a second factor)",
+    tags: TAGS,
+    access: { permission: "document.read", resource: "document" },
+    request: { params: SignatureVersionParamsSchema },
+    response: SignedSchema,
+    status: 201,
+  })
+  @RequiresEntitlement("documents")
+  async sign(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string; documentId: string; versionId: string },
+  ): Promise<{ signedAt: string; sha256: string; level: "simple" }> {
+    const signed = await this.governing.sign(
+      tenantContext(authz, params.clubId),
+      params.documentId,
+      params.versionId,
+    );
+    return { ...signed, signedAt: iso(signed.signedAt) };
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "clubs/:clubId/documents/:documentId/versions/:versionId/signature-page",
+    summary: "A short-lived link to the version's signature page (PDF)",
+    tags: TAGS,
+    access: { permission: "document.read", resource: "document" },
+    request: { params: SignatureVersionParamsSchema },
+    response: DocumentDownloadSchema,
+  })
+  @RequiresEntitlement("documents")
+  async signaturePage(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { clubId: string; documentId: string; versionId: string },
+  ): Promise<{ url: string; expiresAt: string }> {
+    const link = await this.governing.signaturePage(
+      tenantContext(authz, params.clubId),
+      params.documentId,
+      params.versionId,
+    );
+    return { url: link.url, expiresAt: iso(link.expiresAt) };
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "me/signature-requests",
+    summary: "Documents waiting for my signature, across my clubs",
+    tags: TAGS,
+    access: { authenticated: true },
+    response: MySignatureRequestListSchema,
+  })
+  async mySignatureRequests(
+    @CurrentAuthorization() authz: RequestAuthorization,
+  ): Promise<MySignatureRequestList> {
+    const rows = await this.governing.mySignatureRequests(authz.context);
+    return {
+      items: rows.map((r) => ({ ...r, requestedAt: iso(r.requestedAt) })),
+    };
+  }
 }
 
-function toVersion(v: TextVersionRow, persons: Map<string, PersonSummary>): GoverningVersion {
+function toVersion(
+  v: TextVersionRow,
+  persons: Map<string, PersonSummary>,
+  signatures: readonly SignatureRow[],
+  me: string,
+): GoverningVersion {
   return {
     id: v.id,
     number: v.number,
@@ -348,5 +464,15 @@ function toVersion(v: TextVersionRow, persons: Map<string, PersonSummary>): Gove
             recordedAt: iso(v.adoptedAt),
           }
         : null,
+    signers: signatures.map((x) => ({
+      signatureId: x.id,
+      person: persons.get(x.signerPersonId) ?? null,
+      role: x.role,
+      signedAt: x.signedAt ? iso(x.signedAt) : null,
+      level: x.level,
+      provider: x.provider,
+      mine: x.signerPersonId === me && x.signedAt === null,
+    })),
+    signaturePage: v.signaturePageKey !== null,
   };
 }

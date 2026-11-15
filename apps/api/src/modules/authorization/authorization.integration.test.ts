@@ -1047,6 +1047,29 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/governing-documents/${m.draftGoverningId}`,
       expected: { ...CLUB_FORBIDDEN, registrar: 204 },
     },
+    // Signing (P2.4 part C): naming signers needs the governing permission;
+    // signing needs MFA (403 for the club's people, as no matrix token has
+    // it); the signature page is read by the document's readers (not made:
+    // 409).
+    "PUT /api/v1/clubs/:clubId/documents/:documentId/versions/:versionId/signers": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/documents/${m.governingId}/versions/${m.governingVersionId}/signers`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 204 },
+      body: { signers: [] },
+    },
+    "POST /api/v1/clubs/:clubId/documents/:documentId/versions/:versionId/signatures": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/documents/${m.governingId}/versions/${m.governingVersionId}/signatures`,
+      // The relative is not in the document's audience: 404 before the MFA check.
+      expected: { ...ALL_FORBIDDEN, outsider: 404, operator: 404, relative: 404 },
+    },
+    "GET /api/v1/clubs/:clubId/documents/:documentId/versions/:versionId/signature-page": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/documents/${m.governingId}/versions/${m.governingVersionId}/signature-page`,
+      expected: Object.fromEntries(
+        Object.entries(CLUB_AUDIENCE).map(([p, code]) => [p, code === 200 ? 409 : code]),
+      ) as Record<MatrixPersona, number>,
+    },
     // Meetings (P2.4 part B): an agenda is read with the activity or event
     // and edited by whoever manages it; minutes need a series the first
     // time (400 for those allowed, as the matrix gives none). Templates are

@@ -50,6 +50,7 @@ import {
   purgeMemberTask,
 } from "./privacy.ts";
 import { anonymizeProfileViewsTask, profileViewsRetentionTask } from "./profile-views.ts";
+import { signaturePageTask } from "./signature-page.ts";
 import { waitlistOffersTask } from "./waitlists.ts";
 
 export interface TaskDependencies {
@@ -161,6 +162,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "documents:delete_objects": deleteObjectsTask(deps.db, deps.storage ?? null),
     "documents:cleanup": cleanupTask(deps.db, deps.storage ?? null),
     "documents:deletion_dates": deletionDatesTask(deps.db),
+    "documents:signature_page": signaturePageTask(deps.db, deps.storage ?? null),
     "announcements:due": dueAnnouncementsTask(deps.db),
     ...billingTasks(deps),
     ...notificationTasks(deps),

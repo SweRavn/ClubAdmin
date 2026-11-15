@@ -2,11 +2,12 @@
 // "Mina dokument" (P2.2, ADR 0049 decision 9): the newest files of the
 // viewer's (and their children's) groups and clubs, new ones marked (since
 // they last opened the club's or group's documents).
+import { enumKey } from "@clubadmin/i18n";
 import { EmptyState, formatDateTime } from "@clubadmin/ui";
 import { getLocale, getTimeZone, getTranslations } from "next-intl/server";
 
 import { downloadHref, formatSize } from "../../../../components/documents.tsx";
-import { getMyDocuments } from "../../../../server/data.ts";
+import { getMyDocuments, getMySignatureRequests } from "../../../../server/data.ts";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -17,11 +18,12 @@ export async function generateMetadata() {
 export default async function MyDocumentsPage({ searchParams }: Props) {
   const query = await searchParams;
   const cursor = typeof query.cursor === "string" ? query.cursor : null;
-  const [t, locale, timeZone, page] = await Promise.all([
+  const [t, locale, timeZone, page, waiting] = await Promise.all([
     getTranslations(),
     getLocale(),
     getTimeZone(),
     getMyDocuments(cursor),
+    cursor ? Promise.resolve(null) : getMySignatureRequests(),
   ]);
   return (
     <div className="space-y-6">
@@ -29,6 +31,27 @@ export default async function MyDocumentsPage({ searchParams }: Props) {
         <h1 className="text-2xl font-semibold">{t("documents.mine")}</h1>
         <p className="mt-1 max-w-prose text-sm text-muted">{t("documents.mineIntro")}</p>
       </div>
+      {/* Waiting for my signature (P2.4): minutes and other governing documents. */}
+      {waiting && waiting.items.length > 0 ? (
+        <section className="space-y-2" data-testid="waiting-signatures">
+          <h2 className="text-lg font-semibold">{t("governing.waitingForMe")}</h2>
+          <ul className="divide-y divide-border">
+            {waiting.items.map((w) => (
+              <li key={w.signatureId} className="py-2">
+                <a
+                  href={`/clubs/${w.clubId}/governing/${w.documentId}`}
+                  className="font-medium underline"
+                >
+                  {w.documentName}
+                </a>{" "}
+                <span className="text-sm text-muted">
+                  {w.clubName} · {t(enumKey("governing.signerRoles", w.role))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {page.items.length > 0 ? (
         <ul className="divide-y divide-border" data-testid="my-documents">
           {page.items.map((item) => {

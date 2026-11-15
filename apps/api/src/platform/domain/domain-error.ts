@@ -342,6 +342,11 @@ export const DOMAIN_ERRORS = {
   governing_meeting_invalid: "validation",
   /** Only another adopted governing document of the club is superseded. */
   governing_supersede_invalid: "validation",
+  /** A signed draft is locked: a change is a new version, signed again. */
+  governing_signed: "conflict",
+  /** A signer named twice, or not a member of the club. */
+  signers_invalid: "validation",
+  already_signed: "conflict",
   // Meetings and tasks (P2.4 part B).
   /** Two of the club's agenda templates would have the same name. */
   agenda_template_name_taken: "conflict",

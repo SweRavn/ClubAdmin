@@ -17,6 +17,14 @@ import {
 } from "../../../../components/action-form.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { NoticeDocuments } from "../../../../components/documents.tsx";
+import { AgendaLink } from "../../../../components/meetings.tsx";
+import { getAgenda } from "../../../../server/data.ts";
+
+async function EventAgendaLink({ eventId }: { eventId: string }) {
+  const agenda = await getAgenda("events", eventId);
+  if (!agenda || (agenda.items.length === 0 && !agenda.canEdit)) return null;
+  return <AgendaLink href={`/events/${eventId}/agenda`} />;
+}
 import { answerText, EventQuestions } from "../../../../components/event-questions.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
@@ -134,6 +142,8 @@ export default async function EventPage({ params, searchParams }: Props) {
       ) : null}
 
       <NoticeDocuments kind="events" noticeId={event.id} clubId={event.clubId} />
+      {/* The annual meeting's agenda (P2.4): once it has one, or for those who may write it. */}
+      <EventAgendaLink eventId={event.id} />
 
       {event.mine.length > 0 ? (
         <section aria-labelledby="event-mine" className="space-y-4" data-testid="event-mine">

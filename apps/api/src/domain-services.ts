@@ -5,6 +5,7 @@
 
 import type { Database } from "@clubadmin/db";
 import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
+import { inAppSignatureProvider } from "@clubadmin/server-kit/signatures";
 import { DOCUMENT_DEFAULT_CLUB_LIMIT_BYTES } from "@clubadmin/shared";
 
 import { AccountsService } from "./modules/accounts/index.ts";
@@ -147,7 +148,12 @@ export function createCoreServices(
   const events = new EventsService(db, { clubs, activities, attendance, encryption });
   const consents = new ConsentsService(db, { clubs });
   const clubPrivacy = new ClubPrivacyService(db, { clubs });
-  const governing = new GoverningService(db, { privacy: clubPrivacy });
+  const governing = new GoverningService(db, {
+    privacy: clubPrivacy,
+    signer: inAppSignatureProvider(),
+    storage: options.storage ?? null,
+    isMember: (tx, clubId, personId) => memberships.isMemberInTx(tx, clubId, personId),
+  });
   return {
     encryption,
     activities,

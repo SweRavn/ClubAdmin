@@ -21,6 +21,7 @@ import {
   runDeletionDates,
   scanVersion,
 } from "./documents.ts";
+import { makeSignaturePage } from "./signature-page.ts";
 
 loadEnvFiles();
 const config = objectStorageConfig({
@@ -288,5 +289,45 @@ describe("publishing and deletion dates (P2.2 part B)", () => {
       [due.documentId],
     );
     expect(events.map((e) => e.type)).toContain("documents.deleted");
+  });
+});
+
+describe("the signature page (P2.4 part C)", () => {
+  it("is made once every named signer has signed, and stored beside the version", async () => {
+    const documentId = uuidv7();
+    const versionId = uuidv7();
+    await admin(
+      `INSERT INTO documents (id, club_id, folder_id, kind, governing_status, name)
+       VALUES ($1, $2, $3, 'governing', 'draft', 'Protokoll')`,
+      [documentId, club, folder],
+    );
+    await admin(
+      `INSERT INTO document_versions (id, club_id, document_id, number, file_name, body, size, sha256,
+         content_type, status)
+       VALUES ($1, $2, $3, 1, 'Protokoll.md', '# Protokoll', 11, $4, 'text/markdown', 'clean')`,
+      [versionId, club, documentId, "a".repeat(64)],
+    );
+    await admin(
+      `INSERT INTO document_signatures (club_id, version_id, signer_person_id, role)
+       VALUES ($1, $2, $3, 'chair')`,
+      [club, versionId, uploader],
+    );
+    // Not signed yet: nothing to make.
+    expect(await makeSignaturePage(t.db, storage, club, versionId)).toBe(false);
+    await admin(
+      `UPDATE document_signatures SET signed_at = now(), level = 'simple', provider = 'in_app',
+         sha256 = $2 WHERE version_id = $1`,
+      [versionId, "a".repeat(64)],
+    );
+    expect(await makeSignaturePage(t.db, storage, club, versionId)).toBe(true);
+    const [row] = await admin<{ key: string | null }>(
+      "SELECT signature_page_object_key AS key FROM document_versions WHERE id = $1",
+      [versionId],
+    );
+    expect(row?.key).toBe(`documents/${club}/${documentId}/${versionId}-signatures.pdf`);
+    const pdf = await storage.getObject(row!.key!, { maxBytes: 1_000_000 });
+    expect(pdf?.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+    // Made once.
+    expect(await makeSignaturePage(t.db, storage, club, versionId)).toBe(false);
   });
 });

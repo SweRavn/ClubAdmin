@@ -49,7 +49,9 @@
     "documents": "My documents",
     "clubDocuments": "Documents",
     "announcements": "Notice board",
-    "clubAnnouncements": "Announcements"
+    "clubAnnouncements": "Announcements",
+    "tasks": "My tasks",
+    "governing": "Governing documents"
   },
   "clubSwitcher": {
     "label": "Club: {club}",
@@ -854,7 +856,10 @@
     "agenda_template_name_taken": "Two templates cannot have the same name.",
     "agenda_person_invalid": "Presenters and assignees must be members of the club.",
     "agenda_empty": "The agenda has no items to assemble.",
-    "minutes_series_required": "Choose the series the minutes go in."
+    "minutes_series_required": "Choose the series the minutes go in.",
+    "governing_signed": "The draft is signed and cannot change. A change becomes a new version, signed again.",
+    "signers_invalid": "Signers must be members of the club and named once.",
+    "already_signed": "You have already signed this version."
   },
   "memberExport": {
     "columns": {
@@ -2075,6 +2080,14 @@
       "deletion_soon": {
         "title": "A document you uploaded will be deleted soon",
         "body": "The document in {club} is deleted automatically on {date}. Change or remove the date to keep it."
+      },
+      "adopted": {
+        "title": "{kind, select, statutes {New statutes were adopted in {club}} annual_meeting_minutes {New annual meeting minutes in {club}} board_minutes {New minutes in {hasGroup, select, yes {{group}} other {{club}}}} policies {A new policy was adopted in {club}} other {A new governing document was adopted in {club}}}",
+        "body": "Open the document to read it."
+      },
+      "signature_requested": {
+        "title": "A document is waiting for your signature",
+        "body": "Open the document in {club} to read and sign it."
       }
     },
     "announcement": {
@@ -2845,7 +2858,8 @@
       "unmuted": "unmuted in chat",
       "adopted": "adopted",
       "superseded": "superseded",
-      "assembled": "assembled"
+      "assembled": "assembled",
+      "signed": "signed"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -4344,5 +4358,150 @@
     "decisions": "Decisions",
     "actions": "Action items",
     "actionDue": "{action} (by {date})"
+  },
+  "signaturePage": {
+    "title": "Signatures",
+    "version": "Version {number}",
+    "hash": "SHA-256 of the signed text:",
+    "explanation": "The signatures apply to exactly the text with this checksum. If the text changes, the checksum no longer matches.",
+    "hidden": "(protected identity)",
+    "signed": "{role} · signed {at} · {level} ({provider})",
+    "roles": {
+      "chair": "Chair",
+      "secretary": "Secretary",
+      "adjuster": "Adjuster",
+      "other": "Signer"
+    },
+    "levels": {
+      "simple": "simple electronic signature"
+    }
+  },
+  "governing": {
+    "title": "Governing documents",
+    "intro": "Statutes, minutes and policies. Drafts are written here and adopted by the chair or the secretary.",
+    "series": "Series",
+    "noSeries": "No series yet.",
+    "newSeries": "New series",
+    "seriesName": "Series name",
+    "seriesKind": "Kind of series",
+    "seriesKinds": {
+      "statutes": "Statutes",
+      "annual_meeting_minutes": "Annual meeting minutes",
+      "board_minutes": "Board minutes",
+      "policies": "Policies",
+      "other": "Other"
+    },
+    "createSeries": "Create series",
+    "empty": "No documents in the series.",
+    "newDocument": "New document",
+    "documentName": "Name",
+    "body": "Text",
+    "bodyHelp": "Markdown: # Heading, **bold**, *italic*, lists with -. Mark a setting the text decides as '{{'setting key = value'}}'.",
+    "create": "Create draft",
+    "statuses": {
+      "draft": "Draft",
+      "adopted": "Adopted",
+      "superseded": "Superseded",
+      "archived": "Archived"
+    },
+    "current": "Text in force",
+    "draft": "Draft",
+    "noCurrent": "Not adopted yet.",
+    "save": "Save draft",
+    "saved": "Saved.",
+    "adopt": "Record adoption",
+    "adoptedOn": "Adopted on",
+    "effectiveFrom": "Applies from (empty: the same day)",
+    "decisionBody": "Decided by (needed when the text marks settings)",
+    "decisionBodies": {
+      "board": "The board",
+      "annual_meeting": "The annual meeting",
+      "extra_meeting": "An extra general meeting"
+    },
+    "reference": "Paragraph of the minutes (optional)",
+    "supersedes": "Supersedes",
+    "adoptButton": "Record as adopted",
+    "adoptHelp": "Needs a login with a second factor. The version is locked and marked settings become the club's decision.",
+    "adoptedNotice": "The document is recorded as adopted.",
+    "archive": "Archive",
+    "delete": "Delete the draft",
+    "versions": "Versions",
+    "version": "Version {number}",
+    "adoptedInfo": "Adopted {date}, applies from {from}",
+    "notAdopted": "Not adopted",
+    "supersededBy": "Superseded by {name}",
+    "supersedesList": "Supersedes: {names}",
+    "signers": "Signing",
+    "noSigners": "No signers named.",
+    "signerRole": "Role",
+    "signerPerson": "Person",
+    "signerRoles": {
+      "chair": "Chair",
+      "secretary": "Secretary",
+      "adjuster": "Adjuster",
+      "other": "Signer"
+    },
+    "saveSigners": "Save signers",
+    "sign": "Sign",
+    "signHelp": "You sign exactly this version with your second factor. The signature is kept with the checksum.",
+    "signedAt": "Signed {date}",
+    "waiting": "Waiting",
+    "signedNotice": "You have signed.",
+    "signaturePage": "Signature page (PDF)",
+    "waitingForMe": "Waiting for my signature",
+    "noWaiting": "Nothing is waiting for your signature.",
+    "hash": "Checksum (SHA-256): {hash}",
+    "signOnWeb": "Sign on the web: it needs a login with a second factor."
+  },
+  "meetings": {
+    "agenda": "Agenda",
+    "agendaLink": "Agenda and minutes",
+    "intro": "Items, minutes per item, decisions and action items. Assemble the minutes when the meeting is over.",
+    "empty": "The agenda is empty.",
+    "item": "§ {position}",
+    "title": "Heading",
+    "presenter": "Presenter",
+    "nobody": "Nobody",
+    "minutes": "Minutes",
+    "decisions": "Decisions (one per line)",
+    "papers": "Papers",
+    "actions": "Action items",
+    "actionTitle": "Action",
+    "dueDate": "By",
+    "assignee": "Responsible",
+    "status": "Status",
+    "statuses": {
+      "planned": "Planned",
+      "done": "Done",
+      "missed": "Not done"
+    },
+    "remove": "Remove",
+    "newItem": "New item",
+    "newAction": "New action item",
+    "save": "Save the agenda",
+    "fromTemplate": "Start from a template",
+    "useTemplate": "Use {name}",
+    "assemble": "Assemble minutes",
+    "assembleHelp": "The minutes are written as a draft in the series you choose. Assembling again updates the draft.",
+    "series": "Series",
+    "minutesDocument": "The minutes",
+    "readOnly": "You can read the agenda but not change it."
+  },
+  "tasks": {
+    "title": "My tasks",
+    "intro": "Action items from meetings given to you or your children.",
+    "open": "To do",
+    "closed": "Done",
+    "empty": "No tasks.",
+    "due": "By {date}",
+    "from": "From {meeting}",
+    "for": "For {person}",
+    "markDone": "Mark as done",
+    "markPlanned": "Not done after all",
+    "statuses": {
+      "planned": "To do",
+      "done": "Done",
+      "missed": "Not done"
+    }
   }
 }

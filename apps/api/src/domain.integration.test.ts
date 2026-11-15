@@ -213,6 +213,10 @@ describe("tenant isolation of club-owned tables", () => {
                SELECT ${a.id}, 'action_item', 'Fixture', id FROM i RETURNING id)
         INSERT INTO task_assignments (club_id, task_id, person_id)
         SELECT ${a.id}, id, ${member.id} FROM tk`);
+      // Signing (P2.4 part C): a signer named on the fixture version.
+      await tx.execute(sql`
+        INSERT INTO document_signatures (club_id, version_id, signer_person_id, role)
+        SELECT ${a.id}, id, ${member.id}, 'chair' FROM document_versions WHERE club_id = ${a.id} LIMIT 1`);
       await tx.execute(sql`
         INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
         VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);

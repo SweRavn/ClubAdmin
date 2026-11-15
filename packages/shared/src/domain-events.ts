@@ -73,6 +73,15 @@ export const DOMAIN_EVENTS = {
   "document.published": z.object({ clubId: id, documentId: id, versionId: id }),
   /** A file is deleted on its deletion date in a week: its uploader is told (P2.2 part B). */
   "document.deletion_soon": z.object({ clubId: id, documentId: id }),
+  /** A governing document was adopted (P2.4): push to its audience, a fixed text per series kind. */
+  "document.adopted": z.object({ clubId: id, documentId: id, versionId: id }),
+  /** Signers were named for a version (P2.4): each is told. */
+  "document.signature_requested": z.object({
+    clubId: id,
+    signatureIds: z.array(id).min(1).max(20),
+  }),
+  /** Everyone named signed a version (P2.4): the worker makes its signature page. */
+  "document.signed": z.object({ clubId: id, versionId: id }),
   /** An announcement was sent (P2.3): the worker resolves its audience into notices. */
   "announcement.sent": z.object({ clubId: id, announcementId: id }),
   /** An announcement was withdrawn or deleted (P2.3): what is not delivered yet is not. */

@@ -5,7 +5,7 @@
 // documents.repository.ts.
 
 import { sql, type Tx } from "@clubadmin/db";
-import type { GoverningStatus } from "@clubadmin/shared";
+import type { GoverningStatus, SignerRole } from "@clubadmin/shared";
 
 import type { FolderRow } from "./documents.repository.ts";
 
@@ -144,6 +144,8 @@ export interface TextVersionRow {
   adoptedEventId: string | null;
   adoptedByPersonId: string | null;
   adoptedAt: Date | null;
+  /** The signature page's object (every signer signed, P2.4 part C). */
+  signaturePageKey: string | null;
   /** Only when asked for. */
   body: string | null;
 }
@@ -162,12 +164,14 @@ type TextVersionSql = {
   adopted_event_id: string | null;
   adopted_by_person_id: string | null;
   adopted_at: string | null;
+  signature_page_object_key: string | null;
   body: string | null;
 };
 
 const TEXT_VERSION_COLUMNS = sql`v.id, v.document_id, v.number, v.sha256, v.uploaded_by_person_id,
   v.created_at::text, v.uploaded_at::text, v.adopted_on::text, v.effective_from::text,
-  v.adopted_activity_id, v.adopted_event_id, v.adopted_by_person_id, v.adopted_at::text`;
+  v.adopted_activity_id, v.adopted_event_id, v.adopted_by_person_id, v.adopted_at::text,
+  v.signature_page_object_key`;
 
 const toTextVersion = (r: TextVersionSql): TextVersionRow => ({
   id: r.id,
@@ -183,6 +187,7 @@ const toTextVersion = (r: TextVersionSql): TextVersionRow => ({
   adoptedEventId: r.adopted_event_id,
   adoptedByPersonId: r.adopted_by_person_id,
   adoptedAt: r.adopted_at ? new Date(r.adopted_at) : null,
+  signaturePageKey: r.signature_page_object_key,
   body: r.body,
 });
 
@@ -291,4 +296,148 @@ export async function superseder(
     JOIN public.documents s ON s.id = d.superseded_by_document_id
     WHERE d.id = ${documentId}::uuid`);
   return rows[0] ?? null;
+}
+
+// --- Signatures (P2.4 part C) -----------------------------------------------------
+
+export interface SignatureRow {
+  id: string;
+  versionId: string;
+  signerPersonId: string;
+  role: SignerRole;
+  level: "simple" | null;
+  provider: string | null;
+  sha256: string | null;
+  signedAt: Date | null;
+}
+
+/** The signatures of these versions, by version (signers in the order they were named). */
+export async function signatures(
+  tx: Tx,
+  versionIds: readonly string[],
+): Promise<Map<string, SignatureRow[]>> {
+  const out = new Map<string, SignatureRow[]>();
+  if (versionIds.length === 0) return out;
+  const { rows } = await tx.execute<{
+    id: string;
+    version_id: string;
+    signer_person_id: string;
+    role: SignerRole;
+    level: "simple" | null;
+    provider: string | null;
+    sha256: string | null;
+    signed_at: string | null;
+  }>(sql`
+    SELECT s.id, s.version_id, s.signer_person_id, s.role, s.level, s.provider, s.sha256,
+      s.signed_at::text
+    FROM public.document_signatures s
+    WHERE s.version_id = ANY (${`{${versionIds.join(",")}}`}::uuid[])
+    ORDER BY s.version_id, s.created_at, s.id`);
+  for (const r of rows) {
+    const row: SignatureRow = {
+      id: r.id,
+      versionId: r.version_id,
+      signerPersonId: r.signer_person_id,
+      role: r.role,
+      level: r.level,
+      provider: r.provider,
+      sha256: r.sha256,
+      signedAt: r.signed_at ? new Date(r.signed_at) : null,
+    };
+    out.set(r.version_id, [...(out.get(r.version_id) ?? []), row]);
+  }
+  return out;
+}
+
+/**
+ * Names the version's signers: signed ones stay, unsigned ones not given
+ * are removed, new ones are added (returned, to be told).
+ */
+export async function replaceSigners(
+  tx: Tx,
+  input: {
+    clubId: string;
+    versionId: string;
+    signers: readonly { personId: string; role: SignerRole }[];
+    by: string;
+  },
+): Promise<string[]> {
+  const ids = `{${input.signers.map((x) => x.personId).join(",")}}`;
+  await tx.execute(sql`
+    DELETE FROM public.document_signatures
+    WHERE version_id = ${input.versionId}::uuid AND signed_at IS NULL
+      AND NOT (signer_person_id = ANY (${ids}::uuid[]))`);
+  const added: string[] = [];
+  for (const signer of input.signers) {
+    const { rows } = await tx.execute<{ id: string; inserted: boolean }>(sql`
+      INSERT INTO public.document_signatures
+        (club_id, version_id, signer_person_id, role, requested_by_person_id)
+      VALUES (${input.clubId}, ${input.versionId}, ${signer.personId}, ${signer.role}, ${input.by})
+      ON CONFLICT (version_id, signer_person_id) DO UPDATE SET role = EXCLUDED.role
+      WHERE document_signatures.signed_at IS NULL
+      RETURNING id, (xmax = 0) AS inserted`);
+    if (rows[0]?.inserted) added.push(rows[0].id);
+  }
+  return added;
+}
+
+/** Records a signature (false when it was signed already). */
+export async function markSigned(
+  tx: Tx,
+  input: { id: string; provider: string; level: "simple"; sha256: string; signedAt: Date },
+): Promise<boolean> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    UPDATE public.document_signatures SET provider = ${input.provider}, level = ${input.level},
+      sha256 = ${input.sha256}, signed_at = ${input.signedAt.toISOString()}::timestamptz
+    WHERE id = ${input.id}::uuid AND signed_at IS NULL RETURNING id`);
+  return rows.length > 0;
+}
+
+/** Whether a version has any signature (its text is then locked). */
+export async function hasSignature(tx: Tx, versionId: string): Promise<boolean> {
+  const { rows } = await tx.execute<{ found: boolean }>(sql`
+    SELECT EXISTS (SELECT 1 FROM public.document_signatures
+      WHERE version_id = ${versionId}::uuid AND signed_at IS NOT NULL) AS found`);
+  return rows[0]?.found ?? false;
+}
+
+export interface MySignatureRequestRow {
+  signatureId: string;
+  clubId: string;
+  clubName: string;
+  documentId: string;
+  documentName: string;
+  versionId: string;
+  versionNumber: number;
+  role: SignerRole;
+  requestedAt: Date;
+}
+
+/** "Waiting for my signature" across the caller's clubs, newest first. */
+export async function mySignatureRequests(tx: Tx, limit: number): Promise<MySignatureRequestRow[]> {
+  const { rows } = await tx.execute<{
+    signature_id: string;
+    club_id: string;
+    club_name: string;
+    document_id: string;
+    document_name: string;
+    version_id: string;
+    version_number: number;
+    role: SignerRole;
+    requested_at: string;
+  }>(sql`
+    SELECT signature_id, club_id, club_name, document_id, document_name, version_id,
+      version_number, role, requested_at::text
+    FROM app.my_signature_requests(${limit})`);
+  return rows.map((r) => ({
+    signatureId: r.signature_id,
+    clubId: r.club_id,
+    clubName: r.club_name,
+    documentId: r.document_id,
+    documentName: r.document_name,
+    versionId: r.version_id,
+    versionNumber: r.version_number,
+    role: r.role,
+    requestedAt: new Date(r.requested_at),
+  }));
 }

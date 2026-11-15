@@ -805,6 +805,8 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "an announcement's text, audience and channels: on its page and in the archive, changes in the audit log (announcement.*)",
   // Meetings and tasks (P2.4 part B): shown on the meeting's agenda and in
   // "Mina uppgifter"; every change is in the audit log (meeting.*, task.*).
+  "public.document_signatures":
+    "who signed a governing document's version, with the hash and time: on the document and the signature page, in the audit log (document.signed)",
   "public.agenda_templates":
     "the club's agenda templates: on the templates page and in the audit log (meeting.templates.updated)",
   "public.meeting_agenda_items":

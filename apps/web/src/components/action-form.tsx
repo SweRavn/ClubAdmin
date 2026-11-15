@@ -64,6 +64,9 @@ const NOTICE_PARAMS = [
   "member",
   "season",
   "archived",
+  "adopted",
+  "signed",
+  "assembled",
 ];
 
 export const buttonClass = "rounded-md bg-accent px-4 py-2 text-sm text-accent-fg";

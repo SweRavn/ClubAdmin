@@ -19,6 +19,7 @@ import { chatDemoStep } from "./steps/chat.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
 import { documentsDemoStep } from "./steps/documents.ts";
 import { eventsDemoStep } from "./steps/events.ts";
+import { governingDemoStep } from "./steps/governing.ts";
 import { importsDemoStep } from "./steps/imports.ts";
 import { notificationsDemoStep } from "./steps/notifications.ts";
 import { privacyDemoStep } from "./steps/privacy.ts";
@@ -42,6 +43,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   chatDemoStep,
   documentsDemoStep,
   announcementsDemoStep,
+  governingDemoStep,
 ];
 
 export interface SeedOptions {

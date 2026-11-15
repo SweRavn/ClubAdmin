@@ -163,7 +163,7 @@ club has roughly 10 named/central users plus generated players.
 | 10 | **Johan Nilsson** | 27 | yes | SVK **registrar** (the full member register without manager rights, P1.2), Herr senior player and F2017 **assistant coach**; background check **expires in 20 days** → reminder flow |
 | 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** + **registrar** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior**, where he holds SVK's own group role **Materialansvarig** (P1.15 A2) (membership **paused**, P1.2) and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
 | 12 | **Ingrid Haugen** | 12 | no | Daughter of Lars, FIL J2014 player |
-| 13 | **Karin Ek** | 52 | yes | IKN **club manager** + **registrar** + **safeguarding officer**; employed part-time as club administrator (staff, time reporting) |
+| 13 | **Karin Ek** | 52 | yes | IKN **club manager** + **registrar** + **safeguarding officer** + **secretary** (governing documents, P2.4); employed part-time as club administrator (staff, time reporting) |
 | 14 | **Ahmed Yilmaz** | 47 | yes | IKN P2012 **head coach**; background check **expired** → must be flagged |
 | 15 | **Liam Yilmaz** | 14 | yes | IKN P2012 player; user preference `en` locale → locale override |
 | 16 | **Peter Sund** | 60 | yes | IKN **treasurer**; former SVK board member and **manager**, handed over to Anna last year → historic roles (valid_to in past); has a **pending manager hand-over** from Karin in IKN |
@@ -288,6 +288,16 @@ schedule (Ola left two years ago).
   unread announcement. Their events are history: starting the worker sends
   no notices for them. Open `/me/announcements` as Anna or
   `/clubs/<ikn>/announcements` as Göran.
+- **Governing documents and meetings** (P2.4, ADR 0049,
+  `apps/api/src/seed/steps/governing.ts`): in IKN Karin (the secretary)
+  keeps the **statutes**, adopted at last year's annual meeting with the
+  retention of former members marked as a setting, and the board's
+  **minutes**. Last week's **board meeting** ("Styrelsemöte", from the SE
+  template) has minutes per item, a decision on the budget and Peter's
+  action item ("Skicka budgeten till revisorerna", in his "Mina
+  uppgifter"); its minutes are signed by Göran (chair) and **wait for
+  Peter** (adjuster). Open `/clubs/<ikn>/governing` as Karin, or
+  `/me/documents` and `/me/tasks` as Peter.
 - **Documents** (P2.2, ADR 0049, `apps/api/src/seed/steps/documents.ts`):
   in IKN Göran keeps the club's folder **"Policyer"** (the whole club) with
   "Uppförandekod.pdf" and "Trafikpolicy.pdf", the latter **public**. Erik

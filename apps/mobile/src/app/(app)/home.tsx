@@ -114,6 +114,12 @@ export default function Home() {
         onPress={() => router.push("/documents")}
         testID="open-documents"
       />
+      {/* "Mina uppgifter" (P2.4): action items from meetings. */}
+      <LinkButton
+        label={t("nav.tasks")}
+        onPress={() => router.push("/tasks")}
+        testID="open-tasks"
+      />
 
       {actingWards.length > 0 ? (
         <Section title={t("viewingAs.label")}>

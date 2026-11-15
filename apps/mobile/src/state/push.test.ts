@@ -10,6 +10,7 @@ describe("appRoute", () => {
     expect(appRoute("/me/family")).toBe("/settings/family");
     expect(appRoute(`/clubs/${id}/documents/${id}`)).toBe("/documents");
     expect(appRoute(`/clubs/${id}/announcements/${id}`)).toBe(`/announcements/${id}/${id}`);
+    expect(appRoute(`/clubs/${id}/governing/${id}`)).toBe(`/governing/${id}/${id}`);
     expect(appRoute(`/clubs/${id}/members/exports`)).toBe("/notifications");
     expect(appRoute(`/activities/${id}/../../admin`)).toBe("/notifications");
   });

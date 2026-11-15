@@ -16,7 +16,16 @@
 // audience (document.read), drafting `club.governing_documents.manage`,
 // adopting `club.governing_documents.adopt` with MFA.
 
-import { audit, type Database, type TenantContext, type Tx } from "@clubadmin/db";
+import {
+  type ActorContext,
+  audit,
+  type Database,
+  outbox,
+  type TenantContext,
+  type Tx,
+} from "@clubadmin/db";
+import type { ObjectStorage } from "@clubadmin/server-kit/object-storage";
+import type { SignatureProvider } from "@clubadmin/server-kit/signatures";
 import {
   type AdoptGoverningDocumentInput,
   type AudienceInput,
@@ -24,6 +33,8 @@ import {
   type BoardSettingKey,
   type CreateDocumentSeriesInput,
   type CreateGoverningDocumentInput,
+  DOCUMENT_DOWNLOAD_SECONDS,
+  type PutSignersInput,
   settingMarkers,
   settingMarkerValue,
   type UpdateGoverningDocumentInput,
@@ -51,6 +62,8 @@ export interface GoverningView {
   supersededBy: { id: string; name: string } | null;
   supersedes: { id: string; name: string }[];
   audience: docs.AudienceEntryRow[];
+  /** The signatures of the versions shown, by version. */
+  signatures: Map<string, repo.SignatureRow[]>;
 }
 
 /** A governing document's file name in the archive (its text as Markdown). */
@@ -59,10 +72,25 @@ const fileNameOf = (name: string) => `${name.slice(0, 196)}.md`;
 export class GoverningService {
   private readonly db: Database;
   private readonly privacy: ClubPrivacyService;
+  private readonly signer: SignatureProvider;
+  private readonly storage: ObjectStorage | null;
+  private readonly isMember: (tx: Tx, clubId: string, personId: string) => Promise<boolean>;
 
-  constructor(db: Database, deps: { privacy: ClubPrivacyService }) {
+  constructor(
+    db: Database,
+    deps: {
+      privacy: ClubPrivacyService;
+      signer: SignatureProvider;
+      storage: ObjectStorage | null;
+      /** Whether the person is a member of the club (signers are). */
+      isMember: (tx: Tx, clubId: string, personId: string) => Promise<boolean>;
+    },
+  ) {
     this.db = db;
     this.privacy = deps.privacy;
+    this.signer = deps.signer;
+    this.storage = deps.storage;
+    this.isMember = deps.isMember;
   }
 
   // --- Series -------------------------------------------------------------------
@@ -119,26 +147,39 @@ export class GoverningService {
 
   /**
    * A governing document: the version in force with its text, the draft
-   * (managers), the versions and what it superseded. Readers see adopted
-   * documents only (a draft is not found).
+   * (managers, and the draft's named signers), the versions and what it
+   * superseded. Other readers see adopted documents only (a draft is not
+   * found).
    */
   document(context: TenantContext, documentId: string, manage: boolean): Promise<GoverningView> {
+    const personId = actorPersonId(context);
     return this.db.withTenant(context, async (tx) => {
       const document = await docs.findDocument(tx, documentId);
       if (!document || document.kind !== "governing") throw new DomainError("not_found");
-      if (!manage && !document.currentVersionId) throw new DomainError("not_found");
+      const all = await repo.textVersions(tx, documentId);
+      const latest = all[0];
+      const latestSigners =
+        latest && latest.adoptedOn === null
+          ? ((await repo.signatures(tx, [latest.id])).get(latest.id) ?? [])
+          : [];
+      const signsDraft = latestSigners.some((x) => x.signerPersonId === personId);
+      if (!manage && !signsDraft && !document.currentVersionId) {
+        throw new DomainError("not_found");
+      }
       const series = await docs.findFolder(tx, document.folderId);
       if (!series) throw new DomainError("not_found");
-      const all = await repo.textVersions(tx, documentId);
-      const versions = manage ? all : all.filter((v) => v.adoptedOn !== null);
+      const versions = manage || signsDraft ? all : all.filter((v) => v.adoptedOn !== null);
       const current = document.currentVersionId
         ? await repo.textVersion(tx, document.currentVersionId)
         : null;
-      const latest = all[0];
       const draft =
-        manage && latest && latest.adoptedOn === null
+        (manage || signsDraft) && latest && latest.adoptedOn === null
           ? await repo.textVersion(tx, latest.id)
           : null;
+      const signatures = await repo.signatures(
+        tx,
+        versions.map((v) => v.id),
+      );
       const supersededBy =
         document.governingStatus === "superseded" || document.governingStatus === "archived"
           ? await repo.superseder(tx, documentId)
@@ -157,6 +198,7 @@ export class GoverningService {
         supersededBy,
         supersedes: supersedes.map((d) => ({ id: d.id, name: d.name })),
         audience: audiences.get(document.effectiveAudienceId ?? "") ?? [],
+        signatures,
       };
     });
   }
@@ -255,6 +297,10 @@ export class GoverningService {
     let versionId: string | null = null;
     if (input.body !== undefined) {
       const latest = (await repo.textVersions(tx, documentId))[0];
+      // A signed draft is locked too (the signatures are of exactly its text).
+      if (latest && latest.adoptedOn === null && (await repo.hasSignature(tx, latest.id))) {
+        throw new DomainError("governing_signed");
+      }
       if (latest && latest.adoptedOn === null) {
         await repo.updateDraftText(tx, {
           versionId: latest.id,
@@ -365,6 +411,12 @@ export class GoverningService {
         resourceType: "document",
         resourceId: documentId,
       });
+      // Push to its audience: a fixed text per series kind, never its name (P2.4 decision 8).
+      await outbox.publish(tx, "document.adopted", {
+        clubId: context.clubId,
+        documentId,
+        versionId: latest.id,
+      });
       for (const old of replaced) {
         await repo.setGoverning(tx, old.id, { status: "superseded", supersededBy: documentId });
         await audit.record(tx, {
@@ -404,6 +456,130 @@ export class GoverningService {
         resourceId: documentId,
       });
     });
+  }
+
+  // --- Signing (P2.4 part C, ADR 0049 decision 6) -------------------------------
+
+  /**
+   * Names the version's signers (members of the club): signed ones stay,
+   * unsigned ones not given are removed; new ones are told.
+   */
+  async putSigners(
+    context: TenantContext,
+    documentId: string,
+    versionId: string,
+    input: PutSignersInput,
+  ): Promise<void> {
+    const personId = actorPersonId(context);
+    await this.db.withTenant(context, async (tx) => {
+      await this.lockGoverning(tx, documentId);
+      const version = await repo.textVersion(tx, versionId);
+      if (!version || version.documentId !== documentId) throw new DomainError("not_found");
+      const people = new Set(input.signers.map((x) => x.personId));
+      if (people.size !== input.signers.length) throw new DomainError("signers_invalid");
+      for (const id of people) {
+        if (!(await this.isMember(tx, context.clubId, id)))
+          throw new DomainError("signers_invalid");
+      }
+      const added = await repo.replaceSigners(tx, {
+        clubId: context.clubId,
+        versionId,
+        signers: input.signers,
+        by: personId,
+      });
+      await audit.record(tx, {
+        action: "document.signers.updated",
+        resourceType: "document",
+        resourceId: documentId,
+      });
+      if (added.length > 0) {
+        await outbox.publish(tx, "document.signature_requested", {
+          clubId: context.clubId,
+          signatureIds: added,
+        });
+      }
+    });
+  }
+
+  /**
+   * Signs the version as one of its named signers (the controller required
+   * a recent login with a second factor): the hash of exactly its text, the
+   * provider's level and time. When everyone has signed, the worker makes
+   * the signature page.
+   */
+  async sign(
+    context: TenantContext,
+    documentId: string,
+    versionId: string,
+  ): Promise<{ signedAt: Date; sha256: string; level: "simple" }> {
+    const personId = actorPersonId(context);
+    return this.db.withTenant(context, async (tx) => {
+      await this.lockGoverning(tx, documentId);
+      const version = await repo.textVersion(tx, versionId);
+      if (!version || version.documentId !== documentId || !version.sha256) {
+        throw new DomainError("not_found");
+      }
+      const signers = (await repo.signatures(tx, [versionId])).get(versionId) ?? [];
+      const mine = signers.find((x) => x.signerPersonId === personId);
+      if (!mine) throw new DomainError("not_found");
+      if (mine.signedAt) throw new DomainError("already_signed");
+      const result = await this.signer.sign({
+        clubId: context.clubId,
+        versionId,
+        signerPersonId: personId,
+        sha256: version.sha256,
+      });
+      if (
+        !(await repo.markSigned(tx, {
+          id: mine.id,
+          provider: result.provider,
+          level: result.level,
+          sha256: version.sha256,
+          signedAt: result.signedAt,
+        }))
+      ) {
+        throw new DomainError("already_signed");
+      }
+      await audit.record(tx, {
+        action: "document.signed",
+        resourceType: "document",
+        resourceId: documentId,
+      });
+      if (signers.every((x) => x.id === mine.id || x.signedAt !== null)) {
+        await outbox.publish(tx, "document.signed", { clubId: context.clubId, versionId });
+      }
+      return { signedAt: result.signedAt, sha256: version.sha256, level: result.level };
+    });
+  }
+
+  /** A short-lived download link of the version's signature page. */
+  async signaturePage(
+    context: TenantContext,
+    documentId: string,
+    versionId: string,
+  ): Promise<{ url: string; expiresAt: Date }> {
+    const storage = this.storage;
+    if (!storage) throw new DomainError("documents_storage_unavailable");
+    return this.db.withTenant(context, async (tx) => {
+      const document = await docs.findDocument(tx, documentId);
+      const version = await repo.textVersion(tx, versionId);
+      if (!document || !version || version.documentId !== documentId) {
+        throw new DomainError("not_found");
+      }
+      if (!version.signaturePageKey) throw new DomainError("document_not_ready");
+      return {
+        url: storage.presignDownload(version.signaturePageKey, {
+          expiresSeconds: DOCUMENT_DOWNLOAD_SECONDS,
+          filename: `${document.name.slice(0, 160)} v${version.number} signatures.pdf`,
+        }),
+        expiresAt: new Date(Date.now() + DOCUMENT_DOWNLOAD_SECONDS * 1000),
+      };
+    });
+  }
+
+  /** "Waiting for my signature" across the caller's clubs. */
+  mySignatureRequests(context: ActorContext, limit = 50): Promise<repo.MySignatureRequestRow[]> {
+    return this.db.withActor(context, (tx) => repo.mySignatureRequests(tx, limit));
   }
 
   private async lockGoverning(

@@ -3,17 +3,29 @@
 // person's (and their children's) groups and clubs, new ones marked. Cache
 // first: the cached list shows at once and refreshes in the background.
 
+import { enumKey } from "@clubadmin/i18n";
+import { router } from "expo-router";
 import { useTranslations } from "use-intl";
 
-import { useMyDocuments } from "../../../api/queries.ts";
+import { useMyDocuments, useMySignatureRequests } from "../../../api/queries.ts";
 import { DataAge } from "../../../components/data-age.tsx";
 import { DocumentRow } from "../../../components/documents.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
-import { Button, EmptyState, Loading, Muted, Screen, Section } from "../../../components/ui.tsx";
+import {
+  Button,
+  EmptyState,
+  Loading,
+  Muted,
+  Row,
+  Screen,
+  Section,
+} from "../../../components/ui.tsx";
 
 export default function MyDocuments() {
   const t = useTranslations();
   const documents = useMyDocuments();
+  // Waiting for my signature (P2.4): read in the app, signed on the web.
+  const waiting = useMySignatureRequests();
   if (!documents.data) {
     if (documents.isError)
       return (
@@ -32,6 +44,21 @@ export default function MyDocuments() {
     >
       <DataAge updatedAt={documents.dataUpdatedAt} />
       <Muted>{t("documents.mineIntro")}</Muted>
+      {waiting.data && waiting.data.items.length > 0 ? (
+        <Section title={t("governing.waitingForMe")}>
+          {waiting.data.items.map((w, index) => (
+            <Row
+              key={w.signatureId}
+              onPress={() => router.push(`/governing/${w.clubId}/${w.documentId}`)}
+              accessibilityLabel={w.documentName}
+              last={index === waiting.data.items.length - 1}
+              testID={`waiting-${w.documentId}`}
+            >
+              <Muted>{`${w.documentName} · ${w.clubName} · ${t(enumKey("governing.signerRoles", w.role))}`}</Muted>
+            </Row>
+          ))}
+        </Section>
+      ) : null}
       <Section title={t("documents.mine")}>
         {items.length === 0 ? (
           <EmptyState title={t("documents.mineEmpty")} />

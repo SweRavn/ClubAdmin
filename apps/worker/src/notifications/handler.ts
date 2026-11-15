@@ -191,6 +191,9 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       // Documents (P2.2 part B).
       "document.published",
       "document.deletion_soon",
+      // Governing documents (P2.4): adopted, a signature requested.
+      "document.adopted",
+      "document.signature_requested",
       // Announcements (P2.3).
       "announcement.sent",
       "announcement.withdrawn",
@@ -692,6 +695,77 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               about: [],
               params: { group: fact.group_name ?? "" },
               dedupeKey: `document.added:${versionId}`,
+            })),
+          );
+          return;
+        }
+        // A governing document was adopted (P2.4): its audience is told with
+        // a fixed text per series kind, never the document's name.
+        case "document.adopted": {
+          const { clubId, documentId, versionId } = DOMAIN_EVENTS["document.adopted"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows: facts } = await tx.execute<{
+            group_name: string | null;
+            series_kind: string | null;
+            recorder: string | null;
+          }>(sql`
+            SELECT g.name AS group_name, f.series_kind, v.adopted_by_person_id AS recorder
+            FROM public.documents d
+            JOIN public.document_folders f ON f.id = d.folder_id
+            JOIN public.document_versions v ON v.id = ${versionId}::uuid
+            LEFT JOIN public.groups g ON g.id = d.group_id
+            WHERE d.id = ${documentId}::uuid AND d.deleted_at IS NULL`);
+          const fact = facts[0];
+          if (!fact) return;
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            SELECT person_id FROM app.audience_people(app.document_audience(${documentId}::uuid))
+            WHERE person_id IS DISTINCT FROM ${fact.recorder}::uuid`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId,
+              type: "document.adopted" as const,
+              subjectType: "governing_document",
+              subjectId: documentId,
+              about: [],
+              params: { group: fact.group_name ?? "", kind: fact.series_kind ?? "other" },
+              dedupeKey: `document.adopted:${versionId}`,
+            })),
+          );
+          return;
+        }
+        // Signers were named (P2.4): each is asked to sign, at once.
+        case "document.signature_requested": {
+          const { clubId, signatureIds } = DOMAIN_EVENTS["document.signature_requested"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{
+            id: string;
+            signer_person_id: string;
+            document_id: string;
+            series_kind: string | null;
+          }>(sql`
+            SELECT s.id, s.signer_person_id, v.document_id, f.series_kind
+            FROM public.document_signatures s
+            JOIN public.document_versions v ON v.id = s.version_id
+            JOIN public.documents d ON d.id = v.document_id AND d.deleted_at IS NULL
+            JOIN public.document_folders f ON f.id = d.folder_id
+            WHERE s.id = ANY (${`{${signatureIds.join(",")}}`}::uuid[]) AND s.signed_at IS NULL`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.signer_person_id,
+              clubId,
+              type: "document.signature_requested" as const,
+              subjectType: "governing_document",
+              subjectId: r.document_id,
+              about: [],
+              params: { kind: r.series_kind ?? "other" },
+              dedupeKey: `document.signature_requested:${r.id}`,
             })),
           );
           return;

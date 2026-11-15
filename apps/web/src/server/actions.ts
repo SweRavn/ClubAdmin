@@ -2186,6 +2186,282 @@ function announcementFields(form: FormData): Record<string, unknown> | undefined
   return fields;
 }
 
+/** A form's lines as a list (empty lines left out). */
+const lines = (value: string, max: number, length: number): string[] =>
+  value
+    .split(/\r?\n/)
+    .map((line) => line.trim().slice(0, length))
+    .filter((line) => line !== "")
+    .slice(0, max);
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const SERIES_KINDS = new Set([
+  "statutes",
+  "annual_meeting_minutes",
+  "board_minutes",
+  "policies",
+  "other",
+]);
+const SIGNER_ROLES = new Set(["chair", "secretary", "adjuster", "other"]);
+const DECISION_BODIES = new Set(["board", "annual_meeting", "extra_meeting"]);
+const TASK_STATUSES = new Set(["planned", "done", "missed"]);
+
+/**
+ * A meeting's agenda from the editor's form (P2.4): items `item.N.*` in
+ * order (N from 0), each with its decisions (one per line) and action items
+ * `item.N.action.M.*`; an item or action marked `remove` is left out, an
+ * empty new row too.
+ */
+export function agendaFrom(form: FormData): Record<string, unknown>[] | null {
+  const items: Record<string, unknown>[] = [];
+  for (let n = 0; n < 61; n += 1) {
+    const prefix = `item.${n}.`;
+    if (!form.has(`${prefix}title`)) continue;
+    const title = text(form, `${prefix}title`).slice(0, 200);
+    const itemId = id(form, `${prefix}id`);
+    if (text(form, `${prefix}remove`) === "1" || (!title && !itemId)) continue;
+    if (!title) return null;
+    const item: Record<string, unknown> = { title };
+    if (itemId) item.id = itemId;
+    const presenter = id(form, `${prefix}presenter`);
+    item.presenterPersonId = presenter;
+    const minutes = (form.get(`${prefix}minutes`) as string | null) ?? null;
+    if (minutes !== null) item.minutes = minutes.trim() === "" ? null : minutes.slice(0, 50_000);
+    if (form.has(`${prefix}decisions`)) {
+      item.decisions = lines(text(form, `${prefix}decisions`), 100, 5000);
+    }
+    const paperIds = form
+      .getAll(`${prefix}paper`)
+      .filter((v): v is string => typeof v === "string" && isUuid(v));
+    if (form.has(`${prefix}papersShown`)) item.paperIds = paperIds.slice(0, 20);
+    if (form.has(`${prefix}actionsShown`)) {
+      const actions: Record<string, unknown>[] = [];
+      for (let m = 0; m < 21; m += 1) {
+        const a = `${prefix}action.${m}.`;
+        if (!form.has(`${a}title`)) continue;
+        const actionTitle = text(form, `${a}title`).slice(0, 200);
+        const taskId = id(form, `${a}taskId`);
+        if (text(form, `${a}remove`) === "1" || (!actionTitle && !taskId)) continue;
+        const assignee = id(form, `${a}assignee`);
+        if (!actionTitle || !assignee) return null;
+        const dueDate = text(form, `${a}dueDate`);
+        const status = text(form, `${a}status`);
+        actions.push({
+          ...(taskId ? { taskId } : {}),
+          title: actionTitle,
+          dueDate: DAY.test(dueDate) ? dueDate : null,
+          assignees: [{ personId: assignee, ...(TASK_STATUSES.has(status) ? { status } : {}) }],
+        });
+      }
+      item.actions = actions;
+    }
+    items.push(item);
+  }
+  return items.slice(0, 60);
+}
+
+const meetingPath = (form: FormData): string | null => {
+  const kind = text(form, "meetingKind");
+  const meetingId = id(form, "meetingId");
+  if (!meetingId || (kind !== "activity" && kind !== "event")) return null;
+  return `/api/v1/${kind === "activity" ? "activities" : "events"}/${meetingId}`;
+};
+
+/** Governing documents, meetings and tasks (P2.4). */
+const GOVERNING_ACTIONS: Record<string, FormAction> = {
+  "governing-create-series": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const name = text(form, "name").slice(0, 120);
+      const seriesKind = text(form, "seriesKind");
+      if (!clubId || !name || !SERIES_KINDS.has(seriesKind)) return null;
+      const groupId = id(form, "groupId");
+      return {
+        path: `/api/v1/clubs/${clubId}/document-series`,
+        method: "POST",
+        body: { name, seriesKind, ...(groupId ? { groupId } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form), "created", "1"),
+  },
+  "governing-create": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const seriesId = id(form, "seriesId");
+      const name = text(form, "name").slice(0, 200);
+      if (!clubId || !seriesId || !name) return null;
+      const body = ((form.get("body") as string | null) ?? "").slice(0, 200_000);
+      return {
+        path: `/api/v1/clubs/${clubId}/governing-documents`,
+        method: "POST",
+        body: { seriesId, name, body },
+      };
+    },
+    done: (form, result) => {
+      const createdId = (result as { id?: unknown } | null)?.id;
+      const clubId = id(form, "clubId");
+      return typeof createdId === "string" && clubId && isUuid(createdId)
+        ? `/clubs/${clubId}/governing/${createdId}?created=1`
+        : withParam(back(form), "created", "1");
+    },
+  },
+  "governing-save": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      if (!clubId || !documentId) return null;
+      const name = text(form, "name").slice(0, 200);
+      const body = form.get("body");
+      return {
+        path: `/api/v1/clubs/${clubId}/governing-documents/${documentId}`,
+        method: "PATCH",
+        body: {
+          ...(name ? { name } : {}),
+          ...(typeof body === "string" ? { body: body.slice(0, 200_000) } : {}),
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "governing-adopt": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      const versionId = id(form, "versionId");
+      const adoptedOn = text(form, "adoptedOn");
+      if (!clubId || !documentId || !versionId || !DAY.test(adoptedOn)) return null;
+      const effectiveFrom = text(form, "effectiveFrom");
+      const decisionBody = text(form, "decisionBody");
+      const reference = text(form, "reference").slice(0, 200);
+      const supersedes = form
+        .getAll("supersedes")
+        .filter((v): v is string => typeof v === "string" && isUuid(v));
+      return {
+        path: `/api/v1/clubs/${clubId}/governing-documents/${documentId}/adopt`,
+        method: "POST",
+        body: {
+          versionId,
+          adoptedOn,
+          ...(DAY.test(effectiveFrom) ? { effectiveFrom } : {}),
+          ...(DECISION_BODIES.has(decisionBody) ? { decisionBody } : {}),
+          ...(reference ? { reference } : {}),
+          ...(supersedes.length > 0 ? { supersedes: supersedes.slice(0, 20) } : {}),
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "adopted", "1"),
+  },
+  "governing-archive": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      if (!clubId || !documentId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/governing-documents/${documentId}/archive`,
+        method: "POST",
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "governing-delete": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      if (!clubId || !documentId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/governing-documents/${documentId}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => withParam(safeReturnTo(text(form, "after"), "/"), "deleted", "1"),
+  },
+  "governing-signers": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      const versionId = id(form, "versionId");
+      if (!clubId || !documentId || !versionId) return null;
+      const signers: { personId: string; role: string }[] = [];
+      for (let n = 0; n < 10; n += 1) {
+        const personId = id(form, `signer.${n}.personId`);
+        const role = text(form, `signer.${n}.role`);
+        if (personId && SIGNER_ROLES.has(role) && !signers.some((x) => x.personId === personId)) {
+          signers.push({ personId, role });
+        }
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/documents/${documentId}/versions/${versionId}/signers`,
+        method: "PUT",
+        body: { signers },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "governing-sign": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const documentId = id(form, "documentId");
+      const versionId = id(form, "versionId");
+      if (!clubId || !documentId || !versionId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/documents/${documentId}/versions/${versionId}/signatures`,
+        method: "POST",
+      };
+    },
+    done: (form) => withParam(back(form), "signed", "1"),
+  },
+  "agenda-save": {
+    call: (form) => {
+      const path = meetingPath(form);
+      const items = agendaFrom(form);
+      if (!path || !items) return null;
+      return { path: `${path}/agenda`, method: "PUT", body: { items } };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "agenda-from-template": {
+    call: (form) => {
+      const path = meetingPath(form);
+      const titles = form
+        .getAll("templateItem")
+        .filter((v): v is string => typeof v === "string" && v.trim() !== "")
+        .map((v) => ({ title: v.trim().slice(0, 200) }))
+        .slice(0, 60);
+      if (!path || titles.length === 0) return null;
+      return { path: `${path}/agenda`, method: "PUT", body: { items: titles } };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "minutes-assemble": {
+    call: (form) => {
+      const path = meetingPath(form);
+      if (!path) return null;
+      const seriesId = id(form, "seriesId");
+      return { path: `${path}/minutes`, method: "POST", body: seriesId ? { seriesId } : {} };
+    },
+    done: (form, result) => {
+      const documentId = (result as { documentId?: unknown } | null)?.documentId;
+      const clubId = id(form, "clubId");
+      return typeof documentId === "string" && clubId && isUuid(documentId)
+        ? `/clubs/${clubId}/governing/${documentId}?assembled=1`
+        : withParam(back(form), "saved", "1");
+    },
+  },
+  "tasks-status": {
+    call: (form) => {
+      const assignmentId = id(form, "assignmentId");
+      const status = text(form, "status");
+      if (!assignmentId || !TASK_STATUSES.has(status)) return null;
+      return {
+        path: `/api/v1/me/task-assignments/${assignmentId}/status`,
+        method: "POST",
+        body: { status },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/tasks"), "saved", "1"),
+  },
+};
+
 /** Announcements (P2.3, ADR 0053): write, send or schedule, edit, withdraw, delete. */
 const ANNOUNCEMENT_ACTIONS: Record<string, FormAction> = {
   "announcements-create": {
@@ -2380,6 +2656,7 @@ const DOCUMENT_ACTIONS: Record<string, FormAction> = {
 
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...ANNOUNCEMENT_ACTIONS,
+  ...GOVERNING_ACTIONS,
   ...DOCUMENT_ACTIONS,
   ...FAMILY_ACTIONS,
   ...BILLING_ACTIONS,

@@ -305,3 +305,43 @@ minutes and signing.
 - Signing, push on adoption, the screens, seed and budgets follow in
   part C.
 
+## As implemented (P2.4 part C, 2026-11-15)
+
+- **Signing** (`document_signatures`, migration 0047): those who manage
+  governing documents name a version's signers (members of the club, with
+  a role: chair, secretary, adjuster, other; `PUT
+  .../versions/:versionId/signers`); signed ones stay. A named signer signs
+  with a recent login with a second factor (`@RequireMfa()`,
+  `@RecentAuth(10)`): the signature records the provider (`in_app`), the
+  level (`simple`), the time and the SHA-256 of exactly the version's text.
+  A signed signature cannot change (a trigger), and a signed draft cannot
+  be edited (`governing_signed`): a change is a new version, signed again.
+  A draft's named signers read it before it is adopted.
+- **`SignatureProvider`** (`@clubadmin/server-kit/signatures`) is the
+  interface BankID, Freja and the EU wallet implement later; the in-app
+  provider records simple signatures. A club cannot require a level yet.
+- **The signature page**: when every signer has signed, the outbox event
+  `document.signed` makes the worker render one PDF page with pdfkit (the
+  document, the version, the hash, each signer with role, level and time;
+  a protected signer without a name) and store it beside the version
+  (`signature_page_object_key`); readers download it through a short-lived
+  link.
+- **Push**: adopting publishes `document.adopted`; its audience (but the
+  one who recorded it) gets a notice of the type `document.adopted` in the
+  category `documents`, a fixed text per series kind ("Nya stadgar har
+  antagits i {club}", "Nytt protokoll i {group}"), never the document's
+  name. Named signers get `document.signature_requested` at once.
+- **Web**: "Styrdokument" (series and their documents, new series and
+  drafts), a document's page (the text with its settings marked, the draft
+  editor with a preview, adoption, signers, signing, the signature page,
+  versions, archive and delete), a meeting's agenda page (the whole agenda
+  in one form, templates, assembling the minutes), "Mina uppgifter", and
+  "Väntar på min signatur" in "Mina dokument".
+- **App**: "Mina uppgifter" (marking done), a governing document's screen
+  (the text in force, or the draft for its signers) and "Väntar på min
+  signatur" in "Mina dokument"; signing itself happens on the web, where
+  the second factor is asked for. Push opens the document.
+- **Seed**: IK Norrbacka's adopted statutes (with the retention of former
+  members marked), last week's board meeting with minutes per item, a
+  decision and Peter's action item, and its minutes signed by Göran (chair)
+  and waiting for Peter (adjuster). Karin is the club's secretary.

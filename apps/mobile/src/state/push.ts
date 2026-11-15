@@ -37,6 +37,9 @@ export function appRoute(link: string): string {
   const announcement = /^\/clubs\/([0-9a-f-]{36})\/announcements\/([0-9a-f-]{36})$/.exec(path);
   if (announcement) return `/announcements/${announcement[1]}/${announcement[2]}`;
   if (path === "/me/announcements") return "/announcements";
+  // Governing documents (P2.4): the document's screen.
+  const governing = /^\/clubs\/([0-9a-f-]{36})\/governing\/([0-9a-f-]{36})$/.exec(path);
+  if (governing) return `/governing/${governing[1]}/${governing[2]}`;
   // A file (P2.2): "Mina dokument", which opens it.
   if (path === "/me/documents" || /^\/clubs\/[0-9a-f-]{36}\/documents\/[0-9a-f-]{36}$/.test(path))
     return "/documents";

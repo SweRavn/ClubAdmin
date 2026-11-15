@@ -49,7 +49,9 @@
     "documents": "Mine dokumenter",
     "clubDocuments": "Dokumenter",
     "announcements": "Oppslagstavlen",
-    "clubAnnouncements": "Kunngjøringer"
+    "clubAnnouncements": "Kunngjøringer",
+    "tasks": "Mine oppgaver",
+    "governing": "Styringsdokumenter"
   },
   "clubSwitcher": {
     "label": "Klubb: {club}",
@@ -854,7 +856,10 @@
     "agenda_template_name_taken": "To maler kan ikke ha samme navn.",
     "agenda_person_invalid": "Saksbehandlere og ansvarlige må være medlemmer av klubben.",
     "agenda_empty": "Sakslisten har ingen saker å sammenstille.",
-    "minutes_series_required": "Velg hvilken serie protokollen skal ligge i."
+    "minutes_series_required": "Velg hvilken serie protokollen skal ligge i.",
+    "governing_signed": "Utkastet er signert og kan ikke endres. Endringer blir en ny versjon som signeres på nytt.",
+    "signers_invalid": "Signatarene må være medlemmer av klubben og kan bare angis én gang.",
+    "already_signed": "Du har allerede signert denne versjonen."
   },
   "memberExport": {
     "columns": {
@@ -2075,6 +2080,14 @@
       "deletion_soon": {
         "title": "Et dokument du har lastet opp slettes snart",
         "body": "Dokumentet i {club} slettes automatisk {date}. Endre eller fjern datoen hvis det skal beholdes."
+      },
+      "adopted": {
+        "title": "{kind, select, statutes {Nye vedtekter er vedtatt i {club}} annual_meeting_minutes {Ny årsmøteprotokoll i {club}} board_minutes {Ny protokoll i {hasGroup, select, yes {{group}} other {{club}}}} policies {En ny retningslinje er vedtatt i {club}} other {Et nytt styringsdokument er vedtatt i {club}}}",
+        "body": "Åpne dokumentet for å lese det."
+      },
+      "signature_requested": {
+        "title": "Et dokument venter på din signatur",
+        "body": "Åpne dokumentet i {club} for å lese og signere det."
       }
     },
     "announcement": {
@@ -2845,7 +2858,8 @@
       "unmuted": "lot igjen skrive i chatten",
       "adopted": "vedtok",
       "superseded": "erstattet",
-      "assembled": "sammenstilte"
+      "assembled": "sammenstilte",
+      "signed": "signerte"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -4344,5 +4358,150 @@
     "decisions": "Vedtak",
     "actions": "Oppfølgingspunkter",
     "actionDue": "{action} (innen {date})"
+  },
+  "signaturePage": {
+    "title": "Signaturer",
+    "version": "Versjon {number}",
+    "hash": "SHA-256 for den signerte teksten:",
+    "explanation": "Signaturene gjelder nøyaktig teksten med denne kontrollsummen. Endres teksten, stemmer ikke summen lenger.",
+    "hidden": "(beskyttet identitet)",
+    "signed": "{role} · signerte {at} · {level} ({provider})",
+    "roles": {
+      "chair": "Leder",
+      "secretary": "Sekretær",
+      "adjuster": "Protokollunderskriver",
+      "other": "Signatar"
+    },
+    "levels": {
+      "simple": "enkel elektronisk signatur"
+    }
+  },
+  "governing": {
+    "title": "Styringsdokumenter",
+    "intro": "Vedtekter, protokoller og retningslinjer. Utkast skrives her og vedtas av leder eller sekretær.",
+    "series": "Serier",
+    "noSeries": "Ingen serier ennå.",
+    "newSeries": "Ny serie",
+    "seriesName": "Seriens navn",
+    "seriesKind": "Type serie",
+    "seriesKinds": {
+      "statutes": "Vedtekter",
+      "annual_meeting_minutes": "Årsmøteprotokoller",
+      "board_minutes": "Styreprotokoller",
+      "policies": "Retningslinjer",
+      "other": "Annet"
+    },
+    "createSeries": "Opprett serie",
+    "empty": "Ingen dokumenter i serien.",
+    "newDocument": "Nytt dokument",
+    "documentName": "Navn",
+    "body": "Tekst",
+    "bodyHelp": "Markdown: # Overskrift, **fet**, *kursiv*, lister med -. En innstilling teksten bestemmer markeres '{{'setting nøkkel = verdi'}}'.",
+    "create": "Opprett utkast",
+    "statuses": {
+      "draft": "Utkast",
+      "adopted": "Vedtatt",
+      "superseded": "Erstattet",
+      "archived": "Arkivert"
+    },
+    "current": "Gjeldende tekst",
+    "draft": "Utkast",
+    "noCurrent": "Ikke vedtatt ennå.",
+    "save": "Lagre utkast",
+    "saved": "Lagret.",
+    "adopt": "Registrer vedtak",
+    "adoptedOn": "Vedtatt dato",
+    "effectiveFrom": "Gjelder fra (tomt: samme dag)",
+    "decisionBody": "Vedtatt av (kreves når teksten markerer innstillinger)",
+    "decisionBodies": {
+      "board": "Styret",
+      "annual_meeting": "Årsmøtet",
+      "extra_meeting": "Ekstraordinært årsmøte"
+    },
+    "reference": "Sak i protokollen (valgfritt)",
+    "supersedes": "Erstatter",
+    "adoptButton": "Registrer som vedtatt",
+    "adoptHelp": "Krever innlogging med en andre faktor. Versjonen låses, og markerte innstillinger blir klubbens vedtak.",
+    "adoptedNotice": "Dokumentet er registrert som vedtatt.",
+    "archive": "Arkiver",
+    "delete": "Slett utkastet",
+    "versions": "Versjoner",
+    "version": "Versjon {number}",
+    "adoptedInfo": "Vedtatt {date}, gjelder fra {from}",
+    "notAdopted": "Ikke vedtatt",
+    "supersededBy": "Erstattet av {name}",
+    "supersedesList": "Erstatter: {names}",
+    "signers": "Signering",
+    "noSigners": "Ingen signatarer angitt.",
+    "signerRole": "Rolle",
+    "signerPerson": "Person",
+    "signerRoles": {
+      "chair": "Leder",
+      "secretary": "Sekretær",
+      "adjuster": "Protokollunderskriver",
+      "other": "Signatar"
+    },
+    "saveSigners": "Lagre signatarer",
+    "sign": "Signer",
+    "signHelp": "Du signerer nøyaktig denne versjonen med din andre faktor. Signaturen lagres med kontrollsummen.",
+    "signedAt": "Signerte {date}",
+    "waiting": "Venter",
+    "signedNotice": "Du har signert.",
+    "signaturePage": "Signaturside (PDF)",
+    "waitingForMe": "Venter på min signatur",
+    "noWaiting": "Ingenting venter på din signatur.",
+    "hash": "Kontrollsum (SHA-256): {hash}",
+    "signOnWeb": "Signer på nettet: det krever innlogging med en andre faktor."
+  },
+  "meetings": {
+    "agenda": "Saksliste",
+    "agendaLink": "Saksliste og protokoll",
+    "intro": "Saker, protokoll per sak, vedtak og oppfølgingspunkter. Sammenstill protokollen når møtet er ferdig.",
+    "empty": "Sakslisten er tom.",
+    "item": "Sak {position}",
+    "title": "Overskrift",
+    "presenter": "Saksbehandler",
+    "nobody": "Ingen",
+    "minutes": "Protokoll",
+    "decisions": "Vedtak (ett per linje)",
+    "papers": "Saksdokumenter",
+    "actions": "Oppfølgingspunkter",
+    "actionTitle": "Oppfølging",
+    "dueDate": "Innen",
+    "assignee": "Ansvarlig",
+    "status": "Status",
+    "statuses": {
+      "planned": "Planlagt",
+      "done": "Ferdig",
+      "missed": "Ikke gjort"
+    },
+    "remove": "Fjern",
+    "newItem": "Ny sak",
+    "newAction": "Nytt oppfølgingspunkt",
+    "save": "Lagre sakslisten",
+    "fromTemplate": "Start fra en mal",
+    "useTemplate": "Bruk {name}",
+    "assemble": "Sammenstill protokoll",
+    "assembleHelp": "Protokollen skrives som et utkast i serien du velger. Sammenstiller du på nytt, oppdateres utkastet.",
+    "series": "Serie",
+    "minutesDocument": "Protokollen",
+    "readOnly": "Du kan lese sakslisten, men ikke endre den."
+  },
+  "tasks": {
+    "title": "Mine oppgaver",
+    "intro": "Oppfølgingspunkter fra møter som du eller barna dine har fått.",
+    "open": "Å gjøre",
+    "closed": "Ferdige",
+    "empty": "Ingen oppgaver.",
+    "due": "Innen {date}",
+    "from": "Fra {meeting}",
+    "for": "For {person}",
+    "markDone": "Marker som ferdig",
+    "markPlanned": "Likevel ikke ferdig",
+    "statuses": {
+      "planned": "Å gjøre",
+      "done": "Ferdig",
+      "missed": "Ikke gjort"
+    }
   }
 }

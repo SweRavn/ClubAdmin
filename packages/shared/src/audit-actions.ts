@@ -229,6 +229,9 @@ export const AUDIT_ACTIONS = [
   "document.adopted",
   "document.superseded",
   "document.archived",
+  // Signing (P2.4 part C): signers named for a version, a signature.
+  "document.signers.updated",
+  "document.signed",
   // Meetings and tasks (P2.4 part B): a meeting's agenda (items, decisions,
   // papers, action items), its minutes assembled, the club's templates, and
   // an assignment marked from "Mina uppgifter".

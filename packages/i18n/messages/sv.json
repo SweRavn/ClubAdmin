@@ -49,7 +49,9 @@
     "documents": "Mina dokument",
     "clubDocuments": "Dokument",
     "announcements": "Anslagstavlan",
-    "clubAnnouncements": "Anslag"
+    "clubAnnouncements": "Anslag",
+    "tasks": "Mina uppgifter",
+    "governing": "Styrdokument"
   },
   "clubSwitcher": {
     "label": "Förening: {club}",
@@ -854,7 +856,10 @@
     "agenda_template_name_taken": "Två mallar kan inte ha samma namn.",
     "agenda_person_invalid": "Föredragande och ansvariga måste vara medlemmar i föreningen.",
     "agenda_empty": "Dagordningen har inga punkter att sammanställa.",
-    "minutes_series_required": "Välj vilken serie protokollet ska ligga i."
+    "minutes_series_required": "Välj vilken serie protokollet ska ligga i.",
+    "governing_signed": "Utkastet är signerat och kan inte ändras. Ändringar blir en ny version som signeras igen.",
+    "signers_invalid": "Signerarna måste vara medlemmar i föreningen och får bara anges en gång.",
+    "already_signed": "Du har redan signerat den här versionen."
   },
   "memberExport": {
     "columns": {
@@ -2075,6 +2080,14 @@
       "deletion_soon": {
         "title": "Ett dokument du laddat upp tas bort snart",
         "body": "Dokumentet i {club} tas bort automatiskt {date}. Ändra eller ta bort datumet om det ska finnas kvar."
+      },
+      "adopted": {
+        "title": "{kind, select, statutes {Nya stadgar har antagits i {club}} annual_meeting_minutes {Nytt årsmötesprotokoll i {club}} board_minutes {Nytt protokoll i {hasGroup, select, yes {{group}} other {{club}}}} policies {En ny policy har antagits i {club}} other {Ett nytt styrdokument har antagits i {club}}}",
+        "body": "Öppna dokumentet för att läsa det."
+      },
+      "signature_requested": {
+        "title": "Ett dokument väntar på din signatur",
+        "body": "Öppna dokumentet i {club} för att läsa och signera det."
       }
     },
     "announcement": {
@@ -2845,7 +2858,8 @@
       "unmuted": "lät åter skriva i chatten",
       "adopted": "antog",
       "superseded": "ersatte",
-      "assembled": "sammanställde"
+      "assembled": "sammanställde",
+      "signed": "signerade"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -4344,5 +4358,150 @@
     "decisions": "Beslut",
     "actions": "Åtgärder",
     "actionDue": "{action} (senast {date})"
+  },
+  "signaturePage": {
+    "title": "Signaturer",
+    "version": "Version {number}",
+    "hash": "SHA-256 för den signerade texten:",
+    "explanation": "Signaturerna gäller exakt den text som har denna kontrollsumma. Ändras texten stämmer summan inte längre.",
+    "hidden": "(skyddad identitet)",
+    "signed": "{role} · signerade {at} · {level} ({provider})",
+    "roles": {
+      "chair": "Ordförande",
+      "secretary": "Sekreterare",
+      "adjuster": "Justerare",
+      "other": "Signerare"
+    },
+    "levels": {
+      "simple": "enkel elektronisk underskrift"
+    }
+  },
+  "governing": {
+    "title": "Styrdokument",
+    "intro": "Stadgar, protokoll och policyer. Utkast skrivs här och antas av ordföranden eller sekreteraren.",
+    "series": "Serier",
+    "noSeries": "Inga serier ännu.",
+    "newSeries": "Ny serie",
+    "seriesName": "Seriens namn",
+    "seriesKind": "Slags serie",
+    "seriesKinds": {
+      "statutes": "Stadgar",
+      "annual_meeting_minutes": "Årsmötesprotokoll",
+      "board_minutes": "Styrelseprotokoll",
+      "policies": "Policyer",
+      "other": "Övrigt"
+    },
+    "createSeries": "Skapa serie",
+    "empty": "Inga dokument i serien.",
+    "newDocument": "Nytt dokument",
+    "documentName": "Namn",
+    "body": "Text",
+    "bodyHelp": "Markdown: # Rubrik, **fet**, *kursiv*, listor med -. En inställning som texten bestämmer markeras '{{'setting nyckel = värde'}}'.",
+    "create": "Skapa utkast",
+    "statuses": {
+      "draft": "Utkast",
+      "adopted": "Antagen",
+      "superseded": "Ersatt",
+      "archived": "Arkiverad"
+    },
+    "current": "Gällande lydelse",
+    "draft": "Utkast",
+    "noCurrent": "Inte antagen ännu.",
+    "save": "Spara utkast",
+    "saved": "Sparat.",
+    "adopt": "Registrera antagande",
+    "adoptedOn": "Antogs den",
+    "effectiveFrom": "Gäller från (tomt: samma dag)",
+    "decisionBody": "Beslutat av (krävs när texten markerar inställningar)",
+    "decisionBodies": {
+      "board": "Styrelsen",
+      "annual_meeting": "Årsmötet",
+      "extra_meeting": "Extra årsmöte"
+    },
+    "reference": "Paragraf i protokollet (frivilligt)",
+    "supersedes": "Ersätter",
+    "adoptButton": "Registrera som antagen",
+    "adoptHelp": "Kräver inloggning med en andra faktor. Versionen låses och markerade inställningar blir föreningens beslut.",
+    "adoptedNotice": "Dokumentet är registrerat som antaget.",
+    "archive": "Arkivera",
+    "delete": "Ta bort utkastet",
+    "versions": "Versioner",
+    "version": "Version {number}",
+    "adoptedInfo": "Antagen {date}, gäller från {from}",
+    "notAdopted": "Inte antagen",
+    "supersededBy": "Ersatt av {name}",
+    "supersedesList": "Ersätter: {names}",
+    "signers": "Signering",
+    "noSigners": "Inga signerare angivna.",
+    "signerRole": "Roll",
+    "signerPerson": "Person",
+    "signerRoles": {
+      "chair": "Ordförande",
+      "secretary": "Sekreterare",
+      "adjuster": "Justerare",
+      "other": "Signerare"
+    },
+    "saveSigners": "Spara signerare",
+    "sign": "Signera",
+    "signHelp": "Du signerar exakt den här versionen med din andra faktor. Signaturen sparas med kontrollsumman.",
+    "signedAt": "Signerade {date}",
+    "waiting": "Väntar",
+    "signedNotice": "Du har signerat.",
+    "signaturePage": "Signatursida (PDF)",
+    "waitingForMe": "Väntar på min signatur",
+    "noWaiting": "Inget väntar på din signatur.",
+    "hash": "Kontrollsumma (SHA-256): {hash}",
+    "signOnWeb": "Signera på webben: det kräver inloggning med en andra faktor."
+  },
+  "meetings": {
+    "agenda": "Dagordning",
+    "agendaLink": "Dagordning och protokoll",
+    "intro": "Punkter, protokoll per punkt, beslut och åtgärder. Sammanställ protokollet när mötet är klart.",
+    "empty": "Dagordningen är tom.",
+    "item": "§ {position}",
+    "title": "Rubrik",
+    "presenter": "Föredragande",
+    "nobody": "Ingen",
+    "minutes": "Protokoll",
+    "decisions": "Beslut (ett per rad)",
+    "papers": "Handlingar",
+    "actions": "Åtgärder",
+    "actionTitle": "Åtgärd",
+    "dueDate": "Senast",
+    "assignee": "Ansvarig",
+    "status": "Status",
+    "statuses": {
+      "planned": "Planerad",
+      "done": "Klar",
+      "missed": "Inte gjord"
+    },
+    "remove": "Ta bort",
+    "newItem": "Ny punkt",
+    "newAction": "Ny åtgärd",
+    "save": "Spara dagordningen",
+    "fromTemplate": "Börja från en mall",
+    "useTemplate": "Använd {name}",
+    "assemble": "Sammanställ protokoll",
+    "assembleHelp": "Protokollet skrivs som ett utkast i serien du väljer. Sammanställer du igen uppdateras utkastet.",
+    "series": "Serie",
+    "minutesDocument": "Protokollet",
+    "readOnly": "Du kan läsa dagordningen men inte ändra den."
+  },
+  "tasks": {
+    "title": "Mina uppgifter",
+    "intro": "Åtgärder från möten som du eller dina barn har fått.",
+    "open": "Att göra",
+    "closed": "Klara",
+    "empty": "Inga uppgifter.",
+    "due": "Senast {date}",
+    "from": "Från {meeting}",
+    "for": "För {person}",
+    "markDone": "Markera som klar",
+    "markPlanned": "Inte klar ändå",
+    "statuses": {
+      "planned": "Att göra",
+      "done": "Klar",
+      "missed": "Inte gjord"
+    }
   }
 }

@@ -232,6 +232,9 @@ export function noticeLink(input: NoticeInput): string {
     // The file archive (P2.2 part B): the file's page.
     case "document":
       return input.clubId && id ? `/clubs/${input.clubId}/documents/${id}` : "/me/documents";
+    // Governing documents (P2.4): the document's page.
+    case "governing_document":
+      return input.clubId && id ? `/clubs/${input.clubId}/governing/${id}` : "/me/documents";
     // Calendar subscriptions (P1.11): the person's subscriptions page.
     case "calendar_feed":
       return "/me/calendar";

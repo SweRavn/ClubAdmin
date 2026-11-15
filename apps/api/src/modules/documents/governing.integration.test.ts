@@ -12,6 +12,7 @@ import type {
   FolderContent,
   GoverningDocument,
   GoverningVersionText,
+  MySignatureRequestList,
 } from "@clubadmin/shared";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -32,14 +33,14 @@ let t: TestDatabase;
 let s: CoreServices;
 let app: TestApp;
 
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 async function api(
   personId: string,
   method: Method,
   url: string,
   body?: unknown,
-  options: { mfa?: boolean } = {},
+  options: { mfa?: boolean; authAgeSeconds?: number } = {},
 ) {
   return app.app
     .getHttpAdapter()
@@ -384,5 +385,109 @@ describe("a governing document", () => {
     expect(
       (await api(outsider.id, "GET", `${base()}/governing-documents/${statutesId}`)).statusCode,
     ).toBe(404);
+  });
+});
+
+describe("signing (part C)", () => {
+  let minutesId: string;
+  let versionId: string;
+
+  it("names the signers; a named signer reads the draft and sees it waiting", async () => {
+    const created = await api(secretary.id, "POST", `${base()}/governing-documents`, {
+      seriesId,
+      name: "Protokoll styrelsemöte 4",
+      body: "# Protokoll\n\n## § 1 Mötets öppnande",
+    });
+    ({ id: minutesId, versionId } = created.json<{ id: string; versionId: string }>());
+    const named = await api(
+      secretary.id,
+      "PUT",
+      `${base()}/documents/${minutesId}/versions/${versionId}/signers`,
+      {
+        signers: [
+          { personId: secretary.id, role: "secretary" },
+          { personId: member.id, role: "adjuster" },
+        ],
+      },
+    );
+    expect(named.statusCode).toBe(204);
+    // Someone outside the club is never a signer.
+    const stranger = await api(
+      secretary.id,
+      "PUT",
+      `${base()}/documents/${minutesId}/versions/${versionId}/signers`,
+      { signers: [{ personId: outsider.id, role: "adjuster" }] },
+    );
+    expect(detail(stranger)).toBe("signers_invalid");
+
+    const forMember = (
+      await api(member.id, "GET", `${base()}/governing-documents/${minutesId}`)
+    ).json<GoverningDocument>();
+    expect(forMember.draft?.id).toBe(versionId);
+    expect(forMember.draft?.signers.map((x) => [x.person?.id, x.role, x.mine])).toEqual([
+      [secretary.id, "secretary", false],
+      [member.id, "adjuster", true],
+    ]);
+    const waiting = (
+      await api(member.id, "GET", "/me/signature-requests")
+    ).json<MySignatureRequestList>();
+    expect(waiting.items.map((x) => [x.documentId, x.role])).toEqual([[minutesId, "adjuster"]]);
+    // A coach who is not named does not read the draft.
+    expect(
+      (await api(coach.id, "GET", `${base()}/governing-documents/${minutesId}`)).statusCode,
+    ).toBe(404);
+  });
+
+  it("is signed with a recent second factor, the hash of exactly the version", async () => {
+    const url = `${base()}/documents/${minutesId}/versions/${versionId}/signatures`;
+    expect((await api(member.id, "POST", url)).statusCode).toBe(403);
+    expect(
+      (await api(member.id, "POST", url, undefined, { mfa: true, authAgeSeconds: 3600 }))
+        .statusCode,
+    ).toBe(403);
+    expect((await api(coach.id, "POST", url, undefined, { mfa: true })).statusCode).toBe(404);
+    const signed = await api(member.id, "POST", url, undefined, { mfa: true });
+    expect(signed.statusCode).toBe(201);
+    const view = (
+      await api(secretary.id, "GET", `${base()}/governing-documents/${minutesId}`)
+    ).json<GoverningDocument>();
+    expect(signed.json<{ sha256: string }>().sha256).toBe(view.draft?.sha256);
+    expect(view.draft?.signers.find((x) => x.person?.id === member.id)).toMatchObject({
+      level: "simple",
+      provider: "in_app",
+    });
+    expect(detail(await api(member.id, "POST", url, undefined, { mfa: true }))).toBe(
+      "already_signed",
+    );
+    // The signed draft is locked.
+    const edit = await api(secretary.id, "PATCH", `${base()}/governing-documents/${minutesId}`, {
+      body: "changed",
+    });
+    expect(detail(edit)).toBe("governing_signed");
+    expect(
+      (await api(member.id, "GET", "/me/signature-requests")).json<MySignatureRequestList>().items,
+    ).toEqual([]);
+  });
+
+  it("asks the worker for the signature page once everyone has signed", async () => {
+    const url = `${base()}/documents/${minutesId}/versions/${versionId}/signatures`;
+    expect((await api(secretary.id, "POST", url, undefined, { mfa: true })).statusCode).toBe(201);
+    const { rows } = await t.db.withSystem("test:outbox", {}, (tx) =>
+      tx.execute<{ type: string }>(sql`
+        SELECT type FROM outbox.events
+        WHERE type IN ('document.signed', 'document.signature_requested')
+          AND payload::text LIKE ${`%${club.id}%`} ORDER BY id`),
+    );
+    expect(rows.map((r) => r.type)).toEqual(["document.signature_requested", "document.signed"]);
+    expect(await auditActionsOf(t, minutesId)).toEqual(
+      expect.arrayContaining(["document.signers.updated", "document.signed"]),
+    );
+    // Not made yet (the worker's job): not ready.
+    const page = await api(
+      member.id,
+      "GET",
+      `${base()}/documents/${minutesId}/versions/${versionId}/signature-page`,
+    );
+    expect([409, 503]).toContain(page.statusCode);
   });
 });

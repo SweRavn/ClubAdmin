@@ -11,6 +11,8 @@ import {
   ActivityPageSchema,
   AdministratorsOverviewSchema,
   AdultGuardiansSchema,
+  AgendaSchema,
+  AgendaTemplateListSchema,
   AnnouncementArchiveSchema,
   AnnouncementBoardSchema,
   AnnouncementDetailSchema,
@@ -45,12 +47,15 @@ import {
   DataExportsPageSchema,
   DecisionsPageSchema,
   DocumentDetailSchema,
+  DocumentSeriesPageSchema,
   EntitlementsResponseSchema,
   EventDetailSchema,
   EventPageSchema,
   FamilyDuplicatesSchema,
   FolderContentSchema,
   FolderPageSchema,
+  GoverningDocumentSchema,
+  GoverningVersionTextSchema,
   GroupArchivePreviewSchema,
   GroupAttendanceSchema,
   GroupCalendarSchema,
@@ -92,6 +97,8 @@ import {
   MyJoinRequestsSchema,
   MyPermissionsSchema,
   MyProfileSchema,
+  MySignatureRequestListSchema,
+  MyTaskPageSchema,
   MyWaitlistsSchema,
   MyWardsSchema,
   NoticeAttachmentListSchema,
@@ -864,6 +871,53 @@ export async function markDocumentsSeen(clubId: string, groupId: string | null):
 
 // Announcements (P2.3, ADR 0053).
 /** "Anslagstavlan": pinned, then the newest of the viewer's clubs and groups. */
+// Governing documents, meetings and tasks (P2.4).
+export const getDocumentSeries = cache((clubId: string, groupId: string | null) => {
+  const query = new URLSearchParams({ limit: "100" });
+  if (groupId && isUuid(groupId)) query.set("groupId", groupId);
+  return required(
+    `/api/v1/clubs/${requireId(clubId)}/document-series?${query}`,
+    DocumentSeriesPageSchema,
+  );
+});
+export const getGoverningDocument = cache((clubId: string, documentId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/governing-documents/${requireId(documentId)}`,
+    GoverningDocumentSchema,
+  ),
+);
+export const getGoverningVersion = cache((clubId: string, documentId: string, versionId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/governing-documents/${requireId(documentId)}/versions/${requireId(versionId)}`,
+    GoverningVersionTextSchema,
+  ),
+);
+export const getAgendaTemplates = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/agenda-templates`, AgendaTemplateListSchema, {
+    nullOn: [403, 404],
+  }),
+);
+/** A meeting's agenda, or null when the caller does not read the meeting. */
+export const getAgenda = cache((kind: "activities" | "events", meetingId: string) =>
+  apiGet(`/api/v1/${kind}/${requireId(meetingId)}/agenda`, AgendaSchema, { nullOn: [403, 404] }),
+);
+export const getMyTasks = cache((status: "open" | "closed", cursor: string | null) => {
+  const query = new URLSearchParams({ status, limit: "50" });
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(`/api/v1/me/tasks?${query}`, MyTaskPageSchema);
+});
+export const getMySignatureRequests = cache(() =>
+  required("/api/v1/me/signature-requests", MySignatureRequestListSchema),
+);
+/** The club's adult members to pick signers from, or null without access to the register. */
+export const getAdultMembersIfAllowed = cache((clubId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/members?limit=200&bornTo=${new Date().getUTCFullYear() - 18}`,
+    RegisterPageSchema,
+    { nullOn: [403] },
+  ),
+);
+
 export const getMyAnnouncements = cache((cursor: string | null) => {
   const query = new URLSearchParams({ limit: "20" });
   if (cursor && isUuid(cursor)) query.set("cursor", cursor);

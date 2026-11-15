@@ -23,8 +23,16 @@ import type { Task } from "graphile-worker";
 export function documentsHandler(): OutboxHandler {
   return {
     name: "documents",
-    types: ["document.version.uploaded", "documents.deleted"],
+    types: ["document.version.uploaded", "documents.deleted", "document.signed"],
     async handle(event, tx) {
+      if (event.type === "document.signed") {
+        // Everyone signed a governing document's version (P2.4): its signature page.
+        const payload = DOMAIN_EVENTS["document.signed"].parse(event.payload);
+        await tx.execute(sql`
+          SELECT graphile_worker.add_job('documents:signature_page', ${JSON.stringify(payload)}::json,
+            job_key := ${`documents:signature_page:${payload.versionId}`}, max_attempts := 10)`);
+        return;
+      }
       if (event.type === "document.version.uploaded") {
         const payload = DOMAIN_EVENTS["document.version.uploaded"].parse(event.payload);
         await tx.execute(sql`

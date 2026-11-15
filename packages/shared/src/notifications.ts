@@ -140,6 +140,10 @@ export const NOTIFICATION_TYPES = {
   // Documents (P2.2 part B): never the file's or folder's name (free text).
   "document.added": { category: "documents" },
   "document.deletion_soon": { category: "documents" },
+  // Governing documents (P2.4): a fixed text per series kind, never the
+  // document's name or text; a signature request at once.
+  "document.adopted": { category: "documents" },
+  "document.signature_requested": { category: "documents", immediate: true },
   // Announcements (P2.3, ADR 0053): emailed at once; important ones to
   // everyone whatever their settings (never to an address that bounced).
   "announcement.sent": { category: "announcements", immediate: true },

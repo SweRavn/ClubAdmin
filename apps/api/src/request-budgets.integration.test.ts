@@ -45,6 +45,8 @@ let ids: {
   document: string;
   cup: string;
   announcement: string;
+  minutes: string;
+  assignment: string;
 };
 
 interface Case {
@@ -125,6 +127,41 @@ const BILLING_CASES: Case[] = [
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // Governing documents and tasks (P2.4): Peter on IK Norrbacka's board, with
+  // an action item and the board's minutes waiting for his signature.
+  {
+    route: "GET /api/v1/me/tasks",
+    persona: "peter",
+    method: "GET",
+    url: () => "/api/v1/me/tasks",
+    statements: 2,
+    pages: 80,
+  },
+  {
+    route: "POST /api/v1/me/task-assignments/{assignmentId}/status",
+    persona: "peter",
+    method: "POST",
+    url: () => `/api/v1/me/task-assignments/${ids.assignment}/status`,
+    body: () => ({ status: "planned" }),
+    statements: 3,
+    pages: 70,
+  },
+  {
+    route: "GET /api/v1/me/signature-requests",
+    persona: "peter",
+    method: "GET",
+    url: () => "/api/v1/me/signature-requests",
+    statements: 1,
+    pages: 40,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/governing-documents/{documentId}",
+    persona: "peter",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/governing-documents/${ids.minutes}`,
+    statements: 11,
+    pages: 90,
+  },
   // Announcements (P2.3, ADR 0053): Erik in IK Norrbacka's F2015.
   {
     route: "GET /api/v1/me/announcements",
@@ -1090,6 +1127,8 @@ beforeAll(async () => {
     document: string;
     cup: string;
     announcement: string;
+    minutes: string;
+    assignment: string;
   }>(
     "admin",
     `SELECT
@@ -1102,7 +1141,11 @@ beforeAll(async () => {
        (SELECT id FROM document_folders WHERE group_id = $2 AND name = 'Matchschema') AS folder,
        (SELECT id FROM documents WHERE name = 'Matchschema vår.pdf') AS document,
        (SELECT id FROM activities WHERE title = 'Vårcupen i Norrbacka') AS cup,
-       (SELECT id FROM announcements WHERE title = 'Planen är stängd den här veckan') AS announcement`,
+       (SELECT id FROM announcements WHERE title = 'Planen är stängd den här veckan') AS announcement,
+       (SELECT d.id FROM documents d JOIN document_folders f ON f.id = d.folder_id
+        WHERE f.name = 'Styrelseprotokoll' AND d.kind = 'governing' LIMIT 1) AS minutes,
+       (SELECT a.id FROM task_assignments a JOIN tasks t ON t.id = a.task_id
+        WHERE t.title = 'Skicka budgeten till revisorerna') AS assignment`,
     [key("svk-f2017"), key("ikn-f2015")],
   );
   ids = rows[0]!;

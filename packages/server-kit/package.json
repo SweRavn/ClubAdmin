@@ -17,6 +17,7 @@
     "./notifications": "./src/notifications.ts",
     "./calendar": "./src/calendar.ts",
     "./payments": "./src/payments.ts",
+    "./signatures": "./src/signatures.ts",
     "./virus-scan": "./src/virus-scan.ts"
   },
   "scripts": {

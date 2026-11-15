@@ -56,6 +56,7 @@ describe("worker", () => {
     expect(taskList["members:export"]).toBeTypeOf("function");
     expect(taskList["documents:scan"]).toBeTypeOf("function");
     expect(taskList["documents:delete_objects"]).toBeTypeOf("function");
+    expect(taskList["documents:signature_page"]).toBeTypeOf("function");
     expect(taskList["privacy:purge_member"]).toBeTypeOf("function");
     expect(taskList["privacy:protection_changed"]).toBeTypeOf("function");
   });
