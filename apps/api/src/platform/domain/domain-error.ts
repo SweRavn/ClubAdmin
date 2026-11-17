@@ -382,6 +382,21 @@ export const DOMAIN_ERRORS = {
   carpool_not_pending: "conflict",
   /** Old car pools are deleted up to today at most. */
   carpool_before_invalid: "validation",
+  // Expense claims (P2.5 part B).
+  /** The board has decided no mileage rate: reimbursement is off. */
+  mileage_off: "conflict",
+  /** A drive that is not the caller's car, not started, "willing" only or not the group's. */
+  claim_drive_invalid: "validation",
+  /** A drive with no distance (neither the driver's nor the place's). */
+  claim_distance_missing: "validation",
+  /** A drive already in a claim that is not rejected. */
+  claim_drive_claimed: "conflict",
+  /** Nobody attests their own claim. */
+  claim_own: "forbidden",
+  /** The claim was decided already. */
+  claim_decided: "conflict",
+  /** More claims than one export holds: a shorter period. */
+  export_too_large: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

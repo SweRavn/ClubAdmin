@@ -498,3 +498,61 @@ export async function liveLocation(tx: Tx, clubId: string, locationId: string): 
       WHERE l.club_id = ${clubId}::uuid AND l.id = ${locationId}::uuid AND l.archived_at IS NULL) AS ok`);
   return rows[0]?.ok ?? false;
 }
+
+export interface DriveRow {
+  offerId: string;
+  activityId: string;
+  activityTitle: string;
+  activityCreatorPersonId: string | null;
+  startsAt: Date;
+  groupIds: string[];
+  direction: CarpoolDirection;
+  /** The driver's correction, else the place's; none: unknown. */
+  distanceKm: number | null;
+}
+
+/**
+ * The person's drives (cars with seats) of activities that have started and
+ * were not cancelled, newest first, by the driver index; `offerIds`: only
+ * these, locked for a claim.
+ */
+export async function drives(
+  tx: Tx,
+  driverPersonId: string,
+  options: { offerIds?: readonly string[]; limit: number },
+): Promise<DriveRow[]> {
+  const only = options.offerIds
+    ? sql`AND o.id = ANY (${uuidArray(options.offerIds)}::uuid[])`
+    : sql``;
+  const { rows } = await tx.execute<{
+    id: string;
+    activity_id: string;
+    title: string;
+    created_by_person_id: string | null;
+    starts_at: string | Date;
+    group_ids: string[];
+    direction: CarpoolDirection;
+    km: string | null;
+  }>(sql`
+    SELECT o.id, a.id AS activity_id, a.title, a.created_by_person_id, a.starts_at,
+      ARRAY(SELECT ag.group_id FROM public.activity_groups ag WHERE ag.activity_id = a.id) AS group_ids,
+      o.direction, coalesce(o.distance_km, l.distance_km)::text AS km
+    FROM public.carpool_offers o
+    JOIN public.activities a ON a.id = o.activity_id
+    LEFT JOIN public.locations l ON l.club_id = a.club_id AND l.id = a.location_id
+    WHERE o.driver_person_id = ${driverPersonId}::uuid AND NOT o.willing_only
+      AND a.starts_at <= now() AND a.status <> 'cancelled' ${only}
+    ORDER BY a.starts_at DESC, o.id
+    LIMIT ${options.limit}
+    ${options.offerIds ? sql`FOR UPDATE OF o` : sql``}`);
+  return rows.map((r) => ({
+    offerId: r.id,
+    activityId: r.activity_id,
+    activityTitle: r.title,
+    activityCreatorPersonId: r.created_by_person_id,
+    startsAt: new Date(r.starts_at),
+    groupIds: r.group_ids,
+    direction: r.direction,
+    distanceKm: r.km === null ? null : Number(r.km),
+  }));
+}

@@ -388,7 +388,7 @@ export class CarpoolsController {
   @Endpoint({
     method: "GET",
     path: "clubs/:clubId/groups/:groupId/carpool-stats",
-    summary: "Drives, distance and passengers per person (leaders; members when public)",
+    summary: "Drives, distance and passengers per person (leaders, attesters; members when public)",
     tags: TAGS,
     access: { permission: "group.activities.read", resource: "group" },
     request: { params: CarpoolGroupParamsSchema, query: CarpoolStatsQuerySchema },
@@ -400,8 +400,11 @@ export class CarpoolsController {
     @Query() query: CarpoolStatsQuery,
   ): Promise<CarpoolStats> {
     const group = resourceOf(authz, "group");
+    // Leaders and attesters (P2.5 part B) see every row.
     const leader =
-      permits(authz.actor, "group.activities.manage", group) || authz.actor.ownsGroup(group);
+      permits(authz.actor, "group.activities.manage", group) ||
+      authz.actor.ownsGroup(group) ||
+      permits(authz.actor, "group.expenses.attest", group);
     const result = await this.carpools.stats(
       tenantContext(authz, group.clubId),
       group.groupId,

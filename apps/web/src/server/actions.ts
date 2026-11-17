@@ -1695,7 +1695,11 @@ const PRIVACY_ACTIONS: Record<string, FormAction> = {
         if (form.get(`change.${key}`) !== "on") continue;
         const definition: ClubSettingDefinition = CLUB_SETTINGS[key];
         if (definition.type === "integer") settings[key] = Number(text(form, `value.${key}`));
-        else if (definition.type === "boolean") settings[key] = form.get(`value.${key}`) === "on";
+        else if (definition.type === "rate") {
+          // The mileage rate (P2.5): empty turns reimbursement off.
+          const value = text(form, `value.${key}`);
+          settings[key] = value === "" ? null : Number(value);
+        } else if (definition.type === "boolean") settings[key] = form.get(`value.${key}`) === "on";
         else if (definition.type === "purposes") {
           settings[key] = form
             .getAll(`value.${key}`)

@@ -133,6 +133,8 @@ export const UpdateClubSettingsSchema = z
     formerMemberRetentionMonths: z.number().int().min(6).max(120),
     consentPurposes: z.array(z.enum(CONSENT_PURPOSES)).max(CONSENT_PURPOSES.length),
     consentReconfirmOnNewVersion: z.boolean(),
+    /** Mileage reimbursement (P2.5): minor units per km; none: off (a board setting). */
+    mileageRate: z.number().int().min(0).max(100_000).nullable(),
     /** Where members send privacy questions (P1.8a). */
     privacyContactEmail: z.email().max(254).nullable(),
   })

@@ -299,7 +299,14 @@
     "carpool_own_car": "Föraren bokar inte plats i sin egen bil.",
     "carpool_self_booking_age": "Din vårdnadshavare behöver boka platsen åt dig.",
     "carpool_not_pending": "Platsen väntar inte på något godkännande.",
-    "carpool_before_invalid": "Välj ett datum som inte ligger i framtiden."
+    "carpool_before_invalid": "Välj ett datum som inte ligger i framtiden.",
+    "mileage_off": "Föreningen har ingen milersättning beslutad.",
+    "claim_drive_invalid": "En av körningarna kan inte tas med: den är inte din, har inte ägt rum eller hör inte till gruppen.",
+    "claim_distance_missing": "En körning saknar avstånd. Ange körsträckan för körningen först.",
+    "claim_drive_claimed": "En av körningarna finns redan i ett utlägg.",
+    "claim_own": "Du kan inte attestera ditt eget utlägg.",
+    "claim_decided": "Utlägget är redan behandlat.",
+    "export_too_large": "För många utlägg för en fil. Välj en kortare period."
   },
   "roles": {
     "chair": "Ordförande",
@@ -2127,6 +2134,16 @@
         "title": "Samåkningen väntar på ditt godkännande",
         "body": "Ditt barn blir ensamt barn med en vuxen. Öppna Mina samåkningar i {club} för att se vem som kör och godkänna."
       }
+    },
+    "expense": {
+      "submitted": {
+        "title": "Ett utlägg väntar på attest",
+        "body": "Öppna utläggen i {club} för att godkänna eller avslå det."
+      },
+      "decided": {
+        "title": "Ditt utlägg har behandlats",
+        "body": "Öppna Mina utlägg i {club} för att se beslutet."
+      }
     }
   },
   "notifyCategories": {
@@ -2358,7 +2375,8 @@
       "former_member_retention_months": "Tidigare medlemmars uppgifter sparas",
       "attendance_retention_months": "Svar och närvaro sparas",
       "consent_purposes": "Samtycken klubben ber om",
-      "consent_reconfirm_on_new_version": "En ny samtyckestext frågar alla igen"
+      "consent_reconfirm_on_new_version": "En ny samtyckestext frågar alla igen",
+      "mileage_rate": "Milersättning (öre per km, tomt = ingen ersättning)"
     },
     "days": "dagar",
     "months": "månader",
@@ -2887,7 +2905,9 @@
       "adopted": "antog",
       "superseded": "ersatte",
       "assembled": "sammanställde",
-      "signed": "signerade"
+      "signed": "signerade",
+      "submitted": "skickade in",
+      "exported": "exporterade"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -3845,6 +3865,16 @@
         "name": "Hantera samåkning",
         "description": "Kan välja föreningens utgångsplats för avstånd och ta bort samåkningar till äldre aktiviteter.",
         "example": "Kan till exempel ta bort förra säsongens samåkningar."
+      },
+      "group_expenses_attest": {
+        "name": "Attestera gruppens utlägg",
+        "description": "Kan godkänna eller avslå utlägg som gäller gruppen, till exempel milersättning för samåkning. Aldrig sina egna.",
+        "example": "Kan till exempel attestera en förälders milersättning för bortamatcherna i november."
+      },
+      "club_expenses_attest": {
+        "name": "Attestera föreningens utlägg",
+        "description": "Kan godkänna eller avslå alla utlägg i föreningen och exportera godkända utlägg till en fil för utbetalning. Aldrig sina egna.",
+        "example": "Kan till exempel exportera månadens godkända milersättningar till bokföringen."
       }
     }
   },

@@ -15,9 +15,11 @@ export type {
   LocaleDefaults,
   MeetingKind,
   MemberImportRules,
+  MileageRate,
   ParsedPersonalId,
   PersonalIdFormat,
 } from "./types.ts";
+export { mileageRatePerKm } from "./types.ts";
 export { NO, SE };
 
 export const COUNTRY_PACKS: Readonly<Record<string, CountryPack>> = { SE, NO };

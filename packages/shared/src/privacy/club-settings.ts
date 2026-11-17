@@ -40,8 +40,15 @@ export interface EmailSetting extends BaseSetting {
   type: "email";
   default: null;
 }
+/** An amount per kilometre in minor units of the club's currency; none: off (P2.5). */
+export interface RateSetting extends BaseSetting {
+  type: "rate";
+  default: null;
+  max: number;
+  unit: "minor_per_km";
+}
 export type ClubSettingDefinition =
-  IntegerSetting | BooleanSetting | PurposesSetting | EnumSetting | EmailSetting;
+  IntegerSetting | BooleanSetting | PurposesSetting | EnumSetting | EmailSetting | RateSetting;
 
 export const CLUB_SETTINGS = {
   former_member_retention_months: {
@@ -108,6 +115,16 @@ export const CLUB_SETTINGS = {
     default: null,
     decidedBy: "manager",
   },
+  // Mileage reimbursement for car pools (P2.5, ADR 0048): minor units of
+  // the club's currency per kilometre (SEK 25 per mil is 250); none: off.
+  mileage_rate: {
+    field: "mileageRate",
+    type: "rate",
+    default: null,
+    max: 100_000,
+    unit: "minor_per_km",
+    decidedBy: "board",
+  },
 } as const satisfies Record<string, ClubSettingDefinition>;
 
 export type ClubSettingKey = keyof typeof CLUB_SETTINGS;
@@ -121,7 +138,8 @@ export type BoardSettingKey =
   | "former_member_retention_months"
   | "attendance_retention_months"
   | "consent_purposes"
-  | "consent_reconfirm_on_new_version";
+  | "consent_reconfirm_on_new_version"
+  | "mileage_rate";
 
 /** The API fields of the board settings (refused by PATCH /clubs/:clubId/settings). */
 export const BOARD_SETTING_FIELDS: readonly string[] = BOARD_SETTING_KEYS.map(
@@ -163,6 +181,8 @@ export function settingValueSchema(
       return z.enum(definition.values as [string, ...string[]]);
     case "email":
       return z.email().max(254).nullable();
+    case "rate":
+      return z.number().int().min(0).max(definition.max).nullable();
   }
 }
 
@@ -191,5 +211,8 @@ export function settingMarkerValue(key: ClubSettingKey, raw: string): unknown {
       return value;
     case "email":
       return value === "" ? null : value;
+    case "rate":
+      if (value === "" || ["none", "ingen", "off"].includes(value.toLowerCase())) return null;
+      return /^\d{1,6}$/.test(value) ? Number(value) : undefined;
   }
 }

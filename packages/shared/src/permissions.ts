@@ -124,6 +124,11 @@ export const PERMISSIONS = [
   "club.governing_documents.adopt",
   // Car pooling (P2.5, ADR 0048): deleting old car-pool data, the starting place.
   "club.carpools.manage",
+  // Expense claims (P2.5 part B): attesting a group's claims, any claim of
+  // the club (and the CSV export); the queue for either.
+  "group.expenses.attest",
+  "club.expenses.attest",
+  "club.expenses.read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

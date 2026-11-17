@@ -18,6 +18,7 @@ import { ClubsApiModule } from "./modules/clubs/clubs-api.module.ts";
 import { ClubsModule } from "./modules/clubs/index.ts";
 import { DocumentsModule } from "./modules/documents/index.ts";
 import { EventsModule } from "./modules/events/index.ts";
+import { ExpensesModule } from "./modules/expenses/index.ts";
 import { FamiliesModule } from "./modules/families/index.ts";
 import { GroupsModule } from "./modules/groups/index.ts";
 import { GuardianshipsModule } from "./modules/guardianships/index.ts";
@@ -60,6 +61,7 @@ const MODULES = [
   AnnouncementsModule,
   MeetingsModule,
   CarpoolsModule,
+  ExpensesModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

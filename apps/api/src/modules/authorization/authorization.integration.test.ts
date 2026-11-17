@@ -133,7 +133,11 @@ beforeAll(async () => {
   );
   treasurerRoleA = roleRows.find((r) => r.template_key === "treasurer")!.id;
   // Calendar feeds need the entitlement when CI runs with billing on (P1.11).
-  await subscribeToFeatures(t, [m.clubA.id, m.clubB.id], ["calendar_feeds", "chat", "documents"]);
+  await subscribeToFeatures(
+    t,
+    [m.clubA.id, m.clubB.id],
+    ["calendar_feeds", "chat", "documents", "finance"],
+  );
   await dispatchPending();
 });
 afterAll(async () => {
@@ -1167,6 +1171,24 @@ describe("permission matrix", () => {
     "DELETE /api/v1/clubs/:clubId/carpools": {
       url: () => `/api/v1/clubs/${m.clubA.id}/carpools?before=2020-01-01`,
       expected: { ...CLUB_FORBIDDEN, manager: 200 },
+    },
+    // Expense claims (P2.5 part B, the finance feature): the queue for the
+    // club's and groups' attesters (the matrix's coach is a head coach, its
+    // owner owns the section), a decision on a claim the matrix does not
+    // have (404 for them), the export for the club's attesters (the matrix
+    // has no treasurer).
+    "GET /api/v1/clubs/:clubId/expense-claims": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/expense-claims`,
+      expected: { ...CLUB_FORBIDDEN, coach: 200, owner: 200 },
+    },
+    "POST /api/v1/clubs/:clubId/expense-claims/:claimId/decision": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/expense-claims/${SOME_ID}/decision`,
+      expected: { ...CLUB_FORBIDDEN, coach: 404, owner: 404 },
+      body: { decision: "approve" },
+    },
+    "GET /api/v1/clubs/:clubId/expense-claims/export": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/expense-claims/export?from=2026-01-01&to=2026-01-31`,
+      expected: CLUB_FORBIDDEN,
     },
     // Part B (P2.2): seeing, storage, notices' documents.
     "POST /api/v1/clubs/:clubId/documents/seen": {

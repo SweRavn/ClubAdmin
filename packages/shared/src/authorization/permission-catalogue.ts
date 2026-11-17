@@ -212,6 +212,11 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   // Car pooling (P2.5): offering and booking need no permission (participants
   // and guardians); deleting old data and the starting place need this one.
   "club.carpools.manage": role("club", "activities"),
+  // Expense claims (P2.5 part B, the finance feature): attesting a group's
+  // claims (never one's own) and any claim of the club; the queue follows.
+  "group.expenses.attest": role("group", "finance"),
+  "club.expenses.attest": role("club", "finance"),
+  "club.expenses.read": derived("group.expenses.attest"),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -379,6 +384,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.account.manage",
       "billing.invoices.read",
       "club.carpools.manage",
+      "club.expenses.attest",
     ],
   },
   secretary: {
@@ -409,6 +415,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "group.channels.manage",
       "group.documents.manage",
       "group.announcements.send",
+      "group.expenses.attest",
     ],
   },
   assistant_coach: {
@@ -427,6 +434,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "group.channels.create",
       "group.documents.manage",
       "group.announcements.send",
+      "group.expenses.attest",
     ],
   },
   physio: { scope: "group", permissions: LEADER },
@@ -461,6 +469,8 @@ export const OWNER_PERMISSIONS: readonly RolePermission[] = [
   "group.channels.manage",
   "group.documents.manage",
   "group.announcements.send",
+  // P2.5: owners attest the group's expense claims (and appoint head coaches who do).
+  "group.expenses.attest",
 ];
 /**
  * Not powers over others: taking part, counting as a leader, and creating

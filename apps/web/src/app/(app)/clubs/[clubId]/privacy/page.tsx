@@ -106,7 +106,11 @@ export default async function ClubPrivacyPage({ params, searchParams }: Params) 
                         ? s.value
                           ? t("common.yes")
                           : t("common.no")
-                        : `${String(s.value)} ${s.unit === "days" ? t("privacy.days") : t("privacy.months")}`}
+                        : s.value === null
+                          ? "–"
+                          : s.unit
+                            ? `${Number(s.value)} ${s.unit === "days" ? t("privacy.days") : t("privacy.months")}`
+                            : Number(s.value)}
                   </td>
                   <td className="py-2 text-muted">{decisionLabel(s.decision)}</td>
                 </tr>
@@ -220,7 +224,7 @@ export default async function ClubPrivacyPage({ params, searchParams }: Params) 
                       name={`value.${s.key}`}
                       min={s.min}
                       max={s.max}
-                      defaultValue={Number(s.value)}
+                      defaultValue={s.value === null ? "" : Number(s.value)}
                       className={inputClass}
                     />
                   )}

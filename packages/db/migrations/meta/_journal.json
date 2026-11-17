@@ -351,6 +351,13 @@
       "when": 1794850000000,
       "tag": "0049_carpool_note",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1794860000000,
+      "tag": "0050_expense_claims",
+      "breakpoints": true
     }
   ]
 }

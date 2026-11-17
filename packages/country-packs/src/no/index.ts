@@ -31,6 +31,8 @@ export const NO: CountryPack = {
       isoDate(year, 12, 26),
     ].sort();
   },
+  // Skatteetaten 2026: skattefri kilometergodtgjørelse for bil, 3,50 kroner per km.
+  mileageRate: { amountMinor: 350, per: "km", year: 2026 },
   agendaTemplates: [
     {
       // Norges idrettsforbunds lovnorm for idrettslag (årsmøte).

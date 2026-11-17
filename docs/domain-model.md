@@ -1132,6 +1132,38 @@ Endpoints: `GET /activities/:activityId/carpool`, `POST|PATCH|DELETE
 `DELETE /clubs/:clubId/carpools?before=` (`club.carpools.manage`).
 Erasure clears the departure place and the note of the person's drives.
 
+### Expense claims (P2.5 part B, ADR 0048)
+Club-owned tables (tenant RLS, record history; migration 0050), the
+`finance` feature:
+
+- `clubs.mileage_rate`: minor units of the club's currency per km (none:
+  reimbursement off), a board setting of the registry (`mileage_rate`),
+  changed only by a recorded decision (`app.apply_board_decision`; a
+  decision of the rate alone publishes no privacy policy version). The
+  country pack's `mileageRate` is the tax-free guide (SE 25 kr per mil, NO
+  3.50 kr per km, 2026).
+- `expense_claims`: `kind` `mileage`, `claimant_person_id`, `group_id`,
+  `activity_id` (when one activity), `routed_to_person_id` (the activity's
+  creator when they may attest), `amount_minor`, `currency`, `status`
+  `submitted` | `approved` | `rejected` | `exported` | `paid`,
+  `decided_by_person_id` (never the claimant), `decided_at`, `reason`,
+  `exported_at`.
+- `expense_claim_lines`: per drive (`offer_id`, kept as none when the car
+  pool is deleted), `description` (date, direction, activity title),
+  `quantity` (km), `unit_amount_minor`, `amount_minor`.
+
+Permissions: `group.expenses.attest` (head coaches, team managers; owning
+the group or a group above it gives it too),
+`club.expenses.attest` (treasurers; also the CSV export) and
+`club.expenses.read` (the queue: either). Endpoints: `GET
+/me/expense-claims/claimable?clubId=`, `POST|GET /me/expense-claims`
+(`app.my_expense_claims`), `GET /clubs/:clubId/expense-claims`, `POST
+.../:claimId/decision`, `GET .../export?from&to` (CSV, at most 5000
+claims, marked exported). Notices `expense.submitted` (whom it was routed
+to, else the group's attesters, else the club's) and `expense.decided` (the
+claimant). Erasure clears the reason on the person's claims; the claims
+stay for the accounting.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

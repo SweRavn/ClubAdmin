@@ -828,6 +828,12 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "the cars offered for an activity: in its car pool and Mina samåkningar, changes in the audit log (carpool.offer.*)",
   "public.carpool_bookings":
     "who has a seat in which car: in the car pool to those who may see it, changes in the audit log (carpool.booking.*)",
+  // Expense claims (P2.5 part B): shown to the claimant and the attesters,
+  // every change in the audit log (expense.claim.*).
+  "public.expense_claims":
+    "a mileage claim and its decision: in Mina utlägg and the attesters' queue, in the audit log (expense.claim.*)",
+  "public.expense_claim_lines":
+    "a claim's drives and amounts: shown with the claim, created with it (expense.claim.submitted)",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

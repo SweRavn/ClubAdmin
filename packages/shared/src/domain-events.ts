@@ -95,6 +95,10 @@ export const DOMAIN_EVENTS = {
     /** The people to tell (the driver, bookers, guardians asked to confirm; never the actor). */
     personIds: z.array(id).max(50),
   }),
+  /** A mileage claim was submitted (P2.5): its attester, or the group's or club's, is told. */
+  "expense_claim.submitted": z.object({ clubId: id, claimId: id }),
+  /** A claim was approved or rejected (P2.5): the claimant is told. */
+  "expense_claim.decided": z.object({ clubId: id, claimId: id }),
   /** An announcement was sent (P2.3): the worker resolves its audience into notices. */
   "announcement.sent": z.object({ clubId: id, announcementId: id }),
   /** An announcement was withdrawn or deleted (P2.3): what is not delivered yet is not. */

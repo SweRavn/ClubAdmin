@@ -196,6 +196,8 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "document.signature_requested",
       // Car pooling (P2.5).
       "carpool.changed",
+      "expense_claim.submitted",
+      "expense_claim.decided",
       // Announcements (P2.3).
       "announcement.sent",
       "announcement.withdrawn",
@@ -765,6 +767,82 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               dedupeKey: `carpool:${activityId}:${kind}:${personId}:${event.idempotencyKey}`,
             })),
           );
+          return;
+        }
+        // A mileage claim was submitted (P2.5): whom it was routed to, else the
+        // group's attesters and owners, else the club's (never the claimant).
+        // Fixed texts.
+        case "expense_claim.submitted": {
+          const { clubId, claimId } = DOMAIN_EVENTS["expense_claim.submitted"].parse(event.payload);
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            WITH RECURSIVE c AS (
+              SELECT id, club_id, group_id, claimant_person_id, routed_to_person_id
+              FROM public.expense_claims WHERE id = ${claimId}::uuid AND status = 'submitted'
+            ), up AS (
+              SELECT g.id, g.parent_group_id FROM c JOIN public.groups g ON g.id = c.group_id
+              UNION
+              SELECT p.id, p.parent_group_id FROM public.groups p JOIN up ON p.id = up.parent_group_id
+            ), grp AS (
+              SELECT DISTINCT gm.person_id FROM c
+              JOIN public.group_memberships gm ON gm.club_id = c.club_id AND gm.group_id = c.group_id
+                AND gm.valid_to IS NULL
+              JOIN public.role_permissions rp ON rp.club_id = gm.club_id AND rp.role_id = gm.role_id
+                AND rp.permission = 'group.expenses.attest'
+              WHERE gm.person_id <> c.claimant_person_id
+              UNION
+              -- The owners of the group or of a group above it.
+              SELECT o.person_id FROM up
+              JOIN public.group_owners o ON o.group_id = up.id AND o.valid_to IS NULL
+              WHERE o.person_id <> (SELECT claimant_person_id FROM c)
+            ), clb AS (
+              SELECT DISTINCT r.person_id FROM c
+              JOIN public.club_role_assignments r ON r.club_id = c.club_id AND r.valid_to IS NULL
+              JOIN public.role_permissions rp ON rp.club_id = r.club_id AND rp.role_id = r.role_id
+                AND rp.permission = 'club.expenses.attest'
+              WHERE r.person_id <> c.claimant_person_id
+            )
+            SELECT routed_to_person_id AS person_id FROM c WHERE routed_to_person_id IS NOT NULL
+            UNION
+            SELECT person_id FROM grp WHERE NOT EXISTS (SELECT 1 FROM c WHERE routed_to_person_id IS NOT NULL)
+            UNION
+            SELECT person_id FROM clb WHERE NOT EXISTS (SELECT 1 FROM c WHERE routed_to_person_id IS NOT NULL)
+              AND NOT EXISTS (SELECT 1 FROM grp)`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId,
+              type: "expense.submitted" as const,
+              subjectType: "expense_claim",
+              subjectId: claimId,
+              about: [],
+              params: {},
+              dedupeKey: `expense.submitted:${claimId}`,
+            })),
+          );
+          return;
+        }
+        // A claim was approved or rejected: the claimant is told (the app shows which).
+        case "expense_claim.decided": {
+          const { clubId, claimId } = DOMAIN_EVENTS["expense_claim.decided"].parse(event.payload);
+          await useClub(tx, clubId);
+          const { rows } = await tx.execute<{ claimant_person_id: string; status: string }>(sql`
+            SELECT claimant_person_id, status FROM public.expense_claims WHERE id = ${claimId}::uuid`);
+          const claim = rows[0];
+          if (!claim) return;
+          await notify(tx, [
+            {
+              recipientPersonId: claim.claimant_person_id,
+              clubId,
+              type: "expense.decided",
+              subjectType: "expense_claim",
+              subjectId: claimId,
+              about: [],
+              params: { status: claim.status },
+              dedupeKey: `expense.decided:${claimId}`,
+            },
+          ]);
           return;
         }
         // Signers were named (P2.4): each is asked to sign, at once.

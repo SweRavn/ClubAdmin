@@ -855,6 +855,35 @@ export const POLICIES: readonly Policy[] = [
   ),
   // Car pools (P2.5): the club's starting place and deleting old car pools.
   definePolicy("club.carpools.manage", "club", holdsInClub("club.carpools.manage")),
+  // Expense claims (P2.5 part B): attesters of a group (head coaches, team
+  // managers, its owners) and of the club (treasurers); never acting for
+  // someone else.
+  // That nobody attests their own claim is the service's.
+  definePolicy(
+    "group.expenses.attest",
+    "group",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("group.expenses.attest", resource) ||
+        actor.ownsGroup(resource) ||
+        actor.holds("club.expenses.attest", resource.clubId)),
+  ),
+  definePolicy(
+    "club.expenses.attest",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.expenses.attest", resource.clubId),
+  ),
+  // The queue: the club's attesters see every claim, a group's its own.
+  definePolicy(
+    "club.expenses.read",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("club.expenses.attest", resource.clubId) ||
+        actor.holdsInAnyGroup("group.expenses.attest", resource.clubId) ||
+        actor.ownsAnyGroup(resource.clubId)),
+  ),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

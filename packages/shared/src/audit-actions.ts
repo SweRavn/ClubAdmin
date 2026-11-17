@@ -251,6 +251,11 @@ export const AUDIT_ACTIONS = [
   "carpool.self_booking_age.set",
   "carpool.settings.updated",
   "carpool.history.deleted",
+  // Expense claims (P2.5 part B): submitted, attested or rejected, exported.
+  "expense.claim.submitted",
+  "expense.claim.approved",
+  "expense.claim.rejected",
+  "expense.claims.exported",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

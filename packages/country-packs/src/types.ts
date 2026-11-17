@@ -127,6 +127,23 @@ export interface CountryPack {
   defaultClubType?: string;
   /** Default agendas for the club's meetings (P2.4); none: the club writes its own. */
   agendaTemplates?: readonly AgendaTemplateDefault[];
+  /**
+   * The tax-free mileage rate for one's own car (P2.5), a guide when the
+   * board decides the club's rate: minor units per `per` (SE: per mil of
+   * 10 km; NO: per km), for the income year.
+   */
+  mileageRate?: MileageRate;
+}
+
+export interface MileageRate {
+  amountMinor: number;
+  per: "mil" | "km";
+  year: number;
+}
+
+/** A mileage rate in minor units per kilometre (the unit the club's setting is in). */
+export function mileageRatePerKm(rate: MileageRate): number {
+  return rate.per === "mil" ? rate.amountMinor / 10 : rate.amountMinor;
 }
 
 /** Age reached during the calendar year of `date` (how grant rules count ages). */

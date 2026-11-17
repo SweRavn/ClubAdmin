@@ -50,6 +50,7 @@ import { type CarFacts, settleSeats } from "./rule-of-two.ts";
 export type {
   ActivityFacts,
   BookingRow,
+  DriveRow,
   MyCarpoolRow,
   OfferRow,
   StatsRow,
@@ -490,6 +491,23 @@ export class CarpoolsService {
     age: number | null,
   ): Promise<void> {
     return this.guardianships.setCarpoolSelfBookingAge(context, wardPersonId, age);
+  }
+
+  // --- Drives for expense claims (the expenses module) ---------------------------
+
+  /**
+   * The caller's drives of activities that have started, in the caller's
+   * tenant transaction; `offerIds`: only these, locked (a claim is made of them).
+   */
+  drivesInTx(
+    tx: Tx,
+    driverPersonId: string,
+    options: { offerIds?: readonly string[]; limit?: number } = {},
+  ): Promise<repo.DriveRow[]> {
+    return repo.drives(tx, driverPersonId, {
+      ...(options.offerIds ? { offerIds: options.offerIds } : {}),
+      limit: options.limit ?? 200,
+    });
   }
 
   // --- Settings and old data ---------------------------------------------------------

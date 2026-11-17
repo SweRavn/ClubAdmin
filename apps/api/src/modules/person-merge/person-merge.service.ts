@@ -27,6 +27,7 @@ import {
 } from "../club-profiles/index.ts";
 import { DOCUMENT_PERSON_REFERENCES } from "../documents/index.ts";
 import { EVENT_PERSON_REFERENCES } from "../events/index.ts";
+import { EXPENSE_PERSON_REFERENCES } from "../expenses/index.ts";
 import { GROUP_PERSON_REFERENCES } from "../groups/index.ts";
 import { GUARDIANSHIP_PERSON_REFERENCES } from "../guardianships/index.ts";
 import { MEETING_PERSON_REFERENCES } from "../meetings/index.ts";
@@ -56,6 +57,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...ANNOUNCEMENT_PERSON_REFERENCES,
   ...MEETING_PERSON_REFERENCES,
   ...CARPOOL_PERSON_REFERENCES,
+  ...EXPENSE_PERSON_REFERENCES,
   ...PRIVACY_PERSON_REFERENCES,
 ];
 

@@ -231,11 +231,12 @@ export async function applyDueDecisions(db: Database, retentionDb: Database): Pr
   let applied = 0;
   for (const { id, club_id: clubId } of rows) {
     await db.withSystem("clubs:apply_decisions", { clubId }, async (tx) => {
-      const { rows: result } = await tx.execute<{ policy_id: string | null }>(
-        sql`SELECT app.apply_setting_decision(${id}, ${PRIVACY_POLICY_TEMPLATE_VERSION}) AS policy_id`,
+      // A decision of the mileage rate alone (P2.5) publishes no policy version.
+      const { rows: result } = await tx.execute<{ applied: boolean; policy_id: string | null }>(
+        sql`SELECT applied, policy_id FROM app.apply_board_decision(${id}, ${PRIVACY_POLICY_TEMPLATE_VERSION})`,
       );
-      const policyId = result[0]?.policy_id;
-      if (!policyId) return;
+      if (!result[0]?.applied) return;
+      const policyId = result[0].policy_id;
       const { rows: decision } = await tx.execute<{ settings: Record<string, unknown> }>(
         sql`SELECT settings FROM public.club_setting_decisions WHERE id = ${id}`,
       );
@@ -247,13 +248,14 @@ export async function applyDueDecisions(db: Database, retentionDb: Database): Pr
           (key) => CLUB_SETTINGS[key as ClubSettingKey]?.field ?? key,
         ),
       });
+      applied++;
+      if (!policyId) return;
       await audit.record(tx, {
         action: "club.privacy_policy.published",
         resourceType: "club_privacy_policy",
         resourceId: policyId,
       });
       await outbox.publish(tx, "club.privacy_policy.published", { clubId, policyId });
-      applied++;
     });
   }
   return applied;

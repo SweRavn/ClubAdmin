@@ -227,6 +227,17 @@ export class Actor {
     );
   }
 
+  /** The groups of the club where a role the person holds there grants the permission. */
+  groupsHolding(permission: RolePermission, clubId: string): string[] {
+    return [
+      ...new Set(
+        this.relationships.groups
+          .filter((g) => g.clubId === clubId && g.permissions.includes(permission))
+          .map((g) => g.groupId),
+      ),
+    ];
+  }
+
   /** Any club role (board, manager, registrar, ...). */
   hasAnyClubRole(clubId: string): boolean {
     return this.relationships.roles.some((r) => r.clubId === clubId);

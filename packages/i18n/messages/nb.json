@@ -299,7 +299,14 @@
     "carpool_own_car": "Sjåføren booker ikke plass i sin egen bil.",
     "carpool_self_booking_age": "En foresatt må booke plassen for deg.",
     "carpool_not_pending": "Plassen venter ikke på noen godkjenning.",
-    "carpool_before_invalid": "Velg en dato som ikke er fram i tid."
+    "carpool_before_invalid": "Velg en dato som ikke er fram i tid.",
+    "mileage_off": "Klubben har ikke vedtatt noen kjøregodtgjørelse.",
+    "claim_drive_invalid": "En av kjøreturene kan ikke tas med: den er ikke din, har ikke funnet sted eller hører ikke til gruppen.",
+    "claim_distance_missing": "En kjøretur mangler avstand. Oppgi kjørelengden først.",
+    "claim_drive_claimed": "En av kjøreturene er allerede i et utlegg.",
+    "claim_own": "Du kan ikke attestere ditt eget utlegg.",
+    "claim_decided": "Utlegget er allerede behandlet.",
+    "export_too_large": "For mange utlegg for én fil. Velg en kortere periode."
   },
   "roles": {
     "chair": "Leder",
@@ -2127,6 +2134,16 @@
         "title": "Samkjøringen venter på godkjenningen din",
         "body": "Barnet ditt blir eneste barn med én voksen. Åpne Mine samkjøringer i {club} for å se hvem som kjører og godkjenne."
       }
+    },
+    "expense": {
+      "submitted": {
+        "title": "Et utlegg venter på attestasjon",
+        "body": "Åpne utleggene i {club} for å godkjenne eller avslå det."
+      },
+      "decided": {
+        "title": "Utlegget ditt er behandlet",
+        "body": "Åpne Mine utlegg i {club} for å se avgjørelsen."
+      }
     }
   },
   "notifyCategories": {
@@ -2358,7 +2375,8 @@
       "former_member_retention_months": "Tidligere medlemmers opplysninger lagres",
       "attendance_retention_months": "Svar og oppmøte lagres",
       "consent_purposes": "Samtykker klubben ber om",
-      "consent_reconfirm_on_new_version": "En ny samtykketekst spør alle på nytt"
+      "consent_reconfirm_on_new_version": "En ny samtykketekst spør alle på nytt",
+      "mileage_rate": "Kjøregodtgjørelse (øre per km, tomt = ingen godtgjørelse)"
     },
     "days": "dager",
     "months": "måneder",
@@ -2887,7 +2905,9 @@
       "adopted": "vedtok",
       "superseded": "erstattet",
       "assembled": "sammenstilte",
-      "signed": "signerte"
+      "signed": "signerte",
+      "submitted": "sendte inn",
+      "exported": "eksporterte"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -3845,6 +3865,16 @@
         "name": "Administrere samkjøring",
         "description": "Kan velge klubbens utgangspunkt for avstander og slette samkjøringer til eldre aktiviteter.",
         "example": "Kan for eksempel slette forrige sesongs samkjøringer."
+      },
+      "group_expenses_attest": {
+        "name": "Attestere gruppens utlegg",
+        "description": "Kan godkjenne eller avslå utlegg som gjelder gruppen, for eksempel kjøregodtgjørelse for samkjøring. Aldri sine egne.",
+        "example": "Kan for eksempel attestere en forelders kjøregodtgjørelse for bortekampene i november."
+      },
+      "club_expenses_attest": {
+        "name": "Attestere klubbens utlegg",
+        "description": "Kan godkjenne eller avslå alle utlegg i klubben og eksportere godkjente utlegg til en fil for utbetaling. Aldri sine egne.",
+        "example": "Kan for eksempel eksportere månedens godkjente kjøregodtgjørelser til regnskapet."
       }
     }
   },

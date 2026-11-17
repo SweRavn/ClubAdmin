@@ -68,6 +68,8 @@ export const SE: CountryPack = {
       return codes;
     },
   },
+  // Skatteverket, inkomstår 2026: egen bil 25 kronor per mil (unchanged since 2023).
+  mileageRate: { amountMinor: 2500, per: "mil", year: 2026 },
   agendaTemplates: [
     {
       // Riksidrottsförbundets normalstadgar för idrottsföreningar (årsmöte).

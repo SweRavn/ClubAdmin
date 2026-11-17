@@ -100,6 +100,8 @@ export const clubs = pgTable(
       .default(sql`'{photo_publication,video_publication}'::text[]`),
     /** A new consent text version revokes open consents of older versions (P1.8a). */
     consentReconfirmOnNewVersion: boolean().notNull().default(false),
+    /** Mileage reimbursement (P2.5, a board setting): minor units per km; null: off. */
+    mileageRate: integer(),
     /** Months after the last membership ended that a former member's profile is kept (P1.8a). */
     formerMemberRetentionMonths: integer().notNull().default(24),
     /** Where members send privacy questions (a function address; P1.8a). */

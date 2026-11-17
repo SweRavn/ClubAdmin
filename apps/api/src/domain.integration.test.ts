@@ -224,6 +224,14 @@ describe("tenant isolation of club-owned tables", () => {
                    WHERE club_id = ${a.id} LIMIT 1 RETURNING id)
         INSERT INTO carpool_bookings (club_id, offer_id, passenger_person_id, booked_by_person_id)
         SELECT ${a.id}, id, ${a.manager.id}, ${a.manager.id} FROM o`);
+      // Expense claims (P2.5 part B): the member's mileage claim with a line.
+      await tx.execute(sql`
+        WITH c AS (INSERT INTO expense_claims (club_id, kind, claimant_person_id, group_id,
+                     amount_minor, currency)
+                   VALUES (${a.id}, 'mileage', ${member.id}, ${group.id}, 1000, 'SEK') RETURNING id)
+        INSERT INTO expense_claim_lines (club_id, claim_id, description, quantity,
+          unit_amount_minor, amount_minor)
+        SELECT ${a.id}, id, 'Fixture', 4, 250, 1000 FROM c`);
       await tx.execute(sql`
         INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
         VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);

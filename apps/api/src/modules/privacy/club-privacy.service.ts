@@ -187,11 +187,12 @@ export class ClubPrivacyService {
  * Shared with the worker's clubs:apply_decisions job, which has its own copy.
  */
 export async function applyDecisionInTx(tx: Tx, decisionId: string): Promise<string | null> {
-  const { rows } = await tx.execute<{ policy_id: string | null }>(
-    sql`SELECT app.apply_setting_decision(${decisionId}, ${PRIVACY_POLICY_TEMPLATE_VERSION}) AS policy_id`,
+  // A decision of the mileage rate alone (P2.5) is applied without a new policy version.
+  const { rows } = await tx.execute<{ applied: boolean; policy_id: string | null }>(
+    sql`SELECT applied, policy_id FROM app.apply_board_decision(${decisionId}, ${PRIVACY_POLICY_TEMPLATE_VERSION})`,
   );
-  const policyId = rows[0]?.policy_id ?? null;
-  if (!policyId) return null;
+  if (!rows[0]?.applied) return null;
+  const policyId = rows[0].policy_id;
   const decision = (await repo.findDecision(tx, decisionId))!;
   await audit.record(tx, {
     action: "club.settings.updated",
@@ -201,6 +202,7 @@ export async function applyDecisionInTx(tx: Tx, decisionId: string): Promise<str
       (key) => CLUB_SETTINGS[key as BoardSettingKey].field,
     ),
   });
+  if (!policyId) return null;
   await audit.record(tx, {
     action: "club.privacy_policy.published",
     resourceType: "club_privacy_policy",

@@ -152,6 +152,10 @@ export const NOTIFICATION_TYPES = {
   "carpool.booking": { category: "carpool" },
   "carpool.changed": { category: "carpool" },
   "carpool.confirm": { category: "carpool", immediate: true },
+  // Expense claims (P2.5 part B): a claim to attest (to whom it is routed),
+  // a claim decided (to the claimant). Fixed texts, never an amount or name.
+  "expense.submitted": { category: "carpool" },
+  "expense.decided": { category: "carpool" },
   "document.signature_requested": { category: "documents", immediate: true },
   // Announcements (P2.3, ADR 0053): emailed at once; important ones to
   // everyone whatever their settings (never to an address that bounced).

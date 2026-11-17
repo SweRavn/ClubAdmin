@@ -137,5 +137,30 @@ Decided with the prompt's review:
   characters, e.g. "room for a kit bag", "pets have been in the car"),
   shown with the car to those who see the car pool, never in a notice;
   passengers are told when it changes; erasure clears it.
-- Reimbursement, claims and attestation follow in part B.
+
+## As implemented (part B, claims and attestation)
+
+- Migration 0050: `clubs.mileage_rate` (minor units per km) as the board
+  setting `mileage_rate`; `app.apply_board_decision` applies a decision and
+  publishes a privacy policy version only when the decision holds a
+  setting the policy shows (the old `app.apply_setting_decision` remains
+  as a wrapper for a rolling deploy). A governing document marks it as
+  `{{setting mileage_rate = 250}}` (empty: off).
+- The country packs give the tax-free rate as a guide: SE 25 kr per mil,
+  NO 3.50 kr per km (2026).
+- `expense_claims` and `expense_claim_lines` (module
+  `apps/api/src/modules/expenses`), behind the `finance` feature. A claim is
+  for one group; its drives are the claimant's cars of started activities
+  of that group, with a distance; a drive is in at most one claim that is
+  not rejected. Routing to the activity's creator when the claim is for one
+  activity and they may attest; otherwise the worker tells the group's
+  attesters, then the club's.
+- Attesting: `club.expenses.read` opens the queue (the club's attesters see
+  every claim, a group's attester the group's); never one's own claim (also
+  a database check); a rejection needs a reason. The CSV export
+  (`club.expenses.attest`) marks approved claims exported.
+- Attesters see the group's car-pool statistics too.
+- A group's owners (of the group or a group above it) attest its claims
+  too: owning a group gives `group.expenses.attest` (so an owner may still
+  appoint a head coach, whose template role now attests).
 

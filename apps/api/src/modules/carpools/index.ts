@@ -4,4 +4,4 @@
 // the group's statistics.
 export { CarpoolsModule } from "./carpools.module.ts";
 export { CARPOOL_PERSON_REFERENCES } from "./carpools.references.ts";
-export { CarpoolsService } from "./carpools.service.ts";
+export { CarpoolsService, type DriveRow } from "./carpools.service.ts";

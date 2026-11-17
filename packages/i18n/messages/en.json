@@ -299,7 +299,14 @@
     "carpool_own_car": "The driver does not book a seat in their own car.",
     "carpool_self_booking_age": "Your guardian needs to book the seat for you.",
     "carpool_not_pending": "The seat is not waiting for a confirmation.",
-    "carpool_before_invalid": "Choose a date that is not in the future."
+    "carpool_before_invalid": "Choose a date that is not in the future.",
+    "mileage_off": "The club has decided no mileage rate.",
+    "claim_drive_invalid": "One of the drives cannot be included: it is not yours, has not taken place or is not the group's.",
+    "claim_distance_missing": "A drive has no distance. Enter the distance driven first.",
+    "claim_drive_claimed": "One of the drives is already in a claim.",
+    "claim_own": "You cannot attest your own claim.",
+    "claim_decided": "The claim has been decided already.",
+    "export_too_large": "Too many claims for one file. Choose a shorter period."
   },
   "roles": {
     "chair": "Chair",
@@ -2127,6 +2134,16 @@
         "title": "A car pool waits for your confirmation",
         "body": "Your child would be the only child with one adult. Open My car pools in {club} to see who drives and confirm."
       }
+    },
+    "expense": {
+      "submitted": {
+        "title": "An expense claim waits for attestation",
+        "body": "Open the expense claims in {club} to approve or reject it."
+      },
+      "decided": {
+        "title": "Your expense claim has been decided",
+        "body": "Open My expenses in {club} to see the decision."
+      }
     }
   },
   "notifyCategories": {
@@ -2358,7 +2375,8 @@
       "former_member_retention_months": "Former members' data kept",
       "attendance_retention_months": "Answers and attendance kept",
       "consent_purposes": "Consents the club asks for",
-      "consent_reconfirm_on_new_version": "A new consent text asks everyone again"
+      "consent_reconfirm_on_new_version": "A new consent text asks everyone again",
+      "mileage_rate": "Mileage rate (minor units per km, empty = no reimbursement)"
     },
     "days": "days",
     "months": "months",
@@ -2887,7 +2905,9 @@
       "adopted": "adopted",
       "superseded": "superseded",
       "assembled": "assembled",
-      "signed": "signed"
+      "signed": "signed",
+      "submitted": "submitted",
+      "exported": "exported"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -3845,6 +3865,16 @@
         "name": "Manage car pooling",
         "description": "Can choose the club's starting place for distances and delete the car pools of older activities.",
         "example": "Can, for example, delete last season's car pools."
+      },
+      "group_expenses_attest": {
+        "name": "Attest the group's expenses",
+        "description": "Can approve or reject expense claims of the group, such as mileage for car pooling. Never their own.",
+        "example": "Can, for example, attest a parent's mileage for the away matches in November."
+      },
+      "club_expenses_attest": {
+        "name": "Attest the club's expenses",
+        "description": "Can approve or reject every expense claim of the club and export approved claims to a file for payment. Never their own.",
+        "example": "Can, for example, export the month's approved mileage claims to the bookkeeping."
       }
     }
   },
