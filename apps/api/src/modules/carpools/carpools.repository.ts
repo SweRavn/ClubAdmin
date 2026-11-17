@@ -79,6 +79,7 @@ export interface OfferRow {
   willingOnly: boolean;
   seats: number;
   departurePlace: string | null;
+  note: string | null;
   departureAt: Date | null;
   distanceKm: number | null;
   /** Its live (not cancelled) bookings, oldest first. */
@@ -95,6 +96,7 @@ type OfferDb = {
   willing_only: boolean;
   seats: number;
   departure_place: string | null;
+  note: string | null;
   departure_at: string | Date | null;
   distance_km: string | null;
   bookings: {
@@ -116,6 +118,7 @@ const toOffer = (r: OfferDb): OfferRow => ({
   willingOnly: r.willing_only,
   seats: r.seats,
   departurePlace: r.departure_place,
+  note: r.note,
   departureAt: r.departure_at === null ? null : new Date(r.departure_at),
   distanceKm: num(r.distance_km),
   bookings: r.bookings.map((b) => ({
@@ -130,7 +133,7 @@ const toOffer = (r: OfferDb): OfferRow => ({
 
 const OFFER_SELECT = sql`
   SELECT o.id, o.club_id, o.activity_id, o.driver_person_id, o.direction, o.outward_offer_id,
-    o.willing_only, o.seats, o.departure_place, o.departure_at, o.distance_km,
+    o.willing_only, o.seats, o.departure_place, o.note, o.departure_at, o.distance_km,
     coalesce((
       SELECT jsonb_agg(jsonb_build_object('id', b.id, 'passenger_person_id', b.passenger_person_id,
           'booked_by_person_id', b.booked_by_person_id, 'status', b.status,
@@ -215,15 +218,16 @@ export async function insertOffer(
     willingOnly: boolean;
     seats: number;
     departurePlace: string | null;
+    note: string | null;
     departureAt: Date | null;
   },
 ): Promise<string> {
   const { rows } = await tx.execute<{ id: string }>(sql`
     INSERT INTO public.carpool_offers (club_id, activity_id, driver_person_id, direction,
-      outward_offer_id, willing_only, seats, departure_place, departure_at)
+      outward_offer_id, willing_only, seats, departure_place, note, departure_at)
     VALUES (${values.clubId}::uuid, ${values.activityId}::uuid, ${values.driverPersonId}::uuid,
       ${values.direction}, ${values.outwardOfferId}::uuid, ${values.willingOnly}, ${values.seats},
-      ${values.departurePlace}, ${values.departureAt})
+      ${values.departurePlace}, ${values.note}, ${values.departureAt})
     RETURNING id`);
   return rows[0]!.id;
 }
@@ -235,13 +239,14 @@ export async function updateOffer(
     willingOnly: boolean;
     seats: number;
     departurePlace: string | null;
+    note: string | null;
     departureAt: Date | null;
     distanceKm: number | null;
   },
 ): Promise<void> {
   await tx.execute(sql`
     UPDATE public.carpool_offers SET willing_only = ${values.willingOnly}, seats = ${values.seats},
-      departure_place = ${values.departurePlace}, departure_at = ${values.departureAt},
+      departure_place = ${values.departurePlace}, note = ${values.note}, departure_at = ${values.departureAt},
       distance_km = ${values.distanceKm}
     WHERE id = ${offerId}::uuid`);
 }

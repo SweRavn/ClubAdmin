@@ -148,6 +148,7 @@ export class CarpoolsController {
         seats: o.seats,
         freeSeats: Math.max(0, o.seats - o.bookings.length),
         departurePlace: o.departurePlace,
+        note: o.note,
         departureAt: o.departureAt?.toISOString() ?? null,
         distanceKm: o.distanceKm ?? view.activity.distanceKm,
         bookings: o.bookings.map((b) => {

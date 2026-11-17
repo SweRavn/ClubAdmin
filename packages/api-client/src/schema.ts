@@ -6609,6 +6609,7 @@ export interface components {
       seats: number;
       freeSeats: number;
       departurePlace: string | null;
+      note: string | null;
       /** Format: date-time */
       departureAt: string | null;
       distanceKm: number | null;
@@ -6640,6 +6641,7 @@ export interface components {
       /** @default 0 */
       seats: number;
       departurePlace?: string | null;
+      note?: string | null;
       /** Format: date-time */
       departureAt?: string | null;
       /** @default false */
@@ -6649,6 +6651,7 @@ export interface components {
       willingOnly?: boolean;
       seats?: number;
       departurePlace?: string | null;
+      note?: string | null;
       /** Format: date-time */
       departureAt?: string | null;
       distanceKm?: number | null;

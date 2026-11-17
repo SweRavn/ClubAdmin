@@ -344,6 +344,13 @@
       "when": 1794840000000,
       "tag": "0048_carpools",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1794850000000,
+      "tag": "0049_carpool_note",
+      "breakpoints": true
     }
   ]
 }

@@ -1102,7 +1102,9 @@ Club-owned tables (tenant RLS, record history; migration 0048):
 - `carpool_offers`: an activity's car (`driver_person_id`, `direction`
   `out` | `back`, `outward_offer_id` for a return trip copied from the
   outward one, `willing_only` with no seats, `seats` 1–8,
-  `departure_place`, `departure_at`, `distance_km` the driver's correction).
+  `departure_place`, `departure_at`, `note` (the driver's free text, at
+  most 300 characters: "room for a kit bag", "pets have been in the car";
+  migration 0049), `distance_km` the driver's correction).
 - `carpool_bookings`: a seat (`passenger_person_id`, `booked_by_person_id`,
   `status` `held` | `pending_guardian` | `cancelled`,
   `confirmed_by_person_id`/`confirmed_at`); one live seat per passenger and
@@ -1128,7 +1130,7 @@ Endpoints: `GET /activities/:activityId/carpool`, `POST|PATCH|DELETE
 `GET /clubs/:clubId/groups/:groupId/carpool-stats` and `PUT
 .../carpool-settings`, `GET|PUT /clubs/:clubId/carpool-settings` and
 `DELETE /clubs/:clubId/carpools?before=` (`club.carpools.manage`).
-Erasure clears the departure place of the person's drives.
+Erasure clears the departure place and the note of the person's drives.
 
 ## Permissions (implemented policies)
 

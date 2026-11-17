@@ -245,6 +245,7 @@ export class CarpoolsService {
         willingOnly: data.willingOnly,
         seats: data.willingOnly ? 0 : Math.max(1, data.seats),
         departurePlace: data.departurePlace || null,
+        note: data.note || null,
         departureAt: data.departureAt ? new Date(data.departureAt) : null,
       };
       const id = await repo.insertOffer(tx, {
@@ -293,6 +294,7 @@ export class CarpoolsService {
         seats,
         departurePlace:
           data.departurePlace === undefined ? offer.departurePlace : data.departurePlace || null,
+        note: data.note === undefined ? offer.note : data.note || null,
         departureAt:
           data.departureAt === undefined
             ? offer.departureAt
@@ -311,6 +313,7 @@ export class CarpoolsService {
       // Passengers are told of a change to the trip (not of a distance correction).
       const tripChanged =
         next.departurePlace !== offer.departurePlace ||
+        next.note !== offer.note ||
         next.departureAt?.getTime() !== offer.departureAt?.getTime();
       if (tripChanged) {
         await this.notify(tx, scope.activity, me, {

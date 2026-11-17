@@ -60,6 +60,8 @@ export const CarpoolOfferSchema = z
     seats: z.number().int(),
     freeSeats: z.number().int(),
     departurePlace: z.string().nullable(),
+    /** The driver's note ("room for a kit bag", "pets have been in the car"). */
+    note: z.string().nullable(),
     departureAt: z.iso.datetime().nullable(),
     /** The driver's correction, else the place's distance (km, one way). */
     distanceKm: z.number().nullable(),
@@ -94,6 +96,8 @@ export const CreateCarpoolOfferSchema = z
     willingOnly: z.boolean().default(false),
     seats: z.number().int().min(0).max(CARPOOL_MAX_SEATS).default(0),
     departurePlace: z.string().trim().max(200).nullish(),
+    /** The driver's note ("room for a kit bag", "pets have been in the car"). */
+    note: z.string().trim().max(300).nullish(),
     departureAt: z.iso.datetime({ offset: true }).nullish(),
     /** Also offer the return trip (a copy, edited on its own). */
     withReturn: z.boolean().default(false),
@@ -107,6 +111,8 @@ export const UpdateCarpoolOfferSchema = z
     willingOnly: z.boolean().optional(),
     seats: z.number().int().min(0).max(CARPOOL_MAX_SEATS).optional(),
     departurePlace: z.string().trim().max(200).nullish(),
+    /** The driver's note ("room for a kit bag", "pets have been in the car"). */
+    note: z.string().trim().max(300).nullish(),
     departureAt: z.iso.datetime({ offset: true }).nullish(),
     /** The distance driven (one way), corrected after the trip; null: the place's. */
     distanceKm: z.number().min(0).max(5000).nullish(),

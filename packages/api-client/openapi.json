@@ -1809,6 +1809,12 @@
               "null"
             ]
           },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "departureAt": {
             "type": [
               "string",
@@ -1839,6 +1845,7 @@
           "seats",
           "freeSeats",
           "departurePlace",
+          "note",
           "departureAt",
           "distanceKm",
           "bookings"
@@ -1935,6 +1942,13 @@
             ],
             "maxLength": 200
           },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
+          },
           "departureAt": {
             "type": [
               "string",
@@ -1966,6 +1980,13 @@
               "null"
             ],
             "maxLength": 200
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
           },
           "departureAt": {
             "type": [

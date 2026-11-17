@@ -169,6 +169,7 @@ describe("car pools (P2.5)", () => {
     const res = await api(a.guardian.id, "POST", `/activities/${activityId}/carpool/offers`, {
       seats: 3,
       departurePlace: "Klubbstugan",
+      note: "Plats för bollbag",
       departureAt: `${day(3)}T08:30:00Z`,
       withReturn: true,
     });
@@ -186,6 +187,9 @@ describe("car pools (P2.5)", () => {
     ]);
     expect(view.offers[1]!.outwardOfferId).toBe(outId);
     expect(view.offers[0]!.distanceKm).toBe(42.5);
+    // The note goes with the car, the return trip's copy too.
+    expect(view.offers.map((o) => o.note)).toEqual(["Plats för bollbag", "Plats för bollbag"]);
+    expect((await carpool(player.id)).offers[0]!.note).toBe("Plats för bollbag");
   });
 
   it("one adult and a single child not their own: the seat waits for a guardian", async () => {
@@ -375,6 +379,25 @@ describe("car pools (P2.5)", () => {
     );
     expect(moved.statusCode, moved.body).toBe(204);
     expect((await notices("offer_changed")).flat()).toContain(b.guardian.id);
+    // The driver sets the seats free and changes the note; the car's people are told.
+    const told = (await notices("offer_changed")).length;
+    const more = await api(
+      a.guardian.id,
+      "PATCH",
+      `/activities/${activityId}/carpool/offers/${outId}`,
+      { seats: 4, note: "Hunden har åkt i bilen" },
+    );
+    expect(more.statusCode, more.body).toBe(204);
+    const car = (await carpool(a.guardian.id)).offers.find((o) => o.id === outId)!;
+    expect([car.seats, car.freeSeats, car.note]).toEqual([4, 3, "Hunden har åkt i bilen"]);
+    expect((await notices("offer_changed")).length).toBe(told + 1);
+    const tooLong = await api(
+      a.guardian.id,
+      "PATCH",
+      `/activities/${activityId}/carpool/offers/${outId}`,
+      { note: "x".repeat(301) },
+    );
+    expect(tooLong.statusCode).toBe(400);
   });
 
   it("Mina samåkningar: the driver's cars and a guardian's child's seats", async () => {
@@ -450,12 +473,12 @@ describe("car pools (P2.5)", () => {
 
   it("erasure clears the meeting place of the person's drives, in history too", async () => {
     await t.query("admin", "SELECT privacy.erase_person($1, 'test')", [a.guardian.id]);
-    const { rows } = await t.query<{ departure_place: string | null }>(
+    const { rows } = await t.query<{ departure_place: string | null; note: string | null }>(
       "admin",
-      "SELECT departure_place FROM public.carpool_offers WHERE id = $1",
+      "SELECT departure_place, note FROM public.carpool_offers WHERE id = $1",
       [outId],
     );
-    expect(rows[0]?.departure_place).toBeNull();
+    expect(rows[0]).toEqual({ departure_place: null, note: null });
     const { rows: history } = await t.query<{ n: number }>(
       "admin",
       `SELECT count(*)::int AS n FROM history.record_changes

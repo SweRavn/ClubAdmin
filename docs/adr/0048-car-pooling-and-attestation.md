@@ -132,5 +132,10 @@ Decided with the prompt's review:
 - Statistics are read through `group.activities.read`: leaders see every
   row, others their own and their children's unless the group made them
   public.
+- The driver sets the seats free in the car (1–8, never below those
+  booked) and may add a note to the car (migration 0049, at most 300
+  characters, e.g. "room for a kit bag", "pets have been in the car"),
+  shown with the car to those who see the car pool, never in a notice;
+  passengers are told when it changes; erasure clears it.
 - Reimbursement, claims and attestation follow in part B.
 
