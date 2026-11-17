@@ -61,14 +61,6 @@ meeting time and place, and locations have coordinates (ADR 0034).
      its members see per person how far and how often they drove and rode,
      per period; otherwise the statistics are seen by the drivers
      themselves and by attesters and the group's leaders.
-10. **Kept until deleted.** Car pools, drives and the statistics are kept
-    until someone deletes them explicitly (a driver their own offers before
-    the trip; the club's attesters or administrators older data); no
-    automatic deletion. Attested claims follow accounting rules. Erasing a
-    person anonymises them in drives and statistics (the deletion ledger
-    applies it again after a restore, ADR 0047).
-11. **Events** use the same tables: an event session has a transport mode
-    and car pools like an activity.
 9. **A general attestation flow**, built for car-pool claims first and for
    other expenses later (receipts, purchases in Phase 3):
    - A claim (`expense_claims`: kind, amount, lines, the person, the
@@ -83,7 +75,42 @@ meeting time and place, and locations have coordinates (ADR 0034).
    - The flow is generic (kinds, routing, permissions), so new expense
      kinds plug in without a new flow.
 
+10. **Kept until deleted.** Car pools, drives and the statistics are kept
+    until someone deletes them explicitly (a driver their own offers before
+    the trip; the club's attesters or administrators older data); no
+    automatic deletion. Attested claims follow accounting rules. Erasing a
+    person anonymises them in drives and statistics (the deletion ledger
+    applies it again after a restore, ADR 0047).
+11. **Events** use the same tables: an event session has a transport mode
+    and car pools like an activity.
 **Consequences.** Leaders see who can drive and who lacks a ride; members
 settle or the club reimburses on the same numbers; clubs get attested
 mileage claims ready for payment. Distances are as good as the club's list
 of places; correcting a drive is the driver's.
+
+## Amendment (2026-11-17, before P2.5)
+
+Decided with the prompt's review:
+
+- **Event sessions are activities** (`event_activities`): the transport
+  mode and the car pools belong to activities (and series, inherited); an
+  event's sessions have them because they are activities. There is no
+  separate table for event sessions.
+- **Plans**: car pooling and its statistics are in every plan;
+  reimbursement, claims and attestation belong to the `finance` feature
+  (`BILLING_ENABLED=false`: everything is available).
+- **The mileage rate is a board setting** in the settings registry
+  (ADR 0037, `decidedBy: "board"`): it is changed only by a recorded
+  decision, which a governing document (a travel-expense policy) can mark
+  (P2.4). Turning reimbursement on is part of the same setting (a rate of
+  none: off). The club's starting place stays a manager setting.
+- **One adult and a single child not their own** (decision 4) means: the
+  car carries the driver, no other adult, and exactly one child, who is not
+  the driver's own. "Own" is any active guardianship of the driver (parent,
+  legal guardian, step-parent, foster parent). A second adult or the
+  driver's own child in the car (the rule of two) makes confirmation
+  unnecessary; a change that leaves the situation (another passenger
+  cancels) asks again.
+- **The self-booking age** is a guardian's setting per child, stored on the
+  guardianship; with two guardians the higher age (the stricter) applies.
+
