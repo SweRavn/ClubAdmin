@@ -50,12 +50,14 @@ test("Anna creates a group, changes it and deletes it while unused", async ({ pa
   await expect(page.getByTestId("groups-tree")).not.toContainText("Felskapad grupp");
 });
 
-test("Erik changes the place he added but not the club's", async ({ page }) => {
+// P2.5: leaders change every place, its distance included; archiving stays with managers.
+test("Erik changes the club's places but does not archive them", async ({ page }) => {
   await loginAs(page, PERSONAS.erik, { returnTo: `/clubs/${CLUBS.svk}/locations` });
   const own = page.getByTestId("location").filter({ hasText: "Strandviksskolans gymnastiksal" });
   await expect(own.getByTestId("location-edit")).toBeVisible();
   const clubs = page.getByTestId("location").filter({ hasText: "Strandvikens sporthall" });
-  await expect(clubs.getByTestId("location-edit")).toHaveCount(0);
+  await expect(clubs.getByTestId("location-edit")).toBeVisible();
+  await expect(clubs.getByRole("button", { name: "Arkivera" })).toHaveCount(0);
 });
 
 test("Erik answers for a player from the leaders' list", async ({ page }) => {

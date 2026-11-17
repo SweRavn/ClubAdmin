@@ -71,7 +71,12 @@ describe("NO fødselsnummer", () => {
 
 describe("packs", () => {
   it("provide age rules and locale defaults", () => {
-    expect(SE.ageRules).toEqual({ consentAge: 13, ownAccountMinAge: 13, adultAge: 18 });
+    expect(SE.ageRules).toEqual({
+      consentAge: 13,
+      ownAccountMinAge: 13,
+      adultAge: 18,
+      childSelfBookingAge: 13,
+    });
     expect(NO.localeDefaults).toEqual({
       locale: "nb-NO",
       timeZone: "Europe/Oslo",
