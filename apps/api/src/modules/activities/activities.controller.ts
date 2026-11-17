@@ -88,7 +88,10 @@ import { AttendanceService } from "./attendance.service.ts";
 
 const iso = (date: Date) => date.toISOString();
 
-export function toLocationResponse(location: LocationRow, canEdit?: boolean): Location {
+export function toLocationResponse(
+  location: LocationRow,
+  access?: { canEdit: boolean; canArchive: boolean },
+): Location {
   return {
     id: location.id,
     name: location.name,
@@ -99,15 +102,26 @@ export function toLocationResponse(location: LocationRow, canEdit?: boolean): Lo
     longitude: location.longitude,
     directions: location.directions,
     mapUrl: mapUrlOf(location),
+    distanceKm: location.distanceKm,
     archived: location.archivedAt !== null,
-    ...(canEdit === undefined ? {} : { canEdit }),
+    ...(access ?? {}),
   };
 }
 
-/** Holders of club.locations.manage change every location; others only those they added (P1.6b). */
-const canEditLocation = (authz: RequestAuthorization, location: LocationRow) =>
-  authz.actor.holds("club.locations.manage", location.clubId) ||
-  (location.createdByPersonId !== null && location.createdByPersonId === authz.actor.personId);
+/**
+ * Those who add places change every place, distance included (P2.5, widened
+ * from P1.6b's "only their own"); archiving stays with club.locations.manage.
+ */
+const locationAccess = (authz: RequestAuthorization, clubId: string) => {
+  const canArchive = authz.actor.holds("club.locations.manage", clubId);
+  return {
+    canEdit:
+      canArchive ||
+      authz.actor.holds("club.locations.create", clubId) ||
+      authz.actor.managesAnyGroupActivities(clubId),
+    canArchive,
+  };
+};
 
 export function toActivityResponse(view: ActivityView, canManage: boolean): Activity {
   const a = view.activity;
@@ -143,6 +157,7 @@ export function toActivityResponse(view: ActivityView, canManage: boolean): Acti
     requestLead: a.requestLead,
     requestAt: a.requestAt ? iso(a.requestAt) : null,
     inviteesOnly: a.inviteesOnly,
+    transportMode: a.transportMode,
   };
 }
 
@@ -170,6 +185,7 @@ function toSeriesResponse(view: SeriesView, canManage: boolean): Series {
     responseMode: s.responseMode,
     respondByMinutes: s.respondByMinutes,
     requestLead: s.requestLead,
+    transportMode: s.transportMode,
     groups: view.groups,
     sessions: view.sessions,
     canManage,
@@ -225,8 +241,9 @@ export class ActivitiesController {
   ): Promise<LocationList> {
     const { clubId } = resourceOf(authz, "club");
     const page = await this.activities.listLocations(tenantContext(authz, clubId), query);
+    const access = locationAccess(authz, clubId);
     return {
-      items: page.items.map((l) => toLocationResponse(l, canEditLocation(authz, l))),
+      items: page.items.map((l) => toLocationResponse(l, access)),
       nextCursor: page.nextCursor,
     };
   }
@@ -247,14 +264,14 @@ export class ActivitiesController {
     const { clubId } = resourceOf(authz, "club");
     return toLocationResponse(
       await this.activities.createLocation(tenantContext(authz, clubId), body),
-      true,
+      locationAccess(authz, clubId),
     );
   }
 
   @Endpoint({
     method: "PATCH",
     path: "clubs/:clubId/locations/:locationId",
-    summary: "Change or archive a location (club managers, or the person who added it)",
+    summary: "Change a location, distance included (archiving: club.locations.manage)",
     tags: ["activities"],
     access: { permission: "club.locations.create", resource: "club" },
     request: { params: LocationParamsSchema, body: UpdateLocationSchema },
@@ -268,9 +285,9 @@ export class ActivitiesController {
     const { clubId } = resourceOf(authz, "club");
     return toLocationResponse(
       await this.activities.updateLocation(tenantContext(authz, clubId), params.locationId, body, {
-        anyLocation: authz.actor.holds("club.locations.manage", clubId),
+        canArchive: authz.actor.holds("club.locations.manage", clubId),
       }),
-      true,
+      locationAccess(authz, clubId),
     );
   }
 

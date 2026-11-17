@@ -194,6 +194,8 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       // Governing documents (P2.4): adopted, a signature requested.
       "document.adopted",
       "document.signature_requested",
+      // Car pooling (P2.5).
+      "carpool.changed",
       // Announcements (P2.3).
       "announcement.sent",
       "announcement.withdrawn",
@@ -733,6 +735,34 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               about: [],
               params: { group: fact.group_name ?? "", kind: fact.series_kind ?? "other" },
               dedupeKey: `document.adopted:${versionId}`,
+            })),
+          );
+          return;
+        }
+        // A car pool changed (P2.5): the API names whom to tell; fixed texts
+        // per kind, never a name (the app shows the driver to a guardian).
+        case "carpool.changed": {
+          const { clubId, kind, activityId, personIds } = DOMAIN_EVENTS["carpool.changed"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const type =
+            kind === "confirm"
+              ? ("carpool.confirm" as const)
+              : kind === "booked"
+                ? ("carpool.booking" as const)
+                : ("carpool.changed" as const);
+          await notify(
+            tx,
+            personIds.map((personId) => ({
+              recipientPersonId: personId,
+              clubId,
+              type,
+              subjectType: "activity",
+              subjectId: activityId,
+              about: [],
+              params: { kind },
+              dedupeKey: `carpool:${activityId}:${kind}:${personId}:${event.idempotencyKey}`,
             })),
           );
           return;

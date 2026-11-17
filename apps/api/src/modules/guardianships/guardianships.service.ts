@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 
 import { ageOn } from "@clubadmin/country-packs";
 import {
+  type ActorContext,
   audit,
   type Database,
   isUniqueViolation,
@@ -494,6 +495,36 @@ export class GuardianshipsService {
         guardianPersonId: guardianship.guardianPersonId,
         wardPersonId: guardianship.wardPersonId,
       });
+    });
+  }
+
+  /**
+   * The age from which the caller's ward books car-pool seats themselves
+   * (P2.5, ADR 0048; null: the country pack's), on the caller's own active
+   * guardianship of the ward with the right to act for them (else
+   * not_found). With two guardians the higher age applies (the car pool).
+   */
+  setCarpoolSelfBookingAge(
+    context: ActorContext,
+    wardPersonId: string,
+    age: number | null,
+  ): Promise<void> {
+    const me = actorPersonId(context);
+    return this.db.withActor(context, async (tx) => {
+      const { rows } = await tx.execute<{ id: string }>(sql`
+        UPDATE public.guardianships SET carpool_self_booking_age = ${age}
+        WHERE guardian_person_id = ${me}::uuid AND ward_person_id = ${wardPersonId}::uuid
+          AND status = 'active' AND valid_to IS NULL AND 'act_on_behalf' = ANY (rights)
+        RETURNING id`);
+      if (rows.length === 0) throw new DomainError("not_found");
+      for (const row of rows) {
+        await audit.record(tx, {
+          action: "carpool.self_booking_age.set",
+          resourceType: "guardianship",
+          resourceId: row.id,
+          changedFields: ["carpool_self_booking_age"],
+        });
+      }
     });
   }
 

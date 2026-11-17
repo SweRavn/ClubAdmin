@@ -240,6 +240,17 @@ export const AUDIT_ACTIONS = [
   "meeting.templates.updated",
   "task.assignment.completed",
   "task.assignment.updated",
+  // Car pooling (P2.5, ADR 0048): offers, bookings, a guardian's
+  // confirmation, the self-booking age, the club's settings, old data deleted.
+  "carpool.offer.created",
+  "carpool.offer.updated",
+  "carpool.offer.deleted",
+  "carpool.booking.created",
+  "carpool.booking.cancelled",
+  "carpool.booking.confirmed",
+  "carpool.self_booking_age.set",
+  "carpool.settings.updated",
+  "carpool.history.deleted",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

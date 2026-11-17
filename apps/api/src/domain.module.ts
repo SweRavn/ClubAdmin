@@ -9,6 +9,7 @@ import { AnnouncementsModule } from "./modules/announcements/index.ts";
 import { AuditModule } from "./modules/audit/index.ts";
 import { BackupsModule } from "./modules/backups/index.ts";
 import { CalendarModule } from "./modules/calendar/index.ts";
+import { CarpoolsModule } from "./modules/carpools/index.ts";
 import { ChatModule } from "./modules/chat/index.ts";
 import { ClubProfilesModule } from "./modules/club-profiles/index.ts";
 import { ClubTypesModule } from "./modules/club-types/index.ts";
@@ -58,6 +59,7 @@ const MODULES = [
   DocumentsModule,
   AnnouncementsModule,
   MeetingsModule,
+  CarpoolsModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

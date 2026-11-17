@@ -19,6 +19,7 @@ import { ACTIVITY_PERSON_REFERENCES } from "../activities/index.ts";
 import { ADMINISTRATOR_PERSON_REFERENCES } from "../administrators/index.ts";
 import { ANNOUNCEMENT_PERSON_REFERENCES } from "../announcements/index.ts";
 import { CALENDAR_PERSON_REFERENCES } from "../calendar/index.ts";
+import { CARPOOL_PERSON_REFERENCES } from "../carpools/index.ts";
 import { CHAT_PERSON_REFERENCES } from "../chat/index.ts";
 import {
   CLUB_PROFILE_PERSON_REFERENCES,
@@ -54,6 +55,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...DOCUMENT_PERSON_REFERENCES,
   ...ANNOUNCEMENT_PERSON_REFERENCES,
   ...MEETING_PERSON_REFERENCES,
+  ...CARPOOL_PERSON_REFERENCES,
   ...PRIVACY_PERSON_REFERENCES,
 ];
 

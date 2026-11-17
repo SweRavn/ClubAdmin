@@ -55,6 +55,8 @@ export const groups = pgTable(
     offerReplyDays: smallint().notNull().default(7),
     /** The worker offers free places to the next in line (P1.10b, `waitlists:offers`). */
     waitlistAutoOffer: boolean().notNull().default(false),
+    /** The car-pool statistics are shown to the group's members (P2.5). */
+    carpoolStatsPublic: boolean().notNull().default(false),
     archivedAt: timestamp(tz),
     ...timestamps,
   },

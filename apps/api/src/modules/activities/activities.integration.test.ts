@@ -594,7 +594,7 @@ describe("my schedule", () => {
 });
 
 describe("places added by leaders (P1.6b)", () => {
-  it("leaders add places and change only their own; club managers change any", async () => {
+  it("leaders add and change every place (P2.5); only club managers archive", async () => {
     const { club, coach } = await team();
     const managers = await api(club.manager.id, "POST", `/clubs/${club.id}/locations`, {
       body: { name: "Klubbstugan" },
@@ -613,12 +613,17 @@ describe("places added by leaders (P1.6b)", () => {
         .json<{ items: { id: string; canEdit?: boolean }[] }>()
         .items.map((l) => [l.id, l.canEdit]),
     );
-    expect([canEdit.get(ownId), canEdit.get(managersId)]).toEqual([true, false]);
+    expect([canEdit.get(ownId), canEdit.get(managersId)]).toEqual([true, true]);
 
     const others = await api(coach.id, "PATCH", `/clubs/${club.id}/locations/${managersId}`, {
-      body: { directions: "Ingång B" },
+      body: { directions: "Ingång B", distanceKm: 12.5 },
     });
-    expect([others.statusCode, detail(others)]).toEqual([403, "not_allowed"]);
+    expect(others.statusCode, others.body).toBe(200);
+    expect(others.json<{ distanceKm: number }>().distanceKm).toBe(12.5);
+    const archive = await api(coach.id, "PATCH", `/clubs/${club.id}/locations/${ownId}`, {
+      body: { archived: true },
+    });
+    expect([archive.statusCode, detail(archive)]).toEqual([403, "not_allowed"]);
     const mine = await api(coach.id, "PATCH", `/clubs/${club.id}/locations/${ownId}`, {
       body: { directions: "Ingång från skolgården" },
     });

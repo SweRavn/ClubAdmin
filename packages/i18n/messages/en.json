@@ -286,7 +286,20 @@
       "text": "Your login cannot be read right now. Please try again in a moment.",
       "devHint": "Development: the session store (Valkey) cannot be reached. Run pnpm dev:doctor; if Valkey answers inside its container but not from the computer, restart the container:",
       "retry": "Try again"
-    }
+    },
+    "carpool_closed": "The activity has no car pool.",
+    "carpool_started": "The trip has started. Only the distance driven can be changed.",
+    "carpool_driver_not_eligible": "Only adults taking part, or guardians of a participant, can offer a car.",
+    "carpool_offer_exists": "You already offer a car that way.",
+    "carpool_seats_taken": "More seats are booked than that.",
+    "carpool_not_bookable": "This driver can drive if needed but has no seats to book.",
+    "carpool_full": "The car is full.",
+    "carpool_already_booked": "A seat is already booked that way.",
+    "carpool_not_participant": "Only participants and their guardians can ride along.",
+    "carpool_own_car": "The driver does not book a seat in their own car.",
+    "carpool_self_booking_age": "Your guardian needs to book the seat for you.",
+    "carpool_not_pending": "The seat is not waiting for a confirmation.",
+    "carpool_before_invalid": "Choose a date that is not in the future."
   },
   "roles": {
     "chair": "Chair",
@@ -2100,7 +2113,21 @@
         "body": "Open the announcement to read it."
       }
     },
-    "announcementFrom": "Announcement from {from}"
+    "announcementFrom": "Announcement from {from}",
+    "carpool": {
+      "booking": {
+        "title": "Someone booked a seat in your car",
+        "body": "Open the car pool in {club} to see who."
+      },
+      "changed": {
+        "title": "{kind, select, cancelled {A seat in the car pool was cancelled} offer_removed {A car in the car pool was removed} other {A car in the car pool was changed}}",
+        "body": "Open the car pool in {club} to see what applies."
+      },
+      "confirm": {
+        "title": "A car pool waits for your confirmation",
+        "body": "Your child would be the only child with one adult. Open My car pools in {club} to see who drives and confirm."
+      }
+    }
   },
   "notifyCategories": {
     "schedule": "Schedule",
@@ -2114,7 +2141,8 @@
     "waitlist": "Waiting lists",
     "chat": "Chat",
     "documents": "Documents",
-    "announcements": "Announcements"
+    "announcements": "Announcements",
+    "carpool": "Car pooling"
   },
   "notifications": {
     "title": "Notifications",
@@ -3812,6 +3840,11 @@
         "name": "Record governing documents as adopted",
         "description": "Can record that a draft was adopted (date, meeting and when it applies from). The version is locked and the settings the text marks become the club's decision. Needs a login with a second factor.",
         "example": "For example, can record that the annual meeting adopted the new statutes, so that the retention period they set applies."
+      },
+      "club_carpools_manage": {
+        "name": "Manage car pooling",
+        "description": "Can choose the club's starting place for distances and delete the car pools of older activities.",
+        "example": "Can, for example, delete last season's car pools."
       }
     }
   },

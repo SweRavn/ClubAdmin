@@ -17,6 +17,7 @@ import {
   type ResponseMode,
   type SeriesRule,
   type SeriesSlot,
+  type TransportMode,
 } from "@clubadmin/shared";
 import { sql } from "drizzle-orm";
 import {
@@ -28,6 +29,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -54,6 +56,8 @@ export const locations = pgTable(
     longitude: doublePrecision(),
     /** "Entrance B, hall 2". */
     directions: text(),
+    /** The distance by car from the club's starting place (km, one way; P2.5). */
+    distanceKm: numeric({ precision: 6, scale: 1, mode: "number" }),
     archivedAt: timestamp(tz),
     /** Who added it (P1.6b): they and club managers may change it; null = a club manager. */
     createdByPersonId: uuid().references(() => people.id),
@@ -102,6 +106,8 @@ export const activitySeries = pgTable(
     /** Answers (P1.5): copied to each session, the deadline relative to its start. */
     responseMode: text().$type<ResponseMode>().notNull().default("optional"),
     respondByMinutes: integer(),
+    /** How participants get there (P2.5); copied to each session. */
+    transportMode: text().$type<TransportMode>(),
     createdByPersonId: personRef(),
     ...timestamps,
   },
@@ -196,6 +202,8 @@ export const activities = pgTable(
     requestLead: jsonb().$type<RequestLead>(),
     requestAt: timestamp(tz),
     requestedAt: timestamp(tz),
+    /** How participants get there (P2.5): own transport opens the car pool. */
+    transportMode: text().$type<TransportMode>(),
     createdByPersonId: personRef(),
     ...timestamps,
   },

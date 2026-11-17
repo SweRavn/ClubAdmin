@@ -6,7 +6,7 @@ import { normalizeOrganisasjonsnummer } from "./organisasjonsnummer.ts";
 export const NO: CountryPack = {
   code: "NO",
   // GDPR consent age in Norway is 13 (personopplysningsloven § 5).
-  ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18 },
+  ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18, childSelfBookingAge: 13 },
   normalizeOrganizationNumber: normalizeOrganisasjonsnummer,
   personalIdFormat: personalIdFormat(parseFodselsnummer),
   localeDefaults: { locale: "nb-NO", timeZone: "Europe/Oslo", currency: "NOK" },

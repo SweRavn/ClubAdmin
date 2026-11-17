@@ -31,6 +31,11 @@ export interface ResolveOptions {
    * the group see its protected members without another query.
    */
   group?: GroupResource;
+  /**
+   * People the caller sees even when protected, for a reason the caller
+   * checked (a car's driver sees its passengers, P2.5).
+   */
+  alsoVisible?: ReadonlySet<string>;
 }
 
 const JOB = "authorization:visibility";
@@ -85,7 +90,7 @@ export class PersonVisibility {
     for (const id of personIds) {
       if (!protectedIds.has(id) && options.flags?.get(id) !== true) {
         result.set(id, "full");
-      } else if (this.isFamily(viewer, id)) {
+      } else if (this.isFamily(viewer, id) || options.alsoVisible?.has(id)) {
         result.set(id, "protected_visible");
       } else if (!clubId) {
         result.set(id, "hidden");

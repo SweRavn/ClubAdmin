@@ -394,8 +394,8 @@ export const POLICIES: readonly Policy[] = [
   // The club calendar (groups and places, no names): administrators and the board.
   definePolicy("club.activities.read", "club", holdsInClub("club.activities.read")),
   definePolicy("club.locations.manage", "club", holdsInClub("club.locations.manage")),
-  // P1.6b: leaders add the places they use; they change only their own (the
-  // service checks the creator for those who do not manage places).
+  // P1.6b, widened in P2.5: leaders add places and change every place, its
+  // distance included; archiving stays with club.locations.manage (the service).
   definePolicy(
     "club.locations.create",
     "club",
@@ -853,6 +853,8 @@ export const POLICIES: readonly Policy[] = [
   definePolicy("announcement.manage", "announcement", ({ actor, resource }) =>
     canManageAnnouncement(actor, resource),
   ),
+  // Car pools (P2.5): the club's starting place and deleting old car pools.
+  definePolicy("club.carpools.manage", "club", holdsInClub("club.carpools.manage")),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

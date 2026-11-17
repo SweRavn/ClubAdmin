@@ -9,6 +9,11 @@ export interface AgeRules {
   ownAccountMinAge: number;
   /** Age at which guardians' default rights end. */
   adultAge: number;
+  /**
+   * Age from which a child books car-pool seats themselves (P2.5, ADR 0048)
+   * unless a guardian chose otherwise; none: 13.
+   */
+  childSelfBookingAge?: number;
 }
 
 export interface ParsedPersonalId {

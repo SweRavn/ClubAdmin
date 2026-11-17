@@ -147,6 +147,110 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/activities/{activityId}/carpool": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The activity's car pool: cars, free seats, whom the caller may book for
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Carpools_carpool"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/carpool/offers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Offer a car (or to drive if needed), with the return trip if asked
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Carpools_createOffer"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/carpool/offers/{offerId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Remove one's car before the trip (its seats go with it)
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Carpools_deleteOffer"];
+    options?: never;
+    head?: never;
+    /**
+     * Change one's car (after the trip: the distance driven only)
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["Carpools_updateOffer"];
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Book a seat for oneself or one's child (and the seat home)
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Carpools_book"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings/{bookingId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Cancel a seat (the passenger, who booked it, a guardian or the driver)
+     * @description Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Carpools_cancelBooking"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/activities/{activityId}/history": {
     parameters: {
       query?: never;
@@ -1096,6 +1200,50 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/carpool-settings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's car-pool settings: the starting place of distances
+     * @description Requires permission `club.carpools.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Carpools_settings"];
+    /**
+     * Set the starting place distances are measured from
+     * @description Requires permission `club.carpools.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Carpools_putSettings"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/carpools": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete the club's car pools of activities before a date
+     * @description Requires permission `club.carpools.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Carpools_deleteBefore"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/chats": {
     parameters: {
       query?: never;
@@ -2000,6 +2148,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/groups/{groupId}/carpool-settings": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Make the group's car-pool statistics public in the group (its leaders)
+     * @description Requires permission `group.activities.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Carpools_putGroupSettings"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/groups/{groupId}/carpool-stats": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Drives, distance and passengers per person (leaders; members when public)
+     * @description Requires permission `group.activities.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Carpools_stats"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/groups/{groupId}/chats": {
     parameters: {
       query?: never;
@@ -2311,7 +2499,7 @@ export interface paths {
     options?: never;
     head?: never;
     /**
-     * Change or archive a location (club managers, or the person who added it)
+     * Change a location, distance included (archiving: club.locations.manage)
      * @description Requires permission `club.locations.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     patch: operations["Activities_updateLocation"];
@@ -4648,6 +4836,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/carpool-bookings/{bookingId}/confirm": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirm that one's child may be the only child with that driver */
+    post: operations["Carpools_confirm"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/carpools": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Mina samåkningar: my drives and my own and my children's seats */
+    get: operations["Carpools_myCarpools"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/chats": {
     parameters: {
       query?: never;
@@ -5311,6 +5533,23 @@ export interface paths {
     put?: never;
     /** Add a child without email; the caller becomes their parent (or legal guardian) */
     post: operations["Family_addChild"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/wards/{personId}/carpool-age": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** From which age one's child books car-pool seats themselves */
+    put: operations["Carpools_setAge"];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -5999,8 +6238,10 @@ export interface components {
       directions: string | null;
       /** Format: uri */
       mapUrl: string | null;
+      distanceKm?: number | null;
       archived: boolean;
       canEdit?: boolean;
+      canArchive?: boolean;
     } | null;
     RequestLead:
       | {
@@ -6103,6 +6344,8 @@ export interface components {
       /** Format: date-time */
       requestAt?: string | null;
       inviteesOnly?: boolean;
+      /** @enum {string|null} */
+      transportMode?: "own" | "shared" | null;
       responseCounts?: components["schemas"]["ResponseCounts"];
     };
     UpdateActivityRequest: {
@@ -6131,6 +6374,8 @@ export interface components {
       /** Format: date-time */
       respondBy?: string | null;
       requestLead?: components["schemas"]["RequestLead"];
+      /** @enum {string|null} */
+      transportMode?: "own" | "shared" | null;
     };
     Agenda: {
       meeting: components["schemas"]["MeetingRef"];
@@ -6338,6 +6583,91 @@ export interface components {
     };
     CancelActivityRequest: {
       reason?: string;
+    };
+    Carpool: {
+      /** Format: uuid */
+      activityId: string;
+      /** @enum {string|null} */
+      transportMode: "own" | "shared" | null;
+      distanceKm: number | null;
+      offers: components["schemas"]["CarpoolOffer"][];
+      canOffer: boolean;
+      canBookFor: components["schemas"]["PersonSummary"][];
+      withoutRide: components["schemas"]["PersonSummary"][] | null;
+      withoutRideHidden: number;
+    };
+    CarpoolOffer: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      direction: "out" | "back";
+      /** Format: uuid */
+      outwardOfferId: string | null;
+      driver: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      mine: boolean;
+      willingOnly: boolean;
+      seats: number;
+      freeSeats: number;
+      departurePlace: string | null;
+      /** Format: date-time */
+      departureAt: string | null;
+      distanceKm: number | null;
+      bookings: components["schemas"]["CarpoolBooking"][];
+    };
+    CarpoolBooking: {
+      /** Format: uuid */
+      id: string;
+      passenger: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** @enum {string} */
+      status: "held" | "pending_guardian" | "cancelled";
+      canCancel: boolean;
+      canConfirm: boolean;
+    };
+    CarpoolOfferCreated: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      returnId: string | null;
+    };
+    CreateCarpoolOffer: {
+      /**
+       * @default out
+       * @enum {string}
+       */
+      direction: "out" | "back";
+      /** @default false */
+      willingOnly: boolean;
+      /** @default 0 */
+      seats: number;
+      departurePlace?: string | null;
+      /** Format: date-time */
+      departureAt?: string | null;
+      /** @default false */
+      withReturn: boolean;
+    };
+    UpdateCarpoolOffer: {
+      willingOnly?: boolean;
+      seats?: number;
+      departurePlace?: string | null;
+      /** Format: date-time */
+      departureAt?: string | null;
+      distanceKm?: number | null;
+    };
+    CarpoolBooked: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      status: "held" | "pending_guardian" | "cancelled";
+      /** Format: uuid */
+      returnId: string | null;
+    };
+    BookCarpoolSeat: {
+      /** Format: uuid */
+      passengerPersonId: string;
+      /** @default false */
+      alsoReturn: boolean;
+      /** @default false */
+      confirmAlone: boolean;
     };
     HistoryPage: {
       items: components["schemas"]["HistoryItem"][];
@@ -6636,6 +6966,8 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
       requestLead?: components["schemas"]["RequestLead"];
+      /** @enum {string|null} */
+      transportMode?: "own" | "shared" | null;
       groups: {
         /** Format: uuid */
         id: string;
@@ -6675,6 +7007,8 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
       requestLead?: components["schemas"]["RequestLead"];
+      /** @enum {string|null} */
+      transportMode?: "own" | "shared" | null;
     };
     SkipDatesRequest: {
       /** Format: date */
@@ -6705,6 +7039,8 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
       requestLead?: components["schemas"]["RequestLead"];
+      /** @enum {string|null} */
+      transportMode?: "own" | "shared" | null;
       /** Format: uuid */
       activityId: string;
     };
@@ -7475,6 +7811,17 @@ export interface components {
     CreateScopedFeed: {
       label?: string;
     };
+    CarpoolSettings: {
+      /** Format: uuid */
+      startLocationId: string | null;
+    };
+    PutCarpoolSettings: {
+      /** Format: uuid */
+      startLocationId: string | null;
+    };
+    CarpoolsDeleted: {
+      offers: number;
+    };
     ChatList: {
       items: components["schemas"]["ChatSummary"][];
       canCreate?: boolean;
@@ -8173,6 +8520,28 @@ export interface components {
       /** Format: uuid */
       nextCursor: string | null;
     };
+    GroupCarpoolSettings: {
+      statsPublic: boolean;
+    };
+    PutGroupCarpoolSettings: {
+      statsPublic: boolean;
+    };
+    CarpoolStats: {
+      /** Format: uuid */
+      groupId: string;
+      /** Format: date */
+      from: string;
+      /** Format: date */
+      to: string;
+      public: boolean;
+      rows: {
+        person: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+        drives: number;
+        distanceKm: number;
+        passengers: number;
+        rides: number;
+      }[];
+    };
     Ok: {
       /** @enum {boolean} */
       ok: true;
@@ -8419,6 +8788,7 @@ export interface components {
       latitude?: number | null;
       longitude?: number | null;
       directions?: string | null;
+      distanceKm?: number | null;
     };
     UpdateLocationRequest: {
       name?: string;
@@ -8428,6 +8798,7 @@ export interface components {
       latitude?: number | null;
       longitude?: number | null;
       directions?: string | null;
+      distanceKm?: number | null;
       archived?: boolean;
     };
     LocationConflicts: {
@@ -9672,6 +10043,8 @@ export interface components {
       /** Format: date-time */
       respondBy?: string | null;
       requestLead?: components["schemas"]["RequestLead"];
+      /** @enum {string|null} */
+      transportMode?: "own" | "shared" | null;
       /** @default [] */
       groupIds: string[];
     };
@@ -9706,6 +10079,8 @@ export interface components {
       responseMode?: "none" | "optional" | "requested";
       respondByMinutes?: number | null;
       requestLead?: components["schemas"]["RequestLead"];
+      /** @enum {string|null} */
+      transportMode?: "own" | "shared" | null;
       /** @default [] */
       groupIds: string[];
     };
@@ -10229,6 +10604,30 @@ export interface components {
       label?: string | null;
       personIds?: string[];
     };
+    MyCarpoolList: {
+      items: components["schemas"]["MyCarpool"][];
+    };
+    MyCarpool: {
+      /** Format: uuid */
+      clubId: string;
+      clubName: string;
+      /** Format: uuid */
+      activityId: string;
+      activityTitle: string;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: uuid */
+      offerId: string;
+      /** @enum {string} */
+      direction: "out" | "back";
+      driving: boolean;
+      /** Format: uuid */
+      bookingId: string | null;
+      passenger: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** @enum {string|null} */
+      status: "held" | "pending_guardian" | "cancelled" | null;
+      driver: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+    };
     ChatPage: {
       items: components["schemas"]["ChatSummary"][];
       /** Format: uuid */
@@ -10366,6 +10765,7 @@ export interface components {
           | "announcement.manage"
           | "club.governing_documents.manage"
           | "club.governing_documents.adopt"
+          | "club.carpools.manage"
         )[];
       }[];
     };
@@ -10636,7 +11036,8 @@ export interface components {
           | "waitlist"
           | "chat"
           | "documents"
-          | "announcements";
+          | "announcements"
+          | "carpool";
         /** @enum {string} */
         email: "always" | "no_app" | "never";
         push: boolean;
@@ -10664,7 +11065,8 @@ export interface components {
           | "waitlist"
           | "chat"
           | "documents"
-          | "announcements";
+          | "announcements"
+          | "carpool";
         /** @enum {string} */
         email: "always" | "no_app" | "never";
         push: boolean;
@@ -11040,6 +11442,9 @@ export interface components {
       /** Format: uuid */
       guardianshipId: string;
     };
+    SetCarpoolAge: {
+      age: number | null;
+    };
     WardErasurePreview: {
       graceDays: number;
       hasLogin: boolean;
@@ -11103,7 +11508,8 @@ export interface components {
         | "waitlist"
         | "chat"
         | "documents"
-        | "announcements";
+        | "announcements"
+        | "carpool";
     };
     Unsubscribe: {
       token?: string;
@@ -12192,6 +12598,473 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["Activity"];
         };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_carpool: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Carpool"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_createOffer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateCarpoolOffer"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolOfferCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_deleteOffer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+        offerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_updateOffer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+        offerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateCarpoolOffer"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_book: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+        offerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["BookCarpoolSeat"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolBooked"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_cancelBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+        offerId: string;
+        bookingId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Invalid request */
       400: {
@@ -16545,6 +17418,240 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CalendarFeedCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_settings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolSettings"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_putSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutCarpoolSettings"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolSettings"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_deleteBefore: {
+    parameters: {
+      query: {
+        before: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolsDeleted"];
         };
       };
       /** @description Invalid request */
@@ -21166,6 +22273,167 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AnnouncementPreview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_putGroupSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutGroupCarpoolSettings"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GroupCarpoolSettings"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_stats: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolStats"];
         };
       };
       /** @description Invalid request */
@@ -33775,6 +35043,136 @@ export interface operations {
       };
     };
   };
+  Carpools_confirm: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        bookingId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_myCarpools: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyCarpoolList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Chat_myChats: {
     parameters: {
       query?: {
@@ -35063,7 +36461,8 @@ export interface operations {
           | "waitlist"
           | "chat"
           | "documents"
-          | "announcements";
+          | "announcements"
+          | "carpool";
       };
       header?: never;
       path?: never;
@@ -36643,6 +38042,75 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["ChildAdded"];
         };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_setAge: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetCarpoolAge"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Invalid request */
       400: {

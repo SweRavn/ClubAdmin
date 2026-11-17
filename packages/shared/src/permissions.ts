@@ -122,6 +122,8 @@ export const PERMISSIONS = [
   // documents and templates; recording a document as adopted (MFA).
   "club.governing_documents.manage",
   "club.governing_documents.adopt",
+  // Car pooling (P2.5, ADR 0048): deleting old car-pool data, the starting place.
+  "club.carpools.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

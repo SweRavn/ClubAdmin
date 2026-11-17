@@ -715,7 +715,8 @@ describe("permission matrix", () => {
     },
     "PATCH /api/v1/clubs/:clubId/locations/:locationId": {
       url: () => `/api/v1/clubs/${m.clubA.id}/locations/${m.locationId}`,
-      expected: { ...TEAM_MANAGERS(403), manager: 200 },
+      // P2.5: everyone who adds places changes every place (archiving: managers).
+      expected: TEAM_MANAGERS(200),
       body: { directions: "Entrance B" },
     },
     "GET /api/v1/clubs/:clubId/locations/:locationId/conflicts": {
@@ -1110,6 +1111,62 @@ describe("permission matrix", () => {
       url: () => `/api/v1/events/${m.eventId}/minutes`,
       expected: TEAM_MANAGERS(400),
       body: {},
+    },
+    // Car pools (P2.5): read with the activity; the matrix's activity has
+    // no transport mode, so offers are refused (409) to those who see it;
+    // cars and seats the matrix does not have are 404 for them. Statistics
+    // with the group's activities; its setting by those who manage them.
+    "GET /api/v1/activities/:activityId/carpool": {
+      url: () => `/api/v1/activities/${m.activityId}/carpool`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/activities/:activityId/carpool/offers": {
+      url: () => `/api/v1/activities/${m.activityId}/carpool/offers`,
+      expected: Object.fromEntries(
+        Object.entries(INSIDERS).map(([p, status]) => [p, status === 200 ? 409 : status]),
+      ) as Record<MatrixPersona, number>,
+      body: { seats: 2 },
+    },
+    "PATCH /api/v1/activities/:activityId/carpool/offers/:offerId": {
+      url: () => `/api/v1/activities/${m.activityId}/carpool/offers/${SOME_ID}`,
+      expected: ALL_NOT_FOUND,
+      body: { seats: 3 },
+    },
+    "DELETE /api/v1/activities/:activityId/carpool/offers/:offerId": {
+      url: () => `/api/v1/activities/${m.activityId}/carpool/offers/${SOME_ID}`,
+      expected: ALL_NOT_FOUND,
+    },
+    "POST /api/v1/activities/:activityId/carpool/offers/:offerId/bookings": {
+      url: () => `/api/v1/activities/${m.activityId}/carpool/offers/${SOME_ID}/bookings`,
+      expected: ALL_NOT_FOUND,
+      body: { passengerPersonId: SOME_ID },
+    },
+    "DELETE /api/v1/activities/:activityId/carpool/offers/:offerId/bookings/:bookingId": {
+      url: () => `/api/v1/activities/${m.activityId}/carpool/offers/${SOME_ID}/bookings/${SOME_ID}`,
+      expected: ALL_NOT_FOUND,
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/carpool-stats": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/carpool-stats?from=2026-01-01&to=2026-12-31`,
+      expected: INSIDERS,
+    },
+    "PUT /api/v1/clubs/:clubId/groups/:groupId/carpool-settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/carpool-settings`,
+      expected: TEAM_MANAGERS(200),
+      body: { statsPublic: false },
+    },
+    "GET /api/v1/clubs/:clubId/carpool-settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/carpool-settings`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+    },
+    "PUT /api/v1/clubs/:clubId/carpool-settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/carpool-settings`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+      body: { startLocationId: null },
+    },
+    "DELETE /api/v1/clubs/:clubId/carpools": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/carpools?before=2020-01-01`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
     },
     // Part B (P2.2): seeing, storage, notices' documents.
     "POST /api/v1/clubs/:clubId/documents/seen": {

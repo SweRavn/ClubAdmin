@@ -14,7 +14,7 @@ import { parsePersonnummer } from "./personnummer.ts";
 export const SE: CountryPack = {
   code: "SE",
   // GDPR consent age in Sweden is 13 (Lag 2018:218, 2 kap. 4 §).
-  ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18 },
+  ageRules: { consentAge: 13, ownAccountMinAge: 13, adultAge: 18, childSelfBookingAge: 13 },
   normalizeOrganizationNumber: normalizeOrganisationsnummer,
   // Former members (P1.8a): at least six months, so a member who left can
   // still be found for the annual report and grant reports of the year.

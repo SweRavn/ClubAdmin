@@ -153,6 +153,8 @@ export const guardianships = pgTable(
     /** The young person's decision at the adult age (P1.3): kept or ended; null until they decide. */
     adultDecision: text().$type<AdultDecision>(),
     adultDecidedAt: timestamp(tz),
+    /** From which age the ward books car-pool seats themselves (P2.5); null: the pack's. */
+    carpoolSelfBookingAge: integer(),
     /** Who chose the rights of a relative or contact person (the guardian, the adult ward or the club's registrar). */
     grantedByPersonId: uuid().references(() => people.id),
     /** The club that recorded the link from a paper form (it may end it again; FK in migration 0009). */

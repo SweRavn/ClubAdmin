@@ -286,7 +286,20 @@
       "text": "Inloggningen går inte att läsa just nu. Försök igen om en liten stund.",
       "devHint": "Utveckling: sessionslagret (Valkey) går inte att nå. Kör pnpm dev:doctor; om Valkey svarar i containern men inte från datorn, starta om containern:",
       "retry": "Försök igen"
-    }
+    },
+    "carpool_closed": "Aktiviteten har ingen samåkning.",
+    "carpool_started": "Resan har redan börjat. Bara körsträckan kan ändras.",
+    "carpool_driver_not_eligible": "Bara vuxna som deltar, eller vårdnadshavare till en deltagare, kan erbjuda en bil.",
+    "carpool_offer_exists": "Du erbjuder redan en bil åt det hållet.",
+    "carpool_seats_taken": "Fler platser är bokade än så.",
+    "carpool_not_bookable": "Den här föraren kan köra om det behövs men har inga platser att boka.",
+    "carpool_full": "Bilen är full.",
+    "carpool_already_booked": "Det finns redan en plats bokad åt det hållet.",
+    "carpool_not_participant": "Bara deltagare och deras vårdnadshavare kan åka med.",
+    "carpool_own_car": "Föraren bokar inte plats i sin egen bil.",
+    "carpool_self_booking_age": "Din vårdnadshavare behöver boka platsen åt dig.",
+    "carpool_not_pending": "Platsen väntar inte på något godkännande.",
+    "carpool_before_invalid": "Välj ett datum som inte ligger i framtiden."
   },
   "roles": {
     "chair": "Ordförande",
@@ -2100,7 +2113,21 @@
         "body": "Öppna anslaget för att läsa det."
       }
     },
-    "announcementFrom": "Anslag från {from}"
+    "announcementFrom": "Anslag från {from}",
+    "carpool": {
+      "booking": {
+        "title": "Någon har bokat en plats i din bil",
+        "body": "Öppna samåkningen i {club} för att se vem."
+      },
+      "changed": {
+        "title": "{kind, select, cancelled {En plats i samåkningen har avbokats} offer_removed {En bil i samåkningen har tagits bort} other {En bil i samåkningen har ändrats}}",
+        "body": "Öppna samåkningen i {club} för att se vad som gäller."
+      },
+      "confirm": {
+        "title": "Samåkningen väntar på ditt godkännande",
+        "body": "Ditt barn blir ensamt barn med en vuxen. Öppna Mina samåkningar i {club} för att se vem som kör och godkänna."
+      }
+    }
   },
   "notifyCategories": {
     "schedule": "Schemat",
@@ -2114,7 +2141,8 @@
     "waitlist": "Köer",
     "chat": "Chatt",
     "documents": "Dokument",
-    "announcements": "Anslag"
+    "announcements": "Anslag",
+    "carpool": "Samåkning"
   },
   "notifications": {
     "title": "Notiser",
@@ -3812,6 +3840,11 @@
         "name": "Registrera antagna styrdokument",
         "description": "Kan registrera att ett utkast har antagits (datum, möte och när det gäller från). Versionen låses och de inställningar texten markerar blir föreningens beslut. Kräver inloggning med en andra faktor.",
         "example": "Kan till exempel registrera att årsmötet antog de nya stadgarna, så att gallringstiden de anger börjar gälla."
+      },
+      "club_carpools_manage": {
+        "name": "Hantera samåkning",
+        "description": "Kan välja föreningens utgångsplats för avstånd och ta bort samåkningar till äldre aktiviteter.",
+        "example": "Kan till exempel ta bort förra säsongens samåkningar."
       }
     }
   },

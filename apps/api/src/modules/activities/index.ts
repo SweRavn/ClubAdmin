@@ -10,6 +10,7 @@ export {
   type SeriesView,
 } from "./activities.service.ts";
 export { type ScheduleRow } from "./activities.service.ts";
+export { rosterQuery } from "./attendance.repository.ts";
 export { AttendanceService } from "./attendance.service.ts";
 export { answerState } from "./attendance.service.ts";
 export { respondablePeopleOf, schedulePeopleOf } from "./people-scope.ts";

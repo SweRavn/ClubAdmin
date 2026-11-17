@@ -286,7 +286,20 @@
       "text": "Innloggingen kan ikke leses akkurat nå. Prøv igjen om litt.",
       "devHint": "Utvikling: sesjonslageret (Valkey) kan ikke nås. Kjør pnpm dev:doctor; hvis Valkey svarer i containeren, men ikke fra datamaskinen, start containeren på nytt:",
       "retry": "Prøv igjen"
-    }
+    },
+    "carpool_closed": "Aktiviteten har ingen samkjøring.",
+    "carpool_started": "Turen har allerede begynt. Bare kjørelengden kan endres.",
+    "carpool_driver_not_eligible": "Bare voksne som deltar, eller foresatte til en deltaker, kan tilby en bil.",
+    "carpool_offer_exists": "Du tilbyr allerede en bil den veien.",
+    "carpool_seats_taken": "Flere plasser er booket enn det.",
+    "carpool_not_bookable": "Denne sjåføren kan kjøre om nødvendig, men har ingen plasser å booke.",
+    "carpool_full": "Bilen er full.",
+    "carpool_already_booked": "Det er allerede booket en plass den veien.",
+    "carpool_not_participant": "Bare deltakere og deres foresatte kan sitte på.",
+    "carpool_own_car": "Sjåføren booker ikke plass i sin egen bil.",
+    "carpool_self_booking_age": "En foresatt må booke plassen for deg.",
+    "carpool_not_pending": "Plassen venter ikke på noen godkjenning.",
+    "carpool_before_invalid": "Velg en dato som ikke er fram i tid."
   },
   "roles": {
     "chair": "Leder",
@@ -2100,7 +2113,21 @@
         "body": "Åpne kunngjøringen for å lese den."
       }
     },
-    "announcementFrom": "Kunngjøring fra {from}"
+    "announcementFrom": "Kunngjøring fra {from}",
+    "carpool": {
+      "booking": {
+        "title": "Noen har booket en plass i bilen din",
+        "body": "Åpne samkjøringen i {club} for å se hvem."
+      },
+      "changed": {
+        "title": "{kind, select, cancelled {En plass i samkjøringen er avbestilt} offer_removed {En bil i samkjøringen er fjernet} other {En bil i samkjøringen er endret}}",
+        "body": "Åpne samkjøringen i {club} for å se hva som gjelder."
+      },
+      "confirm": {
+        "title": "Samkjøringen venter på godkjenningen din",
+        "body": "Barnet ditt blir eneste barn med én voksen. Åpne Mine samkjøringer i {club} for å se hvem som kjører og godkjenne."
+      }
+    }
   },
   "notifyCategories": {
     "schedule": "Timeplan",
@@ -2114,7 +2141,8 @@
     "waitlist": "Ventelister",
     "chat": "Chat",
     "documents": "Dokumenter",
-    "announcements": "Kunngjøringer"
+    "announcements": "Kunngjøringer",
+    "carpool": "Samkjøring"
   },
   "notifications": {
     "title": "Varsler",
@@ -3812,6 +3840,11 @@
         "name": "Registrere vedtatte styringsdokumenter",
         "description": "Kan registrere at et utkast er vedtatt (dato, møte og når det gjelder fra). Versjonen låses, og innstillingene teksten markerer blir klubbens vedtak. Krever innlogging med en andre faktor.",
         "example": "Kan for eksempel registrere at årsmøtet vedtok de nye vedtektene, slik at lagringstiden de angir gjelder."
+      },
+      "club_carpools_manage": {
+        "name": "Administrere samkjøring",
+        "description": "Kan velge klubbens utgangspunkt for avstander og slette samkjøringer til eldre aktiviteter.",
+        "example": "Kan for eksempel slette forrige sesongs samkjøringer."
       }
     }
   },

@@ -82,6 +82,19 @@ export const DOMAIN_EVENTS = {
   }),
   /** Everyone named signed a version (P2.4): the worker makes its signature page. */
   "document.signed": z.object({ clubId: id, versionId: id }),
+  /**
+   * A car pool changed (P2.5): a seat booked or cancelled (the driver is
+   * told), a car changed or removed (its passengers' bookers are told), or
+   * a booking waits for a guardian's confirmation (the guardians are asked).
+   */
+  "carpool.changed": z.object({
+    clubId: id,
+    kind: z.enum(["booked", "cancelled", "offer_changed", "offer_removed", "confirm"]),
+    activityId: id,
+    driverPersonId: id,
+    /** The people to tell (the driver, bookers, guardians asked to confirm; never the actor). */
+    personIds: z.array(id).max(50),
+  }),
   /** An announcement was sent (P2.3): the worker resolves its audience into notices. */
   "announcement.sent": z.object({ clubId: id, announcementId: id }),
   /** An announcement was withdrawn or deleted (P2.3): what is not delivered yet is not. */

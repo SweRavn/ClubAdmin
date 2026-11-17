@@ -356,6 +356,32 @@ export const DOMAIN_ERRORS = {
   agenda_empty: "conflict",
   /** The first time, the minutes need a series to go in. */
   minutes_series_required: "validation",
+  // Car pools (P2.5, ADR 0048).
+  /** The activity has no car pool: transport mode not "own", cancelled. */
+  carpool_closed: "conflict",
+  /** The trip has started: cars and seats are no longer changed (but the distance). */
+  carpool_started: "conflict",
+  /** Only adults taking part, or guardians of a participant, offer cars. */
+  carpool_driver_not_eligible: "forbidden",
+  /** The caller already offers a car that way. */
+  carpool_offer_exists: "conflict",
+  /** Fewer seats than are booked. */
+  carpool_seats_taken: "conflict",
+  /** "Willing to drive" has no seats to book. */
+  carpool_not_bookable: "conflict",
+  carpool_full: "conflict",
+  /** The passenger already has a seat that way. */
+  carpool_already_booked: "conflict",
+  /** The passenger neither takes part nor is a guardian of a participant. */
+  carpool_not_participant: "validation",
+  /** The driver does not book their own car. */
+  carpool_own_car: "validation",
+  /** The child is younger than the age their guardians allow booking from. */
+  carpool_self_booking_age: "forbidden",
+  /** Only a seat waiting for a guardian's confirmation is confirmed. */
+  carpool_not_pending: "conflict",
+  /** Old car pools are deleted up to today at most. */
+  carpool_before_invalid: "validation",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

@@ -209,6 +209,9 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   // adopted by these two (adopting sets settings the text marks).
   "club.governing_documents.manage": role("club", "documents"),
   "club.governing_documents.adopt": role("club", "documents", true),
+  // Car pooling (P2.5): offering and booking need no permission (participants
+  // and guardians); deleting old data and the starting place need this one.
+  "club.carpools.manage": role("club", "activities"),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -348,6 +351,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "club.channels.create",
       "club.documents.manage",
       "club.announcements.send",
+      "club.carpools.manage",
     ],
   },
   registrar: {
@@ -374,6 +378,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.subscription.read",
       "billing.account.manage",
       "billing.invoices.read",
+      "club.carpools.manage",
     ],
   },
   secretary: {

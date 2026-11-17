@@ -217,6 +217,13 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO document_signatures (club_id, version_id, signer_person_id, role)
         SELECT ${a.id}, id, ${member.id}, 'chair' FROM document_versions WHERE club_id = ${a.id} LIMIT 1`);
+      // Car pools (P2.5): the member drives, the manager has a seat.
+      await tx.execute(sql`
+        WITH o AS (INSERT INTO carpool_offers (club_id, activity_id, driver_person_id, direction, seats)
+                   SELECT ${a.id}, id, ${member.id}, 'out', 2 FROM activities
+                   WHERE club_id = ${a.id} LIMIT 1 RETURNING id)
+        INSERT INTO carpool_bookings (club_id, offer_id, passenger_person_id, booked_by_person_id)
+        SELECT ${a.id}, id, ${a.manager.id}, ${a.manager.id} FROM o`);
       await tx.execute(sql`
         INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
         VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);

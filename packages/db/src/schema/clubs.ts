@@ -65,6 +65,8 @@ export const clubs = pgTable(
     defaultLocale: text().notNull(),
     /** IANA time zone. */
     timeZone: text().notNull(),
+    /** The place car-pool distances are measured from (P2.5; FK in migration 0048). */
+    carpoolStartLocationId: uuid(),
     /** ISO 4217. */
     currency: text().notNull(),
     organizationNumber: text(),

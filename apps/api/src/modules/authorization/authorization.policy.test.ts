@@ -1582,6 +1582,13 @@ const CASES: Record<Permission, Case[]> = {
     { name: "member", actor: plainMember, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
+  "club.carpools.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: true },
+    { name: "coach", actor: coach, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
   "club.announcements.send": [
     { name: "club manager", actor: manager, resource: clubR, allowed: true },
     { name: "secretary", actor: secretary, resource: clubR, allowed: true },

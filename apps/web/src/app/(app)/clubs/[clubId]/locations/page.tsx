@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // The club's locations (P1.4): club managers add, change, archive and
 // restore any; those who manage a group's activities add places and change
-// their own (P1.6b). Double bookings in the coming eight weeks for managers.
+// every place, its distance included (P2.5; P1.6b: only their own). Double
+// bookings in the coming eight weeks for managers.
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
@@ -179,14 +180,20 @@ export default async function LocationsPage({ params, searchParams }: Props) {
                     </button>
                   </ActionForm>
                 </details>
-                <ActionForm action="update-location" className="mt-2">
-                  <input type="hidden" name="clubId" value={club.id} />
-                  <input type="hidden" name="locationId" value={l.id} />
-                  <input type="hidden" name="archive" value={l.archived ? "restore" : "archive"} />
-                  <button type="submit" className={secondaryButtonClass}>
-                    {l.archived ? t("locations.restore") : t("locations.archive")}
-                  </button>
-                </ActionForm>
+                {manages ? (
+                  <ActionForm action="update-location" className="mt-2">
+                    <input type="hidden" name="clubId" value={club.id} />
+                    <input type="hidden" name="locationId" value={l.id} />
+                    <input
+                      type="hidden"
+                      name="archive"
+                      value={l.archived ? "restore" : "archive"}
+                    />
+                    <button type="submit" className={secondaryButtonClass}>
+                      {l.archived ? t("locations.restore") : t("locations.archive")}
+                    </button>
+                  </ActionForm>
+                ) : null}
               </>
             ) : null}
           </li>

@@ -177,6 +177,7 @@ export class ActivitiesService {
           latitude: data.latitude ?? null,
           longitude: data.longitude ?? null,
           directions: data.directions ?? null,
+          distanceKm: data.distanceKm ?? null,
           createdByPersonId: context.personId ?? null,
         })
         .catch(locationWriteError);
@@ -192,23 +193,20 @@ export class ActivitiesService {
 
   /**
    * Archiving keeps the activities there; a new name shows in calendars at
-   * once. Without `anyLocation` (club managers) only the person who added the
-   * location may change it (P1.6b).
+   * once. Everyone who adds places changes every place, its distance
+   * included (P2.5); archiving needs `canArchive` (club.locations.manage).
    */
   updateLocation(
     context: TenantContext,
     locationId: string,
     input: UpdateLocationInput,
-    options: { anyLocation?: boolean } = { anyLocation: true },
+    options: { canArchive?: boolean } = { canArchive: true },
   ): Promise<Location> {
     return this.db.withTenant(context, async (tx) => {
       const data = definedOnly(parseInput(UpdateLocationSchema, input));
       const [current] = await repo.findLocations(tx, [locationId]);
       if (current?.clubId !== context.clubId) throw new DomainError("not_found");
-      if (
-        !options.anyLocation &&
-        (current.createdByPersonId === null || current.createdByPersonId !== context.personId)
-      ) {
+      if (data.archived !== undefined && !options.canArchive) {
         throw new DomainError("not_allowed");
       }
       const { archived, ...fields } = data;
@@ -293,6 +291,7 @@ export class ActivitiesService {
               (await this.clubs.getClubInTx(tx, context.clubId)).timeZone,
             )
           : null,
+        transportMode: data.transportMode ?? null,
         createdByPersonId: actorPersonId(context),
       },
     ]);
@@ -362,6 +361,7 @@ export class ActivitiesService {
           ? { respondBy: data.respondBy ? new Date(data.respondBy) : null }
           : {}),
         ...("requestLead" in data ? { requestLead: data.requestLead ?? null } : {}),
+        ...("transportMode" in data ? { transportMode: data.transportMode ?? null } : {}),
       };
       if ("locationId" in data || "locationText" in data) {
         const locationId = data.locationId ?? null;
@@ -586,6 +586,7 @@ export class ActivitiesService {
           responseMode: data.responseMode ?? defaultResponseMode(data.kind),
           respondByMinutes: data.respondByMinutes ?? null,
           requestLead: data.requestLead ?? null,
+          transportMode: data.transportMode ?? null,
           createdByPersonId: actorPersonId(context),
         },
         groupIds,
@@ -1100,6 +1101,7 @@ export class ActivitiesService {
           }),
       ...(data.endsOn === undefined ? {} : { endsOn: data.endsOn }),
       ...(data.requestLead === undefined ? {} : { requestLead: data.requestLead ?? null }),
+      ...(data.transportMode === undefined ? {} : { transportMode: data.transportMode ?? null }),
       ...(data.skipDates === undefined ? {} : { skipDates: [...new Set(data.skipDates)].sort() }),
       ...(data.skipPublicHolidays === undefined
         ? {}
@@ -1166,6 +1168,7 @@ export class ActivitiesService {
         respondBy: respondByOf(series, session.startsAt),
         requestLead: series.requestLead,
         requestAt: requestAt(series.requestLead, session.startsAt, club.timeZone),
+        transportMode: series.transportMode,
       };
       const shown =
         row.startsAt.getTime() !== next.startsAt.getTime() ||
@@ -1180,7 +1183,12 @@ export class ActivitiesService {
         row.respondBy?.getTime() !== next.respondBy?.getTime() ||
         row.requestAt?.getTime() !== next.requestAt?.getTime() ||
         JSON.stringify(row.requestLead) !== JSON.stringify(next.requestLead);
-      if (shown || answers || row.leaderNotes !== next.leaderNotes) {
+      if (
+        shown ||
+        answers ||
+        row.leaderNotes !== next.leaderNotes ||
+        row.transportMode !== next.transportMode
+      ) {
         updates.push({ ...next, bump: shown });
       }
     }
@@ -1245,6 +1253,7 @@ export class ActivitiesService {
         respondBy: respondByOf(series, s.startsAt),
         requestLead: series.requestLead,
         requestAt: requestAt(series.requestLead, s.startsAt, club.timeZone),
+        transportMode: series.transportMode,
         createdByPersonId: series.createdByPersonId,
       })),
     );

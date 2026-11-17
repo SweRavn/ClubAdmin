@@ -821,6 +821,13 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "action items: on the meeting's agenda and in Mina uppgifter, changes in the audit log (meeting.agenda.updated)",
   "public.task_assignments":
     "who was given a task and whether it is done: on the agenda and in Mina uppgifter, in the audit log (task.assignment.*)",
+  // Car pools (P2.5, ADR 0048): who rides with whom is shown in the car
+  // pool to the car's people, families and leaders only; every change is in
+  // the audit log (carpool.*).
+  "public.carpool_offers":
+    "the cars offered for an activity: in its car pool and Mina samåkningar, changes in the audit log (carpool.offer.*)",
+  "public.carpool_bookings":
+    "who has a seat in which car: in the car pool to those who may see it, changes in the audit log (carpool.booking.*)",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

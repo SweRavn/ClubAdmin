@@ -1089,6 +1089,47 @@ audience given as entries, before it is stored). Sending publishes
 `announcement.sent`; the worker turns it into notices of the category
 `announcements` (ADR 0039), and `announcements:due` sends scheduled ones.
 
+### Car pools (P2.5 part A, ADR 0048)
+Club-owned tables (tenant RLS, record history; migration 0048):
+
+- `activities.transport_mode`, `activity_series.transport_mode` (copied to
+  each session): none, `own` (the car pool is open until the start) or
+  `shared` (a bus). An event's sessions are activities.
+- `locations.distance_km`: from the club's starting place
+  (`clubs.carpool_start_location_id`, a manager setting); everyone who adds
+  places changes every place and its distance (`club.locations.create`,
+  widened), archiving stays with `club.locations.manage`.
+- `carpool_offers`: an activity's car (`driver_person_id`, `direction`
+  `out` | `back`, `outward_offer_id` for a return trip copied from the
+  outward one, `willing_only` with no seats, `seats` 1–8,
+  `departure_place`, `departure_at`, `distance_km` the driver's correction).
+- `carpool_bookings`: a seat (`passenger_person_id`, `booked_by_person_id`,
+  `status` `held` | `pending_guardian` | `cancelled`,
+  `confirmed_by_person_id`/`confirmed_at`); one live seat per passenger and
+  car.
+- `guardianships.carpool_self_booking_age` (7–18, the guardian's choice;
+  the highest of a child's guardians applies, each one's default the
+  country pack's `childSelfBookingAge`, else 13) and
+  `groups.carpool_stats_public` (the group's leaders).
+
+The rule of two (`apps/api/src/modules/carpools/rule-of-two.ts`): a car
+with the driver, no other adult and exactly one child who is not the
+driver's ward holds that child's seat as `pending_guardian` until a
+guardian with the right to act confirms; a confirmation lasts while the
+situation does. Who rides with whom is shown to the car's driver and
+passengers, their families and the activity's leaders; a protected
+passenger only to the driver and their family. Notices: `carpool.changed`
+in the outbox, category `carpool`, fixed texts.
+
+Endpoints: `GET /activities/:activityId/carpool`, `POST|PATCH|DELETE
+.../carpool/offers[/:offerId]`, `POST|DELETE .../bookings[/:bookingId]`,
+`POST /me/carpool-bookings/:bookingId/confirm`, `PUT
+/me/wards/:personId/carpool-age`, `GET /me/carpools` (`app.my_carpools`),
+`GET /clubs/:clubId/groups/:groupId/carpool-stats` and `PUT
+.../carpool-settings`, `GET|PUT /clubs/:clubId/carpool-settings` and
+`DELETE /clubs/:clubId/carpools?before=` (`club.carpools.manage`).
+Erasure clears the departure place of the person's drives.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

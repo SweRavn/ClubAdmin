@@ -114,3 +114,23 @@ Decided with the prompt's review:
 - **The self-booking age** is a guardian's setting per child, stored on the
   guardianship; with two guardians the higher age (the stricter) applies.
 
+## As implemented (part A, car pools)
+
+- Migration 0048: transport modes, `locations.distance_km`,
+  `carpool_offers`, `carpool_bookings`, the guardianship's self-booking
+  age, the group's public statistics, the club's starting place,
+  `app.my_carpools` and `app.ward_booking_club`, the permission
+  `club.carpools.manage` (club managers, treasurers) and the erasure step.
+- The module `apps/api/src/modules/carpools`: the rule of two is a pure
+  function settled after every change of a car's seats; a guardian booking
+  may confirm at once (`confirmAlone`), having seen the driver's name; a
+  child's own booking into such a car always waits.
+- Offers are open to adults on the activity's roster (participants and
+  leaders) and to guardians of a participant; one car per driver and
+  direction. Seats: the passenger themselves, or a guardian with the right
+  to sign up; the return seat is booked with the outward one when asked.
+- Statistics are read through `group.activities.read`: leaders see every
+  row, others their own and their children's unless the group made them
+  public.
+- Reimbursement, claims and attestation follow in part B.
+

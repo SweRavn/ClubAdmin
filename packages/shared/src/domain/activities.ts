@@ -8,6 +8,7 @@
 import { PersonSummarySchema } from "../auth/schemas.ts";
 import { z } from "../zod.ts";
 import { RESPONSE_MODES, RESPONSE_STATUSES, ResponseCountsSchema } from "./attendance.ts";
+import { TRANSPORT_MODES } from "./carpool.ts";
 import { RECURRENCE_FREQS, ruleProblem, type SeriesRule, WEEKDAY_ORDINALS } from "./recurrence.ts";
 
 export const ACTIVITY_KINDS = ["training", "match", "meeting", "other"] as const;
@@ -42,6 +43,8 @@ export const LocationInputSchema = z
     latitude: z.number().min(-90).max(90).nullish(),
     longitude: z.number().min(-180).max(180).nullish(),
     directions: text(500).nullish(),
+    /** The distance by car from the club's starting place (km, one way; P2.5). */
+    distanceKm: z.number().min(0).max(5000).nullish(),
   })
   .strict()
   .openapi("LocationInput");
@@ -65,9 +68,13 @@ export const LocationSchema = z
     directions: z.string().nullable(),
     /** An OpenStreetMap link (coordinates, or the address searched). */
     mapUrl: z.url().nullable(),
+    /** The distance by car from the club's starting place (km, one way; P2.5). */
+    distanceKm: z.number().nullable().optional(),
     archived: z.boolean(),
-    /** The viewer may change it: club managers, or the person who added it (P1.6b). */
+    /** The viewer may change it: those who add places change every place (P2.5). */
     canEdit: z.boolean().optional(),
+    /** The viewer may archive it (club.locations.manage). */
+    canArchive: z.boolean().optional(),
   })
   .openapi("Location");
 export type Location = z.infer<typeof LocationSchema>;
@@ -103,6 +110,9 @@ const place = {
   locationText: text(200).nullish(),
 };
 
+/** How participants get there (P2.5): on their own, or car pooling; null: not said. */
+const transport = { transportMode: z.enum(TRANSPORT_MODES).nullish() };
+
 /** Answers (P1.5): the mode (default by kind) and a deadline. */
 const answers = {
   responseMode: z.enum(RESPONSE_MODES).optional(),
@@ -136,6 +146,7 @@ export const CreateActivitySchema = z
     allDay: z.boolean().default(false),
     meetAt: z.iso.datetime({ offset: true }).nullish(),
     ...answers,
+    ...transport,
     /** More groups for a joint activity (the caller must manage each). */
     groupIds: z.array(z.uuid()).max(20).default([]),
   })
@@ -163,6 +174,7 @@ export const UpdateActivitySchema = z
     endsAt: z.iso.datetime({ offset: true }).optional(),
     meetAt: z.iso.datetime({ offset: true }).nullish(),
     ...answers,
+    ...transport,
   })
   .strict()
   .openapi("UpdateActivityRequest");
@@ -253,6 +265,7 @@ export const CreateSeriesSchema = z
     ...seriesAnswers,
     /** The answer request before each session (P1.14); null or absent: none. */
     requestLead: RequestLeadSchema.nullish(),
+    ...transport,
     groupIds: z.array(z.uuid()).max(20).default([]),
   })
   .strict()
@@ -281,6 +294,7 @@ export const UpdateSeriesSchema = z
     skipPublicHolidays: z.boolean().optional(),
     ...seriesAnswers,
     requestLead: RequestLeadSchema.nullish(),
+    ...transport,
   })
   .strict()
   .openapi("UpdateSeriesRequest");
@@ -376,6 +390,8 @@ export const ActivitySchema = z
     requestAt: z.iso.datetime({ offset: true }).nullable().optional(),
     /** Only those called up take part and answer (#19). */
     inviteesOnly: z.boolean().optional(),
+    /** How participants get there (P2.5); null: not said. */
+    transportMode: z.enum(TRANSPORT_MODES).nullable().optional(),
     /** For those who manage it, in the group calendar. */
     responseCounts: ResponseCountsSchema.optional(),
   })
@@ -440,6 +456,7 @@ export const SeriesSchema = z
     responseMode: z.enum(RESPONSE_MODES).optional(),
     respondByMinutes: z.number().int().nullable().optional(),
     requestLead: RequestLeadSchema.nullable().optional(),
+    transportMode: z.enum(TRANSPORT_MODES).nullable().optional(),
     groups: z.array(ActivityGroupRefSchema),
     /** Sessions it has now (scheduled and cancelled). */
     sessions: z.number().int(),

@@ -171,10 +171,19 @@
             ],
             "format": "uri"
           },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "archived": {
             "type": "boolean"
           },
           "canEdit": {
+            "type": "boolean"
+          },
+          "canArchive": {
             "type": "boolean"
           }
         },
@@ -625,6 +634,17 @@
           "inviteesOnly": {
             "type": "boolean"
           },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
+          },
           "responseCounts": {
             "$ref": "#/components/schemas/ResponseCounts"
           }
@@ -780,6 +800,17 @@
           },
           "requestLead": {
             "$ref": "#/components/schemas/RequestLead"
+          },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
           }
         },
         "additionalProperties": false
@@ -1661,6 +1692,347 @@
             "maxLength": 300
           }
         },
+        "additionalProperties": false
+      },
+      "Carpool": {
+        "type": "object",
+        "properties": {
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CarpoolOffer"
+            }
+          },
+          "canOffer": {
+            "type": "boolean"
+          },
+          "canBookFor": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonSummary"
+            }
+          },
+          "withoutRide": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PersonSummary"
+            }
+          },
+          "withoutRideHidden": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "activityId",
+          "transportMode",
+          "distanceKm",
+          "offers",
+          "canOffer",
+          "canBookFor",
+          "withoutRide",
+          "withoutRideHidden"
+        ]
+      },
+      "CarpoolOffer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "out",
+              "back"
+            ]
+          },
+          "outwardOfferId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "driver": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "mine": {
+            "type": "boolean"
+          },
+          "willingOnly": {
+            "type": "boolean"
+          },
+          "seats": {
+            "type": "integer"
+          },
+          "freeSeats": {
+            "type": "integer"
+          },
+          "departurePlace": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "departureAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "bookings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CarpoolBooking"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "direction",
+          "outwardOfferId",
+          "driver",
+          "mine",
+          "willingOnly",
+          "seats",
+          "freeSeats",
+          "departurePlace",
+          "departureAt",
+          "distanceKm",
+          "bookings"
+        ]
+      },
+      "CarpoolBooking": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "passenger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "held",
+              "pending_guardian",
+              "cancelled"
+            ]
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canConfirm": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "passenger",
+          "status",
+          "canCancel",
+          "canConfirm"
+        ]
+      },
+      "CarpoolOfferCreated": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "returnId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "returnId"
+        ]
+      },
+      "CreateCarpoolOffer": {
+        "type": "object",
+        "properties": {
+          "direction": {
+            "type": "string",
+            "enum": [
+              "out",
+              "back"
+            ],
+            "default": "out"
+          },
+          "willingOnly": {
+            "type": "boolean",
+            "default": false
+          },
+          "seats": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8,
+            "default": 0
+          },
+          "departurePlace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "departureAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "withReturn": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateCarpoolOffer": {
+        "type": "object",
+        "properties": {
+          "willingOnly": {
+            "type": "boolean"
+          },
+          "seats": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "departurePlace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "departureAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 5000
+          }
+        },
+        "additionalProperties": false
+      },
+      "CarpoolBooked": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "held",
+              "pending_guardian",
+              "cancelled"
+            ]
+          },
+          "returnId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "returnId"
+        ]
+      },
+      "BookCarpoolSeat": {
+        "type": "object",
+        "properties": {
+          "passengerPersonId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "alsoReturn": {
+            "type": "boolean",
+            "default": false
+          },
+          "confirmAlone": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "passengerPersonId"
+        ],
         "additionalProperties": false
       },
       "HistoryPage": {
@@ -2707,6 +3079,17 @@
           "requestLead": {
             "$ref": "#/components/schemas/RequestLead"
           },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
+          },
           "groups": {
             "type": "array",
             "items": {
@@ -2895,6 +3278,17 @@
           },
           "requestLead": {
             "$ref": "#/components/schemas/RequestLead"
+          },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
           }
         },
         "additionalProperties": false
@@ -3032,6 +3426,17 @@
           },
           "requestLead": {
             "$ref": "#/components/schemas/RequestLead"
+          },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
           },
           "activityId": {
             "type": "string",
@@ -6235,6 +6640,48 @@
         },
         "additionalProperties": false
       },
+      "CarpoolSettings": {
+        "type": "object",
+        "properties": {
+          "startLocationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "startLocationId"
+        ]
+      },
+      "PutCarpoolSettings": {
+        "type": "object",
+        "properties": {
+          "startLocationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "startLocationId"
+        ],
+        "additionalProperties": false
+      },
+      "CarpoolsDeleted": {
+        "type": "object",
+        "properties": {
+          "offers": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "offers"
+        ]
+      },
       "ChatList": {
         "type": "object",
         "properties": {
@@ -8944,6 +9391,96 @@
           "nextCursor"
         ]
       },
+      "GroupCarpoolSettings": {
+        "type": "object",
+        "properties": {
+          "statsPublic": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "statsPublic"
+        ]
+      },
+      "PutGroupCarpoolSettings": {
+        "type": "object",
+        "properties": {
+          "statsPublic": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "statsPublic"
+        ],
+        "additionalProperties": false
+      },
+      "CarpoolStats": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PersonSummary"
+                    },
+                    {
+                      "type": [
+                        "object",
+                        "null"
+                      ]
+                    }
+                  ]
+                },
+                "drives": {
+                  "type": "integer"
+                },
+                "distanceKm": {
+                  "type": "number"
+                },
+                "passengers": {
+                  "type": "integer"
+                },
+                "rides": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "person",
+                "drives",
+                "distanceKm",
+                "passengers",
+                "rides"
+              ]
+            }
+          }
+        },
+        "required": [
+          "groupId",
+          "from",
+          "to",
+          "public",
+          "rows"
+        ]
+      },
       "Ok": {
         "type": "object",
         "properties": {
@@ -9765,6 +10302,14 @@
             ],
             "minLength": 1,
             "maxLength": 500
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 5000
           }
         },
         "required": [
@@ -9827,6 +10372,14 @@
             ],
             "minLength": 1,
             "maxLength": 500
+          },
+          "distanceKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 5000
           },
           "archived": {
             "type": "boolean"
@@ -14402,6 +14955,17 @@
           "requestLead": {
             "$ref": "#/components/schemas/RequestLead"
           },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
+          },
           "groupIds": {
             "type": "array",
             "items": {
@@ -14544,6 +15108,17 @@
           },
           "requestLead": {
             "$ref": "#/components/schemas/RequestLead"
+          },
+          "transportMode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "own",
+              "shared",
+              null
+            ]
           },
           "groupIds": {
             "type": "array",
@@ -16348,6 +16923,116 @@
         },
         "additionalProperties": false
       },
+      "MyCarpoolList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MyCarpool"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "MyCarpool": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clubName": {
+            "type": "string"
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityTitle": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "offerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "out",
+              "back"
+            ]
+          },
+          "driving": {
+            "type": "boolean"
+          },
+          "bookingId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "passenger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "held",
+              "pending_guardian",
+              "cancelled",
+              null
+            ]
+          },
+          "driver": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "clubId",
+          "clubName",
+          "activityId",
+          "activityTitle",
+          "startsAt",
+          "offerId",
+          "direction",
+          "driving",
+          "bookingId",
+          "passenger",
+          "status",
+          "driver"
+        ]
+      },
       "ChatPage": {
         "type": "object",
         "properties": {
@@ -16570,7 +17255,8 @@
                       "announcement.read",
                       "announcement.manage",
                       "club.governing_documents.manage",
-                      "club.governing_documents.adopt"
+                      "club.governing_documents.adopt",
+                      "club.carpools.manage"
                     ]
                   }
                 }
@@ -17530,7 +18216,8 @@
                     "waitlist",
                     "chat",
                     "documents",
-                    "announcements"
+                    "announcements",
+                    "carpool"
                   ]
                 },
                 "email": {
@@ -17619,7 +18306,8 @@
                     "waitlist",
                     "chat",
                     "documents",
-                    "announcements"
+                    "announcements",
+                    "carpool"
                   ]
                 },
                 "email": {
@@ -19046,6 +19734,23 @@
           "guardianshipId"
         ]
       },
+      "SetCarpoolAge": {
+        "type": "object",
+        "properties": {
+          "age": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 7,
+            "maximum": 18
+          }
+        },
+        "required": [
+          "age"
+        ],
+        "additionalProperties": false
+      },
       "WardErasurePreview": {
         "type": "object",
         "properties": {
@@ -19229,7 +19934,8 @@
               "waitlist",
               "chat",
               "documents",
-              "announcements"
+              "announcements",
+              "carpool"
             ]
           }
         },
@@ -21435,6 +22141,646 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activities/{activityId}/carpool": {
+      "get": {
+        "operationId": "Carpools_carpool",
+        "summary": "The activity's car pool: cars, free seats, whom the caller may book for",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Carpool"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activities/{activityId}/carpool/offers": {
+      "post": {
+        "operationId": "Carpools_createOffer",
+        "summary": "Offer a car (or to drive if needed), with the return trip if asked",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCarpoolOffer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarpoolOfferCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activities/{activityId}/carpool/offers/{offerId}": {
+      "delete": {
+        "operationId": "Carpools_deleteOffer",
+        "summary": "Remove one's car before the trip (its seats go with it)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "offerId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "Carpools_updateOffer",
+        "summary": "Change one's car (after the trip: the distance driven only)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "offerId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCarpoolOffer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings": {
+      "post": {
+        "operationId": "Carpools_book",
+        "summary": "Book a seat for oneself or one's child (and the seat home)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "offerId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookCarpoolSeat"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarpoolBooked"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings/{bookingId}": {
+      "delete": {
+        "operationId": "Carpools_cancelBooking",
+        "summary": "Cancel a seat (the passenger, who booked it, a guardian or the driver)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "offerId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "bookingId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
           },
           "400": {
             "description": "Invalid request",
@@ -27560,6 +28906,317 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CalendarFeedCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/carpool-settings": {
+      "get": {
+        "operationId": "Carpools_settings",
+        "summary": "The club's car-pool settings: the starting place of distances",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.carpools.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarpoolSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "Carpools_putSettings",
+        "summary": "Set the starting place distances are measured from",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.carpools.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutCarpoolSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarpoolSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/carpools": {
+      "delete": {
+        "operationId": "Carpools_deleteBefore",
+        "summary": "Delete the club's car pools of activities before a date",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.carpools.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "before",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarpoolsDeleted"
                 }
               }
             }
@@ -34313,6 +35970,248 @@
         }
       }
     },
+    "/api/v1/clubs/{clubId}/groups/{groupId}/carpool-settings": {
+      "put": {
+        "operationId": "Carpools_putGroupSettings",
+        "summary": "Make the group's car-pool statistics public in the group (its leaders)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.activities.manage` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutGroupCarpoolSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupCarpoolSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/groups/{groupId}/carpool-stats": {
+      "get": {
+        "operationId": "Carpools_stats",
+        "summary": "Drives, distance and passengers per person (leaders; members when public)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `group.activities.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "required": true,
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarpoolStats"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clubs/{clubId}/groups/{groupId}/chats": {
       "get": {
         "operationId": "Chat_groupChats",
@@ -36546,7 +38445,7 @@
     "/api/v1/clubs/{clubId}/locations/{locationId}": {
       "patch": {
         "operationId": "Activities_updateLocation",
-        "summary": "Change or archive a location (club managers, or the person who added it)",
+        "summary": "Change a location, distance included (archiving: club.locations.manage)",
         "tags": [
           "activities"
         ],
@@ -52148,6 +54047,162 @@
         }
       }
     },
+    "/api/v1/me/carpool-bookings/{bookingId}/confirm": {
+      "post": {
+        "operationId": "Carpools_confirm",
+        "summary": "Confirm that one's child may be the only child with that driver",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "bookingId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/carpools": {
+      "get": {
+        "operationId": "Carpools_myCarpools",
+        "summary": "Mina samåkningar: my drives and my own and my children's seats",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCarpoolList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me/chats": {
       "get": {
         "operationId": "Chat_myChats",
@@ -53857,7 +55912,8 @@
                 "waitlist",
                 "chat",
                 "documents",
-                "announcements"
+                "announcements",
+                "carpool"
               ]
             },
             "required": false,
@@ -55998,6 +58054,96 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/wards/{personId}/carpool-age": {
+      "put": {
+        "operationId": "Carpools_setAge",
+        "summary": "From which age one's child books car-pool seats themselves",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCarpoolAge"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Done"
           },
           "400": {
             "description": "Invalid request",

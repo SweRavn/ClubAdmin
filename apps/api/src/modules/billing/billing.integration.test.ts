@@ -255,11 +255,20 @@ describe("invoices", () => {
         })
       ).statusCode,
     ).toBe(403);
-    const partial = await pay(10_000, "BG-100");
-    expect(partial.statusCode).toBe(200);
-    expect(partial.json()).toMatchObject({ status: "open", payments: [{ amountMinor: 10_000 }] });
-    expect((await pay(10_000, "BG-100")).json()).toMatchObject({
-      payments: [{ amountMinor: 10_000 }],
+    // Half the invoice (the first invoice is prorated by the day it is issued).
+    const total = (
+      await call(m.operator.id, {
+        method: "GET",
+        url: `${club()}/invoices/${invoiceId}`,
+        mfa: true,
+      })
+    ).json<{ totalMinor: number }>().totalMinor;
+    const half = Math.floor(total / 2);
+    const partial = await pay(half, "BG-100");
+    expect(partial.statusCode, partial.body).toBe(200);
+    expect(partial.json()).toMatchObject({ status: "open", payments: [{ amountMinor: half }] });
+    expect((await pay(half, "BG-100")).json()).toMatchObject({
+      payments: [{ amountMinor: half }],
     });
 
     const credit = await call(m.operator.id, {
@@ -292,7 +301,7 @@ describe("invoices", () => {
       url: "/api/v1/billing/payments.csv",
       mfa: true,
     });
-    expect(payments.body).toContain("100.00");
+    expect(payments.body).toContain((half / 100).toFixed(2));
 
     const subs = await call(m.operator.id, {
       method: "GET",

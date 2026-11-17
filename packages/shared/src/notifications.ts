@@ -24,6 +24,8 @@ export const NOTIFICATION_CATEGORIES = [
   "documents",
   // Announcements (P2.3, ADR 0053): the club's and groups' messages.
   "announcements",
+  // Car pooling (P2.5, ADR 0048): bookings, changes, a guardian's confirmation.
+  "carpool",
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
@@ -53,6 +55,7 @@ export const CATEGORY_DEFAULTS: Record<NotificationCategory, CategoryDefaults> =
   chat: { email: "never", push: true },
   documents: { email: "no_app", push: true },
   announcements: { email: "no_app", push: true },
+  carpool: { email: "no_app", push: true },
 };
 
 export interface NotificationTypeInfo {
@@ -143,6 +146,12 @@ export const NOTIFICATION_TYPES = {
   // Governing documents (P2.4): a fixed text per series kind, never the
   // document's name or text; a signature request at once.
   "document.adopted": { category: "documents" },
+  // Car pooling (P2.5): a seat booked or cancelled (to the driver), a car
+  // changed or removed (to its passengers' bookers), a confirmation asked of
+  // a guardian (at once). Fixed texts, never a name in push.
+  "carpool.booking": { category: "carpool" },
+  "carpool.changed": { category: "carpool" },
+  "carpool.confirm": { category: "carpool", immediate: true },
   "document.signature_requested": { category: "documents", immediate: true },
   // Announcements (P2.3, ADR 0053): emailed at once; important ones to
   // everyone whatever their settings (never to an address that bounced).

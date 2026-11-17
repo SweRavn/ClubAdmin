@@ -386,6 +386,7 @@ export async function updateSessions(
     respondBy: Date | null;
     requestLead: RequestLead | null;
     requestAt: Date | null;
+    transportMode: string | null;
     bump: boolean;
   }[],
 ): Promise<void> {
@@ -395,7 +396,7 @@ export async function updateSessions(
       starts_at = v.starts_at, ends_at = v.ends_at, kind = v.kind, title = v.title,
       notes = v.notes, leader_notes = v.leader_notes, location_id = v.location_id,
       location_text = v.location_text, response_mode = v.response_mode, respond_by = v.respond_by,
-      request_lead = v.request_lead, request_at = v.request_at,
+      request_lead = v.request_lead, request_at = v.request_at, transport_mode = v.transport_mode,
       sequence = a.sequence + CASE WHEN v.bump THEN 1 ELSE 0 END,
       changed_at = CASE WHEN v.bump THEN now() ELSE a.changed_at END
     FROM jsonb_to_recordset(${JSON.stringify(
@@ -413,11 +414,13 @@ export async function updateSessions(
         respond_by: r.respondBy?.toISOString() ?? null,
         request_lead: r.requestLead,
         request_at: r.requestAt?.toISOString() ?? null,
+        transport_mode: r.transportMode,
         bump: r.bump,
       })),
     )}::jsonb) AS v(id uuid, starts_at timestamptz, ends_at timestamptz, kind text, title text,
       notes text, leader_notes text, location_id uuid, location_text text, response_mode text,
-      respond_by timestamptz, request_lead jsonb, request_at timestamptz, bump boolean)
+      respond_by timestamptz, request_lead jsonb, request_at timestamptz, transport_mode text,
+      bump boolean)
     WHERE a.id = v.id`);
 }
 
