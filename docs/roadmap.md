@@ -61,6 +61,7 @@ Chat is a unique selling point and comes first. The decisions of
 | [P2.6](prompts/P2.6-volunteer-duties.md) | Volunteer duties | ADR 0050 |
 | [P2.7](prompts/P2.7-reporting-plugins.md) | Plugins for grant reporting and background checks; LOK and LAM | ADR 0051 |
 | [P2.8](prompts/P2.8-background-check-plugins.md) | Background-check plugins for Sweden and Norway, tracking screens | ADR 0047, ADR 0051 |
+| [P2.9](prompts/P2.9-programmes-and-templates.md) | Programmes and templates: cups, camps and match days with meals and duty shifts, copied to new dates | ADR 0054 |
 
 Each prompt lists its new permissions with the template roles that get
 them by default (P1.15 decision 5). The order and dependencies are in
@@ -78,7 +79,8 @@ public club website pages · facility booking.
 ## Phase 4 — Heavy and specialised
 
 **Tournaments and match reporting.** A club sets up a tournament (a cup or
-a short series), built on events and their sign-up (ADR 0038):
+a short series), built on events and their sign-up (ADR 0038) and on
+programmes (ADR 0054, P2.9), which hold the generated matches:
 
 - **Fields and slots:** the venue's fields or courts (places, ADR 0034;
   facility booking from Phase 3 when it exists) with the times they are
