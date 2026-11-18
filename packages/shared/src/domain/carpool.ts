@@ -154,6 +154,16 @@ export const SetCarpoolAgeSchema = z
   .openapi("SetCarpoolAge");
 export type SetCarpoolAgeInput = z.infer<typeof SetCarpoolAgeSchema>;
 
+export const CarpoolAgeSchema = z
+  .object({
+    /** The caller's own setting; null: the default. */
+    age: z.number().int().nullable(),
+    /** The country pack's age (the strictest of the child's clubs). */
+    defaultAge: z.number().int(),
+  })
+  .openapi("CarpoolAge");
+export type CarpoolAge = z.infer<typeof CarpoolAgeSchema>;
+
 // --- "Mina samåkningar" -----------------------------------------------------------
 
 export const MyCarpoolSchema = z

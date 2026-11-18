@@ -164,3 +164,27 @@ Decided with the prompt's review:
   too: owning a group gives `group.expenses.attest` (so an owner may still
   appoint a head coach, whose template role now attests).
 
+## As implemented (part C, web, app and demo)
+
+- Web: the transport mode on activity and series forms; the car pool on the
+  activity page (cars there and home, bookings, booking for oneself or a
+  child with the driver's name before confirming alone, offering and
+  changing one's car, the leaders' list of those without a ride); "Mina
+  samåkningar" (`/me/carpools`) with the guardian's confirmation; a group's
+  statistics (`/groups/<id>/carpools`, where its leaders make them
+  public); the starting place, a place's distance and deleting old car
+  pools on the locations page; "Mina utlägg" (`/me/expenses`) and the
+  attesters' queue with the CSV export (`/clubs/<id>/expenses`).
+- From which age a child books seats themselves is set per child on the
+  family page; `GET /api/v1/me/wards/{personId}/carpool-age` returns the
+  caller's own setting and the country's default.
+- App: the car pool on the activity screen (book, cancel, offer seats with
+  a note and the return trip) and "Mina samåkningar" (confirm a child's
+  seat). Cache first: the car pools of the coming week's activities that
+  travel on their own are prefetched with the activities. Claims and
+  attesting stay on the web.
+- Request budgets for the car pool's reads; its writes cannot repeat and
+  are covered by the module's tests.
+- Demo (`docs/seed-data.md`): IK Norrbacka P2012's away match on Saturday
+  with Anna's and Ahmed's cars, the board's mileage rate and Anna's two
+  claims.

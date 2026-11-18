@@ -15,6 +15,7 @@ import {
   SLOT_ROWS,
 } from "../server/series-form.ts";
 import { inputClass } from "./action-form.tsx";
+import { TransportModeField } from "./activity-fields.tsx";
 import { RequestLeadFields, ResponseModeFields } from "./response-mode-fields.tsx";
 
 export interface SeriesFieldValues {
@@ -33,6 +34,7 @@ export interface SeriesFieldValues {
   leaderNotes?: string | null;
   responseMode?: string | null;
   respondByHours?: number | null;
+  transportMode?: string | null;
 }
 
 /** Weekday names (Monday first) in the viewer's language. */
@@ -363,6 +365,7 @@ export async function SeriesFields({
       </label>
       <div className="grid gap-3 sm:grid-cols-2">
         <ResponseModeFields mode={values.responseMode} hours={values.respondByHours} />
+        <TransportModeField value={values.transportMode} />
       </div>
       <RequestLeadFields lead={values.requestLead} />
     </div>

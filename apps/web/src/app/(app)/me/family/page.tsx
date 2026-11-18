@@ -21,6 +21,7 @@ import {
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { ProtectionControls } from "../../../../components/protection.tsx";
 import {
+  getCarpoolAge,
   getFamilyDuplicates,
   getMe,
   getMyWards,
@@ -42,6 +43,7 @@ const NOTICES = [
   "ownLogin",
   "merged",
   "undone",
+  "saved",
 ] as const;
 
 export async function generateMetadata() {
@@ -60,12 +62,14 @@ export default async function FamilyPage({ searchParams }: Props) {
   const children = mine.wards.filter((w) => isFullGuardianshipKind(w.kind));
   const sharedWithMe = mine.wards.filter((w) => isLinkedGuardianshipKind(w.kind));
   // One read per child (a family has a handful).
-  const [guardians, shared, childProfiles, myProfile] = await Promise.all([
+  const [guardians, shared, childProfiles, myProfile, carpoolAges] = await Promise.all([
     Promise.all(children.map((w) => getWardGuardians(w.person.id))),
     Promise.all(sharedWithMe.map((w) => getWardGuardians(w.person.id))),
     // The protection state per child (P1.12; a family has a handful).
     Promise.all(children.map((w) => getPerson(w.person.id, null))),
     getPerson(me.personId, null),
+    // Car pools (P2.5): from which age the child books seats themselves.
+    Promise.all(children.map((w) => getCarpoolAge(w.person.id))),
   ]);
   const meProtected = myProfile.protection?.global === true;
   const childProtected = children.some((w) => w.protectedIdentity === true);
@@ -283,6 +287,31 @@ export default async function FamilyPage({ searchParams }: Props) {
                     </button>
                   </ActionForm>
                 </details>
+              ) : null}
+              {carpoolAges[index] ? (
+                <ActionForm action="carpool-age" className="flex flex-wrap items-end gap-2">
+                  <input type="hidden" name="personId" value={ward.person.id} />
+                  <input type="hidden" name="back" value="/me/family" />
+                  <label className="block space-y-1">
+                    <span className="text-sm">{t("carpool.selfBookingAge")}</span>
+                    <input
+                      name="age"
+                      type="number"
+                      min={7}
+                      max={18}
+                      defaultValue={carpoolAges[index].age ?? ""}
+                      placeholder={String(carpoolAges[index].defaultAge)}
+                      className={inputClass}
+                      data-testid="carpool-age"
+                    />
+                  </label>
+                  <button type="submit" className={buttonClass}>
+                    {t("carpool.save")}
+                  </button>
+                  <p className="w-full text-xs text-muted">
+                    {t("carpool.selfBookingAgeHint", { age: carpoolAges[index].defaultAge })}
+                  </p>
+                </ActionForm>
               ) : null}
               {ward.hasLogin === false && ward.ownLoginFromAge !== undefined ? (
                 <p className="text-xs text-muted">

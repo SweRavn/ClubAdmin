@@ -53,11 +53,15 @@ export class ExpensesService {
   private readonly db: Database;
   private readonly carpools: CarpoolsService;
   private readonly clubs: ClubsService;
-  private readonly entitlements: EntitlementsService;
+  private readonly entitlements: Pick<EntitlementsService, "has">;
 
   constructor(
     db: Database,
-    deps: { carpools: CarpoolsService; clubs: ClubsService; entitlements: EntitlementsService },
+    deps: {
+      carpools: CarpoolsService;
+      clubs: ClubsService;
+      entitlements: Pick<EntitlementsService, "has">;
+    },
   ) {
     this.db = db;
     this.carpools = deps.carpools;

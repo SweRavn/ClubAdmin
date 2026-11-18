@@ -3,7 +3,13 @@
 // and times in the club's time zone, place (a club location or free text),
 // meeting time and place, match details and notes.
 import { enumKey } from "@clubadmin/i18n";
-import { ACTIVITY_KINDS, HOME_AWAY, type Location, type RequestLead } from "@clubadmin/shared";
+import {
+  ACTIVITY_KINDS,
+  HOME_AWAY,
+  type Location,
+  type RequestLead,
+  TRANSPORT_MODES,
+} from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
 
 import { inputClass } from "./action-form.tsx";
@@ -28,6 +34,31 @@ export interface ActivityFieldValues {
   responseMode?: string | null;
   respondByHours?: number | null;
   requestLead?: RequestLead | null;
+  transportMode?: string | null;
+}
+
+/** How participants get there (P2.5): not said, on their own (a car pool) or shared. */
+export async function TransportModeField({ value }: { value?: string | null | undefined }) {
+  const t = await getTranslations();
+  return (
+    <label className="block space-y-1">
+      <span className="text-sm">{t("carpool.transportMode")}</span>
+      <select
+        name="transportMode"
+        className={inputClass}
+        defaultValue={value ?? ""}
+        data-testid="activity-transportMode"
+      >
+        <option value="">{t("activities.notGiven")}</option>
+        {TRANSPORT_MODES.map((m) => (
+          <option key={m} value={m}>
+            {t(enumKey("carpool.transportModes", m))}
+          </option>
+        ))}
+      </select>
+      <span className="text-xs text-muted">{t("carpool.transportModeHint")}</span>
+    </label>
+  );
 }
 
 export async function ActivityFields({
@@ -140,6 +171,7 @@ export async function ActivityFields({
         </select>
       </label>
       {input("competition", t("activities.competition"), { maxLength: 120 })}
+      <TransportModeField value={values.transportMode} />
       <ResponseModeFields mode={values.responseMode} hours={values.respondByHours} />
       <div className="sm:col-span-2">
         <RequestLeadFields lead={values.requestLead} />

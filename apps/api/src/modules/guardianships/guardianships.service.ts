@@ -499,6 +499,31 @@ export class GuardianshipsService {
   }
 
   /**
+   * The caller's own self-booking age for the ward (null: the country
+   * pack's) and the countries of the ward's clubs (for that default), or
+   * null without an active guardianship with the right to act for them.
+   */
+  getCarpoolSelfBookingAge(
+    context: ActorContext,
+    wardPersonId: string,
+  ): Promise<{ age: number | null; countries: string[] } | null> {
+    const me = actorPersonId(context);
+    return this.db.withActor(context, async (tx) => {
+      const { rows } = await tx.execute<{ age: number | null; countries: string[] }>(sql`
+        SELECT max(g.carpool_self_booking_age) AS age,
+          coalesce((SELECT array_agg(DISTINCT c.country) FROM public.club_memberships m
+            JOIN public.clubs c ON c.id = m.club_id
+            WHERE m.person_id = ${wardPersonId}::uuid AND m.valid_to IS NULL
+              AND m.status IN ('active', 'paused')), '{}') AS countries
+        FROM public.guardianships g
+        WHERE g.guardian_person_id = ${me}::uuid AND g.ward_person_id = ${wardPersonId}::uuid
+          AND g.status = 'active' AND g.valid_to IS NULL AND 'act_on_behalf' = ANY (g.rights)
+        HAVING count(*) > 0`);
+      return rows[0] ?? null;
+    });
+  }
+
+  /**
    * The age from which the caller's ward books car-pool seats themselves
    * (P2.5, ADR 0048; null: the country pack's), on the caller's own active
    * guardianship of the ward with the right to act for them (else

@@ -264,6 +264,14 @@ export default async function GroupPage({ params, searchParams }: Params) {
             <h2 id="group-calendar" className="text-lg font-semibold">
               {t("activities.calendar")}
             </h2>
+            {/* Car-pool statistics (P2.5): what each member sees is the API's. */}
+            <a
+              href={`/groups/${group.id}/carpools`}
+              className="text-sm underline"
+              data-testid="group-carpool-stats"
+            >
+              {t("carpool.stats")}
+            </a>
             {calendar.canManage || calendar.canReadAttendance ? (
               <div className="flex flex-wrap gap-2">
                 {calendar.canReadAttendance ? (

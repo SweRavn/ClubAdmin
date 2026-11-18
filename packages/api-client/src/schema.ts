@@ -5641,7 +5641,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** From which age one's child books car-pool seats themselves (own setting, default) */
+    get: operations["Carpools_getAge"];
     /** From which age one's child books car-pool seats themselves */
     put: operations["Carpools_setAge"];
     post?: never;
@@ -11620,6 +11621,10 @@ export interface components {
       person: components["schemas"]["PersonSummary"];
       /** Format: uuid */
       guardianshipId: string;
+    };
+    CarpoolAge: {
+      age: number | null;
+      defaultAge: number;
     };
     SetCarpoolAge: {
       age: number | null;
@@ -38665,6 +38670,73 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ChildAdded"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_getAge: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolAge"];
         };
       };
       /** @description Invalid request */

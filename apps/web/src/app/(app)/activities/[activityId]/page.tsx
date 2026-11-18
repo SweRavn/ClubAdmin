@@ -6,6 +6,7 @@
 // family's answers with the buttons, who is coming where the viewer may see
 // the group, and for leaders every answer with its note and "Take
 // attendance". A call-up (#19) is linked for leaders and noted for everyone.
+// The car pool (P2.5) when the activity has own transport.
 // Calendar data never lists participants.
 import { enumKey } from "@clubadmin/i18n";
 import { localDate, localTime } from "@clubadmin/shared";
@@ -19,6 +20,7 @@ import {
   secondaryButtonClass,
 } from "../../../../components/action-form.tsx";
 import { ActivityFields } from "../../../../components/activity-fields.tsx";
+import { CarpoolSection } from "../../../../components/carpool.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { NoticeDocuments } from "../../../../components/documents.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
@@ -28,6 +30,7 @@ import { recurrenceText, requestLeadText } from "../../../../components/recurren
 import { ResponseButtons, ResponseForm } from "../../../../components/response-buttons.tsx";
 import {
   getActivity,
+  getCarpool,
   getLocations,
   getResponseList,
   getResponseSummary,
@@ -44,11 +47,12 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ActivityPage({ params, searchParams }: Props) {
   const [{ activityId }, query] = await Promise.all([params, searchParams]);
-  const [t, activity, answers, list] = await Promise.all([
+  const [t, activity, answers, list, carpool] = await Promise.all([
     getTranslations(),
     getActivity(activityId),
     getResponseSummary(activityId),
     getResponseList(activityId),
+    getCarpool(activityId),
   ]);
   const locations = activity.canManage ? await getLocations(activity.clubId, true) : [];
   const asked = answers.responseMode !== "none";
@@ -87,6 +91,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
       {query.saved ? <Notice>{t("activities.saved")}</Notice> : null}
       {query.answered ? <Notice>{t("responses.saved")}</Notice> : null}
       {query.updated ? <Notice>{t("activities.updated")}</Notice> : null}
+      {query.booked ? <Notice>{t("carpool.booked")}</Notice> : null}
       <FormError code={query.error} />
       {cancelled ? (
         <p
@@ -349,6 +354,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
         </p>
       ) : null}
 
+      <CarpoolSection activity={activity} carpool={carpool} />
       <NoticeDocuments kind="activities" noticeId={activity.id} clubId={activity.clubId} />
       {activity.kind === "meeting" ? (
         <AgendaLink href={`/activities/${activity.id}/agenda`} />
@@ -423,6 +429,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                   notes: activity.notes,
                   leaderNotes: activity.leaderNotes ?? null,
                   responseMode: activity.responseMode ?? null,
+                  transportMode: activity.transportMode ?? null,
                   respondByHours: activity.respondBy
                     ? Math.round((start.getTime() - Date.parse(activity.respondBy)) / 3_600_000)
                     : null,

@@ -291,6 +291,13 @@ describe("car pools (P2.5)", () => {
       age: 16,
     });
     expect(set.statusCode, set.body).toBe(204);
+    // Each guardian reads their own setting (and the country's default).
+    const mine = await api(teen.coGuardian.id, "GET", `/me/wards/${teen.child.id}/carpool-age`);
+    expect(mine.json()).toEqual({ age: 16, defaultAge: 13 });
+    const other = await api(teen.guardian.id, "GET", `/me/wards/${teen.child.id}/carpool-age`);
+    expect(other.json()).toEqual({ age: null, defaultAge: 13 });
+    const unrelated = await api(a.guardian.id, "GET", `/me/wards/${teen.child.id}/carpool-age`);
+    expect(unrelated.statusCode).toBe(404);
     const notMine = await api(a.guardian.id, "PUT", `/me/wards/${teen.child.id}/carpool-age`, {
       age: 10,
     });

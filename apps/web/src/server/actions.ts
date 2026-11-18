@@ -42,6 +42,7 @@ import {
   RegisterFilterSchema,
   RESPONSE_MODES,
   RESPONSE_STATUSES,
+  TRANSPORT_MODES,
   WAITLIST_MODES,
   WAITLIST_PRIORITY_REASONS,
   WAITLIST_REMOVAL_REASONS,
@@ -401,6 +402,7 @@ function seriesFields(form: FormData, clear: boolean) {
   const requestLead = requestLeadFrom(get);
   if (requestLead === undefined) return null;
   const title = text(form, "title");
+  const transportMode = oneOf(TRANSPORT_MODES, text(form, "transportMode"));
   const responseMode = oneOf(RESPONSE_MODES, text(form, "responseMode"));
   const hours = deadlineHours(form);
   if (hours === undefined) return null;
@@ -421,6 +423,7 @@ function seriesFields(form: FormData, clear: boolean) {
     ...(recurrence.endsOn === undefined ? {} : { endsOn: recurrence.endsOn }),
     ...(requestLead || clear ? { requestLead } : {}),
     skipDates: datesOf(text(form, "skipDates")),
+    ...(transportMode ? { transportMode } : clear ? { transportMode: null } : {}),
     skipPublicHolidays: text(form, "skipPublicHolidays") === "on",
   };
 }
@@ -431,6 +434,7 @@ function activityFields(form: FormData, clear: boolean) {
   if (!startsAt || !endsAt) return null;
   const meetAt = text(form, "meetTime") ? instant(form, "date", "meetTime") : null;
   const homeAway = oneOf(HOME_AWAY, text(form, "homeAway"));
+  const transportMode = oneOf(TRANSPORT_MODES, text(form, "transportMode"));
   const responseMode = oneOf(RESPONSE_MODES, text(form, "responseMode"));
   const hours = deadlineHours(form);
   if (hours === undefined) return null;
@@ -447,6 +451,7 @@ function activityFields(form: FormData, clear: boolean) {
     endsAt,
     ...(meetAt ? { meetAt } : clear ? { meetAt: null } : {}),
     ...(homeAway ? { homeAway } : clear ? { homeAway: null } : {}),
+    ...(transportMode ? { transportMode } : clear ? { transportMode: null } : {}),
     ...clearable(form, ["notes", "leaderNotes", "meetPlace", "opponent", "competition"], clear),
     ...placeOf(form, clear),
   };
@@ -719,10 +724,15 @@ function locationFields(form: FormData, clear: boolean) {
         ? { latitude: null, longitude: null }
         : {};
   if (Number.isNaN(coordinates.latitude) || Number.isNaN(coordinates.longitude)) return null;
+  // The distance by car from the club's starting place (P2.5).
+  const km = text(form, "distanceKm").replace(",", ".");
+  const distanceKm = km === "" ? null : Number(km);
+  if (distanceKm !== null && !(distanceKm >= 0 && distanceKm <= 5000)) return null;
   return {
     name,
     ...clearable(form, ["street", "postalCode", "city", "directions"], clear),
     ...coordinates,
+    ...(distanceKm !== null ? { distanceKm } : clear ? { distanceKm: null } : {}),
   };
 }
 
@@ -2658,7 +2668,189 @@ const DOCUMENT_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+/** Car pools and expense claims (P2.5, ADR 0048). */
+function offerFields(form: FormData) {
+  const willingOnly = text(form, "willingOnly") === "on";
+  const seats = Number(text(form, "seats"));
+  if (!willingOnly && !(Number.isInteger(seats) && seats >= 1 && seats <= 8)) return null;
+  const departureAt = text(form, "departureTime") ? instant(form, "date", "departureTime") : null;
+  return {
+    willingOnly,
+    seats: willingOnly ? 0 : seats,
+    departurePlace: text(form, "departurePlace") || null,
+    departureAt,
+    note: text(form, "note") || null,
+  };
+}
+const carpoolBack = (activityId: string) => `/activities/${activityId}`;
+
+const CARPOOL_ACTIONS: Record<string, FormAction> = {
+  "carpool-offer": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const fields = offerFields(form);
+      if (!activityId || !fields) return null;
+      return {
+        path: `/api/v1/activities/${activityId}/carpool/offers`,
+        method: "POST",
+        body: { ...fields, withReturn: text(form, "withReturn") === "on" },
+      };
+    },
+    done: (form) => withParam(carpoolBack(text(form, "activityId")), "saved", "1"),
+  },
+  "carpool-update": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const offerId = id(form, "offerId");
+      if (!activityId || !offerId) return null;
+      const distance = text(form, "distanceKm");
+      const distanceKm = distance === "" ? null : Number(distance);
+      if (distanceKm !== null && !(distanceKm >= 0 && distanceKm <= 5000)) return null;
+      // Before the trip the car's fields are in the form; after it the distance alone.
+      const trip = form.has("seats") ? offerFields(form) : {};
+      if (trip === null) return null;
+      return {
+        path: `/api/v1/activities/${activityId}/carpool/offers/${offerId}`,
+        method: "PATCH",
+        body: { ...trip, distanceKm },
+      };
+    },
+    done: (form) => withParam(carpoolBack(text(form, "activityId")), "saved", "1"),
+  },
+  "carpool-delete": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const offerId = id(form, "offerId");
+      return activityId && offerId
+        ? { path: `/api/v1/activities/${activityId}/carpool/offers/${offerId}`, method: "DELETE" }
+        : null;
+    },
+    done: (form) => withParam(carpoolBack(text(form, "activityId")), "saved", "1"),
+  },
+  "carpool-book": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const offerId = id(form, "offerId");
+      const passengerPersonId = id(form, "passengerPersonId");
+      if (!activityId || !offerId || !passengerPersonId) return null;
+      return {
+        path: `/api/v1/activities/${activityId}/carpool/offers/${offerId}/bookings`,
+        method: "POST",
+        body: {
+          passengerPersonId,
+          alsoReturn: text(form, "alsoReturn") === "on",
+          confirmAlone: text(form, "confirmAlone") === "on",
+        },
+      };
+    },
+    done: (form) => withParam(carpoolBack(text(form, "activityId")), "booked", "1"),
+  },
+  "carpool-cancel": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const offerId = id(form, "offerId");
+      const bookingId = id(form, "bookingId");
+      if (!activityId || !offerId || !bookingId) return null;
+      return {
+        path: `/api/v1/activities/${activityId}/carpool/offers/${offerId}/bookings/${bookingId}`,
+        method: "DELETE",
+      };
+    },
+    done: (form) => withParam(carpoolBack(text(form, "activityId")), "saved", "1"),
+  },
+  "carpool-confirm": {
+    call: (form) => {
+      const bookingId = id(form, "bookingId");
+      return bookingId
+        ? { path: `/api/v1/me/carpool-bookings/${bookingId}/confirm`, method: "POST" }
+        : null;
+    },
+    done: (form) => withParam(back(form, "/me/carpools"), "confirmed", "1"),
+  },
+  "carpool-age": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      const raw = text(form, "age");
+      const age = raw === "" ? null : Number(raw);
+      if (!personId || (age !== null && !(Number.isInteger(age) && age >= 7 && age <= 18))) {
+        return null;
+      }
+      return { path: `/api/v1/me/wards/${personId}/carpool-age`, method: "PUT", body: { age } };
+    },
+    done: (form) => withParam(back(form, "/me/family"), "saved", "1"),
+  },
+  "carpool-group-settings": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const groupId = id(form, "groupId");
+      if (!clubId || !groupId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/groups/${groupId}/carpool-settings`,
+        method: "PUT",
+        body: { statsPublic: text(form, "statsPublic") === "on" },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "carpool-club-settings": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      if (!clubId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/carpool-settings`,
+        method: "PUT",
+        body: { startLocationId: id(form, "startLocationId") },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "1"),
+  },
+  "carpool-delete-old": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const before = text(form, "before");
+      if (!clubId || !isDate(before)) return null;
+      return { path: `/api/v1/clubs/${clubId}/carpools?before=${before}`, method: "DELETE" };
+    },
+    done: (form) => withParam(back(form), "deleted", "1"),
+  },
+  "expense-claim": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const groupId = id(form, "groupId");
+      const offerIds = [
+        ...new Set(
+          form.getAll("offerId").filter((v): v is string => typeof v === "string" && isUuid(v)),
+        ),
+      ];
+      if (!clubId || !groupId || offerIds.length === 0) return null;
+      return {
+        path: "/api/v1/me/expense-claims",
+        method: "POST",
+        body: { clubId, groupId, offerIds },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/expenses"), "submitted", "1"),
+  },
+  "expense-decide": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const claimId = id(form, "claimId");
+      const decision = oneOf(["approve", "reject"] as const, text(form, "decision"));
+      if (!clubId || !claimId || !decision) return null;
+      const reason = text(form, "reason");
+      if (decision === "reject" && !reason) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/expense-claims/${claimId}/decision`,
+        method: "POST",
+        body: { decision, ...(reason ? { reason } : {}) },
+      };
+    },
+    done: (form) => withParam(back(form), "decided", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
+  ...CARPOOL_ACTIONS,
   ...ANNOUNCEMENT_ACTIONS,
   ...GOVERNING_ACTIONS,
   ...DOCUMENT_ACTIONS,

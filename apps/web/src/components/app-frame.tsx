@@ -72,6 +72,13 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       label: t("nav.tasks"),
       current: pathname.startsWith("/me/tasks"),
     },
+    // "Mina samåkningar" (P2.5): the viewer's drives and their family's seats.
+    {
+      key: "carpools",
+      href: "/me/carpools",
+      label: t("nav.carpools"),
+      current: pathname.startsWith("/me/carpools") || pathname.startsWith("/me/expenses"),
+    },
     // "Mina dokument" (P2.2): the newest files of the viewer's groups and clubs.
     {
       key: "documents",
@@ -123,6 +130,15 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         href: `/clubs/${club.id}/governing`,
         label: t("nav.governing"),
         current: pathname.startsWith(`/clubs/${club.id}/governing`),
+      });
+    }
+    // Expense claims to attest (P2.5): the club's and groups' attesters.
+    if (club.mine?.permissions.includes("club.expenses.read")) {
+      nav.push({
+        key: "expenses",
+        href: `/clubs/${club.id}/expenses`,
+        label: t("nav.expenses"),
+        current: pathname.startsWith(`/clubs/${club.id}/expenses`),
       });
     }
     if (club.mine?.permissions.includes("club.join_requests.manage")) {

@@ -23,7 +23,10 @@ import type {
   RosterEntry,
   SchedulePage,
 } from "./api/queries.ts";
+import type * as CarpoolModuleType from "./components/carpool.tsx";
 import { ClubProvider } from "./state/club.tsx";
+
+type CarpoolModule = typeof CarpoolModuleType;
 
 const ANNA = "0199a000-0000-7000-8000-000000000001";
 const ELSA = "0199a000-0000-7000-8000-000000000003";
@@ -381,6 +384,39 @@ function seededClient() {
     canManage: false,
     ...extra,
   });
+  // "Mina samåkningar" (P2.5): Anna drives; Elsa's seat home waits for her confirmation.
+  client.setQueryData(["carpool", "mine", ANNA], {
+    items: [
+      {
+        clubId: SVK,
+        clubName: "Strandvikens Volleybollklubb",
+        activityId: "0199a000-0000-7000-8099-000000000003",
+        activityTitle: "Bortamatch",
+        startsAt: "2030-05-04T08:00:00Z",
+        offerId: "0199a000-0000-7000-8016-000000000002",
+        direction: "back",
+        driving: false,
+        bookingId: "0199a000-0000-7000-8017-000000000001",
+        passenger: summary(ELSA, "Elsa Lindqvist"),
+        status: "pending_guardian",
+        driver: summary(NADIA, "Erik Johansson"),
+      },
+      {
+        clubId: SVK,
+        clubName: "Strandvikens Volleybollklubb",
+        activityId: "0199a000-0000-7000-8099-000000000003",
+        activityTitle: "Bortamatch",
+        startsAt: "2030-05-04T08:00:00Z",
+        offerId: "0199a000-0000-7000-8016-000000000001",
+        direction: "out",
+        driving: true,
+        bookingId: null,
+        passenger: null,
+        status: null,
+        driver: null,
+      },
+    ],
+  });
   client.setQueryData(["announcements", ANNA, "board"], {
     pages: [
       {
@@ -526,6 +562,74 @@ describe("screens", () => {
     expect(screen.getByText("Årsmöte 12 mars")).toBeTruthy();
     expect(screen.getByText("Välkomna till årsmötet.")).toBeTruthy();
     expect(screen.getAllByTestId("announcement-unread")).toHaveLength(1);
+  });
+
+  it("Mina samåkningar shows the cached list at once, asking to confirm a child's seat", () => {
+    type Module = { default: () => ReactNode };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const Carpools = (require("./app/(app)/carpools/index.tsx") as Module).default;
+    renderScreen(<Carpools />);
+    expect(screen.getAllByTestId("my-carpool")).toHaveLength(2);
+    expect(screen.getByText("You drive")).toBeTruthy();
+    expect(
+      screen.getByText("Elsa Lindqvist is the only child with Erik Johansson. Do you approve?"),
+    ).toBeTruthy();
+    expect(screen.getByTestId("carpool-confirm-0199a000-0000-7000-8017-000000000001")).toBeTruthy();
+  });
+
+  it("an activity's car pool shows the cars, the note, free seats and who has no ride", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const { CarpoolSection } = require("./components/carpool.tsx") as CarpoolModule;
+    const offer = {
+      id: "0199a000-0000-7000-8016-000000000001",
+      direction: "out" as const,
+      outwardOfferId: null,
+      driver: summary(NADIA, "Erik Johansson"),
+      mine: false,
+      willingOnly: false,
+      seats: 3,
+      freeSeats: 2,
+      departurePlace: "Norrbacka IP",
+      note: "Plats för bollbag",
+      departureAt: null,
+      distanceKm: 38,
+      bookings: [
+        {
+          id: "0199a000-0000-7000-8017-000000000002",
+          passenger: null,
+          status: "held" as const,
+          canCancel: false,
+          canConfirm: false,
+        },
+      ],
+    };
+    renderScreen(
+      <CarpoolSection
+        activityId="0199a000-0000-7000-8099-000000000003"
+        timeZone="Europe/Stockholm"
+        open
+        carpool={
+          {
+            activityId: "0199a000-0000-7000-8099-000000000003",
+            transportMode: "own",
+            distanceKm: 38,
+            offers: [offer],
+            canOffer: true,
+            canBookFor: [summary(ELSA, "Elsa Lindqvist")],
+            withoutRide: [summary(NADIA, "Sara Ahmed")],
+            withoutRideHidden: 1,
+            // A booking without a name (the viewer may not see who rides).
+          } as unknown as Parameters<typeof CarpoolSection>[0]["carpool"]
+        }
+      />,
+    );
+    expect(screen.getByText("Plats för bollbag")).toBeTruthy();
+    expect(screen.getByText("2 of 3 seats free")).toBeTruthy();
+    expect(screen.getByText("Seat booked")).toBeTruthy();
+    expect(screen.getByText("No cars yet.")).toBeTruthy();
+    expect(screen.getByText("Sara Ahmed and 1 more")).toBeTruthy();
+    expect(screen.getByTestId(`carpool-book-${offer.id}-${ELSA}`)).toBeTruthy();
+    expect(screen.getByTestId("carpool-offer-submit")).toBeTruthy();
   });
 
   it("an invalid ID in a deep link shows not found", () => {

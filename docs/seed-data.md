@@ -429,6 +429,18 @@ schedule (Ola left two years ago).
   Lindqvist, and Tove Ek without a birth date (an error). Open
   `/clubs/<ikn>/members/import` as Karin with a second factor to try the
   preview. Both start from a file through the import service.
+- **Car pools and claims** (P2.5, `apps/api/src/seed/steps/carpools.ts`):
+  IK Norrbacka's board decided a mileage rate of 25 kr per mil (Göran) and
+  Norrbacka IP is the club's starting place; Kalmarvallen is 38 km away.
+  P2012 plays away against Kalmarby IF on Saturday (own travel): Anna drives
+  with three seats there and back ("Plats för bollbag och lite packning"),
+  Oskar and Liam ride with her; on the way home Liam is the only child with
+  Anna, so his seat waits for Ahmed's confirmation in "Mina samåkningar".
+  Ahmed's car has four seats, five players booked themselves (from 13) and
+  one has no ride, which the leaders see. Anna drove to two earlier away
+  matches; Ahmed approved her claim for the first and rejected the second
+  ("Laget åkte buss …"). Try `/activities/<away match>` as Anna or Ahmed,
+  `/me/expenses` as Anna and `/clubs/<ikn>/expenses` as Ahmed.
 
 ## Club-defined roles (P1.15)
 

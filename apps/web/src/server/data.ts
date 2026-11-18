@@ -25,6 +25,10 @@ import {
   AuditPageSchema,
   BillingAccountResponseSchema,
   CalendarFeedListSchema,
+  CarpoolAgeSchema,
+  CarpoolSchema,
+  CarpoolSettingsSchema,
+  CarpoolStatsSchema,
   ChatDetailSchema,
   ChatListSchema,
   ChatMessagePageSchema,
@@ -33,6 +37,7 @@ import {
   ChatReportDetailSchema,
   ChatReportMessagesSchema,
   ChatReportPageSchema,
+  ClaimableDrivesSchema,
   ClubDetailSchema,
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
@@ -51,6 +56,7 @@ import {
   EntitlementsResponseSchema,
   EventDetailSchema,
   EventPageSchema,
+  ExpenseClaimPageSchema,
   FamilyDuplicatesSchema,
   FolderContentSchema,
   FolderPageSchema,
@@ -87,6 +93,7 @@ import {
   MemberImportRowPageSchema,
   MemberImportSchema,
   MeResponseSchema,
+  MyCarpoolListSchema,
   MyClubCreationRequestsSchema,
   MyClubsSchema,
   MyConsentsSchema,
@@ -1078,3 +1085,56 @@ export const getOpsClubType = cache((clubTypeId: string) =>
   required(`/api/v1/ops/club-types/${requireId(clubTypeId)}`, ClubTypeSchema),
 );
 export const getOpsPlans = cache(() => required("/api/v1/billing/plans", PlanListSchema));
+
+// --- Car pools and expense claims (P2.5) ----------------------------------------------
+
+/** An activity's car pool (everyone who sees the activity). */
+export const getCarpool = cache((activityId: string) =>
+  required(`/api/v1/activities/${requireId(activityId)}/carpool`, CarpoolSchema),
+);
+export const getMyCarpools = cache(() => required("/api/v1/me/carpools", MyCarpoolListSchema));
+/** The group's car-pool statistics for a period, or null without access. */
+export const getCarpoolStats = cache((clubId: string, groupId: string, from: string, to: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/carpool-stats?from=${from}&to=${to}`,
+    CarpoolStatsSchema,
+    { nullOn: [403, 404] },
+  ),
+);
+/** The caller's self-booking age setting for a ward, or null without the right to act for them. */
+export const getCarpoolAge = cache((personId: string) =>
+  apiGet(`/api/v1/me/wards/${requireId(personId)}/carpool-age`, CarpoolAgeSchema, {
+    nullOn: [404],
+  }),
+);
+/** The club's car-pool settings, or null without club.carpools.manage. */
+export const getCarpoolSettings = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/carpool-settings`, CarpoolSettingsSchema, {
+    nullOn: [403],
+  }),
+);
+export const getMyExpenseClaims = cache((cursor: string | null) => {
+  const query = new URLSearchParams({ limit: "50" });
+  if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+  return required(`/api/v1/me/expense-claims?${query}`, ExpenseClaimPageSchema);
+});
+/** The caller's drives in a club not yet claimed, or null without the finance feature. */
+export const getClaimableDrives = cache((clubId: string) =>
+  apiGet(`/api/v1/me/expense-claims/claimable?clubId=${requireId(clubId)}`, ClaimableDrivesSchema, {
+    nullOn: [402, 404],
+  }),
+);
+/** Claims to attest, or null for those who attest none (or without the finance feature). */
+export const getExpenseClaimQueue = cache(
+  (clubId: string, status: string, cursor: string | null) => {
+    const query = new URLSearchParams({ status, limit: "50" });
+    if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+    return apiGet(
+      `/api/v1/clubs/${requireId(clubId)}/expense-claims?${query}`,
+      ExpenseClaimPageSchema,
+      {
+        nullOn: [402, 403],
+      },
+    );
+  },
+);

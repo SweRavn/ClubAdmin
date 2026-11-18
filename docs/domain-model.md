@@ -1125,7 +1125,7 @@ in the outbox, category `carpool`, fixed texts.
 
 Endpoints: `GET /activities/:activityId/carpool`, `POST|PATCH|DELETE
 .../carpool/offers[/:offerId]`, `POST|DELETE .../bookings[/:bookingId]`,
-`POST /me/carpool-bookings/:bookingId/confirm`, `PUT
+`POST /me/carpool-bookings/:bookingId/confirm`, `GET|PUT
 /me/wards/:personId/carpool-age`, `GET /me/carpools` (`app.my_carpools`),
 `GET /clubs/:clubId/groups/:groupId/carpool-stats` and `PUT
 .../carpool-settings`, `GET|PUT /clubs/:clubId/carpool-settings` and

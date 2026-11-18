@@ -114,6 +114,12 @@ export default function Home() {
         onPress={() => router.push("/documents")}
         testID="open-documents"
       />
+      {/* "Mina samåkningar" (P2.5): drives and booked seats. */}
+      <LinkButton
+        label={t("nav.carpools")}
+        onPress={() => router.push("/carpools")}
+        testID="open-carpools"
+      />
       {/* "Mina uppgifter" (P2.4): action items from meetings. */}
       <LinkButton
         label={t("nav.tasks")}

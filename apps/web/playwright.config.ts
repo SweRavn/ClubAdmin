@@ -83,6 +83,12 @@ export default defineConfig({
           testMatch: /governing\.spec\.ts/,
           dependencies: ["announcements"],
         },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["governing"] },
+        // Car pools and mileage claims (P2.5): IK Norrbacka P2012's away match.
+        {
+          name: "carpools",
+          testMatch: /carpools\.spec\.ts/,
+          dependencies: ["governing"],
+        },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["carpools"] },
       ],
 });

@@ -12,12 +12,14 @@ import { AccountsService } from "./modules/accounts/index.ts";
 import { ActivitiesService, AttendanceService } from "./modules/activities/index.ts";
 import { AdministratorsService } from "./modules/administrators/index.ts";
 import { AnnouncementsService } from "./modules/announcements/index.ts";
+import { CarpoolsService } from "./modules/carpools/index.ts";
 import { ChatService, SafeguardingService } from "./modules/chat/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubTypesService } from "./modules/club-types/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
 import { DocumentsService, GoverningService } from "./modules/documents/index.ts";
 import { EventsService } from "./modules/events/index.ts";
+import { ExpensesService } from "./modules/expenses/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
 import {
@@ -77,6 +79,8 @@ export interface CoreServices {
   documents: DocumentsService;
   governing: GoverningService;
   meetings: MeetingsService;
+  carpools: CarpoolsService;
+  expenses: ExpensesService;
   announcements: AnnouncementsService;
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
@@ -154,8 +158,16 @@ export function createCoreServices(
     storage: options.storage ?? null,
     isMember: (tx, clubId, personId) => memberships.isMemberInTx(tx, clubId, personId),
   });
+  const carpools = new CarpoolsService(db, { guardianships });
   return {
     encryption,
+    carpools,
+    // Seed and tests: every feature is entitled (the API checks the plan).
+    expenses: new ExpensesService(db, {
+      carpools,
+      clubs,
+      entitlements: { has: () => Promise.resolve(true) },
+    }),
     activities,
     attendance,
     events,

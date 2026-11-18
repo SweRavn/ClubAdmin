@@ -19,6 +19,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { loadDemoData } from "./seed/demodata.ts";
 import { seed } from "./seed/runner.ts";
+import { DEMO_CARPOOL_IDS } from "./seed/steps/carpools.ts";
 import { SeedClock } from "./seed/time.ts";
 import { devToken, TEST_DEV_AUTH_KEY } from "./testing/oidc.ts";
 import { createCoreServices } from "./testing/services.ts";
@@ -127,6 +128,24 @@ const BILLING_CASES: Case[] = [
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // Car pools (P2.5): Saturday's away match of IK Norrbacka P2012 with two
+  // cars there and back; Ahmed drives one and his son has seats in Anna's.
+  {
+    route: "GET /api/v1/activities/{activityId}/carpool",
+    persona: "ahmed",
+    method: "GET",
+    url: () => `/api/v1/activities/${DEMO_CARPOOL_IDS.awayMatch}/carpool`,
+    statements: 7,
+    pages: 260,
+  },
+  {
+    route: "GET /api/v1/me/carpools",
+    persona: "ahmed",
+    method: "GET",
+    url: () => "/api/v1/me/carpools",
+    statements: 2,
+    pages: 80,
+  },
   // Governing documents and tasks (P2.4): Peter on IK Norrbacka's board, with
   // an action item and the board's minutes waiting for his signature.
   {
@@ -917,6 +936,17 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  // Car pools (P2.5): writes that cannot repeat (each changes what the next
+  // finds); the carpools tests cover them. Each locks the activity, reads the
+  // car's seats by the offer's index and the people's guardians by key.
+  "POST /api/v1/activities/{activityId}/carpool/offers":
+    "the activity and the driver by key, one or two inserts, audit and outbox",
+  "POST /api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings":
+    "the car's seats by its offer, the rule of two, one insert, audit and outbox",
+  "DELETE /api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings/{bookingId}":
+    "as a booking: one update by key, the car's seats, audit and outbox",
+  "POST /api/v1/me/carpool-bookings/{bookingId}/confirm":
+    "as a booking: the guardian check by key, one update, audit and outbox",
   // The file archive (P2.2, ADR 0049): the reads the pages make are measured
   // above (CASES); these writes and rarer reads are covered by the documents tests.
   "GET /api/v1/clubs/{clubId}/documents/{documentId}/versions/{versionId}/download":

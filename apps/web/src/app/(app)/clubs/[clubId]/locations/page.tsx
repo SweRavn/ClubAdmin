@@ -16,6 +16,7 @@ import { weekRange } from "../../../../../components/agenda.tsx";
 import { ClubTime } from "../../../../../components/club-time.tsx";
 import { FormError, Notice } from "../../../../../components/form-error.tsx";
 import {
+  getCarpoolSettings,
   getClub,
   getLocationConflicts,
   getLocations,
@@ -34,6 +35,7 @@ type LocationValues = {
   latitude?: number | null;
   longitude?: number | null;
   directions?: string | null;
+  distanceKm?: number | null | undefined;
 };
 
 export async function generateMetadata() {
@@ -71,6 +73,7 @@ async function LocationFields({ values = {} }: { values?: LocationValues }) {
       <div className="sm:col-span-2">
         {field("directions", t("locations.directions"), { maxLength: 500 })}
       </div>
+      {field("distanceKm", t("locations.distance"), { inputMode: "decimal" })}
     </div>
   );
 }
@@ -81,7 +84,10 @@ export default async function LocationsPage({ params, searchParams }: Props) {
   const permissions = mine.clubs.find((c) => c.club.id === club.id)?.permissions ?? [];
   const manages = permissions.includes("club.locations.manage");
   if (!manages && !permissions.includes("club.locations.create")) forbidden();
-  const locations = await getLocations(club.id, true);
+  const [locations, carpoolSettings] = await Promise.all([
+    getLocations(club.id, true),
+    getCarpoolSettings(club.id),
+  ]);
   const { from, to } = weekRange(0, 8);
   const conflicts = manages
     ? await Promise.all(
@@ -100,6 +106,8 @@ export default async function LocationsPage({ params, searchParams }: Props) {
       <h1 className="text-2xl font-semibold">{t("locations.title")}</h1>
       {query.added ? <Notice>{t("locations.added")}</Notice> : null}
       {query.updated ? <Notice>{t("locations.updated")}</Notice> : null}
+      {query.saved ? <Notice>{t("locations.updated")}</Notice> : null}
+      {query.deleted ? <Notice>{t("carpool.oldDeleted")}</Notice> : null}
       <FormError code={query.error} />
 
       {doubleBooked.length > 0 ? (
@@ -155,6 +163,11 @@ export default async function LocationsPage({ params, searchParams }: Props) {
                 .filter(Boolean)
                 .join(", ")}
             </p>
+            {l.distanceKm !== null && l.distanceKm !== undefined ? (
+              <p className="text-sm" data-testid="location-distance">
+                {t("locations.distanceShown", { km: l.distanceKm })}
+              </p>
+            ) : null}
             {l.mapUrl ? (
               <a
                 href={l.mapUrl}
@@ -212,6 +225,51 @@ export default async function LocationsPage({ params, searchParams }: Props) {
           </button>
         </ActionForm>
       </section>
+
+      {carpoolSettings ? (
+        <section aria-labelledby="carpool-settings" className="space-y-3">
+          <h2 id="carpool-settings" className="text-lg font-semibold">
+            {t("carpool.settings")}
+          </h2>
+          <ActionForm action="carpool-club-settings" className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="clubId" value={club.id} />
+            <input type="hidden" name="back" value={`/clubs/${club.id}/locations`} />
+            <label className="block space-y-1">
+              <span className="text-sm">{t("carpool.startPlace")}</span>
+              <select
+                name="startLocationId"
+                className={inputClass}
+                defaultValue={carpoolSettings.startLocationId ?? ""}
+                data-testid="carpool-start-place"
+              >
+                <option value="">{t("activities.notGiven")}</option>
+                {locations
+                  .filter((l) => !l.archived)
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <button type="submit" className={buttonClass}>
+              {t("locations.save")}
+            </button>
+          </ActionForm>
+          <p className="max-w-prose text-sm text-muted">{t("carpool.startPlaceHint")}</p>
+          <ActionForm action="carpool-delete-old" className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="clubId" value={club.id} />
+            <input type="hidden" name="back" value={`/clubs/${club.id}/locations`} />
+            <label className="block space-y-1">
+              <span className="text-sm">{t("carpool.deleteBefore")}</span>
+              <input type="date" name="before" required className={inputClass} />
+            </label>
+            <button type="submit" className={secondaryButtonClass}>
+              {t("carpool.deleteOld")}
+            </button>
+          </ActionForm>
+        </section>
+      ) : null}
     </div>
   );
 }

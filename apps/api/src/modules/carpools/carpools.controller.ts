@@ -12,6 +12,8 @@ import {
   BookCarpoolSeatSchema,
   type Carpool,
   CarpoolActivityParamsSchema,
+  type CarpoolAge,
+  CarpoolAgeSchema,
   CarpoolBookedSchema,
   CarpoolBookingIdParamsSchema,
   CarpoolBookingParamsSchema,
@@ -309,6 +311,22 @@ export class CarpoolsController {
   ): Promise<null> {
     await this.carpools.confirm(authz.context, params.bookingId);
     return null;
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "me/wards/:personId/carpool-age",
+    summary: "From which age one's child books car-pool seats themselves (own setting, default)",
+    tags: TAGS,
+    access: { authenticated: true },
+    request: { params: WardParamsSchema },
+    response: CarpoolAgeSchema,
+  })
+  getAge(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { personId: string },
+  ): Promise<CarpoolAge> {
+    return this.carpools.getSelfBookingAge(authz.context, params.personId);
   }
 
   @Endpoint({

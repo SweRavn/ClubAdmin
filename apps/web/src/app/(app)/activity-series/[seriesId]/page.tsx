@@ -77,6 +77,7 @@ export default async function SeriesPage({ params, searchParams }: Props) {
     notes: series.notes,
     leaderNotes: series.leaderNotes ?? null,
     responseMode: series.responseMode ?? null,
+    transportMode: series.transportMode ?? null,
     respondByHours:
       series.respondByMinutes === null || series.respondByMinutes === undefined
         ? null

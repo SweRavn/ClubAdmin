@@ -33,6 +33,7 @@ import {
   type BookCarpoolSeatInput,
   BookCarpoolSeatSchema,
   CARPOOL_SELF_BOOKING_AGE,
+  type CarpoolAge,
   type CarpoolBookingStatus,
   type CarpoolDirection,
   type CreateCarpoolOfferInput,
@@ -483,6 +484,19 @@ export class CarpoolsService {
         personIds: [offer.driverPersonId],
       });
     });
+  }
+
+  /** The ward's self-booking age as the caller set it, and the default (else not_found). */
+  async getSelfBookingAge(context: ActorContext, wardPersonId: string): Promise<CarpoolAge> {
+    const row = await this.guardianships.getCarpoolSelfBookingAge(context, wardPersonId);
+    if (!row) throw new DomainError("not_found");
+    const ages = row.countries
+      .filter(isSupportedCountry)
+      .map((c) => getCountryPack(c).ageRules.childSelfBookingAge ?? CARPOOL_SELF_BOOKING_AGE);
+    return {
+      age: row.age,
+      defaultAge: ages.length > 0 ? Math.max(...ages) : CARPOOL_SELF_BOOKING_AGE,
+    };
   }
 
   setSelfBookingAge(

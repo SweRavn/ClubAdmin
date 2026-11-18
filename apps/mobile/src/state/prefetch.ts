@@ -2,7 +2,8 @@
 // Cache first (ADR 0040): what the person will most likely open next is
 // fetched in the background while the app is open and online, so a tap
 // shows it at once and it is there without coverage. Bounded: the coming
-// week's activities (at most PREFETCH_ACTIVITIES, with their answers), the
+// week's activities (at most PREFETCH_ACTIVITIES, with their answers and, when
+// the group travels on its own, their car pools), the
 // events on the schedule, the inbox and its count. Prefetched data is kept
 // fresh for PREFETCH_FRESH_MS, so reopening the app does not fetch it again.
 
@@ -11,6 +12,7 @@ import { useEffect } from "react";
 
 import {
   activityQuery,
+  carpoolQuery,
   eventQuery,
   responseSummaryQuery,
   type ScheduleEntry,
@@ -50,7 +52,15 @@ export function usePrefetch(entries: readonly ScheduleEntry[] | undefined): void
     const targets = prefetchTargets(entries, Date.now());
     const options = { staleTime: PREFETCH_FRESH_MS };
     for (const id of targets.activities) {
-      void client.prefetchQuery({ ...activityQuery(api, scope, id), ...options });
+      const query = activityQuery(api, scope, id);
+      void client.prefetchQuery({ ...query, ...options }).then(() => {
+        if (
+          client.getQueryData<{ transportMode?: string | null }>(query.queryKey)?.transportMode ===
+          "own"
+        ) {
+          void client.prefetchQuery({ ...carpoolQuery(api, scope, id), ...options });
+        }
+      });
     }
     for (const id of targets.answers) {
       void client.prefetchQuery({ ...responseSummaryQuery(api, scope, id), ...options });

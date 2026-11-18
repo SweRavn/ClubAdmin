@@ -1114,3 +1114,102 @@ export function useGoverningDocument(clubId: string, documentId: string) {
     enabled: personId !== null,
   });
 }
+
+// --- Car pools (P2.5) ---------------------------------------------------------------
+
+export const carpoolQuery = (api: ApiClient, scope: Scope, activityId: string) => ({
+  queryKey: ["carpool", activityId, ...scope] as const,
+  queryFn: async () =>
+    data(
+      await api.GET("/api/v1/activities/{activityId}/carpool", {
+        params: { path: { activityId } },
+      }),
+    ),
+});
+
+/** The response types (nullable people are typed as the endpoints return them). */
+export type Carpool = Awaited<ReturnType<ReturnType<typeof carpoolQuery>["queryFn"]>>;
+export type CarpoolOffer = Carpool["offers"][number];
+
+/** An activity's car pool (own travel only: `enabled` follows its transport mode). */
+export function useCarpool(activityId: string, enabled: boolean) {
+  const { api, personId } = useSession();
+  return useQuery({ ...carpoolQuery(api, useScope(), activityId), enabled: enabled && !!personId });
+}
+
+/** "Mina samåkningar": my drives and my own and my children's seats. */
+export function useMyCarpools() {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["carpool", "mine", personId],
+    queryFn: async () => data(await api.GET("/api/v1/me/carpools")),
+    enabled: personId !== null,
+  });
+}
+
+/** After a change the activity's car pool and "Mina samåkningar" are fetched again. */
+function useCarpoolRefresh() {
+  const queryClient = useQueryClient();
+  return () => void queryClient.invalidateQueries({ queryKey: ["carpool"] });
+}
+
+/** Offers seats in my car (and the return trip). */
+export function useOfferCarpool(activityId: string) {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async (body: Schemas["CreateCarpoolOffer"]) =>
+      data(
+        await api.POST("/api/v1/activities/{activityId}/carpool/offers", {
+          params: { path: { activityId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+/** Books a seat for me or my child. */
+export function useBookCarpoolSeat(activityId: string) {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async ({ offerId, ...body }: { offerId: string } & Schemas["BookCarpoolSeat"]) =>
+      data(
+        await api.POST("/api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings", {
+          params: { path: { activityId, offerId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+/** Cancels a seat (the passenger, who booked it, a guardian or the driver). */
+export function useCancelCarpoolSeat(activityId: string) {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async ({ offerId, bookingId }: { offerId: string; bookingId: string }) => {
+      await api.DELETE(
+        "/api/v1/activities/{activityId}/carpool/offers/{offerId}/bookings/{bookingId}",
+        { params: { path: { activityId, offerId, bookingId } } },
+      );
+    },
+    onSuccess: refresh,
+  });
+}
+
+/** A guardian confirms that the child may be the only child with the driver. */
+export function useConfirmCarpoolSeat() {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      await api.POST("/api/v1/me/carpool-bookings/{bookingId}/confirm", {
+        params: { path: { bookingId } },
+      });
+    },
+    onSuccess: refresh,
+  });
+}

@@ -20092,6 +20092,24 @@
           "guardianshipId"
         ]
       },
+      "CarpoolAge": {
+        "type": "object",
+        "properties": {
+          "age": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "defaultAge": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "age",
+          "defaultAge"
+        ]
+      },
       "SetCarpoolAge": {
         "type": "object",
         "properties": {
@@ -59111,6 +59129,91 @@
       }
     },
     "/api/v1/me/wards/{personId}/carpool-age": {
+      "get": {
+        "operationId": "Carpools_getAge",
+        "summary": "From which age one's child books car-pool seats themselves (own setting, default)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarpoolAge"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "operationId": "Carpools_setAge",
         "summary": "From which age one's child books car-pool seats themselves",

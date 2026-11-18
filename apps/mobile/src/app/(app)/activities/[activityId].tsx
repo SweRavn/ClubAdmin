@@ -4,7 +4,8 @@
 // are coming and my family's answers with the buttons (through the offline
 // outbox); leaders open the attendance screen. Offline, before the details
 // were ever loaded, the schedule's cached entry is shown. Activities are
-// planned on the web.
+// planned on the web. Car pools (P2.5): the cars there and home when the
+// group travels on its own.
 
 import { describeRecurrence, enumKey } from "@clubadmin/i18n";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,10 +17,12 @@ import { useFormatter, useLocale, useTranslations } from "use-intl";
 import {
   type SchedulePage,
   useActivity,
+  useCarpool,
   useMyGroups,
   useResponseList,
   useResponseSummary,
 } from "../../../api/queries.ts";
+import { CarpoolSection } from "../../../components/carpool.tsx";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
 import { NoticeDocuments } from "../../../components/notice-documents.tsx";
@@ -56,6 +59,7 @@ function Activity({ activityId }: { activityId: string }) {
   const answers = useResponseSummary(activityId);
   const myGroups = useMyGroups();
   const cached = useCachedEntry(activityId);
+  const carpool = useCarpool(activityId, activity.data?.transportMode === "own");
   useProtectScreen(
     (activity.data?.leaders ?? []).some((p) => p.protected),
     `activity-${activityId}`,
@@ -241,6 +245,21 @@ function Activity({ activityId }: { activityId: string }) {
               <Body>{a.leaderNotes}</Body>
             </Row>
           ) : null}
+        </Section>
+      ) : null}
+
+      {carpool.data ? (
+        <CarpoolSection
+          activityId={activityId}
+          carpool={carpool.data}
+          timeZone={zone}
+          open={!cancelled && startsAt.getTime() > Date.now()}
+        />
+      ) : a?.transportMode === "shared" ? (
+        <Section title={t("carpool.title")}>
+          <Row last>
+            <Body>{t("carpool.shared")}</Body>
+          </Row>
         </Section>
       ) : null}
 
