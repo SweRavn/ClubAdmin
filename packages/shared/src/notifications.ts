@@ -26,6 +26,8 @@ export const NOTIFICATION_CATEGORIES = [
   "announcements",
   // Car pooling (P2.5, ADR 0048): bookings, changes, a guardian's confirmation.
   "carpool",
+  // Volunteer duties (P2.6, ADR 0050): reminders, assignments, swaps.
+  "duties",
 ] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
@@ -56,6 +58,7 @@ export const CATEGORY_DEFAULTS: Record<NotificationCategory, CategoryDefaults> =
   documents: { email: "no_app", push: true },
   announcements: { email: "no_app", push: true },
   carpool: { email: "no_app", push: true },
+  duties: { email: "no_app", push: true },
 };
 
 export interface NotificationTypeInfo {
@@ -157,6 +160,12 @@ export const NOTIFICATION_TYPES = {
   "expense.submitted": { category: "carpool" },
   "expense.decided": { category: "carpool" },
   "document.signature_requested": { category: "documents", immediate: true },
+  // Volunteer duties (P2.6): the reminder the day before, a planner's
+  // assignment, swaps (asked of the holder, done, declined). Fixed texts,
+  // never a name in push.
+  "duty.reminder": { category: "duties", immediate: true },
+  "duty.assigned": { category: "duties" },
+  "duty.swap": { category: "duties", immediate: true },
   // Announcements (P2.3, ADR 0053): emailed at once; important ones to
   // everyone whatever their settings (never to an address that bounced).
   "announcement.sent": { category: "announcements", immediate: true },

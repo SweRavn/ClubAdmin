@@ -22,6 +22,7 @@ import { emailAtOnce, nextDigest, quietUntil } from "./fanout.ts";
 import { notificationsHandler } from "./handler.ts";
 import { memoryPushProvider } from "./push.ts";
 import {
+  dutyRemindersTask,
   eventRemindersTask,
   fanoutTask,
   responseRemindersTask,
@@ -836,6 +837,43 @@ describe("every type reaches the right people", () => {
     expect(await types(x.mikael)).toEqual(["event.signup.reminder"]);
     expect(await types(x.nils)).toEqual([]);
     expect(await types(x.gunilla)).toEqual([]);
+  });
+
+  it("duty.reminder and duty.swap (P2.6): those on the shift and the guardians who see their schedule", async () => {
+    const x = await team();
+    const shift = uuidv7();
+    await t.query(
+      "admin",
+      `WITH dt AS (INSERT INTO duty_types (club_id, name) VALUES ($1, 'Kiosk') RETURNING id)
+       INSERT INTO tasks (id, club_id, group_id, kind, title, starts_at, ends_at, duty_type_id)
+       SELECT $2, $1, $3, 'duty_shift', 'Kiosk', now() + interval '12 hours',
+         now() + interval '14 hours', id FROM dt`,
+      [x.club, shift, x.group],
+    );
+    await t.query(
+      "admin",
+      `INSERT INTO task_assignments (club_id, task_id, person_id, counts_for_person_id)
+       VALUES ($1, $2, $3, $3)`,
+      [x.club, shift, x.elsa],
+    );
+    const remind = dutyRemindersTask({ db: t.db, channels: { email: true, push: true } });
+    await remind({}, helpers);
+    await remind({}, helpers);
+    expect(await types(x.anna)).toEqual(["duty.reminder"]);
+    expect(await types(x.mikael)).toEqual(["duty.reminder"]);
+    expect(await types(x.nils)).toEqual(["duty.reminder"]);
+    expect(await types(x.gunilla)).toEqual([]);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "duty.changed", {
+        clubId: x.club,
+        kind: "swap_requested",
+        shiftId: shift,
+        personIds: [x.coach],
+      }),
+      [handler()],
+    );
+    expect(await types(x.coach)).toEqual(["duty.swap"]);
   });
 
   it("club_creation.decided: the person who asked, nobody else", async () => {

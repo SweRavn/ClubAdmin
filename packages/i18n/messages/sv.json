@@ -322,7 +322,12 @@
     "duty_assigned_by_leader": "Passet är tilldelat av en ledare. Hör av dig till ledaren för att ändra.",
     "duty_needed_below_filled": "Fler är redan anmälda än det nya antalet.",
     "duty_season_invalid": "Säsongen finns inte i föreningen.",
-    "duty_source_invalid": "Aktiviteten eller evenemanget hör inte till gruppen."
+    "duty_source_invalid": "Aktiviteten eller evenemanget hör inte till gruppen.",
+    "duty_shift_not_started": "Passet har inte börjat än.",
+    "duty_visibility_locked": "Föreningen låter inte grupperna välja synlighet för arbetspass.",
+    "duty_swap_open": "Passet är redan erbjudet.",
+    "duty_swap_closed": "Bytet är redan klart, avböjt eller återkallat.",
+    "duty_swap_own": "Du kan inte byta med dig själv."
   },
   "roles": {
     "chair": "Ordförande",
@@ -2163,6 +2168,20 @@
         "title": "Ditt utlägg har behandlats",
         "body": "Öppna Mina utlägg i {club} för att se beslutet."
       }
+    },
+    "duty": {
+      "reminder": {
+        "title": "Påminnelse: {title} {when}",
+        "body": "Ditt arbetspass i {club}. Öppna Mina uppgifter för detaljer."
+      },
+      "assigned": {
+        "title": "{kind, select, unassigned {Du har tagits bort från ett arbetspass} other {Du har fått ett arbetspass}}",
+        "body": "{title} {when} i {club}. Öppna Mina uppgifter för detaljer."
+      },
+      "swap": {
+        "title": "{kind, select, swap_requested {Någon vill ta över ditt arbetspass} swap_declined {Ditt byte av arbetspass avböjdes} other {Ett arbetspass har bytts}}",
+        "body": "{title} {when} i {club}. Öppna Mina uppgifter för att se vad som gäller."
+      }
     }
   },
   "notifyCategories": {
@@ -2178,7 +2197,8 @@
     "chat": "Chatt",
     "documents": "Dokument",
     "announcements": "Anslag",
-    "carpool": "Samåkning"
+    "carpool": "Samåkning",
+    "duties": "Arbetspass"
   },
   "notifications": {
     "title": "Notiser",
@@ -3147,7 +3167,8 @@
       "linkNotComing": "{name} kommer inte: {url}",
       "answerBy": "Svara senast {deadline}",
       "footer": "Prenumeration via ClubAdmin – hantera på {url}",
-      "noAccess": "Prenumerationen har inte längre åtkomst."
+      "noAccess": "Prenumerationen har inte längre åtkomst.",
+      "duty": "Arbetspass: {title}"
     },
     "ui": {
       "title": "Kalenderprenumerationer",

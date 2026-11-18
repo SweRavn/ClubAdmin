@@ -4,6 +4,7 @@ import { Module } from "@nestjs/common";
 import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform/infra/database.ts";
 import { AuthorizationModule } from "../authorization/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
+import { DutiesModule } from "../duties/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
 import { ActivitiesController } from "./activities.controller.ts";
@@ -13,7 +14,7 @@ import { AttendanceService } from "./attendance.service.ts";
 import { ScheduleController } from "./schedule.controller.ts";
 
 @Module({
-  imports: [AuthorizationModule, ClubsModule, MembershipsModule, PeopleModule],
+  imports: [AuthorizationModule, ClubsModule, MembershipsModule, PeopleModule, DutiesModule],
   controllers: [ActivitiesController, AttendanceController, ScheduleController],
   providers: [
     {

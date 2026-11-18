@@ -322,7 +322,12 @@
     "duty_assigned_by_leader": "En leder har tildelt denne vakten. Ta kontakt med lederen for å endre den.",
     "duty_needed_below_filled": "Flere er allerede påmeldt enn det nye antallet.",
     "duty_season_invalid": "Sesongen finnes ikke i klubben.",
-    "duty_source_invalid": "Aktiviteten eller arrangementet hører ikke til gruppen."
+    "duty_source_invalid": "Aktiviteten eller arrangementet hører ikke til gruppen.",
+    "duty_shift_not_started": "Vakten har ikke begynt ennå.",
+    "duty_visibility_locked": "Klubben lar ikke gruppene velge synlighet for dugnadsvakter.",
+    "duty_swap_open": "Vakten er allerede tilbudt.",
+    "duty_swap_closed": "Byttet er allerede gjort, avslått eller trukket tilbake.",
+    "duty_swap_own": "Du kan ikke bytte med deg selv."
   },
   "roles": {
     "chair": "Leder",
@@ -2163,6 +2168,20 @@
         "title": "Utlegget ditt er behandlet",
         "body": "Åpne Mine utlegg i {club} for å se avgjørelsen."
       }
+    },
+    "duty": {
+      "reminder": {
+        "title": "Påminnelse: {title} {when}",
+        "body": "Din dugnadsvakt i {club}. Åpne Mine oppgaver for detaljer."
+      },
+      "assigned": {
+        "title": "{kind, select, unassigned {Du er fjernet fra en dugnadsvakt} other {Du har fått en dugnadsvakt}}",
+        "body": "{title} {when} i {club}. Åpne Mine oppgaver for detaljer."
+      },
+      "swap": {
+        "title": "{kind, select, swap_requested {Noen vil ta over vakten din} swap_declined {Vaktbyttet ditt ble avslått} other {En vakt er byttet}}",
+        "body": "{title} {when} i {club}. Åpne Mine oppgaver for å se hva som gjelder."
+      }
     }
   },
   "notifyCategories": {
@@ -2178,7 +2197,8 @@
     "chat": "Chat",
     "documents": "Dokumenter",
     "announcements": "Kunngjøringer",
-    "carpool": "Samkjøring"
+    "carpool": "Samkjøring",
+    "duties": "Dugnad"
   },
   "notifications": {
     "title": "Varsler",
@@ -3147,7 +3167,8 @@
       "linkNotComing": "{name} kommer ikke: {url}",
       "answerBy": "Svar innen {deadline}",
       "footer": "Abonnement via ClubAdmin – administrer på {url}",
-      "noAccess": "Abonnementet har ikke lenger tilgang."
+      "noAccess": "Abonnementet har ikke lenger tilgang.",
+      "duty": "Dugnadsvakt: {title}"
     },
     "ui": {
       "title": "Kalenderabonnementer",

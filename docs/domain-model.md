@@ -1208,6 +1208,28 @@ the same under `/clubs/:clubId/duty-shifts` for the club's planners, `POST|DELET
 own family's for others until the visibility setting) and `GET|PUT
 /clubs/:clubId/groups/:groupId/duty-quotas`.
 
+Part B (migration 0052): the planners mark a started shift done or missed
+(`POST .../duty-shifts/:shiftId/assignments/:assignmentId/status`; only done
+counts) and list past shifts with someone still planned (`GET
+/clubs/:clubId/groups/:groupId/duty-shifts-to-mark`, `GET
+/clubs/:clubId/duty-shifts-to-mark`). Visibility: the club's `open` |
+`names` | `leaders` and, when the club lets them, a group's own (`GET|PUT
+/clubs/:clubId/groups/:groupId/duty-settings`); with `leaders` only the
+planners see who is on a shift. Swaps (`task_swaps`): `POST
+/clubs/:clubId/duty-assignments/:assignmentId/swaps` (`offer` by the
+holder's family, `request` by another family), `POST
+/clubs/:clubId/duty-swaps/:swapId/take|accept|decline|withdraw`; the
+counterpart always confirms and the assignment changes hands (`source`
+`swap`). "Mina uppgifter": `GET /me/duties?clubId=` (the family's quotas in
+the current season, coming shifts with free places, open swaps). "Mitt
+schema": `SchedulePage.duties` on the first page and the personal calendar
+feed (`app.my_duty_shifts`). Statistics: `GET
+/clubs/:clubId/groups/:groupId/duty-stats?seasonId=` (CSV per person and
+player: shifts and hours done, planned, missed). Notices in the category
+`duties`: `duty.reminder` (the day before, `notifications:duty_reminders`
+every 15 minutes), `duty.assigned` and `duty.swap` (event `duty.changed`),
+to the person and the guardians who see their schedule.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

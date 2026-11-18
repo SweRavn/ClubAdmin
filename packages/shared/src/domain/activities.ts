@@ -9,6 +9,7 @@ import { PersonSummarySchema } from "../auth/schemas.ts";
 import { z } from "../zod.ts";
 import { RESPONSE_MODES, RESPONSE_STATUSES, ResponseCountsSchema } from "./attendance.ts";
 import { TRANSPORT_MODES } from "./carpool.ts";
+import { ScheduleDutySchema } from "./duties.ts";
 import { RECURRENCE_FREQS, ruleProblem, type SeriesRule, WEEKDAY_ORDINALS } from "./recurrence.ts";
 
 export const ACTIVITY_KINDS = ["training", "match", "meeting", "other"] as const;
@@ -557,6 +558,8 @@ export const SchedulePageSchema = z
     nextCursor: z.uuid().nullable(),
     /** The people this schedule covers (me and the wards whose schedule I may see). */
     people: z.array(PersonSummarySchema),
+    /** Their duty shifts in the period (P2.6), on the first page only. */
+    duties: z.array(ScheduleDutySchema).optional(),
   })
   .openapi("SchedulePage");
 export type SchedulePage = z.infer<typeof SchedulePageSchema>;

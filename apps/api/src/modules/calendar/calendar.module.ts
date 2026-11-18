@@ -13,6 +13,7 @@ import {
   PersonPresenter,
 } from "../authorization/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
+import { DutiesModule, DutiesService } from "../duties/index.ts";
 import { EntitlementsService } from "../entitlements/index.ts";
 import { GroupsModule, GroupsService } from "../groups/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
@@ -45,6 +46,7 @@ const valkeyCache = (valkey: ValkeyClient, namespace: string): FeedCache | null 
     ActivitiesModule,
     AuthorizationModule,
     ClubsModule,
+    DutiesModule,
     GroupsModule,
     PeopleModule,
   ],
@@ -65,6 +67,7 @@ const valkeyCache = (valkey: ValkeyClient, namespace: string): FeedCache | null 
         ClubsService,
         GroupsService,
         AccountsService,
+        DutiesService,
       ],
       useFactory: (
         db: OptionalDatabase,
@@ -79,6 +82,7 @@ const valkeyCache = (valkey: ValkeyClient, namespace: string): FeedCache | null 
         clubs: ClubsService,
         groups: GroupsService,
         accounts: AccountsService,
+        duties: DutiesService,
       ) =>
         new CalendarService(
           requireDatabase(db),
@@ -92,6 +96,7 @@ const valkeyCache = (valkey: ValkeyClient, namespace: string): FeedCache | null 
             clubs,
             groups,
             accounts,
+            duties,
             limiter: new RateLimiter(valkey, config.RATE_LIMIT_NAMESPACE),
             cache:
               config.CALENDAR_FEED_CACHE_SECONDS > 0

@@ -28,6 +28,7 @@ import { type Channels, createNotices, debounce, type Notice } from "./fanout.ts
 import {
   activityFacts,
   activityParams,
+  dutyShiftFacts,
   eventAudience,
   eventFacts,
   eventParams,
@@ -196,6 +197,8 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "document.signature_requested",
       // Car pooling (P2.5).
       "carpool.changed",
+      // Volunteer duties (P2.6).
+      "duty.changed",
       "expense_claim.submitted",
       "expense_claim.decided",
       // Announcements (P2.3).
@@ -765,6 +768,41 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
               about: [],
               params: { kind },
               dedupeKey: `carpool:${activityId}:${kind}:${personId}:${event.idempotencyKey}`,
+            })),
+          );
+          return;
+        }
+        // A shift changed hands (P2.6): the API names whom to tell; their
+        // guardians who see the schedule are told too (children without a
+        // login). Fixed texts with the shift's title and time, never a name.
+        case "duty.changed": {
+          const { clubId, kind, shiftId, personIds } = DOMAIN_EVENTS["duty.changed"].parse(
+            event.payload,
+          );
+          await useClub(tx, clubId);
+          const shift = await dutyShiftFacts(tx, shiftId);
+          if (!shift) return;
+          const recipients = await withGuardians(tx, personIds, RIGHTS.schedule);
+          const type =
+            kind === "assigned" || kind === "unassigned"
+              ? ("duty.assigned" as const)
+              : ("duty.swap" as const);
+          await notify(
+            tx,
+            [...recipients].map(([recipient, about]) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type,
+              subjectType: "duty_shift",
+              subjectId: shiftId,
+              about,
+              params: {
+                kind,
+                title: shift.title,
+                startsAt: shift.startsAt,
+                timeZone: shift.timeZone,
+              },
+              dedupeKey: `duty:${shiftId}:${kind}:${recipient}:${event.idempotencyKey}`,
             })),
           );
           return;

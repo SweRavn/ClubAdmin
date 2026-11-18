@@ -490,3 +490,390 @@ export async function quotaCounts(
     GROUP BY a.counts_for_person_id`);
   return new Map(rows.map((r) => [r.person_id, { done: r.done, planned: r.planned }]));
 }
+
+// --- Marking (part B) ----------------------------------------------------------------
+
+/** An assignment's status as marked by a planner; null when not on this shift. */
+export async function setStatus(
+  tx: Tx,
+  input: { shiftId: string; assignmentId: string; status: TaskAssignmentStatus; by: string },
+): Promise<boolean> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    UPDATE public.task_assignments SET status = ${input.status},
+      marked_by_person_id = CASE WHEN ${input.status} = 'planned' THEN NULL ELSE ${input.by}::uuid END,
+      marked_at = CASE WHEN ${input.status} = 'planned' THEN NULL ELSE now() END
+    WHERE id = ${input.assignmentId}::uuid AND task_id = ${input.shiftId}::uuid
+    RETURNING id`);
+  return rows.length > 0;
+}
+
+/** Past shifts of a group (or the club's own) with someone still planned: "Att markera". */
+export async function toMark(
+  tx: Tx,
+  where: { groupId: string } | { club: true },
+  before: Date,
+  limit: number,
+): Promise<ShiftRow[]> {
+  const filter =
+    "groupId" in where
+      ? sql`t.group_id = ${where.groupId}::uuid AND t.kind = 'duty_shift'`
+      : sql`t.club_id = app.current_club_id() AND t.group_id IS NULL AND t.kind = 'duty_shift'`;
+  const { rows } = await tx.execute<ShiftDb>(sql`
+    ${SHIFT_SELECT} WHERE ${filter} AND t.ends_at <= ${before.toISOString()}::timestamptz
+      AND EXISTS (SELECT 1 FROM public.task_assignments a
+        WHERE a.task_id = t.id AND a.status = 'planned')
+    ORDER BY t.starts_at DESC, t.id LIMIT ${limit}`);
+  return rows.map(toShift);
+}
+
+// --- A group's visibility (part B) ---------------------------------------------------
+
+export async function groupVisibility(tx: Tx, groupId: string): Promise<DutyVisibility | null> {
+  const { rows } = await tx.execute<{ visibility: DutyVisibility }>(sql`
+    SELECT visibility FROM public.group_duty_settings WHERE group_id = ${groupId}::uuid`);
+  return rows[0]?.visibility ?? null;
+}
+
+/** The groups' own visibility (when set). */
+export async function groupVisibilities(
+  tx: Tx,
+  groupIds: readonly string[],
+): Promise<Map<string, DutyVisibility>> {
+  if (groupIds.length === 0) return new Map();
+  const { rows } = await tx.execute<{ group_id: string; visibility: DutyVisibility }>(sql`
+    SELECT group_id, visibility FROM public.group_duty_settings
+    WHERE group_id = ANY (${uuidArray([...new Set(groupIds)])}::uuid[])`);
+  return new Map(rows.map((r) => [r.group_id, r.visibility]));
+}
+
+export async function putGroupVisibility(
+  tx: Tx,
+  input: { clubId: string; groupId: string; visibility: DutyVisibility | null },
+): Promise<void> {
+  if (input.visibility === null) {
+    await tx.execute(
+      sql`DELETE FROM public.group_duty_settings WHERE group_id = ${input.groupId}::uuid`,
+    );
+    return;
+  }
+  await tx.execute(sql`
+    INSERT INTO public.group_duty_settings (club_id, group_id, visibility)
+    VALUES (${input.clubId}, ${input.groupId}, ${input.visibility})
+    ON CONFLICT (group_id) DO UPDATE SET visibility = excluded.visibility`);
+}
+
+// --- Swaps (part B) -----------------------------------------------------------------
+
+export interface SwapRow {
+  id: string;
+  assignmentId: string;
+  kind: "offer" | "request";
+  status: "open" | "done" | "declined" | "withdrawn";
+  createdByPersonId: string;
+  takerPersonId: string | null;
+  takerCountsForPersonId: string | null;
+  shiftId: string;
+  holderPersonId: string;
+}
+
+type SwapDb = {
+  id: string;
+  assignment_id: string;
+  kind: SwapRow["kind"];
+  status: SwapRow["status"];
+  created_by_person_id: string;
+  taker_person_id: string | null;
+  taker_counts_for_person_id: string | null;
+  task_id: string;
+  person_id: string;
+};
+const toSwap = (r: SwapDb): SwapRow => ({
+  id: r.id,
+  assignmentId: r.assignment_id,
+  kind: r.kind,
+  status: r.status,
+  createdByPersonId: r.created_by_person_id,
+  takerPersonId: r.taker_person_id,
+  takerCountsForPersonId: r.taker_counts_for_person_id,
+  shiftId: r.task_id,
+  holderPersonId: r.person_id,
+});
+const SWAP_SELECT = sql`
+  SELECT s.id, s.assignment_id, s.kind, s.status, s.created_by_person_id, s.taker_person_id,
+    s.taker_counts_for_person_id, a.task_id, a.person_id
+  FROM public.task_swaps s JOIN public.task_assignments a ON a.id = s.assignment_id`;
+
+/** An assignment by key with its shift (for swaps); null when none. */
+export async function assignment(tx: Tx, assignmentId: string): Promise<AssignmentRow | null> {
+  const { rows } = await tx.execute<{
+    id: string;
+    task_id: string;
+    person_id: string;
+    counts_for_person_id: string | null;
+    source: AssignmentRow["source"];
+    status: TaskAssignmentStatus;
+  }>(sql`
+    SELECT a.id, a.task_id, a.person_id, a.counts_for_person_id, a.source, a.status
+    FROM public.task_assignments a JOIN public.tasks t ON t.id = a.task_id AND t.kind = 'duty_shift'
+    WHERE a.id = ${assignmentId}::uuid`);
+  const r = rows[0];
+  return r
+    ? {
+        id: r.id,
+        shiftId: r.task_id,
+        personId: r.person_id,
+        countsForPersonId: r.counts_for_person_id,
+        source: r.source,
+        status: r.status,
+      }
+    : null;
+}
+
+export async function insertSwap(
+  tx: Tx,
+  input: {
+    clubId: string;
+    assignmentId: string;
+    kind: "offer" | "request";
+    by: string;
+    takerPersonId: string | null;
+    takerCountsForPersonId: string | null;
+  },
+): Promise<string | null> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    INSERT INTO public.task_swaps (club_id, assignment_id, kind, created_by_person_id,
+      taker_person_id, taker_counts_for_person_id)
+    VALUES (${input.clubId}, ${input.assignmentId}, ${input.kind}, ${input.by},
+      ${input.takerPersonId}, ${input.takerCountsForPersonId})
+    ON CONFLICT (assignment_id) WHERE status = 'open' AND kind = 'offer' DO NOTHING
+    RETURNING id`);
+  return rows[0]?.id ?? null;
+}
+
+/** A swap by key, locked with its assignment's shift when asked. */
+export async function swap(tx: Tx, swapId: string): Promise<SwapRow | null> {
+  const { rows } = await tx.execute<SwapDb>(
+    sql`${SWAP_SELECT} WHERE s.id = ${swapId}::uuid FOR UPDATE OF s`,
+  );
+  return rows[0] ? toSwap(rows[0]) : null;
+}
+
+/** Open swaps of these shifts. */
+export async function openSwaps(tx: Tx, shiftIds: readonly string[]): Promise<SwapRow[]> {
+  if (shiftIds.length === 0) return [];
+  const { rows } = await tx.execute<SwapDb>(sql`
+    ${SWAP_SELECT} WHERE s.status = 'open'
+      AND a.task_id = ANY (${uuidArray([...new Set(shiftIds)])}::uuid[])
+    ORDER BY s.created_at, s.id`);
+  return rows.map(toSwap);
+}
+
+export async function closeSwap(
+  tx: Tx,
+  swapId: string,
+  status: "done" | "declined" | "withdrawn",
+  taker?: { personId: string; countsForPersonId: string | null },
+): Promise<void> {
+  await tx.execute(sql`
+    UPDATE public.task_swaps SET status = ${status}, decided_at = now(),
+      taker_person_id = coalesce(${taker?.personId ?? null}::uuid, taker_person_id),
+      taker_counts_for_person_id = CASE WHEN ${taker !== undefined}
+        THEN ${taker?.countsForPersonId ?? null}::uuid ELSE taker_counts_for_person_id END
+    WHERE id = ${swapId}::uuid`);
+}
+
+/** The shift changes hands: the assignment goes to the taker (other open swaps of it end). */
+export async function transfer(
+  tx: Tx,
+  input: { assignmentId: string; personId: string; countsForPersonId: string | null },
+): Promise<boolean> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    UPDATE public.task_assignments SET person_id = ${input.personId},
+      counts_for_person_id = ${input.countsForPersonId}, source = 'swap'
+    WHERE id = ${input.assignmentId}::uuid
+      AND NOT EXISTS (SELECT 1 FROM public.task_assignments o
+        WHERE o.task_id = task_assignments.task_id AND o.person_id = ${input.personId}::uuid)
+    RETURNING id`);
+  if (rows.length === 0) return false;
+  await tx.execute(sql`
+    UPDATE public.task_swaps SET status = 'withdrawn', decided_at = now()
+    WHERE assignment_id = ${input.assignmentId}::uuid AND status = 'open'`);
+  return true;
+}
+
+// --- "Mina uppgifter" (part B) --------------------------------------------------------
+
+/** The groups where these people take part (open memberships). */
+export async function participations(
+  tx: Tx,
+  personIds: readonly string[],
+): Promise<{ personId: string; groupId: string; groupName: string }[]> {
+  if (personIds.length === 0) return [];
+  const { rows } = await tx.execute<{ person_id: string; group_id: string; name: string }>(sql`
+    SELECT DISTINCT gm.person_id, gm.group_id, g.name FROM public.group_memberships gm
+    JOIN public.groups g ON g.id = gm.group_id
+    WHERE gm.person_id = ANY (${uuidArray([...new Set(personIds)])}::uuid[])
+      AND gm.valid_to IS NULL AND gm.participates AND g.club_id = app.current_club_id()`);
+  return rows.map((r) => ({ personId: r.person_id, groupId: r.group_id, groupName: r.name }));
+}
+
+/** Coming shifts of these groups (and the club's own) with a free place. */
+export async function openShifts(
+  tx: Tx,
+  groupIds: readonly string[],
+  range: { from: Date; to: Date },
+  limit: number,
+): Promise<ShiftRow[]> {
+  const { rows } = await tx.execute<ShiftDb>(sql`
+    ${SHIFT_SELECT}
+    WHERE t.kind = 'duty_shift'
+      AND (t.group_id = ANY (${uuidArray([...new Set(groupIds)])}::uuid[])
+        OR (t.group_id IS NULL AND t.club_id = app.current_club_id()))
+      AND t.starts_at >= ${range.from.toISOString()}::timestamptz
+      AND t.starts_at < ${range.to.toISOString()}::timestamptz
+      AND (SELECT count(*) FROM public.task_assignments a WHERE a.task_id = t.id) < t.needed
+    ORDER BY t.starts_at, t.id LIMIT ${limit}`);
+  return rows.map(toShift);
+}
+
+/** The season covering a day in the club, if any (the newest). */
+export async function seasonOn(tx: Tx, day: string): Promise<string | null> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT id FROM public.seasons
+    WHERE club_id = app.current_club_id() AND starts_on <= ${day}::date AND ends_on >= ${day}::date
+    ORDER BY starts_on DESC LIMIT 1`);
+  return rows[0]?.id ?? null;
+}
+
+/** The groups' quotas in a season. */
+export async function quotas(
+  tx: Tx,
+  groupIds: readonly string[],
+  seasonId: string,
+): Promise<Map<string, number>> {
+  if (groupIds.length === 0) return new Map();
+  const { rows } = await tx.execute<{ group_id: string; shifts_per_player: number }>(sql`
+    SELECT group_id, shifts_per_player FROM public.duty_quotas
+    WHERE season_id = ${seasonId}::uuid
+      AND group_id = ANY (${uuidArray([...new Set(groupIds)])}::uuid[])`);
+  return new Map(rows.map((r) => [r.group_id, r.shifts_per_player]));
+}
+
+// --- Statistics (part B) --------------------------------------------------------------
+
+export interface StatsRow {
+  personId: string;
+  countsForPersonId: string | null;
+  status: TaskAssignmentStatus;
+  minutes: number;
+  shiftTitle: string;
+  startsAt: Date;
+}
+
+/** Every assignment of the group's shifts (and the club's own) in the season. */
+export async function stats(
+  tx: Tx,
+  groupId: string,
+  seasonId: string,
+  timeZone: string,
+): Promise<StatsRow[]> {
+  const { rows } = await tx.execute<{
+    person_id: string;
+    counts_for_person_id: string | null;
+    status: TaskAssignmentStatus;
+    minutes: number;
+    title: string;
+    starts_at: Date;
+  }>(sql`
+    SELECT a.person_id, a.counts_for_person_id, a.status,
+      (extract(epoch FROM t.ends_at - t.starts_at) / 60)::int AS minutes, t.title, t.starts_at
+    FROM public.tasks t JOIN public.task_assignments a ON a.task_id = t.id
+    WHERE t.kind = 'duty_shift'
+      AND (t.group_id = ${groupId}::uuid OR (t.group_id IS NULL AND t.club_id = app.current_club_id()))
+      AND t.starts_at >= (SELECT s.starts_on::timestamp AT TIME ZONE ${timeZone}
+        FROM public.seasons s WHERE s.id = ${seasonId}::uuid)
+      AND t.starts_at < (SELECT (s.ends_on + 1)::timestamp AT TIME ZONE ${timeZone}
+        FROM public.seasons s WHERE s.id = ${seasonId}::uuid)
+    ORDER BY t.starts_at, a.id LIMIT 20000`);
+  return rows.map((r) => ({
+    personId: r.person_id,
+    countsForPersonId: r.counts_for_person_id,
+    status: r.status,
+    minutes: r.minutes,
+    shiftTitle: r.title,
+    startsAt: new Date(r.starts_at),
+  }));
+}
+
+// --- "Mitt schema" (part B) -----------------------------------------------------------
+
+export interface MyDutyRow {
+  assignmentId: string;
+  shiftId: string;
+  clubId: string;
+  clubName: string;
+  timeZone: string;
+  groupId: string | null;
+  groupName: string | null;
+  title: string;
+  typeName: string;
+  startsAt: Date;
+  endsAt: Date;
+  locationName: string | null;
+  activityId: string | null;
+  personId: string;
+  countsForPersonId: string | null;
+  status: TaskAssignmentStatus;
+  changedAt: Date;
+}
+
+/** The caller's and their wards' shifts in a period, across their clubs (app.my_duty_shifts). */
+export async function myDutyShifts(
+  tx: Tx,
+  range: { from: Date; to: Date },
+  limit: number,
+): Promise<MyDutyRow[]> {
+  const { rows } = await tx.execute<{
+    assignment_id: string;
+    shift_id: string;
+    club_id: string;
+    club_name: string;
+    time_zone: string;
+    group_id: string | null;
+    group_name: string | null;
+    title: string;
+    type_name: string;
+    starts_at: Date;
+    ends_at: Date;
+    location_name: string | null;
+    activity_id: string | null;
+    person_id: string;
+    counts_for_person_id: string | null;
+    status: TaskAssignmentStatus;
+    changed_at: Date;
+  }>(sql`
+    SELECT * FROM app.my_duty_shifts(${range.from.toISOString()}::timestamptz,
+      ${range.to.toISOString()}::timestamptz, ${limit})`);
+  return rows
+    .map((r) => ({
+      assignmentId: r.assignment_id,
+      shiftId: r.shift_id,
+      clubId: r.club_id,
+      clubName: r.club_name,
+      timeZone: r.time_zone,
+      groupId: r.group_id,
+      groupName: r.group_name,
+      title: r.title,
+      typeName: r.type_name,
+      startsAt: new Date(r.starts_at),
+      endsAt: new Date(r.ends_at),
+      locationName: r.location_name,
+      activityId: r.activity_id,
+      personId: r.person_id,
+      countsForPersonId: r.counts_for_person_id,
+      status: r.status,
+      changedAt: new Date(r.changed_at),
+    }))
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
+    .slice(0, limit);
+}

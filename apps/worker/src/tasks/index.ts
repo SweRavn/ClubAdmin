@@ -24,6 +24,7 @@ import {
   pushReceiptsTask,
 } from "../notifications/deliver.ts";
 import {
+  dutyRemindersTask,
   eventRemindersTask,
   fanoutTask,
   notificationsRetentionTask,
@@ -224,6 +225,8 @@ function notificationTasks(deps: TaskDependencies): TaskList {
     "notifications:response_reminders": responseRemindersTask({ db: deps.db, channels }),
     "notifications:response_requests": responseRequestsTask({ db: deps.db, channels }),
     "notifications:event_reminders": eventRemindersTask({ db: deps.db, channels }),
+    // Volunteer duties (P2.6): the reminder the day before a shift.
+    "notifications:duty_reminders": dutyRemindersTask({ db: deps.db, channels }),
     "notifications:retention": notificationsRetentionTask(deps.db),
     // At least two administrators (P1.15 A3).
     "administrators:daily": administratorsTask(deps.db, channels),
@@ -251,7 +254,8 @@ function notificationTasks(deps: TaskDependencies): TaskList {
  * 05:19 UTC (P1.12); administrators (P1.15 A3: expired suspension requests,
  * grace period reminders) hourly at :11; abandoned document uploads (P2.2)
  * hourly at :29; documents' deletion dates daily at 03:23 UTC; scheduled
- * announcements (P2.3) every minute.
+ * announcements (P2.3) every minute; duty shift reminders (P2.6) every 15
+ * minutes, the day before.
  */
 export const crontab = [
   "* * * * * heartbeat ?max=1",
@@ -266,6 +270,7 @@ export const crontab = [
   "*/15 * * * * notifications:response_reminders ?max=1",
   "*/5 * * * * notifications:response_requests ?max=1",
   "*/15 * * * * notifications:event_reminders ?max=1",
+  "*/15 * * * * notifications:duty_reminders ?max=1",
   "*/15 * * * * notifications:push_receipts ?max=1",
   "37 5 * * * notifications:retention ?fill=2d",
   "17 0 * * * clubs:apply_decisions ?fill=2d",

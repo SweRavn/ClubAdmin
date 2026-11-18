@@ -290,3 +290,141 @@ export const PutDutyQuotaSchema = z
   .strict()
   .openapi("PutDutyQuota");
 export type PutDutyQuotaInput = z.infer<typeof PutDutyQuotaSchema>;
+
+// --- Marking done or missed (part B) --------------------------------------------------
+
+export const SetDutyStatusSchema = z
+  .object({ status: z.enum(TASK_ASSIGNMENT_STATUSES) })
+  .strict()
+  .openapi("SetDutyStatus");
+export type SetDutyStatusInput = z.infer<typeof SetDutyStatusSchema>;
+
+// --- A group's visibility (part B) ----------------------------------------------------
+
+export const GroupDutySettingsSchema = z
+  .object({
+    /** The group's own choice; none: the club's. */
+    visibility: z.enum(DUTY_VISIBILITIES).nullable(),
+    /** What applies in the group. */
+    effective: z.enum(DUTY_VISIBILITIES),
+    /** The club lets its groups choose. */
+    mayChange: z.boolean(),
+  })
+  .openapi("GroupDutySettings");
+export type GroupDutySettings = z.infer<typeof GroupDutySettingsSchema>;
+
+export const PutGroupDutySettingsSchema = z
+  .object({ visibility: z.enum(DUTY_VISIBILITIES).nullable() })
+  .strict()
+  .openapi("PutGroupDutySettings");
+export type PutGroupDutySettingsInput = z.infer<typeof PutGroupDutySettingsSchema>;
+
+// --- Swaps (part B) ------------------------------------------------------------------
+
+export const DUTY_SWAP_KINDS = ["offer", "request"] as const;
+export const DUTY_SWAP_STATUSES = ["open", "done", "declined", "withdrawn"] as const;
+
+export const CreateDutySwapSchema = z
+  .object({
+    /** `offer`: the assignee gives the shift away; `request`: someone asks to take it over. */
+    kind: z.enum(DUTY_SWAP_KINDS),
+    /** A request: who would take it (the caller or a child; none: the caller). */
+    personId: z.uuid().nullish(),
+    /** A request: the player it would then count for. */
+    countsForPersonId: z.uuid().nullish(),
+  })
+  .strict()
+  .openapi("CreateDutySwap");
+export type CreateDutySwapInput = z.input<typeof CreateDutySwapSchema>;
+
+export const TakeDutySwapSchema = z
+  .object({
+    personId: z.uuid().nullish(),
+    countsForPersonId: z.uuid().nullish(),
+  })
+  .strict()
+  .openapi("TakeDutySwap");
+export type TakeDutySwapInput = z.input<typeof TakeDutySwapSchema>;
+
+export const DutySwapSchema = z
+  .object({
+    id: z.uuid(),
+    kind: z.enum(DUTY_SWAP_KINDS),
+    status: z.enum(DUTY_SWAP_STATUSES),
+    assignmentId: z.uuid(),
+    shift: z.object({
+      id: z.uuid(),
+      clubId: z.uuid(),
+      groupId: z.uuid().nullable(),
+      groupName: z.string().nullable(),
+      title: z.string(),
+      startsAt: z.iso.datetime(),
+      endsAt: z.iso.datetime(),
+    }),
+    /** Who holds the shift (none: hidden by protected identity or visibility). */
+    holder: PersonSummarySchema.nullable(),
+    /** A request's would-be taker. */
+    taker: PersonSummarySchema.nullable(),
+    /** The caller's family started it. */
+    mine: z.boolean(),
+    /** An offer the caller's family may take, a request the caller's family may accept. */
+    canTake: z.boolean(),
+    canAccept: z.boolean(),
+  })
+  .openapi("DutySwap");
+export type DutySwap = z.infer<typeof DutySwapSchema>;
+
+export const DutySwapParamsSchema = z.object({ swapId: z.uuid() });
+export const MyDutyAssignmentParamsSchema = z.object({ assignmentId: z.uuid() });
+
+// --- "Mina uppgifter": my family's duties in a club (part B) ----------------------------
+
+export const MyDutiesQuerySchema = z.object({ clubId: z.uuid() });
+
+export const MyDutiesSchema = z
+  .object({
+    clubId: z.uuid(),
+    /** Each of the family's players' quotas in the current season, per group with a quota. */
+    quotas: z.array(
+      z.object({
+        groupId: z.uuid(),
+        groupName: z.string(),
+        seasonId: z.uuid(),
+        player: PersonSummarySchema.nullable(),
+        shiftsPerPlayer: z.number().int(),
+        done: z.number().int(),
+        planned: z.number().int(),
+      }),
+    ),
+    /** Coming shifts with free places in the family's groups (and the club's own). */
+    openShifts: z.array(DutyShiftSchema),
+    /** Open swaps in the family's groups: offers to take, requests to answer, the family's own. */
+    swaps: z.array(DutySwapSchema),
+  })
+  .openapi("MyDuties");
+export type MyDuties = z.infer<typeof MyDutiesSchema>;
+
+// --- "Mitt schema" (part B) ------------------------------------------------------------
+
+export const ScheduleDutySchema = z
+  .object({
+    assignmentId: z.uuid(),
+    shiftId: z.uuid(),
+    club: z.object({ id: z.uuid(), name: z.string(), timeZone: z.string() }),
+    groupName: z.string().nullable(),
+    title: z.string(),
+    typeName: z.string(),
+    startsAt: z.iso.datetime(),
+    endsAt: z.iso.datetime(),
+    place: z.string().nullable(),
+    activityId: z.uuid().nullable(),
+    /** Who does it (the caller or a ward). */
+    person: PersonSummarySchema.nullable(),
+    status: z.enum(TASK_ASSIGNMENT_STATUSES),
+  })
+  .openapi("ScheduleDuty");
+export type ScheduleDuty = z.infer<typeof ScheduleDutySchema>;
+
+// --- Statistics (part B) ---------------------------------------------------------------
+
+export const DutyStatsQuerySchema = z.object({ seasonId: z.uuid() });

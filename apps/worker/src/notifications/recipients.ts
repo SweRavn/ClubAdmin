@@ -242,3 +242,18 @@ export async function registrants(tx: Tx, eventId: string): Promise<string[]> {
     WHERE event_id = ${eventId} AND status IN ('confirmed', 'waitlisted', 'offered')`);
   return rows.map((r) => r.person_id);
 }
+
+/** A duty shift's title, start and the club's time zone (P2.6), for its notices. */
+export async function dutyShiftFacts(
+  tx: Tx,
+  shiftId: string,
+): Promise<{ title: string; startsAt: string; timeZone: string } | null> {
+  const { rows } = await tx.execute<{ title: string; starts_at: Date; time_zone: string }>(sql`
+    SELECT t.title, t.starts_at, c.time_zone FROM public.tasks t
+    JOIN public.clubs c ON c.id = t.club_id
+    WHERE t.id = ${shiftId}::uuid AND t.kind = 'duty_shift'`);
+  const r = rows[0];
+  return r
+    ? { title: r.title, startsAt: new Date(r.starts_at).toISOString(), timeZone: r.time_zone }
+    : null;
+}

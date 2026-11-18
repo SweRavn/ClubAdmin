@@ -42,6 +42,7 @@ import {
   tenantContext,
 } from "../authorization/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
+import type { DutiesService } from "../duties/index.ts";
 import type { EntitlementsService } from "../entitlements/index.ts";
 import type { GroupsService } from "../groups/index.ts";
 import type { PeopleService } from "../people/index.ts";
@@ -96,6 +97,8 @@ export class CalendarService {
     clubs: ClubsService;
     groups: GroupsService;
     accounts: AccountsService;
+    /** Duty shifts (P2.6) in the personal schedule feed. */
+    duties: DutiesService;
     limiter: RateLimiter;
     cache: FeedCache | null;
   };
@@ -456,6 +459,32 @@ export class CalendarService {
         calloutOnly: false,
       });
     });
+    // Duty shifts (P2.6): the people's own, in clubs with feeds.
+    const duties = await this.d.duties.myShifts(authz.context, range, MAX_EVENTS);
+    for (const d of duties) {
+      if (!people.includes(d.personId)) continue;
+      if (!entitled.has(d.clubId)) {
+        entitled.set(d.clubId, await this.d.entitlements.has(d.clubId, "calendar_feeds"));
+      }
+      if (!entitled.get(d.clubId)) continue;
+      const who = d.personId !== me ? names.get(d.personId) : undefined;
+      events.push({
+        uid: `duty-${d.assignmentId}@clubadmin`,
+        stamp: this.now(),
+        start: d.startsAt,
+        end: d.endsAt,
+        allDay: false,
+        timeZone: d.timeZone,
+        sequence: Math.floor(d.changedAt.getTime() / 1000),
+        lastModified: d.changedAt,
+        cancelled: false,
+        summary: `${who ? `${shownName(who)}: ` : ""}${message(locale, "calendar.feed.duty", { title: d.title })}`,
+        location: d.locationName,
+        description: [d.groupName, d.clubName].filter(Boolean).join(" · "),
+        url: `${this.webUrl}/me/tasks`,
+        categories: null,
+      });
+    }
     return writeCalendar({
       prodId: `-//ClubAdmin//${this.version}//EN`,
       name: message(locale, "calendar.feed.mySchedule", {}),

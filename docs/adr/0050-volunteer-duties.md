@@ -103,3 +103,24 @@ Decided with the prompt's review:
 - Until the visibility setting (part B), others' names on a shift are shown
   to its planners only.
 
+## As implemented (part B, 2026-11-18)
+
+- Marking: the planners mark a started shift done or missed; only done
+  counts; past shifts with someone still planned are listed ("Att
+  markera"). Nothing is marked automatically.
+- Visibility: the club's level and, when the club allows it, a group's
+  own; with `leaders` only the shift's planners see names (the shift lists
+  of activities and "Mina uppgifter").
+- Swaps are club paths (`/clubs/:clubId/duty-assignments/:id/swaps`,
+  `/clubs/:clubId/duty-swaps/:id/take|accept|decline|withdraw`) rather than
+  the prompt's `/me/...`, since a swap is read in the club's tenant. An
+  offer is taken (the taker's family, the type's minimum age, whom it then
+  counts for); a request is accepted or declined by the holder's family.
+- Notices (category `duties`): the reminder the day before, a planner's
+  assignment or removal, swaps; to the person and the guardians who see
+  their schedule (receive messages and view schedule). Fixed texts with the
+  shift's title and time.
+- "Mitt schema" and the personal calendar feed include the family's shifts
+  (`app.my_duty_shifts`, migration 0052); "Mina uppgifter" reads `GET
+  /me/duties?clubId=` per club. Statistics as CSV per person and player.
+

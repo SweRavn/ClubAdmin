@@ -95,6 +95,18 @@ export const DOMAIN_EVENTS = {
     /** The people to tell (the driver, bookers, guardians asked to confirm; never the actor). */
     personIds: z.array(id).max(50),
   }),
+  /**
+   * A shift changed hands (P2.6): someone was put on or taken off it by a
+   * planner, a swap was asked of its holder, or a swap was done or declined.
+   * The API names whom to tell (never the actor); the worker adds guardians
+   * for children without a login.
+   */
+  "duty.changed": z.object({
+    clubId: id,
+    kind: z.enum(["assigned", "unassigned", "swap_requested", "swapped", "swap_declined"]),
+    shiftId: id,
+    personIds: z.array(id).max(20),
+  }),
   /** A mileage claim was submitted (P2.5): its attester, or the group's or club's, is told. */
   "expense_claim.submitted": z.object({ clubId: id, claimId: id }),
   /** A claim was approved or rejected (P2.5): the claimant is told. */

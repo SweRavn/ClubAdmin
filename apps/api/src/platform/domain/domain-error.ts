@@ -426,6 +426,16 @@ export const DOMAIN_ERRORS = {
   duty_season_invalid: "validation",
   /** The activity or event is not the group's (or the club's). */
   duty_source_invalid: "validation",
+  /** Done or missed only once the shift has started. */
+  duty_shift_not_started: "conflict",
+  /** The club does not let its groups choose their visibility. */
+  duty_visibility_locked: "forbidden",
+  /** The shift is offered already. */
+  duty_swap_open: "conflict",
+  /** The swap was taken, declined or withdrawn. */
+  duty_swap_closed: "conflict",
+  /** One does not take or ask for one's own shift. */
+  duty_swap_own: "validation",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

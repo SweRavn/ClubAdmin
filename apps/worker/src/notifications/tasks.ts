@@ -343,6 +343,60 @@ export function eventRemindersTask(deps: NotificationTaskDependencies): Task {
   };
 }
 
+/**
+ * The day before a shift (P2.6): those on it, and the guardians who see
+ * their schedule (children without a login), once per assignment.
+ */
+export function dutyRemindersTask(deps: NotificationTaskDependencies): Task {
+  return async () => {
+    const at = deps.now?.() ?? new Date();
+    const until = new Date(at.getTime() + 24 * HOUR_MS);
+    for (const clubId of await clubIds(deps.db)) {
+      await deps.db.withSystem("notifications:duty_reminders", { clubId }, async (tx) => {
+        // By the club's shift index (club, start).
+        const { rows } = await tx.execute<{
+          assignment_id: string;
+          person_id: string;
+          shift_id: string;
+          title: string;
+          starts_at: Date;
+          time_zone: string;
+        }>(sql`
+          SELECT a.id AS assignment_id, a.person_id, t.id AS shift_id, t.title, t.starts_at,
+            c.time_zone
+          FROM public.tasks t
+          JOIN public.task_assignments a ON a.task_id = t.id AND a.status = 'planned'
+          JOIN public.clubs c ON c.id = t.club_id
+          WHERE t.club_id = ${clubId}::uuid AND t.kind = 'duty_shift'
+            AND t.starts_at > ${at.toISOString()}::timestamptz
+            AND t.starts_at <= ${until.toISOString()}::timestamptz
+          LIMIT 2000`);
+        for (const row of rows) {
+          const recipients = await withGuardians(tx, [row.person_id], RIGHTS.schedule);
+          await createNotices(
+            tx,
+            [...recipients].map(([recipient, about]) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type: "duty.reminder" as const,
+              subjectType: "duty_shift",
+              subjectId: row.shift_id,
+              about,
+              params: {
+                title: row.title,
+                startsAt: new Date(row.starts_at).toISOString(),
+                timeZone: row.time_zone,
+              },
+              dedupeKey: `duty:${row.assignment_id}:reminder`,
+            })),
+            { channels: deps.channels, now: at },
+          );
+        }
+      });
+    }
+  };
+}
+
 /** What retention deletes (each on its own index: created_at, created_at, account/last seen). */
 export function retentionQueries(at: Date) {
   const before = (days: number) => new Date(at.getTime() - days * DAY_MS).toISOString();

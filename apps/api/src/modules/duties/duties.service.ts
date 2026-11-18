@@ -22,6 +22,7 @@ import {
   type ActorContext,
   audit,
   type Database,
+  outbox,
   type TenantContext,
   type Tx,
 } from "@clubadmin/db";
@@ -30,15 +31,24 @@ import {
   AssignDutySchema,
   type CreateDutyShiftInput,
   CreateDutyShiftSchema,
+  type CreateDutySwapInput,
+  CreateDutySwapSchema,
   type CreateDutyTypeInput,
   CreateDutyTypeSchema,
   DUTY_SHIFT_LIST_MAX,
   type DutySignUpInput,
   DutySignUpSchema,
+  type DutyVisibility,
   type PutDutyQuotaInput,
   PutDutyQuotaSchema,
   type PutDutySettingsInput,
   PutDutySettingsSchema,
+  type PutGroupDutySettingsInput,
+  PutGroupDutySettingsSchema,
+  type SetDutyStatusInput,
+  SetDutyStatusSchema,
+  type TakeDutySwapInput,
+  TakeDutySwapSchema,
   type UpdateDutyShiftInput,
   UpdateDutyShiftSchema,
   type UpdateDutyTypeInput,
@@ -50,7 +60,15 @@ import { actorPersonId, parseInput } from "../../platform/domain/run.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import * as repo from "./duties.repository.ts";
 
-export type { AssignmentRow, DutySettingsRow, DutyTypeRow, ShiftRow } from "./duties.repository.ts";
+export type {
+  AssignmentRow,
+  DutySettingsRow,
+  DutyTypeRow,
+  MyDutyRow,
+  ShiftRow,
+  StatsRow,
+  SwapRow,
+} from "./duties.repository.ts";
 
 /** Where shifts live: a group's, or the club's own (no group). */
 export type ShiftScope = { groupId: string } | { club: true };
@@ -511,6 +529,7 @@ export class DutiesService {
         resourceId: shift.groupId ?? shift.clubId,
         changedFields: ["person_id", "counts_for_person_id"],
       });
+      await this.tell(tx, actorPersonId(context), shift, "assigned", [data.personId]);
       return { id, countsForPersonId: countsFor };
     });
   }
@@ -532,6 +551,7 @@ export class DutiesService {
         resourceId: shift.groupId ?? shift.clubId,
         changedFields: ["person_id"],
       });
+      await this.tell(tx, actorPersonId(context), shift, "unassigned", [assignment.personId]);
     });
   }
 
@@ -580,6 +600,418 @@ export class DutiesService {
         changedFields: ["shifts_per_player"],
       });
     });
+  }
+
+  // --- Notices -------------------------------------------------------------------
+
+  /** Tells these people (never the actor) that a shift changed hands; the worker adds guardians. */
+  private async tell(
+    tx: Tx,
+    actor: string,
+    shift: repo.ShiftRow,
+    kind: "assigned" | "unassigned" | "swap_requested" | "swapped" | "swap_declined",
+    personIds: readonly (string | null)[],
+  ): Promise<void> {
+    const people = [...new Set(personIds.filter((p): p is string => !!p && p !== actor))];
+    if (people.length === 0) return;
+    await outbox.publish(tx, "duty.changed", {
+      clubId: shift.clubId,
+      kind,
+      shiftId: shift.id,
+      personIds: people.slice(0, 20),
+    });
+  }
+
+  // --- Marking done or missed (the planners) ------------------------------------
+
+  setStatus(
+    context: TenantContext,
+    scope: ShiftScope,
+    shiftId: string,
+    assignmentId: string,
+    input: SetDutyStatusInput,
+  ): Promise<void> {
+    const data = parseInput(SetDutyStatusSchema, input);
+    const me = actorPersonId(context);
+    return this.db.withTenant(context, async (tx) => {
+      const shift = await this.scopedShift(tx, scope, shiftId, true);
+      if (data.status !== "planned" && shift.startsAt.getTime() > this.now().getTime()) {
+        throw new DomainError("duty_shift_not_started");
+      }
+      const marked = await repo.setStatus(tx, {
+        shiftId,
+        assignmentId,
+        status: data.status,
+        by: me,
+      });
+      if (!marked) throw new DomainError("not_found");
+      await audit.record(tx, {
+        action: data.status === "done" ? "duty.assignment.completed" : "duty.assignment.updated",
+        resourceType: shift.groupId ? "group" : "club",
+        resourceId: shift.groupId ?? shift.clubId,
+        changedFields: ["status"],
+      });
+    });
+  }
+
+  /** Past shifts with someone still planned ("Att markera"), newest first. */
+  toMark(
+    context: TenantContext,
+    scope: ShiftScope,
+  ): Promise<{ shifts: repo.ShiftRow[]; assignments: repo.AssignmentRow[]; timeZone: string }> {
+    return this.db.withTenant(context, async (tx) => {
+      const shifts = await repo.toMark(tx, scope, this.now(), 200);
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      return {
+        shifts,
+        assignments: await repo.assignments(
+          tx,
+          shifts.map((s) => s.id),
+        ),
+        timeZone: club.timeZone,
+      };
+    });
+  }
+
+  // --- Visibility ----------------------------------------------------------------
+
+  /** What applies in these groups (a group's own choice when the club allows it). */
+  async visibilityInTx(
+    tx: Tx,
+    groupIds: readonly (string | null)[],
+  ): Promise<{ club: DutyVisibility; groups: Map<string, DutyVisibility> }> {
+    const settings = await repo.settings(tx);
+    const ids = groupIds.filter((g): g is string => !!g);
+    const own = settings.groupsMayChangeVisibility
+      ? await repo.groupVisibilities(tx, ids)
+      : new Map<string, DutyVisibility>();
+    return {
+      club: settings.visibility,
+      groups: new Map(ids.map((g) => [g, own.get(g) ?? settings.visibility])),
+    };
+  }
+
+  visibilityOf(
+    context: TenantContext,
+    groupIds: readonly (string | null)[],
+  ): Promise<{ club: DutyVisibility; groups: Map<string, DutyVisibility> }> {
+    return this.db.withTenant(context, (tx) => this.visibilityInTx(tx, groupIds));
+  }
+
+  getGroupSettings(
+    context: TenantContext,
+    groupId: string,
+  ): Promise<{ visibility: DutyVisibility | null; effective: DutyVisibility; mayChange: boolean }> {
+    return this.db.withTenant(context, async (tx) => {
+      const settings = await repo.settings(tx);
+      const own = await repo.groupVisibility(tx, groupId);
+      return {
+        visibility: own,
+        effective: settings.groupsMayChangeVisibility
+          ? (own ?? settings.visibility)
+          : settings.visibility,
+        mayChange: settings.groupsMayChangeVisibility,
+      };
+    });
+  }
+
+  putGroupSettings(
+    context: TenantContext,
+    groupId: string,
+    input: PutGroupDutySettingsInput,
+  ): Promise<void> {
+    const data = parseInput(PutGroupDutySettingsSchema, input);
+    return this.db.withTenant(context, async (tx) => {
+      if (!(await repo.settings(tx)).groupsMayChangeVisibility) {
+        throw new DomainError("duty_visibility_locked");
+      }
+      await repo.putGroupVisibility(tx, {
+        clubId: context.clubId,
+        groupId,
+        visibility: data.visibility,
+      });
+      await audit.record(tx, {
+        action: "duty.settings.updated",
+        resourceType: "group",
+        resourceId: groupId,
+        changedFields: ["visibility"],
+      });
+    });
+  }
+
+  // --- Swaps ---------------------------------------------------------------------
+
+  private static holds(family: Family, a: { personId: string; countsForPersonId: string | null }) {
+    const people = new Set([family.me, ...family.wardIds]);
+    return (
+      people.has(a.personId) || (a.countsForPersonId !== null && people.has(a.countsForPersonId))
+    );
+  }
+
+  /** Offers one's shift, or asks to take over someone else's. */
+  createSwap(
+    context: TenantContext,
+    family: Family,
+    assignmentId: string,
+    input: CreateDutySwapInput,
+  ): Promise<{ id: string }> {
+    const data = parseInput(CreateDutySwapSchema, input);
+    const me = actorPersonId(context);
+    return this.db.withTenant(context, async (tx) => {
+      const assignment = await repo.assignment(tx, assignmentId);
+      if (!assignment) throw new DomainError("not_found");
+      const shift = await repo.shift(tx, assignment.shiftId, true);
+      if (!shift) throw new DomainError("not_found");
+      this.requireOpen(shift);
+      const ownShift = DutiesService.holds(family, assignment);
+      let taker: { personId: string; countsForPersonId: string | null } | null = null;
+      if (data.kind === "offer") {
+        if (!ownShift) throw new DomainError("not_found");
+      } else {
+        if (ownShift) throw new DomainError("duty_swap_own");
+        taker = await this.taker(tx, family, shift, data.personId, data.countsForPersonId);
+      }
+      const id = await repo.insertSwap(tx, {
+        clubId: shift.clubId,
+        assignmentId,
+        kind: data.kind,
+        by: me,
+        takerPersonId: taker?.personId ?? null,
+        takerCountsForPersonId: taker?.countsForPersonId ?? null,
+      });
+      if (!id) throw new DomainError("duty_swap_open");
+      await audit.record(tx, {
+        action: data.kind === "offer" ? "duty.swap.offered" : "duty.swap.requested",
+        resourceType: shift.groupId ? "group" : "club",
+        resourceId: shift.groupId ?? shift.clubId,
+        changedFields: ["status"],
+      });
+      if (data.kind === "request") {
+        await this.tell(tx, me, shift, "swap_requested", [assignment.personId]);
+      }
+      return { id };
+    });
+  }
+
+  /** Who in the caller's family would take a shift, and whom it would count for. */
+  private async taker(
+    tx: Tx,
+    family: Family,
+    shift: repo.ShiftRow,
+    personId: string | null | undefined,
+    countsForPersonId: string | null | undefined,
+  ): Promise<{ personId: string; countsForPersonId: string | null }> {
+    const worker = personId ?? family.me;
+    if (worker !== family.me && !family.wardIds.includes(worker)) {
+      throw new DomainError("duty_person_invalid");
+    }
+    await this.requireAge(tx, shift, worker);
+    const countsFor = await this.countsFor(
+      tx,
+      shift,
+      [family.me, ...family.wardIds],
+      countsForPersonId,
+    );
+    if (countsFor === null && !(await repo.clubMembers(tx, [worker])).has(worker)) {
+      throw new DomainError("duty_counts_for_invalid");
+    }
+    return { personId: worker, countsForPersonId: countsFor };
+  }
+
+  /** Takes an offered shift (the confirmation). */
+  takeSwap(
+    context: TenantContext,
+    family: Family,
+    swapId: string,
+    input: TakeDutySwapInput,
+  ): Promise<void> {
+    const data = parseInput(TakeDutySwapSchema, input);
+    const me = actorPersonId(context);
+    return this.db.withTenant(context, async (tx) => {
+      const found = await repo.swap(tx, swapId);
+      if (!found || found.kind !== "offer") throw new DomainError("not_found");
+      if (found.status !== "open") throw new DomainError("duty_swap_closed");
+      const shift = await repo.shift(tx, found.shiftId, true);
+      if (!shift) throw new DomainError("not_found");
+      this.requireOpen(shift);
+      const assignment = (await repo.assignment(tx, found.assignmentId))!;
+      if (DutiesService.holds(family, assignment)) throw new DomainError("duty_swap_own");
+      const taker = await this.taker(tx, family, shift, data.personId, data.countsForPersonId);
+      if (!(await repo.transfer(tx, { assignmentId: assignment.id, ...taker }))) {
+        throw new DomainError("duty_already_assigned");
+      }
+      await repo.closeSwap(tx, swapId, "done", taker);
+      await audit.record(tx, {
+        action: "duty.swap.accepted",
+        resourceType: shift.groupId ? "group" : "club",
+        resourceId: shift.groupId ?? shift.clubId,
+        changedFields: ["person_id", "counts_for_person_id"],
+      });
+      await this.tell(tx, me, shift, "swapped", [assignment.personId, found.createdByPersonId]);
+    });
+  }
+
+  /** The holder answers a request to take over their shift. */
+  answerSwap(
+    context: TenantContext,
+    family: Family,
+    swapId: string,
+    accept: boolean,
+  ): Promise<void> {
+    const me = actorPersonId(context);
+    return this.db.withTenant(context, async (tx) => {
+      const found = await repo.swap(tx, swapId);
+      if (!found || found.kind !== "request") throw new DomainError("not_found");
+      const assignment = (await repo.assignment(tx, found.assignmentId))!;
+      if (!DutiesService.holds(family, assignment)) throw new DomainError("not_found");
+      if (found.status !== "open") throw new DomainError("duty_swap_closed");
+      const shift = await repo.shift(tx, found.shiftId, true);
+      if (!shift) throw new DomainError("not_found");
+      if (accept) {
+        this.requireOpen(shift);
+        const moved = await repo.transfer(tx, {
+          assignmentId: assignment.id,
+          personId: found.takerPersonId!,
+          countsForPersonId: found.takerCountsForPersonId,
+        });
+        if (!moved) throw new DomainError("duty_already_assigned");
+      }
+      await repo.closeSwap(tx, swapId, accept ? "done" : "declined");
+      await audit.record(tx, {
+        action: accept ? "duty.swap.accepted" : "duty.swap.declined",
+        resourceType: shift.groupId ? "group" : "club",
+        resourceId: shift.groupId ?? shift.clubId,
+        changedFields: accept ? ["person_id", "counts_for_person_id"] : ["status"],
+      });
+      await this.tell(tx, me, shift, accept ? "swapped" : "swap_declined", [
+        found.createdByPersonId,
+        found.takerPersonId,
+      ]);
+    });
+  }
+
+  /** The one who offered or asked withdraws it before it is answered. */
+  withdrawSwap(context: TenantContext, family: Family, swapId: string): Promise<void> {
+    const people = new Set([family.me, ...family.wardIds]);
+    return this.db.withTenant(context, async (tx) => {
+      const found = await repo.swap(tx, swapId);
+      if (!found || !people.has(found.createdByPersonId)) throw new DomainError("not_found");
+      if (found.status !== "open") throw new DomainError("duty_swap_closed");
+      const shift = await repo.shift(tx, found.shiftId);
+      await repo.closeSwap(tx, swapId, "withdrawn");
+      await audit.record(tx, {
+        action: "duty.swap.withdrawn",
+        resourceType: shift?.groupId ? "group" : "club",
+        resourceId: shift?.groupId ?? context.clubId,
+        changedFields: ["status"],
+      });
+    });
+  }
+
+  // --- "Mina uppgifter" -----------------------------------------------------------
+
+  /** The family's quotas, open shifts and swaps in a club. */
+  myDuties(
+    context: TenantContext,
+    family: Family,
+  ): Promise<{
+    quotas: {
+      groupId: string;
+      groupName: string;
+      seasonId: string;
+      playerId: string;
+      shiftsPerPlayer: number;
+      done: number;
+      planned: number;
+    }[];
+    openShifts: repo.ShiftRow[];
+    shifts: repo.ShiftRow[];
+    assignments: repo.AssignmentRow[];
+    swaps: repo.SwapRow[];
+    visibility: { club: DutyVisibility; groups: Map<string, DutyVisibility> };
+    timeZone: string;
+  }> {
+    const people = [family.me, ...family.wardIds];
+    return this.db.withTenant(context, async (tx) => {
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      const now = this.now();
+      const today = new Intl.DateTimeFormat("sv-SE", { timeZone: club.timeZone }).format(now);
+      const taking = await repo.participations(tx, people);
+      const groupIds = [...new Set(taking.map((t) => t.groupId))];
+      const quotas: Awaited<ReturnType<DutiesService["myDuties"]>>["quotas"] = [];
+      const seasonId = await repo.seasonOn(tx, today);
+      if (seasonId) {
+        const perGroup = await repo.quotas(tx, groupIds, seasonId);
+        for (const [groupId, shiftsPerPlayer] of perGroup) {
+          const counts = await repo.quotaCounts(tx, groupId, seasonId, club.timeZone);
+          for (const t of taking.filter((x) => x.groupId === groupId)) {
+            quotas.push({
+              groupId,
+              groupName: t.groupName,
+              seasonId,
+              playerId: t.personId,
+              shiftsPerPlayer,
+              done: counts.get(t.personId)?.done ?? 0,
+              planned: counts.get(t.personId)?.planned ?? 0,
+            });
+          }
+        }
+      }
+      const range = { from: now, to: new Date(now.getTime() + 60 * 86_400_000) };
+      const upcoming = await repo.shifts(tx, { club: true }, range, DUTY_SHIFT_LIST_MAX);
+      const groupShifts: repo.ShiftRow[] = [];
+      for (const groupId of groupIds) {
+        groupShifts.push(...(await repo.shifts(tx, { groupId }, range, 100)));
+      }
+      const shifts = [...groupShifts, ...upcoming].sort(
+        (a, b) => a.startsAt.getTime() - b.startsAt.getTime(),
+      );
+      const assignments = await repo.assignments(
+        tx,
+        shifts.map((s) => s.id),
+      );
+      const filled = (id: string) => assignments.filter((a) => a.shiftId === id).length;
+      return {
+        quotas,
+        openShifts: shifts.filter((s) => filled(s.id) < s.needed),
+        shifts,
+        assignments,
+        swaps: await repo.openSwaps(
+          tx,
+          shifts.map((s) => s.id),
+        ),
+        visibility: await this.visibilityInTx(tx, groupIds),
+        timeZone: club.timeZone,
+      };
+    });
+  }
+
+  // --- Statistics ----------------------------------------------------------------
+
+  stats(
+    context: TenantContext,
+    groupId: string,
+    seasonId: string,
+  ): Promise<{ rows: repo.StatsRow[]; timeZone: string }> {
+    return this.db.withTenant(context, async (tx) => {
+      if (!(await repo.season(tx, seasonId))) throw new DomainError("duty_season_invalid");
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      return {
+        rows: await repo.stats(tx, groupId, seasonId, club.timeZone),
+        timeZone: club.timeZone,
+      };
+    });
+  }
+
+  // --- "Mitt schema" and the feeds ------------------------------------------------
+
+  /** The caller's and their wards' shifts in a period, across their clubs. */
+  myShifts(
+    context: ActorContext,
+    range: { from: Date; to: Date },
+    limit: number,
+  ): Promise<repo.MyDutyRow[]> {
+    return this.db.withActor(context, (tx) => repo.myDutyShifts(tx, range, limit));
   }
 }
 

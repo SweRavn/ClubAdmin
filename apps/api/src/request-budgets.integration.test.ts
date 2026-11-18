@@ -367,8 +367,8 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => "/cal/demo-anna-my-schedule.ics",
-    statements: 6,
-    pages: 560,
+    statements: 7,
+    pages: 600,
   },
   {
     route: "GET /cal/{secret}.ics (group)",
@@ -580,7 +580,7 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => `/api/v1/me/schedule?${range()}`,
-    statements: 4,
+    statements: 5,
     pages: 220,
   },
   {

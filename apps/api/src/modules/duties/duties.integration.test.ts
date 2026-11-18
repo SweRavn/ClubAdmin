@@ -7,7 +7,13 @@
 // assignment, quotas per season, and shifts never marked from "Mina uppgifter".
 
 import { createTestDatabase, type TestDatabase } from "@clubadmin/db/testing";
-import type { DutyQuota, DutyShiftList, DutyTypeList } from "@clubadmin/shared";
+import type {
+  DutyQuota,
+  DutyShiftList,
+  DutyTypeList,
+  MyDuties,
+  SchedulePage,
+} from "@clubadmin/shared";
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -272,7 +278,12 @@ describe("shifts, sign-up and assignment", () => {
     expect(detail(full)).toBe("duty_shift_full");
   });
 
-  it("the coach sees everyone; a parent sees their own on the activity's shifts", async () => {
+  it("the coach sees everyone; with visibility `leaders` a parent sees only their own", async () => {
+    await api(club.manager.id, "PUT", `/clubs/${club.id}/duty-settings`, {
+      visibility: "leaders",
+      groupsMayChangeVisibility: false,
+      aloneWithChildrenForbidden: true,
+    });
     const list = await api(
       coach.id,
       "GET",
@@ -288,6 +299,17 @@ describe("shifts, sign-up and assignment", () => {
     expect(seen.items[0]!.filled).toBe(2);
     expect(seen.items[0]!.assignments).toHaveLength(1);
     expect(seen.items[0]!.assignments[0]).toMatchObject({ mine: true });
+    // With `names` (the default) the group's members see who is on a shift.
+    await api(club.manager.id, "PUT", `/clubs/${club.id}/duty-settings`, {
+      visibility: "names",
+      groupsMayChangeVisibility: false,
+      aloneWithChildrenForbidden: true,
+    });
+    const named = (
+      await api(a.guardian.id, "GET", `/activities/${activityId}/duty-shifts`)
+    ).json<DutyShiftList>();
+    expect(named.items[0]!.assignments).toHaveLength(2);
+    expect(named.items[0]!.assignments.every((x) => x.person !== null)).toBe(true);
   });
 
   it("a sign-up is cancelled by the family, a leader's assignment only by the leaders", async () => {
@@ -378,5 +400,210 @@ describe("quotas", () => {
       `/clubs/${club.id}/groups/${teamId}/duty-quotas?seasonId=${seasonId}`,
     );
     expect(parent.statusCode).toBe(403);
+  });
+});
+
+describe("part B: visibility, swaps, Mitt schema, marking and statistics", () => {
+  const shiftsOf = async (personId: string) =>
+    (
+      await api(
+        personId,
+        "GET",
+        `/clubs/${club.id}/groups/${teamId}/duty-shifts?from=${day(0)}&to=${day(30)}`,
+      )
+    ).json<DutyShiftList>().items;
+
+  it("a group chooses its visibility only when the club lets it", async () => {
+    const locked = await api(coach.id, "PUT", `/clubs/${club.id}/groups/${teamId}/duty-settings`, {
+      visibility: "leaders",
+    });
+    expect(detail(locked)).toBe("duty_visibility_locked");
+    await api(club.manager.id, "PUT", `/clubs/${club.id}/duty-settings`, {
+      visibility: "names",
+      groupsMayChangeVisibility: true,
+      aloneWithChildrenForbidden: true,
+    });
+    const set = await api(coach.id, "PUT", `/clubs/${club.id}/groups/${teamId}/duty-settings`, {
+      visibility: "leaders",
+    });
+    expect(set.statusCode, set.body).toBe(204);
+    const seen = await api(coach.id, "GET", `/clubs/${club.id}/groups/${teamId}/duty-settings`);
+    expect(seen.json()).toEqual({ visibility: "leaders", effective: "leaders", mayChange: true });
+    const parent = (
+      await api(a.guardian.id, "GET", `/activities/${activityId}/duty-shifts`)
+    ).json<DutyShiftList>();
+    expect(parent.items[0]!.assignments).toHaveLength(1);
+    // Back to the club's.
+    await api(coach.id, "PUT", `/clubs/${club.id}/groups/${teamId}/duty-settings`, {
+      visibility: null,
+    });
+  });
+
+  it("an offered shift is taken by another family; the holder answers a request", async () => {
+    const [shift] = await shiftsOf(coach.id);
+    const mine = shift!.assignments.find((x) => x.person?.id === a.guardian.id)!;
+    const offered = await api(
+      a.guardian.id,
+      "POST",
+      `/clubs/${club.id}/duty-assignments/${mine.id}/swaps`,
+      { kind: "offer" },
+    );
+    expect(offered.statusCode, offered.body).toBe(201);
+    const offerId = offered.json<{ id: string }>().id;
+    const again = await api(
+      a.guardian.id,
+      "POST",
+      `/clubs/${club.id}/duty-assignments/${mine.id}/swaps`,
+      { kind: "offer" },
+    );
+    expect(detail(again)).toBe("duty_swap_open");
+    const own = await api(
+      a.guardian.id,
+      "POST",
+      `/clubs/${club.id}/duty-swaps/${offerId}/take`,
+      {},
+    );
+    expect(detail(own)).toBe("duty_swap_own");
+    // Mina uppgifter shows the offer to the other family.
+    const theirs = await api(siblings.guardian.id, "GET", `/me/duties?clubId=${club.id}`);
+    expect(theirs.statusCode, theirs.body).toBe(200);
+    expect(theirs.json<MyDuties>().swaps).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: offerId, canTake: true })]),
+    );
+    const taken = await api(
+      siblings.guardian.id,
+      "POST",
+      `/clubs/${club.id}/duty-swaps/${offerId}/take`,
+      { countsForPersonId: secondChild },
+    );
+    expect(taken.statusCode, taken.body).toBe(204);
+    let [now] = await shiftsOf(coach.id);
+    expect(now!.assignments.map((x) => x.person?.id).sort()).toEqual(
+      [siblings.guardian.id, siblings.coGuardian.id].sort(),
+    );
+    // A asks to take over the co-guardian's shift: declined, then accepted.
+    const theirsOnShift = now!.assignments.find((x) => x.person?.id === siblings.coGuardian.id)!;
+    const ask = async () =>
+      (
+        await api(
+          a.guardian.id,
+          "POST",
+          `/clubs/${club.id}/duty-assignments/${theirsOnShift.id}/swaps`,
+          { kind: "request" },
+        )
+      ).json<{ id: string }>().id;
+    const first = await ask();
+    const declined = await api(
+      siblings.coGuardian.id,
+      "POST",
+      `/clubs/${club.id}/duty-swaps/${first}/decline`,
+    );
+    expect(declined.statusCode).toBe(204);
+    const second = await ask();
+    const stranger = await api(coach.id, "POST", `/clubs/${club.id}/duty-swaps/${second}/accept`);
+    expect(stranger.statusCode).toBe(404);
+    const accepted = await api(
+      siblings.coGuardian.id,
+      "POST",
+      `/clubs/${club.id}/duty-swaps/${second}/accept`,
+    );
+    expect(accepted.statusCode, accepted.body).toBe(204);
+    [now] = await shiftsOf(coach.id);
+    expect(now!.assignments.find((x) => x.person?.id === a.guardian.id)).toMatchObject({
+      source: "swap",
+      countsFor: expect.objectContaining({ id: a.child.id }) as unknown,
+    });
+    const { rows } = await t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM outbox.events WHERE type = 'duty.changed'",
+    );
+    expect(rows[0]!.n).toBeGreaterThanOrEqual(3);
+  });
+
+  it("Mitt schema has the family's shifts; Mina uppgifter the quotas and open shifts", async () => {
+    const extra = await api(coach.id, "POST", `/clubs/${club.id}/groups/${teamId}/duty-shifts`, {
+      dutyTypeId: kioskId,
+      startsAt: `${day(12)}T09:00:00Z`,
+      endsAt: `${day(12)}T11:00:00Z`,
+    });
+    expect(extra.statusCode).toBe(201);
+    const schedule = await api(
+      a.guardian.id,
+      "GET",
+      `/me/schedule?from=${day(0)}T00:00:00Z&to=${day(30)}T00:00:00Z`,
+    );
+    expect(schedule.statusCode, schedule.body).toBe(200);
+    expect(schedule.json<SchedulePage>().duties).toEqual([
+      expect.objectContaining({ shiftId, title: "Kiosk", status: "planned" }),
+    ]);
+    const mine = (await api(a.guardian.id, "GET", `/me/duties?clubId=${club.id}`)).json<MyDuties>();
+    expect(mine.quotas).toEqual([
+      expect.objectContaining({ shiftsPerPlayer: 2, planned: 1, done: 0 }),
+    ]);
+    expect(mine.openShifts.map((x) => x.id)).toContain(extra.json<{ id: string }>().id);
+    expect(mine.openShifts.map((x) => x.id)).not.toContain(shiftId);
+  });
+
+  it("the planners mark a past shift done; the quota and the statistics count it", async () => {
+    const shift = (await shiftsOf(coach.id)).find((x) => x.id === shiftId);
+    const held = shift!.assignments.find((x) => x.person?.id === a.guardian.id)!;
+    const early = await api(
+      coach.id,
+      "POST",
+      `/clubs/${club.id}/groups/${teamId}/duty-shifts/${shiftId}/assignments/${held.id}/status`,
+      { status: "done" },
+    );
+    expect(detail(early)).toBe("duty_shift_not_started");
+    await t.query(
+      "admin",
+      "UPDATE public.tasks SET starts_at = now() - interval '3 hours', ends_at = now() - interval '1 hour' WHERE id = $1",
+      [shiftId],
+    );
+    const toMark = await api(
+      coach.id,
+      "GET",
+      `/clubs/${club.id}/groups/${teamId}/duty-shifts-to-mark`,
+    );
+    expect(toMark.json<DutyShiftList>().items.map((x) => x.id)).toEqual([shiftId]);
+    const marked = await api(
+      coach.id,
+      "POST",
+      `/clubs/${club.id}/groups/${teamId}/duty-shifts/${shiftId}/assignments/${held.id}/status`,
+      { status: "done" },
+    );
+    expect(marked.statusCode, marked.body).toBe(204);
+    const parentMarks = await api(a.guardian.id, "POST", `/me/task-assignments/${held.id}/status`, {
+      status: "planned",
+    });
+    expect(parentMarks.statusCode).toBe(404);
+    const quota = (
+      await api(
+        coach.id,
+        "GET",
+        `/clubs/${club.id}/groups/${teamId}/duty-quotas?seasonId=${seasonId}`,
+      )
+    ).json<DutyQuota>();
+    expect(quota.players.find((p) => p.person?.id === a.child.id)).toMatchObject({
+      done: 1,
+      planned: 0,
+    });
+    const csv = await api(
+      coach.id,
+      "GET",
+      `/clubs/${club.id}/groups/${teamId}/duty-stats?seasonId=${seasonId}`,
+    );
+    expect(csv.statusCode, csv.body).toBe(200);
+    expect(csv.headers["content-type"]).toContain("text/csv");
+    expect(csv.body.split("\r\n")[0]).toBe(
+      "person,counts_for,shifts_done,hours_done,shifts_planned,shifts_missed",
+    );
+    expect(csv.body).toContain(",1,2.0,0,0");
+    expect(await auditActionsOf(t, teamId)).toEqual(
+      expect.arrayContaining([
+        "duty.swap.offered",
+        "duty.swap.accepted",
+        "duty.assignment.completed",
+      ]),
+    );
   });
 });

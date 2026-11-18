@@ -322,7 +322,12 @@
     "duty_assigned_by_leader": "A leader assigned this shift. Contact the leader to change it.",
     "duty_needed_below_filled": "More people have signed up than the new number.",
     "duty_season_invalid": "The season does not exist in the club.",
-    "duty_source_invalid": "The activity or event does not belong to the group."
+    "duty_source_invalid": "The activity or event does not belong to the group.",
+    "duty_shift_not_started": "The shift has not started yet.",
+    "duty_visibility_locked": "The club does not let its groups choose the visibility of duties.",
+    "duty_swap_open": "The shift is offered already.",
+    "duty_swap_closed": "The swap is already done, declined or withdrawn.",
+    "duty_swap_own": "You cannot swap with yourself."
   },
   "roles": {
     "chair": "Chair",
@@ -2163,6 +2168,20 @@
         "title": "Your expense claim has been decided",
         "body": "Open My expenses in {club} to see the decision."
       }
+    },
+    "duty": {
+      "reminder": {
+        "title": "Reminder: {title} {when}",
+        "body": "Your duty in {club}. Open My tasks for details."
+      },
+      "assigned": {
+        "title": "{kind, select, unassigned {You were taken off a duty} other {You were given a duty}}",
+        "body": "{title} {when} in {club}. Open My tasks for details."
+      },
+      "swap": {
+        "title": "{kind, select, swap_requested {Someone wants to take over your duty} swap_declined {Your duty swap was declined} other {A duty was swapped}}",
+        "body": "{title} {when} in {club}. Open My tasks to see what applies."
+      }
     }
   },
   "notifyCategories": {
@@ -2178,7 +2197,8 @@
     "chat": "Chat",
     "documents": "Documents",
     "announcements": "Announcements",
-    "carpool": "Car pooling"
+    "carpool": "Car pooling",
+    "duties": "Duties"
   },
   "notifications": {
     "title": "Notifications",
@@ -3147,7 +3167,8 @@
       "linkNotComing": "{name} is not coming: {url}",
       "answerBy": "Answer by {deadline}",
       "footer": "Subscribed via ClubAdmin – manage at {url}",
-      "noAccess": "This subscription no longer has access."
+      "noAccess": "This subscription no longer has access.",
+      "duty": "Duty: {title}"
     },
     "ui": {
       "title": "Calendar subscriptions",

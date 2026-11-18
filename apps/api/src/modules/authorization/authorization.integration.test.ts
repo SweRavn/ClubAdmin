@@ -1287,6 +1287,41 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts/${SOME_ID}/assignments/${SOME_ID}`,
       expected: { ...CLUB_FORBIDDEN, manager: 404 },
     },
+    // Part B: marking, "Att markera", a group's visibility, statistics.
+    "POST /api/v1/clubs/:clubId/groups/:groupId/duty-shifts/:shiftId/assignments/:assignmentId/status":
+      {
+        url: () =>
+          `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts/${SOME_ID}/assignments/${SOME_ID}/status`,
+        expected: TEAM_MANAGERS(404),
+        body: { status: "done" },
+      },
+    "POST /api/v1/clubs/:clubId/duty-shifts/:shiftId/assignments/:assignmentId/status": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts/${SOME_ID}/assignments/${SOME_ID}/status`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+      body: { status: "done" },
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/duty-shifts-to-mark": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts-to-mark`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "GET /api/v1/clubs/:clubId/duty-shifts-to-mark": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts-to-mark`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/duty-settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-settings`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "PUT /api/v1/clubs/:clubId/groups/:groupId/duty-settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-settings`,
+      // The matrix's club does not let its groups choose.
+      expected: TEAM_MANAGERS(403),
+      body: { visibility: "open" },
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/duty-stats": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-stats?seasonId=${SOME_ID}`,
+      expected: TEAM_MANAGERS(400),
+    },
     "GET /api/v1/activities/:activityId/duty-shifts": {
       url: () => `/api/v1/activities/${m.activityId}/duty-shifts`,
       expected: INSIDERS,

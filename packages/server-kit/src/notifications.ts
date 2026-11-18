@@ -238,6 +238,9 @@ export function noticeLink(input: NoticeInput): string {
     // Calendar subscriptions (P1.11): the person's subscriptions page.
     case "calendar_feed":
       return "/me/calendar";
+    // Volunteer duties (P2.6): one's shifts are in "Mina uppgifter".
+    case "duty_shift":
+      return "/me/tasks";
     default:
       return "/";
   }

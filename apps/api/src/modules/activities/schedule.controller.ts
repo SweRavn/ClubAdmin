@@ -2,9 +2,12 @@
 // "My schedule" (P1.4, ADR 0034): the activities of my groups and of my
 // wards' groups (those whose schedule I may see: the view_schedule right),
 // across clubs. When acting on behalf of a ward, only the ward's schedule.
+// Their duty shifts (P2.6) come with the first page.
 
 import {
+  type PersonSummary,
   type ResponseMode,
+  type ScheduleDuty,
   type SchedulePage,
   SchedulePageSchema,
   type ScheduleQuery,
@@ -19,6 +22,7 @@ import {
   PersonPresenter,
   type RequestAuthorization,
 } from "../authorization/index.ts";
+import { DutiesService } from "../duties/index.ts";
 import { PeopleService } from "../people/index.ts";
 import { ActivitiesService } from "./activities.service.ts";
 import { respondablePeople } from "./attendance.controller.ts";
@@ -35,11 +39,18 @@ export class ScheduleController {
   private readonly activities: ActivitiesService;
   private readonly people: PeopleService;
   private readonly presenter: PersonPresenter;
+  private readonly duties: DutiesService;
 
-  constructor(activities: ActivitiesService, people: PeopleService, presenter: PersonPresenter) {
+  constructor(
+    activities: ActivitiesService,
+    people: PeopleService,
+    presenter: PersonPresenter,
+    duties: DutiesService,
+  ) {
     this.activities = activities;
     this.people = people;
     this.presenter = presenter;
+    this.duties = duties;
   }
 
   @Endpoint({
@@ -134,6 +145,38 @@ export class ScheduleController {
       }),
       nextCursor: page.nextCursor,
       people,
+      ...(query.cursor
+        ? {}
+        : { duties: await this.dutiesOf(authz.context, query, everyone, shown) }),
     };
+  }
+
+  /** The duty shifts of the schedule's people in its period. */
+  private async dutiesOf(
+    context: RequestAuthorization["context"],
+    query: ScheduleQuery,
+    everyone: readonly string[],
+    shown: Map<string, PersonSummary>,
+  ): Promise<ScheduleDuty[]> {
+    const from = new Date(query.from);
+    const to = new Date(query.to);
+    const people = new Set(query.personId ? [query.personId] : everyone);
+    const rows = await this.duties.myShifts(context, { from, to }, 200);
+    return rows
+      .filter((r) => people.has(r.personId) && (!query.clubId || r.clubId === query.clubId))
+      .map((r) => ({
+        assignmentId: r.assignmentId,
+        shiftId: r.shiftId,
+        club: { id: r.clubId, name: r.clubName, timeZone: r.timeZone },
+        groupName: r.groupName,
+        title: r.title,
+        typeName: r.typeName,
+        startsAt: r.startsAt.toISOString(),
+        endsAt: r.endsAt.toISOString(),
+        place: r.locationName,
+        activityId: r.activityId,
+        person: shown.get(r.personId) ?? null,
+        status: r.status,
+      }));
   }
 }

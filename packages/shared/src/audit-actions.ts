@@ -269,6 +269,14 @@ export const AUDIT_ACTIONS = [
   "duty.assignment.assigned",
   "duty.assignment.unassigned",
   "duty.quota.set",
+  // Part B: marked by the planners, swaps, a group's visibility.
+  "duty.assignment.completed",
+  "duty.assignment.updated",
+  "duty.swap.offered",
+  "duty.swap.requested",
+  "duty.swap.accepted",
+  "duty.swap.declined",
+  "duty.swap.withdrawn",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
