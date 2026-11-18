@@ -18,6 +18,7 @@ import { ClubProfilesService } from "./modules/club-profiles/index.ts";
 import { ClubTypesService } from "./modules/club-types/index.ts";
 import { ClubsService } from "./modules/clubs/index.ts";
 import { DocumentsService, GoverningService } from "./modules/documents/index.ts";
+import { DutiesService } from "./modules/duties/index.ts";
 import { EventsService } from "./modules/events/index.ts";
 import { ExpensesService } from "./modules/expenses/index.ts";
 import { GroupsService } from "./modules/groups/index.ts";
@@ -81,6 +82,7 @@ export interface CoreServices {
   meetings: MeetingsService;
   carpools: CarpoolsService;
   expenses: ExpensesService;
+  duties: DutiesService;
   announcements: AnnouncementsService;
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
@@ -168,6 +170,7 @@ export function createCoreServices(
       clubs,
       entitlements: { has: () => Promise.resolve(true) },
     }),
+    duties: new DutiesService(db, { clubs }),
     activities,
     attendance,
     events,

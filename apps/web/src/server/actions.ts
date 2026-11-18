@@ -20,6 +20,9 @@ import {
   CLUB_SETTINGS,
   type ClubSettingDefinition,
   CONSENT_PURPOSES,
+  DUTY_CHILD_CONTACTS,
+  DUTY_SWAP_KINDS,
+  DUTY_VISIBILITIES,
   EMAIL_MODES,
   EVENT_ACTIVITIES_MAX,
   EVENT_QUESTIONS_MAX,
@@ -42,6 +45,7 @@ import {
   RegisterFilterSchema,
   RESPONSE_MODES,
   RESPONSE_STATUSES,
+  TASK_ASSIGNMENT_STATUSES,
   TRANSPORT_MODES,
   WAITLIST_MODES,
   WAITLIST_PRIORITY_REASONS,
@@ -2684,6 +2688,251 @@ function offerFields(form: FormData) {
 }
 const carpoolBack = (activityId: string) => `/activities/${activityId}`;
 
+// Volunteer duties (P2.6, ADR 0050): the catalogue and settings, a group's
+// or the club's shifts, sign-up, swaps, marking, quotas.
+const shiftsPath = (clubId: string, groupId: string | null) =>
+  groupId
+    ? `/api/v1/clubs/${clubId}/groups/${groupId}/duty-shifts`
+    : `/api/v1/clubs/${clubId}/duty-shifts`;
+const optionalId = (form: FormData, name: string) => id(form, name) ?? undefined;
+const saved = (form: FormData) => withParam(back(form), "saved", "1");
+
+const DUTY_ACTIONS: Record<string, FormAction> = {
+  "duty-type-create": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const name = text(form, "name");
+      const minAge = text(form, "minAge");
+      const childContact = oneOf(DUTY_CHILD_CONTACTS, text(form, "childContact")) ?? "none";
+      if (!clubId || !name) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/duty-types`,
+        method: "POST",
+        body: {
+          name,
+          instruction: optional(text(form, "instruction")) ?? null,
+          minAge: minAge === "" ? null : Number(minAge),
+          childContact,
+        },
+      };
+    },
+    done: saved,
+  },
+  "duty-type-update": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const typeId = id(form, "typeId");
+      if (!clubId || !typeId) return null;
+      const body: Record<string, unknown> = {};
+      if (form.has("archive")) body.archived = text(form, "archive") === "archive";
+      else {
+        const minAge = text(form, "minAge");
+        body.name = text(form, "name");
+        body.instruction = optional(text(form, "instruction")) ?? null;
+        body.minAge = minAge === "" ? null : Number(minAge);
+        body.childContact = oneOf(DUTY_CHILD_CONTACTS, text(form, "childContact")) ?? "none";
+      }
+      return { path: `/api/v1/clubs/${clubId}/duty-types/${typeId}`, method: "PATCH", body };
+    },
+    done: saved,
+  },
+  "duty-settings": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const visibility = oneOf(DUTY_VISIBILITIES, text(form, "visibility"));
+      if (!clubId || !visibility) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/duty-settings`,
+        method: "PUT",
+        body: {
+          visibility,
+          groupsMayChangeVisibility: text(form, "groupsMayChangeVisibility") === "on",
+          aloneWithChildrenForbidden: text(form, "aloneWithChildrenForbidden") === "on",
+        },
+      };
+    },
+    done: saved,
+  },
+  "duty-group-settings": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const groupId = id(form, "groupId");
+      if (!clubId || !groupId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/groups/${groupId}/duty-settings`,
+        method: "PUT",
+        body: { visibility: oneOf(DUTY_VISIBILITIES, text(form, "visibility")) },
+      };
+    },
+    done: saved,
+  },
+  "duty-shift-create": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const dutyTypeId = id(form, "dutyTypeId");
+      const startsAt = instant(form, "date", "startTime");
+      const endsAt = instant(form, "date", "endTime");
+      const needed = Number(text(form, "needed") || "1");
+      if (!clubId || !dutyTypeId || !startsAt || !endsAt || !(needed >= 1 && needed <= 50)) {
+        return null;
+      }
+      return {
+        path: shiftsPath(clubId, id(form, "groupId")),
+        method: "POST",
+        body: {
+          dutyTypeId,
+          title: optional(text(form, "title")) ?? null,
+          note: optional(text(form, "note")) ?? null,
+          startsAt,
+          endsAt,
+          needed,
+          activityId: optionalId(form, "activityId") ?? null,
+        },
+      };
+    },
+    done: saved,
+  },
+  "duty-shift-delete": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const shiftId = id(form, "shiftId");
+      return clubId && shiftId
+        ? { path: `${shiftsPath(clubId, id(form, "groupId"))}/${shiftId}`, method: "DELETE" }
+        : null;
+    },
+    done: saved,
+  },
+  "duty-assign": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const shiftId = id(form, "shiftId");
+      const personId = id(form, "personId");
+      if (!clubId || !shiftId || !personId) return null;
+      return {
+        path: `${shiftsPath(clubId, id(form, "groupId"))}/${shiftId}/assignments`,
+        method: "POST",
+        body: { personId, countsForPersonId: optionalId(form, "countsForPersonId") ?? null },
+      };
+    },
+    done: saved,
+  },
+  "duty-unassign": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const shiftId = id(form, "shiftId");
+      const assignmentId = id(form, "assignmentId");
+      return clubId && shiftId && assignmentId
+        ? {
+            path: `${shiftsPath(clubId, id(form, "groupId"))}/${shiftId}/assignments/${assignmentId}`,
+            method: "DELETE",
+          }
+        : null;
+    },
+    done: saved,
+  },
+  "duty-mark": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const shiftId = id(form, "shiftId");
+      const assignmentId = id(form, "assignmentId");
+      const status = oneOf(TASK_ASSIGNMENT_STATUSES, text(form, "status"));
+      if (!clubId || !shiftId || !assignmentId || !status) return null;
+      return {
+        path: `${shiftsPath(clubId, id(form, "groupId"))}/${shiftId}/assignments/${assignmentId}/status`,
+        method: "POST",
+        body: { status },
+      };
+    },
+    done: saved,
+  },
+  "duty-quota": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const groupId = id(form, "groupId");
+      const seasonId = id(form, "seasonId");
+      const raw = text(form, "shiftsPerPlayer");
+      const shiftsPerPlayer = raw === "" ? null : Number(raw);
+      if (!clubId || !groupId || !seasonId) return null;
+      if (
+        shiftsPerPlayer !== null &&
+        !(Number.isInteger(shiftsPerPlayer) && shiftsPerPlayer >= 0)
+      ) {
+        return null;
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/groups/${groupId}/duty-quotas`,
+        method: "PUT",
+        body: { seasonId, shiftsPerPlayer },
+      };
+    },
+    done: saved,
+  },
+  "duty-signup": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const shiftId = id(form, "shiftId");
+      if (!clubId || !shiftId) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/duty-shifts/${shiftId}/signups`,
+        method: "POST",
+        body: {
+          personId: optionalId(form, "personId") ?? null,
+          countsForPersonId: optionalId(form, "countsForPersonId") ?? null,
+        },
+      };
+    },
+    done: saved,
+  },
+  "duty-cancel": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const shiftId = id(form, "shiftId");
+      const assignmentId = id(form, "assignmentId");
+      return clubId && shiftId && assignmentId
+        ? {
+            path: `/api/v1/clubs/${clubId}/duty-shifts/${shiftId}/signups/${assignmentId}`,
+            method: "DELETE",
+          }
+        : null;
+    },
+    done: saved,
+  },
+  "duty-swap": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const assignmentId = id(form, "assignmentId");
+      const kind = oneOf(DUTY_SWAP_KINDS, text(form, "kind"));
+      if (!clubId || !assignmentId || !kind) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/duty-assignments/${assignmentId}/swaps`,
+        method: "POST",
+        body: { kind, countsForPersonId: optionalId(form, "countsForPersonId") ?? null },
+      };
+    },
+    done: saved,
+  },
+  "duty-swap-answer": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const swapId = id(form, "swapId");
+      const answer = oneOf(
+        ["take", "accept", "decline", "withdraw"] as const,
+        text(form, "answer"),
+      );
+      if (!clubId || !swapId || !answer) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/duty-swaps/${swapId}/${answer}`,
+        method: "POST",
+        body:
+          answer === "take"
+            ? { countsForPersonId: optionalId(form, "countsForPersonId") ?? null }
+            : undefined,
+      };
+    },
+    done: saved,
+  },
+};
+
 const CARPOOL_ACTIONS: Record<string, FormAction> = {
   "carpool-offer": {
     call: (form) => {
@@ -2851,6 +3100,7 @@ const CARPOOL_ACTIONS: Record<string, FormAction> = {
 
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...CARPOOL_ACTIONS,
+  ...DUTY_ACTIONS,
   ...ANNOUNCEMENT_ACTIONS,
   ...GOVERNING_ACTIONS,
   ...DOCUMENT_ACTIONS,

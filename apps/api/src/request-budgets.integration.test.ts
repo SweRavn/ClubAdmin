@@ -20,6 +20,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { loadDemoData } from "./seed/demodata.ts";
 import { seed } from "./seed/runner.ts";
 import { DEMO_CARPOOL_IDS } from "./seed/steps/carpools.ts";
+import { DEMO_DUTY_IDS } from "./seed/steps/duties.ts";
 import { SeedClock } from "./seed/time.ts";
 import { devToken, TEST_DEV_AUTH_KEY } from "./testing/oidc.ts";
 import { createCoreServices } from "./testing/services.ts";
@@ -128,6 +129,24 @@ const BILLING_CASES: Case[] = [
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // Volunteer duties (P2.6): the kiosk and score table at P2012's home match,
+  // Anna signed up for Oskar and Ahmed's shift offered to another family.
+  {
+    route: "GET /api/v1/activities/{activityId}/duty-shifts",
+    persona: "anna",
+    method: "GET",
+    url: () => `/api/v1/activities/${DEMO_DUTY_IDS.homeMatch}/duty-shifts`,
+    statements: 7,
+    pages: 200,
+  },
+  {
+    route: "GET /api/v1/me/duties",
+    persona: "anna",
+    method: "GET",
+    url: () => `/api/v1/me/duties?clubId=${key("ikn")}`,
+    statements: 12,
+    pages: 120,
+  },
   // Car pools (P2.5): Saturday's away match of IK Norrbacka P2012 with two
   // cars there and back; Ahmed drives one and his son has seats in Anna's.
   {
@@ -936,6 +955,20 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  // Volunteer duties (P2.6): writes that cannot repeat; the duties tests
+  // cover them. Each locks the shift and reads it, its assignments and the
+  // family's guardianships by key.
+  "POST /api/v1/clubs/{clubId}/duty-shifts/{shiftId}/signups":
+    "the shift locked by key, its assignments, the family, one insert, audit and outbox",
+  "DELETE /api/v1/clubs/{clubId}/duty-shifts/{shiftId}/signups/{assignmentId}":
+    "as a sign-up: one delete by key, audit and outbox",
+  "POST /api/v1/clubs/{clubId}/duty-assignments/{assignmentId}/swaps":
+    "the assignment by key, the family, one insert, audit and outbox",
+  "POST /api/v1/clubs/{clubId}/duty-swaps/{swapId}/take":
+    "the swap and its assignment locked by key, one update each, audit and outbox",
+  "POST /api/v1/clubs/{clubId}/duty-swaps/{swapId}/accept": "as taking an offer",
+  "POST /api/v1/clubs/{clubId}/duty-swaps/{swapId}/decline": "the swap by key, one update, audit",
+  "POST /api/v1/clubs/{clubId}/duty-swaps/{swapId}/withdraw": "as declining",
   // Car pools (P2.5): writes that cannot repeat (each changes what the next
   // finds); the carpools tests cover them. Each locks the activity, reads the
   // car's seats by the offer's index and the people's guardians by key.

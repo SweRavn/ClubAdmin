@@ -23,6 +23,7 @@ import { ActivityFields } from "../../../../components/activity-fields.tsx";
 import { CarpoolSection } from "../../../../components/carpool.tsx";
 import { ClubTime } from "../../../../components/club-time.tsx";
 import { NoticeDocuments } from "../../../../components/documents.tsx";
+import { ActivityDuties } from "../../../../components/duties.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
 import { AgendaLink } from "../../../../components/meetings.tsx";
@@ -30,8 +31,11 @@ import { recurrenceText, requestLeadText } from "../../../../components/recurren
 import { ResponseButtons, ResponseForm } from "../../../../components/response-buttons.tsx";
 import {
   getActivity,
+  getActivityDutyShifts,
   getCarpool,
   getLocations,
+  getMe,
+  getMyWards,
   getResponseList,
   getResponseSummary,
 } from "../../../../server/data.ts";
@@ -47,13 +51,20 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ActivityPage({ params, searchParams }: Props) {
   const [{ activityId }, query] = await Promise.all([params, searchParams]);
-  const [t, activity, answers, list, carpool] = await Promise.all([
+  const [t, activity, answers, list, carpool, duties, me, wards] = await Promise.all([
     getTranslations(),
     getActivity(activityId),
     getResponseSummary(activityId),
     getResponseList(activityId),
     getCarpool(activityId),
+    getActivityDutyShifts(activityId),
+    getMe(),
+    getMyWards(),
   ]);
+  const family = {
+    me: me.person,
+    children: wards.wards.filter((w) => w.rights.includes("act_on_behalf")).map((w) => w.person),
+  };
   const locations = activity.canManage ? await getLocations(activity.clubId, true) : [];
   const asked = answers.responseMode !== "none";
   const zone = activity.timeZone;
@@ -355,6 +366,11 @@ export default async function ActivityPage({ params, searchParams }: Props) {
       ) : null}
 
       <CarpoolSection activity={activity} carpool={carpool} />
+      <ActivityDuties
+        shifts={duties?.items ?? []}
+        family={family}
+        back={`/activities/${activity.id}`}
+      />
       <NoticeDocuments kind="activities" noticeId={activity.id} clubId={activity.clubId} />
       {activity.kind === "meeting" ? (
         <AgendaLink href={`/activities/${activity.id}/agenda`} />

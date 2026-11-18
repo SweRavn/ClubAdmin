@@ -17,6 +17,7 @@ import { useFormatter, useLocale, useTranslations } from "use-intl";
 import {
   type SchedulePage,
   useActivity,
+  useActivityDuties,
   useCarpool,
   useMyGroups,
   useResponseList,
@@ -24,6 +25,7 @@ import {
 } from "../../../api/queries.ts";
 import { CarpoolSection } from "../../../components/carpool.tsx";
 import { DataAge } from "../../../components/data-age.tsx";
+import { DutyShifts } from "../../../components/duties.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
 import { NoticeDocuments } from "../../../components/notice-documents.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
@@ -60,6 +62,7 @@ function Activity({ activityId }: { activityId: string }) {
   const myGroups = useMyGroups();
   const cached = useCachedEntry(activityId);
   const carpool = useCarpool(activityId, activity.data?.transportMode === "own");
+  const duties = useActivityDuties(activityId);
   useProtectScreen(
     (activity.data?.leaders ?? []).some((p) => p.protected),
     `activity-${activityId}`,
@@ -262,6 +265,9 @@ function Activity({ activityId }: { activityId: string }) {
           </Row>
         </Section>
       ) : null}
+
+      {/* Volunteer duties (P2.6): the activity's shifts and signing up. */}
+      {duties.data ? <DutyShifts title={t("duties.title")} shifts={duties.data.items} /> : null}
 
       <NoticeDocuments kind="activities" noticeId={activityId} />
 

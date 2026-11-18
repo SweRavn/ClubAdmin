@@ -19,6 +19,7 @@ import { carpoolsDemoStep } from "./steps/carpools.ts";
 import { chatDemoStep } from "./steps/chat.ts";
 import { type DemoResult, seedCore } from "./steps/core.ts";
 import { documentsDemoStep } from "./steps/documents.ts";
+import { dutiesDemoStep } from "./steps/duties.ts";
 import { eventsDemoStep } from "./steps/events.ts";
 import { governingDemoStep } from "./steps/governing.ts";
 import { importsDemoStep } from "./steps/imports.ts";
@@ -46,6 +47,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   announcementsDemoStep,
   governingDemoStep,
   carpoolsDemoStep,
+  dutiesDemoStep,
 ];
 
 export interface SeedOptions {

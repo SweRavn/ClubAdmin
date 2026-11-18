@@ -24,9 +24,11 @@ import type {
   SchedulePage,
 } from "./api/queries.ts";
 import type * as CarpoolModuleType from "./components/carpool.tsx";
+import type * as DutiesModuleType from "./components/duties.tsx";
 import { ClubProvider } from "./state/club.tsx";
 
 type CarpoolModule = typeof CarpoolModuleType;
+type DutiesModule = typeof DutiesModuleType;
 
 const ANNA = "0199a000-0000-7000-8000-000000000001";
 const ELSA = "0199a000-0000-7000-8000-000000000003";
@@ -630,6 +632,85 @@ describe("screens", () => {
     expect(screen.getByText("Sara Ahmed and 1 more")).toBeTruthy();
     expect(screen.getByTestId(`carpool-book-${offer.id}-${ELSA}`)).toBeTruthy();
     expect(screen.getByTestId("carpool-offer-submit")).toBeTruthy();
+  });
+
+  it("Mina uppgifter's duties show quotas, an offered shift to take and open shifts", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
+    const { MyDutiesSections } = require("./components/duties.tsx") as DutiesModule;
+    const shift = {
+      id: "0199a000-0000-7000-8018-000000000001",
+      clubId: SVK,
+      groupId: F2017,
+      groupName: "F2017",
+      dutyType: {
+        id: "0199a000-0000-7000-8019-000000000001",
+        name: "Kiosk",
+        minAge: 13,
+        childContact: "with_children" as const,
+      },
+      title: "Kiosk – hemmamatch",
+      note: "Hemmamatch",
+      startsAt: "2030-05-04T12:30:00Z",
+      endsAt: "2030-05-04T15:00:00Z",
+      timeZone: "Europe/Stockholm",
+      locationId: null,
+      locationName: null,
+      activityId: null,
+      eventId: null,
+      needed: 2,
+      filled: 1,
+      assignments: [
+        {
+          id: "0199a000-0000-7000-8020-000000000001",
+          person: null,
+          countsFor: null,
+          source: "signup" as const,
+          status: "planned" as const,
+          mine: false,
+        },
+      ],
+    };
+    renderScreen(
+      <MyDutiesSections
+        duties={
+          {
+            clubId: SVK,
+            quotas: [
+              {
+                groupId: F2017,
+                groupName: "F2017",
+                seasonId: "0199a000-0000-7000-8021-000000000001",
+                player: summary(ELSA, "Elsa Lindqvist"),
+                shiftsPerPlayer: 2,
+                done: 1,
+                planned: 0,
+              },
+            ],
+            openShifts: [shift],
+            swaps: [
+              {
+                id: "0199a000-0000-7000-8022-000000000001",
+                kind: "offer",
+                status: "open",
+                assignmentId: "0199a000-0000-7000-8020-000000000001",
+                shift: { ...shift },
+                holder: null,
+                taker: null,
+                mine: false,
+                canTake: true,
+                canAccept: false,
+              },
+            ],
+          } as unknown as Parameters<typeof MyDutiesSections>[0]["duties"]
+        }
+      />,
+    );
+    expect(screen.getByText("1 done, 0 planned of 2")).toBeTruthy();
+    expect(screen.getByText("Offered: Kiosk – hemmamatch")).toBeTruthy();
+    expect(screen.getByTestId("duty-swap-take-0199a000-0000-7000-8022-000000000001")).toBeTruthy();
+    expect(screen.getByText("1 of 2")).toBeTruthy();
+    expect(screen.getByText("Someone")).toBeTruthy();
+    expect(screen.getByText("Sign up (counts for Elsa Lindqvist)")).toBeTruthy();
   });
 
   it("an invalid ID in a deep link shows not found", () => {

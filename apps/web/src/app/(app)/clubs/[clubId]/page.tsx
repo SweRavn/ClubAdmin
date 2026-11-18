@@ -137,6 +137,16 @@ export default async function ClubPage({ params, searchParams }: Params) {
               </a>
             </>
           ) : null}
+          {permissions.includes("club.duties.read") ||
+          permissions.includes("club.duty_types.manage") ? (
+            <a
+              href={`/clubs/${club.id}/duties`}
+              className="text-sm text-accent underline"
+              data-testid="club-duties-link"
+            >
+              {t("duties.title")}
+            </a>
+          ) : null}
           {canAudit ? (
             <a
               href={`/clubs/${club.id}/audit`}

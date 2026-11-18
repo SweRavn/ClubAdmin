@@ -124,3 +124,21 @@ Decided with the prompt's review:
   (`app.my_duty_shifts`, migration 0052); "Mina uppgifter" reads `GET
   /me/duties?clubId=` per club. Statistics as CSV per person and player.
 
+## As implemented (part C, 2026-11-18)
+
+- Web: the group's page for its planners (`/groups/:id/duties`: coming
+  shifts unstaffed first, new shifts, assigning and removing, "Att
+  markera", the quota per season with the statistics CSV, the group's
+  visibility), the club's page (`/clubs/:id/duties`: duty types, archiving,
+  settings; "alone with children" is not offered where the country pack or
+  the club forbids it), shifts with sign-up on the activity, and the
+  family's quotas, swaps and open shifts in "Mina uppgifter" with offering
+  one's own shift.
+- "Mina uppgifter" chooses among the family's clubs: the caller's and those
+  of the children they act for (a guardian need not be a member).
+- App: the same in "Mina uppgifter" (quotas, take, accept or decline,
+  withdraw, offer one's shift, sign up counting for a child in the shift's
+  group) and on the activity screen; planning stays on the web.
+- Request budgets for `GET /me/duties` and `GET /activities/:id/duty-shifts`;
+  the writes are listed with their costs.
+

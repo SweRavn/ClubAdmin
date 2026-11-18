@@ -441,6 +441,16 @@ schedule (Ola left two years ago).
   matches; Ahmed approved her claim for the first and rejected the second
   ("Laget åkte buss …"). Try `/activities/<away match>` as Anna or Ahmed,
   `/me/expenses` as Anna and `/clubs/<ikn>/expenses` as Ahmed.
+- **Volunteer duties** (P2.6, `apps/api/src/seed/steps/duties.ts`): IK
+  Norrbacka's duty types Kiosk (from 13, no contact with children) and
+  Sekretariat (from 15, with children); P2012's quota is two shifts per
+  player this season. P2012 plays at home against Kalmarby IF in three days:
+  the kiosk (two places: Anna counting for Oskar, Ahmed counting for Liam,
+  his shift offered to another family) and the score table (unstaffed) are
+  on the activity. Kiosk shifts at two later home matches are open, and last
+  week's kiosk, which Anna had, is still to be marked. Try `/activities/<home
+  match>` and `/me/tasks` as Anna, `/groups/<p2012>/duties` as Ahmed and
+  `/clubs/<ikn>/duties` as Karin.
 
 ## Club-defined roles (P1.15)
 

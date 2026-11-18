@@ -1213,3 +1213,146 @@ export function useConfirmCarpoolSeat() {
     onSuccess: refresh,
   });
 }
+
+// --- Volunteer duties (P2.6) ---------------------------------------------------------
+
+export const activityDutiesQuery = (api: ApiClient, scope: Scope, activityId: string) => ({
+  queryKey: ["duties", "activity", activityId, ...scope] as const,
+  queryFn: async () =>
+    data(
+      await api.GET("/api/v1/activities/{activityId}/duty-shifts", {
+        params: { path: { activityId } },
+      }),
+    ),
+});
+
+export const myDutiesQuery = (api: ApiClient, scope: Scope, clubId: string) => ({
+  queryKey: ["duties", "mine", clubId, ...scope] as const,
+  queryFn: async () => data(await api.GET("/api/v1/me/duties", { params: { query: { clubId } } })),
+});
+
+/** The response types (nullable people are typed as the endpoints return them). */
+export type DutyShift = Awaited<
+  ReturnType<ReturnType<typeof activityDutiesQuery>["queryFn"]>
+>["items"][number];
+export type MyDuties = Awaited<ReturnType<ReturnType<typeof myDutiesQuery>["queryFn"]>>;
+
+/** An activity's shifts (who is on them as the club's visibility allows). */
+export function useActivityDuties(activityId: string) {
+  const { api, personId } = useSession();
+  return useQuery({ ...activityDutiesQuery(api, useScope(), activityId), enabled: !!personId });
+}
+
+/** My family's quotas, open shifts and swaps in a club ("Mina uppgifter"). */
+export function useMyDuties(clubId: string | null) {
+  const { api, personId } = useSession();
+  return useQuery({
+    ...myDutiesQuery(api, useScope(), clubId ?? ""),
+    enabled: !!personId && !!clubId,
+  });
+}
+
+/** After a change the shifts, "Mina uppgifter" and the schedule are fetched again. */
+function useDutyRefresh() {
+  const queryClient = useQueryClient();
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: ["duties"] });
+    void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    void queryClient.invalidateQueries({ queryKey: ["schedule"] });
+  };
+}
+
+/** Signs me (or my child) up for a shift, counting for one of my players. */
+export function useDutySignUp() {
+  const { api } = useSession();
+  const refresh = useDutyRefresh();
+  return useMutation({
+    mutationFn: async ({
+      clubId,
+      shiftId,
+      ...body
+    }: { clubId: string; shiftId: string } & Schemas["DutySignUp"]) =>
+      data(
+        await api.POST("/api/v1/clubs/{clubId}/duty-shifts/{shiftId}/signups", {
+          params: { path: { clubId, shiftId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+/** Cancels my own sign-up (an assigned shift is changed by its planner or by a swap). */
+export function useDutyCancel() {
+  const { api } = useSession();
+  const refresh = useDutyRefresh();
+  return useMutation({
+    mutationFn: async ({
+      clubId,
+      shiftId,
+      assignmentId,
+    }: {
+      clubId: string;
+      shiftId: string;
+      assignmentId: string;
+    }) => {
+      await api.DELETE("/api/v1/clubs/{clubId}/duty-shifts/{shiftId}/signups/{assignmentId}", {
+        params: { path: { clubId, shiftId, assignmentId } },
+      });
+    },
+    onSuccess: refresh,
+  });
+}
+
+/** Offers my shift to another family, or asks to take over someone's. */
+export function useCreateDutySwap() {
+  const { api } = useSession();
+  const refresh = useDutyRefresh();
+  return useMutation({
+    mutationFn: async ({
+      clubId,
+      assignmentId,
+      ...body
+    }: { clubId: string; assignmentId: string } & Schemas["CreateDutySwap"]) => {
+      await api.POST("/api/v1/clubs/{clubId}/duty-assignments/{assignmentId}/swaps", {
+        params: { path: { clubId, assignmentId } },
+        body,
+      });
+    },
+    onSuccess: refresh,
+  });
+}
+
+/** Takes an offered shift, accepts or declines a request, or withdraws my own swap. */
+export function useAnswerDutySwap() {
+  const { api } = useSession();
+  const refresh = useDutyRefresh();
+  return useMutation({
+    mutationFn: async ({
+      clubId,
+      swapId,
+      answer,
+      body,
+    }: {
+      clubId: string;
+      swapId: string;
+      answer: "take" | "accept" | "decline" | "withdraw";
+      body?: Schemas["TakeDutySwap"];
+    }) => {
+      const params = { path: { clubId, swapId } };
+      if (answer === "take") {
+        await api.POST("/api/v1/clubs/{clubId}/duty-swaps/{swapId}/take", {
+          params,
+          body: body ?? {},
+        });
+      } else if (answer === "accept") {
+        await api.POST("/api/v1/clubs/{clubId}/duty-swaps/{swapId}/accept", { params });
+      } else if (answer === "decline") {
+        await api.POST("/api/v1/clubs/{clubId}/duty-swaps/{swapId}/decline", { params });
+      } else {
+        await api.POST("/api/v1/clubs/{clubId}/duty-swaps/{swapId}/withdraw", { params });
+      }
+    },
+    onSuccess: refresh,
+  });
+}

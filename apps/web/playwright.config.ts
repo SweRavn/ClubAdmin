@@ -89,6 +89,12 @@ export default defineConfig({
           testMatch: /carpools\.spec\.ts/,
           dependencies: ["governing"],
         },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["carpools"] },
+        // Volunteer duties (P2.6): IK Norrbacka P2012's home match.
+        {
+          name: "duties",
+          testMatch: /duties\.spec\.ts/,
+          dependencies: ["carpools"],
+        },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["duties"] },
       ],
 });

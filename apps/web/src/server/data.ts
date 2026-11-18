@@ -53,6 +53,10 @@ import {
   DecisionsPageSchema,
   DocumentDetailSchema,
   DocumentSeriesPageSchema,
+  DutyQuotaSchema,
+  DutySettingsSchema,
+  DutyShiftListSchema,
+  DutyTypeListSchema,
   EntitlementsResponseSchema,
   EventDetailSchema,
   EventPageSchema,
@@ -68,6 +72,7 @@ import {
   GroupCandidateListSchema,
   GroupConsentsSchema,
   GroupDetailSchema,
+  GroupDutySettingsSchema,
   type GroupList,
   GroupListSchema,
   GroupMemberListSchema,
@@ -98,6 +103,7 @@ import {
   MyClubsSchema,
   MyConsentsSchema,
   MyDocumentPageSchema,
+  MyDutiesSchema,
   MyEventsSchema,
   MyGroupsSchema,
   MyHandoversSchema,
@@ -1106,6 +1112,54 @@ export const getCarpoolAge = cache((personId: string) =>
   apiGet(`/api/v1/me/wards/${requireId(personId)}/carpool-age`, CarpoolAgeSchema, {
     nullOn: [404],
   }),
+);
+// Volunteer duties (P2.6): the catalogue and settings for those who plan
+// shifts, a group's shifts and quotas for its planners, an activity's shifts
+// and the family's duties in a club.
+export const getDutyTypes = cache((clubId: string, archived = false) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/duty-types?archived=${archived}`, DutyTypeListSchema, {
+    nullOn: [403],
+  }),
+);
+export const getDutySettings = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/duty-settings`, DutySettingsSchema, {
+    nullOn: [403],
+  }),
+);
+export const getGroupDutyShifts = cache(
+  (clubId: string, groupId: string, from: string, to: string) =>
+    apiGet(
+      `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/duty-shifts?from=${from}&to=${to}`,
+      DutyShiftListSchema,
+      { nullOn: [403] },
+    ),
+);
+export const getGroupDutiesToMark = cache((clubId: string, groupId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/duty-shifts-to-mark`,
+    DutyShiftListSchema,
+  ),
+);
+export const getGroupDutySettings = cache((clubId: string, groupId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/duty-settings`,
+    GroupDutySettingsSchema,
+  ),
+);
+export const getDutyQuota = cache((clubId: string, groupId: string, seasonId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/groups/${requireId(groupId)}/duty-quotas?seasonId=${requireId(seasonId)}`,
+    DutyQuotaSchema,
+    { nullOn: [400, 403] },
+  ),
+);
+export const getActivityDutyShifts = cache((activityId: string) =>
+  apiGet(`/api/v1/activities/${requireId(activityId)}/duty-shifts`, DutyShiftListSchema, {
+    nullOn: [403, 404],
+  }),
+);
+export const getMyDuties = cache((clubId: string) =>
+  required(`/api/v1/me/duties?clubId=${requireId(clubId)}`, MyDutiesSchema),
 );
 /** The club's car-pool settings, or null without club.carpools.manage. */
 export const getCarpoolSettings = cache((clubId: string) =>

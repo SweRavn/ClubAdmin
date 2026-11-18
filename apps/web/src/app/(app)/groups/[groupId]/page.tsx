@@ -274,6 +274,15 @@ export default async function GroupPage({ params, searchParams }: Params) {
             </a>
             {calendar.canManage || calendar.canReadAttendance ? (
               <div className="flex flex-wrap gap-2">
+                {calendar.canManage ? (
+                  <a
+                    href={`/groups/${group.id}/duties`}
+                    className={secondaryButtonClass}
+                    data-testid="group-duties"
+                  >
+                    {t("duties.title")}
+                  </a>
+                ) : null}
                 {calendar.canReadAttendance ? (
                   <a
                     href={`/groups/${group.id}/attendance`}
