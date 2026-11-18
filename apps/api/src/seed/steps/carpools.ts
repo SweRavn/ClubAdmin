@@ -11,7 +11,7 @@
 //   rejected with a reason.
 // Written through the services as the personas.
 
-import type { ActorContext, TenantContext } from "@clubadmin/db";
+import { type ActorContext, sql, type TenantContext } from "@clubadmin/db";
 
 import { CarpoolsService } from "../../modules/carpools/index.ts";
 import type { DemoStep } from "../environment.ts";
@@ -158,5 +158,14 @@ export const carpoolsDemoStep: DemoStep = {
       decision: "reject",
       reason: "Laget åkte buss till den matchen. Hör av dig om något är fel.",
     });
+
+    // The events are history, not news (as the governing step's): the seats
+    // and decisions are shown where they live, not as unread notices.
+    await env.db.withSystem("seed:carpools", {}, (tx) =>
+      tx.execute(sql`
+        INSERT INTO outbox.deliveries (event_id, handler)
+        SELECT e.id, 'notifications' FROM outbox.events e WHERE e.status <> 'done'
+        ON CONFLICT DO NOTHING`),
+    );
   },
 };

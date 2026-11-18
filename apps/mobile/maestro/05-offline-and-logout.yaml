@@ -28,8 +28,9 @@ name: Offline cold start and logout
     visible:
       id: "home-screen"
     timeout: 20000
-- assertVisible:
-    id: "club-0199a000-0000-7000-8001-000000000001"
+- scrollUntilVisible:
+    element:
+      id: "club-0199a000-0000-7000-8001-000000000001"
 - setAirplaneMode: disabled
 - tapOn:
     id: "open-settings"

@@ -1,4 +1,5 @@
 # Log in as a persona, switch between clubs, open a group (Erik coaches in SVK and IKN).
+# The clubs are below the home screen's links: scroll to them.
 appId: ${APP_ID}
 name: Log in as a persona and switch club
 ---
@@ -6,6 +7,9 @@ name: Log in as a persona and switch club
     file: subflows/login-as.yaml
     env:
       PERSONA: 0199a000-0000-7000-8000-000000000005
+- scrollUntilVisible:
+    element:
+      id: "club-0199a000-0000-7000-8001-000000000002"
 - tapOn:
     id: "club-0199a000-0000-7000-8001-000000000002"
 - extendedWaitUntil:
@@ -14,6 +18,9 @@ name: Log in as a persona and switch club
     timeout: 20000
 - assertVisible: "IK Norrbacka"
 - back
+- scrollUntilVisible:
+    element:
+      id: "club-0199a000-0000-7000-8001-000000000001"
 - tapOn:
     id: "club-0199a000-0000-7000-8001-000000000001"
 - extendedWaitUntil:
