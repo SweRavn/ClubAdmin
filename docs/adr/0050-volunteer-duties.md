@@ -59,3 +59,29 @@ for being alone with children and for background checks.
 **Consequences.** Phase 2 replaces the spreadsheets with sign-up,
 assignment, swaps and quotas; Phase 4 adds the automatic schedule and the
 qualifications register on the same tables; Phase 3 adds paying to buy out.
+
+## Amendment (2026-11-18, before P2.6)
+
+Decided with the prompt's review:
+
+- **Contact with children instead of a check requirement.** A duty type
+  states the contact with children it means (`none`, `with_children`,
+  `alone_with_children`). P2.6 has no background-check requirement; the
+  requirements per category come with the background-check plugins (P2.8,
+  ADR 0051) on that field. Replaces "a background-check requirement" in
+  decision 1 until then.
+- **No adult alone with a child, per country.** Every country pack has
+  `dutyRules.aloneWithChildren` (`forbidden` | `allowed`): Sweden forbids it
+  (ADR 0047); Norway allows it until its rule is confirmed. A club may forbid
+  it where its pack allows it, never the reverse. Where forbidden, no duty
+  type can have `alone_with_children` and such types get no new shifts.
+- **Whom a shift counts for** is chosen at sign-up (automatic with one
+  eligible player in the group).
+- **Swaps both ways** (decision 5): offering one's shift (taking it is the
+  confirmation) and asking to take over someone else's (the holder accepts
+  or declines); one table `task_swaps`.
+- **Visibility** (decision 6) has three levels: `open`, `names`, `leaders`.
+- **Notices**: a `duties` category with fixed texts (the reminder the day
+  before, assignment, swap request, completed swap).
+- Shifts appear in "Mitt schema" and the feeds through `person_schedule`.
+
