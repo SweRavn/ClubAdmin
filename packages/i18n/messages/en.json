@@ -2946,7 +2946,12 @@
       "assembled": "assembled",
       "signed": "signed",
       "submitted": "submitted",
-      "exported": "exported"
+      "exported": "exported",
+      "enabled": "enabled",
+      "disabled": "disabled",
+      "configured": "configured",
+      "call_failed": "failed a call to",
+      "locked": "locked"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",

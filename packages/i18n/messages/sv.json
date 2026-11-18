@@ -2946,7 +2946,12 @@
       "assembled": "sammanställde",
       "signed": "signerade",
       "submitted": "skickade in",
-      "exported": "exporterade"
+      "exported": "exporterade",
+      "enabled": "slog på",
+      "disabled": "slog av",
+      "configured": "ändrade inställningarna för",
+      "call_failed": "misslyckades med anrop till",
+      "locked": "låste"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",

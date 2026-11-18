@@ -449,8 +449,10 @@ const CASES: Case[] = [
     persona: "erik",
     method: "GET",
     url: () => `/api/v1/me/permissions?clubId=${key("svk")}`,
+    // P2.7: the template roles' new permissions (plugins, grants, background
+    // checks) are more role_permissions rows for each club's roles.
     statements: 1,
-    pages: 160,
+    pages: 175,
   },
   {
     route: "GET /api/v1/club-types",
@@ -470,9 +472,9 @@ const CASES: Case[] = [
     // P1.15 A4: the club's active groups (groups_club_idx), its roles with
     // their permissions, the groups' ancestors in one statement. It grows
     // with the club's groups, not with the data (about 90 pages, 125 on the
-    // larger data).
+    // larger data; P2.7's template permissions about 155).
     statements: 3,
-    pages: 150,
+    pages: 165,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/administrators",
@@ -491,9 +493,10 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/clubs/${key("svk")}/roles`,
     // P1.15 B: plus the club type's template (by the club's row and the
-    // template's keys) and the archived roles' keys.
+    // template's keys) and the archived roles' keys; P2.7's template
+    // permissions add a few pages.
     statements: 5,
-    pages: 240,
+    pages: 255,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/permissions/{permission}/holders",
