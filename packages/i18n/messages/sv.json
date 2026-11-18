@@ -308,7 +308,21 @@
     "claim_drive_claimed": "En av körningarna finns redan i ett utlägg.",
     "claim_own": "Du kan inte attestera ditt eget utlägg.",
     "claim_decided": "Utlägget är redan behandlat.",
-    "export_too_large": "För många utlägg för en fil. Välj en kortare period."
+    "export_too_large": "För många utlägg för en fil. Välj en kortare period.",
+    "duty_alone_with_children_forbidden": "Ett arbetspass där en vuxen är ensam med barn är inte tillåtet i föreningen.",
+    "duty_type_archived": "Passtypen är arkiverad.",
+    "duty_type_name_taken": "Det finns redan en passtyp med det namnet.",
+    "duty_shift_full": "Passet är redan fullt.",
+    "duty_shift_started": "Passet har redan börjat.",
+    "duty_too_young": "Personen är för ung för det här passet.",
+    "duty_counts_for_required": "Välj vilket barn passet ska räknas för.",
+    "duty_counts_for_invalid": "Passet kan inte räknas för den personen.",
+    "duty_person_invalid": "Du kan bara anmäla dig själv eller dina barn.",
+    "duty_already_assigned": "Personen har redan det här passet.",
+    "duty_assigned_by_leader": "Passet är tilldelat av en ledare. Hör av dig till ledaren för att ändra.",
+    "duty_needed_below_filled": "Fler är redan anmälda än det nya antalet.",
+    "duty_season_invalid": "Säsongen finns inte i föreningen.",
+    "duty_source_invalid": "Aktiviteten eller evenemanget hör inte till gruppen."
   },
   "roles": {
     "chair": "Ordförande",
@@ -3880,6 +3894,21 @@
         "name": "Attestera föreningens utlägg",
         "description": "Kan godkänna eller avslå alla utlägg i föreningen och exportera godkända utlägg till en fil för utbetalning. Aldrig sina egna.",
         "example": "Kan till exempel exportera månadens godkända milersättningar till bokföringen."
+      },
+      "group_duties_manage": {
+        "name": "Planera gruppens arbetspass",
+        "description": "Kan skapa gruppens arbetspass, tilldela dem, markera dem som gjorda och sätta antal pass per spelare och säsong.",
+        "example": "Kan till exempel lägga kioskpass på alla hemmamatcher och sätta två pass per spelare."
+      },
+      "club_duties_manage": {
+        "name": "Planera föreningens arbetspass",
+        "description": "Kan skapa föreningens egna arbetspass och planera arbetspassen i alla grupper.",
+        "example": "Kan till exempel lägga ut passen till städdagen för hela föreningen."
+      },
+      "club_duty_types_manage": {
+        "name": "Hantera passtyper",
+        "description": "Kan lägga till och ändra föreningens passtyper med instruktion, lägsta ålder och vilken kontakt med barn passet innebär, samt föreningens inställningar för arbetspass.",
+        "example": "Kan till exempel lägga till passtypen \"Sekretariat\" från 15 år."
       }
     }
   },

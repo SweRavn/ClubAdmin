@@ -10,6 +10,7 @@ export type {
   AgendaTemplateDefault,
   AgeRules,
   CountryPack,
+  DutyRules,
   GrantRules,
   GrantSession,
   LocaleDefaults,

@@ -21,6 +21,7 @@ export * from "./domain/chat.ts";
 export * from "./domain/club-types.ts";
 export * from "./domain/core.ts";
 export * from "./domain/documents.ts";
+export * from "./domain/duties.ts";
 export * from "./domain/events.ts";
 export * from "./domain/expenses.ts";
 export * from "./domain/family.ts";

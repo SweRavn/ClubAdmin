@@ -314,7 +314,7 @@ export async function replaceAssignees(
   }
 }
 
-/** An assignment's status (the caller's own, through "Mina uppgifter"). */
+/** An assignment's status (the caller's own action item, through "Mina uppgifter"). */
 export async function markAssignment(
   tx: Tx,
   input: { assignmentId: string; status: TaskAssignmentStatus; by: string },
@@ -327,7 +327,10 @@ export async function markAssignment(
     WITH marked AS (
       UPDATE public.task_assignments SET status = ${input.status},
         marked_by_person_id = ${input.by}, marked_at = now()
-      WHERE id = ${input.assignmentId}::uuid RETURNING task_id)
+      WHERE id = ${input.assignmentId}::uuid
+        -- Shifts (P2.6) are marked by their planners, not from "Mina uppgifter".
+        AND task_id IN (SELECT t.id FROM public.tasks t WHERE t.kind = 'action_item')
+      RETURNING task_id)
     SELECT m.task_id, coalesce(i.activity_id, t.source_activity_id) AS activity_id,
       coalesce(i.event_id, t.source_event_id) AS event_id
     FROM marked m JOIN public.tasks t ON t.id = m.task_id

@@ -1164,6 +1164,50 @@ to, else the group's attesters, else the club's) and `expense.decided` (the
 claimant). Erasure clears the reason on the person's claims; the claims
 stay for the accounting.
 
+### Volunteer duties (P2.6 part A, ADR 0050)
+Club-owned tables (tenant RLS, record history; migration 0051), module
+`apps/api/src/modules/duties`:
+
+- `duty_types`: `name` (unique among active ones), `instruction`,
+  `instruction_document_ids`, `min_age`, `child_contact` `none` |
+  `with_children` | `alone_with_children`, `required_qualifications`
+  (prepared, Phase 4), `archived_at`. `alone_with_children` only where the
+  country pack's `dutyRules.aloneWithChildren` is `allowed` (Sweden:
+  `forbidden`) and the club has not forbidden it itself.
+- Shifts are `tasks` of kind `duty_shift` (ADR 0052) with `duty_type_id`,
+  `location_id`, `needed`, the time slot, `group_id` (none: the club's own)
+  and optionally `source_activity_id` / `source_event_id`;
+  `task_assignments` has `counts_for_person_id` (the player whose quota it
+  counts for), `source` and `bought_out` (prepared, Phase 3).
+- `duty_quotas` (`group_id`, `season_id`, `shifts_per_player`); a group's
+  quota counts its shifts and the club's own in the season's days.
+- `duty_settings` (the club's `visibility`, `groups_may_change_visibility`,
+  `alone_with_children_forbidden`) and `group_duty_settings` (a group's
+  `visibility`); `task_swaps` (offered or asked-for swaps, part B);
+  `duty_unavailability` (prepared, Phase 4; erasure deletes it).
+
+Sign-up: the caller or a child they may act for, from the type's minimum
+age, counting for one of the family's players of the shift's group
+(chosen automatically when there is one; a club shift with nobody to
+count for is an adult member's own). Planners assign with the same rules;
+a leader's assignment is not cancelled by the family. Shifts are not
+marked from "Mina uppgifter" (the planners mark them, part B).
+
+Permissions: `group.duties.manage` (head and assistant coaches, team
+managers; owners; the club's duty planners), `club.duties.manage` (club
+managers: the club's own and every group's shifts), `club.duty_types.manage`
+(club managers: the catalogue and settings) and `club.duties.read` (the
+catalogue and settings for any of them). Endpoints: `GET|POST
+/clubs/:clubId/duty-types`, `PATCH .../duty-types/:typeId`, `GET|PUT
+/clubs/:clubId/duty-settings`, `GET|POST
+/clubs/:clubId/groups/:groupId/duty-shifts[?from&to]`, `PATCH|DELETE
+.../duty-shifts/:shiftId`, `POST|DELETE .../assignments[/:assignmentId]`,
+the same under `/clubs/:clubId/duty-shifts` for the club's planners, `POST|DELETE
+/clubs/:clubId/duty-shifts/:shiftId/signups[/:assignmentId]` (authenticated),
+`GET /activities/:activityId/duty-shifts` (names for the planners, one's
+own family's for others until the visibility setting) and `GET|PUT
+/clubs/:clubId/groups/:groupId/duty-quotas`.
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

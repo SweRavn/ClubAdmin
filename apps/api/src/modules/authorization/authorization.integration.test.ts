@@ -1190,6 +1190,116 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/expense-claims/export?from=2026-01-01&to=2026-01-31`,
       expected: CLUB_FORBIDDEN,
     },
+    // Volunteer duties (P2.6 part A): the catalogue and settings for those
+    // who plan shifts anywhere (the club's manager, the team's coach, the
+    // section's owner), kept by the club manager; a group's shifts and quotas
+    // by its planners; the club's own shifts by the club's. Shifts, types and
+    // seasons the matrix does not have are 404 (or 400) for those allowed.
+    "GET /api/v1/clubs/:clubId/duty-types": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-types`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, coach: 200, owner: 200 },
+    },
+    "POST /api/v1/clubs/:clubId/duty-types": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-types`,
+      expected: { ...CLUB_FORBIDDEN, manager: 201 },
+      body: { name: "Matrix" },
+    },
+    "PATCH /api/v1/clubs/:clubId/duty-types/:typeId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-types/${SOME_ID}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+      body: { name: "Matrix 2" },
+    },
+    "GET /api/v1/clubs/:clubId/duty-settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-settings`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200, coach: 200, owner: 200 },
+    },
+    "PUT /api/v1/clubs/:clubId/duty-settings": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-settings`,
+      expected: { ...CLUB_FORBIDDEN, manager: 204 },
+      body: {
+        visibility: "names",
+        groupsMayChangeVisibility: false,
+        aloneWithChildrenForbidden: false,
+      },
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/duty-shifts": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts?from=2026-01-01&to=2026-12-31`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "POST /api/v1/clubs/:clubId/groups/:groupId/duty-shifts": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts`,
+      expected: TEAM_MANAGERS(404),
+      body: {
+        dutyTypeId: SOME_ID,
+        startsAt: "2030-01-01T10:00:00Z",
+        endsAt: "2030-01-01T12:00:00Z",
+      },
+    },
+    "PATCH /api/v1/clubs/:clubId/groups/:groupId/duty-shifts/:shiftId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts/${SOME_ID}`,
+      expected: TEAM_MANAGERS(404),
+      body: { needed: 2 },
+    },
+    "DELETE /api/v1/clubs/:clubId/groups/:groupId/duty-shifts/:shiftId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts/${SOME_ID}`,
+      expected: TEAM_MANAGERS(404),
+    },
+    "POST /api/v1/clubs/:clubId/groups/:groupId/duty-shifts/:shiftId/assignments": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts/${SOME_ID}/assignments`,
+      expected: TEAM_MANAGERS(404),
+      body: { personId: SOME_ID },
+    },
+    "DELETE /api/v1/clubs/:clubId/groups/:groupId/duty-shifts/:shiftId/assignments/:assignmentId": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-shifts/${SOME_ID}/assignments/${SOME_ID}`,
+      expected: TEAM_MANAGERS(404),
+    },
+    "GET /api/v1/clubs/:clubId/duty-shifts": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts?from=2026-01-01&to=2026-12-31`,
+      expected: { ...CLUB_FORBIDDEN, manager: 200 },
+    },
+    "POST /api/v1/clubs/:clubId/duty-shifts": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+      body: {
+        dutyTypeId: SOME_ID,
+        startsAt: "2030-01-01T10:00:00Z",
+        endsAt: "2030-01-01T12:00:00Z",
+      },
+    },
+    "PATCH /api/v1/clubs/:clubId/duty-shifts/:shiftId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts/${SOME_ID}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+      body: { needed: 2 },
+    },
+    "DELETE /api/v1/clubs/:clubId/duty-shifts/:shiftId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts/${SOME_ID}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+    },
+    "POST /api/v1/clubs/:clubId/duty-shifts/:shiftId/assignments": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts/${SOME_ID}/assignments`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+      body: { personId: SOME_ID },
+    },
+    "DELETE /api/v1/clubs/:clubId/duty-shifts/:shiftId/assignments/:assignmentId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/duty-shifts/${SOME_ID}/assignments/${SOME_ID}`,
+      expected: { ...CLUB_FORBIDDEN, manager: 404 },
+    },
+    "GET /api/v1/activities/:activityId/duty-shifts": {
+      url: () => `/api/v1/activities/${m.activityId}/duty-shifts`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/clubs/:clubId/groups/:groupId/duty-quotas": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-quotas?seasonId=${SOME_ID}`,
+      expected: TEAM_MANAGERS(400),
+    },
+    "PUT /api/v1/clubs/:clubId/groups/:groupId/duty-quotas": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/groups/${m.team.id}/duty-quotas`,
+      expected: TEAM_MANAGERS(400),
+      body: { seasonId: SOME_ID, shiftsPerPlayer: 2 },
+    },
     // Part B (P2.2): seeing, storage, notices' documents.
     "POST /api/v1/clubs/:clubId/documents/seen": {
       url: () => `/api/v1/clubs/${m.clubA.id}/documents/seen`,

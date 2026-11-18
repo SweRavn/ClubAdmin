@@ -308,7 +308,21 @@
     "claim_drive_claimed": "En av kjøreturene er allerede i et utlegg.",
     "claim_own": "Du kan ikke attestere ditt eget utlegg.",
     "claim_decided": "Utlegget er allerede behandlet.",
-    "export_too_large": "For mange utlegg for én fil. Velg en kortere periode."
+    "export_too_large": "For mange utlegg for én fil. Velg en kortere periode.",
+    "duty_alone_with_children_forbidden": "En dugnadsvakt der en voksen er alene med barn er ikke tillatt i klubben.",
+    "duty_type_archived": "Vakttypen er arkivert.",
+    "duty_type_name_taken": "Det finnes allerede en vakttype med det navnet.",
+    "duty_shift_full": "Vakten er allerede full.",
+    "duty_shift_started": "Vakten har allerede begynt.",
+    "duty_too_young": "Personen er for ung for denne vakten.",
+    "duty_counts_for_required": "Velg hvilket barn vakten skal telle for.",
+    "duty_counts_for_invalid": "Vakten kan ikke telle for den personen.",
+    "duty_person_invalid": "Du kan bare melde på deg selv eller barna dine.",
+    "duty_already_assigned": "Personen har allerede denne vakten.",
+    "duty_assigned_by_leader": "En leder har tildelt denne vakten. Ta kontakt med lederen for å endre den.",
+    "duty_needed_below_filled": "Flere er allerede påmeldt enn det nye antallet.",
+    "duty_season_invalid": "Sesongen finnes ikke i klubben.",
+    "duty_source_invalid": "Aktiviteten eller arrangementet hører ikke til gruppen."
   },
   "roles": {
     "chair": "Leder",
@@ -3880,6 +3894,21 @@
         "name": "Attestere klubbens utlegg",
         "description": "Kan godkjenne eller avslå alle utlegg i klubben og eksportere godkjente utlegg til en fil for utbetaling. Aldri sine egne.",
         "example": "Kan for eksempel eksportere månedens godkjente kjøregodtgjørelser til regnskapet."
+      },
+      "group_duties_manage": {
+        "name": "Planlegge gruppens dugnadsvakter",
+        "description": "Kan opprette gruppens vakter, tildele dem, merke dem som utført og sette antall vakter per spiller og sesong.",
+        "example": "Kan for eksempel legge inn kioskvakter på alle hjemmekamper og sette to vakter per spiller."
+      },
+      "club_duties_manage": {
+        "name": "Planlegge klubbens dugnadsvakter",
+        "description": "Kan opprette klubbens egne vakter og planlegge vaktene i alle grupper.",
+        "example": "Kan for eksempel legge ut vaktene til klubbens ryddedag."
+      },
+      "club_duty_types_manage": {
+        "name": "Administrere vakttyper",
+        "description": "Kan legge til og endre klubbens vakttyper med instruks, laveste alder og hvilken kontakt med barn vakten innebærer, og klubbens innstillinger for dugnad.",
+        "example": "Kan for eksempel legge til vakttypen \"Sekretariat\" fra 15 år."
       }
     }
   },

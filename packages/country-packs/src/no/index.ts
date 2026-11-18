@@ -33,6 +33,9 @@ export const NO: CountryPack = {
   },
   // Skatteetaten 2026: skattefri kilometergodtgjørelse for bil, 3,50 kroner per km.
   mileageRate: { amountMinor: 350, per: "km", year: 2026 },
+  // Allowed until the Norwegian rule is confirmed (ADR 0050 amendment); a
+  // club may forbid it itself.
+  dutyRules: { aloneWithChildren: "allowed" },
   agendaTemplates: [
     {
       // Norges idrettsforbunds lovnorm for idrettslag (årsmøte).

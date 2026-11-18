@@ -85,3 +85,21 @@ Decided with the prompt's review:
   before, assignment, swap request, completed swap).
 - Shifts appear in "Mitt schema" and the feeds through `person_schedule`.
 
+## As implemented (part A, 2026-11-18)
+
+- Migration 0051: `duty_types` with `child_contact`, shifts as `tasks` of
+  kind `duty_shift` (type, place, the number needed; a group's or the
+  club's own, optionally of an activity or event), `bought_out` on
+  assignments, `duty_quotas`, `duty_settings`, `group_duty_settings`,
+  `task_swaps`, `duty_unavailability`; the template roles and every club's
+  roles get the three permissions; erasure deletes unavailability.
+- The country packs' `dutyRules.aloneWithChildren` (Sweden forbidden,
+  Norway allowed until confirmed) with the club's stricter setting, checked
+  for new and changed types and for new shifts.
+- The module `apps/api/src/modules/duties`: the catalogue and settings,
+  shifts, sign-up (the caller or a child they may act for; whom it counts
+  for chosen when there are several of the family's players), assignment,
+  quotas per season. Marking from "Mina uppgifter" stays for action items.
+- Until the visibility setting (part B), others' names on a shift are shown
+  to its planners only.
+

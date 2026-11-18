@@ -73,18 +73,21 @@ export default function MyTasks() {
                   .filter(Boolean)
                   .join(" · ")}
               </Muted>
-              <Button
-                label={task.status === "planned" ? t("tasks.markDone") : t("tasks.markPlanned")}
-                kind="secondary"
-                busy={mark.isPending && mark.variables?.assignmentId === task.assignmentId}
-                onPress={() =>
-                  mark.mutate({
-                    assignmentId: task.assignmentId,
-                    status: task.status === "planned" ? "done" : "planned",
-                  })
-                }
-                testID={`task-toggle-${task.assignmentId}`}
-              />
+              {/* Shifts (P2.6) are marked by their planners. */}
+              {task.kind === "action_item" ? (
+                <Button
+                  label={task.status === "planned" ? t("tasks.markDone") : t("tasks.markPlanned")}
+                  kind="secondary"
+                  busy={mark.isPending && mark.variables?.assignmentId === task.assignmentId}
+                  onPress={() =>
+                    mark.mutate({
+                      assignmentId: task.assignmentId,
+                      status: task.status === "planned" ? "done" : "planned",
+                    })
+                  }
+                  testID={`task-toggle-${task.assignmentId}`}
+                />
+              ) : null}
             </View>
           ))
         )}

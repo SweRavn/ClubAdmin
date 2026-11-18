@@ -834,6 +834,21 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "a mileage claim and its decision: in Mina utlägg and the attesters' queue, in the audit log (expense.claim.*)",
   "public.expense_claim_lines":
     "a claim's drives and amounts: shown with the claim, created with it (expense.claim.submitted)",
+  // Volunteer duties (P2.6): the catalogue, quotas and settings on their
+  // pages, every change in the audit log (duty.*); swaps and unavailability
+  // are the person's own, shown where they are made.
+  "public.duty_types":
+    "the club's duty types: on the duty types page, changes in the audit log (duty.type.*)",
+  "public.duty_quotas":
+    "a group's shifts per player and season: in the quota overview, changes in the audit log (duty.quota.set)",
+  "public.duty_settings":
+    "the club's duty settings: on the settings page, changes in the audit log (duty.settings.updated)",
+  "public.group_duty_settings":
+    "a group's duty visibility: in the group's duty settings, changes in the audit log (duty.settings.updated)",
+  "public.task_swaps":
+    "offered and asked-for swaps of shifts: in Mina uppgifter and the group's overview (duty.*)",
+  "public.duty_unavailability":
+    "a person's unavailability for duties (prepared for Phase 4): the person's own",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

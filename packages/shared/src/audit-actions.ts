@@ -256,6 +256,19 @@ export const AUDIT_ACTIONS = [
   "expense.claim.approved",
   "expense.claim.rejected",
   "expense.claims.exported",
+  // Volunteer duties (P2.6): the catalogue and the club's settings, shifts,
+  // sign-ups and assignments (by others, ADR 0050), quotas.
+  "duty.type.created",
+  "duty.type.updated",
+  "duty.settings.updated",
+  "duty.shift.created",
+  "duty.shift.updated",
+  "duty.shift.deleted",
+  "duty.assignment.registered",
+  "duty.assignment.cancelled",
+  "duty.assignment.assigned",
+  "duty.assignment.unassigned",
+  "duty.quota.set",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

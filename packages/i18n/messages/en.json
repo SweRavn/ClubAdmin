@@ -308,7 +308,21 @@
     "claim_drive_claimed": "One of the drives is already in a claim.",
     "claim_own": "You cannot attest your own claim.",
     "claim_decided": "The claim has been decided already.",
-    "export_too_large": "Too many claims for one file. Choose a shorter period."
+    "export_too_large": "Too many claims for one file. Choose a shorter period.",
+    "duty_alone_with_children_forbidden": "A duty where an adult is alone with children is not allowed in the club.",
+    "duty_type_archived": "The duty type is archived.",
+    "duty_type_name_taken": "There is already a duty type with that name.",
+    "duty_shift_full": "The shift is already full.",
+    "duty_shift_started": "The shift has already started.",
+    "duty_too_young": "The person is too young for this shift.",
+    "duty_counts_for_required": "Choose which child the shift counts for.",
+    "duty_counts_for_invalid": "The shift cannot count for that person.",
+    "duty_person_invalid": "You can only sign up yourself or your children.",
+    "duty_already_assigned": "The person already has this shift.",
+    "duty_assigned_by_leader": "A leader assigned this shift. Contact the leader to change it.",
+    "duty_needed_below_filled": "More people have signed up than the new number.",
+    "duty_season_invalid": "The season does not exist in the club.",
+    "duty_source_invalid": "The activity or event does not belong to the group."
   },
   "roles": {
     "chair": "Chair",
@@ -3880,6 +3894,21 @@
         "name": "Attest the club's expenses",
         "description": "Can approve or reject every expense claim of the club and export approved claims to a file for payment. Never their own.",
         "example": "Can, for example, export the month's approved mileage claims to the bookkeeping."
+      },
+      "group_duties_manage": {
+        "name": "Plan the group's duties",
+        "description": "Can create the group's duty shifts, assign them, mark them done and set the number of shifts per player and season.",
+        "example": "Can, for example, add kiosk shifts at every home match and set two shifts per player."
+      },
+      "club_duties_manage": {
+        "name": "Plan the club's duties",
+        "description": "Can create the club's own duty shifts and plan the shifts of every group.",
+        "example": "Can, for example, add the shifts of the club's cleaning day."
+      },
+      "club_duty_types_manage": {
+        "name": "Manage duty types",
+        "description": "Can add and change the club's duty types with an instruction, a minimum age and the contact with children the duty means, and the club's duty settings.",
+        "example": "Can, for example, add the duty type \"Score table\" from age 15."
       }
     }
   },

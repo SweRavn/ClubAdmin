@@ -217,6 +217,13 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "group.expenses.attest": role("group", "finance"),
   "club.expenses.attest": role("club", "finance"),
   "club.expenses.read": derived("group.expenses.attest"),
+  // Volunteer duties (P2.6): signing up needs no permission (the family's
+  // players, the type's minimum age); planning a group's shifts and quotas,
+  // every group's and the club's shifts, and the catalogue need these.
+  "group.duties.manage": role("group", "activities"),
+  "club.duties.manage": role("club", "activities"),
+  "club.duty_types.manage": role("club", "activities"),
+  "club.duties.read": derived("group.duties.manage"),
   // Operators
   "ops.backup.read": builtIn,
 };
@@ -357,6 +364,8 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "club.documents.manage",
       "club.announcements.send",
       "club.carpools.manage",
+      "club.duties.manage",
+      "club.duty_types.manage",
     ],
   },
   registrar: {
@@ -416,6 +425,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "group.documents.manage",
       "group.announcements.send",
       "group.expenses.attest",
+      "group.duties.manage",
     ],
   },
   assistant_coach: {
@@ -425,6 +435,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "group.channels.create",
       "group.documents.manage",
       "group.announcements.send",
+      "group.duties.manage",
     ],
   },
   team_manager: {
@@ -435,6 +446,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "group.documents.manage",
       "group.announcements.send",
       "group.expenses.attest",
+      "group.duties.manage",
     ],
   },
   physio: { scope: "group", permissions: LEADER },
@@ -471,6 +483,8 @@ export const OWNER_PERMISSIONS: readonly RolePermission[] = [
   "group.announcements.send",
   // P2.5: owners attest the group's expense claims (and appoint head coaches who do).
   "group.expenses.attest",
+  // P2.6: owners plan the group's shifts and quotas.
+  "group.duties.manage",
 ];
 /**
  * Not powers over others: taking part, counting as a leader, and creating

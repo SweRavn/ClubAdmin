@@ -129,6 +129,13 @@ export const PERMISSIONS = [
   "group.expenses.attest",
   "club.expenses.attest",
   "club.expenses.read",
+  // Volunteer duties (P2.6, ADR 0050): a group's shifts and quotas, every
+  // group's and the club's own shifts, the catalogue of duty types; reading
+  // the catalogue and the club's duty settings follows.
+  "group.duties.manage",
+  "club.duties.manage",
+  "club.duty_types.manage",
+  "club.duties.read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

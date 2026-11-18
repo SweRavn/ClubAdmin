@@ -70,6 +70,9 @@ export const SE: CountryPack = {
   },
   // Skatteverket, inkomstår 2026: egen bil 25 kronor per mil (unchanged since 2023).
   mileageRate: { amountMinor: 2500, per: "mil", year: 2026 },
+  // No adult alone with a child (ADR 0047; RF's "Trygg idrott"): no duty
+  // may mean being alone with children.
+  dutyRules: { aloneWithChildren: "forbidden" },
   agendaTemplates: [
     {
       // Riksidrottsförbundets normalstadgar för idrottsföreningar (årsmöte).

@@ -1609,6 +1609,32 @@ const CASES: Record<Permission, Case[]> = {
     { name: "member", actor: plainMember, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
+  "group.duties.manage": [
+    { name: "head coach", actor: coach, resource: teamR, allowed: true },
+    { name: "club manager", actor: manager, resource: teamR, allowed: true },
+    { name: "owner of the parent group", actor: sectionOwner, resource: teamR, allowed: true },
+    { name: "physio", actor: physio, resource: teamR, allowed: false },
+    { name: "teammate", actor: teammate, resource: teamR, allowed: false },
+    { name: "coach of another team", actor: otherTeamCoach, resource: teamR, allowed: false },
+  ],
+  "club.duties.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.duty_types.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.duties.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "head coach (plans the group's shifts)", actor: coach, resource: clubR, allowed: true },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
   "club.announcements.send": [
     { name: "club manager", actor: manager, resource: clubR, allowed: true },
     { name: "secretary", actor: secretary, resource: clubR, allowed: true },

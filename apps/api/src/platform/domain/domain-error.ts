@@ -397,6 +397,35 @@ export const DOMAIN_ERRORS = {
   claim_decided: "conflict",
   /** More claims than one export holds: a shorter period. */
   export_too_large: "conflict",
+  // Volunteer duties (P2.6, ADR 0050).
+  /** The country pack or the club forbids a duty with an adult alone with children. */
+  duty_alone_with_children_forbidden: "conflict",
+  /** An archived duty type gets no new shifts. */
+  duty_type_archived: "conflict",
+  /** The club has an active duty type with that name. */
+  duty_type_name_taken: "conflict",
+  /** As many as needed are on the shift. */
+  duty_shift_full: "conflict",
+  /** The shift has started: no more sign-ups or cancellations. */
+  duty_shift_started: "conflict",
+  /** Below the duty type's minimum age. */
+  duty_too_young: "forbidden",
+  /** Several of the family's players could be counted: choose one. */
+  duty_counts_for_required: "validation",
+  /** Not a player of the shift's group (or the club) in the family. */
+  duty_counts_for_invalid: "validation",
+  /** One signs up oneself or one's children (with the right to act for them). */
+  duty_person_invalid: "validation",
+  /** The person is on the shift already. */
+  duty_already_assigned: "conflict",
+  /** A leader's assignment is changed by the leaders. */
+  duty_assigned_by_leader: "forbidden",
+  /** Fewer needed than are on the shift. */
+  duty_needed_below_filled: "conflict",
+  /** Not one of the club's seasons. */
+  duty_season_invalid: "validation",
+  /** The activity or event is not the group's (or the club's). */
+  duty_source_invalid: "validation",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

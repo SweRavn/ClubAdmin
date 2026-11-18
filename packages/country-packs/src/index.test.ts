@@ -82,6 +82,9 @@ describe("packs", () => {
       timeZone: "Europe/Oslo",
       currency: "NOK",
     });
+    // P2.6: Sweden forbids a duty that leaves an adult alone with children.
+    expect(SE.dutyRules).toEqual({ aloneWithChildren: "forbidden" });
+    expect(NO.dutyRules).toEqual({ aloneWithChildren: "allowed" });
     expect(getCountryPack("se")).toBe(SE);
     expect(isSupportedCountry("DK")).toBe(false);
     expect(() => getCountryPack("DK")).toThrow(UnsupportedCountryError);

@@ -65,17 +65,20 @@ export default async function MyTasksPage({ searchParams }: Props) {
                   : ""}
                 {` · ${t(enumKey("tasks.statuses", task.status))}`}
               </p>
-              <ActionForm action="tasks-status">
-                <input type="hidden" name="assignmentId" value={task.assignmentId} />
-                <input
-                  type="hidden"
-                  name="status"
-                  value={task.status === "planned" ? "done" : "planned"}
-                />
-                <button type="submit" className={secondaryButtonClass} data-testid="task-toggle">
-                  {task.status === "planned" ? t("tasks.markDone") : t("tasks.markPlanned")}
-                </button>
-              </ActionForm>
+              {/* Shifts (P2.6) are marked by their planners. */}
+              {task.kind === "action_item" ? (
+                <ActionForm action="tasks-status">
+                  <input type="hidden" name="assignmentId" value={task.assignmentId} />
+                  <input
+                    type="hidden"
+                    name="status"
+                    value={task.status === "planned" ? "done" : "planned"}
+                  />
+                  <button type="submit" className={secondaryButtonClass} data-testid="task-toggle">
+                    {task.status === "planned" ? t("tasks.markDone") : t("tasks.markPlanned")}
+                  </button>
+                </ActionForm>
+              ) : null}
             </li>
           ))}
         </ul>

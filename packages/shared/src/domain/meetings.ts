@@ -12,7 +12,8 @@ import { z } from "../zod.ts";
 export const MEETING_KINDS = ["annual_meeting", "extra_meeting", "board_meeting", "other"] as const;
 export type MeetingKind = (typeof MEETING_KINDS)[number];
 
-export const TASK_KINDS = ["action_item"] as const;
+// Duty shifts (P2.6, ADR 0050) are tasks too; only action items are marked by their assignee.
+export const TASK_KINDS = ["action_item", "duty_shift"] as const;
 export type TaskKind = (typeof TASK_KINDS)[number];
 
 export const TASK_ASSIGNMENT_STATUSES = ["planned", "done", "missed"] as const;

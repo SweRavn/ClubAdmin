@@ -133,6 +133,16 @@ export interface CountryPack {
    * 10 km; NO: per km), for the income year.
    */
   mileageRate?: MileageRate;
+  /**
+   * Volunteer duties (P2.6, ADR 0050 amendment): whether a duty may leave an
+   * adult alone with children. Required: every pack takes a stand; a club may
+   * forbid it where its pack allows it, never the reverse.
+   */
+  dutyRules: DutyRules;
+}
+
+export interface DutyRules {
+  aloneWithChildren: "forbidden" | "allowed";
 }
 
 export interface MileageRate {

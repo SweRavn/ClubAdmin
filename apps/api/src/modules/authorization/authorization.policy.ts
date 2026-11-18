@@ -884,6 +884,41 @@ export const POLICIES: readonly Policy[] = [
         actor.holdsInAnyGroup("group.expenses.attest", resource.clubId) ||
         actor.ownsAnyGroup(resource.clubId)),
   ),
+  // Volunteer duties (P2.6): a group's shifts and quotas by its planners
+  // (coaches, team managers, owners up the chain) and the club's duty
+  // planners; the club's own shifts and the catalogue by the club's.
+  definePolicy(
+    "group.duties.manage",
+    "group",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("group.duties.manage", resource) ||
+        actor.ownsGroup(resource) ||
+        actor.holds("club.duties.manage", resource.clubId)),
+  ),
+  definePolicy(
+    "club.duties.manage",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.duties.manage", resource.clubId),
+  ),
+  definePolicy(
+    "club.duty_types.manage",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.duty_types.manage", resource.clubId),
+  ),
+  // The catalogue and settings for those who plan shifts anywhere in the club.
+  definePolicy(
+    "club.duties.read",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("club.duty_types.manage", resource.clubId) ||
+        actor.holds("club.duties.manage", resource.clubId) ||
+        actor.holdsInAnyGroup("group.duties.manage", resource.clubId) ||
+        actor.ownsAnyGroup(resource.clubId)),
+  ),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

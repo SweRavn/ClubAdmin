@@ -232,6 +232,29 @@ describe("tenant isolation of club-owned tables", () => {
         INSERT INTO expense_claim_lines (club_id, claim_id, description, quantity,
           unit_amount_minor, amount_minor)
         SELECT ${a.id}, id, 'Fixture', 4, 250, 1000 FROM c`);
+      // Volunteer duties (P2.6): a type, a shift of the group with the member
+      // on it and a swap offered, a quota, the settings and unavailability.
+      await tx.execute(sql`
+        WITH dt AS (INSERT INTO duty_types (club_id, name) VALUES (${a.id}, 'Fixture') RETURNING id),
+        se AS (INSERT INTO seasons (club_id, name, starts_on, ends_on)
+               VALUES (${a.id}, 'Fixture', '2030-01-01', '2030-12-31') RETURNING id),
+        q AS (INSERT INTO duty_quotas (club_id, group_id, season_id, shifts_per_player)
+              SELECT ${a.id}, ${group.id}, id, 2 FROM se),
+        sh AS (INSERT INTO tasks (club_id, group_id, kind, title, starts_at, ends_at, duty_type_id)
+               SELECT ${a.id}, ${group.id}, 'duty_shift', 'Fixture', '2030-05-01T10:00Z',
+                 '2030-05-01T12:00Z', id FROM dt RETURNING id),
+        asg AS (INSERT INTO task_assignments (club_id, task_id, person_id, counts_for_person_id)
+                SELECT ${a.id}, id, ${member.id}, ${member.id} FROM sh RETURNING id)
+        INSERT INTO task_swaps (club_id, assignment_id, kind, created_by_person_id)
+        SELECT ${a.id}, id, 'offer', ${member.id} FROM asg`);
+      await tx.execute(sql`
+        INSERT INTO duty_settings (club_id) VALUES (${a.id})`);
+      await tx.execute(sql`
+        INSERT INTO group_duty_settings (club_id, group_id, visibility)
+        VALUES (${a.id}, ${group.id}, 'open')`);
+      await tx.execute(sql`
+        INSERT INTO duty_unavailability (club_id, person_id, from_date, to_date)
+        VALUES (${a.id}, ${member.id}, '2030-07-01', '2030-07-31')`);
       await tx.execute(sql`
         INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
         VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);
