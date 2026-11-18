@@ -155,6 +155,12 @@ export const apiConfigSchema = z
     FILES_BACKUP_WARN_AFTER_HOURS: z.coerce.number().int().positive().default(3),
     /** No passed restore verification for this many days. */
     RESTORE_VERIFICATION_WARN_AFTER_DAYS: z.coerce.number().int().positive().default(8),
+    /**
+     * The bundled plugins this installation installs (P2.7, ADR 0051),
+     * comma-separated ids; empty: all of them. A plugin that is listed but
+     * unknown or incompatible stops the start.
+     */
+    PLUGINS: envList(),
     /** Serve /api/v1/openapi.json. Defaults to on in development only. */
     OPENAPI_ENABLED: envBoolean(false).optional(),
   })

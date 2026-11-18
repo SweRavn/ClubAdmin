@@ -1712,6 +1712,39 @@ const CASES: Record<Permission, Case[]> = {
     { name: "club manager", actor: manager, resource: platformR, allowed: false },
     { name: "outsider", actor: outsider, resource: platformR, allowed: false },
   ],
+  "ops.plugins.manage": [
+    { name: "platform operator", actor: operatorWithoutGrant, resource: platformR, allowed: true },
+    { name: "club manager", actor: manager, resource: platformR, allowed: false },
+    { name: "outsider", actor: outsider, resource: platformR, allowed: false },
+  ],
+  "club.plugins.manage": [
+    { name: "club manager (MFA)", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.grants.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "member", actor: plainMember, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.grants.report": [
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: true },
+    { name: "club manager (reads only)", actor: manager, resource: clubR, allowed: false },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.background_checks.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "treasurer", actor: treasurer, resource: clubR, allowed: false },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
 };
 
 describe("policies", () => {

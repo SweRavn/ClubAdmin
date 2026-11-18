@@ -1230,6 +1230,41 @@ player: shifts and hours done, planned, missed). Notices in the category
 every 15 minutes), `duty.assigned` and `duty.swap` (event `duty.changed`),
 to the person and the guardians who see their schedule.
 
+### Plugins, grant reports and background checks (P2.7 part A, ADR 0051)
+
+Migration 0053. Plugins are packages written against `@clubadmin/plugin-api`
+(manifest, data fields, context, the `grant-reporting` and
+`background-checks` capabilities, a conformance suite); the installation
+bundles them (`apps/api/src/plugins.ts`, installed by `PLUGINS`, checked at
+start).
+
+- `club_plugins`: a club's enabled plugins with their `config` (validated
+  against the manifest); `club_plugin_secrets`: their secrets, encrypted
+  with the club's key, never returned (no history; changes audited by name);
+  `plugin_state`: a plugin's key-value state per club.
+- `grant_reports`: a scheme's period with the plugin's evaluation (IDs and
+  reason codes only), totals, `status` `draft` | `locked` | `exported` |
+  `submitted` | `accepted` | `rejected`, who locked it, a flag when
+  attendance changed in a locked period, the submission's receipt (used from
+  part B).
+- `background_checks`: metadata only (type, issuing country, issued,
+  verified, by whom, method, valid until, superseded, closed): never a
+  document, a code or a negative outcome; `background_check_requests`: checks
+  the club requested, with the plugin's reference. Both are erased with the
+  person and merged with duplicates.
+- `groups.adapted`: an adapted group (parasport, adapted activities); the
+  plugin data field `disability` is "takes part in an adapted group", never
+  health data about a person (decision of 2026-11-18).
+
+Permissions: `ops.plugins.manage` (operators, MFA), `club.plugins.manage`
+(club managers, MFA), `club.grants.read` (club managers, registrars,
+treasurers), `club.grants.report` (registrars, treasurers),
+`club.background_checks.manage` (club managers, registrars). Endpoints: `GET
+/ops/plugins`, `GET /clubs/:clubId/plugins`, `PUT
+/clubs/:clubId/plugins/:pluginId` (enable, configure, set or remove secrets),
+`GET /clubs/:clubId/background-checks/types` (types and requirements of the
+enabled plugins).
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

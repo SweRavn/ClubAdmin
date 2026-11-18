@@ -111,3 +111,28 @@ stays unbuilt until a third-party plugin needs it; its security model is an
 open issue ([#23](https://github.com/SweRavn/ClubAdmin/issues/23)). Submitting to
 RF's Idrottsarenan needs a vendor agreement
 ([#22](https://github.com/SweRavn/ClubAdmin/issues/22)).
+
+## As implemented (part A, 2026-11-18)
+
+- `packages/plugin-api` (contract version 1.0.0): the manifest (with
+  per-club settings as a list of fields the host renders, so the manifest
+  stays JSON), the closed list of data fields, the context (restricted HTTP,
+  a logger that redacts anything that is not an ID, a code, a number or a
+  boolean, state), both capabilities with Zod schemas for every output,
+  `callPlugin` (timeout, output validated, failures as codes with the
+  error's name only), and the conformance suite (`checkConformance`, also
+  detecting reads of undeclared data, calls to undeclared hosts, personal
+  data in logs and non-deterministic output). Fixture plugins for Denmark,
+  Germany, the Netherlands, Finland (grants) and Sweden, Norway, Germany,
+  France, Ireland and Spain (background checks) pass it with exact scenario
+  tests.
+- `disability` is a group flag (`groups.adapted`), not a person's health
+  data (decision of 2026-11-18).
+- The host: plugins installed by configuration (`PLUGINS`) and refused at
+  start when incompatible; secrets in their own table without history;
+  calls run outside any transaction (state accesses are short transactions
+  of their own); a failed call is audited (`plugin.call_failed`) and
+  contained.
+- Not yet: the LOK and LAM plugins, grant reports and the attendance hints
+  from a plugin (part B), the screens (part C, P2.8 for background checks).
+

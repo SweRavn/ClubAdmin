@@ -436,6 +436,19 @@ export const DOMAIN_ERRORS = {
   duty_swap_closed: "conflict",
   /** One does not take or ask for one's own shift. */
   duty_swap_own: "validation",
+  // Plugins (P2.7, ADR 0051)
+  /** No such plugin is installed on this installation. */
+  plugin_not_installed: "not-found",
+  /** The plugin does not serve the club's country. */
+  plugin_wrong_country: "validation",
+  /** The configuration does not match the plugin's manifest. */
+  plugin_config_invalid: "validation",
+  /** A secret the plugin does not declare. */
+  plugin_secret_unknown: "validation",
+  /** The plugin is not enabled for the club. */
+  plugin_disabled: "conflict",
+  /** The plugin failed, took too long or answered outside the contract. */
+  plugin_unavailable: "unavailable",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

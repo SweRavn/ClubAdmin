@@ -269,6 +269,19 @@ export const AUDIT_ACTIONS = [
   "duty.assignment.assigned",
   "duty.assignment.unassigned",
   "duty.quota.set",
+  // Plugins (P2.7, ADR 0051): a club's plugins and their settings and
+  // secrets (names only), failed plugin calls, grant reports locked,
+  // exported and submitted, background checks and requests.
+  "plugin.enabled",
+  "plugin.disabled",
+  "plugin.configured",
+  "plugin.call_failed",
+  "grant.report.locked",
+  "grant.report.exported",
+  "grant.report.submitted",
+  "background_check.recorded",
+  "background_check.deleted",
+  "background_check.requested",
   // Part B: marked by the planners, swaps, a group's visibility.
   "duty.assignment.completed",
   "duty.assignment.updated",

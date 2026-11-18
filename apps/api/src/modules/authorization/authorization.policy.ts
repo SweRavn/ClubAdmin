@@ -919,6 +919,38 @@ export const POLICIES: readonly Policy[] = [
         actor.holdsInAnyGroup("group.duties.manage", resource.clubId) ||
         actor.ownsAnyGroup(resource.clubId)),
   ),
+  // Plugins (P2.7, ADR 0051): operators see the installation's plugins;
+  // a club's plugins are enabled and configured with a second factor;
+  // grant reports are read by those who report them too; background checks
+  // by those who follow them up.
+  definePolicy("ops.plugins.manage", "platform", ({ actor }) => actor.isOperator(), { mfa: true }),
+  definePolicy(
+    "club.plugins.manage",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.plugins.manage", resource.clubId),
+    { mfa: true },
+  ),
+  definePolicy(
+    "club.grants.read",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("club.grants.read", resource.clubId) ||
+        actor.holds("club.grants.report", resource.clubId)),
+  ),
+  definePolicy(
+    "club.grants.report",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.grants.report", resource.clubId),
+  ),
+  definePolicy(
+    "club.background_checks.manage",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.background_checks.manage", resource.clubId),
+  ),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

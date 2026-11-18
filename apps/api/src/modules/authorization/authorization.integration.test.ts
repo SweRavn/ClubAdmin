@@ -344,6 +344,27 @@ describe("permission matrix", () => {
         number
       >,
     },
+    // Plugins (P2.7): operators list the installation's; a club's plugins
+    // need club.plugins.manage with a second factor (403 for the club's
+    // people, as no matrix token has one); background-check types are for
+    // the club's managers and registrars.
+    "GET /api/v1/ops/plugins": {
+      url: () => "/api/v1/ops/plugins",
+      expected: ALL_FORBIDDEN,
+    },
+    "GET /api/v1/clubs/:clubId/plugins": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/plugins`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "PUT /api/v1/clubs/:clubId/plugins/:pluginId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/plugins/se.test.matrix`,
+      expected: CLUB_FORBIDDEN,
+      body: { enabled: true },
+    },
+    "GET /api/v1/clubs/:clubId/background-checks/types": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/types`,
+      expected: ADMINS(200),
+    },
     "GET /api/v1/clubs/:clubId/entitlements": {
       url: () => `/api/v1/clubs/${m.clubA.id}/entitlements`,
       expected: INSIDERS,
@@ -2134,6 +2155,10 @@ describe("reads", () => {
       // Given to the registrar by the matrix scenario (P2.4).
       "club.governing_documents.manage",
       "club.governing_documents.adopt",
+      // Grant reports and background checks (P2.7).
+      "club.grants.read",
+      "club.grants.report",
+      "club.background_checks.manage",
     ]);
     // Listed without a second factor; the endpoints ask for it.
     expect((await permissions(m.manager.id))?.permissions).toEqual(

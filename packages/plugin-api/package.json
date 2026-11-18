@@ -1,0 +1,27 @@
+{
+  "name": "@clubadmin/plugin-api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The plugin contract for grant reporting and background checks (ADR 0051): manifest, context, capabilities, host runner and conformance suite.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clubadmin/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

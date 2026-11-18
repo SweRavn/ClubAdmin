@@ -136,6 +136,14 @@ export const PERMISSIONS = [
   "club.duties.manage",
   "club.duty_types.manage",
   "club.duties.read",
+  // Plugins (P2.7, ADR 0051): the installation's plugins (operators), a
+  // club's plugins and their settings, grant reports (reading; locking,
+  // exporting and submitting), background checks (records and requests).
+  "ops.plugins.manage",
+  "club.plugins.manage",
+  "club.grants.read",
+  "club.grants.report",
+  "club.background_checks.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

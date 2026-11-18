@@ -224,8 +224,15 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "club.duties.manage": role("club", "activities"),
   "club.duty_types.manage": role("club", "activities"),
   "club.duties.read": derived("group.duties.manage"),
+  // Plugins (P2.7): enabling and configuring them; grant reports (people's
+  // attendance and ages); background checks (sensitive by nature).
+  "club.plugins.manage": role("club", "club", true),
+  "club.grants.read": role("club", "finance", true),
+  "club.grants.report": role("club", "finance", true),
+  "club.background_checks.manage": role("club", "privacy", true),
   // Operators
   "ops.backup.read": builtIn,
+  "ops.plugins.manage": builtIn,
 };
 
 /** Permissions a role can hold, in catalogue order. */
@@ -366,11 +373,21 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "club.carpools.manage",
       "club.duties.manage",
       "club.duty_types.manage",
+      "club.plugins.manage",
+      "club.grants.read",
+      "club.background_checks.manage",
     ],
   },
   registrar: {
     scope: "club",
-    permissions: [...ADMIN, "club.members.routine", "club.roles.read"],
+    permissions: [
+      ...ADMIN,
+      "club.members.routine",
+      "club.roles.read",
+      "club.grants.read",
+      "club.grants.report",
+      "club.background_checks.manage",
+    ],
   },
   chair: {
     scope: "club",
@@ -394,6 +411,8 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "billing.invoices.read",
       "club.carpools.manage",
       "club.expenses.attest",
+      "club.grants.read",
+      "club.grants.report",
     ],
   },
   secretary: {

@@ -3930,6 +3930,26 @@
         "name": "Hantera passtyper",
         "description": "Kan lägga till och ändra föreningens passtyper med instruktion, lägsta ålder och vilken kontakt med barn passet innebär, samt föreningens inställningar för arbetspass.",
         "example": "Kan till exempel lägga till passtypen \"Sekretariat\" från 15 år."
+      },
+      "club_plugins_manage": {
+        "name": "Hantera tillägg",
+        "description": "Kan slå på och ställa in föreningens tillägg för bidrag och utdrag ur belastningsregistret, och ange deras inloggningsuppgifter.",
+        "example": "Kan till exempel slå på LOK-stöd och ange föreningens organisationsnummer."
+      },
+      "club_grants_read": {
+        "name": "Se bidragsrapporter",
+        "description": "Kan se bidragsperioder och rapporter: vilka sammankomster och personer som räknas och varför.",
+        "example": "Kan till exempel se vilka träningar som inte räknas för LOK-stöd för att de var för korta."
+      },
+      "club_grants_report": {
+        "name": "Rapportera bidrag",
+        "description": "Kan låsa en bidragsperiod, exportera rapporten och skicka in den.",
+        "example": "Kan till exempel låsa vårens LOK-period och ladda ner filen."
+      },
+      "club_background_checks_manage": {
+        "name": "Följa upp utdrag ur belastningsregistret",
+        "description": "Kan se och följa upp vilka som har visat utdrag och när ett nytt behövs. Inga utdrag sparas, bara att de har visats.",
+        "example": "Kan till exempel se vilka ledare som behöver visa ett nytt utdrag."
       }
     }
   },

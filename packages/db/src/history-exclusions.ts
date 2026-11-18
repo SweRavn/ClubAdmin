@@ -32,6 +32,8 @@ export const HISTORY_EXCLUSIONS: Record<string, string> = {
     "when a person last looked at a club's or group's documents (P2.2): a bookmark rewritten on every visit, IDs and times only",
   "public.member_import_rows":
     "staging rows of a member import (the file's values), deleted seven days after the import ends; the people created from them have history",
+  "public.club_plugin_secrets":
+    "a plugin's encrypted secrets per club (P2.7): only that one was set or changed matters, which the audit log records by name",
 };
 
 export function isHistoryExcluded(qualifiedName: string): boolean {

@@ -32,6 +32,7 @@ import { OnboardingModule } from "./modules/onboarding/index.ts";
 import { PeopleModule } from "./modules/people/index.ts";
 import { PersonMergeModule } from "./modules/person-merge/index.ts";
 import { PersonProfilesModule } from "./modules/person-profiles/index.ts";
+import { PluginsModule } from "./modules/plugins/index.ts";
 import { PrivacyModule } from "./modules/privacy/index.ts";
 import { ProtectionModule } from "./modules/protection/index.ts";
 import { ClubRolesModule, RolesModule } from "./modules/roles/index.ts";
@@ -64,6 +65,7 @@ const MODULES = [
   CarpoolsModule,
   ExpensesModule,
   DutiesModule,
+  PluginsModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

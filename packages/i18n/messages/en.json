@@ -3930,6 +3930,26 @@
         "name": "Manage duty types",
         "description": "Can add and change the club's duty types with an instruction, a minimum age and the contact with children the duty means, and the club's duty settings.",
         "example": "Can, for example, add the duty type \"Score table\" from age 15."
+      },
+      "club_plugins_manage": {
+        "name": "Manage plugins",
+        "description": "Can turn on and configure the club's plugins for grants and background checks, and set their credentials.",
+        "example": "For example, can turn on LOK grants and enter the club's organisation number."
+      },
+      "club_grants_read": {
+        "name": "See grant reports",
+        "description": "Can see grant periods and reports: which sessions and people count and why.",
+        "example": "For example, can see which trainings do not count for LOK because they were too short."
+      },
+      "club_grants_report": {
+        "name": "Report grants",
+        "description": "Can lock a grant period, export the report and submit it.",
+        "example": "For example, can lock the spring LOK period and download the file."
+      },
+      "club_background_checks_manage": {
+        "name": "Follow up background checks",
+        "description": "Can see and follow up who has shown a background check and when a new one is due. No certificates are kept, only that they were shown.",
+        "example": "For example, can see which leaders need to show a new certificate."
       }
     }
   },

@@ -255,6 +255,26 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO duty_unavailability (club_id, person_id, from_date, to_date)
         VALUES (${a.id}, ${member.id}, '2030-07-01', '2030-07-31')`);
+      // Plugins (P2.7): an enabled plugin with a secret and state, a grant
+      // report, a background check and a request.
+      await tx.execute(sql`
+        INSERT INTO club_plugins (club_id, plugin_id, enabled) VALUES (${a.id}, 'se.test.fixture', true)`);
+      await tx.execute(sql`
+        INSERT INTO club_plugin_secrets (club_id, plugin_id, name, value)
+        VALUES (${a.id}, 'se.test.fixture', 'apiKey', 'ciphertext')`);
+      await tx.execute(sql`
+        INSERT INTO plugin_state (club_id, plugin_id, key, value)
+        VALUES (${a.id}, 'se.test.fixture', 'k', '1'::jsonb)`);
+      await tx.execute(sql`
+        INSERT INTO grant_reports (club_id, plugin_id, scheme_key, period_key, period_from, period_to)
+        VALUES (${a.id}, 'se.test.fixture', 'lok', '2030-1', '2030-01-01', '2030-06-30')`);
+      await tx.execute(sql`
+        INSERT INTO background_checks (club_id, person_id, plugin_id, check_type, issuing_country,
+          issued_on, verified_on, method)
+        VALUES (${a.id}, ${member.id}, 'se.test.fixture', 'extract', 'SE', '2030-01-01', '2030-01-02', 'viewed')`);
+      await tx.execute(sql`
+        INSERT INTO background_check_requests (club_id, person_id, plugin_id, check_type, status, plugin_reference)
+        VALUES (${a.id}, ${member.id}, 'se.test.fixture', 'extract', 'requested', 'ref')`);
       await tx.execute(sql`
         INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
         VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);

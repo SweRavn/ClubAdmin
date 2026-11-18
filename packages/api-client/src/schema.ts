@@ -1136,6 +1136,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/background-checks/types": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Background-check types and requirements from the club's enabled plugins
+     * @description Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Plugins_backgroundCheckTypes"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/billing/account": {
     parameters: {
       query?: never;
@@ -3546,6 +3566,46 @@ export interface paths {
      * @description Requires permission `club.settings.update` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     put: operations["Clubs_setPhoneNumbers"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/plugins": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The plugins for the club's country and the club's settings (secrets by name only)
+     * @description Requires permission `club.plugins.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Plugins_clubPlugins"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/plugins/{pluginId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Enable, disable or configure a plugin for the club
+     * @description Requires permission `club.plugins.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Plugins_putClubPlugin"];
     post?: never;
     delete?: never;
     options?: never;
@@ -6540,6 +6600,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/ops/plugins": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The installation's plugins, their versions and what they need (operators)
+     * @description Requires permission `ops.plugins.manage` on the platform. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Plugins_installed"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/people/{personId}": {
     parameters: {
       query?: never;
@@ -8388,6 +8468,28 @@ export interface components {
         name: string;
         labelKey: string | null;
       }[];
+    };
+    BackgroundCheckTypes: {
+      items: {
+        pluginId: string;
+        key: string;
+        name: string;
+        /** @enum {string} */
+        initiator: "person" | "club" | "federation";
+        maxAgeDaysWhenPresented: number | null;
+        recheckMonths: number | null;
+        minAge: number | null;
+        methods: string[];
+      }[];
+      requirements: {
+        pluginId: string;
+        category: string;
+        checkType: string;
+        /** @enum {string} */
+        level: "required" | "recommended";
+        basis: string;
+      }[];
+      unavailable: string[];
     };
     BillingAccountResponse: {
       account: components["schemas"]["BillingAccount"];
@@ -10274,6 +10376,54 @@ export interface components {
         number: string;
       }[];
     };
+    ClubPluginList: {
+      items: components["schemas"]["ClubPlugin"][];
+    };
+    ClubPlugin: components["schemas"]["InstalledPlugin"] & {
+      enabled: boolean;
+      config: {
+        [key: string]: string | number | boolean;
+      };
+      configFields: {
+        key: string;
+        /** @enum {string} */
+        type: "text" | "number" | "boolean" | "choice";
+        label: string;
+        required: boolean;
+        options?: string[];
+        pattern?: string;
+        maxLength?: number;
+      }[];
+      secrets: {
+        name: string;
+        set: boolean;
+      }[];
+      texts: {
+        [key: string]: string;
+      };
+    };
+    InstalledPlugin: {
+      id: string;
+      version: string;
+      publisher: string;
+      licence: string;
+      pluginApi: string;
+      capabilities: string[];
+      regions: string[];
+      data: string[];
+      network: string[];
+    };
+    PutClubPlugin: {
+      enabled: boolean;
+      /** @default {} */
+      config: {
+        [key: string]: string | number | boolean | null;
+      };
+      /** @default {} */
+      secrets: {
+        [key: string]: string | null;
+      };
+    };
     ClubPrivacy: {
       /** Format: uuid */
       clubId: string;
@@ -11668,6 +11818,11 @@ export interface components {
           | "club.duties.manage"
           | "club.duty_types.manage"
           | "club.duties.read"
+          | "ops.plugins.manage"
+          | "club.plugins.manage"
+          | "club.grants.read"
+          | "club.grants.report"
+          | "club.background_checks.manage"
         )[];
       }[];
     };
@@ -12642,6 +12797,10 @@ export interface components {
       /** Format: uuid */
       personId: string;
       reason: string;
+    };
+    InstalledPluginList: {
+      items: components["schemas"]["InstalledPlugin"][];
+      pluginApi: string;
     };
     PersonProfile: {
       person: components["schemas"]["PersonSummary"];
@@ -18113,6 +18272,82 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AuditPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Plugins_backgroundCheckTypes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BackgroundCheckTypes"];
         };
       };
       /** @description Invalid request */
@@ -30078,6 +30313,161 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["ClubDetail"];
         };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Plugins_clubPlugins: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ClubPluginList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Plugins_putClubPlugin: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        pluginId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutClubPlugin"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Invalid request */
       400: {
@@ -43916,6 +44306,71 @@ export interface operations {
         };
         content: {
           "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Plugins_installed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["InstalledPluginList"];
         };
       };
       /** @description Not logged in */

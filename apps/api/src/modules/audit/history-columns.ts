@@ -849,6 +849,19 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "offered and asked-for swaps of shifts: in Mina uppgifter and the group's overview (duty.*)",
   "public.duty_unavailability":
     "a person's unavailability for duties (prepared for Phase 4): the person's own",
+  // Plugins (P2.7, ADR 0051): settings on the plugins page, reports on the
+  // grants page and background checks on their screens (P2.8); every change
+  // is in the audit log (plugin.*, grant.*, background_check.*).
+  "public.club_plugins":
+    "a club's enabled plugins and their settings: on the plugins page, changes in the audit log (plugin.*)",
+  "public.plugin_state":
+    "a plugin's own key-value state per club (references and progress, IDs only): read by the plugin",
+  "public.grant_reports":
+    "a grant period's evaluation and status: on the grants page, locking and exports in the audit log (grant.report.*)",
+  "public.background_checks":
+    "a person's background-check metadata (no document or code): on the background-check screens (background_check.*)",
+  "public.background_check_requests":
+    "a check the club requested and its status: on the background-check screens (background_check.requested)",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

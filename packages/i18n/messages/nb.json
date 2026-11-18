@@ -3930,6 +3930,26 @@
         "name": "Administrere vakttyper",
         "description": "Kan legge til og endre klubbens vakttyper med instruks, laveste alder og hvilken kontakt med barn vakten innebærer, og klubbens innstillinger for dugnad.",
         "example": "Kan for eksempel legge til vakttypen \"Sekretariat\" fra 15 år."
+      },
+      "club_plugins_manage": {
+        "name": "Administrere tillegg",
+        "description": "Kan slå på og stille inn klubbens tillegg for tilskudd og politiattest, og angi innloggingsopplysningene deres.",
+        "example": "Kan for eksempel slå på LAM og angi klubbens organisasjonsnummer."
+      },
+      "club_grants_read": {
+        "name": "Se tilskuddsrapporter",
+        "description": "Kan se tilskuddsperioder og rapporter: hvilke aktiviteter og personer som teller og hvorfor.",
+        "example": "Kan for eksempel se hvilke medlemmer som teller for LAM."
+      },
+      "club_grants_report": {
+        "name": "Rapportere tilskudd",
+        "description": "Kan låse en tilskuddsperiode, eksportere rapporten og sende den inn.",
+        "example": "Kan for eksempel låse perioden og laste ned filen."
+      },
+      "club_background_checks_manage": {
+        "name": "Følge opp politiattester",
+        "description": "Kan se og følge opp hvem som har vist politiattest og når en ny trengs. Ingen attester lagres, bare at de er vist.",
+        "example": "Kan for eksempel se hvilke ledere som må vise ny politiattest."
       }
     }
   },
