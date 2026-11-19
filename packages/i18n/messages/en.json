@@ -4309,7 +4309,8 @@
       "none": "No emoji found",
       "loading": "Loading …"
     },
-    "addReaction": "More reactions"
+    "addReaction": "More reactions",
+    "offlineReason": "Technical reason: {reason}"
   },
   "safeguarding": {
     "title": "Safeguarding cases",

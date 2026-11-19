@@ -33,6 +33,8 @@ export interface ChatRoomTexts {
   versions: string;
   typing: string;
   offline: string;
+  /** The technical reason under the banner: "{reason}". */
+  offlineReason: string;
   /** The emoji panel (P2.7b). */
   emoji: EmojiTexts;
   /** The button that adds another reaction. */
@@ -122,6 +124,8 @@ export function ChatRoom(props: Props) {
   const [reads, setReads] = useState(props.readPointers);
   // Shown only when the connection has been down for a while (P2.7b).
   const [offline, setOffline] = useState(false);
+  /** Why the last attempt failed (no personal data): shown in the banner. */
+  const [offlineReason, setOfflineReason] = useState<string | null>(null);
   /** Counts the connections opened: failed messages are resent on each. */
   const [connected, setConnected] = useState(0);
   const [versions, setVersions] = useState<Record<string, { body: string; writtenAt: string }[]>>(
@@ -203,7 +207,8 @@ export function ChatRoom(props: Props) {
     let attempt = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let grace: ReturnType<typeof setTimeout> | undefined;
-    const down = () => {
+    const down = (reason: string) => {
+      setOfflineReason(reason);
       if (closed || grace) return;
       grace = setTimeout(() => {
         if (!closed) setOffline(true);
@@ -221,7 +226,9 @@ export function ChatRoom(props: Props) {
           url: string;
         };
         if (closed) return;
-        const ws = new WebSocket(sameOriginRealtimeUrl(ticket.url, window.location));
+        const url = sameOriginRealtimeUrl(ticket.url, window.location);
+        const ws = new WebSocket(url);
+        const where = new URL(url).host;
         socket.current = ws;
         ws.onopen = () => {
           attempt = 0;
@@ -243,16 +250,17 @@ export function ChatRoom(props: Props) {
             setReads((r) => ({ ...r, [event.personId]: event.messageId }));
           if (event.type === "typing") setTyping((t) => ({ ...t, [event.personId]: Date.now() }));
         };
-        ws.onclose = () => {
+        ws.onclose = (event) => {
           if (socket.current === ws) socket.current = null;
           if (closed) return;
-          down();
+          // 1006: closed before or without a handshake (refused, certificate, proxy).
+          down(`websocket ${where} ${event.code}`);
           attempt++;
           timer = setTimeout(() => void connect(), Math.min(30_000, 1000 * 2 ** attempt));
         };
-      } catch {
+      } catch (error) {
         if (closed) return;
-        down();
+        down(`ticket ${error instanceof Error ? error.message : "error"}`);
         attempt++;
         timer = setTimeout(() => void connect(), Math.min(30_000, 1000 * 2 ** attempt));
       }
@@ -402,6 +410,11 @@ export function ChatRoom(props: Props) {
           data-testid="chat-offline"
         >
           {texts.offline}
+          {offlineReason ? (
+            <span className="block text-xs text-muted" data-testid="chat-offline-reason">
+              {fill(texts.offlineReason, { reason: offlineReason })}
+            </span>
+          ) : null}
         </p>
       ) : null}
       {cursor ? (

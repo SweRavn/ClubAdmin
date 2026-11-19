@@ -4309,7 +4309,8 @@
       "none": "Fant ingen emoji",
       "loading": "Laster …"
     },
-    "addReaction": "Flere reaksjoner"
+    "addReaction": "Flere reaksjoner",
+    "offlineReason": "Teknisk årsak: {reason}"
   },
   "safeguarding": {
     "title": "Trygghetssaker",

@@ -39,6 +39,8 @@ test("the offline banner shows only while the connection is down", async ({ page
   await Promise.all(sockets.map((s) => s.close()));
   await expect(page.getByTestId("chat-offline")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByTestId("chat-offline")).toContainText("Ej ansluten");
+  // The technical reason, so a person without developer tools can report it.
+  await expect(page.getByTestId("chat-offline-reason")).toContainText("Teknisk orsak:");
 
   // Back: the next attempt connects and the banner goes.
   blocked = false;

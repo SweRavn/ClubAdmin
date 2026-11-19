@@ -99,6 +99,7 @@ export default async function ChatPage({ params, searchParams }: Params) {
     versions: t("chat.versions"),
     typing: t("chat.typing", { name: "{name}" }),
     offline: t("chat.offline"),
+    offlineReason: t("chat.offlineReason", { reason: "{reason}" }),
     emoji: {
       open: t("chat.emoji.open"),
       search: t("chat.emoji.search"),
