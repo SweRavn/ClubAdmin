@@ -85,7 +85,7 @@ prompt (like P1.14) before Phase 2 starts.
 | [P2.6 Volunteer duties](P2.6-volunteer-duties.md) | P2.4 (tasks, ADR 0052), P2.5 |
 | [P2.7 Plugins for grant reporting and background checks; LOK and LAM](P2.7-reporting-plugins.md) | P1.15 |
 | [P2.8 Background-check plugins for Sweden and Norway; tracking screens](P2.8-background-check-plugins.md) | P2.7, P2.1, P2.6 |
-| [P2.7b Web fixes from testing: viewing as, navigation, role names, events](P2.7b-web-feedback-fixes.md) | P2.7 |
+| [P2.7b Web fixes from testing: navigation, search as you type, unsaved changes, role names, demo data](P2.7b-web-feedback-fixes.md) | P2.7 |
 | [P2.9 Programmes and templates: cups, camps, match days copied to new dates](P2.9-programmes-and-templates.md) | P2.6, P1.6 |
 
 The prompts are numbered in the order they are built. Each prompt is checked against the code as it is when it
