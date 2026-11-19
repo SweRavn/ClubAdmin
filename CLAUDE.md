@@ -185,6 +185,11 @@ only run if listed in `onlyBuiltDependencies`.
 - Only `packages/db` imports `pg`/Drizzle drivers; everything else uses
   `createDatabase(...).withTenant/withActor/withSystem` (dependency-cruiser).
   Outbox payloads and job payloads contain IDs only.
+- Web forms (ADR 0055): a change to what the page shows updates in place
+  (no page reload; scroll, focus and open sections kept); a single choice
+  is saved with one tap, never with a separate "Save"; only actions that
+  lead to another resource navigate. Use the shared `ActionForm`; forms
+  still work without JavaScript.
 - Packages under `packages/` are TypeScript source (no build step) with `.ts`
   import extensions and erasable syntax only; apps are compiled with SWC.
 - Backend modules live in `apps/api/src/modules/<module>/` with

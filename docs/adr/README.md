@@ -60,3 +60,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0052](0052-assigned-tasks.md) | Assigned tasks: one system for duty shifts and meeting action items | Accepted |
 | [0053](0053-announcements.md) | Announcements: one message, chosen channels, no text in push | Accepted |
 | [0054](0054-programmes-and-templates.md) | Programmes and templates: a container for activities and shifts, copied without people | Proposed (P2.9) |
+| [0055](0055-web-updates-in-place.md) | The web app updates in place; one tap for a single choice | Accepted (built in P2.7b) |

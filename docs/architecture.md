@@ -385,6 +385,13 @@ file clones it (`createTestDatabase()`, about 0.1 s). Helpers:
   corrections after the lock, LOK-stöd hints) and
   `/groups/[id]/attendance` (a group's summary); one form each, no client
   JavaScript needed.
+- **Interaction (ADR 0055):** a change to what the page shows updates that
+  part in place, without reloading the page (scroll, focus and open
+  sections kept); a single choice (coming / not coming, a mark, a toggle)
+  is saved with one tap, its optional free text on its own. Forms keep
+  working without JavaScript through the same BFF actions; the shared
+  `ActionForm` enhances them. Only actions that lead to another resource
+  navigate.
 - **Security:** CSP with a fresh nonce per request (`src/proxy.ts`),
   Trusted Types in production, no inline scripts, `frame-ancestors 'none'`,
   further headers in `next.config.ts` (ADR 0027). Production builds use
