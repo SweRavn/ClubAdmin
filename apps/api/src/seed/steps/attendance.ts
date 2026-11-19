@@ -69,7 +69,8 @@ export const attendanceDemoStep: DemoStep = {
       );
     const f2017 = await coming("svk", "svk-f2017");
     const generatedF2017 = core.generated.get("svk-f2017") ?? [];
-    for (const [i, activity] of f2017.entries()) {
+    // Activities apart, a few at a time (each answer is its own transaction).
+    await inBatches([...f2017.entries()], async ([i, activity]) => {
       await s.attendance.respond(as("sara", "svk"), activity.id, id("alva"), {
         status: "attending",
       });
@@ -83,7 +84,7 @@ export const attendanceDemoStep: DemoStep = {
           status: j % 4 === 3 ? "not_attending" : "attending",
         });
       }
-    }
+    });
     // Elsa: Anna said she is coming to the first match; Mikael changed it later.
     const match = f2017.find((a) => a.kind === "match");
     if (match) {
@@ -151,7 +152,7 @@ export const attendanceDemoStep: DemoStep = {
       const past = (await calendar(team.club, team.group, -10 * 7 * DAY_MS, -HOUR_MS)).filter(
         (a) => a.status === "scheduled",
       );
-      for (const [i, activity] of past.entries()) {
+      await inBatches([...past.entries()], async ([i, activity]) => {
         const taken = new Date(activity.endsAt.getTime() + 10 * 60_000);
         const service = at(taken);
         const ctx = as(team.leader, team.club, taken);
@@ -180,14 +181,14 @@ export const attendanceDemoStep: DemoStep = {
         if (team.group === "svk-f2017" && guest && i === 2) {
           marks.push({ personId: guest, status: "present", role: "participant" });
         }
-        if (marks.length === 0) continue;
+        if (marks.length === 0) return;
         await service.recordAttendance(
           ctx,
           activity.id,
           { marks: marks.map((m) => ({ ...m, recordedAt: taken.toISOString() })) },
           { leads: true, corrects: false },
         );
-      }
+      });
     }
 
     // Sara (club manager) corrects Alva's mark 40 days ago, after the lock.
@@ -204,3 +205,13 @@ export const attendanceDemoStep: DemoStep = {
     }
   },
 };
+
+/**
+ * Runs `fn` over the items a few at a time (P2.7c: the demo seed within its
+ * budget): the activities are independent, each in its own transactions.
+ */
+async function inBatches<T>(items: readonly T[], fn: (item: T) => Promise<void>, size = 4) {
+  for (let i = 0; i < items.length; i += size) {
+    await Promise.all(items.slice(i, i + size).map(fn));
+  }
+}

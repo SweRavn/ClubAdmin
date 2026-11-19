@@ -78,9 +78,10 @@ export async function seed(
   switch (options.scenario) {
     case "demo": {
       const data = options.data ?? loadDemoData();
+      const coreStarted = performance.now();
       const result = await seedCore(full, data);
       log(
-        `core: ${data.personas.length} personas, ${data.clubs.length} clubs, ${data.groups.length} groups`,
+        `core: ${data.personas.length} personas, ${data.clubs.length} clubs, ${data.groups.length} groups (${((performance.now() - coreStarted) / 1000).toFixed(1)} s)`,
       );
       for (const step of DEMO_STEPS) {
         const started = performance.now();

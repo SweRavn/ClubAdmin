@@ -15,7 +15,7 @@ pnpm db:reset --scenario minimal     # one club, one group, three people
 ```
 
 `pnpm dev` seeds the demo scenario on its first start (`db:seed --if-empty`).
-`db:reset` takes about 7 seconds with the demo scenario (budget 15 s); the full
+`db:reset` takes about 10 seconds with the demo scenario (budget 15 s; the seed logs each step's time); the full
 `load` scenario about 2 minutes (budget 10 minutes; CI seeds `--size 10`, the
 nightly workflow the full size).
 
