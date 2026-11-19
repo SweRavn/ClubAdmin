@@ -20,6 +20,9 @@ import {
 
 /** Absolute URL on this site (behind Caddy the request URL is the internal one). */
 export const siteUrl = (path: string) => new URL(path, webConfig().PUBLIC_WEB_URL).toString();
+/** Sent by the enhanced form (ADR 0055): the action answers where to go as JSON, not as a redirect. */
+export const ENHANCED_HEADER = "x-clubadmin-enhanced";
+
 export const siteOrigin = () => new URL(webConfig().PUBLIC_WEB_URL).origin;
 
 export function redirectTo(path: string, status = 303): NextResponse {

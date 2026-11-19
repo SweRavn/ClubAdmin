@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// A form posting to one of the joining actions (server/actions.ts), with the
-// CSRF token and where to come back to. Works without client JavaScript.
+// A form posting to one of the form actions (server/actions.ts), with the
+// CSRF token and where to come back to. Works without client JavaScript;
+// with it, the change happens in place without reloading the page
+// (EnhancedForm, ADR 0055).
 import type { ReactNode } from "react";
 
 import { currentPath, requireSession } from "../server/data.ts";
+import { EnhancedForm } from "./enhanced-form.tsx";
 
 export async function ActionForm({
   action,
@@ -23,11 +26,11 @@ export async function ActionForm({
   const url = new URL(back ?? path, "https://internal.invalid");
   for (const key of NOTICE_PARAMS) url.searchParams.delete(key);
   return (
-    <form method="post" action={`/actions/${action}`} className={className} data-testid={testId}>
+    <EnhancedForm action={`/actions/${action}`} className={className} testId={testId}>
       <input type="hidden" name="csrf" value={session.record.csrf} />
       <input type="hidden" name="back" value={`${url.pathname}${url.search}`} />
       {children}
-    </form>
+    </EnhancedForm>
   );
 }
 

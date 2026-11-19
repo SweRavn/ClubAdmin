@@ -11,7 +11,13 @@ import { checkoutOrigins } from "../../../server/config.ts";
 import { CSRF_COOKIE, SESSION_COOKIE } from "../../../server/cookies.ts";
 import { checkCsrf } from "../../../server/csrf.ts";
 import { clearFormDraft, KEEP_VALUES_ACTIONS, saveFormDraft } from "../../../server/form-drafts.ts";
-import { formText, problem, redirectTo, siteOrigin } from "../../../server/http.ts";
+import {
+  ENHANCED_HEADER,
+  formText,
+  problem,
+  redirectTo as redirectToPage,
+  siteOrigin,
+} from "../../../server/http.ts";
 import { safeReturnTo } from "../../../server/return-to.ts";
 import { freshSession, loadSession } from "../../../server/sessions.ts";
 
@@ -34,6 +40,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ action: string }> },
 ): Promise<NextResponse> {
+  const enhanced = request.headers.get(ENHANCED_HEADER) === "1";
+  // Where to go next: a 303 for a plain form post, JSON for the enhanced form,
+  // which updates the page in place or navigates without a reload (ADR 0055).
+  const redirectTo = (path: string) =>
+    enhanced
+      ? NextResponse.json({ redirect: path }, { headers: { "cache-control": "no-store" } })
+      : redirectToPage(path);
   const name = (await params).action;
   const action = FORM_ACTIONS[name];
   if (!action) return problem("not-found");
@@ -84,6 +97,7 @@ export async function POST(
     // A payment provider's hosted page (P1.13): only to an allowed origin.
     const external = externalRedirect(body);
     if (external) {
+      if (enhanced) return NextResponse.json({ external });
       const response = NextResponse.redirect(external, 303);
       response.headers.set("cache-control", "no-store");
       response.headers.set("referrer-policy", "no-referrer");

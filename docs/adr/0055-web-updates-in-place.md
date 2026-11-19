@@ -23,8 +23,8 @@ svaret"), while the mobile app answers with one tap. About 190 actions on
 2. **Navigate only to go somewhere else.** A full page change is right
    when the action leads to another resource: creating something opens it,
    deleting the resource the page shows goes back to its list, logging in
-   or out, leaving a club. Even then the browser does a client-side
-   navigation, not a reload.
+   or out, leaving a club. Then the browser loads that page (so the whole
+   frame, the bell's count included, is current there).
 3. **One tap for a single choice.** Where the user picks one of a few
    values (coming / not coming, present / absent, a yes/no setting, a
    status), the tap saves it. Free text that goes with it (a note to the
@@ -40,12 +40,14 @@ svaret"), while the mobile app answers with one tap. About 190 actions on
    actions and still work without JavaScript (and for the end-to-end tests
    that need it). With JavaScript, one shared client component (an
    enhanced `ActionForm`) submits with `fetch` (CSRF token as today, the
-   action answering JSON when asked), then refreshes the server components
-   of the current route (`router.refresh()`) or applies the returned
-   state, so pages need no per-action client code. It is loaded on demand
+   action answering JSON when asked), then fetches the current route's
+   server components again (`router.replace` without scrolling and
+   `router.refresh()`, the frame included) or loads the other page, so
+   pages need no per-action client code. It is loaded on demand
    and counted in the initial JavaScript budget (ADR 0027).
-6. **Rules for new code.** A new form uses the shared component and states
-   which kind it is: in place (default) or navigate (rule 2). A review
+6. **Rules for new code.** A new form uses the shared component; its kind
+   follows from where the action's `done()` leads: back to the same page is
+   in place, another page navigates (rule 2). A review
    rejects a form that reloads the page for a change on the same page, and
    a single choice that needs a separate "Save".
 
@@ -54,5 +56,4 @@ action route; Playwright tests check that the page did not reload (a marker
 in `window` survives) and that focus stays. Error codes keep coming from
 the API's problem details and are shown next to the control. Pages that
 render state from query parameters (`?saved=1`, `?error=`) keep doing so
-for the no-JavaScript path; with JavaScript the same notices appear
-without changing the URL.
+for both paths; with JavaScript the query changes without a reload.

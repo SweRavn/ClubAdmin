@@ -212,9 +212,16 @@ test("Erik, F2017's head coach, answers that he is coming to the next training (
   page,
 }) => {
   await loginAs(page, PERSONAS.erik, { returnTo: "/schedule" });
+  // The answer is saved in place (ADR 0055): the page is not reloaded.
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
   const mine = page.getByTestId(`response-${PERSONAS.erik.id}`).first();
   await mine.getByTestId("response-attending").click();
   await expect(
     page.getByTestId(`response-${PERSONAS.erik.id}`).first().getByTestId("response-attending"),
   ).toHaveAttribute("aria-pressed", "true");
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
 });
