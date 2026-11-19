@@ -26,6 +26,7 @@ export * from "./domain/events.ts";
 export * from "./domain/expenses.ts";
 export * from "./domain/family.ts";
 export * from "./domain/governing.ts";
+export * from "./domain/grants.ts";
 export * from "./domain/groups-admin.ts";
 export * from "./domain/imports.ts";
 export * from "./domain/joining.ts";

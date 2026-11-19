@@ -1551,9 +1551,13 @@
   },
   "grantHints": {
     "lok": {
-      "too_short": "Gir ikke LOK-stöd: kortere enn 45 minutter.",
-      "too_few_participants": "Gir ikke LOK-stöd: færre enn tre deltakere i alderen 7–25 år.",
-      "no_leader": "Gir ikke LOK-stöd: ingen leder på minst 13 år til stede."
+      "too_short": "Gir ikke LOK-støtte: kortere enn minste lengde.",
+      "too_few_participants": "Gir ikke LOK-støtte: færre enn tre deltakere i alderen 6–25 år.",
+      "no_leader": "Gir ikke LOK-støtte: ingen leder på minst 13 år til stede.",
+      "outside_rules": "Før 1. juli 2025: utenfor RFs regler for LOK-støtte.",
+      "over_leader_cap": "Flere enn 20 deltakere per leder: resten gir ikke LOK-støtte.",
+      "no_sport": "Gruppen har ingen idrett angitt; LOK-støtte telles per idrett.",
+      "leader_overlap": "En leder ledet en annen gruppeaktivitet samtidig."
     }
   },
   "events": {

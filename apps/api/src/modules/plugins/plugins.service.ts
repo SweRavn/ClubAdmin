@@ -120,6 +120,15 @@ export class PluginsService {
     return { items: this.registry.all().map(installedPlugin), pluginApi: PLUGIN_API_VERSION };
   }
 
+  /** The IDs of the plugins the club has enabled (installed ones only). */
+  enabledPluginIds(context: TenantContext): Promise<string[]> {
+    return this.db.withTenant(context, async (tx) =>
+      (await repo.clubPlugins(tx))
+        .filter((r) => r.enabled && this.registry.get(r.pluginId))
+        .map((r) => r.pluginId),
+    );
+  }
+
   /** The plugins for the club's country, with the club's settings (secrets by name only). */
   clubPlugins(context: TenantContext, locale: string): Promise<ClubPlugin[]> {
     return this.db.withTenant(context, async (tx) => {
@@ -297,9 +306,7 @@ export class PluginsService {
     context: TenantContext,
     locale: string,
   ): Promise<BackgroundCheckTypes> {
-    const enabled = await this.db.withTenant(context, async (tx) =>
-      (await repo.clubPlugins(tx)).filter((r) => r.enabled).map((r) => r.pluginId),
-    );
+    const enabled = await this.enabledPluginIds(context);
     const out: BackgroundCheckTypes = { items: [], requirements: [], unavailable: [] };
     for (const pluginId of enabled) {
       const plugin = this.registry.get(pluginId);

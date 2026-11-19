@@ -57,6 +57,8 @@ export const groups = pgTable(
     waitlistAutoOffer: boolean().notNull().default(false),
     /** The car-pool statistics are shown to the group's members (P2.5). */
     carpoolStatsPublic: boolean().notNull().default(false),
+    /** Adapted activities, parasport (P2.7, ADR 0051): grant plugins derive `disability` from it. */
+    adapted: boolean().notNull().default(false),
     archivedAt: timestamp(tz),
     ...timestamps,
   },

@@ -10291,6 +10291,375 @@
         ],
         "additionalProperties": false
       },
+      "GrantReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pluginId": {
+            "type": "string",
+            "pattern": "^[a-z]{2,}(\\.[a-z0-9-]+)+$"
+          },
+          "scheme": {
+            "type": "string"
+          },
+          "period": {
+            "$ref": "#/components/schemas/GrantPeriod"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "locked",
+              "exported",
+              "submitted",
+              "accepted",
+              "rejected"
+            ]
+          },
+          "evaluatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lockedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lockedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "attendanceChangedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sessionId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "counts": {
+                  "type": "boolean"
+                },
+                "codes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "counted": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "sessionId",
+                "title",
+                "date",
+                "counts",
+                "codes",
+                "counted"
+              ]
+            }
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "counted": {
+                  "type": "integer"
+                },
+                "codes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "person",
+                "counted",
+                "codes"
+              ]
+            }
+          },
+          "totals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "measure": {
+                  "type": "string"
+                },
+                "dimensions": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "measure",
+                "dimensions",
+                "value"
+              ]
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "field": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "person",
+                "field"
+              ]
+            }
+          },
+          "texts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "pluginId",
+          "scheme",
+          "period",
+          "status",
+          "evaluatedAt",
+          "lockedAt",
+          "lockedBy",
+          "attendanceChangedAt",
+          "sessions",
+          "people",
+          "totals",
+          "missing",
+          "texts"
+        ]
+      },
+      "GrantPeriod": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "referenceDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date"
+          },
+          "late": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "until": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "percent": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "until",
+                "percent"
+              ]
+            }
+          },
+          "refusedAfter": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        },
+        "required": [
+          "key",
+          "from",
+          "to",
+          "referenceDate",
+          "deadline",
+          "late",
+          "refusedAfter"
+        ]
+      },
+      "GrantFiles": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "mediaType": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "mediaType",
+                "content"
+              ]
+            }
+          }
+        },
+        "required": [
+          "files"
+        ]
+      },
+      "GrantExportRequest": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "csv",
+              "pdf",
+              "xml",
+              "json"
+            ]
+          }
+        },
+        "required": [
+          "format"
+        ],
+        "additionalProperties": false
+      },
+      "GrantSchemeList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pluginId": {
+                  "type": "string",
+                  "pattern": "^[a-z]{2,}(\\.[a-z0-9-]+)+$"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "basis": {
+                  "type": "string",
+                  "enum": [
+                    "session",
+                    "membership_snapshot",
+                    "leader"
+                  ]
+                },
+                "formats": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "integration": {
+                  "type": "boolean"
+                },
+                "periods": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GrantPeriod"
+                  }
+                }
+              },
+              "required": [
+                "pluginId",
+                "key",
+                "name",
+                "basis",
+                "formats",
+                "integration",
+                "periods"
+              ]
+            }
+          },
+          "unavailable": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{2,}(\\.[a-z0-9-]+)+$"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "unavailable"
+        ]
+      },
       "GroupList": {
         "type": "object",
         "properties": {
@@ -10400,6 +10769,9 @@
           },
           "archived": {
             "type": "boolean"
+          },
+          "adapted": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -10415,7 +10787,8 @@
           "level",
           "capacity",
           "admissionMode",
-          "archived"
+          "archived",
+          "adapted"
         ]
       },
       "AnnouncementBoard": {
@@ -39686,6 +40059,446 @@
         }
       }
     },
+    "/api/v1/clubs/{clubId}/grants/report": {
+      "get": {
+        "operationId": "Grants_report",
+        "summary": "A period's report: evaluated again while a draft, as locked otherwise",
+        "tags": [
+          "grants"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.grants.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2,}(\\.[a-z0-9-]+)+$"
+            },
+            "required": true,
+            "name": "pluginId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+            },
+            "required": true,
+            "name": "scheme",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_-]{0,39}$"
+            },
+            "required": true,
+            "name": "period",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/grants/reports/{reportId}/export": {
+      "post": {
+        "operationId": "Grants_export",
+        "summary": "A locked report's files (CSV, PDF, …) from its plugin",
+        "tags": [
+          "grants"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.grants.report` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "reportId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantExportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantFiles"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/grants/reports/{reportId}/lock": {
+      "post": {
+        "operationId": "Grants_lock",
+        "summary": "Lock a period's report (its evaluation is kept as it is)",
+        "tags": [
+          "grants"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.grants.report` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "reportId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/grants/schemes": {
+      "get": {
+        "operationId": "Grants_schemes",
+        "summary": "The schemes of the club's enabled grant plugins, with periods and deadlines",
+        "tags": [
+          "grants"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.grants.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantSchemeList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clubs/{clubId}/groups": {
       "get": {
         "operationId": "Groups_listGroups",
@@ -39926,6 +40739,9 @@
                     "maximum": 60
                   },
                   "waitlistAutoOffer": {
+                    "type": "boolean"
+                  },
+                  "adapted": {
                     "type": "boolean"
                   }
                 },
@@ -54913,6 +55729,9 @@
                     "maximum": 60
                   },
                   "waitlistAutoOffer": {
+                    "type": "boolean"
+                  },
+                  "adapted": {
                     "type": "boolean"
                   }
                 },

@@ -2475,6 +2475,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/grants/report": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A period's report: evaluated again while a draft, as locked otherwise
+     * @description Requires permission `club.grants.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Grants_report"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/grants/reports/{reportId}/export": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * A locked report's files (CSV, PDF, …) from its plugin
+     * @description Requires permission `club.grants.report` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Grants_export"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/grants/reports/{reportId}/lock": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Lock a period's report (its evaluation is kept as it is)
+     * @description Requires permission `club.grants.report` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Grants_lock"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/grants/schemes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The schemes of the club's enabled grant plugins, with periods and deadlines
+     * @description Requires permission `club.grants.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Grants_schemes"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/groups": {
     parameters: {
       query?: never;
@@ -9449,6 +9529,93 @@ export interface components {
       reference?: string | null;
       supersedes?: string[];
     };
+    GrantReport: {
+      /** Format: uuid */
+      id: string;
+      pluginId: string;
+      scheme: string;
+      period: components["schemas"]["GrantPeriod"];
+      /** @enum {string} */
+      status: "draft" | "locked" | "exported" | "submitted" | "accepted" | "rejected";
+      /** Format: date-time */
+      evaluatedAt: string | null;
+      /** Format: date-time */
+      lockedAt: string | null;
+      lockedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      /** Format: date-time */
+      attendanceChangedAt: string | null;
+      sessions: {
+        /** Format: uuid */
+        sessionId: string;
+        title: string;
+        /** Format: date */
+        date: string;
+        counts: boolean;
+        codes: string[];
+        counted: number;
+      }[];
+      people: {
+        person: components["schemas"]["PersonSummary"];
+        counted: number;
+        codes: string[];
+      }[];
+      totals: {
+        measure: string;
+        dimensions: {
+          [key: string]: string;
+        };
+        value: number;
+      }[];
+      missing: {
+        person: components["schemas"]["PersonSummary"];
+        field: string;
+      }[];
+      texts: {
+        [key: string]: string;
+      };
+    };
+    GrantPeriod: {
+      key: string;
+      /** Format: date */
+      from: string;
+      /** Format: date */
+      to: string;
+      /** Format: date */
+      referenceDate: string | null;
+      /** Format: date */
+      deadline: string;
+      late: {
+        /** Format: date */
+        until: string;
+        percent: number;
+      }[];
+      /** Format: date */
+      refusedAfter: string | null;
+    };
+    GrantFiles: {
+      files: {
+        name: string;
+        mediaType: string;
+        content: string;
+      }[];
+    };
+    GrantExportRequest: {
+      /** @enum {string} */
+      format: "csv" | "pdf" | "xml" | "json";
+    };
+    GrantSchemeList: {
+      items: {
+        pluginId: string;
+        key: string;
+        name: string;
+        /** @enum {string} */
+        basis: "session" | "membership_snapshot" | "leader";
+        formats: string[];
+        integration: boolean;
+        periods: components["schemas"]["GrantPeriod"][];
+      }[];
+      unavailable: string[];
+    };
     GroupList: {
       items: components["schemas"]["Group"][];
       /** Format: uuid */
@@ -9482,6 +9649,7 @@ export interface components {
       /** @enum {string} */
       admissionMode: "direct" | "waitlist" | "closed";
       archived: boolean;
+      adapted: boolean;
     };
     AnnouncementBoard: {
       pinned: components["schemas"]["Announcement"][];
@@ -24884,6 +25052,318 @@ export interface operations {
       };
     };
   };
+  Grants_report: {
+    parameters: {
+      query: {
+        pluginId: string;
+        scheme: string;
+        period: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GrantReport"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Grants_export: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        reportId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["GrantExportRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GrantFiles"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Grants_lock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        reportId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Grants_schemes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GrantSchemeList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Groups_listGroups: {
     parameters: {
       query?: {
@@ -25000,6 +25480,7 @@ export interface operations {
           waitlistVisiblePublicly?: boolean;
           offerReplyDays?: number;
           waitlistAutoOffer?: boolean;
+          adapted?: boolean;
         };
       };
     };
@@ -35393,6 +35874,7 @@ export interface operations {
           waitlistVisiblePublicly?: boolean;
           offerReplyDays?: number;
           waitlistAutoOffer?: boolean;
+          adapted?: boolean;
         };
       };
     };

@@ -82,8 +82,9 @@ export class PluginsController {
     @CurrentAuthorization() authz: RequestAuthorization,
     @Param() params: { clubId: string; pluginId: string },
     @Body() body: PutClubPluginInput,
-  ): Promise<void> {
+  ): Promise<null> {
     await this.plugins.putClubPlugin(tenantContext(authz, params.clubId), params.pluginId, body);
+    return null;
   }
 
   @Endpoint({

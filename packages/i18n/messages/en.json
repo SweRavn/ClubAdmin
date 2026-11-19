@@ -1551,9 +1551,13 @@
   },
   "grantHints": {
     "lok": {
-      "too_short": "Does not qualify for LOK-stöd: shorter than 45 minutes.",
-      "too_few_participants": "Does not qualify for LOK-stöd: fewer than three participants aged 7–25.",
-      "no_leader": "Does not qualify for LOK-stöd: no leader aged 13 or older present."
+      "too_short": "No LOK grant: shorter than the minimum length.",
+      "too_few_participants": "No LOK grant: fewer than three participants aged 6–25.",
+      "no_leader": "No LOK grant: no leader of at least 13 present.",
+      "outside_rules": "Before 1 July 2025: outside RF's rules for LOK grants.",
+      "over_leader_cap": "More than 20 participants per leader: the rest give no LOK grant.",
+      "no_sport": "The group has no sport set; LOK grants count per sport.",
+      "leader_overlap": "A leader led another group activity at the same time."
     }
   },
   "events": {

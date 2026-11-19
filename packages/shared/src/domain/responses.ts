@@ -156,6 +156,8 @@ export const GroupSchema = z
     capacity: z.number().int().nullable(),
     admissionMode: z.enum(ADMISSION_MODES),
     archived: z.boolean(),
+    /** Adapted activities, parasport (P2.7). */
+    adapted: z.boolean(),
   })
   .openapi("Group");
 export type GroupResponse = z.infer<typeof GroupSchema>;

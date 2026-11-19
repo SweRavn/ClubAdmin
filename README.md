@@ -208,6 +208,7 @@ and restores in [backup and restore](docs/operations/backup-restore.md).
 | [docs/gdpr.md](docs/gdpr.md) | Privacy and data protection |
 | [docs/hosting-and-billing.md](docs/hosting-and-billing.md) | Hosted vs self-hosted, optional billing |
 | [docs/licensing.md](docs/licensing.md) | AGPL-3.0 and dependency licence policy |
+| [docs/plugins.md](docs/plugins.md) | Plugins: grant reporting (LOK, samordnet rapportering) with the rules' sources, background checks |
 | [docs/seed-data.md](docs/seed-data.md) | Demo clubs and personas for development |
 | [docs/roadmap.md](docs/roadmap.md) | Phases and modules |
 | [docs/adr/](docs/adr/README.md) | Architecture decision records (index) |

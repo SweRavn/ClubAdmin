@@ -71,6 +71,7 @@ export function toGroupResponse(group: Group): GroupResponse {
     capacity: group.capacity,
     admissionMode: group.admissionMode,
     archived: group.archivedAt !== null,
+    adapted: group.adapted,
   };
 }
 

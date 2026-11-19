@@ -38,6 +38,7 @@ import { backupMetricsTask } from "./backup-metrics.ts";
 import { calendarRetentionTask } from "./calendar.ts";
 import { chatMaintenanceTask, syncFamilyTask, syncPersonTask } from "./chat.ts";
 import { cleanupTask, deleteObjectsTask, deletionDatesTask, scanTask } from "./documents.ts";
+import { attendanceChangedTask } from "./grants.ts";
 import { flagAdultWardsTask } from "./guardianships.ts";
 import { joiningRetentionTask } from "./joining.ts";
 import { expireMemberExportsTask, memberExportTask, purgeMemberImportsTask } from "./members.ts";
@@ -152,6 +153,7 @@ export function createTaskList(deps: TaskDependencies): TaskList {
     "privacy:anonymize_profile_views": anonymizeProfileViewsTask(deps.db),
     "privacy:profile_views": profileViewsRetentionTask(deps.db),
     "attendance:retention": attendanceRetentionTask(deps.db),
+    "grants:attendance_changed": attendanceChangedTask(deps.db),
     "members:export": memberExportTask(deps.db, deps.storage ?? null),
     "members:expire_exports": expireMemberExportsTask(deps.db, deps.storage ?? null),
     "members:purge_imports": purgeMemberImportsTask(deps.db, deps.storage ?? null),

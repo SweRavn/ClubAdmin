@@ -449,6 +449,12 @@ export const DOMAIN_ERRORS = {
   plugin_disabled: "conflict",
   /** The plugin failed, took too long or answered outside the contract. */
   plugin_unavailable: "unavailable",
+  /** No such period of the scheme. */
+  grant_period_unknown: "not-found",
+  /** The report is locked already. */
+  grant_report_locked: "conflict",
+  /** Lock the report before exporting it. */
+  grant_report_not_locked: "conflict",
 } as const satisfies Record<string, ProblemSlug>;
 
 export type DomainErrorCode = keyof typeof DOMAIN_ERRORS;

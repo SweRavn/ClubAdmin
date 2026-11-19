@@ -133,8 +133,9 @@ RF's Idrottsarenan needs a vendor agreement
   calls run outside any transaction (state accesses are short transactions
   of their own); a failed call is audited (`plugin.call_failed`) and
   contained.
-- Not yet: the LOK and LAM plugins, grant reports and the attendance hints
-  from a plugin (part B), the screens (part C, P2.8 for background checks).
+- Part A did not include the LOK and LAM plugins, grant reports and the
+  attendance hints from a plugin (part B, below) or the screens (part C,
+  P2.8 for background checks).
 
 ## Sources (read 2026-11-19)
 
@@ -165,3 +166,28 @@ RF's Idrottsarenan needs a vendor agreement
   plugin produces the samordnet rapportering figures the idrettsråd
   distributes LAM by.
 
+
+## As implemented (part B2, 2026-11-19)
+
+- The `grants` module (`apps/api/src/modules/grants`): the enabled plugins'
+  schemes with last year's and this year's periods; a period's report,
+  evaluated again and stored on every read while a draft (held sessions of
+  the club with any attendance mark, the activity's first group giving the
+  sport and the adapted flag), returned as stored once locked; locking
+  (`club.grants.report`, audited) and exporting the plugin's files
+  (audited; the report becomes `exported`). People reach the response only
+  through the PersonPresenter; reports store IDs and reason codes.
+- The data a plugin gets: identity from `PeopleService.grantIdentitiesInTx`
+  (names, birth date, sex, the personal identity number only while
+  evaluating and only to plugins declaring it), the latest membership, the
+  group functions with their sport and adapted flag, then
+  `minimizePerson`/`minimizeSession` to the declared fields. Protected
+  people are included (reporting by legal basis, never an address).
+- The attendance views' hints come from the enabled session-based grant
+  plugins (`evaluateSession`), computed after the attendance transaction;
+  the country packs no longer carry grant rules.
+- Attendance recorded or corrected in a locked period flags the report
+  (`attendance_changed_at`) through the `attendance.recorded` event and the
+  worker job `grants:attendance_changed`; the locked evaluation is kept.
+- `groups.adapted` is part of the group API (create, update, responses).
+- Not yet: the screens, deadline reminders and end-to-end tests (part C).

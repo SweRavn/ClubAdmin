@@ -1265,6 +1265,17 @@ treasurers), `club.grants.report` (registrars, treasurers),
 `GET /clubs/:clubId/background-checks/types` (types and requirements of the
 enabled plugins).
 
+Grant reports (part B): `GET /clubs/:clubId/grants/schemes` (the enabled
+plugins' schemes with last year's and this year's periods), `GET
+/clubs/:clubId/grants/report?pluginId&scheme&period` (a draft is evaluated
+again on every read and stored; a locked one is returned as locked), `POST
+/clubs/:clubId/grants/reports/:reportId/lock` and `.../export` (the
+plugin's files; the report becomes `exported`). The attendance views'
+`hints` come from the enabled session-based grant plugins (no plugin, no
+hints). Attendance changed in a locked period flags the report
+(`attendance_changed_at`, worker job `grants:attendance_changed`). `adapted` is a field of the group (create, update, responses). The
+plugins and their rules: [plugins.md](plugins.md).
+
 ## Permissions (implemented policies)
 
 The authorization module (ADR 0006, ADR 0025) has one policy per permission

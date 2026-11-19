@@ -60,28 +60,6 @@ export interface MemberImportRules {
   }[];
 }
 
-/** One session as the grant rules see it (P1.5): its length and who was present. */
-export interface GrantSession {
-  /** The session's local date (ISO), for ages counted by calendar year. */
-  date: string;
-  durationMinutes: number;
-  /** Birth dates of the participants present (null: unknown, never counted). */
-  participantBirthDates: readonly (string | null)[];
-  /** Birth dates of the leaders present. */
-  leaderBirthDates: readonly (string | null)[];
-}
-
-/**
- * A national activity grant whose rules a session must meet to count
- * (Sweden's LOK-stöd). `check` returns the codes of the rules not met
- * (empty: it counts); reporting is a later step.
- */
-export interface GrantRules {
-  /** Short name for messages, e.g. "lok". */
-  scheme: string;
-  check(session: GrantSession): string[];
-}
-
 /** Kinds of meetings an agenda template is for (P2.4). */
 export type MeetingKind = "annual_meeting" | "extra_meeting" | "board_meeting" | "other";
 
@@ -110,8 +88,6 @@ export interface CountryPack {
    * eves that are de facto days off. ISO dates of the year, sorted.
    */
   publicHolidays(year: number): string[];
-  /** The per-session grant rules of the country, or null if it has none (P1.5). */
-  grantRules: GrantRules | null;
   /** A club's organisation number in its canonical form, or null if it is not valid (P1.6b). */
   normalizeOrganizationNumber(input: string): string | null;
   /**

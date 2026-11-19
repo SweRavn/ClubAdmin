@@ -21,6 +21,7 @@ import { DutiesModule } from "./modules/duties/index.ts";
 import { EventsModule } from "./modules/events/index.ts";
 import { ExpensesModule } from "./modules/expenses/index.ts";
 import { FamiliesModule } from "./modules/families/index.ts";
+import { GrantsModule } from "./modules/grants/index.ts";
 import { GroupsModule } from "./modules/groups/index.ts";
 import { GuardianshipsModule } from "./modules/guardianships/index.ts";
 import { JoiningModule } from "./modules/joining/index.ts";
@@ -66,6 +67,7 @@ const MODULES = [
   ExpensesModule,
   DutiesModule,
   PluginsModule,
+  GrantsModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

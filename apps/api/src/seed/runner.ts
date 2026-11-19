@@ -24,6 +24,7 @@ import { eventsDemoStep } from "./steps/events.ts";
 import { governingDemoStep } from "./steps/governing.ts";
 import { importsDemoStep } from "./steps/imports.ts";
 import { notificationsDemoStep } from "./steps/notifications.ts";
+import { pluginsDemoStep } from "./steps/plugins.ts";
 import { privacyDemoStep } from "./steps/privacy.ts";
 import { protectionDemoStep } from "./steps/protection.ts";
 import { SeedClock } from "./time.ts";
@@ -42,6 +43,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   notificationsDemoStep,
   calendarDemoStep,
   protectionDemoStep,
+  pluginsDemoStep,
   chatDemoStep,
   documentsDemoStep,
   announcementsDemoStep,

@@ -244,7 +244,7 @@ schedule (Ola left two years ago).
   F2017, IKN P2012 and F2015, FIL J2014), taken by their leaders on the day:
   most present, some absent or excused, the leaders present, a Minivolley
   player as a guest in F2017, one F2017 session cut short at 40 minutes and
-  one with two participants (LOK-stöd hints), and Sara's correction of
+  one with two participants (LOK-stöd hints, from SVK's LOK plugin), and Sara's correction of
   Alva's mark about 40 days ago ("Fel markering", after the lock; in
   history). An extra F2017 session ("Extrapass inför matchen") starts half
   an hour before seeding, so attendance can be taken at once (Maestro flow
@@ -383,6 +383,11 @@ schedule (Ola left two years ago).
   appears only as "a former member" (an anonymisation ledger entry). Anna set
   and removed club protection on Lars last year (two history rows and audit
   events; Lars is not protected now). The load scenario has no extra views.
+- **Plugins** (P2.7, ADR 0051, `apps/api/src/seed/steps/plugins.ts`): Anna
+  enabled the LOK-stöd plugin (`se.rf.lok`) for SVK a month ago, so SVK's
+  attendance views show the LOK hints and its youth sessions this half-year
+  make up a draft LOK report; Lars enabled samordnet rapportering
+  (`no.nif.samordnet`) for FIL. No report is locked yet.
 - **Calendar feeds** (P1.11, `apps/api/src/seed/steps/calendar.ts`): Anna
   has a "My schedule" feed for Elsa and Oskar
   (`/cal/demo-anna-my-schedule.ics`), Erik subscribes to the F2017 group

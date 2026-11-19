@@ -308,6 +308,60 @@ export class PeopleService {
   }
 
   /**
+   * The people's identity for a grant plugin that declares it (P2.7, ADR
+   * 0051): names, birth date, sex and, when asked for, the decrypted
+   * personal identity number, used during the call only, never logged or
+   * kept. Protected people are included (reporting by legal basis; no
+   * address is ever passed). One read for all the people.
+   */
+  async grantIdentitiesInTx(
+    tx: Tx,
+    personIds: readonly string[],
+    options: { identityNumbers: boolean },
+  ): Promise<
+    Map<
+      string,
+      {
+        givenName: string;
+        familyName: string;
+        birthDate: string | null;
+        sex: "female" | "male" | "other" | null;
+        personalIdentityNumber: string | null;
+      }
+    >
+  > {
+    const rows = await repo.findPeople(tx, [...new Set(personIds)]);
+    const result = new Map<
+      string,
+      {
+        givenName: string;
+        familyName: string;
+        birthDate: string | null;
+        sex: "female" | "male" | "other" | null;
+        personalIdentityNumber: string | null;
+      }
+    >();
+    for (const row of rows) {
+      let number: string | null = null;
+      if (options.identityNumbers && row.personalIdentityNumber) {
+        const plain = await this.encryption.decrypt(tx, row.personalIdentityNumber, pinAad(row.id));
+        number = plain.slice(plain.indexOf(":") + 1);
+      }
+      result.set(row.id, {
+        givenName: row.givenName,
+        familyName: row.familyName,
+        birthDate: row.birthDate,
+        sex:
+          row.gender === "female" || row.gender === "male" || row.gender === "other"
+            ? row.gender
+            : null,
+        personalIdentityNumber: number,
+      });
+    }
+    return result;
+  }
+
+  /**
    * The person's own personal identity number for their "download my data"
    * file (P1.8b; the export job runs as the system). Null when none is stored.
    */

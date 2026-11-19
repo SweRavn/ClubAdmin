@@ -365,6 +365,30 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/types`,
       expected: ADMINS(200),
     },
+    // Grant reports (P2.7 part B): managers, registrars and treasurers read
+    // them; registrars lock and export. Club A has no grant plugin enabled
+    // (409 plugin_disabled for a period's report; the report ID is unknown).
+    "GET /api/v1/clubs/:clubId/grants/schemes": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/grants/schemes`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/clubs/:clubId/grants/report": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/grants/report?pluginId=se.rf.lok&scheme=lok&period=2026-1`,
+      expected: ADMINS(409),
+    },
+    "POST /api/v1/clubs/:clubId/grants/reports/:reportId/lock": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/grants/reports/01900000-0000-7000-8000-000000000000/lock`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 404 },
+      body: {},
+    },
+    "POST /api/v1/clubs/:clubId/grants/reports/:reportId/export": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/grants/reports/01900000-0000-7000-8000-000000000000/export`,
+      expected: { ...CLUB_FORBIDDEN, registrar: 404 },
+      body: { format: "csv" },
+    },
     "GET /api/v1/clubs/:clubId/entitlements": {
       url: () => `/api/v1/clubs/${m.clubA.id}/entitlements`,
       expected: INSIDERS,

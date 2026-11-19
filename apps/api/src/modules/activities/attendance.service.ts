@@ -7,7 +7,6 @@
 // outbox can resend safely; marks taken offline are ordered by the time on
 // the device (the newer mark wins), answers by when they arrive.
 
-import { getCountryPack } from "@clubadmin/country-packs";
 import { audit, type Database, outbox, type TenantContext, type Tx } from "@clubadmin/db";
 import {
   ATTENDANCE_OPENS_BEFORE_MINUTES,
@@ -16,7 +15,6 @@ import {
   CALENDAR_MAX_DAYS,
   CLOCK_SKEW_MINUTES,
   type GrantHint,
-  localDate,
   OFFLINE_MAX_AGE_DAYS,
   type RecordAttendanceInput,
   RecordAttendanceSchema,
@@ -30,12 +28,19 @@ import {
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { actorPersonId, parseInput } from "../../platform/domain/run.ts";
 import type { ClubsService } from "../clubs/index.ts";
+import type { HintInput } from "../grants/index.ts";
 import type { MembershipsService } from "../memberships/index.ts";
 import type { PeopleService } from "../people/index.ts";
 import * as repo from "./activities.repository.ts";
 import * as records from "./attendance.repository.ts";
 
 const MINUTE_MS = 60_000;
+
+/** The grant plugins' hints per session (P2.7: GrantsService.sessionHints). */
+export type GrantHintsProvider = (
+  context: TenantContext,
+  inputs: readonly HintInput[],
+) => Promise<Map<string, GrantHint[]>>;
 const DAY_MS = 86_400_000;
 
 export type ResponseRow = records.ResponseRow;
@@ -129,17 +134,25 @@ export class AttendanceService {
   private readonly clubs: ClubsService;
   private readonly people: PeopleService;
   private readonly memberships: MembershipsService;
+  private readonly grantHints: GrantHintsProvider | undefined;
   private readonly now: () => Date;
 
   constructor(
     db: Database,
-    deps: { clubs: ClubsService; people: PeopleService; memberships: MembershipsService },
+    deps: {
+      clubs: ClubsService;
+      people: PeopleService;
+      memberships: MembershipsService;
+      /** The club's enabled grant plugins' hints (P2.7); none without. */
+      grantHints?: GrantHintsProvider;
+    },
     now: () => Date = () => new Date(),
   ) {
     this.db = db;
     this.clubs = deps.clubs;
     this.people = deps.people;
     this.memberships = deps.memberships;
+    this.grantHints = deps.grantHints;
     this.now = now;
   }
 
@@ -311,12 +324,31 @@ export class AttendanceService {
 
   // --- Attendance -------------------------------------------------------------------
 
-  getAttendance(context: TenantContext, activityId: string): Promise<AttendanceView> {
-    return this.db.withTenant(context, async (tx) => {
+  async getAttendance(context: TenantContext, activityId: string): Promise<AttendanceView> {
+    const { view, inputs } = await this.db.withTenant(context, async (tx) => {
       const activity = await repo.findActivity(tx, activityId);
       if (!activity) throw new DomainError("not_found");
       return this.attendanceView(tx, activity);
     });
+    return this.withHints(context, view, inputs);
+  }
+
+  /** The grant plugins' hints, asked after the transaction (a plugin call never holds one). */
+  private async hints(
+    context: TenantContext,
+    inputs: readonly HintInput[],
+  ): Promise<Map<string, GrantHint[]>> {
+    if (!this.grantHints || inputs.length === 0) return new Map();
+    return this.grantHints(context, inputs);
+  }
+
+  private async withHints(
+    context: TenantContext,
+    view: AttendanceView,
+    inputs: readonly HintInput[],
+  ): Promise<AttendanceView> {
+    const hints = await this.hints(context, inputs);
+    return { ...view, hints: hints.get(view.activity.id) ?? [] };
   }
 
   /**
@@ -325,13 +357,13 @@ export class AttendanceService {
    * reason. Marks older than the one stored (taken offline earlier) are not
    * applied and come back in `stale`; unchanged marks change nothing.
    */
-  recordAttendance(
+  async recordAttendance(
     context: TenantContext,
     activityId: string,
     input: RecordAttendanceInput,
     rights: AttendanceRights,
   ): Promise<{ attendance: AttendanceView; stale: string[] }> {
-    return this.db.withTenant(context, async (tx) => {
+    const result = await this.db.withTenant(context, async (tx) => {
       const data = parseInput(RecordAttendanceSchema, input);
       const activity = await repo.lockActivity(tx, activityId);
       if (!activity) throw new DomainError("not_found");
@@ -418,17 +450,19 @@ export class AttendanceService {
         }
         await outbox.publish(tx, "attendance.recorded", { clubId: context.clubId, activityId });
       }
-      return { attendance: await this.attendanceView(tx, activity), stale: [...new Set(stale)] };
+      const { view, inputs } = await this.attendanceView(tx, activity);
+      return { view, inputs, stale: [...new Set(stale)] };
     });
+    return { attendance: await this.withHints(context, result.view, result.inputs), stale: result.stale };
   }
 
   /** A group's attendance over a range: sessions held with their counts, and members (keyset). */
-  groupAttendance(
+  async groupAttendance(
     context: TenantContext,
     groupId: string,
     query: { from: string; to: string; cursor?: string | undefined; limit: number },
   ): Promise<GroupAttendanceView> {
-    return this.db.withTenant(context, async (tx) => {
+    const view = await this.db.withTenant(context, async (tx) => {
       const from = new Date(query.from);
       const to = new Date(query.to);
       if (to.getTime() <= from.getTime()) throw new DomainError("invalid_input");
@@ -440,9 +474,7 @@ export class AttendanceService {
       const ids = sessions.map((s) => s.activityId);
       const present = await records.presentIn(tx, context.clubId, ids);
       const recorded = await records.recordedSessions(tx, context.clubId, ids);
-      const hints = await this.hintsFor(
-        tx,
-        club,
+      const inputs = hintInputs(
         sessions.map((s) => ({ ...s, recorded: recorded.has(s.activityId) })),
         present,
       );
@@ -463,13 +495,20 @@ export class AttendanceService {
             recorded: recorded.has(session.activityId),
             present: here.filter((p) => p.role === "participant").length,
             leadersPresent: here.filter((p) => p.role === "leader").length,
-            hints: hints.get(session.activityId) ?? [],
+            hints: [] as GrantHint[],
           };
         }),
         members,
         nextCursor: rows.length > query.limit ? members.at(-1)!.personId : null,
+        inputs,
       };
     });
+    const hints = await this.hints(context, view.inputs);
+    const { inputs: _inputs, ...rest } = view;
+    return {
+      ...rest,
+      sessions: rest.sessions.map((s) => ({ ...s, hints: hints.get(s.session.activityId) ?? [] })),
+    };
   }
 
   // --- Internals ----------------------------------------------------------------------
@@ -646,7 +685,10 @@ export class AttendanceService {
     return activity;
   }
 
-  private async attendanceView(tx: Tx, activity: repo.ActivityRow): Promise<AttendanceView> {
+  private async attendanceView(
+    tx: Tx,
+    activity: repo.ActivityRow,
+  ): Promise<{ view: AttendanceView; inputs: HintInput[] }> {
     const club = await this.clubs.getClubInTx(tx, activity.clubId);
     const { open, locked } = attendanceWindow(activity, club.attendanceLockDays, this.now());
     const roster = await records.roster(tx, activity.id);
@@ -678,56 +720,41 @@ export class AttendanceService {
     const present = [...marks.values()]
       .filter((m) => m.status === "present")
       .map((m) => ({ activityId: activity.id, personId: m.personId, role: m.role }));
-    const hints = await this.hintsFor(
-      tx,
-      club,
+    const inputs = hintInputs(
       [{ ...activity, activityId: activity.id, recorded: marks.size > 0 }],
       present,
     );
     return {
-      activity,
-      locked,
-      open: open && activity.status === "scheduled",
-      participants: entries.filter((e) => e.role === "participant"),
-      leaders: entries.filter((e) => e.role === "leader"),
-      hints: hints.get(activity.id) ?? [],
+      view: {
+        activity,
+        locked,
+        open: open && activity.status === "scheduled",
+        participants: entries.filter((e) => e.role === "participant"),
+        leaders: entries.filter((e) => e.role === "leader"),
+        hints: [],
+      },
+      inputs,
     };
   }
+}
 
-  /** The country pack's grant rules each recorded session does not meet. */
-  private async hintsFor(
-    tx: Tx,
-    club: { country: string; timeZone: string },
-    sessions: readonly { activityId: string; startsAt: Date; endsAt: Date; recorded: boolean }[],
-    present: readonly { activityId: string; personId: string; role: AttendanceRole }[],
-  ): Promise<Map<string, GrantHint[]>> {
-    const rules = getCountryPack(club.country).grantRules;
-    const result = new Map<string, GrantHint[]>();
-    if (!rules) return result;
-    const birthDates = await this.people.birthDatesInTx(
-      tx,
-      present.map((p) => p.personId),
-    );
-    for (const s of sessions) {
-      if (!s.recorded) continue;
+/** The recorded sessions as the grant plugins' hints need them (who was present). */
+function hintInputs(
+  sessions: readonly { activityId: string; startsAt: Date; endsAt: Date; recorded: boolean }[],
+  present: readonly { activityId: string; personId: string; role: AttendanceRole }[],
+): HintInput[] {
+  return sessions
+    .filter((s) => s.recorded)
+    .map((s) => {
       const here = present.filter((p) => p.activityId === s.activityId);
-      const codes = rules.check({
-        date: localDate(s.startsAt, club.timeZone),
-        durationMinutes: Math.round((s.endsAt.getTime() - s.startsAt.getTime()) / MINUTE_MS),
-        participantBirthDates: here
-          .filter((p) => p.role === "participant")
-          .map((p) => birthDates.get(p.personId) ?? null),
-        leaderBirthDates: here
-          .filter((p) => p.role === "leader")
-          .map((p) => birthDates.get(p.personId) ?? null),
-      });
-      result.set(
-        s.activityId,
-        codes.map((code) => ({ scheme: rules.scheme, code })),
-      );
-    }
-    return result;
-  }
+      return {
+        activityId: s.activityId,
+        startsAt: s.startsAt,
+        endsAt: s.endsAt,
+        participantIds: here.filter((p) => p.role === "participant").map((p) => p.personId),
+        leaderIds: here.filter((p) => p.role === "leader").map((p) => p.personId),
+      };
+    });
 }
 
 /** When leaders may record: from an hour before the start until the lock (days after the start). */

@@ -32,6 +32,7 @@ import { notificationsHandler } from "./notifications/handler.ts";
 import { createOutboxHandlers } from "./outbox-handlers.ts";
 import { deleteExpiredAttendance } from "./tasks/attendance.ts";
 import { readBackupMetrics } from "./tasks/backup-metrics.ts";
+import { flagAttendanceChanged, grantsHandler } from "./tasks/grants.ts";
 import { flagAdultWards, notifyOwnLoginAge } from "./tasks/guardianships.ts";
 import { createTaskList } from "./tasks/index.ts";
 import { deleteExpiredJoiningData } from "./tasks/joining.ts";
@@ -1009,6 +1010,73 @@ describe("waitlists:offers (P1.10b)", () => {
     expect(events.map((e) => e.type)).toEqual(["waitlist.offer.expired", "waitlist.offer.sent"]);
     // Again: nothing more to do.
     expect(await runWaitlistOffers(t.db)).toMatchObject({ expired: 0, offered: 0 });
+  });
+});
+
+describe("grants", () => {
+  it("flags locked reports of the period when attendance changes, never drafts or other periods", async () => {
+    const club = uuidv7();
+    const person = uuidv7();
+    const activity = uuidv7();
+    const session = await t.connect("admin");
+    try {
+      await session.query("BEGIN");
+      await session.query(
+        "INSERT INTO people (id, given_name, family_name) VALUES ($1, 'G', 'R')",
+        [person],
+      );
+      await session.query(
+        `INSERT INTO clubs (id, name, slug, country, default_locale, time_zone, currency)
+         VALUES ($1, 'Bidrag IF', $2, 'SE', 'sv-SE', 'Europe/Stockholm', 'SEK')`,
+        [club, `grants-${club.slice(-8)}`],
+      );
+      await session.query(
+        "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'club_manager')",
+        [club, person],
+      );
+      await session.query(
+        `INSERT INTO activities (id, club_id, kind, title, starts_at, ends_at, created_by_person_id)
+         VALUES ($1, $2, 'training', 'Träning', '2026-03-10T17:00:00Z', '2026-03-10T18:30:00Z', $3)`,
+        [activity, club, person],
+      );
+      await session.query(
+        `INSERT INTO club_plugins (club_id, plugin_id, enabled)
+         VALUES ($1, 'se.rf.lok', true), ($1, 'se.test.other', true)`,
+        [club],
+      );
+      await session.query(
+        `INSERT INTO grant_reports (club_id, plugin_id, scheme_key, period_key, period_from, period_to, status, locked_at)
+         VALUES ($1, 'se.rf.lok', 'lok', '2026-1', '2026-01-01', '2026-06-30', 'locked', now()),
+                ($1, 'se.rf.lok', 'lok', '2025-2', '2025-07-01', '2025-12-31', 'locked', now()),
+                ($1, 'se.test.other', 'lok', '2026-1', '2026-01-01', '2026-06-30', 'draft', NULL)`,
+        [club],
+      );
+      await session.query("COMMIT");
+    } finally {
+      await session.end();
+    }
+    const eventId = await t.db.withTenant(asPerson(person, club), (tx) =>
+      outbox.publish(tx, "attendance.recorded", { clubId: club, activityId: activity }),
+    );
+    await outbox.dispatch(t.db, eventId, [grantsHandler()]);
+    const { rows: jobs } = await t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM graphile_worker.jobs WHERE task_identifier = 'grants:attendance_changed' AND key = $1",
+      [`grants:attendance_changed:${activity}`],
+    );
+    expect(jobs[0]?.n).toBe(1);
+    expect(await flagAttendanceChanged(t.db, club, activity)).toBe(1);
+    const { rows } = await t.query<{ period_key: string; plugin_id: string; flagged: boolean }>(
+      "admin",
+      `SELECT period_key, plugin_id, attendance_changed_at IS NOT NULL AS flagged
+       FROM grant_reports WHERE club_id = $1 ORDER BY plugin_id, period_key`,
+      [club],
+    );
+    expect(rows).toEqual([
+      { period_key: "2025-2", plugin_id: "se.rf.lok", flagged: false },
+      { period_key: "2026-1", plugin_id: "se.rf.lok", flagged: true },
+      { period_key: "2026-1", plugin_id: "se.test.other", flagged: false },
+    ]);
   });
 });
 

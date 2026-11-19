@@ -49,10 +49,10 @@ async function api(
   personId: string,
   method: Method,
   url: string,
-  options: { body?: unknown; onBehalfOf?: string } = {},
+  options: { body?: unknown; onBehalfOf?: string; mfa?: boolean } = {},
 ) {
   const headers: Record<string, string> = {
-    authorization: `Bearer ${await devToken(personId)}`,
+    authorization: `Bearer ${await devToken(personId, { mfa: options.mfa ?? false })}`,
   };
   if (options.onBehalfOf) headers[ON_BEHALF_OF_HEADER] = options.onBehalfOf;
   return app.app
@@ -679,6 +679,14 @@ describe("attendance", () => {
 
   it("a group's summary counts sessions and marks per member, with the LOK-stöd hints", async () => {
     const x = await team();
+    // The hints come from the club's LOK plugin (P2.7): its group has a sport
+    // and its members joined before the sessions.
+    await t.query("admin", "UPDATE groups SET sport = 'Fotboll' WHERE id = $1", [x.groupId]);
+    await t.query(
+      "admin",
+      "UPDATE club_memberships SET valid_from = now() - interval '120 days' WHERE club_id = $1",
+      [x.club.id],
+    );
     const short = await activity(x, {
       kind: "training",
       title: "Kort",
@@ -692,6 +700,11 @@ describe("attendance", () => {
       endsAt: at(-5 * DAY + 90 * 60_000),
     });
     await backdate(x.groupId);
+    const enabled = await api(x.club.manager.id, "PUT", `/clubs/${x.club.id}/plugins/se.rf.lok`, {
+      body: { enabled: true },
+      mfa: true,
+    });
+    expect(enabled.statusCode, enabled.body).toBe(204);
     for (const id of [short, full]) {
       const res = await api(x.coach.id, "PUT", `/activities/${id}/attendance`, {
         body: {

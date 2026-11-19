@@ -26,6 +26,7 @@ import { mailHandler, type MailHandlerOptions } from "./mail.ts";
 import { notificationsHandler, type NotificationsOptions } from "./notifications/handler.ts";
 import { chatHandler } from "./tasks/chat.ts";
 import { documentsHandler } from "./tasks/documents.ts";
+import { grantsHandler } from "./tasks/grants.ts";
 import { privacyHandler } from "./tasks/privacy.ts";
 import { profileViewsHandler } from "./tasks/profile-views.ts";
 
@@ -70,6 +71,7 @@ export function createOutboxHandlers(deps: {
     profileViewsHandler(),
     chatHandler(),
     documentsHandler(),
+    grantsHandler(),
   ];
   if (deps.mail) handlers.push(mailHandler(deps.mail));
   if (deps.notifications) handlers.push(notificationsHandler(deps.notifications));

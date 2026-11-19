@@ -184,6 +184,8 @@ const groupFields = {
   offerReplyDays: z.number().int().min(1).max(60),
   /** Free places go to the next in line by the worker (P1.10b). */
   waitlistAutoOffer: z.boolean(),
+  /** Adapted activities, parasport (P2.7): grant reports count its members as such. */
+  adapted: z.boolean(),
 };
 
 export const CreateGroupSchema = z

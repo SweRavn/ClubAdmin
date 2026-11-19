@@ -11,8 +11,6 @@ export type {
   AgeRules,
   CountryPack,
   DutyRules,
-  GrantRules,
-  GrantSession,
   LocaleDefaults,
   MeetingKind,
   MemberImportRules,
