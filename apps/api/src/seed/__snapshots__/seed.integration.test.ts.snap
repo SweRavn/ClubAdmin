@@ -175,6 +175,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
           "Träning herr (vinterschema): svk-herr",
         ],
         "single": [
+          "match Bortamatch mot Bergby VK: svk-f2017",
           "match Division 2: Hisingens VK: svk-herr",
           "match Division 2: Kustens VK: svk-herr",
           "match Division 2: Lerums VBK: svk-herr",

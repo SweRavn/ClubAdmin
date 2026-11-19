@@ -634,7 +634,8 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/me/schedule?${range()}`,
     statements: 5,
-    pages: 220,
+    // P2.7c: SVK F2017's away match added one more activity (226 measured in CI).
+    pages: 250,
   },
   {
     route: "GET /api/v1/me/events",
