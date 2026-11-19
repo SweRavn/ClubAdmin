@@ -505,7 +505,13 @@ forbids name fields and name columns elsewhere; the view
   instances share the events over Valkey pub/sub (`rt:chat:<id>`,
   `rt:person:<id>`); the worker publishes there too (membership changes,
   permission changes). Without Valkey (tests, one instance) the events stay
-  in the process.
+  in the process. The connection is the logged-in person's own: while
+  viewing as a ward the web chat fetches new messages every 15 seconds
+  instead. Clients reconnect with backoff and show "not connected" only
+  after the connection has been down for 5 seconds (P2.7b).
+- The web chat's emoji panel (P2.7b) uses `emojibase-data` (MIT) in the
+  viewer's language; panel and data are loaded on the first open, so they
+  are outside the initial JavaScript budget (ADR 0027).
 - Public API for integrations (federations, accounting) uses the same
   endpoints with OAuth client credentials and scoped API keys per club.
 

@@ -12,6 +12,8 @@ import type { ChatMessage, ChatPerson, RealtimeServerEvent } from "@clubadmin/sh
 import { personLabel } from "@clubadmin/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { EmojiPicker, type EmojiTexts } from "./emoji-picker.tsx";
+
 export interface ChatRoomTexts {
   placeholder: string;
   send: string;
@@ -30,6 +32,10 @@ export interface ChatRoomTexts {
   versions: string;
   typing: string;
   offline: string;
+  /** The emoji panel (P2.7b). */
+  emoji: EmojiTexts;
+  /** The button that adds another reaction. */
+  addReaction: string;
   loadOlder: string;
   readBy: string;
   someone: string;
@@ -53,6 +59,11 @@ interface Props {
   chatId: string;
   meId: string;
   csrf: string;
+  /**
+   * The real-time connection is the logged-in person's own (ADR 0047 rule 6):
+   * false while viewing as a ward, when the chat is polled instead.
+   */
+  live: boolean;
   canPost: boolean;
   /** The viewer manages the chat: may hide others' messages (rule 11). */
   canModerate: boolean;
@@ -67,6 +78,11 @@ interface Props {
   timeZone: string;
   texts: ChatRoomTexts;
 }
+
+/** How long the connection may be down before the banner shows. */
+const OFFLINE_GRACE_MS = 5_000;
+/** How often the chat is fetched again without a connection of one's own. */
+const POLL_MS = 15_000;
 
 const REACTIONS = ["👍", "❤️", "😂", "🎉", "😮"];
 
@@ -103,7 +119,10 @@ export function ChatRoom(props: Props) {
   const [editing, setEditing] = useState<{ id: string; body: string } | null>(null);
   const [typing, setTyping] = useState<Record<string, number>>({});
   const [reads, setReads] = useState(props.readPointers);
-  const [online, setOnline] = useState(true);
+  // Shown only when the connection has been down for a while (P2.7b).
+  const [offline, setOffline] = useState(false);
+  /** Counts the connections opened: failed messages are resent on each. */
+  const [connected, setConnected] = useState(0);
   const [versions, setVersions] = useState<Record<string, { body: string; writtenAt: string }[]>>(
     {},
   );
@@ -112,6 +131,7 @@ export function ChatRoom(props: Props) {
   const [notice, setNotice] = useState<string | null>(null);
   const socket = useRef<WebSocket | null>(null);
   const bottom = useRef<HTMLDivElement | null>(null);
+  const input = useRef<HTMLTextAreaElement | null>(null);
   const newest = useRef<string | null>(props.initial[0]?.id ?? null);
 
   const call = useCallback(
@@ -171,10 +191,29 @@ export function ChatRoom(props: Props) {
   }, [base, call, meId, reads]);
 
   // The real-time connection, reconnecting with backoff; every reconnect catches up.
+  // A short drop (a reload of the API, a network change) shows no banner.
   useEffect(() => {
+    if (!props.live) {
+      // Viewing as a ward: no connection of one's own; the chat is fetched again.
+      const poll = setInterval(() => void catchUp().catch(() => undefined), POLL_MS);
+      return () => clearInterval(poll);
+    }
     let closed = false;
     let attempt = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let grace: ReturnType<typeof setTimeout> | undefined;
+    const down = () => {
+      if (closed || grace) return;
+      grace = setTimeout(() => {
+        if (!closed) setOffline(true);
+      }, OFFLINE_GRACE_MS);
+    };
+    const up = () => {
+      if (grace) clearTimeout(grace);
+      grace = undefined;
+      setOffline(false);
+      setConnected((n) => n + 1);
+    };
     const connect = async () => {
       try {
         const ticket = (await call("/api/v1/realtime/tickets", { method: "POST" })) as {
@@ -185,7 +224,7 @@ export function ChatRoom(props: Props) {
         socket.current = ws;
         ws.onopen = () => {
           attempt = 0;
-          setOnline(true);
+          up();
           void catchUp().catch(() => undefined);
         };
         ws.onmessage = (message) => {
@@ -204,26 +243,28 @@ export function ChatRoom(props: Props) {
           if (event.type === "typing") setTyping((t) => ({ ...t, [event.personId]: Date.now() }));
         };
         ws.onclose = () => {
-          socket.current = null;
-          setOnline(false);
+          if (socket.current === ws) socket.current = null;
           if (closed) return;
+          down();
           attempt++;
           timer = setTimeout(() => void connect(), Math.min(30_000, 1000 * 2 ** attempt));
         };
       } catch {
-        setOnline(false);
+        if (closed) return;
+        down();
         attempt++;
-        if (!closed)
-          timer = setTimeout(() => void connect(), Math.min(30_000, 1000 * 2 ** attempt));
+        timer = setTimeout(() => void connect(), Math.min(30_000, 1000 * 2 ** attempt));
       }
     };
     void connect();
     return () => {
       closed = true;
       if (timer) clearTimeout(timer);
+      if (grace) clearTimeout(grace);
       socket.current?.close();
+      socket.current = null;
     };
-  }, [call, catchUp, chatId, refreshOne]);
+  }, [call, catchUp, chatId, refreshOne, props.live]);
 
   // Typing indicators fade after four seconds.
   useEffect(() => {
@@ -286,11 +327,30 @@ export function ChatRoom(props: Props) {
     setNotice(texts.reportSent);
   };
 
+  const react = (messageId: string, emoji: string) =>
+    void call(`${base}/messages/${messageId}/reactions`, {
+      method: "POST",
+      body: { emoji, on: true },
+    }).then((u) => merge([u as ChatMessage]));
+
+  /** Puts an emoji at the cursor of the message field (P2.7b). */
+  const insertEmoji = (emoji: string) => {
+    const field = input.current;
+    const start = field?.selectionStart ?? draft.length;
+    const end = field?.selectionEnd ?? draft.length;
+    setDraft(draft.slice(0, start) + emoji + draft.slice(end));
+    requestAnimationFrame(() => {
+      if (!field) return;
+      field.focus();
+      field.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
+  };
+
   // Failed messages are resent when the connection is back (same ID: never twice).
   useEffect(() => {
-    if (!online) return;
+    if (connected === 0) return;
     for (const p of pending.filter((x) => x.failed)) void send(p.body, p.id, null);
-  }, [online]);
+  }, [connected]);
 
   const typingNames = Object.keys(typing)
     .filter((id) => id !== meId)
@@ -334,8 +394,12 @@ export function ChatRoom(props: Props) {
           {notice}
         </p>
       ) : null}
-      {!online ? (
-        <p role="status" className="rounded-md bg-protected-soft px-3 py-1 text-sm">
+      {offline ? (
+        <p
+          role="status"
+          className="rounded-md bg-protected-soft px-3 py-1 text-sm"
+          data-testid="chat-offline"
+        >
           {texts.offline}
         </p>
       ) : null}
@@ -463,21 +527,21 @@ export function ChatRoom(props: Props) {
                   {props.canPost ? (
                     <details className="relative">
                       <summary className="cursor-pointer list-none px-1 text-muted">＋</summary>
-                      <div className="absolute z-10 flex gap-1 rounded-md border border-border bg-bg p-1">
+                      <div className="absolute z-10 flex items-center gap-1 rounded-md border border-border bg-bg p-1">
                         {REACTIONS.map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            onClick={() =>
-                              void call(`${base}/messages/${m.id}/reactions`, {
-                                method: "POST",
-                                body: { emoji, on: true },
-                              }).then((u) => merge([u as ChatMessage]))
-                            }
-                          >
+                          <button key={emoji} type="button" onClick={() => react(m.id, emoji)}>
                             {emoji}
                           </button>
                         ))}
+                        {/* Any other emoji: the same panel as the message field (P2.7b). */}
+                        <EmojiPicker
+                          texts={{ ...texts.emoji, open: texts.addReaction }}
+                          locale={props.locale}
+                          align="start"
+                          trigger="…"
+                          testId="reaction-more"
+                          onPick={(emoji) => react(m.id, emoji)}
+                        />
                       </div>
                     </details>
                   ) : null}
@@ -610,6 +674,7 @@ export function ChatRoom(props: Props) {
           ) : null}
           <div className="flex gap-2">
             <textarea
+              ref={input}
               aria-label={texts.placeholder}
               placeholder={texts.placeholder}
               className="min-h-[2.5rem] flex-1 resize-y rounded-md border border-border px-3 py-2"
@@ -631,6 +696,7 @@ export function ChatRoom(props: Props) {
                 }
               }}
             />
+            <EmojiPicker texts={texts.emoji} locale={props.locale} onPick={insertEmoji} />
             <button
               type="submit"
               className="rounded-md bg-accent px-4 py-2 text-accent-fg"

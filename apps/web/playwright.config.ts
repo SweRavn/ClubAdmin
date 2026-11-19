@@ -96,6 +96,8 @@ export default defineConfig({
           dependencies: ["carpools"],
         },
         { name: "grants", testMatch: /grants\.spec\.ts/, dependencies: ["duties"] },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["grants"] },
+        // The chat (P2.1, P2.7b): SVK F2017's channel.
+        { name: "chat", testMatch: /chat\.spec\.ts/, dependencies: ["grants"] },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["chat"] },
       ],
 });

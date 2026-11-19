@@ -36,6 +36,7 @@
     "@clubadmin/shared": "workspace:*",
     "@clubadmin/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
+    "emojibase-data": "18.0.0",
     "ioredis": "catalog:",
     "next": "catalog:",
     "next-intl": "catalog:",

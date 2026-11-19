@@ -29,7 +29,7 @@ export default async function MyChatsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">{t("chat.title")}</h1>
-      <ChatLiveRefresh csrf={session.record.csrf} />
+      {session.record.viewingAs ? null : <ChatLiveRefresh csrf={session.record.csrf} />}
       {items.length === 0 ? (
         <p className="text-muted" data-testid="chats-empty">
           {t("chat.empty")}

@@ -99,6 +99,14 @@ export default async function ChatPage({ params, searchParams }: Params) {
     versions: t("chat.versions"),
     typing: t("chat.typing", { name: "{name}" }),
     offline: t("chat.offline"),
+    emoji: {
+      open: t("chat.emoji.open"),
+      search: t("chat.emoji.search"),
+      recent: t("chat.emoji.recent"),
+      none: t("chat.emoji.none"),
+      loading: t("chat.emoji.loading"),
+    },
+    addReaction: t("chat.addReaction"),
     loadOlder: t("chat.loadOlder"),
     readBy: t("chat.readBy", { count: 2 }).replace("2", "{count}"),
     someone: t("chat.someone"),
@@ -209,6 +217,7 @@ export default async function ChatPage({ params, searchParams }: Params) {
             chatId={chatId}
             meId={me.personId}
             csrf={session.record.csrf}
+            live={!session.record.viewingAs}
             canPost={detail.can.post}
             canModerate={detail.can.manage}
             initial={page.items}
