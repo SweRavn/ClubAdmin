@@ -98,16 +98,27 @@ export async function smoke(): Promise<boolean> {
 
   // The chat's real-time connection goes through Caddy on the site's own
   // host to the API (P2.7c); a refused test ticket shows it arrives there.
-  results.push(
-    await check(`Realtime: wss://${appDomain}/api/v1/realtime reaches the API`, async () => {
-      const site = env.get("PUBLIC_WEB_URL") ?? httpsBase(appDomain, httpsPort);
+  // Without the apps running (CI runs this before starting them) it warns.
+  {
+    const name = `Realtime: wss://${appDomain}/api/v1/realtime reaches the API`;
+    const site = env.get("PUBLIC_WEB_URL") ?? httpsBase(appDomain, httpsPort);
+    try {
       const probe = await probeUpgrade(
         `${httpsBase(appDomain, httpsPort)}/api/v1/realtime?ticket=smoke-test`,
         { ca, origin: new URL(site).origin },
       );
-      return realtimeVerdict(probe, new URL(site).origin, env.get("API_UPSTREAM") ?? "");
-    }),
-  );
+      results.push({
+        name,
+        ...realtimeVerdict(probe, new URL(site).origin, env.get("API_UPSTREAM") ?? ""),
+      });
+    } catch (error) {
+      results.push({
+        name,
+        status: "fail",
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   results.push(
     await check(`Zitadel: https://${authDomain} OpenID configuration`, async () => {
@@ -199,29 +210,37 @@ export async function smoke(): Promise<boolean> {
 }
 
 /** What the realtime probe means (exported for its unit test). */
-export function realtimeVerdict(probe: UpgradeProbe, origin: string, upstream: string): string {
+export function realtimeVerdict(
+  probe: UpgradeProbe,
+  origin: string,
+  upstream: string,
+): { status: "ok" | "warn" | "fail"; detail: string; fix?: string } {
+  const foreign = {
+    status: "fail" as const,
+    detail: `the API refuses the origin ${origin}`,
+    fix: "add it to CORS_ORIGINS in .env.local and restart the API",
+  };
   if (probe.kind === "upgraded") {
-    if (probe.closeCode === 4401) return "the API answered (test ticket refused, origin accepted)";
-    if (probe.closeCode === 4403) {
-      throw new Error(
-        `the API refuses the origin ${origin}: add it to CORS_ORIGINS in .env.local and restart the API`,
-      );
+    if (probe.closeCode === 4401) {
+      return { status: "ok", detail: "the API answered (test ticket refused, origin accepted)" };
     }
-    throw new Error(`upgraded, then closed with ${probe.closeCode ?? "no code"}`);
+    if (probe.closeCode === 4403) return foreign;
+    return { status: "fail", detail: `upgraded, then closed with ${probe.closeCode ?? "no code"}` };
   }
   // An API from before P2.7c refuses the handshake itself: it arrived.
-  if (probe.status === 401) return "the API answered (test ticket refused)";
-  if (probe.status === 403) {
-    throw new Error(
-      `the API refuses the origin ${origin}: add it to CORS_ORIGINS in .env.local and restart the API`,
-    );
-  }
+  if (probe.status === 401)
+    return { status: "ok", detail: "the API answered (test ticket refused)" };
+  if (probe.status === 403) return foreign;
   if (probe.status === 502 || probe.status === 503 || probe.status === 504) {
-    throw new Error(
-      `HTTP ${probe.status}: Caddy cannot reach the API at ${upstream || "API_UPSTREAM"}; is the API running (pnpm dev)?`,
-    );
+    return {
+      status: "warn",
+      detail: `HTTP ${probe.status}: Caddy cannot reach the API at ${upstream || "API_UPSTREAM"}`,
+      fix: "start the apps (pnpm dev) and run this again to check the chat's connection",
+    };
   }
-  throw new Error(
-    `HTTP ${probe.status}: the request went to the web app, not the API; run \`pnpm dev:services\` to load the current Caddyfile`,
-  );
+  return {
+    status: "fail",
+    detail: `HTTP ${probe.status}: the request went to the web app, not the API`,
+    fix: "run `pnpm dev:services` to load the current Caddyfile",
+  };
 }

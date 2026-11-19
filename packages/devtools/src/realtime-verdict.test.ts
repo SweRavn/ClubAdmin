@@ -9,29 +9,29 @@ const UPSTREAM = "host.docker.internal:4000";
 
 describe("realtimeVerdict", () => {
   it("passes when the API refuses the test ticket", () => {
-    expect(realtimeVerdict({ kind: "upgraded", closeCode: 4401 }, ORIGIN, UPSTREAM)).toContain(
-      "the API answered",
+    expect(realtimeVerdict({ kind: "upgraded", closeCode: 4401 }, ORIGIN, UPSTREAM).status).toBe(
+      "ok",
     );
-    expect(realtimeVerdict({ kind: "http", status: 401, body: "" }, ORIGIN, UPSTREAM)).toContain(
-      "the API answered",
+    expect(realtimeVerdict({ kind: "http", status: 401, body: "" }, ORIGIN, UPSTREAM).status).toBe(
+      "ok",
     );
   });
 
   it("names the origin the API refuses", () => {
-    expect(() => realtimeVerdict({ kind: "upgraded", closeCode: 4403 }, ORIGIN, UPSTREAM)).toThrow(
-      /CORS_ORIGINS/,
-    );
+    const verdict = realtimeVerdict({ kind: "upgraded", closeCode: 4403 }, ORIGIN, UPSTREAM);
+    expect(verdict.status).toBe("fail");
+    expect(verdict.fix).toContain("CORS_ORIGINS");
   });
 
-  it("says when Caddy cannot reach the API", () => {
-    expect(() =>
-      realtimeVerdict({ kind: "http", status: 502, body: "" }, ORIGIN, UPSTREAM),
-    ).toThrow(/host\.docker\.internal:4000/);
+  it("only warns when the API is not running (services without the apps)", () => {
+    const verdict = realtimeVerdict({ kind: "http", status: 502, body: "" }, ORIGIN, UPSTREAM);
+    expect(verdict.status).toBe("warn");
+    expect(verdict.detail).toContain("host.docker.internal:4000");
   });
 
-  it("says when the route goes to the web app (an old Caddyfile)", () => {
-    expect(() =>
-      realtimeVerdict({ kind: "http", status: 404, body: "" }, ORIGIN, UPSTREAM),
-    ).toThrow(/pnpm dev:services/);
+  it("fails when the route goes to the web app (an old Caddyfile)", () => {
+    const verdict = realtimeVerdict({ kind: "http", status: 404, body: "" }, ORIGIN, UPSTREAM);
+    expect(verdict.status).toBe("fail");
+    expect(verdict.fix).toContain("pnpm dev:services");
   });
 });
