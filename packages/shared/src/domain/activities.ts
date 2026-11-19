@@ -76,6 +76,13 @@ export const LocationSchema = z
     canEdit: z.boolean().optional(),
     /** The viewer may archive it (club.locations.manage). */
     canArchive: z.boolean().optional(),
+    /**
+     * How many activities, series, events, duty shifts and club settings use
+     * it (in lists; P2.7c): only an unused place can be deleted.
+     */
+    useCount: z.number().int().min(0).optional(),
+    /** The viewer may delete it when unused: managers, or the one who added it. */
+    canDelete: z.boolean().optional(),
   })
   .openapi("Location");
 export type Location = z.infer<typeof LocationSchema>;

@@ -19,8 +19,9 @@ meeting time and place, and locations have coordinates (ADR 0034).
 2. **Offering seats.** An adult participant or guardian offers a car with N
    seats, a departure place and time; or "kan köra om det behövs" (willing
    to drive, no seats yet) so the leaders see who could. The return trip is
-   created as a copy of the outward one and edited on its own (other place,
-   time, or not driving home).
+   created with the outward one (same car, seats and note) and edited on
+   its own; its departure place and time are its own (P2.7c: the forms
+   prefill the activity's place and its end), never the outward trip's.
 3. **Booking a seat.** A guardian books for their child; an adult for
    themselves. A child books for themselves from an age the guardian
    chooses; without a choice, the country pack's age, else 13. The guardian

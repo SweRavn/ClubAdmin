@@ -135,7 +135,7 @@ export function ChatRoom(props: Props) {
   const [reason, setReason] = useState("bullying");
   const [notice, setNotice] = useState<string | null>(null);
   const socket = useRef<WebSocket | null>(null);
-  const bottom = useRef<HTMLDivElement | null>(null);
+  const scroller = useRef<HTMLDivElement | null>(null);
   const input = useRef<HTMLTextAreaElement | null>(null);
   const newest = useRef<string | null>(props.initial[0]?.id ?? null);
 
@@ -288,7 +288,10 @@ export function ChatRoom(props: Props) {
   }, []);
 
   useEffect(() => {
-    bottom.current?.scrollIntoView({ block: "end" });
+    // The newest message in view inside the chat's own scroll area (P2.7c),
+    // without moving the page.
+    const list = scroller.current;
+    if (list) list.scrollTop = list.scrollHeight;
     markRead();
   }, [messages.length, markRead]);
 
@@ -393,7 +396,9 @@ export function ChatRoom(props: Props) {
   };
 
   return (
-    <div className="flex min-h-[60vh] flex-col gap-3" data-testid="chat-room">
+    // At most the viewport below the frame (P2.7c): the messages scroll inside,
+    // the field to write in stays in view.
+    <div className="flex h-[calc(100dvh-12rem)] min-h-80 flex-col gap-3" data-testid="chat-room">
       {notice ? (
         <p
           role="status"
@@ -417,261 +422,266 @@ export function ChatRoom(props: Props) {
           ) : null}
         </p>
       ) : null}
-      {cursor ? (
-        <button
-          type="button"
-          onClick={() => void older()}
-          className="self-center text-sm underline"
-        >
-          {texts.loadOlder}
-        </button>
-      ) : null}
-      {messages.length === 0 && pending.length === 0 ? (
-        <p className="text-muted">{texts.noMessages}</p>
-      ) : null}
-      <ol className="flex flex-col gap-2" aria-live="polite" data-testid="chat-messages">
-        {messages.map((m) => {
-          if (m.kind === "system" && m.event) {
-            const names = m.event.personIds.map((id) => props.names[id] ?? texts.someone);
+      <div
+        ref={scroller}
+        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain pr-1"
+        data-testid="chat-scroll"
+      >
+        {cursor ? (
+          <button
+            type="button"
+            onClick={() => void older()}
+            className="self-center text-sm underline"
+          >
+            {texts.loadOlder}
+          </button>
+        ) : null}
+        {messages.length === 0 && pending.length === 0 ? (
+          <p className="text-muted">{texts.noMessages}</p>
+        ) : null}
+        <ol className="flex flex-col gap-2" aria-live="polite" data-testid="chat-messages">
+          {messages.map((m) => {
+            if (m.kind === "system" && m.event) {
+              const names = m.event.personIds.map((id) => props.names[id] ?? texts.someone);
+              return (
+                <li key={m.id} className="text-center text-sm text-muted" data-testid="chat-system">
+                  {fill(texts.system[m.event.type] ?? "", { names: names.join(", ") })}
+                </li>
+              );
+            }
+            const mine = m.senderId === meId;
             return (
-              <li key={m.id} className="text-center text-sm text-muted" data-testid="chat-system">
-                {fill(texts.system[m.event.type] ?? "", { names: names.join(", ") })}
-              </li>
-            );
-          }
-          const mine = m.senderId === meId;
-          return (
-            <li
-              key={m.id}
-              className={`max-w-[85%] rounded-lg px-3 py-2 ${mine ? "self-end bg-accent-soft" : "self-start border border-border"}`}
-              data-testid="chat-message"
-            >
-              <div className="flex flex-wrap items-baseline gap-2 text-xs text-muted">
-                <span className="font-semibold text-fg">{nameOf(m.sender, m.senderId)}</span>
-                <time dateTime={m.createdAt}>{time(m.createdAt)}</time>
-                {m.editedAt ? (
-                  <button
-                    type="button"
-                    className="underline"
-                    onClick={() =>
-                      void call(`${base}/messages/${m.id}/versions`).then((v) =>
-                        setVersions((all) => ({
-                          ...all,
-                          [m.id]: (v as { items: { body: string; writtenAt: string }[] }).items,
-                        })),
-                      )
-                    }
-                  >
-                    {texts.edited}
-                  </button>
-                ) : null}
-              </div>
-              {m.replyTo ? (
-                <blockquote className="mt-1 border-l-2 border-border pl-2 text-sm text-muted">
-                  {nameOf(m.replyTo.sender)}: {m.replyTo.excerpt}
-                </blockquote>
-              ) : null}
-              {m.hidden ? (
-                <p className="italic text-muted">
-                  {m.hidden === "moderator" ? texts.hiddenByModerator : texts.hiddenBySender}
-                </p>
-              ) : editing?.id === m.id ? (
-                <form
-                  className="mt-1 flex gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const body = editing.body.trim();
-                    setEditing(null);
-                    if (body) {
-                      void call(`${base}/messages/${m.id}`, { method: "PATCH", body: { body } })
-                        .then((updated) => merge([updated as ChatMessage]))
-                        .catch(() => undefined);
-                    }
-                  }}
-                >
-                  <input
-                    className="flex-1 rounded-md border border-border px-2 py-1"
-                    value={editing.body}
-                    maxLength={4000}
-                    onChange={(e) => setEditing({ id: m.id, body: e.target.value })}
-                  />
-                  <button type="submit" className="text-sm underline">
-                    {texts.save}
-                  </button>
-                  <button type="button" className="text-sm" onClick={() => setEditing(null)}>
-                    {texts.cancel}
-                  </button>
-                </form>
-              ) : (
-                <p className="whitespace-pre-wrap break-words" data-testid="chat-body">
-                  {m.body}
-                </p>
-              )}
-              {versions[m.id] ? (
-                <details open className="mt-1 text-xs text-muted">
-                  <summary>{texts.versions}</summary>
-                  <ul>
-                    {versions[m.id]!.map((v) => (
-                      <li key={v.writtenAt}>
-                        <time dateTime={v.writtenAt}>{time(v.writtenAt)}</time>: {v.body}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ) : null}
-              {!m.hidden ? (
-                <div className="mt-1 flex flex-wrap items-center gap-1 text-sm">
-                  {m.reactions.map((r) => (
+              <li
+                key={m.id}
+                className={`max-w-[85%] rounded-lg px-3 py-2 ${mine ? "self-end bg-accent-soft" : "self-start border border-border"}`}
+                data-testid="chat-message"
+              >
+                <div className="flex flex-wrap items-baseline gap-2 text-xs text-muted">
+                  <span className="font-semibold text-fg">{nameOf(m.sender, m.senderId)}</span>
+                  <time dateTime={m.createdAt}>{time(m.createdAt)}</time>
+                  {m.editedAt ? (
                     <button
-                      key={r.emoji}
                       type="button"
-                      aria-pressed={r.mine}
-                      disabled={!props.canPost}
-                      className="rounded-full border border-border px-2 aria-pressed:bg-accent-soft"
+                      className="underline"
                       onClick={() =>
-                        void call(`${base}/messages/${m.id}/reactions`, {
-                          method: "POST",
-                          body: { emoji: r.emoji, on: !r.mine },
-                        }).then((u) => merge([u as ChatMessage]))
+                        void call(`${base}/messages/${m.id}/versions`).then((v) =>
+                          setVersions((all) => ({
+                            ...all,
+                            [m.id]: (v as { items: { body: string; writtenAt: string }[] }).items,
+                          })),
+                        )
                       }
                     >
-                      {r.emoji} {r.count}
-                    </button>
-                  ))}
-                  {props.canPost ? (
-                    <details className="relative">
-                      <summary className="cursor-pointer list-none px-1 text-muted">＋</summary>
-                      <div className="absolute z-10 flex items-center gap-1 rounded-md border border-border bg-bg p-1">
-                        {REACTIONS.map((emoji) => (
-                          <button key={emoji} type="button" onClick={() => react(m.id, emoji)}>
-                            {emoji}
-                          </button>
-                        ))}
-                        {/* Any other emoji: the same panel as the message field (P2.7b). */}
-                        <EmojiPicker
-                          texts={{ ...texts.emoji, open: texts.addReaction }}
-                          locale={props.locale}
-                          align="start"
-                          trigger="…"
-                          testId="reaction-more"
-                          onPick={(emoji) => react(m.id, emoji)}
-                        />
-                      </div>
-                    </details>
-                  ) : null}
-                  {props.canPost ? (
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={() => setReplyTo(m)}
-                    >
-                      {texts.reply}
+                      {texts.edited}
                     </button>
                   ) : null}
-                  {!mine && m.kind === "text" && !m.hidden ? (
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={() => setReporting(reporting === m.id ? null : m.id)}
-                      data-testid="chat-report"
-                    >
-                      {texts.report}
+                </div>
+                {m.replyTo ? (
+                  <blockquote className="mt-1 border-l-2 border-border pl-2 text-sm text-muted">
+                    {nameOf(m.replyTo.sender)}: {m.replyTo.excerpt}
+                  </blockquote>
+                ) : null}
+                {m.hidden ? (
+                  <p className="italic text-muted">
+                    {m.hidden === "moderator" ? texts.hiddenByModerator : texts.hiddenBySender}
+                  </p>
+                ) : editing?.id === m.id ? (
+                  <form
+                    className="mt-1 flex gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const body = editing.body.trim();
+                      setEditing(null);
+                      if (body) {
+                        void call(`${base}/messages/${m.id}`, { method: "PATCH", body: { body } })
+                          .then((updated) => merge([updated as ChatMessage]))
+                          .catch(() => undefined);
+                      }
+                    }}
+                  >
+                    <input
+                      className="flex-1 rounded-md border border-border px-2 py-1"
+                      value={editing.body}
+                      maxLength={4000}
+                      onChange={(e) => setEditing({ id: m.id, body: e.target.value })}
+                    />
+                    <button type="submit" className="text-sm underline">
+                      {texts.save}
                     </button>
-                  ) : null}
-                  {!mine && props.canModerate && m.kind === "text" && m.hidden !== "moderator" ? (
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={() => {
-                        if (!window.confirm(texts.moderateConfirm)) return;
-                        void call(`${base}/messages/${m.id}/moderate`, {
-                          method: "POST",
-                          body: {},
-                        }).then(() => refreshOne(m.id));
-                      }}
-                      data-testid="chat-moderate"
-                    >
-                      {texts.moderate}
+                    <button type="button" className="text-sm" onClick={() => setEditing(null)}>
+                      {texts.cancel}
                     </button>
-                  ) : null}
-                  {reporting === m.id ? (
-                    <span className="flex w-full flex-wrap items-center gap-2 text-sm">
-                      <label className="flex items-center gap-1">
-                        <span className="sr-only">{texts.reportTitle}</span>
-                        <select
-                          value={reason}
-                          onChange={(e) => setReason(e.target.value)}
-                          className="rounded border border-border bg-bg px-1 py-0.5"
-                          data-testid="chat-report-reason"
-                        >
-                          {Object.entries(texts.reportReasons).map(([key, label]) => (
-                            <option key={key} value={key}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                  </form>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words" data-testid="chat-body">
+                    {m.body}
+                  </p>
+                )}
+                {versions[m.id] ? (
+                  <details open className="mt-1 text-xs text-muted">
+                    <summary>{texts.versions}</summary>
+                    <ul>
+                      {versions[m.id]!.map((v) => (
+                        <li key={v.writtenAt}>
+                          <time dateTime={v.writtenAt}>{time(v.writtenAt)}</time>: {v.body}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+                {!m.hidden ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-1 text-sm">
+                    {m.reactions.map((r) => (
                       <button
+                        key={r.emoji}
                         type="button"
-                        className="underline"
-                        onClick={() => void report(m.id)}
-                        data-testid="chat-report-send"
+                        aria-pressed={r.mine}
+                        disabled={!props.canPost}
+                        className="rounded-full border border-border px-2 aria-pressed:bg-accent-soft"
+                        onClick={() =>
+                          void call(`${base}/messages/${m.id}/reactions`, {
+                            method: "POST",
+                            body: { emoji: r.emoji, on: !r.mine },
+                          }).then((u) => merge([u as ChatMessage]))
+                        }
                       >
-                        {texts.reportSend}
+                        {r.emoji} {r.count}
                       </button>
-                    </span>
-                  ) : null}
-                  {mine && props.canPost ? (
-                    <>
+                    ))}
+                    {props.canPost ? (
+                      <details className="relative">
+                        <summary className="cursor-pointer list-none px-1 text-muted">＋</summary>
+                        <div className="absolute z-10 flex items-center gap-1 rounded-md border border-border bg-bg p-1">
+                          {REACTIONS.map((emoji) => (
+                            <button key={emoji} type="button" onClick={() => react(m.id, emoji)}>
+                              {emoji}
+                            </button>
+                          ))}
+                          {/* Any other emoji: the same panel as the message field (P2.7b). */}
+                          <EmojiPicker
+                            texts={{ ...texts.emoji, open: texts.addReaction }}
+                            locale={props.locale}
+                            align="start"
+                            trigger="…"
+                            testId="reaction-more"
+                            onPick={(emoji) => react(m.id, emoji)}
+                          />
+                        </div>
+                      </details>
+                    ) : null}
+                    {props.canPost ? (
                       <button
                         type="button"
                         className="text-xs underline"
-                        onClick={() => setEditing({ id: m.id, body: m.body })}
+                        onClick={() => setReplyTo(m)}
                       >
-                        {texts.edit}
+                        {texts.reply}
                       </button>
+                    ) : null}
+                    {!mine && m.kind === "text" && !m.hidden ? (
+                      <button
+                        type="button"
+                        className="text-xs underline"
+                        onClick={() => setReporting(reporting === m.id ? null : m.id)}
+                        data-testid="chat-report"
+                      >
+                        {texts.report}
+                      </button>
+                    ) : null}
+                    {!mine && props.canModerate && m.kind === "text" && m.hidden !== "moderator" ? (
                       <button
                         type="button"
                         className="text-xs underline"
                         onClick={() => {
-                          if (!window.confirm(texts.deleteConfirm)) return;
-                          void call(`${base}/messages/${m.id}`, { method: "DELETE" }).then(() =>
-                            refreshOne(m.id),
-                          );
+                          if (!window.confirm(texts.moderateConfirm)) return;
+                          void call(`${base}/messages/${m.id}/moderate`, {
+                            method: "POST",
+                            body: {},
+                          }).then(() => refreshOne(m.id));
                         }}
+                        data-testid="chat-moderate"
                       >
-                        {texts.delete}
+                        {texts.moderate}
                       </button>
-                      {readCount.get(m.id) ? (
-                        <span className="ml-auto text-xs text-muted">
-                          {fill(texts.readBy, { count: String(readCount.get(m.id)) })}
-                        </span>
-                      ) : null}
-                    </>
-                  ) : null}
-                </div>
-              ) : null}
+                    ) : null}
+                    {reporting === m.id ? (
+                      <span className="flex w-full flex-wrap items-center gap-2 text-sm">
+                        <label className="flex items-center gap-1">
+                          <span className="sr-only">{texts.reportTitle}</span>
+                          <select
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            className="rounded border border-border bg-bg px-1 py-0.5"
+                            data-testid="chat-report-reason"
+                          >
+                            {Object.entries(texts.reportReasons).map(([key, label]) => (
+                              <option key={key} value={key}>
+                                {label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          className="underline"
+                          onClick={() => void report(m.id)}
+                          data-testid="chat-report-send"
+                        >
+                          {texts.reportSend}
+                        </button>
+                      </span>
+                    ) : null}
+                    {mine && props.canPost ? (
+                      <>
+                        <button
+                          type="button"
+                          className="text-xs underline"
+                          onClick={() => setEditing({ id: m.id, body: m.body })}
+                        >
+                          {texts.edit}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-xs underline"
+                          onClick={() => {
+                            if (!window.confirm(texts.deleteConfirm)) return;
+                            void call(`${base}/messages/${m.id}`, { method: "DELETE" }).then(() =>
+                              refreshOne(m.id),
+                            );
+                          }}
+                        >
+                          {texts.delete}
+                        </button>
+                        {readCount.get(m.id) ? (
+                          <span className="ml-auto text-xs text-muted">
+                            {fill(texts.readBy, { count: String(readCount.get(m.id)) })}
+                          </span>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+          {pending.map((p) => (
+            <li
+              key={p.id}
+              className="max-w-[85%] self-end rounded-lg bg-accent-soft px-3 py-2 opacity-70"
+              data-testid="chat-pending"
+            >
+              <p className="whitespace-pre-wrap break-words">{p.body}</p>
+              <p className="text-xs text-muted">{p.failed ? texts.failed : texts.sending}</p>
             </li>
-          );
-        })}
-        {pending.map((p) => (
-          <li
-            key={p.id}
-            className="max-w-[85%] self-end rounded-lg bg-accent-soft px-3 py-2 opacity-70"
-            data-testid="chat-pending"
-          >
-            <p className="whitespace-pre-wrap break-words">{p.body}</p>
-            <p className="text-xs text-muted">{p.failed ? texts.failed : texts.sending}</p>
-          </li>
-        ))}
-      </ol>
-      <div ref={bottom} />
+          ))}
+        </ol>
+      </div>
       <p className="h-5 text-sm text-muted" aria-live="polite">
         {typingNames.length > 0 ? fill(texts.typing, { name: typingNames.join(", ") }) : ""}
       </p>
       {props.canPost ? (
         <form
-          className="sticky bottom-0 flex flex-col gap-1 bg-bg py-2"
+          className="flex flex-col gap-1 bg-bg py-2"
           onSubmit={(e) => {
             e.preventDefault();
             const body = draft.trim();

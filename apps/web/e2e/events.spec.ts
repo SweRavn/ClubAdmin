@@ -149,3 +149,29 @@ test("Anna leaves a half-filled new event, is asked, and later continues the dra
   await page.reload();
   await expect(page.getByTestId("draft-banner")).toHaveCount(0);
 });
+
+test("a new event that ends before it starts says so next to the end, keeping what was typed (P2.7c)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.anna, { returnTo: `/clubs/${CLUBS.svk}/events/new` });
+  const form = page.getByTestId("new-event-form");
+  const inDays = (days: number) =>
+    new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  await form.getByTestId("event-audience-club").check();
+  await form.getByTestId("event-title").fill("Vårfest");
+  await form.getByTestId("event-startDate").fill(inDays(9));
+  await form.getByTestId("event-startTime").fill("18:00");
+  await form.getByTestId("event-endTime").fill("17:00");
+  await page.getByTestId("event-create").click();
+  // The summary at the top, and the message next to the end time, which has focus.
+  await expect(page.getByTestId("form-error")).toBeVisible();
+  const error = form.locator('[data-testid="field-error"][data-field="endTime"]');
+  await expect(error).toContainText("Slutet måste vara efter starten");
+  await expect(form.getByTestId("event-endTime")).toHaveAttribute("aria-invalid", "true");
+  await expect(form.getByTestId("event-endTime")).toBeFocused();
+  await expect(form.getByTestId("event-title")).toHaveValue("Vårfest");
+  // Fixed: the event is created.
+  await form.getByTestId("event-endTime").fill("21:00");
+  await page.getByTestId("event-create").click();
+  await expect(page.getByTestId("event-title")).toHaveText("Vårfest");
+});

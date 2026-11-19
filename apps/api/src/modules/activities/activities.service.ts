@@ -146,7 +146,11 @@ export class ActivitiesService {
   listLocations(
     context: TenantContext,
     page: { cursor?: string | undefined; limit: number; archived: boolean },
-  ): Promise<{ items: Location[]; nextCursor: string | null }> {
+  ): Promise<{
+    items: Location[];
+    usage: ReadonlyMap<string, number>;
+    nextCursor: string | null;
+  }> {
     return this.db.withTenant(context, async (tx) => {
       const rows = await repo.listLocations(tx, context.clubId, {
         cursor: page.cursor ?? null,
@@ -154,7 +158,39 @@ export class ActivitiesService {
         archived: page.archived,
       });
       const items = rows.slice(0, page.limit);
-      return { items, nextCursor: rows.length > page.limit ? items.at(-1)!.id : null };
+      const usage = await repo.locationUsage(
+        tx,
+        context.clubId,
+        items.map((l) => l.id),
+      );
+      return { items, usage, nextCursor: rows.length > page.limit ? items.at(-1)!.id : null };
+    });
+  }
+
+  /**
+   * Deletes a place nobody uses (P2.7c); one in use is archived instead
+   * (`location_in_use`). Managers delete any unused place, those who add
+   * places their own (`canDeleteAny` false: only `createdByPersonId`).
+   */
+  deleteLocation(
+    context: TenantContext,
+    locationId: string,
+    options: { canDeleteAny: boolean },
+  ): Promise<void> {
+    return this.db.withTenant(context, async (tx) => {
+      const [current] = await repo.findLocations(tx, [locationId]);
+      if (current?.clubId !== context.clubId) throw new DomainError("not_found");
+      if (!options.canDeleteAny && current.createdByPersonId !== context.personId) {
+        throw new DomainError("not_allowed");
+      }
+      const usage = await repo.locationUsage(tx, context.clubId, [locationId]);
+      if ((usage.get(locationId) ?? 0) > 0) throw new DomainError("location_in_use");
+      await repo.deleteLocation(tx, locationId);
+      await audit.record(tx, {
+        action: "location.deleted",
+        resourceType: "location",
+        resourceId: locationId,
+      });
     });
   }
 

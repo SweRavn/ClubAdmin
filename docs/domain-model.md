@@ -693,8 +693,11 @@ managers and registrars get the notice `membership.left`.
   locations, case-insensitive), address, optional coordinates (both or
   neither; the map link is OpenStreetMap), directions,
   `created_by_person_id` (P1.6b: leaders add places and change only their
-  own; club managers change any). Archived, never deleted; archived
-  locations are not offered for new activities.
+  own; club managers change any). Archived locations are not offered for
+  new activities. A place nobody uses (no activity, series, event, duty
+  shift or car pool start) can be deleted (P2.7c: managers any, those who
+  add places their own); one in use is archived instead
+  (`location_in_use`).
 - `activity_series`: a recurring series of a club's groups
   (`activity_series_groups`): kind, title, notes, leader notes, location or
   free-text place, `rule` (P1.14: daily, weekly or monthly with an

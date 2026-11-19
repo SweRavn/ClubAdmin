@@ -135,6 +135,10 @@ export const activitySeries = pgTable(
       .where(sql`${t.endsOn} IS NULL OR ${t.endsOn} > ${t.materializedUntil}`),
     index("activity_series_club_idx").on(t.clubId, t.startsOn),
     index("activity_series_creator_idx").on(t.createdByPersonId),
+    // Whether a place is in use (P2.7c).
+    index("activity_series_location_idx")
+      .on(t.clubId, t.locationId)
+      .where(sql`${t.locationId} IS NOT NULL`),
   ],
 );
 

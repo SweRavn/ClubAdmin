@@ -280,6 +280,10 @@ function Activity({ activityId }: { activityId: string }) {
           carpool={carpool.data}
           timeZone={zone}
           open={!cancelled && startsAt.getTime() > Date.now()}
+          returnTrip={{
+            place: a?.location?.name ?? a?.locationText ?? null,
+            at: a?.endsAt ?? null,
+          }}
         />
       ) : a?.transportMode === "shared" ? (
         <Section title={t("carpool.title")}>

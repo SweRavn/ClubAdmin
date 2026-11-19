@@ -108,6 +108,7 @@ export default async function LocationsPage({ params, searchParams }: Props) {
       {query.updated ? <Notice>{t("locations.updated")}</Notice> : null}
       {query.saved ? <Notice>{t("locations.updated")}</Notice> : null}
       {query.deleted ? <Notice>{t("carpool.oldDeleted")}</Notice> : null}
+      {query.removed ? <Notice>{t("locations.deleted")}</Notice> : null}
       <FormError code={query.error} />
 
       {doubleBooked.length > 0 ? (
@@ -206,6 +207,30 @@ export default async function LocationsPage({ params, searchParams }: Props) {
                       {l.archived ? t("locations.restore") : t("locations.archive")}
                     </button>
                   </ActionForm>
+                ) : null}
+                {/* P2.7c: an unused place is deleted, one in use is archived instead. */}
+                {l.canDelete && (l.useCount ?? 0) === 0 ? (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-sm" data-testid="location-delete">
+                      {t("locations.delete")}
+                    </summary>
+                    <ActionForm action="delete-location" className="mt-2 space-y-2">
+                      <input type="hidden" name="clubId" value={club.id} />
+                      <input type="hidden" name="locationId" value={l.id} />
+                      <p className="text-sm">{t("locations.deleteConfirm", { name: l.name })}</p>
+                      <button
+                        type="submit"
+                        className={secondaryButtonClass}
+                        data-testid="location-delete-confirm"
+                      >
+                        {t("locations.deleteButton")}
+                      </button>
+                    </ActionForm>
+                  </details>
+                ) : l.canDelete ? (
+                  <p className="mt-2 text-xs text-muted" data-testid="location-in-use">
+                    {t("locations.inUse", { count: l.useCount ?? 0 })}
+                  </p>
                 ) : null}
               </>
             ) : null}

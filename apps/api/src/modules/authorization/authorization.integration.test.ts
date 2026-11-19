@@ -768,6 +768,11 @@ describe("permission matrix", () => {
       expected: TEAM_MANAGERS(200),
       body: { directions: "Entrance B" },
     },
+    // P2.7c: the place is in use (the manager's 409); the others did not add it.
+    "DELETE /api/v1/clubs/:clubId/locations/:locationId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/locations/${m.locationId}`,
+      expected: { ...TEAM_MANAGERS(403), manager: 409 },
+    },
     "GET /api/v1/clubs/:clubId/locations/:locationId/conflicts": {
       url: () => `/api/v1/clubs/${m.clubA.id}/locations/${m.locationId}/conflicts?${RANGE}`,
       expected: ADMINS(200),

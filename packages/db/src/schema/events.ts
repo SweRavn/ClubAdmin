@@ -85,6 +85,10 @@ export const events = pgTable(
     ),
     index("events_club_starts_idx").on(t.clubId, t.startsAt),
     index("events_creator_idx").on(t.createdByPersonId),
+    // Whether a place is in use (P2.7c).
+    index("events_location_idx")
+      .on(t.clubId, t.locationId)
+      .where(sql`${t.locationId} IS NOT NULL`),
   ],
 );
 

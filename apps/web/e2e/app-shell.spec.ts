@@ -210,14 +210,23 @@ test("switch clubs, browse groups and members; the last club is remembered", asy
   await page.getByTestId("groups-mine").getByRole("link").first().click();
   await expect(page.getByTestId("group-name")).toBeVisible();
 
-  // The last club is remembered (its menu items stay); the selector says "all clubs"
-  // on pages about the person (P2.7b) and names the club on its pages.
+  // On pages about the person the selector says "all clubs" (P2.7b) and the
+  // navigation has only the person-wide pages (P2.7c); a club's pages bring
+  // its items back.
   await page.goto("/schedule");
   // Lars uses Norwegian.
   await expect(page.getByTestId("club-switcher-current")).toHaveText("Alle klubber");
-  await expect(page.getByTestId("nav-members")).toBeVisible();
+  await expect(page.getByTestId("nav-members")).toHaveCount(0);
+  await expect(page.getByTestId("nav-groups")).toHaveCount(0);
   await page.goto(`/clubs/${CLUBS.fil}`);
   await expect(page.getByTestId("club-switcher-current")).toHaveText("Fjordvik Idrettslag");
+  await expect(page.getByTestId("nav-members")).toBeVisible();
+  // "All clubs" is the menu's first entry and goes back (P2.7c).
+  await page.getByTestId("club-switcher").click();
+  await page.getByRole("menuitem", { name: "Alle klubber" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId("club-switcher-current")).toHaveText("Alle klubber");
+  await expect(page.getByTestId("nav-groups")).toHaveCount(0);
 
   await page.goto(`/clubs/${CLUBS.ikn}`);
   await expect(page.getByTestId("nav-members")).toHaveCount(0);

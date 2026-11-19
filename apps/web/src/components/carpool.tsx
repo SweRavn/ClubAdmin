@@ -13,7 +13,15 @@ import { getTranslations } from "next-intl/server";
 import { ActionForm, buttonClass, inputClass, secondaryButtonClass } from "./action-form.tsx";
 import { ClubTime } from "./club-time.tsx";
 
-type Activity = { id: string; startsAt: string; timeZone: string; status: string };
+type Activity = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  timeZone: string;
+  status: string;
+  location: { name: string } | null;
+  locationText: string | null;
+};
 
 export async function CarpoolSection({
   activity,
@@ -264,10 +272,43 @@ export async function CarpoolSection({
             <input type="hidden" name="timeZone" value={zone} />
             <input type="hidden" name="date" value={date} />
             <OfferFields seats={3} place={null} time="" note={null} />
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="withReturn" defaultChecked />
-              {t("carpool.withReturn")}
-            </label>
+            <fieldset className="space-y-2 rounded-md border border-border p-2">
+              <legend className="px-1 text-sm">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="withReturn" defaultChecked />
+                  {t("carpool.withReturn")}
+                </label>
+              </legend>
+              {/* The way home has its own place and time (P2.7c), prefilled
+                  with the activity's place and its end. */}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="block space-y-1">
+                  <span className="text-sm">{t("carpool.returnDeparturePlace")}</span>
+                  <input
+                    name="returnDeparturePlace"
+                    maxLength={200}
+                    defaultValue={activity.location?.name ?? activity.locationText ?? ""}
+                    className={inputClass}
+                    data-testid="carpool-return-place"
+                  />
+                </label>
+                <label className="block space-y-1">
+                  <span className="text-sm">{t("carpool.returnDepartureTime")}</span>
+                  <input
+                    type="time"
+                    name="returnDepartureTime"
+                    defaultValue={localTime(new Date(activity.endsAt), zone)}
+                    className={inputClass}
+                    data-testid="carpool-return-time"
+                  />
+                </label>
+              </div>
+              <input
+                type="hidden"
+                name="returnDate"
+                value={localDate(new Date(activity.endsAt), zone)}
+              />
+            </fieldset>
             <button type="submit" className={buttonClass} data-testid="carpool-offer-submit">
               {t("carpool.offerSubmit")}
             </button>

@@ -132,6 +132,8 @@ export const DOMAIN_ERRORS = {
   // Activities (P1.4)
   location_name_taken: "conflict",
   location_archived: "conflict",
+  /** Activities, series, events, shifts or the club's car pool start use it: archive it instead. */
+  location_in_use: "conflict",
   invalid_recurrence: "validation",
   nonexistent_local_time: "validation",
   series_too_long: "validation",

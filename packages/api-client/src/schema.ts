@@ -3186,7 +3186,11 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
-    delete?: never;
+    /**
+     * Delete a place nobody uses (location_in_use: archive it instead); managers any, those who add places their own
+     * @description Requires permission `club.locations.create` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Activities_deleteLocation"];
     options?: never;
     head?: never;
     /**
@@ -7046,6 +7050,8 @@ export interface components {
       archived: boolean;
       canEdit?: boolean;
       canArchive?: boolean;
+      useCount?: number;
+      canDelete?: boolean;
     } | null;
     RequestLead:
       | {
@@ -7456,6 +7462,9 @@ export interface components {
       departureAt?: string | null;
       /** @default false */
       withReturn: boolean;
+      returnDeparturePlace?: string | null;
+      /** Format: date-time */
+      returnDepartureAt?: string | null;
     };
     UpdateCarpoolOffer: {
       willingOnly?: boolean;
@@ -28546,6 +28555,81 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["Location"];
         };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Activities_deleteLocation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        locationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Invalid request */
       400: {

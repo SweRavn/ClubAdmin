@@ -10,8 +10,9 @@
 // as before; any unexpected answer falls back to the plain post.
 
 import { usePathname, useRouter } from "next/navigation";
-import { type FormEvent, type ReactNode, useRef, useState, useTransition } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState, useTransition } from "react";
 
+import { type FieldError, markFields } from "./field-errors.ts";
 import {
   DraftBanner,
   type DraftMessages,
@@ -29,6 +30,7 @@ export function EnhancedForm({
   testId,
   guard,
   draft,
+  fieldErrors,
   children,
 }: {
   action: string;
@@ -38,6 +40,8 @@ export function EnhancedForm({
   guard?: GuardMessages | null | undefined;
   /** Keep the values as a draft in this browser under this key (P2.7b). */
   draft?: { key: string; messages: DraftMessages } | null | undefined;
+  /** What is wrong per field after a failed post of this form (P2.7c). */
+  fieldErrors?: readonly FieldError[] | undefined;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -46,6 +50,14 @@ export function EnhancedForm({
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement | null>(null);
+  // Each field's message next to it, the first field focused (P2.7c).
+  const errorsKey = JSON.stringify(fieldErrors ?? []);
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const first = markFields(form, JSON.parse(errorsKey) as FieldError[]);
+    first?.focus();
+  }, [errorsKey]);
   const unsaved = useUnsavedGuard({
     formRef,
     enabled: Boolean(guard),

@@ -23,8 +23,66 @@ import { freshSession, loadSession } from "../../../server/sessions.ts";
 
 export const dynamic = "force-dynamic";
 
-const withError = (path: string, code: string) =>
-  `${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(code)}`;
+/**
+ * Back to the form with the error's code, and (P2.7c) which form failed
+ * (`invalid`, the action's name) with each field's code (`fields`:
+ * `name:code;name:code`): the form shows them next to its fields. Codes and
+ * field names only, never values.
+ */
+function withError(
+  path: string,
+  code: string,
+  invalid?: { action: string; fields: Record<string, string> },
+): string {
+  const url = new URL(path, "https://internal.invalid");
+  url.searchParams.set("error", code);
+  const fields = Object.entries(invalid?.fields ?? {}).filter(
+    ([name, field]) => FIELD_NAME.test(name) && FIELD_CODE.test(field),
+  );
+  if (invalid && fields.length > 0) {
+    url.searchParams.set("invalid", invalid.action);
+    url.searchParams.set("fields", fields.map(([n, c]) => `${n}:${c}`).join(";"));
+  }
+  return `${url.pathname}${url.search}`;
+}
+
+const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_.]{0,60}$/;
+const FIELD_CODE = /^[a-z][a-z_]{0,60}$/;
+
+/**
+ * The form fields of the API's validation issues (`errors[].path` of the
+ * body: its first segment, through the action's `apiFields`) and of domain
+ * codes that are about one field.
+ */
+function fieldsOfProblem(
+  body: unknown,
+  code: string,
+  apiFields: Record<string, string>,
+): Record<string, string> {
+  const fields: Record<string, string> = {};
+  const issues = (body as { errors?: unknown } | null)?.errors;
+  if (Array.isArray(issues)) {
+    for (const issue of issues as { location?: string; path?: string; code?: string }[]) {
+      if (issue.location !== "body" || typeof issue.path !== "string") continue;
+      const first = issue.path.split(/[.[]/)[0] ?? "";
+      const name = apiFields[first] ?? first;
+      if (name && !(name in fields)) fields[name] = issue.code ?? "invalid";
+    }
+  }
+  const field = DOMAIN_CODE_FIELDS[code];
+  const name = field ? (apiFields[field] ?? field) : null;
+  if (name) fields[name] = code;
+  return fields;
+}
+
+/** Domain codes about one request field (the API's name; mapped like the issues). */
+const DOMAIN_CODE_FIELDS: Record<string, string> = {
+  event_period_invalid: "endsAt",
+  respond_by_after_start: "respondBy",
+  location_name_taken: "name",
+  group_name_taken: "name",
+  role_names_required: "names",
+};
 
 /** One more row of a list (`more` = its query parameter, e.g. "qrows"), counted from the form. */
 function withMoreRows(path: string, form: FormData): string {
@@ -80,7 +138,12 @@ export async function POST(
   const call = action.call(form);
   if (!call || "invalid" in call) {
     if (keepValues) await saveFormDraft(session.id, name, form);
-    return redirectTo(withError(back, call ? call.invalid : "invalid_input"));
+    return redirectTo(
+      withError(back, call ? call.invalid : "invalid_input", {
+        action: name,
+        fields: call?.fields ?? {},
+      }),
+    );
   }
   const res = await apiFetch(call.path, session.record, {
     method: call.method,
@@ -118,7 +181,12 @@ export async function POST(
             ? "rate_limited"
             : "failed";
   if (keepValues) await saveFormDraft(session.id, name, form);
-  return redirectTo(withError(back, code));
+  return redirectTo(
+    withError(back, code, {
+      action: name,
+      fields: fieldsOfProblem(body, code, action.apiFields ?? {}),
+    }),
+  );
 }
 
 /**

@@ -32,12 +32,15 @@ export function CarpoolSection({
   carpool,
   timeZone,
   open,
+  returnTrip = { place: null, at: null },
 }: {
   activityId: string;
   carpool: Carpool;
   timeZone: string;
   /** The activity has not started and is not cancelled. */
   open: boolean;
+  /** Where and when the way home starts by default: the activity's place and end (P2.7c). */
+  returnTrip?: { place: string | null; at: string | null };
 }) {
   const t = useTranslations();
   if (carpool.transportMode === "shared") {
@@ -52,7 +55,7 @@ export function CarpoolSection({
   // No transport mode and no car yet (P2.7b): the offer form starts the car pool.
   if (carpool.transportMode !== "own" && carpool.offers.length === 0) {
     return open && carpool.canOffer ? (
-      <OfferForm activityId={activityId} title={t("carpool.start")} />
+      <OfferForm activityId={activityId} title={t("carpool.start")} returnTrip={returnTrip} />
     ) : null;
   }
   const myOut = carpool.offers.some((o) => o.mine && o.direction === "out");
@@ -101,7 +104,9 @@ export function CarpoolSection({
           </Row>
         </Section>
       ) : null}
-      {open && carpool.canOffer && !myOut ? <OfferForm activityId={activityId} /> : null}
+      {open && carpool.canOffer && !myOut ? (
+        <OfferForm activityId={activityId} returnTrip={returnTrip} />
+      ) : null}
     </>
   );
 }
@@ -205,13 +210,24 @@ function Car({
   );
 }
 
-function OfferForm({ activityId, title }: { activityId: string; title?: string }) {
+function OfferForm({
+  activityId,
+  title,
+  returnTrip,
+}: {
+  activityId: string;
+  title?: string;
+  returnTrip: { place: string | null; at: string | null };
+}) {
   const t = useTranslations();
   const theme = useTheme();
   const offer = useOfferCarpool(activityId);
   const [seats, setSeats] = useState(3);
   const [note, setNote] = useState("");
   const [withReturn, setWithReturn] = useState(true);
+  // The way home starts at the activity's place when it ends (P2.7c), never
+  // where the outward trip started.
+  const [returnPlace, setReturnPlace] = useState(returnTrip.place ?? "");
   return (
     <Section title={title ?? t("carpool.offer")}>
       <Row>
@@ -261,6 +277,25 @@ function OfferForm({ activityId, title }: { activityId: string; title?: string }
           <Body>{t("carpool.withReturn")}</Body>
         </View>
       </Row>
+      {withReturn ? (
+        <Row>
+          <TextInput
+            value={returnPlace}
+            onChangeText={setReturnPlace}
+            placeholder={t("carpool.returnDeparturePlace")}
+            accessibilityLabel={t("carpool.returnDeparturePlace")}
+            maxLength={200}
+            testID="carpool-return-place"
+            style={{
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              borderRadius: 8,
+              padding: theme.space(3),
+              color: theme.colors.fg,
+            }}
+          />
+        </Row>
+      ) : null}
       <Row last>
         <Button
           label={t("carpool.offerSubmit")}
@@ -272,6 +307,12 @@ function OfferForm({ activityId, title }: { activityId: string; title?: string }
               seats,
               note: note.trim() === "" ? null : note.trim(),
               withReturn,
+              ...(withReturn
+                ? {
+                    returnDeparturePlace: returnPlace.trim() === "" ? null : returnPlace.trim(),
+                    returnDepartureAt: returnTrip.at,
+                  }
+                : {}),
             })
           }
           testID="carpool-offer-submit"

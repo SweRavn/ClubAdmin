@@ -242,8 +242,16 @@ export class ActivitiesController {
     const { clubId } = resourceOf(authz, "club");
     const page = await this.activities.listLocations(tenantContext(authz, clubId), query);
     const access = locationAccess(authz, clubId);
+    // As the policy of club.locations.create: also those who plan a group's activities.
+    const mayCreate =
+      authz.actor.holds("club.locations.create", clubId) ||
+      authz.actor.managesAnyGroupActivities(clubId);
     return {
-      items: page.items.map((l) => toLocationResponse(l, access)),
+      items: page.items.map((l) => ({
+        ...toLocationResponse(l, access),
+        useCount: page.usage.get(l.id) ?? 0,
+        canDelete: access.canArchive || (mayCreate && l.createdByPersonId === authz.actor.personId),
+      })),
       nextCursor: page.nextCursor,
     };
   }
@@ -289,6 +297,28 @@ export class ActivitiesController {
       }),
       locationAccess(authz, clubId),
     );
+  }
+
+  @Endpoint({
+    method: "DELETE",
+    path: "clubs/:clubId/locations/:locationId",
+    summary:
+      "Delete a place nobody uses (location_in_use: archive it instead); managers any, those who add places their own",
+    tags: ["activities"],
+    access: { permission: "club.locations.create", resource: "club" },
+    request: { params: LocationParamsSchema },
+    response: z.null(),
+    status: 204,
+  })
+  async deleteLocation(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof LocationParamsSchema>,
+  ): Promise<null> {
+    const { clubId } = resourceOf(authz, "club");
+    await this.activities.deleteLocation(tenantContext(authz, clubId), params.locationId, {
+      canDeleteAny: authz.actor.holds("club.locations.manage", clubId),
+    });
+    return null;
   }
 
   @Endpoint({

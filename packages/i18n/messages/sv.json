@@ -919,7 +919,8 @@
     "grant_report_not_locked": "Lås rapporten innan filerna hämtas.",
     "grant_export_empty": "Tillägget gav ingen fil i det formatet.",
     "respond_by_after_start": "Svara senast kan inte vara efter att aktiviteten börjar.",
-    "role_names_required": "Ge rollen ett namn på föreningens språk och engelska."
+    "role_names_required": "Ge rollen ett namn på föreningens språk och engelska.",
+    "location_in_use": "Platsen används och kan inte tas bort – arkivera den i stället."
   },
   "memberExport": {
     "columns": {
@@ -1473,7 +1474,12 @@
     "conflicts": "Dubbelbokningar de kommande åtta veckorna",
     "addLink": "Saknas platsen? Lägg till en plats",
     "distance": "Avstånd från startplatsen (km)",
-    "distanceShown": "{km} km från startplatsen"
+    "distanceShown": "{km} km från startplatsen",
+    "delete": "Ta bort…",
+    "deleteConfirm": "{name} tas bort helt. Det går inte att ångra.",
+    "deleteButton": "Ta bort platsen",
+    "deleted": "Platsen är borttagen.",
+    "inUse": "Används {count, plural, one {på # ställe} other {på # ställen}} (aktiviteter, serier, evenemang, pass): arkivera den i stället för att ta bort den."
   },
   "responses": {
     "title": "Svar",
@@ -4770,7 +4776,9 @@
     "statsOwnOnly": "Du ser din egen och dina barns statistik.",
     "selfBookingAge": "Bokar samåkning själv från ålder",
     "selfBookingAgeHint": "Tomt: {age} år (landets regel). Yngre barn bokas av vårdnadshavare.",
-    "start": "Ordna samåkning"
+    "start": "Ordna samåkning",
+    "returnDeparturePlace": "Plats för hemfärden",
+    "returnDepartureTime": "Avgång hem"
   },
   "expenses": {
     "mine": "Mina utlägg",
@@ -4977,5 +4985,20 @@
     "draftFound": "Du har ett utkast som inte skickats, sparat",
     "resume": "Fortsätt på utkastet",
     "discard": "Börja om"
+  },
+  "fieldErrors": {
+    "invalid": "Kontrollera fältet.",
+    "required": "Fyll i fältet.",
+    "too_small": "För kort eller för litet.",
+    "too_big": "För långt eller för stort.",
+    "invalid_format": "Fel format.",
+    "invalid_type": "Fel värde.",
+    "invalid_value": "Välj ett av alternativen.",
+    "invalid_date": "Ange ett giltigt datum (ÅÅÅÅ-MM-DD).",
+    "invalid_time": "Ange en giltig tid (TT:MM).",
+    "invalid_number": "Ange ett heltal större än noll.",
+    "event_period_invalid": "Slutet måste vara efter starten.",
+    "questions_invalid": "Varje fråga behöver en text, och val behöver minst två alternativ.",
+    "summary": "Formuläret behöver rättas: {count, plural, one {# fält} other {# fält}} är markerade nedan."
   }
 }

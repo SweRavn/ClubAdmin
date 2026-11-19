@@ -68,3 +68,15 @@ in `window` survives) and that focus stays. Error codes keep coming from
 the API's problem details and are shown next to the control. Pages that
 render state from query parameters (`?saved=1`, `?error=`) keep doing so
 for both paths; with JavaScript the query changes without a reload.
+
+**Field errors (P2.7c).** A form that comes back invalid says what is
+wrong next to each field: the action route adds the failed form's action
+(`invalid`) and each field's code (`fields=name:code;…`) to the address,
+from the action's own checks (`InvalidForm.fields`) and from the API's
+validation issues (`errors[].path`, mapped to the form's names with the
+action's `apiFields`) or a domain code about one field. `ActionForm`
+turns the codes of its own action into messages (`fieldErrors.<code>`,
+else the error's own text); with JavaScript the form marks each field
+(`aria-invalid`, the message after it, `aria-describedby`) and focuses the
+first; the summary at the top says how many fields are marked. Codes and
+field names only, never values.

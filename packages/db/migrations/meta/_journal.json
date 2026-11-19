@@ -379,6 +379,13 @@
       "when": 1794890000000,
       "tag": "0053_plugins",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1794900000000,
+      "tag": "0054_location_usage",
+      "breakpoints": true
     }
   ]
 }

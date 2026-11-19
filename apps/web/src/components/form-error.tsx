@@ -10,13 +10,24 @@ export async function FormError({ code }: { code: string | string[] | undefined 
   if (typeof code !== "string" || code === "") return null;
   const t = await getTranslations();
   const key = enumKey("joinErrors", code);
+  // Fields marked in the form (P2.7c): the summary says how many, the form
+  // shows each next to its field.
+  const marked = (
+    new URL(await currentPath(), "https://internal.invalid").searchParams.get("fields") ?? ""
+  )
+    .split(";")
+    .filter(Boolean).length;
   // Development (DEV_AUTH, P1.6b): how to log in with the second factor.
   const devMfa = code === "mfa_required" && webConfig().DEV_AUTH;
   const back = devMfa ? new URL(await currentPath(), "https://internal.invalid") : null;
   back?.searchParams.delete("error");
   return (
     <p role="alert" className="rounded-md bg-protected-soft px-3 py-2" data-testid="form-error">
-      {key === "common.other" ? t("joinErrors.failed") : t(key)}
+      {marked > 0
+        ? t("fieldErrors.summary", { count: marked })
+        : key === "common.other"
+          ? t("joinErrors.failed")
+          : t(key)}
       {back ? (
         <span className="mt-1 block text-sm" data-testid="dev-mfa-hint">
           {t("joinErrors.devMfaHint")}{" "}

@@ -257,7 +257,14 @@ export class CarpoolsService {
       });
       const returnId =
         directions.includes("back") && data.direction === "out"
-          ? await repo.insertOffer(tx, { ...values, direction: "back", outwardOfferId: id })
+          ? await repo.insertOffer(tx, {
+              ...values,
+              // The way home starts elsewhere and later (P2.7c): its own place and time.
+              departurePlace: data.returnDeparturePlace || null,
+              departureAt: data.returnDepartureAt ? new Date(data.returnDepartureAt) : null,
+              direction: "back",
+              outwardOfferId: id,
+            })
           : null;
       await audit.record(tx, {
         action: "carpool.offer.created",

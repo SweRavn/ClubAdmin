@@ -90,7 +90,9 @@ export async function AppFrame({ children }: { children: ReactNode }) {
       current: pathname.startsWith("/me/documents"),
     },
   ];
-  if (club) {
+  // "Alla föreningar" (P2.7c): the personal pages cover every club, so the
+  // navigation shows only them; the club's pages come with a chosen club.
+  if (club && !personalPage) {
     nav.push({
       key: "groups",
       href: `/clubs/${club.id}/groups`,
@@ -250,6 +252,7 @@ export async function AppFrame({ children }: { children: ReactNode }) {
               })}
               placeholder={personalPage ? t("clubSwitcher.all") : t("clubSwitcher.choose")}
               prefix={t("clubSwitcher.prefix")}
+              all={{ label: t("clubSwitcher.all"), href: "/" }}
             />
           ) : null}
           {/* Its own row, wrapping when the items do not fit (P2.7b): never wider than the page. */}

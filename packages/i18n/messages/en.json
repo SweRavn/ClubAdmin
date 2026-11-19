@@ -919,7 +919,8 @@
     "grant_report_not_locked": "Lock the report before downloading its files.",
     "grant_export_empty": "The plugin gave no file in that format.",
     "respond_by_after_start": "The answer deadline cannot be after the activity starts.",
-    "role_names_required": "Give the role a name in the club's language and in English."
+    "role_names_required": "Give the role a name in the club's language and in English.",
+    "location_in_use": "The place is in use and cannot be deleted – archive it instead."
   },
   "memberExport": {
     "columns": {
@@ -1473,7 +1474,12 @@
     "conflicts": "Double bookings in the coming eight weeks",
     "addLink": "Place missing? Add a place",
     "distance": "Distance from the start place (km)",
-    "distanceShown": "{km} km from the start place"
+    "distanceShown": "{km} km from the start place",
+    "delete": "Delete…",
+    "deleteConfirm": "{name} will be deleted. This cannot be undone.",
+    "deleteButton": "Delete the place",
+    "deleted": "The place was deleted.",
+    "inUse": "Used in {count, plural, one {# place} other {# places}} (activities, series, events, shifts): archive it instead of deleting it."
   },
   "responses": {
     "title": "Answers",
@@ -4770,7 +4776,9 @@
     "statsOwnOnly": "You see your own and your children's statistics.",
     "selfBookingAge": "Books car pools themselves from age",
     "selfBookingAgeHint": "Empty: {age} (the country's rule). Younger children are booked by a guardian.",
-    "start": "Arrange a car pool"
+    "start": "Arrange a car pool",
+    "returnDeparturePlace": "Departure place home",
+    "returnDepartureTime": "Departure home"
   },
   "expenses": {
     "mine": "My expenses",
@@ -4977,5 +4985,20 @@
     "draftFound": "You have an unsent draft, saved",
     "resume": "Continue the draft",
     "discard": "Start over"
+  },
+  "fieldErrors": {
+    "invalid": "Check this field.",
+    "required": "Fill in this field.",
+    "too_small": "Too short or too small.",
+    "too_big": "Too long or too large.",
+    "invalid_format": "Wrong format.",
+    "invalid_type": "Wrong value.",
+    "invalid_value": "Choose one of the options.",
+    "invalid_date": "Enter a valid date (YYYY-MM-DD).",
+    "invalid_time": "Enter a valid time (HH:MM).",
+    "invalid_number": "Enter a whole number greater than zero.",
+    "event_period_invalid": "The end must be after the start.",
+    "questions_invalid": "Each question needs a text, and choices need at least two options.",
+    "summary": "The form needs fixing: {count, plural, one {# field is} other {# fields are}} marked below."
   }
 }

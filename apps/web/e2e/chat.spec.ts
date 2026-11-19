@@ -80,3 +80,25 @@ test("the emoji panel searches, inserts at the cursor and remembers recent emoji
   await expect(page.getByTestId("emoji-panel")).toHaveCount(0);
   await expect(page.getByTestId("emoji-open")).toBeFocused();
 });
+
+test("the chat keeps its size: messages scroll inside, the field stays in view (P2.7c)", async ({
+  page,
+}) => {
+  await openChannel(page);
+  const field = page.getByTestId("chat-input");
+  for (let i = 1; i <= 25; i++) {
+    await field.fill(`Meddelande ${i}`);
+    await field.press("Enter");
+    await expect(page.getByTestId("chat-body").filter({ hasText: `Meddelande ${i}` })).toHaveCount(
+      1,
+    );
+  }
+  await expect(field).toBeInViewport();
+  await expect(page.getByTestId("chat-body").last()).toBeInViewport();
+  const scroll = page.getByTestId("chat-scroll");
+  expect(await scroll.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+  // The page itself does not grow with the messages.
+  expect(
+    await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 400),
+  ).toBe(true);
+});

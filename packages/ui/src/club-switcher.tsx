@@ -14,9 +14,22 @@ export interface ClubSwitcherProps {
   placeholder: string;
   /** A visible label before the club's name (P2.7b), e.g. "Förening:". */
   prefix?: string;
+  /**
+   * The first entry, back to the pages about the person across clubs
+   * (P2.7c): its label ("Alla föreningar") and where it goes. Current when no
+   * club is.
+   */
+  all?: { label: string; href: string };
 }
 
-export function ClubSwitcher({ clubs, currentId, label, placeholder, prefix }: ClubSwitcherProps) {
+export function ClubSwitcher({
+  clubs,
+  currentId,
+  label,
+  placeholder,
+  prefix,
+  all,
+}: ClubSwitcherProps) {
   const current = clubs.find((c) => c.id === currentId);
   return (
     <Menu
@@ -28,13 +41,26 @@ export function ClubSwitcher({ clubs, currentId, label, placeholder, prefix }: C
           <span data-testid="club-switcher-current">{current?.name ?? placeholder}</span>
         </span>
       }
-      items={clubs.map((club) => ({
-        kind: "link",
-        key: club.id,
-        label: club.name,
-        href: club.href,
-        current: club.id === currentId,
-      }))}
+      items={[
+        ...(all
+          ? [
+              {
+                kind: "link" as const,
+                key: "all",
+                label: all.label,
+                href: all.href,
+                current: currentId === null,
+              },
+            ]
+          : []),
+        ...clubs.map((club) => ({
+          kind: "link" as const,
+          key: club.id,
+          label: club.name,
+          href: club.href,
+          current: club.id === currentId,
+        })),
+      ]}
     />
   );
 }

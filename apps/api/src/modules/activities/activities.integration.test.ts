@@ -634,6 +634,47 @@ describe("places added by leaders (P1.6b)", () => {
     expect(byManager.statusCode).toBe(200);
   });
 
+  it("deletes an unused place; one in use is archived instead (P2.7c)", async () => {
+    const { club, groupId, coach } = await team();
+    const create = async (as: string, name: string) =>
+      (await api(as, "POST", `/clubs/${club.id}/locations`, { body: { name } })).json<{
+        id: string;
+      }>().id;
+    const coachs = await create(coach.id, "Skolgården");
+    const managers = await create(club.manager.id, "Klubbstugan");
+    const used = await create(club.manager.id, "Norrbackahallen");
+    await api(coach.id, "POST", `/groups/${groupId}/activities`, {
+      body: {
+        kind: "training",
+        title: "Pass",
+        startsAt: `${day(11)}T15:00:00Z`,
+        endsAt: `${day(11)}T16:00:00Z`,
+        locationId: used,
+      },
+    });
+
+    type Item = { id: string; useCount?: number; canDelete?: boolean };
+    const list = (as: string) =>
+      api(as, "GET", `/clubs/${club.id}/locations`).then(
+        (r) => new Map(r.json<{ items: Item[] }>().items.map((l) => [l.id, l])),
+      );
+    const forCoach = await list(coach.id);
+    expect(forCoach.get(coachs)).toMatchObject({ useCount: 0, canDelete: true });
+    expect(forCoach.get(managers)).toMatchObject({ useCount: 0, canDelete: false });
+    expect((await list(club.manager.id)).get(used)).toMatchObject({ useCount: 1, canDelete: true });
+
+    // Those who add places delete only their own; managers any unused one.
+    const others = await api(coach.id, "DELETE", `/clubs/${club.id}/locations/${managers}`);
+    expect([others.statusCode, detail(others)]).toEqual([403, "not_allowed"]);
+    const own = await api(coach.id, "DELETE", `/clubs/${club.id}/locations/${coachs}`);
+    expect(own.statusCode, own.body).toBe(204);
+    const inUse = await api(club.manager.id, "DELETE", `/clubs/${club.id}/locations/${used}`);
+    expect([inUse.statusCode, detail(inUse)]).toEqual([409, "location_in_use"]);
+    const unused = await api(club.manager.id, "DELETE", `/clubs/${club.id}/locations/${managers}`);
+    expect(unused.statusCode).toBe(204);
+    expect([...(await list(club.manager.id)).keys()]).toEqual([used]);
+  });
+
   it("an 'other' activity says what it is (kindLabel); other kinds have none", async () => {
     const { groupId, coach } = await team();
     const lunch = await api(coach.id, "POST", `/groups/${groupId}/activities`, {

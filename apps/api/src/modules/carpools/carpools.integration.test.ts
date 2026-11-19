@@ -213,6 +213,8 @@ describe("car pools (P2.5)", () => {
       note: "Plats för bollbag",
       departureAt: `${day(3)}T08:30:00Z`,
       withReturn: true,
+      returnDeparturePlace: "Hallens entré",
+      returnDepartureAt: `${day(3)}T12:15:00Z`,
     });
     expect(res.statusCode, res.body).toBe(201);
     ({ id: outId, returnId: backId } = res.json<{ id: string; returnId: string }>());
@@ -231,6 +233,11 @@ describe("car pools (P2.5)", () => {
     // The note goes with the car, the return trip's copy too.
     expect(view.offers.map((o) => o.note)).toEqual(["Plats för bollbag", "Plats för bollbag"]);
     expect((await carpool(player.id)).offers[0]!.note).toBe("Plats för bollbag");
+    // The way home has its own place and time, never the outward trip's (P2.7c).
+    expect(view.offers.map((o) => [o.departurePlace, o.departureAt])).toEqual([
+      ["Klubbstugan", `${day(3)}T08:30:00.000Z`],
+      ["Hallens entré", `${day(3)}T12:15:00.000Z`],
+    ]);
   });
 
   it("one adult and a single child not their own: the seat waits for a guardian", async () => {

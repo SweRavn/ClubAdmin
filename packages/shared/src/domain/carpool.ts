@@ -99,8 +99,14 @@ export const CreateCarpoolOfferSchema = z
     /** The driver's note ("room for a kit bag", "pets have been in the car"). */
     note: z.string().trim().max(300).nullish(),
     departureAt: z.iso.datetime({ offset: true }).nullish(),
-    /** Also offer the return trip (a copy, edited on its own). */
+    /** Also offer the return trip (same car, seats and note; edited on its own). */
     withReturn: z.boolean().default(false),
+    /**
+     * The return trip's own departure (P2.7c): never the outward trip's;
+     * none when not given (the forms prefill the activity's place and end).
+     */
+    returnDeparturePlace: z.string().trim().max(200).nullish(),
+    returnDepartureAt: z.iso.datetime({ offset: true }).nullish(),
   })
   .strict()
   .openapi("CreateCarpoolOffer");

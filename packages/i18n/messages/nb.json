@@ -919,7 +919,8 @@
     "grant_report_not_locked": "Lås rapporten før filene lastes ned.",
     "grant_export_empty": "Tillegget ga ingen fil i det formatet.",
     "respond_by_after_start": "Svarfristen kan ikke være etter at aktiviteten begynner.",
-    "role_names_required": "Gi rollen et navn på klubbens språk og på engelsk."
+    "role_names_required": "Gi rollen et navn på klubbens språk og på engelsk.",
+    "location_in_use": "Stedet er i bruk og kan ikke slettes – arkiver det i stedet."
   },
   "memberExport": {
     "columns": {
@@ -1473,7 +1474,12 @@
     "conflicts": "Dobbeltbookinger de neste åtte ukene",
     "addLink": "Mangler stedet? Legg til et sted",
     "distance": "Avstand fra startstedet (km)",
-    "distanceShown": "{km} km fra startstedet"
+    "distanceShown": "{km} km fra startstedet",
+    "delete": "Slett…",
+    "deleteConfirm": "{name} slettes. Det kan ikke angres.",
+    "deleteButton": "Slett stedet",
+    "deleted": "Stedet er slettet.",
+    "inUse": "Brukes {count, plural, one {# gang} other {# ganger}} (aktiviteter, serier, arrangementer, vakter): arkiver det i stedet for å slette det."
   },
   "responses": {
     "title": "Svar",
@@ -4770,7 +4776,9 @@
     "statsOwnOnly": "Du ser din egen og barnas statistikk.",
     "selfBookingAge": "Bestiller samkjøring selv fra alder",
     "selfBookingAgeHint": "Tomt: {age} år (landets regel). Yngre barn bestilles av foresatte.",
-    "start": "Ordne samkjøring"
+    "start": "Ordne samkjøring",
+    "returnDeparturePlace": "Sted for hjemreisen",
+    "returnDepartureTime": "Avreise hjem"
   },
   "expenses": {
     "mine": "Mine utlegg",
@@ -4977,5 +4985,20 @@
     "draftFound": "Du har et utkast som ikke er sendt, lagret",
     "resume": "Fortsett på utkastet",
     "discard": "Begynn på nytt"
+  },
+  "fieldErrors": {
+    "invalid": "Kontroller feltet.",
+    "required": "Fyll ut feltet.",
+    "too_small": "For kort eller for lite.",
+    "too_big": "For langt eller for stort.",
+    "invalid_format": "Feil format.",
+    "invalid_type": "Feil verdi.",
+    "invalid_value": "Velg et av alternativene.",
+    "invalid_date": "Oppgi en gyldig dato (ÅÅÅÅ-MM-DD).",
+    "invalid_time": "Oppgi et gyldig klokkeslett (TT:MM).",
+    "invalid_number": "Oppgi et heltall større enn null.",
+    "event_period_invalid": "Slutten må være etter starten.",
+    "questions_invalid": "Hvert spørsmål trenger en tekst, og valg trenger minst to alternativer.",
+    "summary": "Skjemaet må rettes: {count, plural, one {# felt er} other {# felt er}} markert nedenfor."
   }
 }

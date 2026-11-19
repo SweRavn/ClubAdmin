@@ -65,6 +65,12 @@ export interface ApiCall {
 /** A form that is not valid, with the code the page explains next to the field. */
 export interface InvalidForm {
   invalid: string;
+  /**
+   * What is wrong per form field (P2.7c): the field's `name` and an error
+   * code (`required`, `invalid_date`, `event_period_invalid`, ...), shown
+   * next to the field.
+   */
+  fields?: Record<string, string>;
 }
 
 export interface FormAction {
@@ -75,6 +81,11 @@ export interface FormAction {
   call(form: FormData): ApiCall | InvalidForm | null;
   /** Where to go on success; `result` is the API's JSON body (or null). */
   done(form: FormData, result: unknown): string;
+  /**
+   * The form field of each request body field the API may refuse (P2.7c),
+   * where the names differ (`startsAt` → `startDate`); others keep their name.
+   */
+  apiFields?: Record<string, string>;
 }
 
 const text = (form: FormData, name: string): string => {
@@ -448,7 +459,10 @@ function activityFields(
   // The answer deadline is never after the start (P2.7b).
   const respondBy = fields && "respondBy" in fields ? fields.respondBy : null;
   if (fields && respondBy && respondBy > fields.startsAt) {
-    return { invalid: "respond_by_after_start" };
+    return {
+      invalid: "respond_by_after_start",
+      fields: { respondByDate: "respond_by_after_start" },
+    };
   }
   return fields;
 }
@@ -736,6 +750,16 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
     },
     done: (form) => withParam(back(form), "updated", "1"),
   },
+  // P2.7c: an unused place is deleted; one in use answers location_in_use.
+  "delete-location": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const locationId = id(form, "locationId");
+      if (!clubId || !locationId) return null;
+      return { path: `/api/v1/clubs/${clubId}/locations/${locationId}`, method: "DELETE" };
+    },
+    done: (form) => withParam(back(form), "removed", "1"),
+  },
 };
 
 /** A location's fields; coordinates as decimal degrees (both or neither). */
@@ -830,12 +854,83 @@ function eventFields(
   form: FormData,
   clear: boolean,
 ): ReturnType<typeof eventFieldsOf> | InvalidForm {
+  const wrong = eventFieldErrors(form, clear);
+  if (Object.keys(wrong).length > 0) {
+    const only = Object.values(wrong);
+    return {
+      // One period error alone keeps its own message at the top.
+      invalid:
+        only.length === 1 && only[0] === "event_period_invalid"
+          ? "event_period_invalid"
+          : "invalid_input",
+      fields: wrong,
+    };
+  }
   const fields = eventFieldsOf(form, clear);
   if (fields?.endsAt && fields.startsAt && fields.endsAt <= fields.startsAt) {
-    return { invalid: "event_period_invalid" };
+    return { invalid: "event_period_invalid", fields: { endDate: "event_period_invalid" } };
   }
   return fields;
 }
+
+/**
+ * What is wrong in an event form, per field (P2.7c): the title, the dates
+ * and times (a date's time without its date is checked as the API would
+ * see it), the capacity and the questions.
+ */
+function eventFieldErrors(form: FormData, clear: boolean): Record<string, string> {
+  const wrong: Record<string, string> = {};
+  if (!text(form, "title") && (!clear || form.has("title"))) wrong["title"] = "required";
+  const day = (name: string, required = false) => {
+    const value = text(form, name);
+    if (value === "" ? required : !isDate(value)) {
+      wrong[name] = value === "" ? "required" : "invalid_date";
+    }
+  };
+  const clock = (name: string) => {
+    const value = text(form, name);
+    if (value !== "" && !isTime(value)) wrong[name] = "invalid_time";
+  };
+  day("startDate", !clear || form.has("startDate"));
+  clock("startTime");
+  for (const name of ["endDate", "closesDate", "opensDate", "cancelDate"]) day(name);
+  for (const name of ["endTime", "closesTime", "opensTime", "cancelTime"]) clock(name);
+  const capacity = text(form, "capacity");
+  if (capacity !== "" && !(Number.isInteger(Number(capacity)) && Number(capacity) > 0)) {
+    wrong["capacity"] = "invalid_number";
+  }
+  if (Object.keys(wrong).length === 0 && questionsOf(form) === null) {
+    // The first question whose type or options are wrong.
+    for (let i = 0; i < EVENT_ROWS; i++) {
+      const label = text(form, `q.${i}.label`);
+      if (!label || text(form, `q.${i}.remove`) === "on") continue;
+      const type = oneOf(QUESTION_TYPES, text(form, `q.${i}.type`));
+      const options = text(form, `q.${i}.options`)
+        .split(/\r?\n/)
+        .filter((o) => o.trim());
+      if (!type || ((type === "choice" || type === "choices") && options.length < 2)) {
+        wrong[type ? `q.${i}.options` : `q.${i}.type`] = "questions_invalid";
+        break;
+      }
+    }
+  }
+  if (Object.keys(wrong).length === 0) {
+    const fields = eventFieldsOf(form, clear);
+    if (fields?.endsAt && fields.startsAt && fields.endsAt <= fields.startsAt) {
+      wrong[text(form, "endDate") ? "endDate" : "endTime"] = "event_period_invalid";
+    }
+  }
+  return wrong;
+}
+
+/** The event form's fields of the API's request fields (P2.7c). */
+const EVENT_API_FIELDS: Record<string, string> = {
+  startsAt: "startDate",
+  endsAt: "endDate",
+  registrationClosesAt: "closesDate",
+  registrationOpensAt: "opensDate",
+  cancellationClosesAt: "cancelDate",
+};
 
 function eventFieldsOf(form: FormData, clear: boolean) {
   const startsAt = optionalInstant(form, "startDate", "startTime", "00:00");
@@ -943,6 +1038,7 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
         },
       };
     },
+    apiFields: EVENT_API_FIELDS,
     done: (form, result) => {
       const created = resultId(result);
       if (!created) return back(form);
@@ -958,6 +1054,7 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
       if (!eventId || !fields) return null;
       return { path: `/api/v1/events/${eventId}`, method: "PATCH", body: fields };
     },
+    apiFields: EVENT_API_FIELDS,
     done: (form) => `/events/${text(form, "eventId")}?updated=1`,
   },
   "publish-event": {
@@ -2982,7 +3079,19 @@ const CARPOOL_ACTIONS: Record<string, FormAction> = {
       return {
         path: `/api/v1/activities/${activityId}/carpool/offers`,
         method: "POST",
-        body: { ...fields, withReturn: text(form, "withReturn") === "on" },
+        body: {
+          ...fields,
+          withReturn: text(form, "withReturn") === "on",
+          // The way home: its own place and time (P2.7c), on the activity's last day.
+          ...(text(form, "withReturn") === "on"
+            ? {
+                returnDeparturePlace: text(form, "returnDeparturePlace") || null,
+                returnDepartureAt: text(form, "returnDepartureTime")
+                  ? instant(form, "returnDate", "returnDepartureTime")
+                  : null,
+              }
+            : {}),
+        },
       };
     },
     done: (form) => withParam(carpoolBack(text(form, "activityId")), "saved", "1"),

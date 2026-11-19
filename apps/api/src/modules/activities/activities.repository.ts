@@ -40,6 +40,42 @@ export async function listLocations(
     .limit(page.limit);
 }
 
+/**
+ * How many rows use each of these places (P2.7c): activities, series,
+ * events, duty shifts and the club's car pool start. One statement for a
+ * page of places, each part by the club and the place.
+ */
+export async function locationUsage(
+  tx: Tx,
+  clubId: string,
+  ids: readonly string[],
+): Promise<Map<string, number>> {
+  if (ids.length === 0) return new Map();
+  const list = sql.join(
+    ids.map((id) => sql`${id}::uuid`),
+    sql`, `,
+  );
+  const { rows } = await tx.execute<{ id: string; n: number }>(sql`
+    SELECT location_id AS id, count(*)::int AS n FROM (
+      SELECT location_id FROM public.activities
+        WHERE club_id = ${clubId} AND location_id IN (${list})
+      UNION ALL SELECT location_id FROM public.activity_series
+        WHERE club_id = ${clubId} AND location_id IN (${list})
+      UNION ALL SELECT location_id FROM public.events
+        WHERE club_id = ${clubId} AND location_id IN (${list})
+      UNION ALL SELECT location_id FROM public.tasks
+        WHERE club_id = ${clubId} AND location_id IN (${list})
+      UNION ALL SELECT carpool_start_location_id FROM public.clubs
+        WHERE id = ${clubId} AND carpool_start_location_id IN (${list})
+    ) used GROUP BY location_id
+  `);
+  return new Map(rows.map((r) => [r.id, r.n]));
+}
+
+export async function deleteLocation(tx: Tx, id: string): Promise<void> {
+  await tx.delete(locations).where(eq(locations.id, id));
+}
+
 export async function findLocations(tx: Tx, ids: readonly string[]): Promise<LocationRow[]> {
   if (ids.length === 0) return [];
   return tx
