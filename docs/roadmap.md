@@ -74,7 +74,11 @@ Team cash desk · member fees, invoicing, Swish/card payments · paying
 attested expense claims (mileage from car pools first, ADR 0048) · buying
 out volunteer duties (ADR 0050) · club budget ·
 training plan library (versioning, sharing, copying, licences) · sponsors/ads ·
-public club website pages · facility booking.
+public club website pages · facility booking ·
+user documentation of the whole system for clubs (a guided, illustrated
+help site per role in sv, en and nb, also shown to prospective clubs:
+what ClubAdmin does, screenshots from the demo data, kept current by the
+end-to-end tests).
 
 ## Phase 4 — Heavy and specialised
 
