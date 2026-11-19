@@ -1171,9 +1171,18 @@ describe("permission matrix", () => {
     },
     "POST /api/v1/activities/:activityId/carpool/offers": {
       url: () => `/api/v1/activities/${m.activityId}/carpool/offers`,
-      expected: Object.fromEntries(
-        Object.entries(INSIDERS).map(([p, status]) => [p, status === 200 ? 409 : status]),
-      ) as Record<MatrixPersona, number>,
+      // Open without a transport mode (P2.7b): those on the roster and their
+      // relatives offer a car; the club's administrators off the roster may not.
+      expected: {
+        ...INSIDERS,
+        coach: 201,
+        member: 201,
+        parent: 201,
+        relative: 201,
+        manager: 403,
+        owner: 403,
+        registrar: 403,
+      },
       body: { seats: 2 },
     },
     "PATCH /api/v1/activities/:activityId/carpool/offers/:offerId": {

@@ -14,8 +14,12 @@ name: Offline attendance
     visible:
       id: "schedule-screen"
     timeout: 20000
+# The title line: leaders answer too (P2.7b), so the middle of the row can be
+# an answer button.
 - tapOn:
-    id: "schedule-item-0199a000-0000-7000-8015-000000000001"
+    text: ".*· Extrapass inför matchen"
+    childOf:
+      id: "schedule-item-0199a000-0000-7000-8015-000000000001"
 - extendedWaitUntil:
     visible:
       id: "activity-screen"
