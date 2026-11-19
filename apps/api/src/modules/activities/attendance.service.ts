@@ -453,7 +453,10 @@ export class AttendanceService {
       const { view, inputs } = await this.attendanceView(tx, activity);
       return { view, inputs, stale: [...new Set(stale)] };
     });
-    return { attendance: await this.withHints(context, result.view, result.inputs), stale: result.stale };
+    return {
+      attendance: await this.withHints(context, result.view, result.inputs),
+      stale: result.stale,
+    };
   }
 
   /** A group's attendance over a range: sessions held with their counts, and members (keyset). */
