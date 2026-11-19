@@ -136,3 +136,32 @@ RF's Idrottsarenan needs a vendor agreement
 - Not yet: the LOK and LAM plugins, grant reports and the attendance hints
   from a plugin (part B), the screens (part C, P2.8 for background checks).
 
+## Sources (read 2026-11-19)
+
+- Sweden, LOK-stöd: RF, *Föreskrifter om statligt lokalt aktivitetsstöd*,
+  fastställda av RS 2025-05-22, in force from 2025-07-01:
+  [PDF](https://www.rf.se/download/18.541eee07197627cf1f795bb9/1750073010580/LOK-st%C3%B6dsf%C3%B6reskrifter%2020250522.pdf)
+  ([RF's page](https://www.rf.se/bidrag-och-stod/lok-stod)). How the plugin
+  reads them: [`plugins/se-lok/README.md`](../../plugins/se-lok/README.md).
+- Norway, LAM and samordnet rapportering:
+  [NIF's page on LAM](https://www.idrettsforbundet.no/klubbguiden/drifte-et-idrettslag/okonomi/stotteordninger/lokale-aktivitetsmidler-lam/),
+  [NIF's letter for 2026](https://www.idrettsforbundet.no/contentassets/57eff2efb62542859be58348aa276fac/lam-2026-brev-fra-nif-til-idrettsrad-og-idrettskretser-for-2026.pdf),
+  [NIF's information on LAM 2026](https://www.idrettsforbundet.no/contentassets/57eff2efb62542859be58348aa276fac/lam-informasjon-om-lam-2026-til-idrettsrad-og-idrettskretser.pdf),
+  [KUD's letter for 2026](https://www.idrettsforbundet.no/contentassets/76a5289d74e448eca0be2043dfd56e66/lam-2026-tilskudd-til-lokale-lag-og-foreninger-lam-fra-kud-til-nif-for-2026.pdf)
+  and [NIF's key figures 2024](https://www.idrettsforbundet.no/contentassets/9f94ba79767846d9a67d1a56f4054dc2/nokkeltallsrapport-2024---norges-idrettsforbund.pdf).
+  How the plugin reads them: [`plugins/no-lam/README.md`](../../plugins/no-lam/README.md).
+
+## As implemented (part B1, 2026-11-19)
+
+- `plugins/se-lok` (`se.rf.lok`) and `plugins/no-lam` (`no.nif.samordnet`),
+  bundled with the API (`apps/api/src/plugins.ts`), both passing the
+  conformance suite with scenario tests.
+- What the sources changed from the prompt: late LOK applications lose 25,
+  50 or 75 per cent in three steps and are refused from 1 October and
+  1 April; a leader may not lead two group activities at once; two or more
+  leaders give an extra leader support; participants must be members; the
+  amounts (X, Y, Z) are set yearly, so reports count units; no municipal
+  XML file is described (not built). LAM is not applied for by clubs: the
+  plugin produces the samordnet rapportering figures the idrettsråd
+  distributes LAM by.
+

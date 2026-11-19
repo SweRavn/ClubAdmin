@@ -355,14 +355,23 @@ describe("the endpoints", () => {
     await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
     const res = await api(operator.id, "GET", "/ops/plugins");
     expect(res.statusCode).toBe(200);
-    expect(res.json<InstalledPluginList>()).toEqual({ items: [], pluginApi: "1.0.0" });
+    // The bundled plugins: LOK (Sweden) and samordnet rapportering (Norway).
+    const installed = res.json<InstalledPluginList>();
+    expect(installed.pluginApi).toBe("1.0.0");
+    expect(installed.items.map((p) => [p.id, p.regions])).toEqual([
+      ["no.nif.samordnet", ["NO"]],
+      ["se.rf.lok", ["SE"]],
+    ]);
     expect((await api(club.manager.id, "GET", "/ops/plugins")).statusCode).toBe(403);
   });
 
   it("needs club.plugins.manage with a second factor, and hides another club's", async () => {
     const res = await api(club.manager.id, "GET", `/clubs/${club.id}/plugins`);
     expect(res.statusCode).toBe(200);
-    expect(res.json<ClubPluginList>()).toEqual({ items: [] });
+    // A Swedish club sees LOK only, disabled until it enables it.
+    expect(res.json<ClubPluginList>().items.map((p) => [p.id, p.enabled])).toEqual([
+      ["se.rf.lok", false],
+    ]);
     expect(
       (await api(club.manager.id, "GET", `/clubs/${club.id}/plugins`, undefined, false)).statusCode,
     ).toBe(403);

@@ -1,0 +1,28 @@
+{
+  "name": "@clubadmin/plugin-se-lok",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sweden's LOK-stöd (statligt lokalt aktivitetsstöd) as a grant-reporting plugin, RF's rules of 22 May 2025 (ADR 0051)",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clubadmin/plugin-api": "workspace:*",
+    "pdfkit": "^0.17.2"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/pdfkit": "^0.17.7",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

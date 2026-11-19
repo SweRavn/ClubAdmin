@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - plugins/*
 
 # Supply-chain hardening (docs/security.md):
 # - dependency lifecycle scripts never run unless allowed below (true)

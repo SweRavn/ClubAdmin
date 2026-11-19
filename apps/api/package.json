@@ -41,6 +41,8 @@
     "@clubadmin/i18n": "workspace:*",
     "@clubadmin/server-kit": "workspace:*",
     "@clubadmin/plugin-api": "workspace:*",
+    "@clubadmin/plugin-no-lam": "workspace:*",
+    "@clubadmin/plugin-se-lok": "workspace:*",
     "@clubadmin/shared": "workspace:*",
     "@fastify/cors": "catalog:",
     "@fastify/helmet": "catalog:",
