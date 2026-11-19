@@ -44,10 +44,8 @@ export async function CarpoolSection({
   const out = carpool.offers.filter((o) => o.direction === "out");
   const home = carpool.offers.filter((o) => o.direction === "back");
   const myOut = out.some((o) => o.mine);
-  const open =
-    carpool.transportMode !== "shared" &&
-    activity.status !== "cancelled" &&
-    Date.parse(activity.startsAt) > Date.now();
+  // Shared transport returned above; own or no mode is open until the start (P2.7b).
+  const open = activity.status !== "cancelled" && Date.parse(activity.startsAt) > Date.now();
 
   const car = (o: CarpoolOffer) => {
     const returnTrip = o.direction === "out" ? home.find((h) => h.outwardOfferId === o.id) : null;
