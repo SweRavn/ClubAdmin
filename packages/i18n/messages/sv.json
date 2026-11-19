@@ -53,7 +53,8 @@
     "tasks": "Mina uppgifter",
     "governing": "Styrdokument",
     "carpools": "Mina samåkningar",
-    "expenses": "Utlägg"
+    "expenses": "Utlägg",
+    "breadcrumbs": "Brödsmulor"
   },
   "clubSwitcher": {
     "label": "Förening: {club}",

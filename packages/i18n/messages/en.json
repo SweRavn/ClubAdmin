@@ -53,7 +53,8 @@
     "tasks": "My tasks",
     "governing": "Governing documents",
     "carpools": "My car pools",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "breadcrumbs": "Breadcrumbs"
   },
   "clubSwitcher": {
     "label": "Club: {club}",

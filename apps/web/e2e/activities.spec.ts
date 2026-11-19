@@ -281,3 +281,15 @@ test("Anna arranges a car pool for Oskar's next training with one tap (P2.7b)", 
     true,
   );
 });
+
+test("breadcrumbs on a group's consents and attendance pages (P2.7b)", async ({ page }) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}/consents` });
+  const trail = page.getByTestId("breadcrumbs");
+  await expect(trail.getByRole("link", { name: "Strandvikens Volleybollklubb" })).toBeVisible();
+  await expect(trail.getByRole("link", { name: "F2017" })).toBeVisible();
+  await expect(trail.locator('[aria-current="page"]')).toHaveText("Samtycken");
+  await page.goto(`/groups/${GROUPS.svkF2017}/attendance`);
+  await expect(page.getByTestId("breadcrumbs").locator('[aria-current="page"]')).toBeVisible();
+  await page.getByTestId("breadcrumbs").getByRole("link", { name: "F2017" }).click();
+  await page.waitForURL(new RegExp(`/groups/${GROUPS.svkF2017}$`));
+});
