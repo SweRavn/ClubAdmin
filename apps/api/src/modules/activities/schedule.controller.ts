@@ -136,7 +136,8 @@ export class ScheduleController {
                 {
                   personId: id,
                   status: status === "attending" || status === "not_attending" ? status : null,
-                  canRespond: open && respondable.has(id) && row.memberIds.includes(id),
+                  // Everyone who has the activity answers, leaders too (P2.7b).
+                  canRespond: open && respondable.has(id),
                 },
               ];
             }),

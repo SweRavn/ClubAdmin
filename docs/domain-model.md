@@ -399,6 +399,10 @@ roles: `chair`, `vice_chair`, `treasurer`, `secretary`, `board_member`,
 `assigned_by_person_id`, `ended_by_person_id`.
 
 ### `roles` and `role_permissions` (P1.15, ADR 0046)
+Every permission and the built-in template's club and group roles are listed
+in [roles-and-permissions.md](roles-and-permissions.md) (generated). A group
+role is what older text calls a *function*.
+
 A club's roles: `scope` (`club` or `group`), `template_key` (the template
 role it comes from), `locked` (the club manager and the chair), names and
 descriptions per language (NULL: the catalogue's text), `version`. A club's
@@ -741,8 +745,10 @@ managers and registrars get the notice `membership.left`.
   not answered, once. Until the deadline any answer, after it only "not attending";
   cancelled or ended activities take no answers.
 - **The roster** of an activity is who was in its groups on its start
-  (`group_memberships` valid at `starts_at`): members are participants,
-  the other functions leaders. With a call-up (`activities.invitees_only`,
+  (`group_memberships` valid at `starts_at`): those whose group role holds
+  `group.participate` are participants, those with `group.lead` leaders.
+  Everyone on the roster answers, leaders too, counted apart (P2.7b,
+  ADR 0035 "Leaders answer too"). With a call-up (`activities.invitees_only`,
   ADR 0036) the participants are only the members called up
   (`activity_invitees`: club-owned, one per activity and person, IDs and
   who called them up; readable across clubs by the person and their

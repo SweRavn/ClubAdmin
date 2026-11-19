@@ -67,6 +67,12 @@
       "via": "addChild"
     },
     {
+      "guardian": "patrik",
+      "ward": "wilma",
+      "kind": "parent",
+      "via": "addChild"
+    },
+    {
       "guardian": "samira",
       "ward": "nadia",
       "kind": "parent",
@@ -651,6 +657,14 @@
       "person": "viktor",
       "club": "svk",
       "requestedBy": "henrik",
+      "preferredGroups": [
+        "svk-f2017"
+      ]
+    },
+    {
+      "person": "wilma",
+      "club": "svk",
+      "requestedBy": "patrik",
       "preferredGroups": [
         "svk-f2017"
       ]

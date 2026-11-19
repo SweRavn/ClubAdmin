@@ -82,7 +82,7 @@ export async function roster(
   return rows.map((r) => ({ personId: r.person_id, role: r.role }));
 }
 
-/** Whether each person was a participant of the activity's groups on its start. */
+/** Whether each person is on the activity's roster, in any role (leaders answer too, P2.7b). */
 export async function onRoster(
   tx: Tx,
   activityId: string,
@@ -91,7 +91,7 @@ export async function onRoster(
   if (personIds.length === 0) return new Set();
   const { rows } = await tx.execute<{ person_id: string }>(sql`
     SELECT r.person_id FROM (${rosterQuery([activityId])}) r
-    WHERE r.role = 'participant' AND r.person_id = ANY (${uuidArray(personIds)}::uuid[])`);
+    WHERE r.person_id = ANY (${uuidArray(personIds)}::uuid[])`);
   return new Set(rows.map((r) => r.person_id));
 }
 
@@ -244,7 +244,10 @@ export async function responseCounts(
   );
 }
 
-/** The leaders' list: the roster's participants with their answers, given name first (keyset). */
+/**
+ * The leaders' list: the roster with their answers (participants and, since
+ * P2.7b, leaders, each with their role), given name first (keyset).
+ */
 export async function responseList(
   tx: Tx,
   activityId: string,
@@ -253,17 +256,18 @@ export async function responseList(
   const { rows } = await tx.execute<{
     id: string | null;
     person_id: string;
+    role: AttendanceRole;
     status: ResponseStatus | null;
     note: string | null;
     responded_by_person_id: string | null;
     responded_at: string | null;
   }>(sql`
     SELECT * FROM (
-      SELECT ar.id, r.person_id, ar.status, ar.note, ar.responded_by_person_id, ar.responded_at,
+      SELECT ar.id, r.person_id, r.role, ar.status, ar.note, ar.responded_by_person_id, ar.responded_at,
         ${givenNameSortKey(sql`r.person_id`)} AS sort_key
       FROM (${rosterQuery([activityId])}) r
       LEFT JOIN public.activity_responses ar ON ar.activity_id = r.activity_id AND ar.person_id = r.person_id
-      WHERE r.role = 'participant'
+      WHERE true
         ${page.status === "none" ? sql`AND ar.id IS NULL` : page.status ? sql`AND ar.status = ${page.status}` : sql``}
     ) x
     ${
@@ -275,7 +279,7 @@ export async function responseList(
     LIMIT ${page.limit}`);
   return rows.map((r) => ({
     personId: r.person_id,
-    role: "participant" as const,
+    role: r.role,
     response:
       r.id && r.status && r.responded_by_person_id && r.responded_at
         ? toResponse({

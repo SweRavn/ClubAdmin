@@ -182,7 +182,9 @@ export class AttendanceController {
     return {
       items: page.items.flatMap((item) => {
         const person = shown.get(item.personId);
-        return person ? [toResponse(person, item.response, shown, true)] : [];
+        return person
+          ? [{ ...toResponse(person, item.response, shown, true), role: item.role }]
+          : [];
       }),
       nextCursor: page.nextCursor,
       counts: page.counts,

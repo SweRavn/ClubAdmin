@@ -222,7 +222,8 @@ const CASES: Case[] = [
     method: "GET",
     url: () => "/api/v1/me/announcements",
     statements: 3,
-    pages: 260,
+    // P2.7b: more people in the demo (applicants, their parents).
+    pages: 280,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/groups/{groupId}/announcements",
@@ -421,7 +422,8 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/groups/${key("svk-f2017")}/waitlist`,
     statements: 3,
-    pages: 400,
+    // P2.7b: the owner sees every applicant (six in F2017, two before).
+    pages: 450,
   },
   {
     route: "GET /api/v1/groups/{groupId}/waitlist/summary",
@@ -453,7 +455,8 @@ const CASES: Case[] = [
     method: "GET",
     url: () => "/api/v1/me/waitlists",
     statements: 6,
-    pages: 110,
+    // P2.7b: the demo's queued children have their parents and join requests.
+    pages: 130,
   },
   // Club-defined roles (P1.15 A2): the app's "my roles" (the relationship
   // set plus the club's roles by club), the roles page (roles with their

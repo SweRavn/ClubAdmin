@@ -141,7 +141,18 @@ function Activity({ activityId }: { activityId: string }) {
         <Section title={t("responses.title")}>
           <Row last={answers.data.mine.length === 0}>
             {a?.inviteesOnly ? <Muted>{t("invitees.onlyInvited")}</Muted> : null}
-            <Body>{t("responses.counts", answers.data.counts)}</Body>
+            <Body>
+              {t("responses.counts", {
+                attending: answers.data.counts.attending,
+                notAttending: answers.data.counts.notAttending,
+                notAnswered: answers.data.counts.notAnswered,
+                roster: answers.data.counts.roster,
+              })}
+            </Body>
+            {answers.data.counts.leaders && answers.data.counts.leaders.roster > 0 ? (
+              // Leaders answer too, counted apart (P2.7b).
+              <Muted>{t("responses.leaderCounts", answers.data.counts.leaders)}</Muted>
+            ) : null}
             {answers.data.open && answers.data.deadlinePassed ? (
               <Muted>{t("responses.deadlinePassed")}</Muted>
             ) : null}

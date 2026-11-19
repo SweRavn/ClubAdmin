@@ -23,7 +23,8 @@ are personal data about children and must never reveal a protected member
   (`group_memberships` valid at `starts_at`): members are participants, the
   other functions leaders. Someone who joined later or left earlier is not
   on it; their answers are kept and not counted. Answers are only accepted
-  for participants on the roster. Guests (not on the roster) must be
+  for people on the roster (participants, and since P2.7b leaders too: see
+  "Leaders answer too"). Guests (not on the roster) must be
   active members of the club; their mark says so.
 - **Response modes and deadlines.** `response_mode` (`none`, `optional`,
   `requested`; by kind: trainings optional, matches and meetings requested,
@@ -124,3 +125,27 @@ as "answered by …") and is audited as `activity.response.set_by_leader`,
 not on behalf of anyone. Leaders do not withdraw answers (the person or a
 guardian does). Leaving out the note when answering keeps the current note;
 `null` clears it, so answering again never loses a note.
+
+## Leaders answer too (decided 2026-11-19, P2.7b)
+
+Everyone called to an activity answers whether they are coming, in any
+role and for every kind, when the activity asks for answers: the roster's
+leaders (group roles with `group.lead`: coaches, team managers, …) answer
+for themselves like participants (a guardian for a young leader with
+`sign_up`). The summary counts participants as before and the leaders apart
+(`counts.leaders`, an added field, ADR 0029); the leaders' list shows every
+answer with the person's role; "My schedule" offers the answer to leaders;
+the answer requests and reminders go to leaders who have not answered; a
+leader's answer pre-fills their attendance mark. A call-up (ADR 0036) still
+selects participants only; the leaders stay on the roster. Grant reports
+read marks, not answers, and are unchanged.
+
+Leaders are not given the participating role as well (considered and
+rejected): a participating role (`group.participate`) means *participant*,
+and places and waiting lists (only participating roles take a place),
+grant reports (participants by age; a session needs a leader), attendance
+statistics per member, call-ups and duty and car-pool quotas all rely on
+that; a second group role per leader would also have to be kept in step.
+*Who is asked* is separated from *the role on the roster* instead. In a
+board or committee group where everyone is an equal member, the members
+simply hold a participating role.

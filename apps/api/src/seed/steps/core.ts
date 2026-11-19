@@ -881,10 +881,28 @@ class CoreSeeder {
           guardian,
           this.env.clock.birthDate(this.env.generator.int(32, 48), "03-01"),
         );
-        await this.createGenerated(
-          ctx,
-          child,
-          this.generatedBirthDate(g, g.generated?.ageFrom ?? 9),
+        // As applying does (P2.7b): the parent added the child, and asked the
+        // club for a place, so the list's owners see them.
+        const asParent: ActorContext = {
+          actorKind: "person",
+          personId: guardian.id,
+          requestId: "seed:waitlists",
+        };
+        await this.s.guardianships.addChild(
+          asParent,
+          {
+            givenName: child.givenName,
+            familyName: child.familyName,
+            birthDate: this.generatedBirthDate(g, g.generated?.ageFrom ?? 9),
+            gender: child.gender,
+          },
+          "parent",
+          { id: child.id },
+        );
+        await this.env.db.withTenant({ ...asParent, clubId: ctx.clubId }, (tx) =>
+          tx.execute(sql`
+            INSERT INTO join_requests (club_id, person_id, requested_by_person_id, preferred_group_ids)
+            VALUES (${ctx.clubId}, ${child.id}, ${guardian.id}, ${`{${g.id}}`}::uuid[])`),
         );
         personId = child.id;
         requestedBy = guardian.id;

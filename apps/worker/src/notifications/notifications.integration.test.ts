@@ -432,6 +432,8 @@ describe("answer reminders", () => {
     await remind({}, helpers);
     await remind({}, helpers);
     expect((await noticesOf(x.anna)).map((n) => n.type)).toEqual(["response.reminder"]);
+    // The coach answers too (P2.7b) and has not.
+    expect((await noticesOf(x.coach)).map((n) => n.type)).toEqual(["response.reminder"]);
     // Nils (contact person) may not answer; Gunilla neither.
     expect(await noticesOf(x.nils)).toEqual([]);
     expect(await noticesOf(x.gunilla)).toEqual([]);

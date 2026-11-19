@@ -775,6 +775,44 @@
       ],
       "createdAt": "-3y",
       "id": "0199a000-0000-7000-8000-000000000041"
+    },
+    {
+      "key": "patrik",
+      "number": 42,
+      "givenName": "Patrik",
+      "familyName": "Forsberg",
+      "age": 39,
+      "birthday": "04-14",
+      "gender": "male",
+      "login": "account",
+      "email": "patrik.forsberg@example.test",
+      "phone": "+46 70 174 06 42",
+      "description": "Wilma's father: she has been offered a place in SVK F2017, which he can accept.",
+      "tags": [
+        "parent",
+        "waiting list"
+      ],
+      "createdAt": "-1y",
+      "id": "0199a000-0000-7000-8000-000000000042"
+    },
+    {
+      "key": "wilma",
+      "number": 43,
+      "givenName": "Wilma",
+      "familyName": "Forsberg",
+      "age": 9,
+      "birthday": "09-03",
+      "gender": "female",
+      "login": "none",
+      "email": null,
+      "createdBy": "patrik",
+      "createdAt": "-9y",
+      "description": "Daughter of Patrik, offered a place in SVK F2017 (the offer runs out in three days; a pending join request).",
+      "tags": [
+        "child",
+        "waiting list"
+      ],
+      "id": "0199a000-0000-7000-8000-000000000043"
     }
   ]
 }

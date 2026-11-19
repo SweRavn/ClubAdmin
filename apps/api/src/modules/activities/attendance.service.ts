@@ -73,7 +73,14 @@ export function answerState(
 export interface ResponseSummaryView {
   activity: repo.ActivityRow;
   state: AnswerState;
-  counts: { attending: number; notAttending: number; notAnswered: number; roster: number };
+  counts: {
+    attending: number;
+    notAttending: number;
+    notAnswered: number;
+    roster: number;
+    /** The roster's leaders, who answer too (P2.7b); summaries only. */
+    leaders?: { attending: number; notAttending: number; notAnswered: number; roster: number };
+  };
   /** People attending (IDs; the caller presents those the viewer may see). */
   attending: string[];
   /** The answers of these people (the viewer's own and wards'), when on the roster. */
@@ -254,26 +261,37 @@ export class AttendanceService {
     return this.db.withTenant(context, async (tx) => {
       const activity = await repo.findActivity(tx, activityId);
       if (!activity) throw new DomainError("not_found");
-      const roster = (await records.roster(tx, activityId)).filter((r) => r.role === "participant");
+      const everyone = await records.roster(tx, activityId);
+      const roster = everyone.filter((r) => r.role === "participant");
+      const leaders = new Set(everyone.filter((r) => r.role === "leader").map((r) => r.personId));
       const onRoster = new Set(roster.map((r) => r.personId));
-      const answers = (await records.responses(tx, activityId)).filter((r) =>
-        onRoster.has(r.personId),
-      );
-      const byPerson = new Map(answers.map((r) => [r.personId, r]));
+      const all = await records.responses(tx, activityId);
+      const answers = all.filter((r) => onRoster.has(r.personId));
+      const leaderAnswers = all.filter((r) => leaders.has(r.personId));
+      const byPerson = new Map(all.map((r) => [r.personId, r]));
       const attending = answers.filter((r) => r.status === "attending").map((r) => r.personId);
       const notAttending = answers.filter((r) => r.status === "not_attending").length;
+      const leadersAttending = leaderAnswers.filter((r) => r.status === "attending").length;
+      const leadersNotAttending = leaderAnswers.filter((r) => r.status === "not_attending").length;
       return {
         activity,
         state: answerState(activity, this.now()),
+        // Participants as before; leaders answer too and are counted apart (P2.7b).
         counts: {
           attending: attending.length,
           notAttending,
           notAnswered: roster.length - answers.length,
           roster: roster.length,
+          leaders: {
+            attending: leadersAttending,
+            notAttending: leadersNotAttending,
+            notAnswered: leaders.size - leaderAnswers.length,
+            roster: leaders.size,
+          },
         },
         attending,
         mine: personIds
-          .filter((id) => onRoster.has(id))
+          .filter((id) => onRoster.has(id) || leaders.has(id))
           .map((id) => ({ personId: id, response: byPerson.get(id) ?? null })),
       };
     });
@@ -289,7 +307,7 @@ export class AttendanceService {
       limit: number;
     },
   ): Promise<{
-    items: { personId: string; response: ResponseRow | null }[];
+    items: { personId: string; role: "participant" | "leader"; response: ResponseRow | null }[];
     nextCursor: string | null;
     counts: ResponseSummaryView["counts"];
   }> {
@@ -304,7 +322,7 @@ export class AttendanceService {
       const counts = (await records.responseCounts(tx, [activityId])).get(activityId);
       const items = rows.slice(0, query.limit);
       return {
-        items: items.map((r) => ({ personId: r.personId, response: r.response })),
+        items: items.map((r) => ({ personId: r.personId, role: r.role, response: r.response })),
         nextCursor: rows.length > query.limit ? items.at(-1)!.personId : null,
         counts: countsOf(counts),
       };
@@ -705,7 +723,8 @@ export class AttendanceService {
         personId: r.personId,
         role: r.role,
         mark: marks.get(r.personId) ?? null,
-        suggested: r.role === "participant" && answer ? SUGGESTION[answer] : null,
+        // Leaders answer too (P2.7b): their answer pre-fills their mark as well.
+        suggested: answer ? SUGGESTION[answer] : null,
         guest: false,
       };
     });

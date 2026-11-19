@@ -32,7 +32,9 @@
       "status": "offered",
       "queuedAt": "-9mo",
       "offerExpiresIn": "+3d",
-      "decidedBy": "erik"
+      "decidedBy": "erik",
+      "person": "wilma",
+      "requestedBy": "patrik"
     },
     {
       "group": "svk-f2017",

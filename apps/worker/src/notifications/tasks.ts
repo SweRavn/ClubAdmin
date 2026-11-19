@@ -20,6 +20,7 @@ import { type Channels, createNotices, type Notice, uuidArray } from "./fanout.t
 import {
   activityFacts,
   activityParams,
+  answerers,
   eventAudience,
   eventFacts,
   eventParams,
@@ -186,7 +187,7 @@ export function responseRemindersTask(deps: NotificationTaskDependencies): Task 
         for (const row of rows) {
           const a = await activityFacts(tx, row.club_id, row.id);
           if (!a) continue;
-          const roster = await participants(tx, a.id);
+          const roster = await answerers(tx, a.id);
           if (roster.length === 0) continue;
           const { rows: answered } = await tx.execute<{ person_id: string }>(sql`
           SELECT person_id FROM public.activity_responses
@@ -246,7 +247,7 @@ export function responseRequestsTask(deps: NotificationTaskDependencies): Task {
           if (row.late) continue;
           const a = await activityFacts(tx, row.club_id, row.id);
           if (!a || a.responseMode === "none") continue;
-          const roster = await participants(tx, a.id);
+          const roster = await answerers(tx, a.id);
           if (roster.length === 0) continue;
           const { rows: answered } = await tx.execute<{ person_id: string }>(sql`
             SELECT person_id FROM public.activity_responses

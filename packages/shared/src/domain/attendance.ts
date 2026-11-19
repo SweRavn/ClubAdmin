@@ -68,6 +68,8 @@ export const ResponseSchema = z
     /** Null when not answered, or when the viewer may not see who answered. */
     respondedBy: PersonSummarySchema.nullable(),
     respondedAt: z.iso.datetime({ offset: true }).nullable(),
+    /** In the leaders' list (P2.7b): the person's role on the roster. */
+    role: z.enum(["participant", "leader"]).optional(),
   })
   .openapi("ActivityResponse");
 export type ActivityResponse = z.infer<typeof ResponseSchema>;
@@ -79,6 +81,18 @@ export const ResponseCountsSchema = z
     notAnswered: z.number().int(),
     /** Members of the activity's groups on its start (protected ones included). */
     roster: z.number().int(),
+    /**
+     * The roster's leaders (coaches, team managers, …), who answer too
+     * (P2.7b): counted apart from the participants. In an activity's summary.
+     */
+    leaders: z
+      .object({
+        attending: z.number().int(),
+        notAttending: z.number().int(),
+        notAnswered: z.number().int(),
+        roster: z.number().int(),
+      })
+      .optional(),
   })
   .openapi("ResponseCounts");
 export type ResponseCounts = z.infer<typeof ResponseCountsSchema>;

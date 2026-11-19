@@ -136,6 +136,24 @@ export async function participants(tx: Tx, activityId: string): Promise<string[]
 }
 
 /**
+ * Everyone asked to answer (P2.7b): the roster's participants (with a call-up
+ * those called up) and its leaders, who answer too.
+ */
+export async function answerers(tx: Tx, activityId: string): Promise<string[]> {
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT DISTINCT gm.person_id FROM public.activities a
+    JOIN public.activity_groups ag ON ag.activity_id = a.id
+    JOIN public.group_memberships gm ON gm.club_id = ag.club_id AND gm.group_id = ag.group_id
+      AND gm.valid_from <= a.starts_at
+      AND (gm.valid_to IS NULL OR gm.valid_to > a.starts_at)
+    WHERE a.id = ${activityId}
+      AND (NOT gm.participates OR NOT a.invitees_only OR EXISTS (
+        SELECT 1 FROM public.activity_invitees i
+        WHERE i.activity_id = a.id AND i.person_id = gm.person_id))`);
+  return rows.map((r) => r.person_id);
+}
+
+/**
  * Those who see an activity's answers (`activity.responses.read`, P1.15):
  * club-wide planners (`group.activities.manage` through a club role: club
  * managers), owners of its groups or their ancestors, and those holding

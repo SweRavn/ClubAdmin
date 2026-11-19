@@ -30,6 +30,8 @@
   },
   "dependencies": {
     "@clubadmin/db": "workspace:*",
-    "@clubadmin/server-kit": "workspace:*"
+    "@clubadmin/i18n": "workspace:*",
+    "@clubadmin/server-kit": "workspace:*",
+    "@clubadmin/shared": "workspace:*"
   }
 }

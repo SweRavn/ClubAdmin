@@ -192,12 +192,18 @@ club has roughly 10 named/central users plus generated players.
 | 39 | **Ulf Ek** | 63 | yes | Founded **Lövsta Bordtennisklubb** and is its only administrator: the grace period's banner and reminders |
 | 40 | **Britt Sjöberg** | 58 | yes | Founded **Ekuddens Schackklubb**, of the club type Schackklubb: its roles came from the type's template (P1.15 B) |
 | 41 | **Aron Nyström** | 36 | yes | Ekudden SK's second administrator next to Britt |
+| 42 | **Patrik Forsberg** | 39 | yes | Wilma's father: her place in SVK F2017 is offered (three days left), so he can accept it on "Mina köer" (P2.7b) |
+| 43 | **Wilma Forsberg** | 9 | no | Patrik's daughter, offered a place in SVK F2017 (a pending join request) |
 
 Ahmed is Liam's parent; Liam, like Oskar, was created as a child and got his
 own login (half a year ago). The waiting list of F2017 has five waiting, one
 outstanding offer (expires in 3 days), one admitted out of order ("sibling
 already plays in the group") and one offer that a system job expired
-yesterday. Henrik sees "Number 2 of 5" for Viktor on `/me/waitlists`; Erik
+yesterday. The outstanding offer is Wilma's: log in as Patrik and accept it
+on `/me/waitlists` (P2.7b). The generated applicants were added by their
+generated parent, who asked the club for a place (a pending join request),
+as applying does, so the list's owners see every applicant. Henrik sees
+"Number 2 of 5" for Viktor on `/me/waitlists`; Erik
 (owner) sees the list in order with the offer out on the group's waiting
 list page; Sara (club manager) sees the out-of-turn admission with its
 reason on the club's waiting lists page (P1.10b). Seeded now as data only, for modules that come later: background

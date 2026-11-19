@@ -1505,7 +1505,8 @@
     "yourAnswer": "Ditt svar",
     "respondByDate": "Dato",
     "respondByTime": "Tid",
-    "respondByDateHint": "Tomt: svar tas imot til aktiviteten begynner. Bare en dato: til slutten av dagen."
+    "respondByDateHint": "Tomt: svar tas imot til aktiviteten begynner. Bare en dato: til slutten av dagen.",
+    "leaderCounts": "Ledere: {attending} kommer · {notAttending} kommer ikke · {notAnswered} har ikke svart"
   },
   "responseModes": {
     "none": "Ingen svar",

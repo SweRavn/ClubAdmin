@@ -83,7 +83,13 @@ interface Summary {
   responseMode: string;
   open: boolean;
   deadlinePassed: boolean;
-  counts: { attending: number; notAttending: number; notAnswered: number; roster: number };
+  counts: {
+    attending: number;
+    notAttending: number;
+    notAnswered: number;
+    roster: number;
+    leaders?: { attending: number; notAttending: number; notAnswered: number; roster: number };
+  };
   attending: { id: string }[] | null;
   mine: {
     person: { id: string };
@@ -218,11 +224,11 @@ describe("responses", () => {
       },
     );
     expect(relative.statusCode).toBe(403);
-    // The coach is not on the roster as a participant; nobody answers for strangers.
+    // The coach is on the roster as a leader and answers too (P2.7b); nobody answers for strangers.
     const coach = await api(x.coach.id, "PUT", `/activities/${id}/responses/${x.coach.id}`, {
       body: { status: "attending" },
     });
-    expect([coach.statusCode, detail(coach)]).toEqual([409, "not_on_roster"]);
+    expect(coach.statusCode, coach.body).toBe(200);
     const other = await api(x.member.id, "PUT", `/activities/${id}/responses/${x.child.id}`, {
       body: { status: "attending" },
     });
@@ -232,7 +238,8 @@ describe("responses", () => {
     await api(x.parent.id, "PUT", `/activities/${id}/responses/${x.child.id}`, {
       body: { status: "attending" },
     });
-    expect((await audit(x.club.id)).filter((a) => a === "activity.response.set")).toHaveLength(2);
+    // The parent's, the member's and the coach's own (P2.7b).
+    expect((await audit(x.club.id)).filter((a) => a === "activity.response.set")).toHaveLength(3);
     // Acting on behalf of the child works too, and is recorded as on behalf.
     const onBehalf = await api(x.parent.id, "PUT", `/activities/${id}/responses/${x.child.id}`, {
       body: { status: "not_attending", note: "Feber" },
@@ -245,7 +252,37 @@ describe("responses", () => {
        WHERE club_id = $1 AND action = 'activity.response.set' ORDER BY created_at, id`,
       [x.club.id],
     );
-    expect(rows.map((r) => r.on_behalf_of_person_id)).toEqual([x.child.id, null, x.child.id]);
+    // The coach answered for themselves (P2.7b): no on-behalf either.
+    expect(rows.map((r) => r.on_behalf_of_person_id)).toEqual([x.child.id, null, null, x.child.id]);
+  });
+
+  it("leaders answer trainings and meetings too, counted apart from the participants (P2.7b)", async () => {
+    const x = await team();
+    for (const kind of ["training", "meeting"] as const) {
+      const id = await activity(x, {
+        kind,
+        title: kind,
+        responseMode: "requested",
+        startsAt: at(4 * DAY),
+        endsAt: at(4 * DAY + HOUR),
+      });
+      const res = await api(x.coach.id, "PUT", `/activities/${id}/responses/${x.coach.id}`, {
+        body: { status: "attending" },
+      });
+      expect(res.statusCode, res.body).toBe(200);
+      const view = await summary(x.coach.id, id);
+      expect(view.counts).toMatchObject({
+        attending: 0,
+        leaders: { attending: 1, notAttending: 0, notAnswered: 0, roster: 1 },
+      });
+      expect(view.mine).toEqual([
+        expect.objectContaining({
+          person: expect.objectContaining({ id: x.coach.id }) as unknown,
+          status: "attending",
+          canRespond: true,
+        }),
+      ]);
+    }
   });
 
   it("after the deadline only 'not attending'; cancelled and 'none' activities take no answers", async () => {
@@ -307,7 +344,14 @@ describe("responses", () => {
     });
 
     const forMember = await summary(x.member.id, id);
-    expect(forMember.counts).toEqual({ attending: 2, notAttending: 1, notAnswered: 0, roster: 3 });
+    expect(forMember.counts).toEqual({
+      attending: 2,
+      notAttending: 1,
+      notAnswered: 0,
+      roster: 3,
+      // The coach, counted apart (P2.7b).
+      leaders: { attending: 0, notAttending: 0, notAnswered: 1, roster: 1 },
+    });
     // The protected member is counted, never named, for other members.
     expect(forMember.attending?.map((p) => p.id)).toEqual([x.member.id]);
     // The relative may read the schedule, not the roster: counts only.
@@ -322,7 +366,11 @@ describe("responses", () => {
         note?: string | null;
       }[];
     }>().items;
-    expect(items).toHaveLength(3);
+    // The participants and the coach, with their roles (P2.7b).
+    expect(items).toHaveLength(4);
+    expect(
+      items.filter((i) => (i as { role?: string }).role === "leader").map((i) => i.person.id),
+    ).toEqual([x.coach.id]);
     expect(items.find((i) => i.person.id === x.hidden.id)?.person.protected).toBe(true);
     expect(items.find((i) => i.person.id === x.child.id)).toMatchObject({
       status: "not_attending",
@@ -330,7 +378,10 @@ describe("responses", () => {
     });
     expect((await api(x.member.id, "GET", `/activities/${id}/responses`)).statusCode).toBe(403);
     const notAnswered = await api(x.coach.id, "GET", `/activities/${id}/responses?status=none`);
-    expect(notAnswered.json<{ items: unknown[] }>().items).toEqual([]);
+    // Only the coach, a leader, has not answered (P2.7b).
+    expect(
+      notAnswered.json<{ items: { person: { id: string } }[] }>().items.map((i) => i.person.id),
+    ).toEqual([x.coach.id]);
 
     // The group calendar shows the counts to those who manage the activity.
     const range = `from=${encodeURIComponent(at(0))}&to=${encodeURIComponent(at(10 * DAY))}`;
@@ -379,8 +430,9 @@ describe("responses", () => {
     const forCoach = (await api(x.coach.id, "GET", `/me/schedule?${range}`)).json<{
       items: Entry[];
     }>();
+    // The coach answers for themselves too (P2.7b).
     expect(forCoach.items.find((e) => e.activityId === id)?.responses).toEqual([
-      { personId: x.coach.id, status: null, canRespond: false },
+      { personId: x.coach.id, status: null, canRespond: true },
     ]);
   });
 });
@@ -434,7 +486,7 @@ describe("call-ups", () => {
     );
 
     // The member's answer stays but is not counted; they can no longer answer.
-    expect((await summary(x.coach.id, id)).counts).toEqual({
+    expect((await summary(x.coach.id, id)).counts).toMatchObject({
       attending: 0,
       notAttending: 0,
       notAnswered: 2,
@@ -472,7 +524,7 @@ describe("call-ups", () => {
       body: { inviteesOnly: false, personIds: [] },
     });
     expect(all.json<InviteesJson>()).toMatchObject({ inviteesOnly: false, invitedCount: 0 });
-    expect((await summary(x.coach.id, id)).counts).toEqual({
+    expect((await summary(x.coach.id, id)).counts).toMatchObject({
       attending: 2,
       notAttending: 0,
       notAnswered: 1,
@@ -907,10 +959,13 @@ describe("leaders answer for participants (P1.6b)", () => {
       ).json<{ items: { person: { id: string } }[]; nextCursor: string | null }>();
     const first = await order();
     const second = await order(first.nextCursor!);
-    expect([...first.items, ...second.items].map((r) => r.person.id)).toEqual([
-      people[1]!.id,
-      people[2]!.id,
-      people[0]!.id,
-    ]);
+    // The participants in given-name order (the coach, a leader, is listed too, P2.7b).
+    const ids = new Set(people.map((p) => p.id));
+    const third = second.nextCursor ? await order(second.nextCursor) : { items: [] };
+    expect(
+      [...first.items, ...second.items, ...third.items]
+        .map((r) => r.person.id)
+        .filter((personId) => ids.has(personId)),
+    ).toEqual([people[1]!.id, people[2]!.id, people[0]!.id]);
   });
 });

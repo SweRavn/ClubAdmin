@@ -7065,6 +7065,12 @@ export interface components {
       notAttending: number;
       notAnswered: number;
       roster: number;
+      leaders?: {
+        attending: number;
+        notAttending: number;
+        notAnswered: number;
+        roster: number;
+      };
     };
     PersonSummary: {
       /** Format: uuid */
@@ -7769,6 +7775,8 @@ export interface components {
       respondedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
       /** Format: date-time */
       respondedAt: string | null;
+      /** @enum {string} */
+      role?: "participant" | "leader";
     };
     ResponseSummary: {
       /** Format: uuid */

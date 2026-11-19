@@ -266,6 +266,29 @@
           },
           "roster": {
             "type": "integer"
+          },
+          "leaders": {
+            "type": "object",
+            "properties": {
+              "attending": {
+                "type": "integer"
+              },
+              "notAttending": {
+                "type": "integer"
+              },
+              "notAnswered": {
+                "type": "integer"
+              },
+              "roster": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "attending",
+              "notAttending",
+              "notAnswered",
+              "roster"
+            ]
           }
         },
         "required": [
@@ -3088,6 +3111,13 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "participant",
+              "leader"
+            ]
           }
         },
         "required": [

@@ -793,9 +793,15 @@ importers:
       '@clubadmin/db':
         specifier: workspace:*
         version: link:../db
+      '@clubadmin/i18n':
+        specifier: workspace:*
+        version: link:../i18n
       '@clubadmin/server-kit':
         specifier: workspace:*
         version: link:../server-kit
+      '@clubadmin/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@clubadmin/config':
         specifier: workspace:*

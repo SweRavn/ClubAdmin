@@ -1505,7 +1505,8 @@
     "yourAnswer": "Your answer",
     "respondByDate": "Date",
     "respondByTime": "Time",
-    "respondByDateHint": "Empty: answers are taken until the activity starts. Only a date: until the end of that day."
+    "respondByDateHint": "Empty: answers are taken until the activity starts. Only a date: until the end of that day.",
+    "leaderCounts": "Leaders: {attending} coming · {notAttending} not coming · {notAnswered} not answered"
   },
   "responseModes": {
     "none": "Not asked for",

@@ -372,6 +372,22 @@ describe("with the API", () => {
   const entry = async (viewer: string, group: string, person: string) =>
     (await roster(viewer, group)).items.find((i) => i.person.id === person);
 
+  it("shows F2017's whole waiting list to its owner and the club manager (P2.7b)", async () => {
+    const queued = (await get("erik", `/api/v1/groups/${id("svk-f2017")}/waitlist`)).json<{
+      items: { person: { id: string }; status: string }[];
+    }>();
+    const open = queued.items.filter((e) => e.status === "waiting" || e.status === "offered");
+    // Five waiting (Viktor among them) and Wilma's outstanding offer.
+    expect(open).toHaveLength(6);
+    expect(open.map((e) => e.person.id)).toEqual(
+      expect.arrayContaining([id("viktor"), id("wilma")]),
+    );
+    const managers = (await get("sara", `/api/v1/groups/${id("svk-f2017")}/waitlist`)).json<{
+      items: unknown[];
+    }>();
+    expect(managers.items).toHaveLength(queued.items.length);
+  });
+
   it("hides Nadia from other members, shows her with the icon to leaders, managers and Samira", async () => {
     const nadia = id("nadia");
     const asMaja = await roster("maja", "ikn-f2015");

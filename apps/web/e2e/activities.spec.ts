@@ -207,3 +207,14 @@ test("Anna uses the club calendar and adds a location", async ({ page }) => {
   await page.waitForURL(/added=1/);
   await expect(page.getByTestId("locations")).toContainText(name);
 });
+
+test("Erik, F2017's head coach, answers that he is coming to the next training (P2.7b)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: "/schedule" });
+  const mine = page.getByTestId(`response-${PERSONAS.erik.id}`).first();
+  await mine.getByTestId("response-attending").click();
+  await expect(
+    page.getByTestId(`response-${PERSONAS.erik.id}`).first().getByTestId("response-attending"),
+  ).toHaveAttribute("aria-pressed", "true");
+});

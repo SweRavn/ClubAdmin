@@ -234,7 +234,20 @@ export default async function ActivityPage({ params, searchParams }: Props) {
               {t("invitees.onlyInvited")}
             </p>
           ) : null}
-          <p data-testid="response-counts">{t("responses.counts", answers.counts)}</p>
+          <p data-testid="response-counts">
+            {t("responses.counts", {
+              attending: answers.counts.attending,
+              notAttending: answers.counts.notAttending,
+              notAnswered: answers.counts.notAnswered,
+              roster: answers.counts.roster,
+            })}
+          </p>
+          {answers.counts.leaders && answers.counts.leaders.roster > 0 ? (
+            // Leaders answer too, counted apart (P2.7b).
+            <p className="text-sm" data-testid="response-leader-counts">
+              {t("responses.leaderCounts", answers.counts.leaders)}
+            </p>
+          ) : null}
           {answers.respondBy ? (
             <p className="text-sm text-muted" data-testid="respond-by">
               {t("responses.answerByLabel")}{" "}
