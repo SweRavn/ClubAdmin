@@ -228,6 +228,27 @@ async function startServicesOnce(full: boolean, enableBackup: boolean): Promise<
     }
   }
 
+  // Caddy reads its Caddyfile only when it starts, and `up` keeps a running
+  // container whose file changed (a bind mount): load the current one.
+  if (
+    (await compose([
+      "exec",
+      "-T",
+      "caddy",
+      "caddy",
+      "reload",
+      "--config",
+      "/etc/caddy/Caddyfile",
+      "--adapter",
+      "caddyfile",
+    ])) !== 0
+  ) {
+    console.error(
+      "\nCaddy did not load infra/docker/caddy/Caddyfile.dev. Run `pnpm dev:logs caddy`.",
+    );
+    return false;
+  }
+
   const env = loadEnv();
   // The application's key gets the files bucket; the backup key (separate
   // credentials) reads it and writes the backup and replica buckets.
