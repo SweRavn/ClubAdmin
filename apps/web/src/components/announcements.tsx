@@ -175,6 +175,7 @@ export async function AnnouncementComposer({
   return (
     <ActionForm
       action={existing ? "announcements-update" : "announcements-create"}
+      guard
       className="space-y-4"
       testId="announcement-composer"
     >

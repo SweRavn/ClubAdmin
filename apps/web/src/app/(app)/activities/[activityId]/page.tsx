@@ -433,6 +433,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
             </summary>
             <ActionForm
               action="update-activity"
+              guard
               className="mt-3 space-y-3"
               testId="activity-edit-form"
             >

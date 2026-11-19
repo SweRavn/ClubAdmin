@@ -101,7 +101,7 @@ export default async function NewSeriesPage({ params, searchParams }: Props) {
               </p>
             ) : null}
           </section>
-          <ActionForm action="create-series" className="space-y-4" testId="new-series-form">
+          <ActionForm action="create-series" guard className="space-y-4" testId="new-series-form">
             <input type="hidden" name="groupId" value={group.id} />
             <input type="hidden" name="kind" value="training" />
             <SeriesFields timeZone={club.timeZone} locations={locations} values={values} />

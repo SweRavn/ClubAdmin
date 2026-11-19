@@ -159,12 +159,14 @@ test("another club's pages show the not-found page", async ({ browser }) => {
 test("Anna views as Elsa and as Oskar, then as herself", async ({ browser }) => {
   const page = await asPersona(browser, PERSONAS.anna);
   const switchTo = async (name: string) => {
-    await page.getByTestId("viewing-as").click();
-    await Promise.all([
-      page.waitForEvent("framenavigated"),
-      // The demo has a duplicate Elsa (P1.3, merged in families.spec.ts): the real one comes first.
-      page.getByRole("menuitem", { name }).first().click(),
-    ]);
+    // The demo has a duplicate Elsa (P1.3, merged in families.spec.ts): the real one comes first.
+    const item = page.getByRole("menuitem", { name }).first();
+    // Right after a page change the menu may not be hydrated yet: open it until it shows.
+    await expect(async () => {
+      if (!(await item.isVisible())) await page.getByTestId("viewing-as").click();
+      await expect(item).toBeVisible({ timeout: 1_000 });
+    }).toPass();
+    await Promise.all([page.waitForEvent("framenavigated"), item.click()]);
   };
   await expect(page.getByTestId("viewing-as-banner")).toHaveCount(0);
 

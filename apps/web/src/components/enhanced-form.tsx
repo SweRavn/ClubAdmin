@@ -12,6 +12,14 @@
 import { usePathname, useRouter } from "next/navigation";
 import { type FormEvent, type ReactNode, useRef, useState, useTransition } from "react";
 
+import {
+  DraftBanner,
+  type DraftMessages,
+  type GuardMessages,
+  LeaveDialog,
+  useUnsavedGuard,
+} from "./unsaved-guard.tsx";
+
 /** The header the action route checks (server/http.ts ENHANCED_HEADER). */
 const ENHANCED_HEADER = "x-clubadmin-enhanced";
 
@@ -19,11 +27,17 @@ export function EnhancedForm({
   action,
   className,
   testId,
+  guard,
+  draft,
   children,
 }: {
   action: string;
   className?: string | undefined;
   testId?: string | undefined;
+  /** Ask before leaving with unsaved changes (P2.7b). */
+  guard?: GuardMessages | null | undefined;
+  /** Keep the values as a draft in this browser under this key (P2.7b). */
+  draft?: { key: string; messages: DraftMessages } | null | undefined;
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -31,6 +45,12 @@ export function EnhancedForm({
   const native = useRef(false);
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const unsaved = useUnsavedGuard({
+    formRef,
+    enabled: Boolean(guard),
+    draftKey: draft?.key ?? null,
+  });
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     if (native.current) return;
@@ -39,6 +59,7 @@ export function EnhancedForm({
     event.preventDefault();
     if (busy) return;
     setBusy(true);
+    unsaved.onSubmitting();
     const fallback = () => {
       native.current = true;
       form.requestSubmit(submitter);
@@ -55,6 +76,13 @@ export function EnhancedForm({
         external?: unknown;
       } | null;
       if (!res.ok || !body) return fallback();
+      const failed =
+        typeof body.redirect === "string" &&
+        ["error", "draft"].some((key) =>
+          new URL(body.redirect as string, window.location.origin).searchParams.has(key),
+        );
+      if (failed) unsaved.onFailed();
+      else unsaved.onSaved();
       if (typeof body.external === "string") {
         window.location.assign(body.external);
         return;
@@ -78,16 +106,32 @@ export function EnhancedForm({
   };
 
   return (
-    <form
-      method="post"
-      action={action}
-      className={className}
-      data-testid={testId}
-      data-enhanced="true"
-      aria-busy={busy || undefined}
-      onSubmit={(event) => void onSubmit(event)}
-    >
-      {children}
-    </form>
+    <>
+      {draft && unsaved.stored ? (
+        <DraftBanner
+          messages={draft.messages}
+          savedAt={unsaved.stored.savedAt}
+          onResume={unsaved.resume}
+          onDiscard={unsaved.discard}
+        />
+      ) : null}
+      <form
+        ref={formRef}
+        method="post"
+        action={action}
+        className={className}
+        data-testid={testId}
+        data-enhanced="true"
+        aria-busy={busy || undefined}
+        onSubmit={(event) => void onSubmit(event)}
+        onInput={guard ? unsaved.onChange : undefined}
+        onChange={guard ? unsaved.onChange : undefined}
+      >
+        {children}
+      </form>
+      {guard && unsaved.pending ? (
+        <LeaveDialog messages={guard} onStay={unsaved.stay} onLeave={unsaved.leave} />
+      ) : null}
+    </>
   );
 }

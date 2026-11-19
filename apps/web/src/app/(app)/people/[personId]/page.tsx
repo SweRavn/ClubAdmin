@@ -15,6 +15,7 @@ import {
 import { GuardianRow, RightsFields } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
+import { LiveSearch, SubmitWithoutScript } from "../../../../components/live-search.tsx";
 import { PersonConsents } from "../../../../components/person-consents.tsx";
 import { PersonClubRoles } from "../../../../components/person-roles.tsx";
 import { ClubProtectionPanel, ProtectionControls } from "../../../../components/protection.tsx";
@@ -357,19 +358,27 @@ export default async function PersonPage({ params, searchParams }: Props) {
                 <input type="hidden" name="clubId" value={guardianClub.club.id} />
                 <label className="block space-y-1">
                   <span className="text-sm">{t("family.club.search")}</span>
-                  <input
+                  <LiveSearch
                     name="guardianQ"
                     defaultValue={guardianQ}
                     className={inputClass}
-                    data-testid="guardian-search"
+                    label={t("family.club.search")}
+                    resultsId="guardian-candidates"
+                    testId="guardian-search"
                   />
                 </label>
-                <button type="submit" className={secondaryButtonClass}>
-                  {t("family.club.searchButton")}
-                </button>
+                <SubmitWithoutScript>
+                  <button type="submit" className={secondaryButtonClass}>
+                    {t("family.club.searchButton")}
+                  </button>
+                </SubmitWithoutScript>
               </form>
               {candidates.length ? (
-                <ul className="space-y-2" data-testid="guardian-candidates">
+                <ul
+                  id="guardian-candidates"
+                  className="space-y-2"
+                  data-testid="guardian-candidates"
+                >
                   {candidates.map((m) => (
                     <li key={m.person.id}>
                       <ActionForm

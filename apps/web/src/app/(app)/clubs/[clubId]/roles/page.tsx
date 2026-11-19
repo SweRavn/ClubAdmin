@@ -256,7 +256,7 @@ export default async function RolesPage({ params, searchParams }: Props) {
             {t("rolesAdmin.newRole")}
           </h2>
           <p className="text-sm text-muted">{t("rolesAdmin.newRoleHint")}</p>
-          <ActionForm action="create-role" className="grid max-w-xl gap-3">
+          <ActionForm action="create-role" guard className="grid max-w-xl gap-3">
             <input type="hidden" name="clubId" value={club.id} />
             <input type="hidden" name="back" value={`/clubs/${club.id}/roles`} />
             <label className="flex flex-col gap-1 text-sm">

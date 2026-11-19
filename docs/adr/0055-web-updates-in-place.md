@@ -45,7 +45,18 @@ svaret"), while the mobile app answers with one tap. About 190 actions on
    `router.refresh()`, the frame included) or loads the other page, so
    pages need no per-action client code. It is loaded on demand
    and counted in the initial JavaScript budget (ADR 0027).
-6. **Rules for new code.** A new form uses the shared component; its kind
+6. **Unsaved changes ask first** (P2.7b). A form where several fields are
+   typed (an event, an activity, a series, an announcement, a duty shift,
+   a role) opts in with `ActionForm guard` (`GuardedForm` for a plain GET
+   form): leaving it with changes gets the browser's prompt on unload and
+   an in-app dialog for links inside the app. A new event also keeps what
+   was typed as a draft (`ActionForm draft`): in the browser's
+   `localStorage`, per person and form, never on the server, offered again
+   ("Fortsätt på utkastet" / "Börja om") and removed when the form is
+   sent. Server-side drafts (`status = 'draft'`, the same draft on every
+   device) would need a migration, history and audit; they are left until
+   users ask for them.
+7. **Rules for new code.** A new form uses the shared component; its kind
    follows from where the action's `done()` leads: back to the same page is
    in place, another page navigates (rule 2). A review
    rejects a form that reloads the page for a change on the same page, and

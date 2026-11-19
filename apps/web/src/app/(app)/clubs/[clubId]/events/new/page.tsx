@@ -44,7 +44,12 @@ export default async function NewEventPage({ params, searchParams }: Props) {
       </p>
       <h1 className="text-2xl font-semibold">{t("events.newTitle")}</h1>
       <FormError code={query.error} />
-      <ActionForm action="create-event" className="space-y-6" testId="new-event-form">
+      <ActionForm
+        action="create-event"
+        draft="new-event"
+        className="space-y-6"
+        testId="new-event-form"
+      >
         <input type="hidden" name="clubId" value={club.id} />
         <fieldset className="space-y-2">
           <legend className="text-lg font-semibold">{t("events.audience")}</legend>

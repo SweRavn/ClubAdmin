@@ -3086,7 +3086,8 @@
     "coOwners": "Gruppeeiere kan utnevne medeiere",
     "ownersAdmit": "Gruppeeiere tar opp nye klubbmedlemmer fra køene sine",
     "saveSettings": "Lagre",
-    "settingsSaved": "Gruppeinnstillingene ble lagret."
+    "settingsSaved": "Gruppeinnstillingene ble lagret.",
+    "typeMore": "Flere enn ti treff: skriv flere bokstaver."
   },
   "waitlist": {
     "tab": "Kø",
@@ -4300,7 +4301,15 @@
       "self_harm": "Noen kan skade seg selv",
       "other": "Noe annet"
     },
-    "pushOff": "Varsler av"
+    "pushOff": "Varsler av",
+    "emoji": {
+      "open": "Sett inn emoji",
+      "search": "Søk etter emoji",
+      "recent": "Nylig brukt",
+      "none": "Fant ingen emoji",
+      "loading": "Laster …"
+    },
+    "addReaction": "Flere reaksjoner"
   },
   "safeguarding": {
     "title": "Trygghetssaker",
@@ -4958,5 +4967,14 @@
       "accepted": "Godkjent",
       "rejected": "Avslått"
     }
+  },
+  "unsaved": {
+    "question": "Du har endringer som ikke er lagret. Vil du forlate siden?",
+    "draftKept": "Det du har skrevet lagres som et utkast på denne enheten.",
+    "stay": "Bli værende",
+    "leave": "Forlat siden",
+    "draftFound": "Du har et utkast som ikke er sendt, lagret",
+    "resume": "Fortsett på utkastet",
+    "discard": "Begynn på nytt"
   }
 }

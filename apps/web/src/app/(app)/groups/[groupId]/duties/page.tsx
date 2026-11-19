@@ -163,6 +163,7 @@ export default async function GroupDutiesPage({ params, searchParams }: Props) {
           </h2>
           <ActionForm
             action="duty-shift-create"
+            guard
             className="grid gap-3 sm:grid-cols-2"
             testId="duty-shift-form"
           >

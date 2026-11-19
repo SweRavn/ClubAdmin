@@ -234,7 +234,12 @@ export default async function SeriesPage({ params, searchParams }: Props) {
           <summary className="cursor-pointer font-medium" data-testid="series-edit">
             {t("series.edit")}
           </summary>
-          <ActionForm action="update-series" className="mt-3 space-y-4" testId="series-edit-form">
+          <ActionForm
+            action="update-series"
+            guard
+            className="mt-3 space-y-4"
+            testId="series-edit-form"
+          >
             <input type="hidden" name="seriesId" value={series.id} />
             <label className="block space-y-1">
               <span className="text-sm">{t("series.from")}</span>

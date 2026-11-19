@@ -3086,7 +3086,8 @@
     "coOwners": "Group owners may appoint co-owners",
     "ownersAdmit": "Group owners admit new club members from their waiting lists",
     "saveSettings": "Save",
-    "settingsSaved": "The group settings were saved."
+    "settingsSaved": "The group settings were saved.",
+    "typeMore": "More than ten matches: type more letters."
   },
   "waitlist": {
     "tab": "Waiting list",
@@ -4300,7 +4301,15 @@
       "self_harm": "Someone may hurt themselves",
       "other": "Something else"
     },
-    "pushOff": "Notifications off"
+    "pushOff": "Notifications off",
+    "emoji": {
+      "open": "Insert emoji",
+      "search": "Search emoji",
+      "recent": "Recently used",
+      "none": "No emoji found",
+      "loading": "Loading …"
+    },
+    "addReaction": "More reactions"
   },
   "safeguarding": {
     "title": "Safeguarding cases",
@@ -4958,5 +4967,14 @@
       "accepted": "Accepted",
       "rejected": "Rejected"
     }
+  },
+  "unsaved": {
+    "question": "You have unsaved changes. Leave the page?",
+    "draftKept": "What you have typed is kept as a draft on this device.",
+    "stay": "Stay",
+    "leave": "Leave the page",
+    "draftFound": "You have an unsent draft, saved",
+    "resume": "Continue the draft",
+    "discard": "Start over"
   }
 }

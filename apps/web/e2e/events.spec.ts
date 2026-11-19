@@ -107,3 +107,45 @@ test("Anna creates a club event with only an end time and a second question, wit
   await expect(page.getByTestId("event-title")).toHaveText("Spela volleyboll");
   expect(errors.filter((e) => e.includes("key"))).toEqual([]);
 });
+
+test("Anna leaves a half-filled new event, is asked, and later continues the draft (P2.7b)", async ({
+  page,
+}) => {
+  // Reloading with changes gets the browser's own question, which is accepted.
+  const prompts: string[] = [];
+  page.on("dialog", (dialog) => {
+    prompts.push(dialog.type());
+    void dialog.accept();
+  });
+  await loginAs(page, PERSONAS.anna, { returnTo: `/clubs/${CLUBS.svk}/events/new` });
+  const form = page.getByTestId("new-event-form");
+  await expect(page.getByTestId("draft-banner")).toHaveCount(0);
+  await form.getByTestId("event-audience-club").check();
+  await form.getByTestId("event-title").fill("Höstfest");
+  // Another menu item: the app asks first.
+  await page.getByTestId("nav-groups").click();
+  await expect(page.getByTestId("unsaved-dialog")).toBeVisible();
+  await expect(page.getByTestId("unsaved-dialog")).toContainText("inte sparats");
+  // Stays: still on the form with what was typed.
+  await page.getByTestId("unsaved-stay").click();
+  await expect(page.getByTestId("unsaved-dialog")).toHaveCount(0);
+  await expect(form.getByTestId("event-title")).toHaveValue("Höstfest");
+  await expect(page).toHaveURL(/\/events\/new/);
+  // Leaves.
+  await page.getByTestId("nav-groups").click();
+  await page.getByTestId("unsaved-leave").click();
+  await expect(page).toHaveURL(/\/groups$|\/clubs\/[^/]+\/groups/);
+  // Comes back: "Fortsätt på utkastet" fills the form again.
+  await page.goto(`/clubs/${CLUBS.svk}/events/new`);
+  await expect(page.getByTestId("draft-banner")).toBeVisible();
+  await page.getByTestId("draft-resume").click();
+  await expect(form.getByTestId("event-title")).toHaveValue("Höstfest");
+  await expect(form.getByTestId("event-audience-club")).toBeChecked();
+  // Reloading with the resumed changes asks (the browser's prompt).
+  await page.reload();
+  expect(prompts).toContain("beforeunload");
+  // Started over: the draft is gone.
+  await page.getByTestId("draft-discard").click();
+  await page.reload();
+  await expect(page.getByTestId("draft-banner")).toHaveCount(0);
+});

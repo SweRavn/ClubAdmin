@@ -51,7 +51,7 @@ export default async function NewActivityPage({ params, searchParams }: Props) {
       </p>
       <h1 className="text-2xl font-semibold">{t("activities.newTitle")}</h1>
       <FormError code={query.error} />
-      <ActionForm action="create-activity" className="space-y-4" testId="new-activity-form">
+      <ActionForm action="create-activity" guard className="space-y-4" testId="new-activity-form">
         <input type="hidden" name="groupId" value={group.id} />
         <ActivityFields
           timeZone={club.timeZone}

@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 
 import { ActionForm, buttonClass, inputClass } from "../../../../components/action-form.tsx";
 import { FormError } from "../../../../components/form-error.tsx";
+import { LiveSearch, SubmitWithoutScript } from "../../../../components/live-search.tsx";
 import { getMe, getMyWards, searchClubs } from "../../../../server/data.ts";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -31,22 +32,19 @@ export default async function FindClubPage({ searchParams }: Props) {
       <h1 className="text-2xl font-semibold">{t("findClub.title")}</h1>
       <FormError code={params.error} />
       <form method="get" action="/clubs/find" role="search" className="flex max-w-lg gap-2">
-        <label htmlFor="q" className="sr-only">
-          {t("findClub.search")}
-        </label>
-        <input
-          id="q"
+        <LiveSearch
           name="q"
-          type="search"
           defaultValue={q}
-          minLength={2}
-          placeholder={t("findClub.search")}
+          label={t("findClub.search")}
           className={inputClass}
-          data-testid="club-search"
+          resultsId="club-results"
+          testId="club-search"
         />
-        <button type="submit" className={buttonClass}>
-          {t("findClub.searchButton")}
-        </button>
+        <SubmitWithoutScript>
+          <button type="submit" className={buttonClass}>
+            {t("findClub.searchButton")}
+          </button>
+        </SubmitWithoutScript>
       </form>
 
       {result === null ? (
@@ -54,7 +52,7 @@ export default async function FindClubPage({ searchParams }: Props) {
       ) : result.items.length === 0 ? (
         <EmptyState title={t("findClub.empty")} headingLevel={2} />
       ) : (
-        <ul className="space-y-3" data-testid="club-results">
+        <ul id="club-results" className="space-y-3" data-testid="club-results">
           {result.items.map((club) => (
             <li key={club.id} className="rounded-lg border border-border bg-raised p-4">
               <div className="flex flex-wrap items-baseline gap-2">

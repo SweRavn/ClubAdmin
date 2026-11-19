@@ -22,8 +22,8 @@ async function as(
 test("Emma asks to join Strandvikens VK and Anna approves", async ({ browser }) => {
   const emma = await as(browser, PERSONAS.emma);
   await emma.getByTestId("find-club").click();
+  // Search as you type (P2.7b): no "Sök" button with JavaScript.
   await emma.getByTestId("club-search").fill("Strandvikens");
-  await emma.getByRole("button", { name: "Sök" }).click();
   const results = emma.getByTestId("club-results");
   await expect(results).toContainText("Strandvikens");
   await results.getByText("Ansök om medlemskap").first().click();

@@ -293,3 +293,22 @@ test("breadcrumbs on a group's consents and attendance pages (P2.7b)", async ({ 
   await page.getByTestId("breadcrumbs").getByRole("link", { name: "F2017" }).click();
   await page.waitForURL(new RegExp(`/groups/${GROUPS.svkF2017}$`));
 });
+
+test("Erik adds a member by typing part of a name and picking from the list (P2.7b)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}/manage` });
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  // No "Sök" button: the matches come as one types.
+  await expect(page.getByRole("button", { name: "Sök" })).toHaveCount(0);
+  await page.getByTestId("member-search").fill("Wilm");
+  const matches = page.locator("#member-matches");
+  await expect(matches).toContainText("Wilma");
+  await page.getByTestId("member-search").press("ArrowDown");
+  await expect(matches.locator(":focus")).toHaveCount(1);
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
+});

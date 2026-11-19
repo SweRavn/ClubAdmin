@@ -17,6 +17,7 @@ import {
   secondaryButtonClass,
 } from "../../../../../components/action-form.tsx";
 import { FormError, Notice } from "../../../../../components/form-error.tsx";
+import { LiveSearch, SubmitWithoutScript } from "../../../../../components/live-search.tsx";
 import { roleName } from "../../../../../components/roles.ts";
 import {
   getAssignableRoles,
@@ -39,6 +40,9 @@ const one = (value: string | string[] | undefined, max = 100) =>
 export async function generateMetadata() {
   return { title: (await getTranslations())("groupAdmin.title") };
 }
+
+/** Matches are listed under the field when fewer than this; otherwise "type more" (P2.7b). */
+const MATCHES_SHOWN = 10;
 
 export default async function ManageGroupPage({ params, searchParams }: Props) {
   const [{ groupId }, query] = await Promise.all([params, searchParams]);
@@ -160,24 +164,32 @@ export default async function ManageGroupPage({ params, searchParams }: Props) {
             <h3 className="font-medium">{t("groupAdmin.addOwnerTitle")}</h3>
             <p className="text-sm text-muted">{t("groupAdmin.ownerHint")}</p>
             <form method="get" className="flex flex-wrap gap-2">
-              <input
+              <LiveSearch
                 name="ownerQ"
                 defaultValue={ownerQ}
-                minLength={2}
                 className={`${inputClass} max-w-xs`}
-                aria-label={t("groupAdmin.search")}
-                placeholder={t("groupAdmin.search")}
-                data-testid="owner-search"
+                label={t("groupAdmin.search")}
+                resultsId="owner-matches"
+                testId="owner-search"
               />
-              <button type="submit" className={secondaryButtonClass}>
-                {t("groupAdmin.searchButton")}
-              </button>
+              <SubmitWithoutScript>
+                <button type="submit" className={secondaryButtonClass}>
+                  {t("groupAdmin.searchButton")}
+                </button>
+              </SubmitWithoutScript>
             </form>
             {ownerMatches ? (
               ownerMatches.items.length === 0 ? (
                 <p className="text-sm text-muted">{t("groupAdmin.noMatches")}</p>
+              ) : ownerMatches.items.length >= MATCHES_SHOWN ? (
+                <p className="text-sm text-muted" data-testid="owner-type-more">
+                  {t("groupAdmin.typeMore")}
+                </p>
               ) : (
-                <ul className="space-y-1">
+                <ul
+                  id="owner-matches"
+                  className="space-y-1 rounded-md border border-border p-2 shadow-sm"
+                >
                   {ownerMatches.items.map((c) => (
                     <li key={c.person.id} className="flex flex-wrap items-center gap-3">
                       <span>{candidateLine(c)}</span>
@@ -238,14 +250,13 @@ export default async function ManageGroupPage({ params, searchParams }: Props) {
           <div className="space-y-2 rounded-lg border border-border p-3">
             <h3 className="font-medium">{t("groupAdmin.addMemberTitle")}</h3>
             <form method="get" className="flex flex-wrap gap-2">
-              <input
+              <LiveSearch
                 name="memberQ"
                 defaultValue={memberQ}
-                minLength={2}
                 className={`${inputClass} max-w-xs`}
-                aria-label={t("groupAdmin.search")}
-                placeholder={t("groupAdmin.search")}
-                data-testid="member-search"
+                label={t("groupAdmin.search")}
+                resultsId="member-matches"
+                testId="member-search"
               />
               <label className="flex items-center gap-2 text-sm">
                 {t("rolesAdmin.groupRole")}
@@ -267,15 +278,24 @@ export default async function ManageGroupPage({ params, searchParams }: Props) {
                   </select>
                 )}
               </label>
-              <button type="submit" className={secondaryButtonClass}>
-                {t("groupAdmin.searchButton")}
-              </button>
+              <SubmitWithoutScript>
+                <button type="submit" className={secondaryButtonClass}>
+                  {t("groupAdmin.searchButton")}
+                </button>
+              </SubmitWithoutScript>
             </form>
             {memberMatches ? (
               memberMatches.items.length === 0 ? (
                 <p className="text-sm text-muted">{t("groupAdmin.noMatches")}</p>
+              ) : memberMatches.items.length >= MATCHES_SHOWN ? (
+                <p className="text-sm text-muted" data-testid="member-type-more">
+                  {t("groupAdmin.typeMore")}
+                </p>
               ) : (
-                <ul className="space-y-1">
+                <ul
+                  id="member-matches"
+                  className="space-y-1 rounded-md border border-border p-2 shadow-sm"
+                >
                   {memberMatches.items.map((c) => (
                     <li key={c.person.id}>
                       <ActionForm

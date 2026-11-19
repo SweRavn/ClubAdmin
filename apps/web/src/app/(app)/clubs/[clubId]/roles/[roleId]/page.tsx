@@ -25,6 +25,7 @@ import {
   permissionsByArea,
   roleName,
 } from "../../../../../../components/roles.ts";
+import { GuardedForm } from "../../../../../../components/unsaved-guard.tsx";
 import {
   getClub,
   getClubRoles,
@@ -188,7 +189,18 @@ export default async function RolePage({ params, searchParams }: Props) {
       </section>
 
       {canManage && !previewing ? (
-        <form method="get" action={back} className="space-y-6" data-testid="role-form">
+        <GuardedForm
+          method="get"
+          action={back}
+          className="space-y-6"
+          data-testid="role-form"
+          messages={{
+            question: t("unsaved.question"),
+            draftKept: null,
+            stay: t("unsaved.stay"),
+            leave: t("unsaved.leave"),
+          }}
+        >
           <input type="hidden" name="preview" value="1" />
           <fieldset className="grid max-w-xl gap-3">
             <legend className="text-lg font-semibold">{t("rolesAdmin.names")}</legend>
@@ -247,7 +259,7 @@ export default async function RolePage({ params, searchParams }: Props) {
           <button type="submit" className={buttonClass}>
             {t("rolesAdmin.preview")}
           </button>
-        </form>
+        </GuardedForm>
       ) : null}
 
       {canManage && !previewing ? (

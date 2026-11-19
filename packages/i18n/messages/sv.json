@@ -3086,7 +3086,8 @@
     "coOwners": "Gruppägare får utse fler ägare",
     "ownersAdmit": "Gruppägare antar nya klubbmedlemmar från sina köer",
     "saveSettings": "Spara",
-    "settingsSaved": "Gruppinställningarna sparades."
+    "settingsSaved": "Gruppinställningarna sparades.",
+    "typeMore": "Fler än tio träffar: skriv fler bokstäver."
   },
   "waitlist": {
     "tab": "Kö",
@@ -4300,7 +4301,15 @@
       "self_harm": "Någon kan skada sig själv",
       "other": "Något annat"
     },
-    "pushOff": "Notiser av"
+    "pushOff": "Notiser av",
+    "emoji": {
+      "open": "Infoga emoji",
+      "search": "Sök emoji",
+      "recent": "Senast använda",
+      "none": "Ingen emoji hittades",
+      "loading": "Laddar …"
+    },
+    "addReaction": "Fler reaktioner"
   },
   "safeguarding": {
     "title": "Trygghetsärenden",
@@ -4958,5 +4967,14 @@
       "accepted": "Godkänd",
       "rejected": "Avslagen"
     }
+  },
+  "unsaved": {
+    "question": "Du har ändringar som inte sparats. Vill du lämna sidan?",
+    "draftKept": "Det du har skrivit sparas som ett utkast på den här enheten.",
+    "stay": "Stanna kvar",
+    "leave": "Lämna sidan",
+    "draftFound": "Du har ett utkast som inte skickats, sparat",
+    "resume": "Fortsätt på utkastet",
+    "discard": "Börja om"
   }
 }

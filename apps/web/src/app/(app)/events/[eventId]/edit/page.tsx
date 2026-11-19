@@ -37,7 +37,7 @@ export default async function EditEventPage({ params, searchParams }: Props) {
       </p>
       <h1 className="text-2xl font-semibold">{t("events.editTitle")}</h1>
       <FormError code={query.error} />
-      <ActionForm action="update-event" className="space-y-6" testId="edit-event-form">
+      <ActionForm action="update-event" guard className="space-y-6" testId="edit-event-form">
         <input type="hidden" name="eventId" value={event.id} />
         <EventFields
           timeZone={event.timeZone}
