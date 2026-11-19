@@ -172,6 +172,19 @@ const CASES: Case[] = [
     statements: 7,
     pages: 260,
   },
+  // P2.7c: "Mitt schema" asks per club for its activities' car pools: the
+  // activities, Ahmed's wards, his family on their rosters, their facts, the
+  // cars (and the drivers' summaries), whatever the number of cars.
+  {
+    route: "GET /api/v1/clubs/{clubId}/carpool-summaries",
+    persona: "ahmed",
+    method: "GET",
+    url: () =>
+      `/api/v1/clubs/${key("ikn")}/carpool-summaries?activityIds=${DEMO_CARPOOL_IDS.awayMatch}`,
+    // Measured 6 statements, 60→64 pages.
+    statements: 6,
+    pages: 100,
+  },
   {
     route: "GET /api/v1/me/carpools",
     persona: "ahmed",

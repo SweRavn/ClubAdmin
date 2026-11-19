@@ -9,6 +9,7 @@ import { currentPath } from "../server/data.ts";
 
 /** The page's crumb: the message key of the first path segment after the club or group. */
 const CLUB_PAGES: Record<string, string> = {
+  administration: "administration.title",
   administrators: "administrators.title",
   announcements: "announcements.archive",
   audit: "audit.title",
@@ -40,6 +41,26 @@ const CLUB_PAGES: Record<string, string> = {
   storage: "documents.storage.title",
   waitlists: "waitlist.clubTitle",
 };
+/** Club pages reached from "Administration" (P2.7c): Förening › Administration › page. */
+const ADMINISTRATION_PAGES = new Set([
+  "administrators",
+  "audit",
+  "billing",
+  "duplicates",
+  "grants",
+  "history",
+  "invitations",
+  "join-requests",
+  "locations",
+  "plugins",
+  "privacy",
+  "profile-views",
+  "protected",
+  "roles",
+  "settings",
+  "storage",
+  "waitlists",
+]);
 const GROUP_PAGES: Record<string, string> = {
   announcements: "announcements.title",
   archive: "groupForm.archiveTitle",
@@ -70,6 +91,9 @@ export async function Breadcrumbs({
   const crumbs: { href: string; label: string }[] = [
     { href: `/clubs/${club.id}`, label: club.name },
     ...(group ? [{ href: base, label: group.name }] : []),
+    ...(!group && segment && ADMINISTRATION_PAGES.has(segment)
+      ? [{ href: `${base}/administration`, label: t("administration.title") }]
+      : []),
     ...(pageKey && segment ? [{ href: `${base}/${segment}`, label: t(pageKey as never) }] : []),
   ];
   const current = crumbs.findLastIndex((c) => c.href === pathname);

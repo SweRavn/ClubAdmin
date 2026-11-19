@@ -96,6 +96,7 @@ const NOTICE_PARAMS = [
   "error",
   "invalid",
   "fields",
+  "booked",
   "removed",
   "created",
   "protection",

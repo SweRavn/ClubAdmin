@@ -340,6 +340,45 @@ const toAssignment = (r: {
 });
 
 /** A person's open club role assignments. */
+/**
+ * A page of the role matrix (P2.7c): the people holding a club role (or
+ * `roleId`), keyset by person ID, plus `include` on the first page (people
+ * added by search); then their open club role assignments. Two statements,
+ * from the club's assignments by person (club_role_assignments' indexes).
+ */
+export async function roleMatrix(
+  tx: Tx,
+  clubId: string,
+  page: { cursor: string | null; limit: number; roleId: string | null; include: string[] },
+): Promise<{ personIds: string[]; assignments: ClubAssignmentRow[]; more: boolean }> {
+  const { rows: people } = await tx.execute<{ person_id: string }>(sql`
+    SELECT DISTINCT a.person_id FROM public.club_role_assignments a
+    WHERE a.club_id = ${clubId} AND a.valid_to IS NULL
+      AND (${page.roleId}::uuid IS NULL OR a.role_id = ${page.roleId}::uuid)
+      AND (${page.cursor}::uuid IS NULL OR a.person_id > ${page.cursor}::uuid)
+    ORDER BY a.person_id LIMIT ${page.limit + 1}`);
+  const more = people.length > page.limit;
+  const ids = [
+    ...(page.cursor === null ? page.include : []),
+    ...people.slice(0, page.limit).map((r) => r.person_id),
+  ];
+  const personIds = [...new Set(ids)];
+  if (personIds.length === 0) return { personIds, assignments: [], more };
+  const { rows } = await tx.execute<{
+    id: string;
+    person_id: string;
+    role_id: string;
+    valid_from: Date;
+    assigned_by_person_id: string | null;
+  }>(sql`
+    SELECT a.id, a.person_id, a.role_id, a.valid_from, a.assigned_by_person_id
+    FROM public.club_role_assignments a
+    WHERE a.club_id = ${clubId} AND a.valid_to IS NULL
+      AND a.person_id = ANY (${`{${personIds.join(",")}}`}::uuid[])
+    ORDER BY a.person_id, a.valid_from`);
+  return { personIds, assignments: rows.map(toAssignment), more };
+}
+
 export async function assignmentsOfPerson(
   tx: Tx,
   clubId: string,

@@ -18,10 +18,15 @@ import {
   requireSession,
 } from "../server/data.ts";
 import { ActionForm } from "./action-form.tsx";
+import { ADMINISTRATION_PERMISSIONS } from "./administration.ts";
 import { wardEntries } from "./ward-labels.ts";
 
 export const LOGOUT_FORM = "logout-form";
 export const VIEWING_AS_FORM = "viewing-as-form";
+
+/** The club pages that belong to "Administration" (the tab is current there). */
+const ADMINISTRATION_PATH =
+  /^\/(administration|administrators|audit|billing|duplicates|grants|history|invitations|locations|plugins|privacy|profile-views|protected|roles|settings|storage|waitlists)(\/|$)/;
 
 export async function AppFrame({ children }: { children: ReactNode }) {
   const session = await requireSession();
@@ -154,22 +159,6 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         current: pathname.startsWith(`/clubs/${club.id}/join-requests`),
       });
     }
-    if (club.mine?.permissions.includes("club.waitlists.read")) {
-      nav.push({
-        key: "waitlists",
-        href: `/clubs/${club.id}/waitlists`,
-        label: t("waitlist.clubTitle"),
-        current: pathname.startsWith(`/clubs/${club.id}/waitlists`),
-      });
-    }
-    if (club.mine?.permissions.includes("club.invitations.manage")) {
-      nav.push({
-        key: "invitations",
-        href: `/clubs/${club.id}/invitations`,
-        label: t("nav.invitations"),
-        current: pathname.startsWith(`/clubs/${club.id}/invitations`),
-      });
-    }
     // Safeguarding cases (P2.1 part B): the club's safeguarding officers.
     if (club.mine?.permissions.includes("club.safeguarding.handle")) {
       nav.push({
@@ -187,24 +176,22 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         current: pathname.startsWith(`/clubs/${club.id}/calendar`),
       });
     }
-    // Leaders add places too (P1.6b).
-    if (
-      club.mine?.permissions.includes("club.locations.manage") ||
-      club.mine?.permissions.includes("club.locations.create")
-    ) {
-      nav.push({
-        key: "locations",
-        href: `/clubs/${club.id}/locations`,
-        label: t("nav.locations"),
-        current: pathname.startsWith(`/clubs/${club.id}/locations`),
-      });
-    }
     if (club.mine?.permissions.includes("club.members.read")) {
       nav.push({
         key: "members",
         href: `/clubs/${club.id}/members`,
         label: t("nav.members"),
         current: pathname.startsWith(`/clubs/${club.id}/members`),
+      });
+    }
+    // The club's administration in one place (P2.7c): waiting lists,
+    // invitations, places, roles, settings, logs and the rest are there.
+    if (club.mine?.permissions.some((p) => ADMINISTRATION_PERMISSIONS.has(p))) {
+      nav.push({
+        key: "administration",
+        href: `/clubs/${club.id}/administration`,
+        label: t("administration.nav"),
+        current: ADMINISTRATION_PATH.test(pathname.replace(`/clubs/${club.id}`, "")),
       });
     }
   }

@@ -456,6 +456,14 @@ export class ClubRolesService {
     );
   }
 
+  /** A page of the role matrix: people by club roles (P2.7c). */
+  roleMatrix(
+    context: TenantContext,
+    page: { cursor: string | null; limit: number; roleId: string | null; include: string[] },
+  ): Promise<{ personIds: string[]; assignments: ClubAssignmentRow[]; more: boolean }> {
+    return this.db.withTenant(context, (tx) => repo.roleMatrix(tx, context.clubId, page));
+  }
+
   assignmentsOfPerson(context: TenantContext, personId: string): Promise<ClubAssignmentRow[]> {
     return this.db.withTenant(context, (tx) =>
       repo.assignmentsOfPerson(tx, context.clubId, personId),

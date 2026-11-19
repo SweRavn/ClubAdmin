@@ -29,6 +29,8 @@ import {
   CarpoolSchema,
   CarpoolSettingsSchema,
   CarpoolStatsSchema,
+  CarpoolSummariesSchema,
+  type CarpoolSummary,
   ChatDetailSchema,
   ChatListSchema,
   ChatMessagePageSchema,
@@ -139,6 +141,7 @@ import {
   ResponseSummarySchema,
   RoleAssignmentListSchema,
   RoleListSchema,
+  RoleMatrixSchema,
   RolePreviewSchema,
   SchedulePageSchema,
   SeasonListSchema,
@@ -457,6 +460,21 @@ export const getClubRoles = cache((clubId: string) =>
   required(`/api/v1/clubs/${requireId(clubId)}/roles`, RoleListSchema),
 );
 /** The club's roles, or null without `club.roles.read` (a coach editing a folder's audience). */
+/** A page of the role matrix (P2.7c): people with their club roles. */
+export const getRoleMatrix = cache(
+  (clubId: string, query: { cursor?: string; roleId?: string; include: readonly string[] }) => {
+    const params = new URLSearchParams();
+    if (query.cursor && isUuid(query.cursor)) params.set("cursor", query.cursor);
+    if (query.roleId && isUuid(query.roleId)) params.set("roleId", query.roleId);
+    const include = query.include.filter(isUuid).slice(0, 20);
+    if (include.length > 0) params.set("include", include.join(","));
+    return required(
+      `/api/v1/clubs/${requireId(clubId)}/role-matrix?${params.toString()}`,
+      RoleMatrixSchema,
+    );
+  },
+);
+
 export const getClubRolesIfAllowed = cache((clubId: string) =>
   apiGet(`/api/v1/clubs/${requireId(clubId)}/roles`, RoleListSchema, { nullOn: [403] }),
 );
@@ -1148,6 +1166,29 @@ export const getOpsPlans = cache(() => required("/api/v1/billing/plans", PlanLis
 // --- Car pools and expense claims (P2.5) ----------------------------------------------
 
 /** An activity's car pool (everyone who sees the activity). */
+/**
+ * The car pools of a page's activities, per club (P2.7c): one request per
+ * club, by activity ID. Activities without the viewer's family are left out.
+ */
+export async function getCarpoolSummaries(
+  items: readonly { activityId: string; clubId: string }[],
+): Promise<Map<string, CarpoolSummary>> {
+  const byClub = new Map<string, string[]>();
+  for (const i of items) byClub.set(i.clubId, [...(byClub.get(i.clubId) ?? []), i.activityId]);
+  const pages = await Promise.all(
+    [...byClub].map(([clubId, ids]) =>
+      apiGet(
+        `/api/v1/clubs/${requireId(clubId)}/carpool-summaries?activityIds=${ids
+          .filter(isUuid)
+          .slice(0, 60)
+          .join(",")}`,
+        CarpoolSummariesSchema,
+      ).catch(() => null),
+    ),
+  );
+  return new Map(pages.flatMap((p) => p?.items ?? []).map((s) => [s.activityId, s]));
+}
+
 export const getCarpool = cache((activityId: string) =>
   required(`/api/v1/activities/${requireId(activityId)}/carpool`, CarpoolSchema),
 );

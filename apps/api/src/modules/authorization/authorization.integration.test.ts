@@ -1170,6 +1170,11 @@ describe("permission matrix", () => {
     // no transport mode, so offers are refused (409) to those who see it;
     // cars and seats the matrix does not have are 404 for them. Statistics
     // with the group's activities; its setting by those who manage them.
+    // P2.7c: the schedule's car pools; empty for those not taking part.
+    "GET /api/v1/clubs/:clubId/carpool-summaries": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/carpool-summaries?activityIds=${m.activityId}`,
+      expected: INSIDERS,
+    },
     "GET /api/v1/activities/:activityId/carpool": {
       url: () => `/api/v1/activities/${m.activityId}/carpool`,
       expected: INSIDERS,
@@ -1981,6 +1986,10 @@ describe("permission matrix", () => {
     },
     "GET /api/v1/clubs/:clubId/permissions/:permission/holders": {
       url: () => `/api/v1/clubs/${m.clubA.id}/permissions/club.members.read/holders`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/clubs/:clubId/role-matrix": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/role-matrix`,
       expected: ADMINS(200),
     },
     "GET /api/v1/clubs/:clubId/role-assignments": {

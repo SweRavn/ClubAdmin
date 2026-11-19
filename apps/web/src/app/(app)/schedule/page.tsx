@@ -9,7 +9,7 @@ import { getTranslations } from "next-intl/server";
 import { Agenda, weekOffset, weekRange } from "../../../components/agenda.tsx";
 import { ClubTime } from "../../../components/club-time.tsx";
 import { FormError, Notice } from "../../../components/form-error.tsx";
-import { getMyEvents, getSchedule } from "../../../server/data.ts";
+import { getCarpoolSummaries, getMyEvents, getSchedule } from "../../../server/data.ts";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 const WEEKS = 4;
@@ -29,6 +29,12 @@ export default async function SchedulePage({ searchParams }: Props) {
     getMyEvents(),
   ]);
   // Events open for sign-up for me or my wards (P1.6): "Sign up by …".
+  // The car pools of the page's activities (P2.7c): one request per club.
+  const carpools = await getCarpoolSummaries(
+    schedule.items
+      .filter((e) => e.status === "scheduled" && Date.parse(e.startsAt) > Date.now())
+      .map((e) => ({ activityId: e.activityId, clubId: e.club.id })),
+  );
   const signUp = events.items.filter(
     (i) => i.event.open && i.people.some((p) => p.canRegister && p.status === null),
   );
@@ -129,6 +135,7 @@ export default async function SchedulePage({ searchParams }: Props) {
           place: e.place,
           groups: e.groups,
           people: e.people,
+          carpool: carpools.get(e.activityId),
           ...(e.responseMode ? { responseMode: e.responseMode } : {}),
           respondBy: e.respondBy ?? null,
           responses: (e.responses ?? []).map((r) => {

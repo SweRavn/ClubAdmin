@@ -56,7 +56,6 @@ export async function CarpoolSection({
   const open = activity.status !== "cancelled" && Date.parse(activity.startsAt) > Date.now();
 
   const car = (o: CarpoolOffer) => {
-    const returnTrip = o.direction === "out" ? home.find((h) => h.outwardOfferId === o.id) : null;
     return (
       <li
         key={o.id}
@@ -140,40 +139,34 @@ export async function CarpoolSection({
             ))}
           </ul>
         ) : null}
-        {open && !o.mine && !o.willingOnly && o.freeSeats > 0 && carpool.canBookFor.length > 0 ? (
-          <ActionForm action="carpool-book" className="space-y-2" testId="carpool-book-form">
-            <input type="hidden" name="activityId" value={activity.id} />
-            <input type="hidden" name="offerId" value={o.id} />
-            <label className="block space-y-1">
-              <span className="text-sm">{t("carpool.bookFor")}</span>
-              <select
-                name="passengerPersonId"
-                className={inputClass}
-                data-testid="carpool-passenger"
-              >
-                {carpool.canBookFor.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {personLabel(p)}
-                  </option>
+        {/* One tap per person and direction (P2.7c): "Åk med dit" / "Åk med hem".
+            A seat waiting for a guardian's confirmation shows above. */}
+        {open && !o.mine && !o.willingOnly ? (
+          o.freeSeats > 0 ? (
+            <div className="flex flex-wrap gap-2" data-testid="carpool-book-buttons">
+              {carpool.canBookFor
+                .filter((p) => !o.bookings.some((b) => b.passenger?.id === p.id))
+                .map((p) => (
+                  <ActionForm key={p.id} action="carpool-book">
+                    <input type="hidden" name="activityId" value={activity.id} />
+                    <input type="hidden" name="offerId" value={o.id} />
+                    <input type="hidden" name="passengerPersonId" value={p.id} />
+                    <button
+                      type="submit"
+                      className={secondaryButtonClass}
+                      data-testid="carpool-book"
+                    >
+                      {o.direction === "out" ? t("carpool.rideOut") : t("carpool.rideHome")}
+                      {carpool.canBookFor.length > 1 ? ` – ${personLabel(p)}` : ""}
+                    </button>
+                  </ActionForm>
                 ))}
-              </select>
-            </label>
-            {returnTrip && returnTrip.freeSeats > 0 ? (
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="alsoReturn" defaultChecked />
-                {t("carpool.alsoReturn")}
-              </label>
-            ) : null}
-            <label className="flex items-start gap-2 text-sm">
-              <input type="checkbox" name="confirmAlone" className="mt-1" />
-              <span>
-                {t("carpool.confirmAlone", { driver: o.driver ? personLabel(o.driver) : "" })}
-              </span>
-            </label>
-            <button type="submit" className={buttonClass} data-testid="carpool-book">
-              {t("carpool.book")}
-            </button>
-          </ActionForm>
+            </div>
+          ) : (
+            <p className="text-xs text-muted" data-testid="carpool-full">
+              {t("carpool.full")}
+            </p>
+          )
         ) : null}
         {o.mine ? (
           <details>
@@ -261,6 +254,16 @@ export async function CarpoolSection({
             </p>
           )}
         </div>
+      ) : null}
+      {/* Why no seat can be booked (P2.7c). */}
+      {!open ? (
+        <p className="text-sm text-muted" data-testid="carpool-why">
+          {t("carpool.startedNoBooking")}
+        </p>
+      ) : carpool.canBookFor.length === 0 && carpool.offers.some((o) => !o.mine) ? (
+        <p className="text-sm text-muted" data-testid="carpool-why">
+          {t("carpool.notTakingPart")}
+        </p>
       ) : null}
       {open && carpool.canOffer && !myOut ? (
         <details className="rounded-lg border border-border p-3">

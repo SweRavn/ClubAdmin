@@ -1264,6 +1264,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/carpool-summaries": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The car pools of a page of the schedule's activities (P2.7c): cars with seats, whom I may book for, my family's seats
+     * @description Requires permission `club.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Carpools_summaries"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/carpools": {
     parameters: {
       query?: never;
@@ -3816,6 +3836,26 @@ export interface paths {
      * @description Requires permission `club.roles.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     delete: operations["ClubRoles_unassign"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/role-matrix": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The role matrix (P2.7c): people holding club roles (and people added by search) with their club roles
+     * @description Requires permission `club.roles.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["ClubRoles_roleMatrix"];
+    put?: never;
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -8714,6 +8754,42 @@ export interface components {
       /** Format: uuid */
       startLocationId: string | null;
     };
+    CarpoolSummaries: {
+      items: components["schemas"]["CarpoolSummary"][];
+    };
+    CarpoolSummary: {
+      /** Format: uuid */
+      activityId: string;
+      open: boolean;
+      offers: {
+        /** Format: uuid */
+        id: string;
+        /** @enum {string} */
+        direction: "out" | "back";
+        /** Format: uuid */
+        outwardOfferId: string | null;
+        driver: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+        mine: boolean;
+        freeSeats: number;
+        departurePlace: string | null;
+        /** Format: date-time */
+        departureAt: string | null;
+      }[];
+      canBookFor: components["schemas"]["PersonSummary"][];
+      bookings: {
+        /** Format: uuid */
+        id: string;
+        /** Format: uuid */
+        offerId: string;
+        /** @enum {string} */
+        direction: "out" | "back";
+        /** Format: uuid */
+        passengerPersonId: string;
+        /** @enum {string} */
+        status: "held" | "pending_guardian" | "cancelled";
+        canCancel: boolean;
+      }[];
+    };
     CarpoolsDeleted: {
       offers: number;
     };
@@ -10786,6 +10862,20 @@ export interface components {
       personId: string;
       /** Format: uuid */
       roleId: string;
+    };
+    RoleMatrix: {
+      rows: {
+        person: components["schemas"]["PersonSummary"];
+        assignments: {
+          /** Format: uuid */
+          id: string;
+          /** Format: uuid */
+          roleId: string;
+          self: boolean;
+        }[];
+      }[];
+      /** Format: uuid */
+      nextCursor: string | null;
     };
     RoleList: {
       items: components["schemas"]["Role"][];
@@ -19081,6 +19171,84 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CarpoolSettings"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Carpools_summaries: {
+    parameters: {
+      query: {
+        activityIds: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CarpoolSummaries"];
         };
       };
       /** @description Invalid request */
@@ -31590,6 +31758,87 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  ClubRoles_roleMatrix: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        roleId?: string;
+        include?: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["RoleMatrix"];
         };
       };
       /** @description Invalid request */

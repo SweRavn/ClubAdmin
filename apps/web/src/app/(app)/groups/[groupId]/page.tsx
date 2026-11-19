@@ -19,6 +19,7 @@ import { LazyGroupRoster } from "../../../../components/lazy-group-roster.tsx";
 import { RosterEntry } from "../../../../components/roster-entry.tsx";
 import { SubscribeCalendar } from "../../../../components/subscribe-calendar.tsx";
 import {
+  getCarpoolSummaries,
   getClub,
   getClubGroups,
   getGroup,
@@ -29,6 +30,7 @@ import {
   getMe,
   getMyGroups,
   getMyWards,
+  getSchedule,
 } from "../../../../server/data.ts";
 
 type Params = {
@@ -60,7 +62,7 @@ export default async function GroupPage({ params, searchParams }: Params) {
     getGroupMembers(groupId, limit),
     getGroupCalendarIfAllowed(groupId, range.from, range.to),
   ]);
-  const [club, groups, events, me, myGroups, wards] = await Promise.all([
+  const [club, groups, events, me, myGroups, wards, mySchedule] = await Promise.all([
     getClub(group.clubId),
     getClubGroups(group.clubId),
     // Events (P1.6): for those who see the group's activities.
@@ -68,7 +70,37 @@ export default async function GroupPage({ params, searchParams }: Params) {
     getMe(),
     getMyGroups(),
     getMyWards(),
+    // My family's answers on the group's activities (P2.7c), as in "Mitt schema".
+    calendar ? getSchedule(range.from, range.to).catch(() => null) : null,
   ]);
+  const mine = new Map((mySchedule?.items ?? []).map((e) => [e.activityId, e]));
+  const carpools = await getCarpoolSummaries(
+    (calendar?.items ?? [])
+      .filter(
+        (a) => mine.has(a.id) && a.status === "scheduled" && Date.parse(a.startsAt) > Date.now(),
+      )
+      .map((a) => ({ activityId: a.id, clubId: group.clubId })),
+  );
+  /** A group calendar item with my family's answers and car pool (P2.7c). */
+  const withMine = (item: ReturnType<typeof agendaItemOf>) => {
+    const entry = mine.get(item.id);
+    if (!entry) return item;
+    return {
+      ...item,
+      carpool: carpools.get(item.id),
+      respondBy: entry.respondBy ?? null,
+      ...(entry.responseMode ? { responseMode: entry.responseMode } : {}),
+      responses: (entry.responses ?? []).map((r) => {
+        const who = entry.people.find((p) => p.id === r.personId);
+        return {
+          personId: r.personId,
+          label: entry.people.length > 1 && who ? personLabel(who) : null,
+          status: r.status,
+          canRespond: r.canRespond,
+        };
+      }),
+    };
+  };
   // Joining or queueing is offered only for those not in the group yet (P2.7b).
   const inGroup = membersOfGroup(myGroups, me.personId, group.id);
   const candidates = [
@@ -348,7 +380,7 @@ export default async function GroupPage({ params, searchParams }: Params) {
             ) : null}
           </div>
           <Agenda
-            items={calendar.items.map(agendaItemOf)}
+            items={calendar.items.map((a) => withMine(agendaItemOf(a)))}
             emptyText={t("activities.noneInRange")}
             testId="group-calendar"
           />

@@ -90,6 +90,55 @@ export const CarpoolSchema = z
   .openapi("Carpool");
 export type Carpool = z.infer<typeof CarpoolSchema>;
 
+/**
+ * The car pools of a page of the schedule (P2.7c): per activity the caller
+ * or a ward takes part in, the cars with seats (driver, departure, free
+ * seats), whom the caller may book for, and their family's seats. For "Åk
+ * med dit/hem" and the "Kommer" menu without opening the activity.
+ */
+export const CarpoolSummariesQuerySchema = z.object({
+  /** Comma-separated activity IDs of the club (at most 60). */
+  activityIds: z
+    .string()
+    .transform((v) => v.split(",").filter(Boolean))
+    .pipe(z.array(z.uuid()).min(1).max(60)),
+});
+export const CarpoolSummarySchema = z
+  .object({
+    activityId: z.uuid(),
+    open: z.boolean(),
+    offers: z.array(
+      z.object({
+        id: z.uuid(),
+        direction: z.enum(CARPOOL_DIRECTIONS),
+        outwardOfferId: z.uuid().nullable(),
+        driver: PersonSummarySchema.nullable(),
+        mine: z.boolean(),
+        freeSeats: z.number().int().min(0),
+        departurePlace: z.string().nullable(),
+        departureAt: z.iso.datetime({ offset: true }).nullable(),
+      }),
+    ),
+    canBookFor: z.array(PersonSummarySchema),
+    /** The caller's and their wards' seats. */
+    bookings: z.array(
+      z.object({
+        id: z.uuid(),
+        offerId: z.uuid(),
+        direction: z.enum(CARPOOL_DIRECTIONS),
+        passengerPersonId: z.uuid(),
+        status: z.enum(CARPOOL_BOOKING_STATUSES),
+        canCancel: z.boolean(),
+      }),
+    ),
+  })
+  .openapi("CarpoolSummary");
+export type CarpoolSummary = z.infer<typeof CarpoolSummarySchema>;
+export const CarpoolSummariesSchema = z
+  .object({ items: z.array(CarpoolSummarySchema) })
+  .openapi("CarpoolSummaries");
+export type CarpoolSummaries = z.infer<typeof CarpoolSummariesSchema>;
+
 export const CreateCarpoolOfferSchema = z
   .object({
     direction: z.enum(CARPOOL_DIRECTIONS).default("out"),

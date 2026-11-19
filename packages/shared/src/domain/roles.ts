@@ -273,3 +273,32 @@ export const RoleAssignmentListSchema = z
   .openapi("ClubRoleAssignmentList");
 
 export const RoleAssignmentQuerySchema = z.object({ personId: z.uuid() });
+
+/**
+ * The role matrix (P2.7c): people in rows, the club's roles in columns. Rows
+ * are those holding a club role (or `roleId`), keyset by person, plus
+ * `include` (comma-separated person IDs added by search) on the first page.
+ */
+export const RoleMatrixQuerySchema = z.object({
+  cursor: z.uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(50),
+  roleId: z.uuid().optional(),
+  include: z
+    .string()
+    .optional()
+    .transform((v) => (v ?? "").split(",").filter(Boolean))
+    .pipe(z.array(z.uuid()).max(20)),
+});
+export const RoleMatrixSchema = z
+  .object({
+    rows: z.array(
+      z.object({
+        person: PersonSummarySchema,
+        /** The person's open club role assignments. */
+        assignments: z.array(z.object({ id: z.uuid(), roleId: z.uuid(), self: z.boolean() })),
+      }),
+    ),
+    nextCursor: z.uuid().nullable(),
+  })
+  .openapi("RoleMatrix");
+export type RoleMatrix = z.infer<typeof RoleMatrixSchema>;

@@ -13,11 +13,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useFormatter, useTranslations } from "use-intl";
 
-import { type ScheduleEntry, useSchedule } from "../../api/queries.ts";
+import { type ScheduleEntry, useCarpoolSummaries, useSchedule } from "../../api/queries.ts";
 import { DataAge } from "../../components/data-age.tsx";
 import { ErrorView } from "../../components/error-view.tsx";
 import { OutboxBanner } from "../../components/outbox-banner.tsx";
 import { ResponseButtons } from "../../components/response-buttons.tsx";
+import { carsFor, RideChoices, useCarText } from "../../components/ride-choices.tsx";
 import { RoleBadge } from "../../components/role-badge.tsx";
 import { scheduleDays } from "../../components/schedule-days.ts";
 import {
@@ -64,6 +65,14 @@ export default function ScheduleScreen() {
   const days = useMemo(
     () => scheduleDays(schedule.data?.items ?? [], person, Date.now()),
     [schedule.data, person],
+  );
+  const carText = useCarText();
+  // The car pools of the coming activities (P2.7c): one request per club.
+  const carpools = useCarpoolSummaries(
+    (schedule.data?.items ?? [])
+      .filter((e) => e.status === "scheduled" && Date.parse(e.startsAt) > Date.now())
+      .slice(0, 60)
+      .map((e) => ({ activityId: e.activityId, clubId: e.club.id })),
   );
 
   const header = (
@@ -194,17 +203,32 @@ export default function ScheduleScreen() {
                         .filter((r) => r.canRespond && (person === null || r.personId === person))
                         .map((r) => {
                           const who = entry.people.find((p) => p.id === r.personId);
+                          const carpool = carpools.get(entry.activityId);
                           return (
-                            <ResponseButtons
-                              key={r.personId}
-                              activityId={entry.activityId}
-                              personId={r.personId}
-                              status={r.status}
-                              deadlinePassed={
-                                entry.respondBy ? Date.parse(entry.respondBy) < Date.now() : false
-                              }
-                              {...(several && who ? { label: personLabel(who) } : {})}
-                            />
+                            <View key={r.personId} style={{ gap: theme.space(1) }}>
+                              <ResponseButtons
+                                key={r.personId}
+                                activityId={entry.activityId}
+                                personId={r.personId}
+                                status={r.status}
+                                deadlinePassed={
+                                  entry.respondBy ? Date.parse(entry.respondBy) < Date.now() : false
+                                }
+                                {...(several && who ? { label: personLabel(who) } : {})}
+                                rides={carsFor(carpool, r.personId, "out").map((o) => ({
+                                  offerId: o.id,
+                                  label: carText(o, entry.club.timeZone),
+                                }))}
+                              />
+                              {r.status !== "not_attending" ? (
+                                <RideChoices
+                                  activityId={entry.activityId}
+                                  personId={r.personId}
+                                  carpool={carpool}
+                                  timeZone={entry.club.timeZone}
+                                />
+                              ) : null}
+                            </View>
                           );
                         })
                     : null}

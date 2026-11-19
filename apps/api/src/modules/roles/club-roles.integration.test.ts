@@ -195,6 +195,59 @@ describe("club-defined roles (P1.15 A2)", () => {
     );
   });
 
+  it("the role matrix pages the holders, filters by role and adds searched people (P2.7c)", async () => {
+    const club = await buildClub(c.s);
+    const roles = (await c.s.clubRoles.listRoles(club.ctx)).roles;
+    const treasurer = roles.find((r) => r.templateKey === "treasurer")!;
+    const holders = [await buildPerson(c.s), await buildPerson(c.s), await buildPerson(c.s)];
+    for (const p of holders) {
+      await c.s.memberships.addMember(club.ctx, p.id);
+      await c.s.clubRoles.assignClubRole(club.ctx, p.id, treasurer.id);
+    }
+    const searched = await buildPerson(c.s);
+    await c.s.memberships.addMember(club.ctx, searched.id);
+
+    const first = await c.s.clubRoles.roleMatrix(club.ctx, {
+      cursor: null,
+      limit: 2,
+      roleId: null,
+      include: [searched.id],
+    });
+    // The searched person first, then the holders by ID (the manager among them).
+    expect(first.personIds[0]).toBe(searched.id);
+    expect(first.personIds).toHaveLength(3);
+    expect(first.more).toBe(true);
+    const all = new Set(first.personIds);
+    let cursor = first.personIds.at(-1)!;
+    for (;;) {
+      const next = await c.s.clubRoles.roleMatrix(club.ctx, {
+        cursor,
+        limit: 2,
+        roleId: null,
+        include: [searched.id],
+      });
+      for (const id of next.personIds) all.add(id);
+      if (!next.more) break;
+      cursor = next.personIds.at(-1)!;
+    }
+    expect([...all]).toEqual(
+      expect.arrayContaining([club.manager.id, searched.id, ...holders.map((h) => h.id)]),
+    );
+    const onlyTreasurers = await c.s.clubRoles.roleMatrix(club.ctx, {
+      cursor: null,
+      limit: 50,
+      roleId: treasurer.id,
+      include: [],
+    });
+    expect(onlyTreasurers.personIds.sort()).toEqual(holders.map((h) => h.id).sort());
+    // Each row has all the person's club roles, the filtered one among them.
+    for (const h of holders) {
+      expect(
+        onlyTreasurers.assignments.filter((a) => a.personId === h.id).map((a) => a.roleId),
+      ).toContain(treasurer.id);
+    }
+  });
+
   it("a club's own group role takes part or leads by its permissions", async () => {
     const club = await buildClub(c.s);
     const team = await c.s.groups.createGroup(club.ctx, { name: "Herr", kind: "team" });

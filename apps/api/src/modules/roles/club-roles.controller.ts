@@ -36,6 +36,9 @@ import {
   RoleAssignmentSchema,
   type RoleList,
   RoleListSchema,
+  type RoleMatrix,
+  RoleMatrixQuerySchema,
+  RoleMatrixSchema,
   RoleParamsSchema,
   type RolePermission,
   type RolePreview,
@@ -411,6 +414,60 @@ export class ClubRolesController {
         return person ? [{ person, roleIds: r.roleIds, groupIds: r.groupIds }] : [];
       }),
       nextCursor: rows.length > query.limit ? (page.at(-1)?.personId ?? null) : null,
+    };
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "clubs/:clubId/role-matrix",
+    summary:
+      "The role matrix (P2.7c): people holding club roles (and people added by search) with their club roles",
+    tags: ["roles"],
+    access: { permission: "club.roles.read", resource: "club" },
+    request: { params: ClubParamsSchema, query: RoleMatrixQuerySchema },
+    response: RoleMatrixSchema,
+  })
+  async roleMatrix(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Query() query: z.infer<typeof RoleMatrixQuerySchema>,
+  ): Promise<RoleMatrix> {
+    const { clubId } = resourceOf(authz, "club");
+    const context = tenantContext(authz, clubId);
+    const page = await this.roles.roleMatrix(context, {
+      cursor: query.cursor ?? null,
+      limit: query.limit,
+      roleId: query.roleId ?? null,
+      include: query.include,
+    });
+    // People through the presenter: hidden people are left out.
+    const shown = new Map(
+      (
+        await this.presenter.present(
+          authz,
+          clubId,
+          await this.people.summaries(context, page.personIds),
+        )
+      ).map((p) => [p.id, p]),
+    );
+    const last = page.personIds.at(-1) ?? null;
+    return {
+      rows: page.personIds.flatMap((id) => {
+        const person = shown.get(id);
+        if (!person) return [];
+        return [
+          {
+            person,
+            assignments: page.assignments
+              .filter((a) => a.personId === id)
+              .map((a) => ({
+                id: a.id,
+                roleId: a.roleId,
+                self: a.assignedByPersonId === a.personId,
+              })),
+          },
+        ];
+      }),
+      nextCursor: page.more ? last : null,
     };
   }
 

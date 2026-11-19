@@ -23,11 +23,14 @@ export async function FormError({ code }: { code: string | string[] | undefined 
   back?.searchParams.delete("error");
   return (
     <p role="alert" className="rounded-md bg-protected-soft px-3 py-2" data-testid="form-error">
-      {marked > 0
-        ? t("fieldErrors.summary", { count: marked })
-        : key === "common.other"
-          ? t("joinErrors.failed")
-          : t(key)}
+      {/* The error's own text when it has one; the general one counts the marked fields. */}
+      {key !== "common.other" && code !== "invalid_input"
+        ? t(key)
+        : marked > 0
+          ? t("fieldErrors.summary", { count: marked })
+          : key === "common.other"
+            ? t("joinErrors.failed")
+            : t(key)}
       {back ? (
         <span className="mt-1 block text-sm" data-testid="dev-mfa-hint">
           {t("joinErrors.devMfaHint")}{" "}

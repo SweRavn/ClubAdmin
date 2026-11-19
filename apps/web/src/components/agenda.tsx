@@ -6,11 +6,12 @@
 // the answer buttons per person (P1.5); calendars of those who manage an
 // activity show how many have answered.
 import { enumKey } from "@clubadmin/i18n";
-import { localDate, type PersonSummary } from "@clubadmin/shared";
+import { type CarpoolSummary, localDate, type PersonSummary } from "@clubadmin/shared";
 import { formatDateTime, personLabel, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ResponseButtons } from "./response-buttons.tsx";
+import { carLabelOf, carsFor, RideButtons } from "./ride-buttons.tsx";
 
 export interface AgendaItem {
   id: string;
@@ -44,6 +45,8 @@ export interface AgendaItem {
   }[];
   /** For those who manage it (group calendar). */
   counts?: { attending: number; notAttending: number; notAnswered: number };
+  /** The car pool for the viewer's family (P2.7c): seats there and home. */
+  carpool?: CarpoolSummary | undefined;
 }
 
 export async function Agenda({
@@ -168,16 +171,35 @@ export async function Agenda({
                         {item.responses
                           .filter((r) => r.canRespond)
                           .map((r) => (
-                            <ResponseButtons
-                              key={r.personId}
-                              activityId={item.id}
-                              personId={r.personId}
-                              status={r.status}
-                              deadlinePassed={
-                                item.respondBy ? Date.parse(item.respondBy) < Date.now() : false
-                              }
-                              {...(r.label ? { label: r.label } : {})}
-                            />
+                            <span key={r.personId} className="block space-y-1">
+                              <ResponseButtons
+                                activityId={item.id}
+                                personId={r.personId}
+                                status={r.status}
+                                deadlinePassed={
+                                  item.respondBy ? Date.parse(item.respondBy) < Date.now() : false
+                                }
+                                {...(r.label ? { label: r.label } : {})}
+                                rides={carsFor(item.carpool, r.personId, "out").map((o) => ({
+                                  offerId: o.id,
+                                  label: carLabelOf(
+                                    o,
+                                    item.timeZone,
+                                    locale,
+                                    t("carpool.hiddenDriver"),
+                                  ),
+                                }))}
+                              />
+                              {/* Seats there and home, apart (P2.7c). */}
+                              {r.status !== "not_attending" ? (
+                                <RideButtons
+                                  activityId={item.id}
+                                  personId={r.personId}
+                                  carpool={item.carpool}
+                                  timeZone={item.timeZone}
+                                />
+                              ) : null}
+                            </span>
                           ))}
                       </span>
                     ) : null}

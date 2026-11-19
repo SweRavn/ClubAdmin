@@ -66,7 +66,8 @@ test("Erik answers for a player from the leaders' list", async ({ page }) => {
     .getByTestId("agenda-item")
     .filter({ hasNotText: "Inställd" })
     .getByRole("link", { name: "Träning", exact: true })
-    .first()
+    // A later one: today's may have started (no more answers), whatever the time of day.
+    .last()
     .click();
   const list = page.getByTestId("response-list");
   await expect(list).toBeVisible();

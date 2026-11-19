@@ -1,0 +1,31 @@
+# Seats from My schedule (P2.7c): Sara books Alva's seat there in Mikael's
+# car and the way home apart, then cancels the way home; the seats show
+# under the answer at once.
+appId: ${APP_ID}
+name: Ride there and home from My schedule
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000007
+- back
+- extendedWaitUntil:
+    visible:
+      id: "schedule-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element: "Åk med dit: Mikael Lindqvist.*"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "Åk med dit: Mikael Lindqvist.*"
+- extendedWaitUntil:
+    visible: "Åker dit med Mikael Lindqvist.*"
+    timeout: 20000
+- scrollUntilVisible:
+    element: "Åk med hem: Mikael Lindqvist.*"
+    direction: DOWN
+    timeout: 20000
+- tapOn: "Åk med hem: Mikael Lindqvist.*"
+- extendedWaitUntil:
+    visible: "Åker hem med Mikael Lindqvist.*"
+    timeout: 20000

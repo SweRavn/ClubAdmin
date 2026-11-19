@@ -28,6 +28,9 @@ import {
   type CarpoolStatsQuery,
   CarpoolStatsQuerySchema,
   CarpoolStatsSchema,
+  type CarpoolSummaries,
+  CarpoolSummariesQuerySchema,
+  CarpoolSummariesSchema,
   ClubParamsSchema,
   type CreateCarpoolOfferInput,
   CreateCarpoolOfferSchema,
@@ -346,6 +349,55 @@ export class CarpoolsController {
   ): Promise<null> {
     await this.carpools.setSelfBookingAge(authz.context, params.personId, body.age);
     return null;
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "clubs/:clubId/carpool-summaries",
+    summary:
+      "The car pools of a page of the schedule's activities (P2.7c): cars with seats, whom I may book for, my family's seats",
+    tags: TAGS,
+    access: { permission: "club.read", resource: "club" },
+    request: { params: ClubParamsSchema, query: CarpoolSummariesQuerySchema },
+    response: CarpoolSummariesSchema,
+  })
+  async summaries(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Query() query: { activityIds: string[] },
+  ): Promise<CarpoolSummaries> {
+    const { clubId } = resourceOf(authz, "club");
+    const me = authz.actor.personId;
+    const views = await this.carpools.summaries(tenantContext(authz, clubId), query.activityIds);
+    // Drivers (to those who take part, as on the activity's car pool) and the family.
+    const persons = await this.persons(authz, clubId, [
+      ...views.flatMap((v) => v.offers.map((o) => o.driverPersonId)),
+      ...views.flatMap((v) => v.bookFor),
+    ]);
+    return {
+      items: views.map((v) => ({
+        activityId: v.activity.id,
+        open: v.open,
+        offers: v.offers.map((o) => ({
+          id: o.id,
+          direction: o.direction,
+          outwardOfferId: o.outwardOfferId,
+          driver: persons.get(o.driverPersonId) ?? null,
+          mine: o.driverPersonId === me,
+          freeSeats: Math.max(0, o.seats - o.bookings.length),
+          departurePlace: o.departurePlace,
+          departureAt: o.departureAt?.toISOString() ?? null,
+        })),
+        canBookFor: v.bookFor.flatMap((id) => (persons.has(id) ? [persons.get(id)!] : [])),
+        bookings: v.bookings.map(({ offer, booking }) => ({
+          id: booking.id,
+          offerId: offer.id,
+          direction: offer.direction,
+          passengerPersonId: booking.passengerPersonId,
+          status: booking.status,
+          canCancel: v.open,
+        })),
+      })),
+    };
   }
 
   @Endpoint({

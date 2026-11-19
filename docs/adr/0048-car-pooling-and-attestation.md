@@ -200,3 +200,23 @@ pool (the mode itself stays unset; nothing is written on the activity). A
 leader's explicit "shared transport" still hides it. Own transport shows the
 car pool from the start, with who has no ride yet; without a mode that list
 appears once there is a car.
+
+## Amendment (P2.7c, 2026-11-19): seats from the schedule and the answer
+
+- A seat is booked with one tap per person and direction ("Åk med dit",
+  "Åk med hem"); the way there and the way home are booked apart. Where no
+  seat can be booked the car pool says why (your own car, full, not taking
+  part, the trip has started).
+- "Mitt schema" and a group's list of activities show, per person in the
+  viewer's family, the cars with free seats there and home (driver, pick-up
+  place and time) and the seats booked, from
+  `GET /clubs/:clubId/carpool-summaries?activityIds=…` (one request per club
+  and page, a fixed number of statements; only activities the caller or a
+  ward takes part in, since a car names its driver).
+- "Kommer" opens a menu when a car there has a free seat: "Tar mig dit
+  själv" answers as before, a car answers "attending" and books the seat.
+  On the web the BFF makes the two calls in order (the answer, then the
+  seat); if the seat fails (full meanwhile) the answer stays and the error
+  shows. The app sends the answer through the outbox and books the seat.
+  No combined API endpoint: the two stay separate operations with their own
+  rules and audit.

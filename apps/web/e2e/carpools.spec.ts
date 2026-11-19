@@ -69,3 +69,54 @@ test("claims: approved and rejected for Anna, in the queue for Ahmed", async ({
   await page.goto(`/groups/${GROUPS.iknP2012}/carpools`);
   await expect(page.getByTestId("carpool-stats")).toContainText("Anna");
 });
+
+// P2.7c: SVK F2017's away match has Mikael's car (there and home) and
+// Johan's (there only).
+const SVK_MATCH = "0199a000-0000-7000-8015-000000000013";
+
+test("Sara books Alva's seats there and home from Mitt schema, apart (P2.7c)", async ({ page }) => {
+  await loginAs(page, PERSONAS.sara, { returnTo: "/schedule" });
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  const match = page
+    .getByTestId("agenda-item")
+    .filter({ has: page.locator(`a[href="/activities/${SVK_MATCH}"]`) });
+  const alva = match.getByTestId(`rides-${PERSONAS.alva.id}`);
+  // Two cars there: a menu with the drivers and pick-up places.
+  await alva.getByTestId("ride-menu-out").locator("summary").click();
+  await alva
+    .getByTestId("ride-menu-out")
+    .getByRole("button", { name: /Mikael Lindqvist · Strandviksskolan/ })
+    .click();
+  await expect(alva.getByTestId("ride-booked-out")).toContainText("Mikael Lindqvist");
+  // One car home: one tap.
+  await alva.getByTestId("ride-book-back").click();
+  await expect(alva.getByTestId("ride-booked-back")).toContainText("Bergby sporthall");
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
+  // Cancelling the way home keeps the seat there.
+  await alva.getByTestId("ride-cancel-back").click();
+  await expect(alva.getByTestId("ride-booked-back")).toHaveCount(0);
+  await expect(alva.getByTestId("ride-booked-out")).toBeVisible();
+});
+
+test("Erik answers Kommer with a seat in Johan's car from the group's list (P2.7c)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}` });
+  const match = page
+    .getByTestId("agenda-item")
+    .filter({ has: page.locator(`a[href="/activities/${SVK_MATCH}"]`) });
+  const answer = match.getByTestId(`response-${PERSONAS.erik.id}`);
+  await answer.getByTestId("response-attending").click();
+  // "Tar mig dit själv" or a car: the driver and where they leave from.
+  await expect(answer.getByTestId("response-self")).toBeVisible();
+  await answer.getByTestId("response-ride").filter({ hasText: "Johan" }).click();
+  const rides = match.getByTestId(`rides-${PERSONAS.erik.id}`);
+  await expect(rides.getByTestId("ride-booked-out")).toContainText("Johan");
+  // The answer is given: the activity page shows "Kommer" chosen and the seat.
+  await page.goto(`/activities/${SVK_MATCH}`);
+  await expect(page.getByTestId("carpool")).toContainText("Erik Johansson");
+});

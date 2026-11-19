@@ -264,6 +264,46 @@ describe("car pools (P2.5)", () => {
     expect(asGuardian.offers[0]!.driver?.id).toBe(a.guardian.id);
   });
 
+  it("the schedule's summaries: cars, whom I book for, my family's seats (P2.7c)", async () => {
+    type Summaries = {
+      items: {
+        activityId: string;
+        open: boolean;
+        offers: {
+          id: string;
+          direction: string;
+          driver: { id: string } | null;
+          freeSeats: number;
+        }[];
+        canBookFor: { id: string }[];
+        bookings: { offerId: string; passengerPersonId: string; status: string }[];
+      }[];
+    };
+    const summaries = async (personId: string) => {
+      const res = await api(
+        personId,
+        "GET",
+        `/clubs/${club.id}/carpool-summaries?activityIds=${activityId}`,
+      );
+      expect(res.statusCode, res.body).toBe(200);
+      return res.json<Summaries>().items;
+    };
+    const [mine] = await summaries(b.guardian.id);
+    expect(mine).toMatchObject({ activityId, open: true });
+    expect(mine!.canBookFor.map((p) => p.id)).toEqual([b.child.id]);
+    expect(mine!.offers.map((o) => [o.direction, o.driver?.id])).toEqual([
+      ["out", a.guardian.id],
+      ["back", a.guardian.id],
+    ]);
+    // The seats booked above, out and home, waiting for the other guardian.
+    expect(mine!.bookings.map((x) => [x.passengerPersonId, x.status])).toEqual([
+      [b.child.id, "pending_guardian"],
+      [b.child.id, "pending_guardian"],
+    ]);
+    // Not taking part: nothing (a car names its driver); another club: 404.
+    expect(await summaries(outsider.id).catch(() => [])).toEqual([]);
+  });
+
   it("names passengers only to the car's people, families and leaders", async () => {
     const asPlayer = await carpool(player.id);
     expect(asPlayer.offers[0]!.bookings.map((x) => x.passenger)).toEqual([null]);

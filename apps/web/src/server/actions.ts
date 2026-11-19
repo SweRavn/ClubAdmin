@@ -78,7 +78,7 @@ export interface FormAction {
    * The API call, or null if the form is not valid (then: back with
    * ?error=invalid_input), or `{ invalid: code }` for a specific reason.
    */
-  call(form: FormData): ApiCall | InvalidForm | null;
+  call(form: FormData): ApiCall | readonly ApiCall[] | InvalidForm | null;
   /** Where to go on success; `result` is the API's JSON body (or null). */
   done(form: FormData, result: unknown): string;
   /**
@@ -668,6 +668,29 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
         method: "PUT",
         body: { status, ...(withNote ? { note: note || null } : {}) },
       };
+    },
+    done: (form) => withParam(back(form), "answered", "1"),
+  },
+  // "Kommer" with a seat in a car (P2.7c): the answer, then the seat; when
+  // the seat fails (full meanwhile), the answer stays and the error shows.
+  "respond-ride": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const personId = id(form, "personId");
+      const offerId = id(form, "offerId");
+      if (!activityId || !personId || !offerId) return null;
+      return [
+        {
+          path: `/api/v1/activities/${activityId}/responses/${personId}`,
+          method: "PUT",
+          body: { status: "attending" },
+        },
+        {
+          path: `/api/v1/activities/${activityId}/carpool/offers/${offerId}/bookings`,
+          method: "POST",
+          body: { passengerPersonId: personId, alsoReturn: false, confirmAlone: false },
+        },
+      ];
     },
     done: (form) => withParam(back(form), "answered", "1"),
   },
@@ -3141,7 +3164,8 @@ const CARPOOL_ACTIONS: Record<string, FormAction> = {
         },
       };
     },
-    done: (form) => withParam(carpoolBack(text(form, "activityId")), "booked", "1"),
+    // Back where the seat was booked (P2.7c: the schedule too, in place).
+    done: (form) => withParam(back(form), "booked", "1"),
   },
   "carpool-cancel": {
     call: (form) => {
@@ -3154,7 +3178,7 @@ const CARPOOL_ACTIONS: Record<string, FormAction> = {
         method: "DELETE",
       };
     },
-    done: (form) => withParam(carpoolBack(text(form, "activityId")), "saved", "1"),
+    done: (form) => withParam(back(form), "saved", "1"),
   },
   "carpool-confirm": {
     call: (form) => {

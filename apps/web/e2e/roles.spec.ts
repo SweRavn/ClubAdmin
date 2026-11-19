@@ -64,3 +64,43 @@ test("the operator sees the club types and a type's template", async ({ page }) 
   await expect(page.getByTestId("club-type-role")).toHaveCount(5);
   await expect(page.getByTestId("club-type-page")).toContainText("Turneringsledare");
 });
+
+test("Karin finds Administration, gives a role in the role matrix and ends it (P2.7c)", async ({
+  page,
+}) => {
+  // Changing roles needs the second factor (as on the person's page).
+  await loginAs(page, PERSONAS.karin, { returnTo: `/clubs/${CLUBS.ikn}`, mfa: true });
+  await page.getByTestId("nav-administration").click();
+  await expect(page.getByTestId("administration")).toBeVisible();
+  await page.getByTestId("administration-link-matrix").click();
+  await expect(page.getByTestId("role-matrix")).toBeVisible();
+  // Ahmed holds no club role: found by name and added as a row.
+  await page.getByTestId("role-matrix-search").fill("Ahmed");
+  await page.getByTestId("role-matrix-add").first().click();
+  const row = page.locator(`[data-testid="role-matrix-row"][data-person="${PERSONAS.ahmed.id}"]`);
+  await expect(row).toBeVisible();
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  const cell = row.getByRole("button", { name: /Kassör/ });
+  await expect(cell).toHaveAttribute("aria-pressed", "false");
+  await cell.click();
+  await expect(row.getByRole("button", { name: /Kassör: har rollen/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  // The arrow keys move between cells.
+  await row.getByRole("button", { name: /Kassör/ }).focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(row.getByRole("button", { name: /Kassör/ })).not.toBeFocused();
+  // Ended again with one more tap, in place.
+  await row.getByRole("button", { name: /Kassör/ }).click();
+  await expect(row.getByRole("button", { name: /Kassör: har inte rollen/ })).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
+  // Breadcrumbs: Förening › Administration › page.
+  await expect(page.getByRole("navigation", { name: "Brödsmulor" })).toContainText(
+    "Administration",
+  );
+});

@@ -51,6 +51,9 @@ flows offline maestro/05-offline-and-logout.yaml
 # Answers and attendance through the offline outbox (P1.5).
 flows responses maestro/08-answer.yaml maestro/09-offline-attendance.yaml
 
+# Seats in a car from My schedule (P2.7c).
+flows carpools maestro/15-carpool-rides.yaml
+
 # The inbox and notification settings (P1.7).
 flows notifications maestro/10-notifications.yaml
 

@@ -12,6 +12,9 @@ async function openChannel(page: Page) {
   await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}` });
   await page.getByTestId("group-channels").getByTestId("chat-row").first().click();
   await expect(page.getByTestId("chat-room")).toBeVisible();
+  // The field is the chat's own (React) state: type only once the page runs.
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByTestId("emoji-open")).toBeEnabled();
 }
 
 test("the offline banner shows only while the connection is down", async ({ page }) => {

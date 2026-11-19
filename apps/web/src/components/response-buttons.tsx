@@ -100,6 +100,7 @@ export async function ResponseButtons({
   deadlinePassed = false,
   label,
   testId = "response",
+  rides = [],
 }: {
   activityId: string;
   personId: string;
@@ -108,8 +109,73 @@ export async function ResponseButtons({
   /** Whose answer, when the viewer answers for several people. */
   label?: string;
   testId?: string;
+  /**
+   * The cars there with a free seat for this person (P2.7c): "Kommer" opens
+   * a menu, "Tar mig dit själv" or one of the cars (the answer and the seat
+   * in one tap).
+   */
+  rides?: readonly { offerId: string; label: string }[];
 }) {
   const t = await getTranslations();
+  if (rides.length > 0 && !deadlinePassed && status !== "attending") {
+    return (
+      <span className="flex flex-wrap items-center gap-2" data-testid={`${testId}-${personId}`}>
+        {label ? <span className="text-sm">{label}</span> : null}
+        <details className="relative" data-testid={`${testId}-attending-menu`}>
+          <summary
+            className={`${buttonClass(false)} cursor-pointer list-none`}
+            data-testid={`${testId}-attending`}
+          >
+            {t("responses.coming")} ▾
+          </summary>
+          <span className="absolute z-10 mt-1 flex min-w-64 flex-col gap-1 rounded-md border border-border bg-raised p-2 shadow">
+            <ActionForm action="respond">
+              <input type="hidden" name="activityId" value={activityId} />
+              <input type="hidden" name="personId" value={personId} />
+              <button
+                type="submit"
+                name="status"
+                value="attending"
+                className="w-full rounded px-2 py-1 text-left text-sm hover:bg-surface"
+                data-testid={`${testId}-self`}
+              >
+                {t("responses.ownWay")}
+              </button>
+            </ActionForm>
+            <span className="px-2 pt-1 text-xs text-muted">{t("responses.rideWith")}</span>
+            {rides.map((ride) => (
+              <ActionForm key={ride.offerId} action="respond-ride">
+                <input type="hidden" name="activityId" value={activityId} />
+                <input type="hidden" name="personId" value={personId} />
+                <input type="hidden" name="offerId" value={ride.offerId} />
+                <button
+                  type="submit"
+                  className="w-full rounded px-2 py-1 text-left text-sm hover:bg-surface"
+                  data-testid={`${testId}-ride`}
+                >
+                  {ride.label}
+                </button>
+              </ActionForm>
+            ))}
+          </span>
+        </details>
+        <ActionForm action="respond">
+          <input type="hidden" name="activityId" value={activityId} />
+          <input type="hidden" name="personId" value={personId} />
+          <button
+            type="submit"
+            name="status"
+            value="not_attending"
+            className={buttonClass(status === "not_attending")}
+            aria-pressed={status === "not_attending"}
+            data-testid={`${testId}-not-attending`}
+          >
+            {t("responses.notComing")}
+          </button>
+        </ActionForm>
+      </span>
+    );
+  }
   return (
     <ActionForm
       action="respond"

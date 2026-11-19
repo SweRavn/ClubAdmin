@@ -454,7 +454,11 @@ schedule (Ola left two years ago).
   one has no ride, which the leaders see. Anna drove to two earlier away
   matches; Ahmed approved her claim for the first and rejected the second
   ("Laget åkte buss …"). Try `/activities/<away match>` as Anna or Ahmed,
-  `/me/expenses` as Anna and `/clubs/<ikn>/expenses` as Ahmed.
+  `/me/expenses` as Anna and `/clubs/<ikn>/expenses` as Ahmed. SVK F2017
+  plays away against Bergby VK in five days (P2.7c): Elsa's father Mikael
+  drives there (from Strandviksskolan) and home (from Bergby sporthall), the
+  assistant coach Johan there only (from Klubbstugan); try booking Alva's
+  seats from "Mitt schema" as Sara, or "Kommer" with a seat as Erik.
 - **Volunteer duties** (P2.6, `apps/api/src/seed/steps/duties.ts`): IK
   Norrbacka's duty types Kiosk (from 13, no contact with children) and
   Sekretariat (from 15, with children); P2012's quota is two shifts per

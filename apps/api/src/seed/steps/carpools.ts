@@ -22,6 +22,8 @@ export const DEMO_CARPOOL_IDS = {
   awayMatch: "0199a000-0000-7000-8015-000000000010",
   pastMatch1: "0199a000-0000-7000-8015-000000000011",
   pastMatch2: "0199a000-0000-7000-8015-000000000012",
+  /** SVK F2017's away match with two families' cars (P2.7c). */
+  svkF2017Match: "0199a000-0000-7000-8015-000000000013",
 } as const;
 
 const DAY_MS = 86_400_000;
@@ -99,6 +101,8 @@ export const carpoolsDemoStep: DemoStep = {
       departureAt: `${date(4)}T08:30:00Z`,
       note: "Plats för bollbag och lite packning",
       withReturn: true,
+      returnDeparturePlace: "Kalmarvallen",
+      returnDepartureAt: `${date(4)}T12:15:00Z`,
     });
     await s.carpools.book(as("anna"), awayId, anna.id, { passengerPersonId: id("oskar") });
     await s.carpools.book(ahmed, awayId, anna.id, { passengerPersonId: id("liam") });
@@ -157,6 +161,45 @@ export const carpoolsDemoStep: DemoStep = {
     await s.expenses.decide(ahmed, scope, second.id, {
       decision: "reject",
       reason: "Laget åkte buss till den matchen. Hör av dig om något är fel.",
+    });
+
+    // SVK F2017's away match (P2.7c): Elsa's father Mikael drives there and
+    // home, the assistant coach Johan there only; Erik and Sara (Alva's
+    // mother) find seats from "Mitt schema" or the "Kommer" menu.
+    const svk = (persona: string): TenantContext => ({
+      actorKind: "person",
+      personId: id(persona),
+      clubId: id("svk"),
+      requestId: "seed:carpools",
+    });
+    await s.activities.createActivity(
+      svk("erik"),
+      id("svk-f2017"),
+      {
+        kind: "match",
+        title: "Bortamatch mot Bergby VK",
+        opponent: "Bergby VK",
+        homeAway: "away",
+        startsAt: `${date(5)}T09:00:00Z`,
+        endsAt: `${date(5)}T11:00:00Z`,
+        locationText: "Bergby sporthall",
+        transportMode: "own",
+        responseMode: "requested",
+      },
+      { id: DEMO_CARPOOL_IDS.svkF2017Match },
+    );
+    await s.carpools.createOffer(svk("mikael"), DEMO_CARPOOL_IDS.svkF2017Match, {
+      seats: 3,
+      departurePlace: "Strandviksskolan",
+      departureAt: `${date(5)}T07:45:00Z`,
+      withReturn: true,
+      returnDeparturePlace: "Bergby sporthall",
+      returnDepartureAt: `${date(5)}T11:15:00Z`,
+    });
+    await s.carpools.createOffer(svk("johan"), DEMO_CARPOOL_IDS.svkF2017Match, {
+      seats: 2,
+      departurePlace: "Klubbstugan",
+      departureAt: `${date(5)}T07:30:00Z`,
     });
 
     // The events are history, not news (as the governing step's): the seats

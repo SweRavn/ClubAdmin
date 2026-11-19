@@ -5,7 +5,13 @@
 // unknown fields and enum values from a newer server are tolerated (ADR 0029).
 
 import type { ApiClient, components } from "@clubadmin/api-client";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import { useSession } from "../state/session.tsx";
 
@@ -1136,6 +1142,36 @@ export function useCarpool(activityId: string, enabled: boolean) {
   const { api, personId } = useSession();
   return useQuery({ ...carpoolQuery(api, useScope(), activityId), enabled: enabled && !!personId });
 }
+
+/**
+ * The car pools of the schedule's activities (P2.7c): one request per club,
+ * cached with the car pools (refreshed after a booking). By activity ID.
+ */
+export function useCarpoolSummaries(items: readonly { activityId: string; clubId: string }[]) {
+  const { api, personId } = useSession();
+  const byClub = new Map<string, string[]>();
+  for (const i of items) byClub.set(i.clubId, [...(byClub.get(i.clubId) ?? []), i.activityId]);
+  const results = useQueries({
+    queries: [...byClub].map(([clubId, ids]) => {
+      const activityIds = ids.slice(0, 60).join(",");
+      return {
+        queryKey: ["carpool", "summaries", personId, clubId, activityIds],
+        queryFn: async () =>
+          data(
+            await api.GET("/api/v1/clubs/{clubId}/carpool-summaries", {
+              params: { path: { clubId }, query: { activityIds } },
+            }),
+          ),
+        enabled: personId !== null && activityIds !== "",
+      };
+    }),
+  });
+  return new Map(
+    results.flatMap((r) => r.data?.items ?? []).map((s) => [s.activityId, s] as const),
+  );
+}
+export type CarpoolSummary =
+  ReturnType<typeof useCarpoolSummaries> extends Map<string, infer S> ? S : never;
 
 /** "Mina samåkningar": my drives and my own and my children's seats. */
 export function useMyCarpools() {

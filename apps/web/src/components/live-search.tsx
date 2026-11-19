@@ -51,8 +51,19 @@ export function LiveSearch({
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
+  // Typed before the page's script ran (P2.7c): search for what is in the
+  // field once, when it differs from what the page shows.
+  const input = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    const field = input.current;
+    if (field && field.value !== defaultValue && field.value.trim().length >= minLength) {
+      search(field.form);
+    }
+    // Once, on hydration.
+  }, []);
   return (
     <input
+      ref={input}
       type="search"
       name={name}
       defaultValue={defaultValue}

@@ -5,7 +5,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 
-import { FORM_ACTIONS } from "../../../server/actions.ts";
+import { type ApiCall, FORM_ACTIONS } from "../../../server/actions.ts";
 import { apiFetch } from "../../../server/api.ts";
 import { checkoutOrigins } from "../../../server/config.ts";
 import { CSRF_COOKIE, SESSION_COOKIE } from "../../../server/cookies.ts";
@@ -136,7 +136,7 @@ export async function POST(
     );
   }
   const call = action.call(form);
-  if (!call || "invalid" in call) {
+  if (!call || ("invalid" in call && !Array.isArray(call))) {
     if (keepValues) await saveFormDraft(session.id, name, form);
     return redirectTo(
       withError(back, call ? call.invalid : "invalid_input", {
@@ -145,16 +145,25 @@ export async function POST(
       }),
     );
   }
-  const res = await apiFetch(call.path, session.record, {
-    method: call.method,
-    ...(call.body !== undefined
-      ? { headers: { "content-type": "application/json" }, body: JSON.stringify(call.body) }
-      : {}),
-    forwardedFor: request.headers.get("x-forwarded-for"),
-  });
-  const body: unknown = res.headers.get("content-type")?.includes("json")
-    ? await res.json().catch(() => null)
-    : null;
+  // Several calls in order (P2.7c: "Kommer" with a seat in a car): each must
+  // succeed; the first that fails stops, and what came before stays done.
+  const calls: readonly ApiCall[] = Array.isArray(call) ? call : [call as ApiCall];
+  let res: Response | null = null;
+  let body: unknown = null;
+  for (const one of calls) {
+    res = await apiFetch(one.path, session.record, {
+      method: one.method,
+      ...(one.body !== undefined
+        ? { headers: { "content-type": "application/json" }, body: JSON.stringify(one.body) }
+        : {}),
+      forwardedFor: request.headers.get("x-forwarded-for"),
+    });
+    body = res.headers.get("content-type")?.includes("json")
+      ? await res.json().catch(() => null)
+      : null;
+    if (!res.ok) break;
+  }
+  if (!res) return problem("bad-request");
   if (res.ok) {
     if (keepValues) await clearFormDraft(session.id, name);
     // A payment provider's hosted page (P1.13): only to an allowed origin.

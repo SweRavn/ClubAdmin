@@ -10,9 +10,10 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { useTranslations } from "use-intl";
 
 import { useOutbox } from "../api/outbox.ts";
-import type { SchedulePage } from "../api/queries.ts";
+import { type SchedulePage, useBookCarpoolSeat } from "../api/queries.ts";
 import { useSession } from "../state/session.tsx";
 import { useTheme } from "../theme.ts";
+import { Button } from "./ui.tsx";
 
 type Status = "attending" | "not_attending";
 
@@ -47,6 +48,7 @@ export function ResponseButtons({
   deadlinePassed,
   label,
   onAnswer,
+  rides = [],
 }: {
   activityId: string;
   personId: string;
@@ -54,23 +56,33 @@ export function ResponseButtons({
   deadlinePassed: boolean;
   label?: string;
   onAnswer?: (status: Status) => void;
+  /**
+   * The cars there with a free seat (P2.7c): "Kommer" opens the choice of
+   * "Tar mig dit själv" or a car (the answer and the seat in one tap).
+   */
+  rides?: readonly { offerId: string; label: string }[];
 }) {
   const t = useTranslations();
   const theme = useTheme();
   const send = useOutbox();
   const optimistic = useOptimisticAnswer();
+  const book = useBookCarpoolSeat(activityId);
+  const [choosing, setChoosing] = useState(false);
   const answer = (next: Status) => {
     if (next === status) return;
     optimistic(activityId, personId, next);
     onAnswer?.(next);
     send({ kind: "response", activityId, personId, status: next });
   };
+  const withRides = rides.length > 0 && status !== "attending";
   const button = (value: Status, text: string) => {
     const selected = status === value;
     return (
       <Pressable
         key={value}
-        onPress={() => answer(value)}
+        onPress={() =>
+          value === "attending" && withRides ? setChoosing(!choosing) : answer(value)
+        }
         accessibilityRole="button"
         accessibilityState={{ selected }}
         accessibilityLabel={label ? `${label}: ${text}` : text}
@@ -100,6 +112,42 @@ export function ResponseButtons({
       {label ? <Text style={{ color: theme.colors.fg }}>{label}</Text> : null}
       {deadlinePassed ? null : button("attending", t("responses.coming"))}
       {button("not_attending", t("responses.notComing"))}
+      {choosing && withRides ? (
+        <View
+          style={{ width: "100%", gap: theme.space(1) }}
+          testID={`answer-menu-${activityId}-${personId}`}
+        >
+          <Button
+            kind="secondary"
+            label={t("responses.ownWay")}
+            onPress={() => {
+              setChoosing(false);
+              answer("attending");
+            }}
+            testID={`answer-self-${activityId}-${personId}`}
+          />
+          <Text style={{ color: theme.colors.muted }}>{t("responses.rideWith")}</Text>
+          {rides.map((ride) => (
+            <Button
+              key={ride.offerId}
+              kind="secondary"
+              label={ride.label}
+              busy={book.isPending}
+              onPress={() => {
+                setChoosing(false);
+                answer("attending");
+                book.mutate({
+                  offerId: ride.offerId,
+                  passengerPersonId: personId,
+                  alsoReturn: false,
+                  confirmAlone: false,
+                });
+              }}
+              testID={`answer-ride-${ride.offerId}-${personId}`}
+            />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }

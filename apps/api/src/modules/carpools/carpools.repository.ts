@@ -28,6 +28,15 @@ export interface ActivityFacts {
 
 /** The activity with what the car pool needs of it (null: not readable). */
 export async function activityFacts(tx: Tx, activityId: string): Promise<ActivityFacts | null> {
+  return (await activitiesFacts(tx, [activityId]))[0] ?? null;
+}
+
+/** Several activities' facts (the schedule's summaries, P2.7c), readable ones only. */
+export async function activitiesFacts(
+  tx: Tx,
+  activityIds: readonly string[],
+): Promise<ActivityFacts[]> {
+  if (activityIds.length === 0) return [];
   const { rows } = await tx.execute<{
     id: string;
     club_id: string;
@@ -44,10 +53,8 @@ export async function activityFacts(tx: Tx, activityId: string): Promise<Activit
     FROM public.activities a
     JOIN public.clubs c ON c.id = a.club_id
     LEFT JOIN public.locations l ON l.club_id = a.club_id AND l.id = a.location_id
-    WHERE a.id = ${activityId}::uuid`);
-  const r = rows[0];
-  if (!r) return null;
-  return {
+    WHERE a.id = ANY (${uuidArray([...new Set(activityIds)])}::uuid[])`);
+  return rows.map((r) => ({
     id: r.id,
     clubId: r.club_id,
     title: r.title,
@@ -57,7 +64,7 @@ export async function activityFacts(tx: Tx, activityId: string): Promise<Activit
     transportMode: r.transport_mode,
     distanceKm: num(r.distance_km),
     country: r.country,
-  };
+  }));
 }
 
 export interface BookingRow {
@@ -140,6 +147,38 @@ const OFFER_SELECT = sql`
           'confirmed_by_person_id', b.confirmed_by_person_id) ORDER BY b.created_at, b.id)
       FROM public.carpool_bookings b WHERE b.offer_id = o.id AND b.status <> 'cancelled'), '[]') AS bookings
   FROM public.carpool_offers o`;
+
+/** The cars of several activities (the schedule's summaries, P2.7c), outward first. */
+export async function offersOf(tx: Tx, activityIds: readonly string[]): Promise<OfferRow[]> {
+  if (activityIds.length === 0) return [];
+  const { rows } = await tx.execute<OfferDb>(sql`
+    ${OFFER_SELECT}
+    WHERE o.activity_id = ANY (${uuidArray([...new Set(activityIds)])}::uuid[])
+    ORDER BY o.activity_id, o.direction DESC, o.id`);
+  return rows.map(toOffer);
+}
+
+/** The caller's wards (active guardianships, any right): checked per right by People. */
+export async function wardsOf(tx: Tx, guardianPersonId: string): Promise<string[]> {
+  const { rows } = await tx.execute<{ ward_person_id: string }>(sql`
+    SELECT DISTINCT g.ward_person_id FROM public.guardianships g
+    WHERE g.guardian_person_id = ${guardianPersonId}::uuid
+      AND g.status = 'active' AND g.valid_to IS NULL`);
+  return rows.map((r) => r.ward_person_id);
+}
+
+/** Which of these people take part in which of these activities (roster, P2.7c). */
+export async function rosterOf(
+  tx: Tx,
+  activityIds: readonly string[],
+  personIds: readonly string[],
+): Promise<{ activityId: string; personId: string }[]> {
+  if (activityIds.length === 0 || personIds.length === 0) return [];
+  const { rows } = await tx.execute<{ activity_id: string; person_id: string }>(sql`
+    SELECT r.activity_id, r.person_id FROM (${rosterQuery(activityIds)}) r
+    WHERE r.person_id = ANY (${uuidArray([...new Set(personIds)])}::uuid[])`);
+  return rows.map((r) => ({ activityId: r.activity_id, personId: r.person_id }));
+}
 
 /** The activity's cars, outward first, oldest first. */
 export async function offers(tx: Tx, activityId: string): Promise<OfferRow[]> {

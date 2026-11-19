@@ -57,6 +57,24 @@ export type {
   StatsRow,
 } from "./carpools.repository.ts";
 
+/** At most this many activities per summaries request (a page of the schedule). */
+export const CARPOOL_SUMMARY_MAX = 60;
+
+/**
+ * One activity's car pool as the schedule shows it (P2.7c): the cars with
+ * free seats, whom the caller may book for, and their family's seats. Only
+ * activities the caller or a ward takes part in.
+ */
+export interface CarpoolSummaryView {
+  activity: repo.ActivityFacts;
+  open: boolean;
+  /** Cars with seats (not "willing to drive"), outward first. */
+  offers: repo.OfferRow[];
+  bookFor: string[];
+  /** The caller's and their wards' live seats. */
+  bookings: { offer: repo.OfferRow; booking: repo.BookingRow }[];
+}
+
 /** The car pool as the controller presents it (who sees whom is the controller's). */
 export interface CarpoolView {
   activity: repo.ActivityFacts;
@@ -140,6 +158,66 @@ export class CarpoolsService {
   }
 
   // --- Reading ------------------------------------------------------------------
+
+  /**
+   * The car pools of a page of the schedule's activities in one club (P2.7c),
+   * in a fixed number of statements: the activities, the caller's wards, who
+   * of the family takes part, their facts and the cars. Activities without
+   * the caller's family on the roster are left out (a car names its driver).
+   */
+  summaries(context: TenantContext, activityIds: readonly string[]): Promise<CarpoolSummaryView[]> {
+    const me = actorPersonId(context);
+    return this.db.withTenant(context, async (tx) => {
+      const ids = [...new Set(activityIds)].slice(0, CARPOOL_SUMMARY_MAX);
+      const activities = (await repo.activitiesFacts(tx, ids)).filter(
+        (a) => a.clubId === context.clubId && a.transportMode !== "shared",
+      );
+      if (activities.length === 0) return [];
+      const wards = await repo.wardsOf(tx, me);
+      const family = [me, ...wards];
+      const roster = await repo.rosterOf(
+        tx,
+        activities.map((a) => a.id),
+        family,
+      );
+      const facts = await repo.personFacts(tx, family);
+      const offers = await repo.offersOf(
+        tx,
+        activities.map((a) => a.id),
+      );
+      return activities.flatMap((activity) => {
+        const people = new People(facts, activity.country, activity.startsAt);
+        const taking = new Set(
+          roster.filter((r) => r.activityId === activity.id).map((r) => r.personId),
+        );
+        if (taking.size === 0) return [];
+        const open = this.isOpen(activity);
+        const bookFor = open
+          ? [
+              ...(taking.has(me) && (!people.isChild(me) || people.maySelfBook(me)) ? [me] : []),
+              ...wards.filter(
+                (w) => taking.has(w) && people.guardiansOf(w, "sign_up").includes(me),
+              ),
+            ]
+          : [];
+        const cars = offers.filter((o) => o.activityId === activity.id && !o.willingOnly);
+        const familySet = new Set(family);
+        return [
+          {
+            activity,
+            open,
+            offers: cars,
+            bookFor,
+            bookings: cars.flatMap((offer) =>
+              offer.bookings
+                .filter((b) => familySet.has(b.passengerPersonId))
+                .map((booking) => ({ offer, booking })),
+            ),
+          },
+        ];
+      });
+    });
+  }
 
   carpool(context: TenantContext, activityId: string): Promise<CarpoolView> {
     const me = actorPersonId(context);
