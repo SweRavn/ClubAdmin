@@ -78,7 +78,8 @@ public club website pages · facility booking ·
 user documentation of the whole system for clubs (a guided, illustrated
 help site per role in sv, en and nb, also shown to prospective clubs:
 what ClubAdmin does, screenshots from the demo data, kept current by the
-end-to-end tests).
+end-to-end tests), and help built into the apps where users get answers
+at once in the app (how it works is to be worked out).
 
 ## Phase 4 — Heavy and specialised
 
