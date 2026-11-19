@@ -7,6 +7,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { sameOriginRealtimeUrl } from "./realtime-url.ts";
+
 export function ChatLiveRefresh({ csrf }: { csrf: string }) {
   const router = useRouter();
   useEffect(() => {
@@ -27,7 +29,7 @@ export function ChatLiveRefresh({ csrf }: { csrf: string }) {
         });
         if (!response.ok || closed) throw new Error("ticket");
         const { url } = (await response.json()) as { url: string };
-        ws = new WebSocket(url);
+        ws = new WebSocket(sameOriginRealtimeUrl(url, window.location));
         ws.onopen = () => {
           attempt = 0;
         };

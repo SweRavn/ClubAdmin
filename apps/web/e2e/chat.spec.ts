@@ -17,7 +17,9 @@ async function openChannel(page: Page) {
 test("the offline banner shows only while the connection is down", async ({ page }) => {
   let blocked = false;
   const sockets: { close: () => Promise<void> }[] = [];
+  const hosts = new Set<string>();
   await page.routeWebSocket(/\/api\/v1\/realtime/, (ws) => {
+    hosts.add(new URL(ws.url()).host);
     if (blocked) {
       void ws.close();
       return;
@@ -29,6 +31,8 @@ test("the offline banner shows only while the connection is down", async ({ page
   // Connected: no banner, also after the grace period.
   await page.waitForTimeout(6_000);
   await expect(page.getByTestId("chat-offline")).toHaveCount(0);
+  // On the page's own host (P2.7b): no second certificate or origin.
+  expect([...hosts]).toEqual([new URL(page.url()).host]);
 
   // The connection drops and cannot come back: the banner appears.
   blocked = true;

@@ -10,18 +10,22 @@ import { checkoutOrigins } from "./server/config.ts";
 import { PATH_HEADER } from "./server/data.ts";
 import { contentSecurityPolicy, newNonce } from "./server/security-headers.ts";
 
-/** The API's WebSocket origin (the chat's real-time connection, P2.1). */
-export const realtimeOrigins = (): string[] => {
-  const url = process.env.PUBLIC_API_URL;
-  try {
-    if (!url) return [];
-    const api = new URL(url);
-    api.protocol = api.protocol === "http:" ? "ws:" : "wss:";
-    return [api.origin];
-  } catch {
-    return [];
-  }
-};
+/**
+ * The WebSocket origins of the chat's real-time connection (P2.1): the
+ * site's own (the connection goes there since P2.7b; some browsers do not
+ * count wss: as 'self') and the API's.
+ */
+export const realtimeOrigins = (): string[] =>
+  [process.env.PUBLIC_WEB_URL, process.env.PUBLIC_API_URL].flatMap((url) => {
+    try {
+      if (!url) return [];
+      const origin = new URL(url);
+      origin.protocol = origin.protocol === "http:" ? "ws:" : "wss:";
+      return [origin.origin];
+    } catch {
+      return [];
+    }
+  });
 
 const formActions = (): string[] => {
   const issuer = process.env.AUTH_ISSUER;

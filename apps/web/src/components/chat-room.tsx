@@ -13,6 +13,7 @@ import { personLabel } from "@clubadmin/ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { EmojiPicker, type EmojiTexts } from "./emoji-picker.tsx";
+import { sameOriginRealtimeUrl } from "./realtime-url.ts";
 
 export interface ChatRoomTexts {
   placeholder: string;
@@ -220,7 +221,7 @@ export function ChatRoom(props: Props) {
           url: string;
         };
         if (closed) return;
-        const ws = new WebSocket(ticket.url);
+        const ws = new WebSocket(sameOriginRealtimeUrl(ticket.url, window.location));
         socket.current = ws;
         ws.onopen = () => {
           attempt = 0;

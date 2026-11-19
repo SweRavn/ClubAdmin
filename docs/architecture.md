@@ -505,7 +505,12 @@ forbids name fields and name columns elsewhere; the view
   instances share the events over Valkey pub/sub (`rt:chat:<id>`,
   `rt:person:<id>`); the worker publishes there too (membership changes,
   permission changes). Without Valkey (tests, one instance) the events stay
-  in the process. The connection is the logged-in person's own: while
+  in the process. The web app opens the connection on its own host
+  (`wss://<web host>/api/v1/realtime`, P2.7b): the reverse proxy in front of
+  the web app must forward that path, with the upgrade, to the API (the dev
+  Caddyfile does; Next.js cannot proxy WebSockets), so the browser needs no
+  certificate, host or CORS origin of the API's. The mobile app uses the
+  ticket's URL on the API's host. The connection is the logged-in person's own: while
   viewing as a ward the web chat fetches new messages every 15 seconds
   instead. Clients reconnect with backoff and show "not connected" only
   after the connection has been down for 5 seconds (P2.7b).

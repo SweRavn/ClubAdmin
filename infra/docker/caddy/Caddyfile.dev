@@ -16,6 +16,13 @@
 		reverse_proxy {$API_UPSTREAM}
 	}
 
+	# The web app's real-time connection (P2.1, P2.7b): on the page's own host,
+	# so the browser needs no second certificate or origin for the API. The
+	# upgrade goes to the API directly (Next.js does not proxy WebSockets).
+	handle /api/v1/realtime {
+		reverse_proxy {$API_UPSTREAM}
+	}
+
 	# The web app (Next.js) is also the backend-for-frontend: browser calls to
 	# /api/* go through it, which adds the access token from the session.
 	handle {
