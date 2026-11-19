@@ -87,6 +87,7 @@ prompt (like P1.14) before Phase 2 starts.
 | [P2.8 Background-check plugins for Sweden and Norway; tracking screens](P2.8-background-check-plugins.md) | P2.7, P2.1, P2.6 |
 | [P2.7b Web fixes from testing: updates in place and one-tap answers (ADR 0055), leaders answer too, car pools in one tap, roles overview, navigation, search as you type, unsaved changes, waiting lists, chat, role names, demo data](P2.7b-web-feedback-fixes.md) | P2.7 |
 | [P2.9 Programmes and templates: cups, camps, match days copied to new dates](P2.9-programmes-and-templates.md) | P2.6, P1.6 |
+| [P2.10 Call-ups across groups, for series, and revoking a call-up](P2.10-call-ups-across-groups.md) | P2.7b |
 
 The prompts are numbered in the order they are built. Each prompt is checked against the code as it is when it
 starts (as P1.15 B was) and adjusted before it is implemented. Permissions

@@ -62,6 +62,7 @@ Chat is a unique selling point and comes first. The decisions of
 | [P2.7](prompts/P2.7-reporting-plugins.md) | Plugins for grant reporting and background checks; LOK and LAM | ADR 0051 |
 | [P2.8](prompts/P2.8-background-check-plugins.md) | Background-check plugins for Sweden and Norway, tracking screens | ADR 0047, ADR 0051 |
 | [P2.9](prompts/P2.9-programmes-and-templates.md) | Programmes and templates: cups, camps and match days with meals and duty shifts, copied to new dates | ADR 0054 |
+| [P2.10](prompts/P2.10-call-ups-across-groups.md) | Call-ups: permanent guests from other groups, ad hoc guests, series call-ups per person and session, revoking with a reason | ADR 0056 (amends 0036) |
 
 Each prompt lists its new permissions with the template roles that get
 them by default (P1.15 decision 5). The order and dependencies are in

@@ -61,3 +61,4 @@ Never rewrite an accepted ADR; supersede it with a new one.
 | [0053](0053-announcements.md) | Announcements: one message, chosen channels, no text in push | Accepted |
 | [0054](0054-programmes-and-templates.md) | Programmes and templates: a container for activities and shifts, copied without people | Proposed (P2.9) |
 | [0055](0055-web-updates-in-place.md) | The web app updates in place; one tap for a single choice | Accepted (built in P2.7b) |
+| [0056](0056-call-ups-across-groups-and-series.md) | Call-ups across groups and for series; revoking a call-up with a reason | Proposed (P2.10) |

@@ -1,6 +1,6 @@
 # 0036 — Call-ups: only the people called up take part in an activity
 
-**Status:** Accepted (after P1.5, [#19](https://github.com/SweRavn/ClubAdmin/issues/19)).
+**Status:** Accepted (after P1.5, [#19](https://github.com/SweRavn/ClubAdmin/issues/19)). Amended by ADR 0056 (guests from other groups, series call-ups, revocation).
 
 **Context.** In P1.5 (ADR 0035) the roster of an activity is everyone in
 its groups on its start. Matches often need a squad ("kallelse"): only some
