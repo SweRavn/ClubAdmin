@@ -79,6 +79,8 @@ test("Erik previews and creates a series, then changes this and following", asyn
   await page.getByTestId("series-start-0").fill("19:00");
   await page.getByTestId("series-startsOn").fill(start);
   await page.getByTestId("series-endsOn").fill(day(14 + 7 * 3));
+  // Four sessions whatever today's date (a holiday such as Christmas Eve would be skipped).
+  await page.getByTestId("series-skipHolidays").uncheck();
   await page.getByTestId("series-preview-button").click();
   await page.waitForURL(/preview=1/);
   await expect(page.getByTestId("series-preview").locator("li")).toHaveCount(4);
