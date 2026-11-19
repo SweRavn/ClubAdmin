@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { exportCaddyRootCert } from "./caddy.ts";
 import { composeCapture } from "./compose.ts";
 import { loadEnv, requireEnv } from "./env.ts";
-import { httpsGet } from "./https.ts";
+import { httpsGet, probeUpgrade, type UpgradeProbe } from "./https.ts";
 import { check, type CheckResult, printResults } from "./report.ts";
 import { signV4 } from "./s3.ts";
 import { sendMail } from "./smtp.ts";
@@ -93,6 +93,19 @@ export async function smoke(): Promise<boolean> {
       if (!res.body.includes("ClubAdmin"))
         throw new Error(`HTTP ${res.status} without expected content`);
       return `HTTP ${res.status}, certificate trusted`;
+    }),
+  );
+
+  // The chat's real-time connection goes through Caddy on the site's own
+  // host to the API (P2.7c); a refused test ticket shows it arrives there.
+  results.push(
+    await check(`Realtime: wss://${appDomain}/api/v1/realtime reaches the API`, async () => {
+      const site = env.get("PUBLIC_WEB_URL") ?? httpsBase(appDomain, httpsPort);
+      const probe = await probeUpgrade(
+        `${httpsBase(appDomain, httpsPort)}/api/v1/realtime?ticket=smoke-test`,
+        { ca, origin: new URL(site).origin },
+      );
+      return realtimeVerdict(probe, new URL(site).origin, env.get("API_UPSTREAM") ?? "");
     }),
   );
 
@@ -183,4 +196,32 @@ export async function smoke(): Promise<boolean> {
   }
 
   return printResults("Smoke test of the local services", results);
+}
+
+/** What the realtime probe means (exported for its unit test). */
+export function realtimeVerdict(probe: UpgradeProbe, origin: string, upstream: string): string {
+  if (probe.kind === "upgraded") {
+    if (probe.closeCode === 4401) return "the API answered (test ticket refused, origin accepted)";
+    if (probe.closeCode === 4403) {
+      throw new Error(
+        `the API refuses the origin ${origin}: add it to CORS_ORIGINS in .env.local and restart the API`,
+      );
+    }
+    throw new Error(`upgraded, then closed with ${probe.closeCode ?? "no code"}`);
+  }
+  // An API from before P2.7c refuses the handshake itself: it arrived.
+  if (probe.status === 401) return "the API answered (test ticket refused)";
+  if (probe.status === 403) {
+    throw new Error(
+      `the API refuses the origin ${origin}: add it to CORS_ORIGINS in .env.local and restart the API`,
+    );
+  }
+  if (probe.status === 502 || probe.status === 503 || probe.status === 504) {
+    throw new Error(
+      `HTTP ${probe.status}: Caddy cannot reach the API at ${upstream || "API_UPSTREAM"}; is the API running (pnpm dev)?`,
+    );
+  }
+  throw new Error(
+    `HTTP ${probe.status}: the request went to the web app, not the API; run \`pnpm dev:services\` to load the current Caddyfile`,
+  );
 }

@@ -72,6 +72,11 @@ test("Karin finds Administration, gives a role in the role matrix and ends it (P
   await loginAs(page, PERSONAS.karin, { returnTo: `/clubs/${CLUBS.ikn}`, mfa: true });
   await page.getByTestId("nav-administration").click();
   await expect(page.getByTestId("administration")).toBeVisible();
+  // Pages that change something and overviews look apart.
+  const matrixItem = page.locator("li", { has: page.getByTestId("administration-link-matrix") });
+  await expect(matrixItem).toHaveAttribute("data-kind", "manage");
+  const whoCan = page.locator("li", { has: page.getByTestId("administration-link-who-can") });
+  await expect(whoCan).toHaveAttribute("data-kind", "view");
   await page.getByTestId("administration-link-matrix").click();
   await expect(page.getByTestId("role-matrix")).toBeVisible();
   // Ahmed holds no club role: found by name and added as a row.

@@ -115,3 +115,61 @@ export function servedChain(url: string, connectTo = "127.0.0.1"): Promise<strin
     socket.on("error", reject);
   });
 }
+
+/** What a WebSocket handshake got (P2.7c): upgraded, with the close code sent at once, or HTTP. */
+export type UpgradeProbe =
+  { kind: "upgraded"; closeCode: number | null } | { kind: "http"; status: number; body: string };
+
+/**
+ * Opens a WebSocket handshake through the given CA and waits for the first
+ * frame: the realtime gateway refuses a test ticket with close code 4401
+ * (or 4403 for a foreign origin), which shows the request reached it.
+ */
+export function probeUpgrade(
+  url: string,
+  options: { ca: string; origin: string; connectTo?: string; timeoutMs?: number },
+): Promise<UpgradeProbe> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const req = request({
+      host: options.connectTo ?? "127.0.0.1",
+      port: target.port === "" ? 443 : Number(target.port),
+      path: `${target.pathname}${target.search}`,
+      servername: target.hostname,
+      ca: options.ca,
+      timeout: options.timeoutMs ?? 10_000,
+      headers: {
+        host: target.host,
+        origin: options.origin,
+        connection: "Upgrade",
+        upgrade: "websocket",
+        "sec-websocket-version": "13",
+        "sec-websocket-key": Buffer.from("clubadmin-probe!").toString("base64"),
+      },
+    });
+    req.on("upgrade", (_res, socket, head) => {
+      const read = (data: Buffer) => {
+        socket.destroy();
+        // A close frame: 0x88, a length, then the code (two bytes).
+        resolve({
+          kind: "upgraded",
+          closeCode: data[0] === 0x88 && data.length >= 4 ? data.readUInt16BE(2) : null,
+        });
+      };
+      if (head.length > 0) read(head);
+      else socket.once("data", read);
+      socket.once("error", () => resolve({ kind: "upgraded", closeCode: null }));
+    });
+    req.on("response", (res) => {
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk: string) => {
+        if (body.length < 500) body += chunk;
+      });
+      res.on("end", () => resolve({ kind: "http", status: res.statusCode ?? 0, body }));
+    });
+    req.on("timeout", () => req.destroy(new Error("timed out")));
+    req.on("error", reject);
+    req.end();
+  });
+}

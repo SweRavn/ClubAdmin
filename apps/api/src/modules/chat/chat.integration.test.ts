@@ -595,21 +595,24 @@ describe("the real-time connection", () => {
   };
 
   it("refuses a connection without a valid ticket, and a ticket used twice", async () => {
+    // Refused after the handshake with a close code the client can show
+    // (P2.7c): a refused handshake would reach browsers only as 1006.
+    const closed = (ws: WebSocket) =>
+      new Promise<number>((resolve) => {
+        ws.on("close", (code) => resolve(code));
+        ws.on("error", () => undefined);
+      });
     const bad = new WebSocket(`${url}?ticket=${"x".repeat(43)}`);
-    const status = await new Promise<number>((resolve) => {
-      bad.on("unexpected-response", (_req, res) => resolve(res.statusCode ?? 0));
-      bad.on("error", () => undefined);
+    expect(await closed(bad)).toBe(4401);
+    const foreign = new WebSocket(`${url}?ticket=${"x".repeat(43)}`, {
+      headers: { origin: "https://evil.example" },
     });
-    expect(status).toBe(401);
+    expect(await closed(foreign)).toBe(4403);
     const ticket = (await api(team.coach.id, "POST", "/realtime/tickets")).json<RealtimeTicket>();
     const first = new WebSocket(`${url}?ticket=${ticket.ticket}`);
     await new Promise((r) => first.once("open", r));
     const second = new WebSocket(`${url}?ticket=${ticket.ticket}`);
-    const again = await new Promise<number>((resolve) => {
-      second.on("unexpected-response", (_req, res) => resolve(res.statusCode ?? 0));
-      second.on("error", () => undefined);
-    });
-    expect(again).toBe(401);
+    expect(await closed(second)).toBe(4401);
     first.close();
   });
 

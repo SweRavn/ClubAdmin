@@ -509,7 +509,10 @@ forbids name fields and name columns elsewhere; the view
   (`wss://<web host>/api/v1/realtime`, P2.7b): the reverse proxy in front of
   the web app must forward that path, with the upgrade, to the API (the dev
   Caddyfile does; Next.js cannot proxy WebSockets), so the browser needs no
-  certificate, host or CORS origin of the API's. The mobile app uses the
+  certificate, host or CORS origin of the API's. A refused connection
+  completes the handshake and closes at once with a code the client can
+  show (4401 no valid ticket, 4403 a foreign origin, 4429 too many
+  connections): a refused handshake reaches browsers only as 1006. The mobile app uses the
   ticket's URL on the API's host. The connection is the logged-in person's own: while
   viewing as a ward the web chat fetches new messages every 15 seconds
   instead. Clients reconnect with backoff and show "not connected" only

@@ -5041,7 +5041,11 @@
     "history": "Changes",
     "protected": "Protected members",
     "profileViews": "Who has viewed profiles",
-    "safeguarding": "Safeguarding"
+    "safeguarding": "Safeguarding",
+    "kindManage": "Change",
+    "kindManageHint": "Pages where you change settings or manage something.",
+    "kindView": "Overview",
+    "kindViewHint": "Pages that only show information."
   },
   "roleMatrix": {
     "title": "Role overview",

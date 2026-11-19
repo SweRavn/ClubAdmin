@@ -36,6 +36,13 @@ const HEARTBEAT_MS = 30_000;
 const TYPING_INTERVAL_MS = 2_000;
 /** Client frames are small JSON objects. */
 const MAX_PAYLOAD = 1024;
+/** Why a connection is refused (close codes 4000–4999 are the application's). */
+type RefusalCode = 4401 | 4403 | 4429;
+const REFUSALS: Record<RefusalCode, string> = {
+  4401: "ticket",
+  4403: "origin",
+  4429: "too_many",
+};
 
 interface Connection {
   socket: WebSocket;
@@ -101,9 +108,15 @@ export class ChatGateway implements OnApplicationBootstrap, OnApplicationShutdow
     return this.wss.clients.size;
   }
 
-  private refuse(socket: Duplex, status: number): void {
-    socket.write(`HTTP/1.1 ${status} ${status === 401 ? "Unauthorized" : "Forbidden"}\r\n\r\n`);
-    socket.destroy();
+  /**
+   * Refuses a connection so the client can tell why (P2.7c): a refused
+   * handshake reaches browsers only as close code 1006, the same as a proxy
+   * that never forwarded it. So the handshake completes and the connection
+   * closes at once with an application code: 4401 no valid ticket, 4403 an
+   * origin that is not the web app's, 4429 too many connections.
+   */
+  private refuse(request: IncomingMessage, socket: Duplex, head: Buffer, code: RefusalCode): void {
+    this.wss.handleUpgrade(request, socket, head, (ws) => ws.close(code, REFUSALS[code]));
   }
 
   private async upgrade(request: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {
@@ -115,16 +128,16 @@ export class ChatGateway implements OnApplicationBootstrap, OnApplicationShutdow
     // Browsers send their origin: only the web app's (mobile apps send none).
     const origin = request.headers.origin;
     if (origin && !this.origins.includes(origin)) {
-      this.refuse(socket, 403);
+      this.refuse(request, socket, head, 4403);
       return;
     }
     const holder = await this.tickets.consume(url.searchParams.get("ticket") ?? "");
     if (!holder) {
-      this.refuse(socket, 401);
+      this.refuse(request, socket, head, 4401);
       return;
     }
     if ((this.byPerson.get(holder.personId)?.size ?? 0) >= this.maxPerPerson) {
-      this.refuse(socket, 403);
+      this.refuse(request, socket, head, 4429);
       return;
     }
     this.wss.handleUpgrade(request, socket, head, (ws) => {

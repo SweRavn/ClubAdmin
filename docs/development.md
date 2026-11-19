@@ -355,6 +355,22 @@ Settings, schedules and restores: `infra/backup/README.md` and
 See also [`infra/docker/README.md`](../infra/docker/README.md) for details
 about each service.
 
+## Troubleshooting: the chat says "Ej ansluten"
+
+The chat's real-time connection goes from the browser to
+`wss://clubadmin.localhost/api/v1/realtime`, which Caddy forwards to the API.
+The banner's "Teknisk orsak" names what happened:
+
+- `websocket … 1006`: the connection never reached the API. Run
+  `pnpm dev:smoke`; its "Realtime" line says why: the request went to the
+  web app (Caddy runs an old Caddyfile: `pnpm dev:services` reloads it) or
+  Caddy cannot reach the API (is it running? `API_UPSTREAM` in `.env.local`).
+- `websocket … 4403`: the API refuses the page's origin: the address in the
+  browser must be in `CORS_ORIGINS` in `.env.local` (restart the API).
+- `websocket … 4401`: the ticket was not accepted (used or expired); the
+  chat gets a new one by itself.
+- `ticket …`: the ticket request failed (not logged in, rate limited).
+
 ## Troubleshooting: stuck on "Aktivera ditt användarkonto"
 
 You signed up through Zitadel, and every visit to the login now shows

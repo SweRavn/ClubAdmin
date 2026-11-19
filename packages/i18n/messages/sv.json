@@ -5041,7 +5041,11 @@
     "history": "Ändringar",
     "protected": "Skyddade medlemmar",
     "profileViews": "Vem har tittat på profiler",
-    "safeguarding": "Trygghet"
+    "safeguarding": "Trygghet",
+    "kindManage": "Ändra",
+    "kindManageHint": "Sidor där du ändrar inställningar eller hanterar något.",
+    "kindView": "Översikt",
+    "kindViewHint": "Sidor som bara visar information."
   },
   "roleMatrix": {
     "title": "Rollöversikt",
