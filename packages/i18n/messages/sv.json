@@ -900,7 +900,17 @@
     "minutes_series_required": "Välj vilken serie protokollet ska ligga i.",
     "governing_signed": "Utkastet är signerat och kan inte ändras. Ändringar blir en ny version som signeras igen.",
     "signers_invalid": "Signerarna måste vara medlemmar i föreningen och får bara anges en gång.",
-    "already_signed": "Du har redan signerat den här versionen."
+    "already_signed": "Du har redan signerat den här versionen.",
+    "plugin_not_installed": "Tillägget finns inte i installationen.",
+    "plugin_wrong_country": "Tillägget gäller inte föreningens land.",
+    "plugin_config_invalid": "En inställning för tillägget är felaktig eller saknas.",
+    "plugin_secret_unknown": "Tillägget har inget sådant hemligt värde.",
+    "plugin_disabled": "Tillägget är avstängt i föreningen.",
+    "plugin_unavailable": "Tillägget svarade inte. Försök igen om en stund.",
+    "grant_period_unknown": "Perioden finns inte för bidragsordningen.",
+    "grant_report_locked": "Rapporten är redan låst.",
+    "grant_report_not_locked": "Lås rapporten innan filerna hämtas.",
+    "grant_export_empty": "Tillägget gav ingen fil i det formatet."
   },
   "memberExport": {
     "columns": {
@@ -2185,6 +2195,12 @@
       "swap": {
         "title": "{kind, select, swap_requested {Någon vill ta över ditt arbetspass} swap_declined {Ditt byte av arbetspass avböjdes} other {Ett arbetspass har bytts}}",
         "body": "{title} {when} i {club}. Öppna Mina uppgifter för att se vad som gäller."
+      }
+    },
+    "grant": {
+      "deadline": {
+        "title": "Sista dag för en bidragsrapport närmar sig",
+        "body": "Rapporten i {club} ska vara inskickad senast {date}. Öppna Bidrag för att granska, låsa och hämta den."
       }
     }
   },
@@ -4842,5 +4858,84 @@
     },
     "visibility": "Vem ser namnen på passen",
     "who": "Vem"
+  },
+  "plugins": {
+    "title": "Tillägg",
+    "intro": "Tillägg för föreningens land, till exempel rapportering av LOK-stöd. Ett tillägg får bara de uppgifter som visas under det.",
+    "none": "Det finns inga tillägg för föreningens land.",
+    "saved": "Tillägget har sparats.",
+    "on": "På",
+    "off": "Av",
+    "enable": "Använd tillägget i föreningen",
+    "save": "Spara",
+    "dataTitle": "Uppgifter som tillägget får",
+    "network": "Kontaktar: {hosts}",
+    "noNetwork": "Kontaktar inga andra tjänster.",
+    "secretSet": "sparad",
+    "secretNotSet": "inte angiven",
+    "secretKeep": "Lämna tomt för att behålla",
+    "secretRemove": "Ta bort det sparade värdet",
+    "opsTitle": "Tillägg",
+    "opsIntro": "Installerade tillägg. Tilläggsgränssnittets version: {version}.",
+    "id": "Tillägg",
+    "version": "Version",
+    "regions": "Länder",
+    "capabilitiesTitle": "Gör",
+    "contract": "kräver gränssnitt {range}",
+    "dataFields": {
+      "name": "Namn",
+      "birthDate": "Födelsedatum",
+      "sex": "Kön",
+      "personalIdentityNumber": "Personnummer",
+      "disability": "Deltar i anpassad verksamhet",
+      "homeMunicipality": "Hemkommun",
+      "membershipStatus": "Medlemskap",
+      "membershipFeePaid": "Betald medlemsavgift",
+      "groupSport": "Gruppens idrott",
+      "attendance": "Närvaro",
+      "leaders": "Ledare",
+      "clubRoles": "Roller i föreningen",
+      "groupRoles": "Funktioner i grupper"
+    },
+    "capabilities": {
+      "grant-reporting": "Bidragsrapportering",
+      "background-checks": "Utdrag ur belastningsregistret"
+    }
+  },
+  "grants": {
+    "title": "Bidrag",
+    "intro": "Rapporter till bidragsordningar som föreningen har slagit på under Tillägg: vad som räknas och varför, vad som saknas och filerna att skicka in.",
+    "none": "Inga bidragsordningar är påslagna. En administratör slår på dem under Tillägg.",
+    "unavailable": "Tillägget svarade inte: {plugins}. Försök igen om en stund.",
+    "schemes": "Bidragsordningar",
+    "current": "Pågår",
+    "deadline": "Sista dag {date}",
+    "late": "Försenad: {percent} % avdrag om den skickas in senast {until}",
+    "refused": "För sent: perioden tas inte längre emot",
+    "report": "Rapport {from} – {to}",
+    "evaluatedAt": "räknad {at}",
+    "lockedBy": "låst {at} av",
+    "attendanceChanged": "Närvaron i perioden ändrades efter att rapporten låstes ({at}). Den låsta rapporten är oförändrad.",
+    "missing": "Uppgifter som saknas",
+    "missingHint": "Komplettera uppgifterna innan rapporten låses; personer utan dem räknas inte.",
+    "totals": "Summor",
+    "sessions": "Gruppaktiviteter: {counting} av {total} räknas",
+    "counts": "Räknas ({count} deltagare)",
+    "notCounted": "Räknas inte",
+    "people": "Personer ({count})",
+    "lock": "Lås rapporten",
+    "lockHint": "När rapporten är låst ändras den inte längre, och filerna kan hämtas.",
+    "lockWithMissing": "Det saknas uppgifter. Personer utan dem räknas inte om du låser nu.",
+    "lockedNotice": "Rapporten är låst.",
+    "format": "Format",
+    "export": "Hämta filen",
+    "statuses": {
+      "draft": "Utkast",
+      "locked": "Låst",
+      "exported": "Hämtad",
+      "submitted": "Inskickad",
+      "accepted": "Godkänd",
+      "rejected": "Avslagen"
+    }
   }
 }

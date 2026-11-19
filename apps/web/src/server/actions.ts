@@ -3098,7 +3098,59 @@ const CARPOOL_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+// Plugins and grant reports (P2.7 part C): a club's plugin is enabled and
+// configured in one PUT (fields named config.<key> with their types in
+// `configKeys`, secrets as secret.<name>, removed with secretRemove.<name>;
+// an empty secret field leaves the stored one); a period's report is locked.
+const KEY = /^[a-zA-Z][a-zA-Z0-9_]{0,39}$/;
+const GRANT_ACTIONS: Record<string, FormAction> = {
+  "club-plugin-save": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const pluginId = text(form, "pluginId");
+      if (!clubId || !/^[a-z]{2,}(\.[a-z0-9-]+)+$/.test(pluginId)) return null;
+      const config: Record<string, string | number | boolean | null> = {};
+      for (const entry of text(form, "configKeys").split(",").filter(Boolean)) {
+        const [key = "", type = ""] = entry.split(":");
+        if (!KEY.test(key)) return null;
+        const value = text(form, `config.${key}`);
+        if (type === "boolean") config[key] = form.get(`config.${key}`) === "on";
+        else if (value === "") config[key] = null;
+        else if (type === "number") {
+          const n = Number(value.replace(",", "."));
+          if (!Number.isFinite(n)) return null;
+          config[key] = n;
+        } else config[key] = value;
+      }
+      const secrets: Record<string, string | null> = {};
+      for (const name of text(form, "secretNames").split(",").filter(Boolean)) {
+        if (!KEY.test(name)) return null;
+        const value = text(form, `secret.${name}`);
+        if (form.get(`secretRemove.${name}`) === "on") secrets[name] = null;
+        else if (value !== "") secrets[name] = value;
+      }
+      return {
+        path: `/api/v1/clubs/${clubId}/plugins/${pluginId}`,
+        method: "PUT",
+        body: { enabled: form.get("enabled") === "on", config, secrets },
+      };
+    },
+    done: saved,
+  },
+  "grant-report-lock": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const reportId = id(form, "reportId");
+      return clubId && reportId
+        ? { path: `/api/v1/clubs/${clubId}/grants/reports/${reportId}/lock`, method: "POST" }
+        : null;
+    },
+    done: (form) => withParam(back(form), "locked", "1"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
+  ...GRANT_ACTIONS,
   ...CARPOOL_ACTIONS,
   ...DUTY_ACTIONS,
   ...ANNOUNCEMENT_ACTIONS,

@@ -129,6 +129,21 @@ const BILLING_CASES: Case[] = [
 
 /** The requests of the apps, with their budgets. */
 const CASES: Case[] = [
+  // Grant reports (P2.7): SVK's LOK report for this half-year, evaluated
+  // again (a draft): the club's held sessions by its date index, who was
+  // present, the people's data and memberships by key, one upsert.
+  {
+    route: "GET /api/v1/clubs/{clubId}/grants/report",
+    persona: "anna",
+    method: "GET",
+    url: () => {
+      const now = new Date();
+      const period = `${now.getUTCFullYear()}-${now.getUTCMonth() < 6 ? 1 : 2}`;
+      return `/api/v1/clubs/${key("svk")}/grants/report?pluginId=se.rf.lok&scheme=lok&period=${period}`;
+    },
+    statements: 15,
+    pages: 450,
+  },
   // Volunteer duties (P2.6): the kiosk and score table at P2012's home match,
   // Anna signed up for Oskar and Ahmed's shift offered to another family.
   {

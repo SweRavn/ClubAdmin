@@ -7,7 +7,7 @@
 // (a plugin may wait on a remote service); a failed call is audited and
 // contained.
 
-import { audit, type Database, type TenantContext } from "@clubadmin/db";
+import { audit, type Database, type TenantContext, type Tx } from "@clubadmin/db";
 import {
   callPlugin,
   type CheckType,
@@ -83,6 +83,9 @@ export function installedPlugin(plugin: Plugin): InstalledPlugin {
   };
 }
 
+/** Who calls a plugin: a person in the club, or a background job in the club. */
+export type PluginCaller = TenantContext | { system: string; clubId: string };
+
 export class PluginsService {
   private readonly db: Database;
   private readonly registry: PluginRegistry;
@@ -127,6 +130,23 @@ export class PluginsService {
         .filter((r) => r.enabled && this.registry.get(r.pluginId))
         .map((r) => r.pluginId),
     );
+  }
+
+  /**
+   * A background job's view (deadline reminders, P2.7 part C): every active
+   * club's enabled, installed plugins, read club by club in the club's
+   * context (club_plugins is tenant-scoped).
+   */
+  async enabledPluginsOfAllClubs(job: string): Promise<{ clubId: string; pluginId: string }[]> {
+    const clubIds = await this.db.withSystem(job, {}, (tx) => repo.activeClubIds(tx));
+    const out: { clubId: string; pluginId: string }[] = [];
+    for (const clubId of clubIds) {
+      const rows = await this.db.withSystem(job, { clubId }, (tx) => repo.clubPlugins(tx));
+      for (const r of rows) {
+        if (r.enabled && this.registry.get(r.pluginId)) out.push({ clubId, pluginId: r.pluginId });
+      }
+    }
+    return out;
   }
 
   /** The plugins for the club's country, with the club's settings (secrets by name only). */
@@ -223,20 +243,28 @@ export class PluginsService {
     });
   }
 
+  /** A caller's transaction in the club: a person's, or a background job's. */
+  private inClub<T>(context: PluginCaller, fn: (tx: Tx) => Promise<T>): Promise<T> {
+    return "system" in context
+      ? this.db.withSystem(context.system, { clubId: context.clubId }, fn)
+      : this.db.withTenant(context, fn);
+  }
+
   /**
    * Calls an enabled plugin of the club. The settings are read in one short
    * transaction; the call itself runs outside it (each state access is its
-   * own short transaction), validated against `schema` and contained.
+   * own short transaction), validated against `schema` and contained. A
+   * background job (deadline reminders) calls as `{ system, clubId }`.
    */
   async run<T>(
-    context: TenantContext,
+    context: PluginCaller,
     pluginId: string,
     call: (plugin: Plugin, ctx: PluginContext) => Promise<unknown>,
     schema: z.ZodType<T>,
   ): Promise<PluginCallResult<T>> {
     const plugin = this.registry.get(pluginId);
     if (!plugin) throw new DomainError("plugin_not_installed");
-    const settings = await this.db.withTenant(context, async (tx) => {
+    const settings = await this.inClub(context, async (tx) => {
       const club = await this.clubs.getClubInTx(tx, context.clubId);
       const row = await repo.clubPlugin(tx, pluginId);
       if (!row?.enabled) throw new DomainError("plugin_disabled");
@@ -252,13 +280,10 @@ export class PluginsService {
     });
     const state = {
       get: (key: string) =>
-        this.db.withTenant(context, (tx) =>
-          repo.stateGet(tx, pluginId, key),
-        ) as Promise<JsonValue | null>,
+        this.inClub(context, (tx) => repo.stateGet(tx, pluginId, key)) as Promise<JsonValue | null>,
       set: (key: string, value: JsonValue) =>
-        this.db.withTenant(context, (tx) => repo.stateSet(tx, pluginId, key, value)),
-      delete: (key: string) =>
-        this.db.withTenant(context, (tx) => repo.stateDelete(tx, pluginId, key)),
+        this.inClub(context, (tx) => repo.stateSet(tx, pluginId, key, value)),
+      delete: (key: string) => this.inClub(context, (tx) => repo.stateDelete(tx, pluginId, key)),
     };
     const refused: string[] = [];
     const ctx: PluginContext = {
@@ -289,7 +314,7 @@ export class PluginsService {
         },
         "plugin call failed",
       );
-      await this.db.withTenant(context, (tx) =>
+      await this.inClub(context, (tx) =>
         audit.record(tx, {
           action: "plugin.call_failed",
           resourceType: "club",

@@ -51,6 +51,7 @@ const NOTICE_PARAMS = [
   "merged",
   "undone",
   "saved",
+  "locked",
   "deleted",
   "uploaded",
   "answered",

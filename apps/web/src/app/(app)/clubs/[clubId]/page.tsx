@@ -147,6 +147,24 @@ export default async function ClubPage({ params, searchParams }: Params) {
               {t("duties.title")}
             </a>
           ) : null}
+          {permissions.includes("club.grants.read") ? (
+            <a
+              href={`/clubs/${club.id}/grants`}
+              className="text-sm text-accent underline"
+              data-testid="club-grants-link"
+            >
+              {t("grants.title")}
+            </a>
+          ) : null}
+          {permissions.includes("club.plugins.manage") ? (
+            <a
+              href={`/clubs/${club.id}/plugins`}
+              className="text-sm text-accent underline"
+              data-testid="club-plugins-link"
+            >
+              {t("plugins.title")}
+            </a>
+          ) : null}
           {canAudit ? (
             <a
               href={`/clubs/${club.id}/audit`}

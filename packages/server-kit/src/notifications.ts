@@ -241,6 +241,15 @@ export function noticeLink(input: NoticeInput): string {
     // Volunteer duties (P2.6): one's shifts are in "Mina uppgifter".
     case "duty_shift":
       return "/me/tasks";
+    // Grant reports (P2.7 part C): the period's report.
+    case "grant_report": {
+      const query = new URLSearchParams({
+        pluginId: str(input.params.pluginId),
+        scheme: str(input.params.scheme),
+        period: str(input.params.period),
+      });
+      return input.clubId ? `/clubs/${input.clubId}/grants?${query}` : "/";
+    }
     default:
       return "/";
   }

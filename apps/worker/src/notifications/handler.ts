@@ -201,6 +201,8 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "duty.changed",
       "expense_claim.submitted",
       "expense_claim.decided",
+      // Grant reports (P2.7 part C): a deadline near.
+      "grant.deadline.near",
       // Announcements (P2.3).
       "announcement.sent",
       "announcement.withdrawn",
@@ -810,6 +812,40 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
         // A mileage claim was submitted (P2.5): whom it was routed to, else the
         // group's attesters and owners, else the club's (never the claimant).
         // Fixed texts.
+        // A grant report's deadline is near (P2.7 part C): those who lock and
+        // export the club's reports (club.grants.report through a club role).
+        case "grant.deadline.near": {
+          const payload = DOMAIN_EVENTS["grant.deadline.near"].parse(event.payload);
+          await useClub(tx, payload.clubId);
+          const { rows } = await tx.execute<{ person_id: string; time_zone: string }>(sql`
+            SELECT DISTINCT r.person_id, c.time_zone
+            FROM public.club_role_assignments r
+            JOIN public.role_permissions rp ON rp.club_id = r.club_id AND rp.role_id = r.role_id
+              AND rp.permission = 'club.grants.report'
+            JOIN public.clubs c ON c.id = r.club_id
+            WHERE r.club_id = ${payload.clubId}::uuid AND r.valid_to IS NULL`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId: payload.clubId,
+              type: "grant.deadline" as const,
+              subjectType: "grant_report",
+              subjectId: null,
+              about: [],
+              params: {
+                pluginId: payload.pluginId,
+                scheme: payload.scheme,
+                period: payload.period,
+                date: `${payload.deadline}T12:00:00Z`,
+                timeZone: r.time_zone,
+                count: payload.days,
+              },
+              dedupeKey: `grant.deadline:${payload.pluginId}:${payload.scheme}:${payload.period}:${payload.days}`,
+            })),
+          );
+          return;
+        }
         case "expense_claim.submitted": {
           const { clubId, claimId } = DOMAIN_EVENTS["expense_claim.submitted"].parse(event.payload);
           await useClub(tx, clubId);

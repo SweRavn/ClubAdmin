@@ -2,7 +2,7 @@
 // The operator console (P1.13; club types P1.15 B): only for platform
 // operators acting as operators with a second factor; everyone else gets the
 // forbidden page. Club name and country only, never member data. Billing
-// shows only with BILLING_ENABLED.
+// shows only with BILLING_ENABLED; the installed plugins (P2.7).
 import { forbidden } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -22,6 +22,9 @@ export default async function OpsLayout({ children }: { children: ReactNode }) {
       <nav className="flex gap-4 border-b border-border pb-2 text-sm">
         <a href="/ops/club-types" className="font-medium underline">
           {t("clubTypes.title")}
+        </a>
+        <a href="/ops/plugins" className="font-medium underline">
+          {t("plugins.opsTitle")}
         </a>
         {billing ? (
           <a href="/ops/billing" className="font-medium underline">

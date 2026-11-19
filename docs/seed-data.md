@@ -387,7 +387,10 @@ schedule (Ola left two years ago).
   enabled the LOK-stöd plugin (`se.rf.lok`) for SVK a month ago, so SVK's
   attendance views show the LOK hints and its youth sessions this half-year
   make up a draft LOK report; Lars enabled samordnet rapportering
-  (`no.nif.samordnet`) for FIL. No report is locked yet.
+  (`no.nif.samordnet`) for FIL. No report is locked yet. Try
+  `/clubs/<svk>/grants` as Anna, Johan (registrars) or Sara (treasurer) to
+  lock and download, and `/clubs/<svk>/plugins` as Anna with a second
+  factor.
 - **Calendar feeds** (P1.11, `apps/api/src/seed/steps/calendar.ts`): Anna
   has a "My schedule" feed for Elsa and Oskar
   (`/cal/demo-anna-my-schedule.ics`), Erik subscribes to the F2017 group

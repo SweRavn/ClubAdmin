@@ -3,7 +3,8 @@
 // bundled LOK plugin: the scheme and its periods once the club enables it,
 // a period's draft report (what counts and why, people through the
 // presenter), locking (registrars, not managers), exporting the locked
-// report's files, the audit trail and another club seeing nothing.
+// report's files, the audit trail and another club seeing nothing; the
+// deadline reminders (P2.7 part C).
 
 import { createTestDatabase, type TestDatabase } from "@clubadmin/db/testing";
 import type { GrantFiles, GrantReport, GrantSchemeList } from "@clubadmin/shared";
@@ -19,6 +20,7 @@ import {
 import { devToken, TEST_DEV_AUTH_KEY } from "../../testing/oidc.ts";
 import { type CoreServices, createCoreServices } from "../../testing/services.ts";
 import { createTestApp, NO_RATE_LIMITS, type TestApp } from "../../testing/test-app.ts";
+import { GrantsService } from "./grants.service.ts";
 
 let t: TestDatabase;
 let s: CoreServices;
@@ -267,5 +269,49 @@ describe("grant reports", () => {
       )
     ).json<GrantReport>().status;
     expect(status).toBe("exported");
+  });
+});
+
+describe("deadline reminders", () => {
+  const events = async () => {
+    const { rows } = await t.query<{ payload: { period: string; days: number } }>(
+      "admin",
+      `SELECT payload FROM outbox.events WHERE type = 'grant.deadline.near' AND club_id = $1
+       ORDER BY created_at, id`,
+      [club.id],
+    );
+    return rows.map((r) => `${r.payload.period}:${r.payload.days}`);
+  };
+
+  it("publish once per stage before an unlocked period's deadline, never for other clubs", async () => {
+    const grants = app.app.get(GrantsService);
+    // LOK's spring period 2026 is due 25 August 2026: ten days ahead.
+    await grants.remindDeadlines(new Date("2026-08-15T10:00:00Z"));
+    expect(await events()).toEqual(["2026-1:14"]);
+    // The next day: the same stage, nothing new.
+    await grants.remindDeadlines(new Date("2026-08-16T10:00:00Z"));
+    expect(await events()).toEqual(["2026-1:14"]);
+    // Three days ahead: the last reminder; after the deadline, none.
+    await grants.remindDeadlines(new Date("2026-08-22T10:00:00Z"));
+    await grants.remindDeadlines(new Date("2026-08-27T10:00:00Z"));
+    expect(await events()).toEqual(["2026-1:14", "2026-1:3"]);
+    const { rows } = await t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM outbox.events WHERE type = 'grant.deadline.near' AND club_id = $1",
+      [other.id],
+    );
+    expect(rows[0]?.n).toBe(0);
+  });
+
+  it("skip a period whose report is locked", async () => {
+    const grants = app.app.get(GrantsService);
+    // The period locked above (this half-year): its deadline's stage 14.
+    const [year, half] = periodKey.split("-").map(Number) as [number, number];
+    const deadline = half === 1 ? `${year}-08-25` : `${year + 1}-02-25`;
+    const before = await events();
+    await grants.remindDeadlines(new Date(Date.parse(`${deadline}T10:00:00Z`) - 10 * DAY));
+    expect((await events()).filter((e) => e.startsWith(`${periodKey}:`))).toEqual(
+      before.filter((e) => e.startsWith(`${periodKey}:`)),
+    );
   });
 });

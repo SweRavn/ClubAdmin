@@ -95,6 +95,7 @@ export default defineConfig({
           testMatch: /duties\.spec\.ts/,
           dependencies: ["carpools"],
         },
-        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["duties"] },
+        { name: "grants", testMatch: /grants\.spec\.ts/, dependencies: ["duties"] },
+        { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["grants"] },
       ],
 });

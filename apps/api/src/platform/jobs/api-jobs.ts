@@ -17,6 +17,7 @@ import {
 
 import type { ActivitiesService } from "../../modules/activities/index.ts";
 import type { EventsService } from "../../modules/events/index.ts";
+import type { GrantsService } from "../../modules/grants/index.ts";
 import type { MemberImportsService } from "../../modules/members/index.ts";
 import {
   type DataExportJobDeps,
@@ -68,6 +69,15 @@ export function activityTasks(activities: ActivitiesService): TaskList {
   };
 }
 
+export function grantTasks(grants: GrantsService): TaskList {
+  return {
+    // Grant deadlines (P2.7 part C): reminders 14 and 3 days ahead.
+    "grants:deadline_reminders": async () => {
+      await grants.remindDeadlines();
+    },
+  };
+}
+
 const ExportPayload = z.object({ exportId: z.uuid() });
 
 export function privacyTasks(exports: DataExportJobDeps, erasure: ErasureJobDeps): TaskList {
@@ -85,12 +95,13 @@ export function privacyTasks(exports: DataExportJobDeps, erasure: ErasureJobDeps
 /**
  * Every minute: an offer is answered by its time to the minute. Every ten
  * minutes: erasures whose grace period has passed. Daily: series extended
- * to the horizon (P1.14).
+ * to the horizon (P1.14), grant deadline reminders (P2.7).
  */
 export const API_CRONTAB = [
   "* * * * * events:expire_offers ?max=1",
   "*/10 * * * * privacy:erase ?max=1",
   "23 2 * * * activities:extend_series ?max=1",
+  "41 6 * * * grants:deadline_reminders ?max=1",
 ].join("\n");
 
 function graphileLogger(logger: Logger): GraphileLogger {
@@ -110,6 +121,7 @@ export function startApiJobs(options: {
   imports: MemberImportsService;
   events: EventsService;
   activities: ActivitiesService;
+  grants: GrantsService;
   exports: DataExportJobDeps;
   erasure: ErasureJobDeps;
   logger: Logger;
@@ -123,6 +135,7 @@ export function startApiJobs(options: {
       ...memberImportTasks(options.imports),
       ...eventTasks(options.events),
       ...activityTasks(options.activities),
+      ...grantTasks(options.grants),
       ...privacyTasks(options.exports, options.erasure),
     },
     crontab: API_CRONTAB,

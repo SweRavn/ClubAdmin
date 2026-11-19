@@ -7,6 +7,7 @@ import { loadApiConfig } from "./config.ts";
 import { ActivitiesService } from "./modules/activities/index.ts";
 import { AuthorizationService, PersonPresenter } from "./modules/authorization/index.ts";
 import { EventsService } from "./modules/events/index.ts";
+import { GrantsService } from "./modules/grants/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
 import { SessionsService, zitadelUsers } from "./modules/identity/index.ts";
 import { MemberImportsService } from "./modules/members/index.ts";
@@ -46,6 +47,7 @@ const importJobs =
         imports: app.get(MemberImportsService),
         events: app.get(EventsService),
         activities: app.get(ActivitiesService),
+        grants: app.get(GrantsService),
         ...privacyJobDeps(),
         logger,
       })

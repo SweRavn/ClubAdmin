@@ -6,7 +6,7 @@
 // view's hints. The host stores the evaluation (IDs and codes only) and
 // never gives a plugin more than its manifest declares.
 
-import { audit, type Database, type TenantContext, type Tx } from "@clubadmin/db";
+import { audit, type Database, outbox, type TenantContext, type Tx } from "@clubadmin/db";
 import {
   ExportFileSchema,
   type GrantReport as PluginReport,
@@ -33,6 +33,9 @@ import type { PluginRegistry, PluginsService } from "../plugins/index.ts";
 import * as repo from "./grants.repository.ts";
 
 const DAY_MS = 86_400_000;
+const REMINDER_JOB = "grants:deadline_reminders";
+/** Reminders before a deadline: 14 days ahead, then 3 (each sent once). */
+const REMINDER_DAYS = [14, 3] as const;
 const LOCALES = ["sv", "en", "nb"] as const;
 
 /** A plugin's texts in the caller's language (English when it is not one of the plugin's). */
@@ -479,5 +482,72 @@ export class GrantsService {
       }
     }
     return result;
+  }
+
+  /**
+   * Deadline reminders (daily, an API job): for every club's enabled grant
+   * plugin, last year's and this year's periods whose deadline is 14 or 3
+   * days away (in the club's time zone) and whose report is not locked yet
+   * get a `grant.deadline.near` event, once per stage (idempotency key).
+   * Returns the events published.
+   */
+  async remindDeadlines(now: Date = new Date()): Promise<number> {
+    const enabled = await this.plugins.enabledPluginsOfAllClubs(REMINDER_JOB);
+    let published = 0;
+    for (const { clubId, pluginId } of enabled) {
+      if (!this.registry.get(pluginId)?.grantReporting) continue;
+      const year = now.getUTCFullYear();
+      const result = await this.plugins.run(
+        { system: REMINDER_JOB, clubId },
+        pluginId,
+        async (p, ctx) => {
+          const out: { scheme: string; period: Period }[] = [];
+          for (const scheme of await p.grantReporting!.schemes(ctx)) {
+            for (const y of [year - 1, year]) {
+              for (const period of await p.grantReporting!.periods(ctx, scheme.key, y)) {
+                out.push({ scheme: scheme.key, period });
+              }
+            }
+          }
+          return out;
+        },
+        z.array(z.object({ scheme: z.string(), period: PeriodSchema })),
+      );
+      if (!result.ok) continue;
+      published += await this.db.withSystem(REMINDER_JOB, { clubId }, async (tx) => {
+        const club = await this.clubs.getClubInTx(tx, clubId);
+        const today = localDate(now, club.timeZone);
+        let count = 0;
+        for (const { scheme, period } of result.value) {
+          const days = Math.round(
+            (Date.parse(`${period.deadline}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) /
+              DAY_MS,
+          );
+          // The nearest stage not yet passed: 14 days (4–14 left), then 3 (0–3 left).
+          const stage = [...REMINDER_DAYS].reverse().find((d) => days >= 0 && days <= d);
+          if (stage === undefined || period.from > today) continue;
+          const report = await repo.reportByKey(tx, { pluginId, scheme, period: period.key });
+          if (report && report.status !== "draft") continue;
+          await outbox.publish(
+            tx,
+            "grant.deadline.near",
+            {
+              clubId,
+              pluginId,
+              scheme,
+              period: period.key,
+              deadline: period.deadline,
+              days: stage,
+            },
+            {
+              idempotencyKey: `grant.deadline:${clubId}:${pluginId}:${scheme}:${period.key}:${stage}`,
+            },
+          );
+          count += 1;
+        }
+        return count;
+      });
+    }
+    return published;
   }
 }

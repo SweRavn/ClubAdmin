@@ -900,7 +900,17 @@
     "minutes_series_required": "Choose the series the minutes go in.",
     "governing_signed": "The draft is signed and cannot change. A change becomes a new version, signed again.",
     "signers_invalid": "Signers must be members of the club and named once.",
-    "already_signed": "You have already signed this version."
+    "already_signed": "You have already signed this version.",
+    "plugin_not_installed": "The plugin is not installed.",
+    "plugin_wrong_country": "The plugin is not for the club's country.",
+    "plugin_config_invalid": "A setting of the plugin is invalid or missing.",
+    "plugin_secret_unknown": "The plugin has no such secret.",
+    "plugin_disabled": "The plugin is turned off in the club.",
+    "plugin_unavailable": "The plugin did not answer. Try again in a while.",
+    "grant_period_unknown": "The period does not exist for the grant scheme.",
+    "grant_report_locked": "The report is already locked.",
+    "grant_report_not_locked": "Lock the report before downloading its files.",
+    "grant_export_empty": "The plugin gave no file in that format."
   },
   "memberExport": {
     "columns": {
@@ -2185,6 +2195,12 @@
       "swap": {
         "title": "{kind, select, swap_requested {Someone wants to take over your duty} swap_declined {Your duty swap was declined} other {A duty was swapped}}",
         "body": "{title} {when} in {club}. Open My tasks to see what applies."
+      }
+    },
+    "grant": {
+      "deadline": {
+        "title": "A grant report's deadline is near",
+        "body": "The report in {club} is due by {date}. Open Grants to review, lock and download it."
       }
     }
   },
@@ -4842,5 +4858,84 @@
     },
     "visibility": "Who sees the names on shifts",
     "who": "Who"
+  },
+  "plugins": {
+    "title": "Plugins",
+    "intro": "Plugins for the club's country, such as LOK grant reporting. A plugin only gets the data listed under it.",
+    "none": "There are no plugins for the club's country.",
+    "saved": "The plugin has been saved.",
+    "on": "On",
+    "off": "Off",
+    "enable": "Use the plugin in the club",
+    "save": "Save",
+    "dataTitle": "Data the plugin gets",
+    "network": "Contacts: {hosts}",
+    "noNetwork": "Contacts no other services.",
+    "secretSet": "saved",
+    "secretNotSet": "not set",
+    "secretKeep": "Leave empty to keep",
+    "secretRemove": "Remove the saved value",
+    "opsTitle": "Plugins",
+    "opsIntro": "Installed plugins. Plugin interface version: {version}.",
+    "id": "Plugin",
+    "version": "Version",
+    "regions": "Countries",
+    "capabilitiesTitle": "Does",
+    "contract": "needs interface {range}",
+    "dataFields": {
+      "name": "Name",
+      "birthDate": "Date of birth",
+      "sex": "Sex",
+      "personalIdentityNumber": "Personal identity number",
+      "disability": "Takes part in adapted activities",
+      "homeMunicipality": "Home municipality",
+      "membershipStatus": "Membership",
+      "membershipFeePaid": "Membership fee paid",
+      "groupSport": "The group's sport",
+      "attendance": "Attendance",
+      "leaders": "Leaders",
+      "clubRoles": "Roles in the club",
+      "groupRoles": "Functions in groups"
+    },
+    "capabilities": {
+      "grant-reporting": "Grant reporting",
+      "background-checks": "Background checks"
+    }
+  },
+  "grants": {
+    "title": "Grants",
+    "intro": "Reports to the grant schemes the club has turned on under Plugins: what counts and why, what is missing and the files to submit.",
+    "none": "No grant schemes are turned on. An administrator turns them on under Plugins.",
+    "unavailable": "The plugin did not answer: {plugins}. Try again in a while.",
+    "schemes": "Grant schemes",
+    "current": "Current",
+    "deadline": "Deadline {date}",
+    "late": "Late: {percent} % deduction if submitted by {until}",
+    "refused": "Too late: the period is no longer accepted",
+    "report": "Report {from} – {to}",
+    "evaluatedAt": "counted {at}",
+    "lockedBy": "locked {at} by",
+    "attendanceChanged": "Attendance in the period changed after the report was locked ({at}). The locked report is unchanged.",
+    "missing": "Missing data",
+    "missingHint": "Complete the data before locking the report; people without it do not count.",
+    "totals": "Totals",
+    "sessions": "Group activities: {counting} of {total} count",
+    "counts": "Counts ({count} participants)",
+    "notCounted": "Does not count",
+    "people": "People ({count})",
+    "lock": "Lock the report",
+    "lockHint": "Once locked, the report no longer changes and its files can be downloaded.",
+    "lockWithMissing": "Data is missing. People without it do not count if you lock now.",
+    "lockedNotice": "The report is locked.",
+    "format": "Format",
+    "export": "Download the file",
+    "statuses": {
+      "draft": "Draft",
+      "locked": "Locked",
+      "exported": "Downloaded",
+      "submitted": "Submitted",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    }
   }
 }

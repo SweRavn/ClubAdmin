@@ -101,6 +101,16 @@ export const DOMAIN_EVENTS = {
    * The API names whom to tell (never the actor); the worker adds guardians
    * for children without a login.
    */
+  // Grant reports (P2.7 part C): a period's deadline is near and its report
+  // is not locked yet (14 and 3 days before; plugin, scheme and period keys).
+  "grant.deadline.near": z.object({
+    clubId: id,
+    pluginId: z.string().regex(/^[a-z]{2,}(\.[a-z0-9-]+)+$/),
+    scheme: z.string().regex(/^[a-z][a-z0-9_-]{0,39}$/),
+    period: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,39}$/),
+    deadline: z.iso.date(),
+    days: z.number().int().min(0),
+  }),
   "duty.changed": z.object({
     clubId: id,
     kind: z.enum(["assigned", "unassigned", "swap_requested", "swapped", "swap_declined"]),

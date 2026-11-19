@@ -8,8 +8,10 @@ by the operator and enabled per club.
 
 ## For clubs
 
-A club manager enables a plugin under the club's settings (a second factor is
-needed, `club.plugins.manage`) and fills in its settings. Only plugins for the
+A club manager enables a plugin on the club's page under **Tillägg**
+(`/clubs/<club>/plugins`; a second factor is needed, `club.plugins.manage`)
+and fills in its settings; the page shows the data each plugin gets and the
+hosts it contacts before it is turned on. Only plugins for the
 club's country are offered. Once a grant plugin is enabled:
 
 - The attendance views show why a session does not count (for LOK: too short,
@@ -17,9 +19,14 @@ club's country are offered. Once a grant plugin is enabled:
 - Managers, registrars and treasurers see each period's report: which sessions
   and people count and why, the totals and the data to fix first (for
   example a missing birth date).
-- A registrar or treasurer locks the period's report and exports its files
-  (CSV, PDF) to hand in. A locked report keeps its evaluation; attendance
-  changed afterwards is flagged, not counted.
+- On the club's page under **Bidrag** (`/clubs/<club>/grants`) each scheme
+  lists its periods with the deadline (and the late steps once it has
+  passed). A registrar or treasurer locks the period's report and downloads
+  its files (CSV, PDF) to hand in. A locked report keeps its evaluation;
+  attendance changed afterwards is flagged, not counted.
+- Registrars and treasurers get a notification 14 and 3 days before a
+  deadline while the period's report is not locked (the API's daily job
+  `grants:deadline_reminders`).
 
 Groups with adapted activities (parasport) are marked as such on the group
 (`adapted`). Grant plugins count their members as "with a disability" where
@@ -45,8 +52,8 @@ LOK plugin; other municipal schemes need plugins of their own.
 The API bundles the plugins in `apps/api/src/plugins.ts`; the `PLUGINS`
 setting chooses which are installed (all bundled ones by default). A plugin
 whose contract version the API does not support stops the start.
-`GET /api/v1/ops/plugins` lists the installed plugins (operators, second
-factor).
+The operator console lists the installed plugins (`/ops/plugins`, from `GET
+/api/v1/ops/plugins`; operators with a second factor).
 
 ## What a plugin may see
 

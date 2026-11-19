@@ -164,6 +164,9 @@ export const NOTIFICATION_TYPES = {
   // assignment, swaps (asked of the holder, done, declined). Fixed texts,
   // never a name in push.
   "duty.reminder": { category: "duties", immediate: true },
+  // Grant reports (P2.7 part C): a deadline 14 and 3 days ahead, to those
+  // who lock and export the club's reports.
+  "grant.deadline": { category: "club_admin" },
   "duty.assigned": { category: "duties" },
   "duty.swap": { category: "duties", immediate: true },
   // Announcements (P2.3, ADR 0053): emailed at once; important ones to

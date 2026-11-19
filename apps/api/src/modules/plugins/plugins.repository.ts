@@ -104,3 +104,10 @@ export async function stateDelete(tx: Tx, pluginId: string, key: string): Promis
     DELETE FROM public.plugin_state
     WHERE club_id = app.current_club_id() AND plugin_id = ${pluginId} AND key = ${key}`);
 }
+
+/** Every club that is not archived (a background job, no club context). */
+export async function activeClubIds(tx: Tx): Promise<string[]> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT id FROM public.clubs WHERE status <> 'archived' ORDER BY id`);
+  return rows.map((r) => r.id);
+}

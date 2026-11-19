@@ -931,6 +931,28 @@ describe("privacy notices (P1.8a)", () => {
     expect(await noticesOf(ids.anna)).toEqual([]);
   });
 
+  it("grant.deadline reaches those who lock the club's grant reports, nobody else (P2.7 C)", async () => {
+    const ids = await team();
+    // Anna is the club's registrar (club.grants.report); the coach manages the club.
+    await t.query(
+      "admin",
+      "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'registrar')",
+      [ids.club, ids.anna],
+    );
+    const event = await publish(ids.club, "grant.deadline.near", {
+      clubId: ids.club,
+      pluginId: "se.rf.lok",
+      scheme: "lok",
+      period: "2026-1",
+      deadline: "2026-08-25",
+      days: 14,
+    });
+    await outbox.dispatch(t.db, event, [handler()]);
+    expect(await types(ids.anna)).toEqual(["grant.deadline"]);
+    expect(await types(ids.coach)).toEqual([]);
+    expect(await types(ids.mikael)).toEqual([]);
+  });
+
   it("chat reports reach the safeguarding officers only; a mute reaches the person (P2.1 B)", async () => {
     const ids = await team();
     await t.query(

@@ -191,3 +191,30 @@ RF's Idrottsarenan needs a vendor agreement
   worker job `grants:attendance_changed`; the locked evaluation is kept.
 - `groups.adapted` is part of the group API (create, update, responses).
 - Not yet: the screens, deadline reminders and end-to-end tests (part C).
+
+## As implemented (part C, 2026-11-19)
+
+- Web: the club's **Tillägg** page (`/clubs/<club>/plugins`, MFA): the
+  plugins for the club's country, on or off, settings generated from the
+  manifest's fields, secrets by name (never shown; an empty field keeps the
+  stored one), the declared data and hosts. **Bidrag**
+  (`/clubs/<club>/grants`): the schemes with their periods, deadlines and
+  late steps; a period's report with sessions and reasons, people, totals and
+  the missing data linked to the person; locking, and the export as a
+  download (a form POST, CSRF checked, as it is audited). The operator
+  console lists the installed plugins (`/ops/plugins`). The web server sends
+  the page's language to these endpoints (`Accept-Language`), so the
+  plugins' texts are in the viewer's language.
+- Deadline reminders: the API's daily job `grants:deadline_reminders` runs
+  every club's enabled grant plugins as a background job
+  (`PluginsService.run` with `{ system, clubId }`) and publishes
+  `grant.deadline.near` 14 and 3 days before a deadline while the period's
+  report is not locked (once per stage, by idempotency key); the worker
+  notifies the holders of `club.grants.report` (`grant.deadline`, category
+  `club_admin`, linking to the period's report).
+- A budget for the report endpoint (15 statements, independent of the data).
+- Not built: submitting through an integration (no plugin has one; RF's
+  needs its agreement, [#22](https://github.com/SweRavn/ClubAdmin/issues/22)),
+  so there is no submit endpoint or button yet; the e2e test checks the LOK
+  report, locking and the CSV download, not fixing a birth date (the demo
+  people have theirs).

@@ -900,7 +900,17 @@
     "minutes_series_required": "Velg hvilken serie protokollen skal ligge i.",
     "governing_signed": "Utkastet er signert og kan ikke endres. Endringer blir en ny versjon som signeres på nytt.",
     "signers_invalid": "Signatarene må være medlemmer av klubben og kan bare angis én gang.",
-    "already_signed": "Du har allerede signert denne versjonen."
+    "already_signed": "Du har allerede signert denne versjonen.",
+    "plugin_not_installed": "Tillegget er ikke installert.",
+    "plugin_wrong_country": "Tillegget gjelder ikke klubbens land.",
+    "plugin_config_invalid": "En innstilling for tillegget er feil eller mangler.",
+    "plugin_secret_unknown": "Tillegget har ingen slik hemmelig verdi.",
+    "plugin_disabled": "Tillegget er slått av i klubben.",
+    "plugin_unavailable": "Tillegget svarte ikke. Prøv igjen om litt.",
+    "grant_period_unknown": "Perioden finnes ikke for tilskuddsordningen.",
+    "grant_report_locked": "Rapporten er allerede låst.",
+    "grant_report_not_locked": "Lås rapporten før filene lastes ned.",
+    "grant_export_empty": "Tillegget ga ingen fil i det formatet."
   },
   "memberExport": {
     "columns": {
@@ -2185,6 +2195,12 @@
       "swap": {
         "title": "{kind, select, swap_requested {Noen vil ta over vakten din} swap_declined {Vaktbyttet ditt ble avslått} other {En vakt er byttet}}",
         "body": "{title} {when} i {club}. Åpne Mine oppgaver for å se hva som gjelder."
+      }
+    },
+    "grant": {
+      "deadline": {
+        "title": "Fristen for en tilskuddsrapport nærmer seg",
+        "body": "Rapporten i {club} skal være sendt inn senest {date}. Åpne Tilskudd for å se gjennom, låse og laste den ned."
       }
     }
   },
@@ -4842,5 +4858,84 @@
     },
     "visibility": "Hvem ser navnene på vaktene",
     "who": "Hvem"
+  },
+  "plugins": {
+    "title": "Tillegg",
+    "intro": "Tillegg for klubbens land, for eksempel samordnet rapportering. Et tillegg får bare opplysningene som vises under det.",
+    "none": "Det finnes ingen tillegg for klubbens land.",
+    "saved": "Tillegget er lagret.",
+    "on": "På",
+    "off": "Av",
+    "enable": "Bruk tillegget i klubben",
+    "save": "Lagre",
+    "dataTitle": "Opplysninger tillegget får",
+    "network": "Kontakter: {hosts}",
+    "noNetwork": "Kontakter ingen andre tjenester.",
+    "secretSet": "lagret",
+    "secretNotSet": "ikke angitt",
+    "secretKeep": "La stå tomt for å beholde",
+    "secretRemove": "Fjern den lagrede verdien",
+    "opsTitle": "Tillegg",
+    "opsIntro": "Installerte tillegg. Versjon av tilleggsgrensesnittet: {version}.",
+    "id": "Tillegg",
+    "version": "Versjon",
+    "regions": "Land",
+    "capabilitiesTitle": "Gjør",
+    "contract": "krever grensesnitt {range}",
+    "dataFields": {
+      "name": "Navn",
+      "birthDate": "Fødselsdato",
+      "sex": "Kjønn",
+      "personalIdentityNumber": "Personnummer",
+      "disability": "Deltar i tilrettelagt aktivitet",
+      "homeMunicipality": "Hjemkommune",
+      "membershipStatus": "Medlemskap",
+      "membershipFeePaid": "Betalt medlemskontingent",
+      "groupSport": "Gruppens idrett",
+      "attendance": "Oppmøte",
+      "leaders": "Ledere",
+      "clubRoles": "Roller i klubben",
+      "groupRoles": "Funksjoner i grupper"
+    },
+    "capabilities": {
+      "grant-reporting": "Tilskuddsrapportering",
+      "background-checks": "Politiattest"
+    }
+  },
+  "grants": {
+    "title": "Tilskudd",
+    "intro": "Rapporter til tilskuddsordninger klubben har slått på under Tillegg: hva som teller og hvorfor, hva som mangler og filene som skal sendes inn.",
+    "none": "Ingen tilskuddsordninger er slått på. En administrator slår dem på under Tillegg.",
+    "unavailable": "Tillegget svarte ikke: {plugins}. Prøv igjen om litt.",
+    "schemes": "Tilskuddsordninger",
+    "current": "Pågår",
+    "deadline": "Frist {date}",
+    "late": "Forsinket: {percent} % trekk hvis den sendes inn senest {until}",
+    "refused": "For sent: perioden tas ikke lenger imot",
+    "report": "Rapport {from} – {to}",
+    "evaluatedAt": "beregnet {at}",
+    "lockedBy": "låst {at} av",
+    "attendanceChanged": "Oppmøtet i perioden ble endret etter at rapporten ble låst ({at}). Den låste rapporten er uendret.",
+    "missing": "Opplysninger som mangler",
+    "missingHint": "Fyll inn opplysningene før rapporten låses; personer uten dem teller ikke.",
+    "totals": "Summer",
+    "sessions": "Gruppeaktiviteter: {counting} av {total} teller",
+    "counts": "Teller ({count} deltakere)",
+    "notCounted": "Teller ikke",
+    "people": "Personer ({count})",
+    "lock": "Lås rapporten",
+    "lockHint": "Når rapporten er låst, endres den ikke lenger, og filene kan lastes ned.",
+    "lockWithMissing": "Det mangler opplysninger. Personer uten dem teller ikke hvis du låser nå.",
+    "lockedNotice": "Rapporten er låst.",
+    "format": "Format",
+    "export": "Last ned filen",
+    "statuses": {
+      "draft": "Utkast",
+      "locked": "Låst",
+      "exported": "Lastet ned",
+      "submitted": "Sendt inn",
+      "accepted": "Godkjent",
+      "rejected": "Avslått"
+    }
   }
 }

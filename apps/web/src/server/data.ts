@@ -42,6 +42,7 @@ import {
   ClubDuplicatesSchema,
   ClubGuardiansSchema,
   ClubPlansSchema,
+  ClubPluginListSchema,
   ClubPrivacySchema,
   ClubProfileViewsSchema,
   ClubSearchResultSchema,
@@ -66,6 +67,8 @@ import {
   FolderPageSchema,
   GoverningDocumentSchema,
   GoverningVersionTextSchema,
+  GrantReportSchema,
+  GrantSchemeListSchema,
   GroupArchivePreviewSchema,
   GroupAttendanceSchema,
   GroupCalendarSchema,
@@ -80,6 +83,7 @@ import {
   GroupWaitlistSchema,
   GuardianInvitationLookupSchema,
   HistoryPageSchema,
+  InstalledPluginListSchema,
   InvitationListSchema,
   InvitationLookupSchema,
   InvitationOptionsSchema,
@@ -783,6 +787,55 @@ async function historyGet<S extends z.ZodType>(
   }
   throw new ApiResponseError(res.status, res.headers.get("x-request-id"));
 }
+
+// Plugins and grant reports (P2.7 part C, ADR 0051): the plugins' texts come
+// in the page's language (Accept-Language); expected refusals (a second
+// factor, a plugin that is off or did not answer, an unknown period) come
+// back as the problem's code for the page to explain.
+async function localizedGet<S extends z.ZodType>(
+  path: string,
+  schema: S,
+  locale: string,
+): Promise<HistoryResult<z.infer<S>>> {
+  const session = await requireSession();
+  const res = await apiFetch(path, session.record, {
+    onBehalfOf: null,
+    headers: { "accept-language": locale },
+  });
+  if (res.ok) return { page: schema.parse(await res.json()), error: null };
+  if (res.status === 401) redirect(`/login?returnTo=${encodeURIComponent(await currentPath())}`);
+  const body = (await res.json().catch(() => ({}))) as { detail?: unknown };
+  const detail = typeof body.detail === "string" ? body.detail : "error";
+  if (res.status === 403) {
+    if (detail !== "mfa_required") forbidden();
+    return { page: null, error: detail };
+  }
+  if (res.status === 404 && detail === "not_found") notFound();
+  if ([400, 404, 409, 503].includes(res.status)) return { page: null, error: detail };
+  throw new ApiResponseError(res.status, res.headers.get("x-request-id"));
+}
+
+/** The installation's plugins (operators with a second factor); null for everyone else. */
+export const getOpsPlugins = cache(() =>
+  apiGet("/api/v1/ops/plugins", InstalledPluginListSchema, { nullOn: [403] }),
+);
+/** The club's plugins (club.plugins.manage with a second factor). */
+export const getClubPlugins = cache((clubId: string, locale: string) =>
+  localizedGet(`/api/v1/clubs/${requireId(clubId)}/plugins`, ClubPluginListSchema, locale),
+);
+/** The enabled grant schemes with their periods; error codes as above. */
+export const getGrantSchemes = cache((clubId: string, locale: string) =>
+  localizedGet(`/api/v1/clubs/${requireId(clubId)}/grants/schemes`, GrantSchemeListSchema, locale),
+);
+/** A period's report (evaluated again while a draft). */
+export const getGrantReport = cache(
+  (clubId: string, key: { pluginId: string; scheme: string; period: string }, locale: string) =>
+    localizedGet(
+      `/api/v1/clubs/${requireId(clubId)}/grants/report?${new URLSearchParams(key)}`,
+      GrantReportSchema,
+      locale,
+    ),
+);
 
 /** A detail page's history: path like "groups/<id>" (IDs checked), query with cursor etc. */
 export const getHistory = cache((path: string, query: string) =>
