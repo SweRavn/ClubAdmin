@@ -5,7 +5,8 @@
 // Leaders answer for participants with the same control (P1.6b, `onAnswer`
 // updates their list).
 import { useQueryClient } from "@tanstack/react-query";
-import { Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useTranslations } from "use-intl";
 
 import { useOutbox } from "../api/outbox.ts";
@@ -99,6 +100,74 @@ export function ResponseButtons({
       {label ? <Text style={{ color: theme.colors.fg }}>{label}</Text> : null}
       {deadlinePassed ? null : button("attending", t("responses.coming"))}
       {button("not_attending", t("responses.notComing"))}
+    </View>
+  );
+}
+
+/**
+ * The optional note to the leaders (P2.7b, ADR 0055): saved on its own,
+ * through the outbox like the answer, once there is an answer; the answer
+ * itself never waits for it.
+ */
+export function ResponseNote({
+  activityId,
+  personId,
+  status,
+  note,
+}: {
+  activityId: string;
+  personId: string;
+  status: Status | null;
+  note: string | null | undefined;
+}) {
+  const t = useTranslations();
+  const theme = useTheme();
+  const send = useOutbox();
+  const [text, setText] = useState(note ?? "");
+  const [saved, setSaved] = useState(false);
+  if (!status) return null;
+  return (
+    <View style={{ gap: theme.space(2), marginTop: theme.space(2) }}>
+      <TextInput
+        value={text}
+        onChangeText={(value) => {
+          setText(value);
+          setSaved(false);
+        }}
+        accessibilityLabel={t("responses.noteLabel")}
+        placeholder={t("responses.noteLabel")}
+        maxLength={200}
+        multiline
+        testID={`answer-note-${activityId}-${personId}`}
+        style={{
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          borderRadius: 8,
+          padding: theme.space(3),
+          color: theme.colors.fg,
+        }}
+      />
+      <Pressable
+        onPress={() => {
+          send({ kind: "response", activityId, personId, status, note: text.trim() || null });
+          setSaved(true);
+        }}
+        accessibilityRole="button"
+        testID={`answer-note-save-${activityId}-${personId}`}
+        style={{
+          minHeight: theme.touch,
+          justifyContent: "center",
+          alignSelf: "flex-start",
+          paddingHorizontal: theme.space(3),
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+        }}
+      >
+        <Text style={{ color: theme.colors.fg, fontWeight: "600" }}>
+          {saved ? t("responses.noteSaved") : t("responses.saveNote")}
+        </Text>
+      </Pressable>
     </View>
   );
 }

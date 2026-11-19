@@ -104,7 +104,8 @@ export async function sendWrite(api: ApiClient, write: OutboxWrite): Promise<unk
   const result = await api.PUT("/api/v1/activities/{activityId}/responses/{personId}", {
     params: { path },
     headers,
-    body: { status: write.status, ...(write.note ? { note: write.note } : {}) },
+    // A note given (even empty: null clears it) is sent; left out, the current note stays.
+    body: { status: write.status, ...(write.note !== undefined ? { note: write.note } : {}) },
   });
   return result.data;
 }

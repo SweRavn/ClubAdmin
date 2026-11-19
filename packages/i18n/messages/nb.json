@@ -1506,7 +1506,9 @@
     "respondByDate": "Dato",
     "respondByTime": "Tid",
     "respondByDateHint": "Tomt: svar tas imot til aktiviteten begynner. Bare en dato: til slutten av dagen.",
-    "leaderCounts": "Ledere: {attending} kommer · {notAttending} kommer ikke · {notAnswered} har ikke svart"
+    "leaderCounts": "Ledere: {attending} kommer · {notAttending} kommer ikke · {notAnswered} har ikke svart",
+    "saveNote": "Lagre meldingen",
+    "noteSaved": "Meldingen er lagret"
   },
   "responseModes": {
     "none": "Ingen svar",

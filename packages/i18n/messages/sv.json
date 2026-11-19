@@ -1506,7 +1506,9 @@
     "respondByDate": "Datum",
     "respondByTime": "Tid",
     "respondByDateHint": "Tomt: svar tas emot tills aktiviteten börjar. Bara ett datum: till dagens slut.",
-    "leaderCounts": "Ledare: {attending} kommer · {notAttending} kommer inte · {notAnswered} har inte svarat"
+    "leaderCounts": "Ledare: {attending} kommer · {notAttending} kommer inte · {notAnswered} har inte svarat",
+    "saveNote": "Spara meddelandet",
+    "noteSaved": "Meddelandet sparat"
   },
   "responseModes": {
     "none": "Inga svar",

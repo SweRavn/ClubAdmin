@@ -225,3 +225,33 @@ test("Erik, F2017's head coach, answers that he is coming to the next training (
     true,
   );
 });
+
+test("Anna answers for Elsa with one tap on the activity page; the note is saved on its own (P2.7b)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.anna, { returnTo: "/schedule" });
+  const item = page
+    .getByTestId("agenda-item")
+    .filter({ has: page.getByTestId(`response-${PERSONAS.elsa.id}`) })
+    .first();
+  await item.getByRole("link").first().click();
+  await page.waitForURL(/\/activities\//);
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  const form = page.getByTestId(`response-${PERSONAS.elsa.id}`);
+  await form.getByTestId("response-note").fill("Kommer tio minuter sent");
+  await form.getByTestId("response-attending").click();
+  await expect(form.getByTestId("response-attending")).toHaveAttribute("aria-pressed", "true");
+  await expect(form.getByTestId("response-note")).toHaveValue("Kommer tio minuter sent");
+  await form.getByTestId("response-note").fill("Kommer en kvart sent");
+  await form.getByTestId("response-save").click();
+  await expect(page.getByTestId("notice")).toBeVisible();
+  await expect(form.getByTestId("response-note")).toHaveValue("Kommer en kvart sent");
+  // Saved: the same note after a fresh load.
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
+  await page.reload();
+  await expect(form.getByTestId("response-note")).toHaveValue("Kommer en kvart sent");
+});

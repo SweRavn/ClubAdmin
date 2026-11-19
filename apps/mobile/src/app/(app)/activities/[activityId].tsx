@@ -30,7 +30,7 @@ import { ErrorView } from "../../../components/error-view.tsx";
 import { NoticeDocuments } from "../../../components/notice-documents.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useProtectScreen } from "../../../components/protect-screen.ts";
-import { ResponseButtons } from "../../../components/response-buttons.tsx";
+import { ResponseButtons, ResponseNote } from "../../../components/response-buttons.tsx";
 import { RoleBadge } from "../../../components/role-badge.tsx";
 import { useIdParam } from "../../../components/route-id.ts";
 import { Body, Button, Loading, Muted, Row, Screen, Section } from "../../../components/ui.tsx";
@@ -161,12 +161,20 @@ function Activity({ activityId }: { activityId: string }) {
             <Row key={r.person.id} last={index === answers.data.mine.length - 1}>
               <PersonName person={r.person} />
               {r.canRespond && !cancelled ? (
-                <ResponseButtons
-                  activityId={activityId}
-                  personId={r.person.id}
-                  status={r.status}
-                  deadlinePassed={answers.data.deadlinePassed}
-                />
+                <View>
+                  <ResponseButtons
+                    activityId={activityId}
+                    personId={r.person.id}
+                    status={r.status}
+                    deadlinePassed={answers.data.deadlinePassed}
+                  />
+                  <ResponseNote
+                    activityId={activityId}
+                    personId={r.person.id}
+                    status={r.status}
+                    note={r.note}
+                  />
+                </View>
               ) : r.status ? (
                 <RoleBadge label={t(enumKey("responseStatus", r.status))} />
               ) : null}

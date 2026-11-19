@@ -1506,7 +1506,9 @@
     "respondByDate": "Date",
     "respondByTime": "Time",
     "respondByDateHint": "Empty: answers are taken until the activity starts. Only a date: until the end of that day.",
-    "leaderCounts": "Leaders: {attending} coming · {notAttending} not coming · {notAnswered} not answered"
+    "leaderCounts": "Leaders: {attending} coming · {notAttending} not coming · {notAnswered} not answered",
+    "saveNote": "Save the message",
+    "noteSaved": "Message saved"
   },
   "responseModes": {
     "none": "Not asked for",
