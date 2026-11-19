@@ -33,7 +33,10 @@ export async function CarpoolSection({
       </section>
     );
   }
-  if (carpool.transportMode !== "own" && carpool.offers.length === 0) return null;
+  // No transport mode and no car yet (P2.7b): "Ordna samåkning" for those who
+  // may offer a ride; the first offer starts the car pool.
+  const starting = carpool.transportMode !== "own" && carpool.offers.length === 0;
+  if (starting && !carpool.canOffer) return null;
   const zone = activity.timeZone;
   const date = localDate(new Date(activity.startsAt), zone);
   const back = `/activities/${activity.id}`;
@@ -42,7 +45,7 @@ export async function CarpoolSection({
   const home = carpool.offers.filter((o) => o.direction === "back");
   const myOut = out.some((o) => o.mine);
   const open =
-    carpool.transportMode === "own" &&
+    carpool.transportMode !== "shared" &&
     activity.status !== "cancelled" &&
     Date.parse(activity.startsAt) > Date.now();
 
@@ -238,7 +241,7 @@ export async function CarpoolSection({
           </div>
         );
       })}
-      {carpool.withoutRide ? (
+      {carpool.withoutRide && !starting ? (
         <div data-testid="carpool-without-ride">
           <h3 className="text-sm font-semibold">{t("carpool.withoutRide")}</h3>
           {carpool.withoutRide.length === 0 && carpool.withoutRideHidden === 0 ? (
@@ -256,7 +259,7 @@ export async function CarpoolSection({
       {open && carpool.canOffer && !myOut ? (
         <details className="rounded-lg border border-border p-3">
           <summary className="cursor-pointer font-medium" data-testid="carpool-offer">
-            {t("carpool.offer")}
+            {starting ? t("carpool.start") : t("carpool.offer")}
           </summary>
           <ActionForm action="carpool-offer" className="mt-2 space-y-2" testId="carpool-offer-form">
             <input type="hidden" name="activityId" value={activity.id} />

@@ -255,3 +255,29 @@ test("Anna answers for Elsa with one tap on the activity page; the note is saved
   await page.reload();
   await expect(form.getByTestId("response-note")).toHaveValue("Kommer en kvart sent");
 });
+
+test("Anna arranges a car pool for Oskar's next training with one tap (P2.7b)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.anna, { returnTo: `/groups/${GROUPS.iknP2012}` });
+  await page
+    .getByTestId("group-calendar")
+    .getByTestId("agenda-item")
+    .filter({ hasText: "Träning" })
+    .first()
+    .getByRole("link")
+    .first()
+    .click();
+  await page.waitForURL(/\/activities\//);
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  // No transport mode set: "Ordna samåkning" opens the offer form.
+  await expect(page.getByTestId("carpool-offer")).toHaveText("Ordna samåkning");
+  await page.getByTestId("carpool-offer").click();
+  await page.getByTestId("carpool-offer-submit").click();
+  await expect(page.getByTestId("carpool-car").first()).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
+});

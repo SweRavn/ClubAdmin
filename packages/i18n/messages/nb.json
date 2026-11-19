@@ -4758,7 +4758,8 @@
     "statsArePublic": "Statistikken er synlig for alle i gruppen.",
     "statsOwnOnly": "Du ser din egen og barnas statistikk.",
     "selfBookingAge": "Bestiller samkjøring selv fra alder",
-    "selfBookingAgeHint": "Tomt: {age} år (landets regel). Yngre barn bestilles av foresatte."
+    "selfBookingAgeHint": "Tomt: {age} år (landets regel). Yngre barn bestilles av foresatte.",
+    "start": "Ordne samkjøring"
   },
   "expenses": {
     "mine": "Mine utlegg",

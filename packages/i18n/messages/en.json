@@ -4758,7 +4758,8 @@
     "statsArePublic": "The statistics are visible to everyone in the group.",
     "statsOwnOnly": "You see your own and your children's statistics.",
     "selfBookingAge": "Books car pools themselves from age",
-    "selfBookingAgeHint": "Empty: {age} (the country's rule). Younger children are booked by a guardian."
+    "selfBookingAgeHint": "Empty: {age} (the country's rule). Younger children are booked by a guardian.",
+    "start": "Arrange a car pool"
   },
   "expenses": {
     "mine": "My expenses",

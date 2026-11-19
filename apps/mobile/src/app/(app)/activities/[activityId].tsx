@@ -61,7 +61,11 @@ function Activity({ activityId }: { activityId: string }) {
   const answers = useResponseSummary(activityId);
   const myGroups = useMyGroups();
   const cached = useCachedEntry(activityId);
-  const carpool = useCarpool(activityId, activity.data?.transportMode === "own");
+  // Also without a transport mode: the first offer starts the car pool (P2.7b).
+  const carpool = useCarpool(
+    activityId,
+    activity.data !== undefined && activity.data.transportMode !== "shared",
+  );
   const duties = useActivityDuties(activityId);
   useProtectScreen(
     (activity.data?.leaders ?? []).some((p) => p.protected),

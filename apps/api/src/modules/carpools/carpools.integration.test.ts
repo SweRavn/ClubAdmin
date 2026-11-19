@@ -141,6 +141,47 @@ describe("transport modes (P2.5)", () => {
     );
     expect(rows.map((r) => r.transport_mode)).toEqual(["shared"]);
   });
+
+  it("without a transport mode the first offer starts the car pool; shared transport has none (P2.7b)", async () => {
+    const training = await api(coach.id, "POST", `/groups/${teamId}/activities`, {
+      kind: "training",
+      title: "Träning",
+      startsAt: `${day(4)}T16:00:00Z`,
+      endsAt: `${day(4)}T17:30:00Z`,
+    });
+    expect(training.statusCode, training.body).toBe(201);
+    const trainingId = training.json<{ id: string; transportMode: string | null }>().id;
+    const view = (await api(a.guardian.id, "GET", `/activities/${trainingId}/carpool`)).json<{
+      transportMode: string | null;
+      canOffer: boolean;
+    }>();
+    expect(view).toMatchObject({ transportMode: null, canOffer: true });
+    const offer = await api(a.guardian.id, "POST", `/activities/${trainingId}/carpool/offers`, {
+      seats: 3,
+    });
+    expect(offer.statusCode, offer.body).toBe(201);
+    // Withdrawn again: the later tests count this team's cars.
+    const offerId = offer.json<{ id: string }>().id;
+    const removed = await api(
+      a.guardian.id,
+      "DELETE",
+      `/activities/${trainingId}/carpool/offers/${offerId}`,
+    );
+    expect(removed.statusCode, removed.body).toBeLessThan(300);
+
+    const bus = await api(coach.id, "POST", `/groups/${teamId}/activities`, {
+      kind: "match",
+      title: "Bussresa",
+      startsAt: `${day(5)}T10:00:00Z`,
+      endsAt: `${day(5)}T12:00:00Z`,
+      transportMode: "shared",
+    });
+    const busId = bus.json<{ id: string }>().id;
+    const refused = await api(a.guardian.id, "POST", `/activities/${busId}/carpool/offers`, {
+      seats: 3,
+    });
+    expect([refused.statusCode, detail(refused)]).toEqual([409, "carpool_closed"]);
+  });
 });
 
 describe("car pools (P2.5)", () => {

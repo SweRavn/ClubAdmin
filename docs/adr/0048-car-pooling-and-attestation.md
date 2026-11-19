@@ -188,3 +188,14 @@ Decided with the prompt's review:
 - Demo (`docs/seed-data.md`): IK Norrbacka P2012's away match on Saturday
   with Anna's and Ahmed's cars, the board's mileage rate and Anna's two
   claims.
+
+## A car pool without a transport mode (decided 2026-11-19, P2.7b)
+
+A car pool is open on every activity of a group unless it has shared
+transport (a bus) or is cancelled or has started: with no transport mode
+set, the activity page offers **"Ordna samåkning"** to those who may offer
+a ride (the roster and their guardians), and the first offer starts the car
+pool (the mode itself stays unset; nothing is written on the activity). A
+leader's explicit "shared transport" still hides it. Own transport shows the
+car pool from the start, with who has no ride yet; without a mode that list
+appears once there is a car.

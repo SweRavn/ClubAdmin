@@ -4758,7 +4758,8 @@
     "statsArePublic": "Statistiken är synlig för alla i gruppen.",
     "statsOwnOnly": "Du ser din egen och dina barns statistik.",
     "selfBookingAge": "Bokar samåkning själv från ålder",
-    "selfBookingAgeHint": "Tomt: {age} år (landets regel). Yngre barn bokas av vårdnadshavare."
+    "selfBookingAgeHint": "Tomt: {age} år (landets regel). Yngre barn bokas av vårdnadshavare.",
+    "start": "Ordna samåkning"
   },
   "expenses": {
     "mine": "Mina utlägg",

@@ -49,7 +49,12 @@ export function CarpoolSection({
       </Section>
     );
   }
-  if (carpool.transportMode !== "own") return null;
+  // No transport mode and no car yet (P2.7b): the offer form starts the car pool.
+  if (carpool.transportMode !== "own" && carpool.offers.length === 0) {
+    return open && carpool.canOffer ? (
+      <OfferForm activityId={activityId} title={t("carpool.start")} />
+    ) : null;
+  }
   const myOut = carpool.offers.some((o) => o.mine && o.direction === "out");
   return (
     <>
@@ -200,7 +205,7 @@ function Car({
   );
 }
 
-function OfferForm({ activityId }: { activityId: string }) {
+function OfferForm({ activityId, title }: { activityId: string; title?: string }) {
   const t = useTranslations();
   const theme = useTheme();
   const offer = useOfferCarpool(activityId);
@@ -208,7 +213,7 @@ function OfferForm({ activityId }: { activityId: string }) {
   const [note, setNote] = useState("");
   const [withReturn, setWithReturn] = useState(true);
   return (
-    <Section title={t("carpool.offer")}>
+    <Section title={title ?? t("carpool.offer")}>
       <Row>
         <Muted>{t("carpool.seats")}</Muted>
         <View style={{ flexDirection: "row", alignItems: "center", gap: theme.space(2) }}>

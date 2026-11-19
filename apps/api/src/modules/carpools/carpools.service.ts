@@ -596,16 +596,21 @@ export class CarpoolsService {
     return { activity, roster, people, eligible };
   }
 
+  /**
+   * A car pool is open unless the activity has shared transport (a bus) or
+   * is cancelled or started: with no transport mode set, the first offer
+   * starts it ("Ordna samåkning", P2.7b, ADR 0048).
+   */
   private isOpen(activity: repo.ActivityFacts): boolean {
     return (
-      activity.transportMode === "own" &&
+      activity.transportMode !== "shared" &&
       activity.status !== "cancelled" &&
       activity.startsAt > this.now()
     );
   }
 
   private requireOpen(activity: repo.ActivityFacts): void {
-    if (activity.transportMode !== "own" || activity.status === "cancelled") {
+    if (activity.transportMode === "shared" || activity.status === "cancelled") {
       throw new DomainError("carpool_closed");
     }
     if (activity.startsAt <= this.now()) throw new DomainError("carpool_started");
