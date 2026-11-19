@@ -250,35 +250,37 @@ export class GrantsService {
         const date = localDate(s.startsAt, club.timeZone);
         return date >= period.from && date <= period.to;
       });
-      const present = await repo.present(
+      const groups = await repo.sessionGroups(
         tx,
         rows.map((r) => r.activityId),
       );
-      const ids = [...new Set(present.map((p) => p.personId))];
+      const ids = [...new Set(rows.flatMap((r) => r.present.map((p) => p.personId)))];
       const people = await this.peopleFor(tx, plugin, ids, period.to, club.timeZone, {
         identityNumbers: true,
       });
-      const sessions = rows.map((s) =>
-        minimizeSession(
-          {
-            id: s.activityId,
-            groupId: s.groupId,
-            sport: s.sport,
-            adapted: s.adapted,
-            kind: s.kind,
-            date: localDate(s.startsAt, club.timeZone),
-            startsAt: s.startsAt.toISOString(),
-            durationMinutes: minutes(s.startsAt, s.endsAt),
-            participantIds: present
-              .filter((p) => p.activityId === s.activityId && p.role === "participant")
-              .map((p) => p.personId),
-            leaderIds: present
-              .filter((p) => p.activityId === s.activityId && p.role === "leader")
-              .map((p) => p.personId),
-          },
-          plugin.manifest.data,
-        ),
-      );
+      const sessions = rows.flatMap((s) => {
+        const group = groups.get(s.activityId);
+        if (!group) return [];
+        return [
+          minimizeSession(
+            {
+              id: s.activityId,
+              groupId: group.groupId,
+              sport: group.sport,
+              adapted: group.adapted,
+              kind: s.kind,
+              date: localDate(s.startsAt, club.timeZone),
+              startsAt: s.startsAt.toISOString(),
+              durationMinutes: minutes(s.startsAt, s.endsAt),
+              participantIds: s.present
+                .filter((p) => p.role === "participant")
+                .map((p) => p.personId),
+              leaderIds: s.present.filter((p) => p.role === "leader").map((p) => p.personId),
+            },
+            plugin.manifest.data,
+          ),
+        ];
+      });
       return { sessions, people, titles: new Map(rows.map((r) => [r.activityId, r.title])) };
     });
   }

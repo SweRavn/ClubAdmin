@@ -16,13 +16,15 @@ export interface HeldSessionRow {
   kind: "training" | "match" | "meeting" | "other";
   startsAt: Date;
   endsAt: Date;
-  /** The activity's first group (by ID): its sport and adapted flag. */
-  groupId: string;
-  sport: string | null;
-  adapted: boolean;
+  /** Everyone marked present, with their role. */
+  present: { personId: string; role: "participant" | "leader" }[];
 }
 
-/** Held (scheduled, started) activities of the club in the range with any attendance mark. */
+/**
+ * Held (scheduled, started) activities of the club in the range with any
+ * attendance mark, and who was present: one statement, the activities by
+ * the club's date index and each one's marks by attendance_records_activity_idx.
+ */
 export async function heldSessions(
   tx: Tx,
   range: { from: Date; to: Date },
@@ -33,54 +35,38 @@ export async function heldSessions(
     kind: HeldSessionRow["kind"];
     starts_at: string;
     ends_at: string;
-    group_id: string;
-    sport: string | null;
-    adapted: boolean;
+    person_id: string;
+    role: "participant" | "leader";
+    status: string;
   }>(sql`
-    SELECT a.id, a.title, a.kind, a.starts_at, a.ends_at, g.id AS group_id, g.sport, g.adapted
+    SELECT a.id, a.title, a.kind, a.starts_at, a.ends_at, r.person_id, r.role, r.status
     FROM public.activities a
-    CROSS JOIN LATERAL (
-      SELECT ag.group_id FROM public.activity_groups ag
-      WHERE ag.activity_id = a.id ORDER BY ag.group_id LIMIT 1) first
-    JOIN public.groups g ON g.id = first.group_id
+    JOIN public.attendance_records r ON r.club_id = a.club_id AND r.activity_id = a.id
     WHERE a.club_id = app.current_club_id()
       AND a.starts_at >= ${range.from.toISOString()}::timestamptz
       AND a.starts_at < least(${range.to.toISOString()}::timestamptz, now())
       AND a.status = 'scheduled'
-      AND EXISTS (SELECT 1 FROM public.attendance_records r
-                  WHERE r.club_id = a.club_id AND r.activity_id = a.id)
-    ORDER BY a.starts_at, a.id`);
-  return rows.map((r) => ({
-    activityId: r.id,
-    title: r.title,
-    kind: r.kind,
-    startsAt: new Date(r.starts_at),
-    endsAt: new Date(r.ends_at),
-    groupId: r.group_id,
-    sport: r.sport,
-    adapted: r.adapted,
-  }));
+    ORDER BY a.starts_at, a.id, r.person_id`);
+  const sessions = new Map<string, HeldSessionRow>();
+  for (const r of rows) {
+    let session = sessions.get(r.id);
+    if (!session) {
+      session = {
+        activityId: r.id,
+        title: r.title,
+        kind: r.kind,
+        startsAt: new Date(r.starts_at),
+        endsAt: new Date(r.ends_at),
+        present: [],
+      };
+      sessions.set(r.id, session);
+    }
+    if (r.status === "present") session.present.push({ personId: r.person_id, role: r.role });
+  }
+  return [...sessions.values()];
 }
 
-/** Who was marked present in these sessions. */
-export async function present(
-  tx: Tx,
-  activityIds: readonly string[],
-): Promise<{ activityId: string; personId: string; role: "participant" | "leader" }[]> {
-  if (activityIds.length === 0) return [];
-  const { rows } = await tx.execute<{
-    activity_id: string;
-    person_id: string;
-    role: "participant" | "leader";
-  }>(sql`
-    SELECT activity_id, person_id, role FROM public.attendance_records
-    WHERE club_id = app.current_club_id()
-      AND activity_id = ANY (${uuidArray(activityIds)}::uuid[]) AND status = 'present'
-    ORDER BY activity_id, person_id`);
-  return rows.map((r) => ({ activityId: r.activity_id, personId: r.person_id, role: r.role }));
-}
-
-/** Each activity's first group (by ID) with its sport and adapted flag. */
+/** Each activity's first group (by ID) with its sport and adapted flag: one index search per activity. */
 export async function sessionGroups(
   tx: Tx,
   activityIds: readonly string[],
@@ -92,12 +78,13 @@ export async function sessionGroups(
     sport: string | null;
     adapted: boolean;
   }>(sql`
-    SELECT DISTINCT ON (ag.activity_id) ag.activity_id, g.id AS group_id, g.sport, g.adapted
-    FROM public.activity_groups ag
-    JOIN public.groups g ON g.id = ag.group_id
-    WHERE ag.club_id = app.current_club_id()
-      AND ag.activity_id = ANY (${uuidArray(activityIds)}::uuid[])
-    ORDER BY ag.activity_id, ag.group_id`);
+    SELECT s.id AS activity_id, g.id AS group_id, g.sport, g.adapted
+    FROM unnest(${uuidArray([...new Set(activityIds)])}::uuid[]) AS s(id)
+    CROSS JOIN LATERAL (
+      SELECT ag.group_id FROM public.activity_groups ag
+      WHERE ag.club_id = app.current_club_id() AND ag.activity_id = s.id
+      ORDER BY ag.group_id LIMIT 1) first
+    JOIN public.groups g ON g.id = first.group_id`);
   return new Map(
     rows.map((r) => [r.activity_id, { groupId: r.group_id, sport: r.sport, adapted: r.adapted }]),
   );
