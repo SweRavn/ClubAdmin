@@ -729,7 +729,7 @@ describe("invitations to several groups, each with a role (P1.15 A4)", () => {
     await s.groups.addOwner(club.ctx, own.id, owner.id, "club_manager");
     const historian = await s.clubRoles.createRole(club.ctx, {
       scope: "group",
-      names: { sv: "Krönikör" },
+      names: { sv: "Krönikör", en: "Krönikör" },
       permissions: ["group.participate", "group.owners.manage"],
     });
 
@@ -773,7 +773,7 @@ describe("invitations to several groups, each with a role (P1.15 A4)", () => {
   it("a club role by ID, given on acceptance (club manager with MFA)", async () => {
     const office = await s.clubRoles.createRole(club.ctx, {
       scope: "club",
-      names: { sv: "Kansli" },
+      names: { sv: "Kansli", en: "Kansli" },
       permissions: ["club.members.read"],
     });
     const byRegistrar = await api(registrar.id, "POST", `/clubs/${club.id}/invitations`, {
@@ -790,7 +790,9 @@ describe("invitations to several groups, each with a role (P1.15 A4)", () => {
     );
     const token = decodeURIComponent(created.json<{ url: string }>().url.split("/join/")[1]!);
     const lookup = await api(null, "GET", `/invitations/lookup?token=${encodeURIComponent(token)}`);
-    expect(lookup.json()).toMatchObject({ clubRole: { id: office.id, names: { sv: "Kansli" } } });
+    expect(lookup.json()).toMatchObject({
+      clubRole: { id: office.id, names: { sv: "Kansli", en: "Kansli" } },
+    });
     const person = await buildPerson(s);
     await api(person.id, "POST", "/invitations/accept", { body: { token } });
     const { rows } = await t.query<{ role_id: string }>(

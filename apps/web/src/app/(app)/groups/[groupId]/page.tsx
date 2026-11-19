@@ -4,7 +4,7 @@
 // protected people the viewer may see carry the crossed-camera icon.
 import { enumKey } from "@clubadmin/i18n";
 import { GROUP_FUNCTIONS, type GroupFunction } from "@clubadmin/shared";
-import { EmptyState, PersonName, RoleBadge } from "@clubadmin/ui";
+import { EmptyState, personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 
@@ -13,6 +13,7 @@ import { Agenda, agendaItemOf, weekOffset, weekRange } from "../../../../compone
 import { ChatRow } from "../../../../components/chat-parts.tsx";
 import { EventList } from "../../../../components/event-list.tsx";
 import { Notice } from "../../../../components/form-error.tsx";
+import { membersOfGroup } from "../../../../components/group-membership.ts";
 import { HistoryLink } from "../../../../components/history-view.tsx";
 import { LazyGroupRoster } from "../../../../components/lazy-group-roster.tsx";
 import { RosterEntry } from "../../../../components/roster-entry.tsx";
@@ -25,6 +26,9 @@ import {
   getGroupChatsIfAllowed,
   getGroupEvents,
   getGroupMembers,
+  getMe,
+  getMyGroups,
+  getMyWards,
 } from "../../../../server/data.ts";
 
 type Params = {
@@ -56,12 +60,23 @@ export default async function GroupPage({ params, searchParams }: Params) {
     getGroupMembers(groupId, limit),
     getGroupCalendarIfAllowed(groupId, range.from, range.to),
   ]);
-  const [club, groups, events] = await Promise.all([
+  const [club, groups, events, me, myGroups, wards] = await Promise.all([
     getClub(group.clubId),
     getClubGroups(group.clubId),
     // Events (P1.6): for those who see the group's activities.
     calendar ? getGroupEvents(group.id, new Date().toISOString()) : null,
+    getMe(),
+    getMyGroups(),
+    getMyWards(),
   ]);
+  // Joining or queueing is offered only for those not in the group yet (P2.7b).
+  const inGroup = membersOfGroup(myGroups, me.personId, group.id);
+  const candidates = [
+    me.personId,
+    ...wards.wards.filter((w) => w.rights.includes("act_on_behalf")).map((w) => w.person.id),
+  ];
+  const canStillJoin = candidates.some((id) => !inGroup.has(id));
+  const wardsInGroup = wards.wards.filter((w) => inGroup.has(w.person.id));
   const parent = groups.find((g) => g.id === group.parentGroupId) ?? null;
   const subgroups = groups.filter((g) => g.parentGroupId === group.id && !g.archived);
   const leaders =
@@ -132,7 +147,17 @@ export default async function GroupPage({ params, searchParams }: Params) {
                 {t("waitlist.tab")}
               </a>
             ) : null}
-            {group.admissionMode !== "closed" && !group.archived ? (
+            {inGroup.has(me.personId) ? (
+              <span className="text-sm" data-testid="group-you-are-member">
+                {t("waitlist.youAreMember")}
+              </span>
+            ) : null}
+            {wardsInGroup.map((w) => (
+              <span key={w.person.id} className="text-sm" data-testid="group-ward-is-member">
+                {t("waitlist.wardIsMember", { name: personLabel(w.person) })}
+              </span>
+            ))}
+            {group.admissionMode !== "closed" && !group.archived && canStillJoin ? (
               <a
                 href={`/clubs/find/${group.clubId}?group=${group.id}`}
                 className={secondaryButtonClass}

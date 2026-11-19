@@ -71,6 +71,27 @@ test("Erik adds a match, cancels and restores it", async ({ page }) => {
   await expect(page.getByTestId("activity-cancelled")).toHaveCount(0);
 });
 
+test("Erik sets the answer deadline as a date, never after the start (P2.7b)", async ({ page }) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}` });
+  await page.getByTestId("new-activity").click();
+  await page.waitForURL(/activities\/new/);
+  const fill = async (deadline: string) => {
+    await page.getByTestId("activity-kind").selectOption("match");
+    await page.getByTestId("activity-title").fill("Match mot Havsbyns VK");
+    await page.getByTestId("activity-date").fill(day(11));
+    await page.getByTestId("activity-startTime").fill("10:00");
+    await page.getByTestId("activity-endTime").fill("11:30");
+    await page.getByTestId("respond-by-date").fill(deadline);
+    await page.getByTestId("respond-by-time").fill("18:00");
+    await page.getByTestId("activity-create").click();
+  };
+  await fill(day(12));
+  await expect(page.getByTestId("form-error")).toContainText("Svara senast");
+  await fill(day(9));
+  await page.waitForURL(/\/activities\/.*saved=1/);
+  await expect(page.getByTestId("respond-by")).toContainText("18:00");
+});
+
 test("Erik previews and creates a series, then changes this and following", async ({ page }) => {
   await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}/series/new` });
   const start = day(14);

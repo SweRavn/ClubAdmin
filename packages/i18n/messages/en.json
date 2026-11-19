@@ -58,7 +58,9 @@
   "clubSwitcher": {
     "label": "Club: {club}",
     "choose": "Choose club",
-    "none": "No club"
+    "none": "No club",
+    "prefix": "Club:",
+    "all": "All clubs"
   },
   "userMenu": {
     "label": "Account menu",
@@ -76,7 +78,9 @@
     "label": "Viewing as",
     "self": "Myself",
     "banner": "You are viewing as {name}: you see what {name} sees.",
-    "stop": "Back to myself"
+    "stop": "Back to myself",
+    "noClub": "no club",
+    "possibleDuplicate": "possible duplicate"
   },
   "footer": {
     "source": "Source code",
@@ -186,7 +190,9 @@
   "groups": {
     "title": "Groups in {club}",
     "empty": "No groups yet.",
-    "archived": "Archived"
+    "archived": "Archived",
+    "mine": "My groups",
+    "others": "Other groups"
   },
   "group": {
     "owners": "Owners",
@@ -910,7 +916,9 @@
     "grant_period_unknown": "The period does not exist for the grant scheme.",
     "grant_report_locked": "The report is already locked.",
     "grant_report_not_locked": "Lock the report before downloading its files.",
-    "grant_export_empty": "The plugin gave no file in that format."
+    "grant_export_empty": "The plugin gave no file in that format.",
+    "respond_by_after_start": "The answer deadline cannot be after the activity starts.",
+    "role_names_required": "Give the role a name in the club's language and in English."
   },
   "memberExport": {
     "columns": {
@@ -1494,7 +1502,10 @@
     "modeDefault": "Default for the type",
     "answerByLabel": "Answer by",
     "save": "Save the answer",
-    "yourAnswer": "Your answer"
+    "yourAnswer": "Your answer",
+    "respondByDate": "Date",
+    "respondByTime": "Time",
+    "respondByDateHint": "Empty: answers are taken until the activity starts. Only a date: until the end of that day."
   },
   "responseModes": {
     "none": "Not asked for",
@@ -1678,7 +1689,7 @@
     },
     "needsConnection": "Needs a connection",
     "startHint": "The date is required; without a time it starts at midnight.",
-    "endHint": "Empty: ends at the end of the day (23:59).",
+    "endHint": "Empty: ends at the end of the day (23:59). Only a time: the day it starts.",
     "opensHint": "Empty: sign-up opens as soon as the event is published.",
     "closesHint": "Empty: sign-up closes when the event starts.",
     "cancelHint": "Empty: the same as the sign-up deadline.",
@@ -1693,7 +1704,7 @@
   "groupForm": {
     "newTitle": "New group",
     "newSubgroup": "New subgroup",
-    "editTitle": "Edit group",
+    "editTitle": "Group settings",
     "name": "Name",
     "noParent": "None (top level)",
     "birthYearFrom": "Born from year",
@@ -3174,7 +3185,9 @@
     "applyPlace": "Apply for a place",
     "applyPlaceButton": "Send the application",
     "directOpen": "Places free: a leader admits the application",
-    "closedGroup": "The group does not take applications; contact a leader."
+    "closedGroup": "The group does not take applications; contact a leader.",
+    "youAreMember": "You are in the group.",
+    "wardIsMember": "{name} is in the group."
   },
   "calendar": {
     "feed": {
@@ -4077,7 +4090,9 @@
       "missing": "missing"
     },
     "copyFromTemplate": "Add from the template",
-    "copied": "The role was added from the template."
+    "copied": "The role was added from the template.",
+    "moreLanguages": "More languages",
+    "moreLanguagesHint": "Optional. Without a name in a language, the name in the club's language or English is shown."
   },
   "administrators": {
     "title": "Administrators",
@@ -4819,7 +4834,7 @@
     "noQuotas": "No duty quotas this season.",
     "noShifts": "No shifts in the next 60 days.",
     "noSwaps": "No swaps right now.",
-    "noTypes": "No duty types yet.",
+    "noTypes": "The club has no duty types yet. An administrator adds them under Volunteer duties.",
     "note": "Note",
     "nothingToMark": "No shifts to mark.",
     "offer": "Offer swap",
@@ -4857,7 +4872,8 @@
       "leaders": "Only the leaders see the names"
     },
     "visibility": "Who sees the names on shifts",
-    "who": "Who"
+    "who": "Who",
+    "addTypes": "Add duty types"
   },
   "plugins": {
     "title": "Plugins",

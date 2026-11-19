@@ -129,6 +129,27 @@ export const dutiesDemoStep: DemoStep = {
       countsForPersonId: id("oskar"),
     });
 
+    // SVK's catalogue (Anna, P2.7b): its coaches create shifts for home matches.
+    const svk = id("svk");
+    const asAnna: TenantContext = {
+      actorKind: "person",
+      personId: id("anna"),
+      clubId: svk,
+      requestId: "seed:duties",
+    };
+    await s.duties.createType(asAnna, {
+      name: "Kiosk",
+      instruction: "Öppna kiosken en halvtimme före första matchen. Växelkassan finns i förrådet.",
+      minAge: 13,
+      childContact: "none",
+    });
+    await s.duties.createType(asAnna, {
+      name: "Sekretariat",
+      instruction: "Sköt resultattavlan och matchprotokollet tillsammans med domaren.",
+      minAge: 15,
+      childContact: "with_children",
+    });
+
     // The events are history, not news (as the other steps').
     await env.db.withSystem("seed:duties", {}, (tx) =>
       tx.execute(sql`

@@ -58,7 +58,9 @@
   "clubSwitcher": {
     "label": "Klubb: {club}",
     "choose": "Velg klubb",
-    "none": "Ingen klubb"
+    "none": "Ingen klubb",
+    "prefix": "Klubb:",
+    "all": "Alle klubber"
   },
   "userMenu": {
     "label": "Kontomeny",
@@ -76,7 +78,9 @@
     "label": "Viser som",
     "self": "Meg selv",
     "banner": "Du viser som {name}: du ser det {name} ser.",
-    "stop": "Tilbake til meg selv"
+    "stop": "Tilbake til meg selv",
+    "noClub": "ingen klubb",
+    "possibleDuplicate": "mulig duplikat"
   },
   "footer": {
     "source": "Kildekode",
@@ -186,7 +190,9 @@
   "groups": {
     "title": "Grupper i {club}",
     "empty": "Ingen grupper ennå.",
-    "archived": "Arkivert"
+    "archived": "Arkivert",
+    "mine": "Mine grupper",
+    "others": "Andre grupper"
   },
   "group": {
     "owners": "Eiere",
@@ -910,7 +916,9 @@
     "grant_period_unknown": "Perioden finnes ikke for tilskuddsordningen.",
     "grant_report_locked": "Rapporten er allerede låst.",
     "grant_report_not_locked": "Lås rapporten før filene lastes ned.",
-    "grant_export_empty": "Tillegget ga ingen fil i det formatet."
+    "grant_export_empty": "Tillegget ga ingen fil i det formatet.",
+    "respond_by_after_start": "Svarfristen kan ikke være etter at aktiviteten begynner.",
+    "role_names_required": "Gi rollen et navn på klubbens språk og på engelsk."
   },
   "memberExport": {
     "columns": {
@@ -1494,7 +1502,10 @@
     "modeDefault": "Standard for typen",
     "answerByLabel": "Svar innen",
     "save": "Lagre svaret",
-    "yourAnswer": "Ditt svar"
+    "yourAnswer": "Ditt svar",
+    "respondByDate": "Dato",
+    "respondByTime": "Tid",
+    "respondByDateHint": "Tomt: svar tas imot til aktiviteten begynner. Bare en dato: til slutten av dagen."
   },
   "responseModes": {
     "none": "Ingen svar",
@@ -1678,7 +1689,7 @@
     },
     "needsConnection": "Krever tilkobling",
     "startHint": "Dato kreves; uten klokkeslett starter det ved midnatt.",
-    "endHint": "Tomt: slutter ved dagens slutt (23:59).",
+    "endHint": "Tomt: slutter ved dagens slutt (23:59). Bare et klokkeslett: samme dag som starten.",
     "opensHint": "Tomt: påmeldingen åpner så snart arrangementet publiseres.",
     "closesHint": "Tomt: påmeldingen stenger når arrangementet starter.",
     "cancelHint": "Tomt: det samme som påmeldingsfristen.",
@@ -1693,7 +1704,7 @@
   "groupForm": {
     "newTitle": "Ny gruppe",
     "newSubgroup": "Ny undergruppe",
-    "editTitle": "Endre gruppe",
+    "editTitle": "Gruppeinnstillinger",
     "name": "Navn",
     "noParent": "Ingen (øverst)",
     "birthYearFrom": "Født fra år",
@@ -3174,7 +3185,9 @@
     "applyPlace": "Søk om plass",
     "applyPlaceButton": "Send søknaden",
     "directOpen": "Ledige plasser: en leder tar opp søknaden",
-    "closedGroup": "Gruppen tar ikke imot søknader; kontakt en leder."
+    "closedGroup": "Gruppen tar ikke imot søknader; kontakt en leder.",
+    "youAreMember": "Du er med i gruppen.",
+    "wardIsMember": "{name} er med i gruppen."
   },
   "calendar": {
     "feed": {
@@ -4077,7 +4090,9 @@
       "missing": "mangler"
     },
     "copyFromTemplate": "Legg til fra malen",
-    "copied": "Rollen er lagt til fra malen."
+    "copied": "Rollen er lagt til fra malen.",
+    "moreLanguages": "Flere språk",
+    "moreLanguagesHint": "Valgfritt. Uten navn på et språk vises navnet på klubbens språk eller engelsk."
   },
   "administrators": {
     "title": "Administratorer",
@@ -4819,7 +4834,7 @@
     "noQuotas": "Ingen vaktkrav denne sesongen.",
     "noShifts": "Ingen vakter de neste 60 dagene.",
     "noSwaps": "Ingen bytter akkurat nå.",
-    "noTypes": "Ingen vakttyper ennå.",
+    "noTypes": "Klubben har ingen typer dugnadsvakter ennå. En administrator legger dem til under Dugnad.",
     "note": "Merknad",
     "nothingToMark": "Ingen vakter å markere.",
     "offer": "Tilby bytte",
@@ -4857,7 +4872,8 @@
       "leaders": "Bare lederne ser navnene"
     },
     "visibility": "Hvem ser navnene på vaktene",
-    "who": "Hvem"
+    "who": "Hvem",
+    "addTypes": "Legg til typer dugnadsvakter"
   },
   "plugins": {
     "title": "Tillegg",

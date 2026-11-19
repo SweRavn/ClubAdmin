@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Whether an activity or series asks for answers, and the deadline in hours
-// before the start (P1.5). Empty mode: the default of the activity's kind.
+// Whether an activity or series asks for answers, and the deadline (P1.5):
+// for a single activity a date and time in the club's time zone (P2.7b;
+// empty: until it starts), for a series hours before each session.
+// Empty mode: the default of the activity's kind.
 import { enumKey } from "@clubadmin/i18n";
 import { type RequestLead, RESPONSE_MODES } from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
@@ -10,9 +12,13 @@ import { inputClass } from "./action-form.tsx";
 export async function ResponseModeFields({
   mode,
   hours,
+  deadline,
 }: {
   mode?: string | null | undefined;
+  /** A series: hours before each session. */
   hours?: number | null | undefined;
+  /** A single activity: the deadline's local date and time (both empty: until the start). */
+  deadline?: { date: string; time: string } | undefined;
 }) {
   const t = await getTranslations();
   return (
@@ -33,20 +39,45 @@ export async function ResponseModeFields({
           ))}
         </select>
       </label>
-      <label className="block space-y-1">
-        <span className="text-sm">{t("responses.respondBy")}</span>
-        <input
-          name="respondByHours"
-          type="number"
-          min={0}
-          max={336}
-          step={1}
-          className={inputClass}
-          defaultValue={hours ?? ""}
-          data-testid="respond-by-hours"
-        />
-        <span className="block text-xs text-muted">{t("responses.respondByHint")}</span>
-      </label>
+      {deadline ? (
+        <fieldset className="space-y-1">
+          <legend className="text-sm">{t("responses.respondBy")}</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              name="respondByDate"
+              type="date"
+              aria-label={t("responses.respondByDate")}
+              className={inputClass}
+              defaultValue={deadline.date}
+              data-testid="respond-by-date"
+            />
+            <input
+              name="respondByTime"
+              type="time"
+              aria-label={t("responses.respondByTime")}
+              className={inputClass}
+              defaultValue={deadline.time}
+              data-testid="respond-by-time"
+            />
+          </div>
+          <span className="block text-xs text-muted">{t("responses.respondByDateHint")}</span>
+        </fieldset>
+      ) : (
+        <label className="block space-y-1">
+          <span className="text-sm">{t("responses.respondBy")}</span>
+          <input
+            name="respondByHours"
+            type="number"
+            min={0}
+            max={336}
+            step={1}
+            className={inputClass}
+            defaultValue={hours ?? ""}
+            data-testid="respond-by-hours"
+          />
+          <span className="block text-xs text-muted">{t("responses.respondByHint")}</span>
+        </label>
+      )}
     </>
   );
 }

@@ -11,7 +11,8 @@ import { getTranslations } from "next-intl/server";
 
 import { ActionForm, buttonClass, inputClass } from "../../../../../components/action-form.tsx";
 import { FormError } from "../../../../../components/form-error.tsx";
-import { getMe, getMyWards, getOpenGroups } from "../../../../../server/data.ts";
+import { membersOfGroup } from "../../../../../components/group-membership.ts";
+import { getMe, getMyGroups, getMyWards, getOpenGroups } from "../../../../../server/data.ts";
 
 type Props = {
   params: Promise<{ clubId: string }>;
@@ -24,11 +25,12 @@ export async function generateMetadata() {
 
 export default async function OpenGroupsPage({ params, searchParams }: Props) {
   const [{ clubId }, query] = await Promise.all([params, searchParams]);
-  const [t, me, wards, groups] = await Promise.all([
+  const [t, me, wards, groups, myGroups] = await Promise.all([
     getTranslations(),
     getMe(),
     getMyWards(),
     getOpenGroups(clubId),
+    getMyGroups(),
   ]);
   const children = wards.wards.filter((w) => w.rights.includes("act_on_behalf"));
   const only = typeof query.group === "string" ? query.group : null;
@@ -88,14 +90,20 @@ export default async function OpenGroupsPage({ params, searchParams }: Props) {
                     <label className="block space-y-1">
                       <span>{t("waitlist.applyFor")}</span>
                       <select name="personId" className={inputClass} data-testid="apply-person">
-                        {children.map((w) => (
-                          <option key={w.person.id} value={w.person.id}>
-                            {personLabel(w.person)}
+                        {children
+                          .filter(
+                            (w) => !membersOfGroup(myGroups, me.personId, g.id).has(w.person.id),
+                          )
+                          .map((w) => (
+                            <option key={w.person.id} value={w.person.id}>
+                              {personLabel(w.person)}
+                            </option>
+                          ))}
+                        {membersOfGroup(myGroups, me.personId, g.id).has(me.personId) ? null : (
+                          <option value={me.personId}>
+                            {t("findClub.yourself")} ({personLabel(me.person)})
                           </option>
-                        ))}
-                        <option value={me.personId}>
-                          {t("findClub.yourself")} ({personLabel(me.person)})
-                        </option>
+                        )}
                       </select>
                     </label>
                     <label className="block space-y-1">

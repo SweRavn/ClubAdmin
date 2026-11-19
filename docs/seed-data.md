@@ -458,7 +458,9 @@ schedule (Ola left two years ago).
   on the activity. Kiosk shifts at two later home matches are open, and last
   week's kiosk, which Anna had, is still to be marked. Try `/activities/<home
   match>` and `/me/tasks` as Anna, `/groups/<p2012>/duties` as Ahmed and
-  `/clubs/<ikn>/duties` as Karin.
+  `/clubs/<ikn>/duties` as Karin. SVK has the duty types Kiosk (from 13) and
+  Sekretariat (from 15, with children) and no shifts yet, so Erik (F2017's
+  head coach) can create one on `/groups/<f2017>/duties` (P2.7b).
 
 ## Club-defined roles (P1.15)
 

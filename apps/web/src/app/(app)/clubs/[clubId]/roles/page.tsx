@@ -15,7 +15,9 @@ import {
 } from "../../../../../components/action-form.tsx";
 import { AdministratorsBanner } from "../../../../../components/administrators-banner.tsx";
 import { FormError, Notice } from "../../../../../components/form-error.tsx";
+import { RoleNameFields } from "../../../../../components/role-name-fields.tsx";
 import {
+  byPermissionName,
   isSensitive,
   permissionName,
   roleName,
@@ -207,7 +209,7 @@ export default async function RolesPage({ params, searchParams }: Props) {
             className={`${inputClass} max-w-md`}
             aria-label={t("rolesAdmin.whoCan")}
           >
-            {rolePermissions.map((e) => (
+            {byPermissionName(t, locale, rolePermissions).map((e) => (
               <option key={e.permission} value={e.permission}>
                 {permissionName(t, e.permission)}
               </option>
@@ -264,17 +266,7 @@ export default async function RolesPage({ params, searchParams }: Props) {
                 <option value="club">{t("rolesAdmin.scopeClub")}</option>
               </select>
             </label>
-            {(["nameSv", "nameEn", "nameNb"] as const).map((field) => (
-              <label key={field} className="flex flex-col gap-1 text-sm">
-                {t(`rolesAdmin.${field}`)}
-                <input
-                  name={field}
-                  maxLength={60}
-                  className={inputClass}
-                  required={field === "nameSv"}
-                />
-              </label>
-            ))}
+            <RoleNameFields clubLocale={club.defaultLocale} required />
             <button type="submit" className={buttonClass}>
               {t("rolesAdmin.create")}
             </button>

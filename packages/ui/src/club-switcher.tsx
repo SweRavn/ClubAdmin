@@ -12,15 +12,22 @@ export interface ClubSwitcherProps {
   label: string;
   /** Shown when there is no current club. */
   placeholder: string;
+  /** A visible label before the club's name (P2.7b), e.g. "Förening:". */
+  prefix?: string;
 }
 
-export function ClubSwitcher({ clubs, currentId, label, placeholder }: ClubSwitcherProps) {
+export function ClubSwitcher({ clubs, currentId, label, placeholder, prefix }: ClubSwitcherProps) {
   const current = clubs.find((c) => c.id === currentId);
   return (
     <Menu
       label={label}
       testId="club-switcher"
-      trigger={<span className="truncate">{current?.name ?? placeholder}</span>}
+      trigger={
+        <span className="truncate">
+          {prefix ? <span className="text-muted">{prefix} </span> : null}
+          <span data-testid="club-switcher-current">{current?.name ?? placeholder}</span>
+        </span>
+      }
       items={clubs.map((club) => ({
         kind: "link",
         key: club.id,

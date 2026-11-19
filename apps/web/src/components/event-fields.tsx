@@ -131,7 +131,7 @@ export async function EventFields({
     const q: EventQuestion | undefined = saved[i];
     const name = (f: string) => `q.${i}.${f}`;
     return (
-      <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-6">
+      <div key={`q${i}`} className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-6">
         <input type="hidden" name={name("id")} value={fromDraft(draft, name("id"), q?.id)} />
         <label className="block space-y-1 sm:col-span-3">
           <span className="text-sm">{t("events.questionLabel")}</span>
@@ -340,7 +340,7 @@ export async function EventSessions({
     const name = (f: string) => `a.${i}.${f}`;
     const value = (f: string, fallback = "") => fromDraft(draft, name(f), fallback);
     return (
-      <div className="group grid gap-2 sm:grid-cols-6" data-testid="session-row">
+      <div key={`a${i}`} className="group grid gap-2 sm:grid-cols-6" data-testid="session-row">
         <select
           name={name("kind")}
           className={inputClass}

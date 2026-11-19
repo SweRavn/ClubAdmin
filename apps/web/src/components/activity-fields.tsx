@@ -32,7 +32,9 @@ export interface ActivityFieldValues {
   notes?: string | null;
   leaderNotes?: string | null;
   responseMode?: string | null;
-  respondByHours?: number | null;
+  /** The answer deadline's local date and time (P2.7b), empty strings for "until the start". */
+  respondByDate?: string;
+  respondByTime?: string;
   requestLead?: RequestLead | null;
   transportMode?: string | null;
 }
@@ -172,7 +174,10 @@ export async function ActivityFields({
       </label>
       {input("competition", t("activities.competition"), { maxLength: 120 })}
       <TransportModeField value={values.transportMode} />
-      <ResponseModeFields mode={values.responseMode} hours={values.respondByHours} />
+      <ResponseModeFields
+        mode={values.responseMode}
+        deadline={{ date: values.respondByDate ?? "", time: values.respondByTime ?? "" }}
+      />
       <div className="sm:col-span-2">
         <RequestLeadFields lead={values.requestLead} />
       </div>

@@ -236,7 +236,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           ) : null}
           <p data-testid="response-counts">{t("responses.counts", answers.counts)}</p>
           {answers.respondBy ? (
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted" data-testid="respond-by">
               {t("responses.answerByLabel")}{" "}
               <ClubTime
                 value={answers.respondBy}
@@ -446,9 +446,12 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                   leaderNotes: activity.leaderNotes ?? null,
                   responseMode: activity.responseMode ?? null,
                   transportMode: activity.transportMode ?? null,
-                  respondByHours: activity.respondBy
-                    ? Math.round((start.getTime() - Date.parse(activity.respondBy)) / 3_600_000)
-                    : null,
+                  respondByDate: activity.respondBy
+                    ? localDate(new Date(activity.respondBy), zone)
+                    : "",
+                  respondByTime: activity.respondBy
+                    ? localTime(new Date(activity.respondBy), zone)
+                    : "",
                   requestLead: activity.requestLead ?? null,
                 }}
               />

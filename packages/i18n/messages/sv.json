@@ -58,7 +58,9 @@
   "clubSwitcher": {
     "label": "Förening: {club}",
     "choose": "Välj förening",
-    "none": "Ingen förening"
+    "none": "Ingen förening",
+    "prefix": "Förening:",
+    "all": "Alla föreningar"
   },
   "userMenu": {
     "label": "Kontomeny",
@@ -76,7 +78,9 @@
     "label": "Visar som",
     "self": "Mig själv",
     "banner": "Du visar som {name}: du ser det {name} ser.",
-    "stop": "Tillbaka till mig själv"
+    "stop": "Tillbaka till mig själv",
+    "noClub": "ingen förening",
+    "possibleDuplicate": "möjlig dubblett"
   },
   "footer": {
     "source": "Källkod",
@@ -186,7 +190,9 @@
   "groups": {
     "title": "Grupper i {club}",
     "empty": "Inga grupper ännu.",
-    "archived": "Arkiverad"
+    "archived": "Arkiverad",
+    "mine": "Mina grupper",
+    "others": "Andra grupper"
   },
   "group": {
     "owners": "Ägare",
@@ -910,7 +916,9 @@
     "grant_period_unknown": "Perioden finns inte för bidragsordningen.",
     "grant_report_locked": "Rapporten är redan låst.",
     "grant_report_not_locked": "Lås rapporten innan filerna hämtas.",
-    "grant_export_empty": "Tillägget gav ingen fil i det formatet."
+    "grant_export_empty": "Tillägget gav ingen fil i det formatet.",
+    "respond_by_after_start": "Svara senast kan inte vara efter att aktiviteten börjar.",
+    "role_names_required": "Ge rollen ett namn på föreningens språk och engelska."
   },
   "memberExport": {
     "columns": {
@@ -1494,7 +1502,10 @@
     "modeDefault": "Standard för typen",
     "answerByLabel": "Svara senast",
     "save": "Spara svaret",
-    "yourAnswer": "Ditt svar"
+    "yourAnswer": "Ditt svar",
+    "respondByDate": "Datum",
+    "respondByTime": "Tid",
+    "respondByDateHint": "Tomt: svar tas emot tills aktiviteten börjar. Bara ett datum: till dagens slut."
   },
   "responseModes": {
     "none": "Inga svar",
@@ -1678,7 +1689,7 @@
     },
     "needsConnection": "Kräver uppkoppling",
     "startHint": "Datum krävs; utan tid börjar det vid midnatt.",
-    "endHint": "Tomt: slutar vid dagens slut (23:59).",
+    "endHint": "Tomt: slutar vid dagens slut (23:59). Bara en tid: samma dag som starten.",
     "opensHint": "Tomt: anmälan är öppen direkt när evenemanget publiceras.",
     "closesHint": "Tomt: anmälan stänger när evenemanget börjar.",
     "cancelHint": "Tomt: samma som anmälans sista dag.",
@@ -1693,7 +1704,7 @@
   "groupForm": {
     "newTitle": "Ny grupp",
     "newSubgroup": "Ny undergrupp",
-    "editTitle": "Ändra grupp",
+    "editTitle": "Gruppinställningar",
     "name": "Namn",
     "noParent": "Ingen (överst)",
     "birthYearFrom": "Född från år",
@@ -3174,7 +3185,9 @@
     "applyPlace": "Ansök om plats",
     "applyPlaceButton": "Skicka ansökan",
     "directOpen": "Lediga platser: en ledare antar ansökan",
-    "closedGroup": "Gruppen tar inte emot ansökningar; kontakta en ledare."
+    "closedGroup": "Gruppen tar inte emot ansökningar; kontakta en ledare.",
+    "youAreMember": "Du är med i gruppen.",
+    "wardIsMember": "{name} är med i gruppen."
   },
   "calendar": {
     "feed": {
@@ -4077,7 +4090,9 @@
       "missing": "saknas"
     },
     "copyFromTemplate": "Lägg till från mallen",
-    "copied": "Rollen är tillagd från mallen."
+    "copied": "Rollen är tillagd från mallen.",
+    "moreLanguages": "Fler språk",
+    "moreLanguagesHint": "Valfritt. Utan namn på ett språk visas namnet på föreningens språk eller engelska."
   },
   "administrators": {
     "title": "Föreningsadministratörer",
@@ -4819,7 +4834,7 @@
     "noQuotas": "Inga passkrav den här säsongen.",
     "noShifts": "Inga pass de kommande 60 dagarna.",
     "noSwaps": "Inga byten just nu.",
-    "noTypes": "Inga passtyper ännu.",
+    "noTypes": "Föreningen har inga typer av arbetspass än. En administratör lägger till dem under Arbetspass.",
     "note": "Anteckning",
     "nothingToMark": "Inga pass att markera.",
     "offer": "Erbjud byte",
@@ -4857,7 +4872,8 @@
       "leaders": "Bara ledarna ser namnen"
     },
     "visibility": "Vem ser namnen på passen",
-    "who": "Vem"
+    "who": "Vem",
+    "addTypes": "Lägg till typer av arbetspass"
   },
   "plugins": {
     "title": "Tillägg",

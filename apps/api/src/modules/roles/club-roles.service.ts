@@ -77,6 +77,26 @@ const clean = (texts: RoleTexts | undefined | null): Record<string, string> | nu
   return entries.length > 0 ? (Object.fromEntries(entries) as Record<string, string>) : null;
 };
 
+/**
+ * A club's own role is named at least in the club's language and English
+ * (P2.7b); other languages are optional and fall back to those when shown.
+ */
+export function requiredNameLanguages(defaultLocale: string): ("sv" | "en" | "nb")[] {
+  const own = defaultLocale.slice(0, 2).toLowerCase();
+  const club: "sv" | "en" | "nb" = own === "nb" || own === "no" ? "nb" : own === "sv" ? "sv" : "en";
+  return club === "en" ? ["en"] : [club, "en"];
+}
+
+function checkNames(
+  names: Record<string, string> | null,
+  defaultLocale: string,
+): asserts names is Record<string, string> {
+  if (!names) throw new DomainError("invalid_input");
+  if (requiredNameLanguages(defaultLocale).some((lang) => !names[lang])) {
+    throw new DomainError("role_names_required");
+  }
+}
+
 /** Permissions a role of the scope may hold: group roles only group permissions. */
 function checkPermissions(scope: "club" | "group", permissions: readonly string[]): void {
   for (const p of permissions) {
@@ -247,7 +267,8 @@ export class ClubRolesService {
       const permissions = [...new Set(input.permissions)];
       checkPermissions(input.scope, permissions);
       const names = clean(input.names);
-      if (!names) throw new DomainError("invalid_input");
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      checkNames(names, club.defaultLocale);
       const id = await repo.insertRole(tx, {
         clubId: context.clubId,
         scope: input.scope,
@@ -321,8 +342,11 @@ export class ClubRolesService {
         } = {};
         if (input.names !== undefined) {
           const names = clean(input.names);
-          // A club's own role always has a name; a template role may fall back to the catalogue's.
-          if (!names && !role.templateKey) throw new DomainError("invalid_input");
+          // A club's own role is named in the club's language and English; a
+          // template role may fall back to the catalogue's.
+          if (!role.templateKey) {
+            checkNames(names, (await this.clubs.getClubInTx(tx, context.clubId)).defaultLocale);
+          }
           texts.names = names;
           changed.push("names");
         }

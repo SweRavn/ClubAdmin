@@ -171,7 +171,8 @@ test("Anna views as Elsa and as Oskar, then as herself", async ({ browser }) => 
   await switchTo(PERSONAS.elsa.name);
   await expect(page.getByTestId("viewing-as-banner")).toContainText(PERSONAS.elsa.name);
   await expect(page.getByTestId("my-groups")).toContainText("Strandvikens Volleybollklubb");
-  await expect(page.getByTestId("club-switcher")).toContainText("Strandvikens");
+  // The home page is about the person, not one club (P2.7b).
+  await expect(page.getByTestId("club-switcher-current")).toHaveText("Alla föreningar");
 
   await switchTo(PERSONAS.oskar.name);
   await expect(page.getByTestId("viewing-as-banner")).toContainText(PERSONAS.oskar.name);
@@ -202,11 +203,19 @@ test("switch clubs, browse groups and members; the last club is remembered", asy
 
   await page.getByTestId("nav-groups").click();
   await expect(page).toHaveURL(new RegExp(`/clubs/${CLUBS.fil}/groups$`));
-  await page.getByTestId("groups-tree").getByRole("link").first().click();
+  // Lars leads FIL's J2014: it is under "Mina grupper" (P2.7b).
+  await expect(page.getByTestId("groups-mine")).toBeVisible();
+  await page.getByTestId("groups-mine").getByRole("link").first().click();
   await expect(page.getByTestId("group-name")).toBeVisible();
 
-  await page.goto("/");
-  await expect(page.getByTestId("club-switcher")).toContainText("Fjordvik");
+  // The last club is remembered (its menu items stay); the selector says "all clubs"
+  // on pages about the person (P2.7b) and names the club on its pages.
+  await page.goto("/schedule");
+  // Lars uses Norwegian.
+  await expect(page.getByTestId("club-switcher-current")).toHaveText("Alle klubber");
+  await expect(page.getByTestId("nav-members")).toBeVisible();
+  await page.goto(`/clubs/${CLUBS.fil}`);
+  await expect(page.getByTestId("club-switcher-current")).toHaveText("Fjordvik Idrettslag");
 
   await page.goto(`/clubs/${CLUBS.ikn}`);
   await expect(page.getByTestId("nav-members")).toHaveCount(0);

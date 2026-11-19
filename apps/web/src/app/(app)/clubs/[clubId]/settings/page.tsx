@@ -140,7 +140,7 @@ export default async function ClubSettingsPage({ params, searchParams }: Props) 
           <input type="hidden" name="clubId" value={club.id} />
           <RowList
             rows={Array.from({ length: CLUB_PHONE_NUMBERS_MAX }, (_, i) => (
-              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_6rem]">
+              <div key={i} className="grid gap-2 sm:grid-cols-[1fr_1fr_6rem]">
                 <input
                   name={`phone.${i}.label`}
                   className={inputClass}

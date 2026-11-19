@@ -18,7 +18,9 @@ export interface NamedRole {
 
 export function roleName(t: Translate, locale: string, role: NamedRole): string {
   const names = role.names ?? {};
-  const own = names[locale as "sv" | "en" | "nb"] ?? names.sv ?? names.en ?? names.nb;
+  // In the viewer's language, else the club's (Swedish or Norwegian; a club's own role is
+  // always named in it, P2.7b), else English.
+  const own = names[locale as "sv" | "en" | "nb"] ?? names.sv ?? names.nb ?? names.en;
   if (own) return own;
   if (role.templateKey) {
     return tr(t, enumKey(role.scope === "club" ? "roles" : "functions", role.templateKey));
@@ -30,6 +32,19 @@ const keyOf = (permission: string) => permission.replaceAll(".", "_");
 
 export const permissionName = (t: Translate, permission: string) =>
   tr(t, `permissionCatalogue.permissions.${keyOf(permission)}.name`);
+/** Permissions sorted by their name in the viewer's language (P2.7b: "Who can …?"). */
+export function byPermissionName<T extends { permission: string }>(
+  t: Translate,
+  locale: string,
+  items: readonly T[],
+): T[] {
+  const collator = new Intl.Collator(locale, { sensitivity: "base" });
+  return items
+    .map((item) => ({ item, name: permissionName(t, item.permission) }))
+    .sort((a, b) => collator.compare(a.name, b.name))
+    .map((x) => x.item);
+}
+
 export const permissionDescription = (t: Translate, permission: string) =>
   tr(t, `permissionCatalogue.permissions.${keyOf(permission)}.description`);
 export const permissionExample = (t: Translate, permission: string) =>

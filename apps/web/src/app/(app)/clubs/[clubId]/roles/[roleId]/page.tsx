@@ -15,6 +15,7 @@ import {
   secondaryButtonClass,
 } from "../../../../../../components/action-form.tsx";
 import { FormError, Notice } from "../../../../../../components/form-error.tsx";
+import { RoleNameFields } from "../../../../../../components/role-name-fields.tsx";
 import {
   areaName,
   isSensitive,
@@ -192,17 +193,11 @@ export default async function RolePage({ params, searchParams }: Props) {
           <fieldset className="grid max-w-xl gap-3">
             <legend className="text-lg font-semibold">{t("rolesAdmin.names")}</legend>
             <p className="text-sm text-muted">{t("rolesAdmin.namesHint")}</p>
-            {(["nameSv", "nameEn", "nameNb"] as const).map((field) => (
-              <label key={field} className="flex flex-col gap-1 text-sm">
-                {t(`rolesAdmin.${field}`)}
-                <input
-                  name={field}
-                  defaultValue={names[field]}
-                  maxLength={60}
-                  className={inputClass}
-                />
-              </label>
-            ))}
+            <RoleNameFields
+              clubLocale={club.defaultLocale}
+              values={names}
+              required={!role.templateKey}
+            />
           </fieldset>
           <fieldset className="space-y-4">
             <legend className="text-lg font-semibold">{t("rolesAdmin.permissionsTitle")}</legend>

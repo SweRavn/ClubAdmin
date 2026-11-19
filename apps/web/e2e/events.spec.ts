@@ -82,3 +82,28 @@ test("an organiser creates an event; a parent signs up from My schedule", async 
   await expect(page.getByTestId("event-mine")).toContainText("Nadia Karimi");
   await expect(page.getByTestId("registration-status").first()).toHaveText(/Plats bekräftad/);
 });
+
+test("Anna creates a club event with only an end time and a second question, without console errors", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(m.text());
+  });
+  await loginAs(page, PERSONAS.anna, { returnTo: `/clubs/${CLUBS.svk}/events/new` });
+  const form = page.getByTestId("new-event-form");
+  const inDays = (days: number) =>
+    new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  await form.getByTestId("event-audience-club").check();
+  await form.getByTestId("event-title").fill("Spela volleyboll");
+  await form.getByTestId("event-startDate").fill(inDays(8));
+  await form.getByTestId("event-startTime").fill("08:00");
+  // Only an end time (P2.7b): the event ends the day it starts.
+  await form.getByTestId("event-endTime").fill("10:50");
+  await form.getByTestId("question-label").first().fill("Tröjstorlek");
+  await form.getByTestId("questions-add").click();
+  await form.getByTestId("question-label").nth(1).fill("Allergier");
+  await page.getByTestId("event-create").click();
+  await expect(page.getByTestId("event-title")).toHaveText("Spela volleyboll");
+  expect(errors.filter((e) => e.includes("key"))).toEqual([]);
+});

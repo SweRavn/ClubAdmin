@@ -401,7 +401,10 @@ roles: `chair`, `vice_chair`, `treasurer`, `secretary`, `board_member`,
 ### `roles` and `role_permissions` (P1.15, ADR 0046)
 A club's roles: `scope` (`club` or `group`), `template_key` (the template
 role it comes from), `locked` (the club manager and the chair), names and
-descriptions per language (NULL: the catalogue's text), `version`. Each
+descriptions per language (NULL: the catalogue's text), `version`. A club's
+own role is named at least in the club's language and English
+(`role_names_required`, P2.7b); a missing language shows the club's
+language's name, else the English one (at display time, nothing copied). Each
 role's permissions are rows in `role_permissions` (keys of the permission
 catalogue, `packages/shared/src/authorization/permission-catalogue.ts`).
 Every club gets the built-in template's roles when it is created (a trigger

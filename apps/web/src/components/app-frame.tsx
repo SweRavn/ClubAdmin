@@ -18,6 +18,7 @@ import {
   requireSession,
 } from "../server/data.ts";
 import { ActionForm } from "./action-form.tsx";
+import { wardEntries } from "./ward-labels.ts";
 
 export const LOGOUT_FORM = "logout-form";
 export const VIEWING_AS_FORM = "viewing-as-form";
@@ -37,6 +38,8 @@ export async function AppFrame({ children }: { children: ReactNode }) {
   ]);
   const csrf = session.record.csrf;
   const pathname = new URL(path, "https://internal.invalid").pathname;
+  // Pages about the person across clubs (P2.7b): the selector shows "all clubs", not the last one.
+  const personalPage = pathname === "/" || /^\/(schedule|me)(\/|$)/.test(pathname);
   const actingFor = wards.wards.filter((w) => w.rights.includes("act_on_behalf"));
   const viewingAs = actingFor.find((w) => w.person.id === session.record.viewingAs) ?? null;
   const myName = personLabel(me.person);
@@ -241,13 +244,17 @@ export async function AppFrame({ children }: { children: ReactNode }) {
                 name: c.club.name,
                 href: `/clubs/${c.club.id}`,
               }))}
-              currentId={club?.mine ? club.id : null}
-              label={t("clubSwitcher.label", { club: club?.name ?? t("clubSwitcher.none") })}
-              placeholder={t("clubSwitcher.choose")}
+              currentId={personalPage ? null : club?.mine ? club.id : null}
+              label={t("clubSwitcher.label", {
+                club: personalPage ? t("clubSwitcher.all") : (club?.name ?? t("clubSwitcher.none")),
+              })}
+              placeholder={personalPage ? t("clubSwitcher.all") : t("clubSwitcher.choose")}
+              prefix={t("clubSwitcher.prefix")}
             />
           ) : null}
-          <nav aria-label={t("nav.label")} className="order-last w-full sm:order-none sm:w-auto">
-            <ul className="flex gap-1">
+          {/* Its own row, wrapping when the items do not fit (P2.7b): never wider than the page. */}
+          <nav aria-label={t("nav.label")} className="order-last w-full">
+            <ul className="flex flex-wrap gap-1">
               {nav.map((item) => (
                 <li key={item.key}>
                   <a
@@ -310,13 +317,16 @@ export async function AppFrame({ children }: { children: ReactNode }) {
                     name: "personId",
                     value: "",
                   },
-                  ...actingFor.map((w): MenuItem => ({
+                  ...wardEntries(actingFor, {
+                    noClub: t("viewingAs.noClub"),
+                    possibleDuplicate: t("viewingAs.possibleDuplicate"),
+                  }).map((w): MenuItem => ({
                     kind: "submit",
-                    key: w.person.id,
-                    label: personLabel(w.person),
+                    key: w.id,
+                    label: w.label,
                     form: VIEWING_AS_FORM,
                     name: "personId",
-                    value: w.person.id,
+                    value: w.id,
                   })),
                 ]}
               />

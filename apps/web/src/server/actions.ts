@@ -62,9 +62,17 @@ export interface ApiCall {
   body?: unknown;
 }
 
+/** A form that is not valid, with the code the page explains next to the field. */
+export interface InvalidForm {
+  invalid: string;
+}
+
 export interface FormAction {
-  /** The API call, or null if the form is not valid (then: back with ?error=invalid_input). */
-  call(form: FormData): ApiCall | null;
+  /**
+   * The API call, or null if the form is not valid (then: back with
+   * ?error=invalid_input), or `{ invalid: code }` for a specific reason.
+   */
+  call(form: FormData): ApiCall | InvalidForm | null;
   /** Where to go on success; `result` is the API's JSON body (or null). */
   done(form: FormData, result: unknown): string;
 }
@@ -431,8 +439,21 @@ function seriesFields(form: FormData, clear: boolean) {
     skipPublicHolidays: text(form, "skipPublicHolidays") === "on",
   };
 }
-/** The activity fields of the create and edit forms. */
-function activityFields(form: FormData, clear: boolean) {
+/** The activity fields of the create and edit forms, or why they are not valid. */
+function activityFields(
+  form: FormData,
+  clear: boolean,
+): ReturnType<typeof activityFieldsOf> | InvalidForm {
+  const fields = activityFieldsOf(form, clear);
+  // The answer deadline is never after the start (P2.7b).
+  const respondBy = fields && "respondBy" in fields ? fields.respondBy : null;
+  if (fields && respondBy && respondBy > fields.startsAt) {
+    return { invalid: "respond_by_after_start" };
+  }
+  return fields;
+}
+
+function activityFieldsOf(form: FormData, clear: boolean) {
   const startsAt = instant(form, "date", "startTime");
   const endsAt = instant(form, "date", "endTime");
   if (!startsAt || !endsAt) return null;
@@ -440,12 +461,12 @@ function activityFields(form: FormData, clear: boolean) {
   const homeAway = oneOf(HOME_AWAY, text(form, "homeAway"));
   const transportMode = oneOf(TRANSPORT_MODES, text(form, "transportMode"));
   const responseMode = oneOf(RESPONSE_MODES, text(form, "responseMode"));
-  const hours = deadlineHours(form);
-  if (hours === undefined) return null;
+  // The answer deadline (P2.7b): a date and time in the club's time zone; a date
+  // alone ends that day; empty: until the start; never after the start.
+  const respondBy = optionalInstant(form, "respondByDate", "respondByTime");
+  if (respondBy === null) return null;
   const requestLead = requestLeadFrom((name) => text(form, name));
   if (requestLead === undefined) return null;
-  const respondBy =
-    hours === null ? null : new Date(Date.parse(startsAt) - hours * 3_600_000).toISOString();
   return {
     ...(responseMode ? { responseMode } : {}),
     ...(respondBy ? { respondBy } : clear ? { respondBy: null } : {}),
@@ -478,6 +499,7 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       const groupId = id(form, "groupId");
       const kind = oneOf(ACTIVITY_KINDS, text(form, "kind"));
       const fields = activityFields(form, false);
+      if (fields && "invalid" in fields) return fields;
       if (!groupId || !kind || !fields) return null;
       const groupIds = form
         .getAll("otherGroupId")
@@ -498,6 +520,7 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       const activityId = id(form, "activityId");
       const kind = oneOf(ACTIVITY_KINDS, text(form, "kind"));
       const fields = activityFields(form, true);
+      if (fields && "invalid" in fields) return fields;
       if (!activityId || !kind || !fields) return null;
       return {
         path: `/api/v1/activities/${activityId}`,
@@ -803,9 +826,24 @@ function questionsOf(form: FormData): EventQuestion[] | null {
   return rows.sort((a, b) => a.order - b.order).map((r) => r.question);
 }
 
-function eventFields(form: FormData, clear: boolean) {
+function eventFields(
+  form: FormData,
+  clear: boolean,
+): ReturnType<typeof eventFieldsOf> | InvalidForm {
+  const fields = eventFieldsOf(form, clear);
+  if (fields?.endsAt && fields.startsAt && fields.endsAt <= fields.startsAt) {
+    return { invalid: "event_period_invalid" };
+  }
+  return fields;
+}
+
+function eventFieldsOf(form: FormData, clear: boolean) {
   const startsAt = optionalInstant(form, "startDate", "startTime", "00:00");
-  const endsAt = optionalInstant(form, "endDate", "endTime");
+  // An end time without an end date ends on the start date (P2.7b).
+  const endsAt =
+    !text(form, "endDate") && text(form, "endTime")
+      ? optionalInstant(form, "startDate", "endTime")
+      : optionalInstant(form, "endDate", "endTime");
   const registrationClosesAt = optionalInstant(form, "closesDate", "closesTime");
   const registrationOpensAt = optionalInstant(form, "opensDate", "opensTime", "00:00");
   const cancellationClosesAt = optionalInstant(form, "cancelDate", "cancelTime");
@@ -887,6 +925,7 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
       const clubId = id(form, "clubId");
       const fields = eventFields(form, false);
       const activities = sessionsOf(form);
+      if (fields && "invalid" in fields) return fields;
       if (!clubId || !fields || !activities) return null;
       const audience = text(form, "audience") === "club" ? "club" : "groups";
       const groupIds = form
@@ -915,6 +954,7 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
     call: (form) => {
       const eventId = id(form, "eventId");
       const fields = eventFields(form, true);
+      if (fields && "invalid" in fields) return fields;
       if (!eventId || !fields) return null;
       return { path: `/api/v1/events/${eventId}`, method: "PATCH", body: fields };
     },

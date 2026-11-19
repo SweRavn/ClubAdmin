@@ -48,7 +48,7 @@ describe("who counts (A3.1)", () => {
     // A club role of its own with club.roles.manage, held by the second as well.
     const own = await c.s.clubRoles.createRole(club.ctx, {
       scope: "club",
-      names: { sv: "Kansli" },
+      names: { sv: "Kansli", en: "Kansli" },
       permissions: ["club.roles.manage"],
     });
     await c.s.clubRoles.assignClubRole(club.ctx, second!.id, own.id);

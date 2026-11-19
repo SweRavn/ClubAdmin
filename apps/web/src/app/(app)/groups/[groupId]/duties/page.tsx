@@ -218,6 +218,18 @@ export default async function GroupDutiesPage({ params, searchParams }: Props) {
             </div>
           </ActionForm>
         </section>
+      ) : types ? (
+        // No duty types yet (P2.7b): say why there is no form, and who adds them.
+        <p className="rounded-md bg-accent-soft px-3 py-2 text-sm" data-testid="duty-no-types">
+          {t("duties.noTypes")}{" "}
+          {clubs.clubs
+            .find((c) => c.club.id === group.clubId)
+            ?.permissions.includes("club.duty_types.manage") ? (
+            <a href={`/clubs/${group.clubId}/duties`} className="underline">
+              {t("duties.addTypes")}
+            </a>
+          ) : null}
+        </p>
       ) : null}
 
       <section aria-labelledby="to-mark" className="space-y-3">

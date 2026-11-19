@@ -240,6 +240,8 @@ export const DOMAIN_ERRORS = {
   club_type_role_exists: "conflict",
   club_type_role_required: "conflict",
   club_type_role_names_required: "validation",
+  /** A club's own role needs a name in the club's language and English (P2.7b). */
+  role_names_required: "validation",
   template_role_exists: "conflict",
   /** The change would leave fewer than two administrators (database constraint). */
   administrators_minimum: "conflict",

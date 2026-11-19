@@ -1945,12 +1945,16 @@ describe("permission matrix", () => {
     "POST /api/v1/clubs/:clubId/roles": {
       url: () => `/api/v1/clubs/${m.clubA.id}/roles`,
       expected: CLUB_FORBIDDEN,
-      body: { scope: "group", names: { sv: "Materialansvarig" }, permissions: [] },
+      body: {
+        scope: "group",
+        names: { sv: "Materialansvarig", en: "Materialansvarig" },
+        permissions: [],
+      },
     },
     "PATCH /api/v1/clubs/:clubId/roles/:roleId": {
       url: () => `/api/v1/clubs/${m.clubA.id}/roles/${treasurerRoleA}`,
       expected: CLUB_FORBIDDEN,
-      body: { version: 1, names: { sv: "Ekonomiansvarig" } },
+      body: { version: 1, names: { sv: "Ekonomiansvarig", en: "Ekonomiansvarig" } },
     },
     "POST /api/v1/clubs/:clubId/roles/:roleId/preview": {
       url: () => `/api/v1/clubs/${m.clubA.id}/roles/${treasurerRoleA}/preview`,

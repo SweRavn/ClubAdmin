@@ -242,8 +242,17 @@ export class MeController {
     const shown = new Map((await this.presenter.present(authz, null, rows)).map((p) => [p.id, p]));
     const people = new Map(rows.map((p) => [p.id, p]));
     const clubById = new Map(clubs.map((c) => [c.id, c]));
+    // One entry per person (P2.7b): a ward with several guardianships to the
+    // caller (a parent and a relative's link) is listed once, the fullest first.
+    const rank = (kind: string) => (kind === "parent" || kind === "legal_guardian" ? 0 : 1);
+    const once = [...wards]
+      .sort((a, b) => rank(a.kind) - rank(b.kind))
+      .filter((w, i, all) => all.findIndex((x) => x.personId === w.personId) === i);
+    const order = new Map<string, number>();
+    wards.forEach((w, i) => order.set(w.personId, order.get(w.personId) ?? i));
+    once.sort((a, b) => order.get(a.personId)! - order.get(b.personId)!);
     return {
-      wards: wards.flatMap((w) => {
+      wards: once.flatMap((w) => {
         const person = shown.get(w.personId);
         if (!person) return [];
         const wardClubs = wardMemberships

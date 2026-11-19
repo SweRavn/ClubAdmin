@@ -65,9 +65,9 @@ export async function POST(
     );
   }
   const call = action.call(form);
-  if (!call) {
+  if (!call || "invalid" in call) {
     if (keepValues) await saveFormDraft(session.id, name, form);
-    return redirectTo(withError(back, "invalid_input"));
+    return redirectTo(withError(back, call ? call.invalid : "invalid_input"));
   }
   const res = await apiFetch(call.path, session.record, {
     method: call.method,

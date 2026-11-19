@@ -54,15 +54,41 @@ describe("club-defined roles (P1.15 A2)", () => {
 
     const own = await c.s.clubRoles.createRole(club.ctx, {
       scope: "group",
-      names: { sv: "Materialansvarig" },
+      names: { sv: "Materialansvarig", en: "Materialansvarig" },
       permissions: ["group.activities.manage"],
     });
     expect(own).toMatchObject({ templateKey: null, locked: false, version: 1 });
+    // A club's own role is named in the club's language and English (P2.7b);
+    // Norwegian is optional and can be added later.
+    await expect(
+      c.s.clubRoles.createRole(club.ctx, {
+        scope: "group",
+        names: { sv: "Bara svenska" },
+        permissions: ["group.activities.manage"],
+      }),
+    ).rejects.toSatisfy((e) => isDomainError(e, "role_names_required"));
+    const withNb = await c.s.clubRoles.updateRole(club.ctx, own.id, {
+      version: own.version,
+      names: { sv: "Materialansvarig", en: "Equipment manager", nb: "Materialansvarlig" },
+      permissions: own.permissions,
+    });
+    expect(withNb.names).toEqual({
+      sv: "Materialansvarig",
+      en: "Equipment manager",
+      nb: "Materialansvarlig",
+    });
+    await expect(
+      c.s.clubRoles.updateRole(club.ctx, own.id, {
+        version: withNb.version,
+        names: { nb: "Bare norsk" },
+        permissions: own.permissions,
+      }),
+    ).rejects.toSatisfy((e) => isDomainError(e, "role_names_required"));
     // A group role holds group permissions only.
     await expect(
       c.s.clubRoles.createRole(club.ctx, {
         scope: "group",
-        names: { sv: "Fel" },
+        names: { sv: "Fel", en: "Fel" },
         permissions: ["club.settings.update"],
       }),
     ).rejects.toSatisfy((e) => isDomainError(e, "permission_not_for_group_roles"));
@@ -118,7 +144,7 @@ describe("club-defined roles (P1.15 A2)", () => {
     await c.s.memberships.addMember(club.ctx, person.id);
     const own = await c.s.clubRoles.createRole(club.ctx, {
       scope: "club",
-      names: { sv: "Sponsoransvarig" },
+      names: { sv: "Sponsoransvarig", en: "Sponsoransvarig" },
       permissions: ["club.members.read"],
     });
     const assignment = await c.s.clubRoles.assignClubRole(club.ctx, person.id, own.id);
@@ -154,7 +180,7 @@ describe("club-defined roles (P1.15 A2)", () => {
     void second;
     const replacement = await c.s.clubRoles.createRole(club.ctx, {
       scope: "club",
-      names: { sv: "Partneransvarig" },
+      names: { sv: "Partneransvarig", en: "Partneransvarig" },
       permissions: [],
     });
     expect(await c.s.clubRoles.deleteRole(club.ctx, own.id, replacement.id)).toEqual({
@@ -176,7 +202,7 @@ describe("club-defined roles (P1.15 A2)", () => {
     await c.s.memberships.addMember(club.ctx, person.id);
     const equipment = await c.s.clubRoles.createRole(club.ctx, {
       scope: "group",
-      names: { sv: "Materialansvarig" },
+      names: { sv: "Materialansvarig", en: "Materialansvarig" },
       permissions: ["group.activities.manage"],
     });
     const row = await c.s.memberships.addGroupMember(club.ctx, team.id, person.id, "member", {
