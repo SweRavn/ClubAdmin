@@ -21,4 +21,9 @@ name: Ride there and home from My schedule
 - extendedWaitUntil:
     visible: "Åker dit med Mikael Lindqvist.*"
     timeout: 20000
-- assertVisible: "Åker hem med Mikael Lindqvist.*"
+# The booked rows replace the button at the bottom edge: the way home may be
+# just below it.
+- scrollUntilVisible:
+    element: "Åker hem med Mikael Lindqvist.*"
+    direction: DOWN
+    timeout: 10000
