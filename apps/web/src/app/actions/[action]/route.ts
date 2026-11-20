@@ -11,6 +11,7 @@ import { checkoutOrigins } from "../../../server/config.ts";
 import { CSRF_COOKIE, SESSION_COOKIE } from "../../../server/cookies.ts";
 import { checkCsrf } from "../../../server/csrf.ts";
 import { clearFormDraft, KEEP_VALUES_ACTIONS, saveFormDraft } from "../../../server/form-drafts.ts";
+import { formFieldOf } from "../../../server/form-fields.ts";
 import {
   ENHANCED_HEADER,
   formText,
@@ -51,26 +52,25 @@ const FIELD_CODE = /^[a-z][a-z_]{0,60}$/;
 
 /**
  * The form fields of the API's validation issues (`errors[].path` of the
- * body: its first segment, through the action's `apiFields`) and of domain
- * codes that are about one field.
+ * body, through `formFieldOf`) and of domain codes that are about one field.
  */
 function fieldsOfProblem(
   body: unknown,
   code: string,
   apiFields: Record<string, string>,
+  formNames: ReadonlySet<string>,
 ): Record<string, string> {
   const fields: Record<string, string> = {};
   const issues = (body as { errors?: unknown } | null)?.errors;
   if (Array.isArray(issues)) {
     for (const issue of issues as { location?: string; path?: string; code?: string }[]) {
       if (issue.location !== "body" || typeof issue.path !== "string") continue;
-      const first = issue.path.split(/[.[]/)[0] ?? "";
-      const name = apiFields[first] ?? first;
+      const name = formFieldOf(issue.path, apiFields, formNames);
       if (name && !(name in fields)) fields[name] = issue.code ?? "invalid";
     }
   }
   const field = DOMAIN_CODE_FIELDS[code];
-  const name = field ? (apiFields[field] ?? field) : null;
+  const name = field ? formFieldOf(field, apiFields, formNames) : null;
   if (name) fields[name] = code;
   return fields;
 }
@@ -193,7 +193,7 @@ export async function POST(
   return redirectTo(
     withError(back, code, {
       action: name,
-      fields: fieldsOfProblem(body, code, action.apiFields ?? {}),
+      fields: fieldsOfProblem(body, code, action.apiFields ?? {}, new Set(form.keys())),
     }),
   );
 }

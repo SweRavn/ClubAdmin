@@ -951,6 +951,16 @@ function eventFieldErrors(form: FormData, clear: boolean): Record<string, string
 
 /** The event form's fields of the API's request fields (P2.7c). */
 const EVENT_API_FIELDS: Record<string, string> = {
+  groupIds: "groupId",
+  // The sessions' rows (`*` is the row; P2.7d).
+  "activities.*.title": "a.*.title",
+  "activities.*.kind": "a.*.kind",
+  "activities.*.kindLabel": "a.*.kindLabel",
+  "activities.*.startsAt": "a.*.startTime",
+  "activities.*.endsAt": "a.*.endTime",
+  "questions.*.label": "q.*.label",
+  "questions.*.type": "q.*.type",
+  "questions.*.options": "q.*.options",
   startsAt: "startDate",
   endsAt: "endDate",
   registrationClosesAt: "closesDate",
@@ -999,20 +1009,32 @@ function eventFieldsOf(form: FormData, clear: boolean) {
   };
 }
 
-/** Sessions created with a group event (rows a.N; empty rows are left out). */
+/**
+ * Sessions created with a group event (rows a.N; empty rows are left out),
+ * or what is wrong in them, per field (P2.7d: each wrong field is marked).
+ */
 function sessionsOf(form: FormData) {
   const sessions = [];
+  const wrong: Record<string, string> = {};
   for (let i = 0; i < SESSION_ROWS; i++) {
     const title = text(form, `a.${i}.title`);
     if (!title) continue;
     const kind = oneOf(ACTIVITY_KINDS, text(form, `a.${i}.kind`));
     const startsAt = instant(form, `a.${i}.date`, `a.${i}.startTime`);
     const endsAt = instant(form, `a.${i}.date`, `a.${i}.endTime`);
-    if (!kind || !startsAt || !endsAt) return null;
+    if (!kind) wrong[`a.${i}.kind`] = "required";
+    if (!isDate(text(form, `a.${i}.date`))) {
+      wrong[`a.${i}.date`] = text(form, `a.${i}.date`) ? "invalid_date" : "required";
+    }
+    for (const name of [`a.${i}.startTime`, `a.${i}.endTime`]) {
+      if (!isTime(text(form, name))) wrong[name] = text(form, name) ? "invalid_time" : "required";
+    }
+    if (startsAt && endsAt && endsAt <= startsAt) wrong[`a.${i}.endTime`] = "event_period_invalid";
+    if (!kind || !startsAt || !endsAt || endsAt <= startsAt) continue;
     const kindLabel = kind === "other" ? text(form, `a.${i}.kindLabel`) : "";
     sessions.push({ kind, title, startsAt, endsAt, ...(kindLabel ? { kindLabel } : {}) });
   }
-  return sessions;
+  return Object.keys(wrong).length > 0 ? { invalid: "invalid_input", fields: wrong } : sessions;
 }
 
 /** Answers from the sign-up form: fields named answer.<questionId>. */
@@ -1047,7 +1069,8 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
       const fields = eventFields(form, false);
       const activities = sessionsOf(form);
       if (fields && "invalid" in fields) return fields;
-      if (!clubId || !fields || !activities) return null;
+      if (!Array.isArray(activities)) return activities;
+      if (!clubId || !fields) return null;
       const audience = text(form, "audience") === "club" ? "club" : "groups";
       const groupIds = form
         .getAll("groupId")

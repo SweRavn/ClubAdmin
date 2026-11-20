@@ -175,3 +175,30 @@ test("a new event that ends before it starts says so next to the end, keeping wh
   await page.getByTestId("event-create").click();
   await expect(page.getByTestId("event-title")).toHaveText("Vårfest");
 });
+
+test("a session row without its end time is marked in red next to the field (P2.7d)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.erik, {
+    returnTo: `/clubs/${CLUBS.svk}/events/new?groupId=${GROUPS.svkF2017}`,
+  });
+  const form = page.getByTestId("new-event-form");
+  const inDays = (days: number) =>
+    new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  await form.getByTestId("event-title").fill("Cupen i Bergby");
+  await form.getByTestId("event-startDate").fill(inDays(12));
+  const row = form.getByTestId("session-row").first();
+  await row.getByTestId("session-title").fill("Första matchen");
+  await row.getByTestId("session-date").fill(inDays(12));
+  await row.getByTestId("session-start").fill("10:00");
+  await page.getByTestId("event-create").click();
+  // "Kontrollera formuläret" at the top, and the field itself marked.
+  await expect(page.getByTestId("form-error")).toBeVisible();
+  const end = row.getByTestId("session-end");
+  await expect(end).toHaveAttribute("aria-invalid", "true");
+  await expect(form.locator('[data-testid="field-error"][data-field="a.0.endTime"]')).toBeVisible();
+  // Red: the marked field has a border of its own colour (globals.css).
+  const marked = await end.evaluate((el) => getComputedStyle(el).boxShadow);
+  expect(marked).not.toBe("none");
+  await expect(row.getByTestId("session-title")).toHaveValue("Första matchen");
+});

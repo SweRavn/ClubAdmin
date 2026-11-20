@@ -4,3 +4,16 @@
 
 /* Class names used by the shared components. */
 @source "../../../../packages/ui/src";
+
+/*
+ * A field the server refused (P2.7c, P2.7d): red border and ring, so it is
+ * seen next to its message (aria-invalid is set by field-errors.ts and by
+ * the summary's fields without JavaScript).
+ */
+@layer base {
+  [aria-invalid="true"] {
+    border-color: var(--ca-protected);
+    box-shadow: 0 0 0 1px var(--ca-protected);
+    background-color: var(--ca-protected-soft);
+  }
+}
