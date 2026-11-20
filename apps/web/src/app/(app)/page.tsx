@@ -5,7 +5,6 @@ import { enumKey } from "@clubadmin/i18n";
 import type { MyGroups } from "@clubadmin/shared";
 import { personLabel, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
-import { Suspense } from "react";
 
 import { FormError, Notice } from "../../components/form-error.tsx";
 import { InProgress, Onboarding } from "../../components/joining-panels.tsx";
@@ -79,10 +78,12 @@ export default async function HomePage({ searchParams }: Props) {
       {/* Its data came with the page's (above): no late paint (LCP budget). */}
       <InProgress />
 
-      {/* "Mitt schema" is Home's (P2.7d): answers, rides and the weeks here. */}
-      <Suspense fallback={null}>
-        <MySchedule params={params} />
-      </Suspense>
+      {/* "Mitt schema" is Home's (P2.7d): answers, rides and the weeks here.
+          Rendered with the page, not in a Suspense boundary: a streamed
+          boundary's reveal is held back after the first paint, and its
+          "open for sign-up" line became the largest paint (about 300 ms
+          late in CI; docs/performance.md). */}
+      <MySchedule params={params} />
 
       {clubs.clubs.length > 0 ? (
         <section aria-labelledby="my-clubs">

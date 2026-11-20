@@ -409,11 +409,14 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
     at once (about 1.28 s). Content above the fold must not sit in a Suspense
     boundary that streams after the shell.
     P2.7d: Home became the schedule (answers, rides, the weeks). In CI its
-    LCP rose to about 1.6 s (1.3 s on a laptop, before and after alike);
-    Home now shows this week and "Visa fler veckor" (`?weeks=4`) the next
-    four, so its first paint carries one week's activities. The Lighthouse
-    script prints a line per run (LCP element and phases, the document's
-    timing, the main thread's work) so that CI's numbers can be compared.
+    LCP rose to about 1.6 s with FCP at 1.25 s: the largest paint was the
+    schedule's "open for sign-up" line, streamed in a Suspense boundary and
+    revealed about 300 ms after the first paint (the same hold as above;
+    on a laptop no event was open, so it never showed). The schedule now
+    renders with the page, and Home shows this week ("Visa fler veckor",
+    `?weeks=4`, the next four) so that the page waits for less. The
+    Lighthouse script prints a line per run (LCP element and phases, the
+    document's timing, the main thread's work), which is how this was found.
   - INP: the production end-to-end spec (`E2E_PRODUCTION=1`) interacts with a
     group page (menus, tooltip) at 4× CPU slowdown and fails if an
     interaction takes 200 ms or more to paint (Event Timing). At P0.9 the
