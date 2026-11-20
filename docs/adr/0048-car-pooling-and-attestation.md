@@ -220,3 +220,14 @@ appears once there is a car.
   shows. The app sends the answer through the outbox and books the seat.
   No combined API endpoint: the two stay separate operations with their own
   rules and audit.
+
+**Amendment (P2.7f, 2026-11-20).** Adults keep car-pool defaults on their
+profile (`accounts.carpool_settings`: seats, departure place, a note to the
+passengers, minutes after the end to leave for home; only their own
+account reads and writes them). With them the group's list of activities
+offers "Skapa samåkning" under each activity they may drive to: one tap
+offers the car there and home. The way home's time, when the driver gives
+none, is the activity's minutes after its end
+(`activities.carpool_return_minutes`, set when it is created), else the
+driver's, else the club's (`clubs.carpool_return_minutes`, beside the
+starting place), else 15 minutes; the offer form shows that time.

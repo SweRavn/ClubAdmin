@@ -443,6 +443,12 @@ describe("car pools (P2.5)", () => {
       age: 10,
     });
     expect(notMine.statusCode).toBe(404);
+    // The car pool tells the child why they cannot book (P2.7f): from 16.
+    const asTeen = await api(teen.child.id, "GET", `/activities/${activityId}/carpool`);
+    expect(asTeen.json<{ canBookFor: unknown[]; selfBookingAge?: number }>()).toMatchObject({
+      canBookFor: [],
+      selfBookingAge: 16,
+    });
     const refused = await api(
       teen.child.id,
       "POST",
@@ -607,7 +613,7 @@ describe("car pools (P2.5)", () => {
     expect(put.statusCode, put.body).toBe(200);
     expect(
       (await api(club.manager.id, "GET", `/clubs/${club.id}/carpool-settings`)).json(),
-    ).toEqual({ startLocationId: locationId });
+    ).toEqual({ startLocationId: locationId, returnMinutes: null });
     const future = await api(
       club.manager.id,
       "DELETE",
@@ -635,5 +641,58 @@ describe("car pools (P2.5)", () => {
       [outId],
     );
     expect(history[0]?.n).toBe(0);
+  });
+});
+
+describe("the way home's time and one's own defaults (P2.7f)", () => {
+  it("activity, then driver, then club, then 15 minutes after the end; only adults keep defaults", async () => {
+    const create = async (extra: Record<string, unknown> = {}) => {
+      const res = await api(coach.id, "POST", `/groups/${teamId}/activities`, {
+        kind: "match",
+        title: "Hemmamatch",
+        startsAt: `${day(6)}T10:00:00Z`,
+        endsAt: `${day(6)}T12:00:00Z`,
+        transportMode: "own",
+        ...extra,
+      });
+      expect(res.statusCode, res.body).toBe(201);
+      return res.json<{ id: string }>().id;
+    };
+    const returnAt = async (id: string) =>
+      (await api(player.id, "GET", `/activities/${id}/carpool`)).json<{ defaultReturnAt: string }>()
+        .defaultReturnAt;
+    const plain = await create();
+    // Nothing set anywhere: 15 minutes.
+    expect(await returnAt(plain)).toBe(`${day(6)}T12:15:00.000Z`);
+    // The club's minutes.
+    await s.carpools.setSettings(club.ctx, { startLocationId: null, returnMinutes: 20 });
+    expect(await returnAt(plain)).toBe(`${day(6)}T12:20:00.000Z`);
+    // The driver's own, on their profile; a child keeps none.
+    const mine = await api(player.id, "GET", "/me/carpool-settings");
+    expect(mine.json()).toEqual({ settings: null, canSet: true });
+    const saved = await api(player.id, "PUT", "/me/carpool-settings", {
+      settings: { seats: 3, departurePlace: "Torget", note: "Plats för väskor", returnMinutes: 30 },
+    });
+    expect(saved.statusCode, saved.body).toBe(200);
+    expect(await returnAt(plain)).toBe(`${day(6)}T12:30:00.000Z`);
+    const child = await api(a.child.id, "PUT", "/me/carpool-settings", {
+      settings: { seats: 3, departurePlace: null, note: null, returnMinutes: null },
+    });
+    expect([child.statusCode, detail(child)]).toEqual([403, "carpool_driver_not_eligible"]);
+    // The activity's own minutes win, also for an offer without a time home.
+    const own = await create({ carpoolReturnMinutes: 5 });
+    expect(await returnAt(own)).toBe(`${day(6)}T12:05:00.000Z`);
+    const offer = await api(player.id, "POST", `/activities/${own}/carpool/offers`, {
+      seats: 3,
+      withReturn: true,
+    });
+    expect(offer.statusCode, offer.body).toBe(201);
+    const view = (await api(player.id, "GET", `/activities/${own}/carpool`)).json<{
+      offers: { direction: string; departureAt: string | null }[];
+    }>();
+    expect(view.offers.find((o) => o.direction === "back")?.departureAt).toBe(
+      `${day(6)}T12:05:00.000Z`,
+    );
+    await s.carpools.setSettings(club.ctx, { startLocationId: null, returnMinutes: null });
   });
 });

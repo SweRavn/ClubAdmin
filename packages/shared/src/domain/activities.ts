@@ -120,6 +120,8 @@ const place = {
 
 /** How participants get there (P2.5): on their own, or car pooling; null: not said. */
 const transport = { transportMode: z.enum(TRANSPORT_MODES).nullish() };
+/** A single activity's way home (P2.7f): minutes after its end; null: the driver's or club's. */
+const returnMinutes = { carpoolReturnMinutes: z.number().int().min(0).max(240).nullish() };
 
 /** Answers (P1.5): the mode (default by kind) and a deadline. */
 const answers = {
@@ -155,6 +157,7 @@ export const CreateActivitySchema = z
     meetAt: z.iso.datetime({ offset: true }).nullish(),
     ...answers,
     ...transport,
+    ...returnMinutes,
     /** More groups for a joint activity (the caller must manage each). */
     groupIds: z.array(z.uuid()).max(20).default([]),
     /**
@@ -189,6 +192,7 @@ export const UpdateActivitySchema = z
     meetAt: z.iso.datetime({ offset: true }).nullish(),
     ...answers,
     ...transport,
+    ...returnMinutes,
   })
   .strict()
   .openapi("UpdateActivityRequest");
@@ -412,6 +416,8 @@ export const ActivitySchema = z
     inviteesOnly: z.boolean().optional(),
     /** How participants get there (P2.5); null: not said. */
     transportMode: z.enum(TRANSPORT_MODES).nullable().optional(),
+    /** Minutes after the end that the way home leaves (P2.7f); null: not said. */
+    carpoolReturnMinutes: z.number().int().nullable().optional(),
     /** For those who manage it, in the group calendar. */
     responseCounts: ResponseCountsSchema.optional(),
   })

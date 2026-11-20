@@ -86,6 +86,17 @@ export const CarpoolSchema = z
     withoutRide: z.array(PersonSummarySchema).nullable(),
     /** How many without a seat out the leaders cannot see by name (protected). */
     withoutRideHidden: z.number().int(),
+    /**
+     * When the viewer's way home would leave (P2.7f): the activity's minutes
+     * after its end, else the viewer's own, else the club's, else 15.
+     */
+    defaultReturnAt: z.iso.datetime({ offset: true }).optional(),
+    /**
+     * The viewer takes part but is a child too young to book seats
+     * themselves (P2.7f): the age from which they may (their guardians'
+     * choice, else the country's); a guardian books until then.
+     */
+    selfBookingAge: z.number().int().optional(),
   })
   .openapi("Carpool");
 export type Carpool = z.infer<typeof CarpoolSchema>;
@@ -120,6 +131,8 @@ export const CarpoolSummarySchema = z
       }),
     ),
     canBookFor: z.array(PersonSummarySchema),
+    /** The caller may offer a car (an adult taking part or a guardian of one; P2.7f). */
+    canOffer: z.boolean().optional(),
     /** The caller's and their wards' seats. */
     bookings: z.array(
       z.object({
@@ -279,12 +292,20 @@ export const CarpoolStatsSchema = z
 export type CarpoolStats = z.infer<typeof CarpoolStatsSchema>;
 
 export const CarpoolSettingsSchema = z
-  .object({ startLocationId: z.uuid().nullable() })
+  .object({
+    startLocationId: z.uuid().nullable(),
+    /** Minutes after an activity's end that the way home leaves (P2.7f); null: 15. */
+    returnMinutes: z.number().int().nullable().optional(),
+  })
   .openapi("CarpoolSettings");
 export type CarpoolSettings = z.infer<typeof CarpoolSettingsSchema>;
 
 export const PutCarpoolSettingsSchema = z
-  .object({ startLocationId: z.uuid().nullable() })
+  .object({
+    startLocationId: z.uuid().nullable(),
+    /** Left out: unchanged (P2.7f). */
+    returnMinutes: z.number().int().min(0).max(240).nullable().optional(),
+  })
   .strict()
   .openapi("PutCarpoolSettings");
 export type PutCarpoolSettingsInput = z.infer<typeof PutCarpoolSettingsSchema>;
@@ -306,3 +327,38 @@ export const PutGroupCarpoolSettingsSchema = z
 export type PutGroupCarpoolSettingsInput = z.infer<typeof PutGroupCarpoolSettingsSchema>;
 
 export const CarpoolGroupParamsSchema = z.object({ clubId: z.uuid(), groupId: z.uuid() });
+
+/** The default way home: this many minutes after an activity's end (P2.7f). */
+export const CARPOOL_RETURN_MINUTES_DEFAULT = 15;
+export const CarpoolReturnMinutesSchema = z.number().int().min(0).max(240);
+
+/**
+ * An adult's car-pool defaults (P2.7f), on their profile: used when they
+ * offer a car with one tap ("Skapa samåkning").
+ */
+export const PersonalCarpoolSettingsSchema = z
+  .object({
+    seats: z.number().int().min(1).max(CARPOOL_MAX_SEATS),
+    departurePlace: z.string().trim().max(200).nullable(),
+    note: z.string().trim().max(300).nullable(),
+    returnMinutes: CarpoolReturnMinutesSchema.nullable(),
+  })
+  .strict()
+  .openapi("PersonalCarpoolSettings");
+export type PersonalCarpoolSettings = z.infer<typeof PersonalCarpoolSettingsSchema>;
+
+export const MyCarpoolSettingsSchema = z
+  .object({
+    /** Null: none saved. */
+    settings: PersonalCarpoolSettingsSchema.nullable(),
+    /** Only adults set them. */
+    canSet: z.boolean(),
+  })
+  .openapi("MyCarpoolSettings");
+export type MyCarpoolSettings = z.infer<typeof MyCarpoolSettingsSchema>;
+
+export const PutMyCarpoolSettingsSchema = z
+  .object({ settings: PersonalCarpoolSettingsSchema.nullable() })
+  .strict()
+  .openapi("PutMyCarpoolSettings");
+export type PutMyCarpoolSettingsInput = z.infer<typeof PutMyCarpoolSettingsSchema>;

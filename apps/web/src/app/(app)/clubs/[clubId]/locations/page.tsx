@@ -277,11 +277,27 @@ export default async function LocationsPage({ params, searchParams }: Props) {
                   ))}
               </select>
             </label>
+            {/* When the way home leaves by default (P2.7f); empty: 15 minutes. */}
+            <label className="block space-y-1">
+              <span className="text-sm">{t("carpool.clubReturnMinutes")}</span>
+              <input
+                type="number"
+                name="returnMinutes"
+                min={0}
+                max={240}
+                step={5}
+                defaultValue={carpoolSettings.returnMinutes ?? ""}
+                placeholder="15"
+                className={`${inputClass} w-32`}
+                data-testid="carpool-club-return-minutes"
+              />
+            </label>
             <button type="submit" className={buttonClass}>
               {t("locations.save")}
             </button>
           </ActionForm>
           <p className="max-w-prose text-sm text-muted">{t("carpool.startPlaceHint")}</p>
+          <p className="max-w-prose text-sm text-muted">{t("carpool.clubReturnHint")}</p>
           <ActionForm action="carpool-delete-old" className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="clubId" value={club.id} />
             <input type="hidden" name="back" value={`/clubs/${club.id}/locations`} />

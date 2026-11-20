@@ -32,12 +32,15 @@ import {
 import {
   type BookCarpoolSeatInput,
   BookCarpoolSeatSchema,
+  CARPOOL_RETURN_MINUTES_DEFAULT,
   CARPOOL_SELF_BOOKING_AGE,
   type CarpoolAge,
   type CarpoolBookingStatus,
   type CarpoolDirection,
   type CreateCarpoolOfferInput,
   CreateCarpoolOfferSchema,
+  type PersonalCarpoolSettings,
+  PersonalCarpoolSettingsSchema,
   type UpdateCarpoolOfferInput,
   UpdateCarpoolOfferSchema,
 } from "@clubadmin/shared";
@@ -71,6 +74,8 @@ export interface CarpoolSummaryView {
   /** Cars with seats (not "willing to drive"), outward first. */
   offers: repo.OfferRow[];
   bookFor: string[];
+  /** The caller may offer a car (P2.7f "Skapa samåkning"). */
+  canOffer: boolean;
   /** The caller's and their wards' live seats. */
   bookings: { offer: repo.OfferRow; booking: repo.BookingRow }[];
 }
@@ -86,6 +91,10 @@ export interface CarpoolView {
   bookFor: string[];
   /** Participants without a seat out (for leaders). */
   withoutRide: string[];
+  /** When the caller's way home would leave (P2.7f). */
+  defaultReturnAt: Date;
+  /** The caller takes part but is a child too young to book: from which age they may. */
+  selfBookingAge: number | null;
   /** Whether the person is the caller, or a ward of theirs. */
   family: (personId: string) => boolean;
   /** Whether the caller may cancel or confirm a booking. */
@@ -125,9 +134,15 @@ class People {
   maySelfBook(personId: string): boolean {
     const f = this.facts.get(personId);
     if (!f?.birthDate) return false;
-    const ages = f.guardians.map((g) => g.carpoolAge ?? this.defaultAge);
-    const age = ages.length > 0 ? Math.max(...ages) : this.defaultAge;
-    return ageOn(f.birthDate, this.on) >= age;
+    return ageOn(f.birthDate, this.on) >= this.selfBookingAge(personId);
+  }
+
+  /** From which age the child books seats themselves (the highest of their guardians' choices). */
+  selfBookingAge(personId: string): number {
+    const ages = (this.facts.get(personId)?.guardians ?? []).map(
+      (g) => g.carpoolAge ?? this.defaultAge,
+    );
+    return ages.length > 0 ? Math.max(...ages) : this.defaultAge;
   }
 }
 
@@ -208,6 +223,8 @@ export class CarpoolsService {
             open,
             offers: cars,
             bookFor,
+            canOffer:
+              open && !people.isChild(me) && (taking.has(me) || wards.some((w) => taking.has(w))),
             bookings: cars.flatMap((offer) =>
               offer.bookings
                 .filter((b) => familySet.has(b.passengerPersonId))
@@ -254,6 +271,11 @@ export class CarpoolsService {
         open,
         canOffer: open && eligible.has(me) && !people.isChild(me),
         bookFor,
+        selfBookingAge:
+          eligible.has(me) && people.isChild(me) && !people.maySelfBook(me)
+            ? people.selfBookingAge(me)
+            : null,
+        defaultReturnAt: returnAt(scope.activity, await this.driverMinutes(tx, me)),
         withoutRide: roster
           .filter(
             (r) =>
@@ -339,7 +361,10 @@ export class CarpoolsService {
               ...values,
               // The way home starts elsewhere and later (P2.7c): its own place and time.
               departurePlace: data.returnDeparturePlace || null,
-              departureAt: data.returnDepartureAt ? new Date(data.returnDepartureAt) : null,
+              // No time given: the activity's, the driver's, the club's or 15 minutes after the end (P2.7f).
+              departureAt: data.returnDepartureAt
+                ? new Date(data.returnDepartureAt)
+                : returnAt(scope.activity, await this.driverMinutes(tx, me)),
               direction: "back",
               outwardOfferId: id,
             })
@@ -623,25 +648,80 @@ export class CarpoolsService {
     });
   }
 
-  settings(context: TenantContext): Promise<{ startLocationId: string | null }> {
-    return this.db.withTenant(context, async (tx) => ({
-      startLocationId: await repo.startLocation(tx, context.clubId),
-    }));
+  settings(
+    context: TenantContext,
+  ): Promise<{ startLocationId: string | null; returnMinutes: number | null }> {
+    return this.db.withTenant(context, (tx) => repo.clubSettings(tx, context.clubId));
   }
 
-  setSettings(context: TenantContext, startLocationId: string | null): Promise<void> {
+  /** The starting place, and (when given) the way home's minutes after the end (P2.7f). */
+  setSettings(
+    context: TenantContext,
+    input: { startLocationId: string | null; returnMinutes?: number | null | undefined },
+  ): Promise<{ startLocationId: string | null; returnMinutes: number | null }> {
     return this.db.withTenant(context, async (tx) => {
+      const { startLocationId } = input;
       if (startLocationId && !(await repo.liveLocation(tx, context.clubId, startLocationId))) {
         throw new DomainError("not_found");
       }
       await repo.setStartLocation(tx, context.clubId, startLocationId);
+      if (input.returnMinutes !== undefined) {
+        await repo.setReturnMinutes(tx, context.clubId, input.returnMinutes);
+      }
       await audit.record(tx, {
         action: "carpool.settings.updated",
         resourceType: "club",
         resourceId: context.clubId,
-        changedFields: ["carpool_start_location_id"],
+        changedFields: [
+          "carpool_start_location_id",
+          ...(input.returnMinutes !== undefined ? ["carpool_return_minutes"] : []),
+        ],
       });
+      return repo.clubSettings(tx, context.clubId);
     });
+  }
+
+  // --- One's own defaults (P2.7f) ------------------------------------------------------
+
+  /** The caller's own car-pool defaults, and whether they may set them (adults). */
+  mySettings(
+    context: ActorContext,
+  ): Promise<{ settings: PersonalCarpoolSettings | null; canSet: boolean }> {
+    const me = actorPersonId(context);
+    return this.db.withActor(context, async (tx) => ({
+      settings: parsedSettings(await repo.personalSettings(tx, me)),
+      canSet: await this.isAdult(tx, me),
+    }));
+  }
+
+  /** Saves (or with null clears) the caller's defaults; adults with a login only. */
+  setMySettings(
+    context: ActorContext,
+    input: PersonalCarpoolSettings | null,
+  ): Promise<{ settings: PersonalCarpoolSettings | null; canSet: boolean }> {
+    const me = actorPersonId(context);
+    const data = input === null ? null : parseInput(PersonalCarpoolSettingsSchema, input);
+    return this.db.withActor(context, async (tx) => {
+      if (!(await this.isAdult(tx, me))) throw new DomainError("carpool_driver_not_eligible");
+      if (!(await repo.setPersonalSettings(tx, me, data))) throw new DomainError("not_found");
+      await audit.record(tx, {
+        action: "carpool.settings.updated",
+        resourceType: "person",
+        resourceId: me,
+        changedFields: ["carpool_settings"],
+      });
+      return { settings: data, canSet: true };
+    });
+  }
+
+  private async isAdult(tx: Tx, personId: string): Promise<boolean> {
+    const facts = (await repo.personFacts(tx, [personId])).get(personId);
+    return Boolean(facts?.birthDate && ageOn(facts.birthDate, this.now()) >= 18);
+  }
+
+  /** The driver's own minutes after the end (their profile), if any. */
+  private async driverMinutes(tx: Tx, personId: string): Promise<number | null> {
+    return parsedSettings(await repo.personalSettings(tx, personId))?.returnMinutes ?? null;
   }
 
   /** Deletes the club's car pools of activities that started before the date (at most today). */
@@ -828,4 +908,24 @@ export class CarpoolsService {
 /** Who booked the car's seats (else the passengers): told of its changes. */
 function bookers(offer: repo.OfferRow): string[] {
   return offer.bookings.map((b) => b.bookedByPersonId ?? b.passengerPersonId);
+}
+
+/**
+ * When the way home leaves (P2.7f): the activity's minutes after its end,
+ * else the driver's own, else the club's, else 15 minutes.
+ */
+export function returnAt(activity: repo.ActivityFacts, driverMinutes: number | null): Date {
+  const minutes =
+    activity.returnMinutes ??
+    driverMinutes ??
+    activity.clubReturnMinutes ??
+    CARPOOL_RETURN_MINUTES_DEFAULT;
+  return new Date(activity.endsAt.getTime() + minutes * 60_000);
+}
+
+/** Stored defaults that still match the schema (older or broken values read as none). */
+function parsedSettings(value: unknown): PersonalCarpoolSettings | null {
+  if (value === null || value === undefined) return null;
+  const parsed = PersonalCarpoolSettingsSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }

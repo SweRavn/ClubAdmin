@@ -207,6 +207,8 @@ export const activities = pgTable(
     requestAt: timestamp(tz),
     requestedAt: timestamp(tz),
     /** How participants get there (P2.5): own transport opens the car pool. */
+    /** Minutes after the end that the way home leaves (P2.7f); null: the driver's or club's. */
+    carpoolReturnMinutes: integer(),
     transportMode: text().$type<TransportMode>(),
     createdByPersonId: personRef(),
     ...timestamps,

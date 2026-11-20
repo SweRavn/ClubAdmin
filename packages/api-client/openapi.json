@@ -690,6 +690,12 @@
               null
             ]
           },
+          "carpoolReturnMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "responseCounts": {
             "$ref": "#/components/schemas/ResponseCounts"
           }
@@ -856,6 +862,14 @@
               "shared",
               null
             ]
+          },
+          "carpoolReturnMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 240
           }
         },
         "additionalProperties": false
@@ -1788,6 +1802,13 @@
             }
           },
           "withoutRideHidden": {
+            "type": "integer"
+          },
+          "defaultReturnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "selfBookingAge": {
             "type": "integer"
           }
         },
@@ -7109,6 +7130,12 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "returnMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "required": [
@@ -7124,6 +7151,14 @@
               "null"
             ],
             "format": "uuid"
+          },
+          "returnMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 240
           }
         },
         "required": [
@@ -7229,6 +7264,9 @@
             "items": {
               "$ref": "#/components/schemas/PersonSummary"
             }
+          },
+          "canOffer": {
+            "type": "boolean"
           },
           "bookings": {
             "type": "array",
@@ -17078,6 +17116,14 @@
               null
             ]
           },
+          "carpoolReturnMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 240
+          },
           "groupIds": {
             "type": "array",
             "items": {
@@ -19071,6 +19117,75 @@
             "maxItems": 20
           }
         },
+        "additionalProperties": false
+      },
+      "MyCarpoolSettings": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "$ref": "#/components/schemas/PersonalCarpoolSettings"
+          },
+          "canSet": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "settings",
+          "canSet"
+        ]
+      },
+      "PersonalCarpoolSettings": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "seats": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8
+          },
+          "departurePlace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 300
+          },
+          "returnMinutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 240
+          }
+        },
+        "required": [
+          "seats",
+          "departurePlace",
+          "note",
+          "returnMinutes"
+        ],
+        "additionalProperties": false
+      },
+      "PutMyCarpoolSettings": {
+        "type": "object",
+        "properties": {
+          "settings": {
+            "$ref": "#/components/schemas/PersonalCarpoolSettings"
+          }
+        },
+        "required": [
+          "settings"
+        ],
         "additionalProperties": false
       },
       "MyCarpoolList": {
@@ -62000,6 +62115,166 @@
         "responses": {
           "204": {
             "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/carpool-settings": {
+      "get": {
+        "operationId": "Carpools_mySettings",
+        "summary": "My car-pool defaults (P2.7f): seats, departure place, note, minutes after the end",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCarpoolSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "Carpools_setMySettings",
+        "summary": "Save my car-pool defaults (adults; settings null clears them)",
+        "tags": [
+          "carpools"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutMyCarpoolSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyCarpoolSettings"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request",

@@ -460,6 +460,7 @@ export default async function ActivityPage({ params, searchParams }: Props) {
                   leaderNotes: activity.leaderNotes ?? null,
                   responseMode: activity.responseMode ?? null,
                   transportMode: activity.transportMode ?? null,
+                  carpoolReturnMinutes: activity.carpoolReturnMinutes ?? null,
                   respondByDate: activity.respondBy
                     ? localDate(new Date(activity.respondBy), zone)
                     : "",

@@ -10,6 +10,7 @@ import { type Carpool, type CarpoolOffer, localDate, localTime } from "@clubadmi
 import { personLabel, PersonName, RoleBadge } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
+import { getMyCarpoolSettings } from "../server/data.ts";
 import { ActionForm, buttonClass, inputClass, secondaryButtonClass } from "./action-form.tsx";
 import { ClubTime } from "./club-time.tsx";
 
@@ -54,6 +55,10 @@ export async function CarpoolSection({
   const myOut = out.some((o) => o.mine);
   // Shared transport returned above; own or no mode is open until the start (P2.7b).
   const open = activity.status !== "cancelled" && Date.parse(activity.startsAt) > Date.now();
+  // The offer form starts from my own defaults (P2.7f), and the way home
+  // from the activity's, my, the club's or 15 minutes after the end.
+  const mine = open && carpool.canOffer && !myOut ? (await getMyCarpoolSettings()).settings : null;
+  const returnAt = new Date(carpool.defaultReturnAt ?? activity.endsAt);
 
   const car = (o: CarpoolOffer) => {
     return (
@@ -262,7 +267,9 @@ export async function CarpoolSection({
         </p>
       ) : carpool.canBookFor.length === 0 && carpool.offers.some((o) => !o.mine) ? (
         <p className="text-sm text-muted" data-testid="carpool-why">
-          {t("carpool.notTakingPart")}
+          {carpool.selfBookingAge !== undefined
+            ? t("carpool.tooYoungToBook", { age: carpool.selfBookingAge })
+            : t("carpool.notTakingPart")}
         </p>
       ) : null}
       {open && carpool.canOffer && !myOut ? (
@@ -274,7 +281,12 @@ export async function CarpoolSection({
             <input type="hidden" name="activityId" value={activity.id} />
             <input type="hidden" name="timeZone" value={zone} />
             <input type="hidden" name="date" value={date} />
-            <OfferFields seats={3} place={null} time="" note={null} />
+            <OfferFields
+              seats={mine?.seats ?? 3}
+              place={mine?.departurePlace ?? null}
+              time=""
+              note={mine?.note ?? null}
+            />
             <fieldset className="space-y-2 rounded-md border border-border p-2">
               <legend className="px-1 text-sm">
                 <label className="flex items-center gap-2">
@@ -300,17 +312,13 @@ export async function CarpoolSection({
                   <input
                     type="time"
                     name="returnDepartureTime"
-                    defaultValue={localTime(new Date(activity.endsAt), zone)}
+                    defaultValue={localTime(returnAt, zone)}
                     className={inputClass}
                     data-testid="carpool-return-time"
                   />
                 </label>
               </div>
-              <input
-                type="hidden"
-                name="returnDate"
-                value={localDate(new Date(activity.endsAt), zone)}
-              />
+              <input type="hidden" name="returnDate" value={localDate(returnAt, zone)} />
             </fieldset>
             <button type="submit" className={buttonClass} data-testid="carpool-offer-submit">
               {t("carpool.offerSubmit")}

@@ -118,6 +118,8 @@ export const accounts = pgTable(
     timeZone: text(),
     theme: text(),
     notificationSettings: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+    /** An adult's car-pool defaults (P2.7f): seats, place, note, minutes after the end. */
+    carpoolSettings: jsonb().$type<Record<string, unknown>>(),
     /** A new login email waiting for its code (P2.7d, ADR 0057). */
     pendingEmail: text(),
     /** The code is derived from this ID (INVITATION_TOKEN_KEY); a new request gives a new one. */

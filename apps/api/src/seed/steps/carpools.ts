@@ -66,7 +66,22 @@ export const carpoolsDemoStep: DemoStep = {
       reference: "Styrelsemöte 2, § 9",
       settings: { mileage_rate: 250 },
     });
-    await s.carpools.setSettings(as("goran"), "0199a000-0000-7000-8013-000000000003");
+    await s.carpools.setSettings(as("goran"), {
+      startLocationId: "0199a000-0000-7000-8013-000000000003",
+    });
+    // Erik and Mikael keep car-pool defaults (P2.7f): "Skapa samåkning" on the group page.
+    await s.carpools.setMySettings(actor("erik"), {
+      seats: 3,
+      departurePlace: "Hamngatan 4",
+      note: "Plats för en bollbag",
+      returnMinutes: 20,
+    });
+    await s.carpools.setMySettings(actor("mikael"), {
+      seats: 2,
+      departurePlace: "Strandviksskolan",
+      note: null,
+      returnMinutes: null,
+    });
     await s.activities.createLocation(
       as("ahmed"),
       { name: "Kalmarvallen", street: "Vallgatan 1", city: "Kalmarby", distanceKm: 38 },

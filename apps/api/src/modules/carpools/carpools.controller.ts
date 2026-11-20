@@ -38,11 +38,15 @@ import {
   GroupCarpoolSettingsSchema,
   type MyCarpoolList,
   MyCarpoolListSchema,
+  type MyCarpoolSettings,
+  MyCarpoolSettingsSchema,
   type PersonSummary,
   type PutCarpoolSettingsInput,
   PutCarpoolSettingsSchema,
   type PutGroupCarpoolSettingsInput,
   PutGroupCarpoolSettingsSchema,
+  type PutMyCarpoolSettingsInput,
+  PutMyCarpoolSettingsSchema,
   type SetCarpoolAgeInput,
   SetCarpoolAgeSchema,
   type UpdateCarpoolOfferInput,
@@ -174,6 +178,8 @@ export class CarpoolsController {
       canBookFor: view.bookFor.flatMap((id) => (persons.has(id) ? [persons.get(id)!] : [])),
       withoutRide,
       withoutRideHidden: leader ? view.withoutRide.length - (withoutRide?.length ?? 0) : 0,
+      defaultReturnAt: view.defaultReturnAt.toISOString(),
+      ...(view.selfBookingAge !== null ? { selfBookingAge: view.selfBookingAge } : {}),
     };
   }
 
@@ -388,6 +394,7 @@ export class CarpoolsController {
           departureAt: o.departureAt?.toISOString() ?? null,
         })),
         canBookFor: v.bookFor.flatMap((id) => (persons.has(id) ? [persons.get(id)!] : [])),
+        canOffer: v.canOffer,
         bookings: v.bookings.map(({ offer, booking }) => ({
           id: booking.id,
           offerId: offer.id,
@@ -398,6 +405,35 @@ export class CarpoolsController {
         })),
       })),
     };
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "me/carpool-settings",
+    summary: "My car-pool defaults (P2.7f): seats, departure place, note, minutes after the end",
+    tags: TAGS,
+    access: { authenticated: true },
+    request: {},
+    response: MyCarpoolSettingsSchema,
+  })
+  mySettings(@CurrentAuthorization() authz: RequestAuthorization): Promise<MyCarpoolSettings> {
+    return this.carpools.mySettings(authz.context);
+  }
+
+  @Endpoint({
+    method: "PUT",
+    path: "me/carpool-settings",
+    summary: "Save my car-pool defaults (adults; settings null clears them)",
+    tags: TAGS,
+    access: { authenticated: true },
+    request: { body: PutMyCarpoolSettingsSchema },
+    response: MyCarpoolSettingsSchema,
+  })
+  setMySettings(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Body() body: PutMyCarpoolSettingsInput,
+  ): Promise<MyCarpoolSettings> {
+    return this.carpools.setMySettings(authz.context, body.settings);
   }
 
   @Endpoint({
@@ -560,8 +596,7 @@ export class CarpoolsController {
     @Param() params: { clubId: string },
     @Body() body: PutCarpoolSettingsInput,
   ): Promise<CarpoolSettings> {
-    await this.carpools.setSettings(tenantContext(authz, params.clubId), body.startLocationId);
-    return { startLocationId: body.startLocationId };
+    return this.carpools.setSettings(tenantContext(authz, params.clubId), body);
   }
 
   @Endpoint({

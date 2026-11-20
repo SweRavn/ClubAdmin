@@ -1125,6 +1125,13 @@ Club-owned tables (tenant RLS, record history; migration 0048):
   (`clubs.carpool_start_location_id`, a manager setting); everyone who adds
   places changes every place and its distance (`club.locations.create`,
   widened), archiving stays with `club.locations.manage`.
+- When the way home leaves (P2.7f, migration 0057): an offer without a
+  time home leaves `activities.carpool_return_minutes` after the end, else
+  the driver's own minutes (`accounts.carpool_settings`), else the club's
+  (`clubs.carpool_return_minutes`, with the starting place), else 15
+  minutes. `accounts.carpool_settings` (adults; own account only) also
+  holds the driver's seats, departure place and note for "Skapa
+  samåkning", one tap under an activity in the group's list.
 - `carpool_offers`: an activity's car (`driver_person_id`, `direction`
   `out` | `back`, `outward_offer_id` for a return trip copied from the
   outward one, `willing_only` with no seats, `seats` 1–8,

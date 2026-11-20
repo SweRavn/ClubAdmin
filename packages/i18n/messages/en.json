@@ -4815,7 +4815,25 @@
     "startedNoBooking": "The trip has started; seats are no longer booked.",
     "rideWith": "Ride with",
     "thereAndHome": "there and home",
-    "thereOnly": "there only"
+    "thereOnly": "there only",
+    "quick": "Offer a car pool ({seats} seats)",
+    "returnMinutes": "Way home, minutes after the end",
+    "returnMinutesHint": "Empty: the driver's or the club's choice, else 15 minutes.",
+    "clubReturnMinutes": "Way home, minutes after the end",
+    "clubReturnHint": "When the way home leaves if neither the activity nor the driver says. Empty: 15 minutes.",
+    "defaults": {
+      "title": "Car pool",
+      "intro": "Your defaults when you drive. With them you get the \"Offer a car pool\" button under the groups' activities.",
+      "seats": "Seats",
+      "departurePlace": "Departure place",
+      "note": "Information for the passengers",
+      "returnMinutes": "Way home, minutes after the end",
+      "returnHint": "Empty: the activity's or the club's choice, else 15 minutes. The activity's choice comes before yours.",
+      "save": "Save",
+      "clear": "Remove the defaults",
+      "saved": "The car-pool settings are saved."
+    },
+    "tooYoungToBook": "You book a seat yourself from age {age}. Until then a guardian books it for you."
   },
   "expenses": {
     "mine": "My expenses",

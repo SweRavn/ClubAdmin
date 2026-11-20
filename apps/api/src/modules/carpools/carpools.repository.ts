@@ -24,6 +24,9 @@ export interface ActivityFacts {
   /** The place's distance (km), when at a club place that has one. */
   distanceKm: number | null;
   country: string;
+  /** Minutes after the end the way home leaves (P2.7f): the activity's and the club's. */
+  returnMinutes: number | null;
+  clubReturnMinutes: number | null;
 }
 
 /** The activity with what the car pool needs of it (null: not readable). */
@@ -47,9 +50,12 @@ export async function activitiesFacts(
     transport_mode: TransportMode | null;
     distance_km: string | null;
     country: string;
+    return_minutes: number | null;
+    club_return_minutes: number | null;
   }>(sql`
     SELECT a.id, a.club_id, a.title, a.starts_at, a.ends_at, a.status, a.transport_mode,
-      l.distance_km, c.country
+      l.distance_km, c.country, a.carpool_return_minutes AS return_minutes,
+      c.carpool_return_minutes AS club_return_minutes
     FROM public.activities a
     JOIN public.clubs c ON c.id = a.club_id
     LEFT JOIN public.locations l ON l.club_id = a.club_id AND l.id = a.location_id
@@ -64,6 +70,8 @@ export async function activitiesFacts(
     transportMode: r.transport_mode,
     distanceKm: num(r.distance_km),
     country: r.country,
+    returnMinutes: r.return_minutes,
+    clubReturnMinutes: r.club_return_minutes,
   }));
 }
 
@@ -514,10 +522,50 @@ export async function setStatsPublic(tx: Tx, groupId: string, value: boolean): P
 
 /** The club's starting place for distances (a car-pool setting on the club's row). */
 export async function startLocation(tx: Tx, clubId: string): Promise<string | null> {
-  const { rows } = await tx.execute<{ id: string | null }>(
-    sql`SELECT carpool_start_location_id AS id FROM public.clubs WHERE id = ${clubId}::uuid`,
-  );
-  return rows[0]?.id ?? null;
+  return (await clubSettings(tx, clubId)).startLocationId;
+}
+
+/** The club's car-pool settings: the starting place and the way home's minutes (P2.7f). */
+export async function clubSettings(
+  tx: Tx,
+  clubId: string,
+): Promise<{ startLocationId: string | null; returnMinutes: number | null }> {
+  const { rows } = await tx.execute<{ id: string | null; minutes: number | null }>(sql`
+    SELECT carpool_start_location_id AS id, carpool_return_minutes AS minutes
+    FROM public.clubs WHERE id = ${clubId}::uuid`);
+  return { startLocationId: rows[0]?.id ?? null, returnMinutes: rows[0]?.minutes ?? null };
+}
+
+export async function setReturnMinutes(
+  tx: Tx,
+  clubId: string,
+  minutes: number | null,
+): Promise<void> {
+  await tx.execute(sql`
+    UPDATE public.clubs SET carpool_return_minutes = ${minutes}
+    WHERE id = ${clubId}::uuid`);
+}
+
+/** The person's own car-pool defaults (their account; own_account policy; P2.7f). */
+export async function personalSettings(
+  tx: Tx,
+  personId: string,
+): Promise<Record<string, unknown> | null> {
+  const { rows } = await tx.execute<{ settings: Record<string, unknown> | null }>(sql`
+    SELECT carpool_settings AS settings FROM public.accounts WHERE person_id = ${personId}::uuid`);
+  return rows[0]?.settings ?? null;
+}
+
+/** Saves the person's own defaults; false without an account (own_account policy). */
+export async function setPersonalSettings(
+  tx: Tx,
+  personId: string,
+  settings: Record<string, unknown> | null,
+): Promise<boolean> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    UPDATE public.accounts SET carpool_settings = ${settings === null ? null : JSON.stringify(settings)}::jsonb
+    WHERE person_id = ${personId}::uuid RETURNING id`);
+  return rows.length > 0;
 }
 
 export async function setStartLocation(

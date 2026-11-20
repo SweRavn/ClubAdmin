@@ -4815,7 +4815,25 @@
     "startedNoBooking": "Turen har startet; plasser bestilles ikke lenger.",
     "rideWith": "Sitt på med",
     "thereAndHome": "dit og hjem",
-    "thereOnly": "bare dit"
+    "thereOnly": "bare dit",
+    "quick": "Opprett samkjøring ({seats} plasser)",
+    "returnMinutes": "Hjemreise, minutter etter slutt",
+    "returnMinutesHint": "Tom: sjåførens eller klubbens valg, ellers 15 minutter.",
+    "clubReturnMinutes": "Hjemreise, minutter etter slutt",
+    "clubReturnHint": "Når hjemreisen går hvis verken aktiviteten eller sjåføren har angitt noe. Tom: 15 minutter.",
+    "defaults": {
+      "title": "Samkjøring",
+      "intro": "Dine forvalg når du kjører. Med dem får du knappen \"Opprett samkjøring\" under gruppenes aktiviteter.",
+      "seats": "Antall plasser",
+      "departurePlace": "Avreisested",
+      "note": "Informasjon til passasjerene",
+      "returnMinutes": "Hjemreise, minutter etter slutt",
+      "returnHint": "Tom: aktivitetens eller klubbens valg, ellers 15 minutter. Aktivitetens valg gjelder før ditt.",
+      "save": "Lagre",
+      "clear": "Fjern forvalgene",
+      "saved": "Samkjøringsinnstillingene er lagret."
+    },
+    "tooYoungToBook": "Du bestiller plass selv fra {age} år. Til da bestiller en foresatt plassen for deg."
   },
   "expenses": {
     "mine": "Mine utlegg",

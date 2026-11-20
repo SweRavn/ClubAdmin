@@ -490,11 +490,23 @@ function activityFieldsOf(form: FormData, clear: boolean) {
     endsAt,
     ...(meetAt ? { meetAt } : clear ? { meetAt: null } : {}),
     ...(homeAway ? { homeAway } : clear ? { homeAway: null } : {}),
+    ...returnMinutesOf(form, clear),
     ...(transportMode ? { transportMode } : clear ? { transportMode: null } : {}),
     ...clearable(form, ["notes", "leaderNotes", "meetPlace", "opponent", "competition"], clear),
     ...placeOf(form, clear),
   };
 }
+/** The way home's minutes after the end (P2.7f); empty: none (cleared on edit). */
+function returnMinutesOf(form: FormData, clear: boolean) {
+  if (!form.has("carpoolReturnMinutes")) return {};
+  const value = text(form, "carpoolReturnMinutes");
+  const minutes = Number(value);
+  if (value === "" || !Number.isInteger(minutes) || minutes < 0 || minutes > 240) {
+    return clear ? { carpoolReturnMinutes: null } : {};
+  }
+  return { carpoolReturnMinutes: minutes };
+}
+
 /** Those offered in the call-up list but not ticked (P2.7e). */
 function leftOut(form: FormData): string[] {
   const ticked = new Set(form.getAll("callUp"));
@@ -3178,6 +3190,57 @@ const CARPOOL_ACTIONS: Record<string, FormAction> = {
     },
     done: (form) => withParam(carpoolBack(text(form, "activityId")), "saved", "1"),
   },
+  // My car-pool defaults (P2.7f), on "Min profil"; "clear" removes them.
+  "carpool-defaults": {
+    call: (form) => {
+      if (text(form, "clear") === "1") {
+        return { path: "/api/v1/me/carpool-settings", method: "PUT", body: { settings: null } };
+      }
+      const seats = Number(text(form, "seats"));
+      const minutes = text(form, "returnMinutes");
+      const returnMinutes = minutes === "" ? null : Number(minutes);
+      const wrong: Record<string, string> = {};
+      if (!(Number.isInteger(seats) && seats >= 1 && seats <= 8)) wrong.seats = "invalid_number";
+      if (
+        returnMinutes !== null &&
+        !(Number.isInteger(returnMinutes) && returnMinutes >= 0 && returnMinutes <= 240)
+      ) {
+        wrong.returnMinutes = "invalid_number";
+      }
+      if (Object.keys(wrong).length > 0) return { invalid: "invalid_input", fields: wrong };
+      return {
+        path: "/api/v1/me/carpool-settings",
+        method: "PUT",
+        body: {
+          settings: {
+            seats,
+            departurePlace: text(form, "departurePlace") || null,
+            note: text(form, "note") || null,
+            returnMinutes,
+          },
+        },
+      };
+    },
+    done: (form) => withParam(back(form, "/me/profile"), "saved", "carpool"),
+  },
+  // "Skapa samåkning" (P2.7f): my defaults, there and home; stays on the page.
+  "carpool-quick": {
+    call: (form) => {
+      const activityId = id(form, "activityId");
+      const fields = offerFields(form);
+      if (!activityId || !fields) return null;
+      return {
+        path: `/api/v1/activities/${activityId}/carpool/offers`,
+        method: "POST",
+        body: {
+          ...fields,
+          withReturn: true,
+          returnDeparturePlace: text(form, "returnDeparturePlace") || null,
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "carpool"),
+  },
   "carpool-update": {
     call: (form) => {
       const activityId = id(form, "activityId");
@@ -3280,7 +3343,13 @@ const CARPOOL_ACTIONS: Record<string, FormAction> = {
       return {
         path: `/api/v1/clubs/${clubId}/carpool-settings`,
         method: "PUT",
-        body: { startLocationId: id(form, "startLocationId") },
+        body: {
+          startLocationId: id(form, "startLocationId"),
+          // The way home's default minutes (P2.7f); empty: none (15).
+          ...(form.has("returnMinutes")
+            ? { returnMinutes: returnMinutesOf(form, true).carpoolReturnMinutes ?? null }
+            : {}),
+        },
       };
     },
     done: (form) => withParam(back(form), "saved", "1"),

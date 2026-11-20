@@ -158,6 +158,7 @@ export function toActivityResponse(view: ActivityView, canManage: boolean): Acti
     requestAt: a.requestAt ? iso(a.requestAt) : null,
     inviteesOnly: a.inviteesOnly,
     transportMode: a.transportMode,
+    carpoolReturnMinutes: a.carpoolReturnMinutes,
   };
 }
 

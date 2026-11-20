@@ -148,3 +148,47 @@ test("the last free seat in Erik's car is offered for Alva (P2.7d)", async ({ pa
       .filter({ hasText: /Erik Johansson.*dit och hem/ }),
   ).toBeVisible();
 });
+
+test("Erik offers his car with one tap from the group's list, with his defaults (P2.7f)", async ({
+  page,
+}) => {
+  // Erik keeps defaults (the demo): 3 seats, a note, home 20 minutes after the end.
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}` });
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  const item = page
+    .getByTestId("agenda-item")
+    .filter({ has: page.getByTestId("carpool-quick") })
+    .first();
+  const href = await item.getByRole("link").first().getAttribute("href");
+  await item.getByTestId("carpool-quick").click();
+  await expect(
+    page
+      .getByTestId("agenda-item")
+      .filter({ has: page.locator(`a[href="${href}"]`) })
+      .getByTestId("carpool-quick"),
+  ).toHaveCount(0);
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
+  await page.goto(href!);
+  const mine = page.getByTestId("carpool-car").filter({ hasText: "Din bil" });
+  await expect(mine.first()).toContainText("Plats för en bollbag");
+});
+
+test("Anna keeps her car-pool defaults on her profile (P2.7f)", async ({ page }) => {
+  await loginAs(page, PERSONAS.anna, { returnTo: "/me/profile" });
+  const form = page.getByTestId("carpool-defaults-form");
+  await form.getByTestId("carpool-defaults-seats").fill("4");
+  await form.getByTestId("carpool-defaults-place").fill("Strandvägen 12");
+  await form.getByTestId("carpool-defaults-note").fill("Barnstol finns");
+  await form.getByTestId("carpool-defaults-returnMinutes").fill("10");
+  await form.getByTestId("carpool-defaults-save").click();
+  await expect(page.getByTestId("notice")).toBeVisible();
+  await expect(form.getByTestId("carpool-defaults-seats")).toHaveValue("4");
+  await expect(form.getByTestId("carpool-defaults-returnMinutes")).toHaveValue("10");
+  // Back to none, for the tests that come after.
+  await form.getByTestId("carpool-defaults-clear").click();
+  await expect(page.getByTestId("carpool-defaults-clear")).toHaveCount(0);
+});

@@ -13,9 +13,11 @@ import {
   inputClass,
   secondaryButtonClass,
 } from "../../../../components/action-form.tsx";
+import { CarpoolDefaults } from "../../../../components/carpool-defaults.tsx";
 import { ContactForm } from "../../../../components/contact-form.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
-import { getMyProfile, getMyWards } from "../../../../server/data.ts";
+import { resolveTimeZone } from "../../../../server/context.ts";
+import { getMyCarpoolSettings, getMyProfile, getMyWards } from "../../../../server/data.ts";
 import { safeReturnTo } from "../../../../server/return-to.ts";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -33,6 +35,9 @@ export default async function ProfilePage({ searchParams }: Props) {
   ]);
   const next = safeReturnTo(typeof params.next === "string" ? params.next : null);
   const saved = typeof params.saved === "string" ? params.saved : null;
+  const carpool = profile.complete ? await getMyCarpoolSettings() : null;
+  // The person's own zone (their setting, the club's, the browser's), never the server's.
+  const zone = await resolveTimeZone();
   const wards = profile.complete
     ? (await getMyWards()).wards.filter((w) => w.rights.includes("act_on_behalf"))
     : [];
@@ -43,6 +48,7 @@ export default async function ProfilePage({ searchParams }: Props) {
         <FormError code={params.error} />
         {saved === "contact" ? <Notice>{t("contact.saved")}</Notice> : null}
         {saved === "email" ? <Notice>{t("contact.emailSaved")}</Notice> : null}
+        {saved === "carpool" ? <Notice>{t("carpool.defaults.saved")}</Notice> : null}
       </div>
 
       <section className="space-y-3">
@@ -107,9 +113,10 @@ export default async function ProfilePage({ searchParams }: Props) {
               <p>
                 {t("contact.pending", {
                   email: profile.pendingEmail.email,
-                  until: new Intl.DateTimeFormat(locale, { timeStyle: "short" }).format(
-                    new Date(profile.pendingEmail.expiresAt),
-                  ),
+                  until: new Intl.DateTimeFormat(locale, {
+                    timeStyle: "short",
+                    timeZone: zone,
+                  }).format(new Date(profile.pendingEmail.expiresAt)),
                 })}
               </p>
               <ActionForm action="confirm-email-change" className="flex flex-wrap items-end gap-2">
@@ -156,6 +163,9 @@ export default async function ProfilePage({ searchParams }: Props) {
           )}
         </section>
       ) : null}
+
+      {/* Car-pool defaults (P2.7f): adults only. */}
+      {carpool?.canSet ? <CarpoolDefaults settings={carpool.settings} /> : null}
 
       {wards.length > 0 ? (
         <section className="space-y-2" data-testid="ward-contacts">

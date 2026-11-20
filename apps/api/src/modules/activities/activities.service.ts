@@ -329,6 +329,7 @@ export class ActivitiesService {
             )
           : null,
         transportMode: data.transportMode ?? null,
+        carpoolReturnMinutes: data.carpoolReturnMinutes ?? null,
         createdByPersonId: actorPersonId(context),
       },
     ]);
@@ -417,6 +418,9 @@ export class ActivitiesService {
           : {}),
         ...("requestLead" in data ? { requestLead: data.requestLead ?? null } : {}),
         ...("transportMode" in data ? { transportMode: data.transportMode ?? null } : {}),
+        ...("carpoolReturnMinutes" in data
+          ? { carpoolReturnMinutes: data.carpoolReturnMinutes ?? null }
+          : {}),
       };
       if ("locationId" in data || "locationText" in data) {
         const locationId = data.locationId ?? null;

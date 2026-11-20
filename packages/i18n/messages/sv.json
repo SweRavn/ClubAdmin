@@ -4815,7 +4815,25 @@
     "startedNoBooking": "Resan har börjat; platser bokas inte längre.",
     "rideWith": "Åk med",
     "thereAndHome": "dit och hem",
-    "thereOnly": "bara dit"
+    "thereOnly": "bara dit",
+    "quick": "Skapa samåkning ({seats} platser)",
+    "returnMinutes": "Hemfärd, minuter efter slut",
+    "returnMinutesHint": "Tom: förarens eller föreningens val, annars 15 minuter.",
+    "clubReturnMinutes": "Hemfärd, minuter efter slut",
+    "clubReturnHint": "När hemfärden avgår om varken aktiviteten eller föraren angett något. Tom: 15 minuter.",
+    "defaults": {
+      "title": "Samåkning",
+      "intro": "Dina förval när du kör. Med dem får du knappen \"Skapa samåkning\" under gruppernas aktiviteter.",
+      "seats": "Antal platser",
+      "departurePlace": "Avgångsplats",
+      "note": "Information till passagerarna",
+      "returnMinutes": "Hemfärd, minuter efter slut",
+      "returnHint": "Tom: aktivitetens eller föreningens val, annars 15 minuter. Aktivitetens val gäller före ditt.",
+      "save": "Spara",
+      "clear": "Ta bort förvalen",
+      "saved": "Samåkningsinställningarna är sparade."
+    },
+    "tooYoungToBook": "Du bokar plats själv från {age} år. Fram till dess bokar din vårdnadshavare platsen åt dig."
   },
   "expenses": {
     "mine": "Mina utlägg",

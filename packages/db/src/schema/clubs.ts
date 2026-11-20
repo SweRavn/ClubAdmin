@@ -102,6 +102,8 @@ export const clubs = pgTable(
     consentReconfirmOnNewVersion: boolean().notNull().default(false),
     /** Mileage reimbursement (P2.5, a board setting): minor units per km; null: off. */
     mileageRate: integer(),
+    /** Minutes after an activity's end that the way home leaves (P2.7f); null: 15. */
+    carpoolReturnMinutes: integer(),
     /** Months after the last membership ended that a former member's profile is kept (P1.8a). */
     formerMemberRetentionMonths: integer().notNull().default(24),
     /** Where members send privacy questions (a function address; P1.8a). */

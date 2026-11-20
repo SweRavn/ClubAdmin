@@ -105,6 +105,7 @@ import {
   MemberImportSchema,
   MeResponseSchema,
   MyCarpoolListSchema,
+  MyCarpoolSettingsSchema,
   MyClubCreationRequestsSchema,
   MyClubsSchema,
   MyConsentsSchema,
@@ -1193,6 +1194,10 @@ export const getCarpool = cache((activityId: string) =>
   required(`/api/v1/activities/${requireId(activityId)}/carpool`, CarpoolSchema),
 );
 export const getMyCarpools = cache(() => required("/api/v1/me/carpools", MyCarpoolListSchema));
+/** My car-pool defaults (P2.7f): what "Skapa samåkning" offers. */
+export const getMyCarpoolSettings = cache(() =>
+  required("/api/v1/me/carpool-settings", MyCarpoolSettingsSchema),
+);
 /** The group's car-pool statistics for a period, or null without access. */
 export const getCarpoolStats = cache((clubId: string, groupId: string, from: string, to: string) =>
   apiGet(

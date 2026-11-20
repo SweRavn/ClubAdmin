@@ -169,7 +169,8 @@ const CASES: Case[] = [
     persona: "ahmed",
     method: "GET",
     url: () => `/api/v1/activities/${DEMO_CARPOOL_IDS.awayMatch}/carpool`,
-    statements: 7,
+    // P2.7f: the caller's own minutes for the way home (their account).
+    statements: 8,
     pages: 260,
   },
   // P2.7c: "Mitt schema" asks per club for its activities' car pools: the

@@ -146,6 +146,9 @@ season, so the group page shows "10 of 10 places".
 
 ## Demo scenario: named personas
 
+Erik and Mikael keep car-pool defaults (P2.7f), so the F2017 page offers
+them "Skapa samåkning" under the activities they do not drive to yet.
+
 All names fictional. Children without own login have **no email**. Most
 adults and the F2017 children have a phone number and an address (P2.7d);
 only Anna, Erik, Johan and Ahmed share theirs with their clubs, so a leader

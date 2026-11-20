@@ -10,6 +10,7 @@ import { Suspense } from "react";
 
 import { secondaryButtonClass } from "../../../../components/action-form.tsx";
 import { Agenda, agendaItemOf, weekOffset, weekRange } from "../../../../components/agenda.tsx";
+import { CarpoolQuick } from "../../../../components/carpool-quick.tsx";
 import { ChatRow } from "../../../../components/chat-parts.tsx";
 import { EventList } from "../../../../components/event-list.tsx";
 import { Notice } from "../../../../components/form-error.tsx";
@@ -28,6 +29,7 @@ import {
   getGroupEvents,
   getGroupMembers,
   getMe,
+  getMyCarpoolSettings,
   getMyGroups,
   getMyWards,
   getSchedule,
@@ -73,6 +75,8 @@ export default async function GroupPage({ params, searchParams }: Params) {
     // My family's answers on the group's activities (P2.7c), as in "Mitt schema".
     calendar ? getSchedule(range.from, range.to).catch(() => null) : null,
   ]);
+  // "Skapa samåkning" for those who keep car-pool defaults (P2.7f).
+  const carpoolDefaults = calendar ? (await getMyCarpoolSettings()).settings : null;
   const mine = new Map((mySchedule?.items ?? []).map((e) => [e.activityId, e]));
   const carpools = await getCarpoolSummaries(
     (calendar?.items ?? [])
@@ -85,9 +89,18 @@ export default async function GroupPage({ params, searchParams }: Params) {
   const withMine = (item: ReturnType<typeof agendaItemOf>) => {
     const entry = mine.get(item.id);
     if (!entry) return item;
+    const carpool = carpools.get(item.id);
+    const quick =
+      carpoolDefaults &&
+      carpool?.open &&
+      carpool.canOffer &&
+      !carpool.offers.some((o) => o.mine) ? (
+        <CarpoolQuick activityId={item.id} settings={carpoolDefaults} returnPlace={item.place} />
+      ) : null;
     return {
       ...item,
-      carpool: carpools.get(item.id),
+      ...(quick ? { actions: quick } : {}),
+      carpool,
       respondBy: entry.respondBy ?? null,
       ...(entry.responseMode ? { responseMode: entry.responseMode } : {}),
       responses: (entry.responses ?? []).map((r) => {

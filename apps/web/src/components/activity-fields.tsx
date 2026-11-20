@@ -38,6 +38,7 @@ export interface ActivityFieldValues {
   respondByTime?: string;
   requestLead?: RequestLead | null;
   transportMode?: string | null;
+  carpoolReturnMinutes?: number | null;
 }
 
 /** How participants get there (P2.5): not said, on their own (a car pool) or shared. */
@@ -186,6 +187,21 @@ export async function ActivityFields({
       </label>
       {input("competition", t("activities.competition"), { maxLength: 120 })}
       <TransportModeField value={values.transportMode} />
+      {/* When the way home leaves (P2.7f): minutes after the end; empty: the driver's or club's. */}
+      <label className="block space-y-1">
+        <span className="text-sm">{t("carpool.returnMinutes")}</span>
+        <input
+          type="number"
+          name="carpoolReturnMinutes"
+          min={0}
+          max={240}
+          step={5}
+          defaultValue={values.carpoolReturnMinutes ?? ""}
+          className={inputClass}
+          data-testid="activity-carpoolReturnMinutes"
+        />
+        <span className="text-xs text-muted">{t("carpool.returnMinutesHint")}</span>
+      </label>
       <ResponseModeFields
         mode={values.responseMode}
         deadline={{ date: values.respondByDate ?? "", time: values.respondByTime ?? "" }}
