@@ -10,6 +10,33 @@ const c = useCoreDatabase();
 const address = { street: "Storgatan 1", postalCode: "111 22", city: "Stockholm", country: "SE" };
 
 describe("people", () => {
+  it("changes phone and address with an audit event naming the fields only (P2.7d)", async () => {
+    const p = await buildPerson(c.s);
+    const changed = await c.s.people.updateContact(actor(p.id), p.id, {
+      phone: "070-123 45 67",
+      address,
+    });
+    expect(changed).toMatchObject({ phone: "070-123 45 67", address });
+    // The same values again change nothing (no second event).
+    await c.s.people.updateContact(actor(p.id), p.id, {
+      phone: "070-123 45 67",
+      address: { ...address },
+    });
+    const { rows } = await c.t.query<{ changed_fields: string[]; n: number }>(
+      "admin",
+      "SELECT changed_fields FROM audit.events WHERE action = 'person.contact.updated' AND resource_id = $1",
+      [p.id],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.changed_fields.sort()).toEqual(["address", "phone"]);
+    expect(JSON.stringify(rows)).not.toContain("123 45");
+    const history = await historyOf(c.t, "public.people", p.id);
+    expect(history.some((h) => h.changed_columns.includes("phone"))).toBe(true);
+    // null removes a field.
+    const removed = await c.s.people.updateContact(actor(p.id), p.id, { address: null });
+    expect(removed.address).toBeNull();
+  });
+
   it("stores the personal identity number encrypted, with a blind index, and redacts it in history", async () => {
     const parent = await buildPerson(c.s);
     const { child } = await c.s.guardianships.addChild(actor(parent.id), {

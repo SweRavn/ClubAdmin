@@ -360,6 +360,21 @@
                   "type": "integer",
                   "minimum": 15,
                   "maximum": 720
+                },
+                "locationId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "locationText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 200
                 }
               },
               "required": [
@@ -3313,6 +3328,21 @@
                   "type": "integer",
                   "minimum": 15,
                   "maximum": 720
+                },
+                "locationId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "locationText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 200
                 }
               },
               "required": [
@@ -3516,6 +3546,21 @@
                   "type": "integer",
                   "minimum": 15,
                   "maximum": 720
+                },
+                "locationId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "locationText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 200
                 }
               },
               "required": [
@@ -3664,6 +3709,21 @@
                   "type": "integer",
                   "minimum": 15,
                   "maximum": 720
+                },
+                "locationId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "locationText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 200
                 }
               },
               "required": [
@@ -17095,6 +17155,21 @@
                   "type": "integer",
                   "minimum": 15,
                   "maximum": 720
+                },
+                "locationId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "locationText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 200
                 }
               },
               "required": [
@@ -17259,6 +17334,21 @@
                   "type": "integer",
                   "minimum": 15,
                   "maximum": 720
+                },
+                "locationId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "locationText": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "minLength": 1,
+                  "maxLength": 200
                 }
               },
               "required": [
@@ -19236,6 +19326,7 @@
                       "event.registrations.manage",
                       "person.profile.read",
                       "person.profile.update",
+                      "club.people.contact.edit",
                       "person.protection.set",
                       "person.access_log.read",
                       "person.guardians.read",
@@ -20149,6 +20240,131 @@
           "canAccept"
         ]
       },
+      "MyProfile": {
+        "type": "object",
+        "properties": {
+          "person": {
+            "$ref": "#/components/schemas/PersonSummary"
+          },
+          "birthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "clubCreation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "request",
+              "not_allowed"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "address": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "street": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "postalCode": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "city": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$"
+              }
+            },
+            "required": [
+              "street",
+              "postalCode",
+              "city",
+              "country"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pendingEmail": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "email",
+              "expiresAt"
+            ]
+          },
+          "protectedIdentity": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "person",
+          "birthDate",
+          "complete",
+          "clubCreation"
+        ]
+      },
+      "RequestEmailChangeRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "additionalProperties": false
+      },
+      "ConfirmEmailChangeRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "additionalProperties": false
+      },
       "MyEvents": {
         "type": "object",
         "properties": {
@@ -21015,38 +21231,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "MyProfile": {
-        "type": "object",
-        "properties": {
-          "person": {
-            "$ref": "#/components/schemas/PersonSummary"
-          },
-          "birthDate": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date"
-          },
-          "complete": {
-            "type": "boolean"
-          },
-          "clubCreation": {
-            "type": "string",
-            "enum": [
-              "create",
-              "request",
-              "not_allowed"
-            ]
-          }
-        },
-        "required": [
-          "person",
-          "birthDate",
-          "complete",
-          "clubCreation"
-        ]
       },
       "CompleteProfileRequest": {
         "type": "object",
@@ -23145,6 +23329,12 @@
                     "string",
                     "null"
                   ]
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "required": [
@@ -23152,6 +23342,19 @@
                 "kind"
               ]
             }
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactEditable": {
+            "type": "string",
+            "enum": [
+              "self",
+              "club"
+            ]
           },
           "protection": {
             "$ref": "#/components/schemas/ProtectionState"
@@ -23223,6 +23426,52 @@
           "canRemoveGlobal",
           "canChangeClub"
         ]
+      },
+      "UpdateContactRequest": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\+?[0-9 ()-]{5,20}$"
+          },
+          "address": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "street": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "postalCode": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "city": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "country": {
+                "type": "string",
+                "pattern": "^[A-Z]{2}$"
+              }
+            },
+            "required": [
+              "street",
+              "postalCode",
+              "city",
+              "country"
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "PersonConsents": {
         "type": "object",
@@ -63076,6 +63325,244 @@
         }
       }
     },
+    "/api/v1/me/email": {
+      "post": {
+        "operationId": "Onboarding_requestEmailChange",
+        "summary": "Change my login email: a code goes to the new address; nothing changes until it is entered (recent login)",
+        "tags": [
+          "me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestEmailChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/email/confirm": {
+      "post": {
+        "operationId": "Onboarding_confirmEmailChange",
+        "summary": "Confirm the new login email with the code sent to it; the old address is told",
+        "tags": [
+          "me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmEmailChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/email/pending": {
+      "delete": {
+        "operationId": "Onboarding_cancelEmailChange",
+        "summary": "Drop an open change of my login email",
+        "tags": [
+          "me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/me/events": {
       "get": {
         "operationId": "Events_mine",
@@ -68781,6 +69268,123 @@
         }
       }
     },
+    "/api/v1/people/{personId}/club-contact": {
+      "patch": {
+        "operationId": "PersonProfiles_updateClubContact",
+        "summary": "Change a member's phone and address for the club (club.people.contact.edit, second factor; never the login email)",
+        "tags": [
+          "people"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.people.contact.edit` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "query"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContactRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/people/{personId}/consents": {
       "get": {
         "operationId": "Consents_personConsents",
@@ -69077,6 +69681,114 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Empty"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/people/{personId}/contact": {
+      "patch": {
+        "operationId": "PersonProfiles_updateOwnContact",
+        "summary": "Change my own or my ward's phone and address (the person, or a guardian acting on their behalf)",
+        "tags": [
+          "people"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `person.profile.update` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateContactRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
                 }
               }
             }

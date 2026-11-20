@@ -304,6 +304,59 @@ describe("car pools (P2.5)", () => {
     expect(await summaries(outsider.id).catch(() => [])).toEqual([]);
   });
 
+  it("a child who answered Kommer is still offered the car's last seats, there and home (P2.7d)", async () => {
+    type Summary = {
+      offers: {
+        id: string;
+        direction: string;
+        freeSeats: number;
+        outwardOfferId: string | null;
+      }[];
+      canBookFor: { id: string }[];
+    };
+    const answered = await api(
+      teen.guardian.id,
+      "PUT",
+      `/activities/${activityId}/responses/${teen.child.id}`,
+      { status: "attending" },
+    );
+    expect(answered.statusCode, answered.body).toBe(200);
+    const res = await api(
+      teen.guardian.id,
+      "GET",
+      `/clubs/${club.id}/carpool-summaries?activityIds=${activityId}`,
+    );
+    const [summary] = res.json<{ items: Summary[] }>().items;
+    expect(summary!.canBookFor.map((p) => p.id)).toContain(teen.child.id);
+    // Three seats, one taken by b's child: the car is listed with two free,
+    // and its way home (same car) too, so "Åk med" books both.
+    const out = summary!.offers.find((o) => o.id === outId)!;
+    expect(out.freeSeats).toBe(2);
+    expect(summary!.offers.find((o) => o.outwardOfferId === outId)?.freeSeats).toBe(2);
+
+    const booked = await api(
+      teen.guardian.id,
+      "POST",
+      `/activities/${activityId}/carpool/offers/${outId}/bookings`,
+      { passengerPersonId: teen.child.id, alsoReturn: true },
+    );
+    expect(booked.statusCode, booked.body).toBe(201);
+    const { id, returnId } = booked.json<{ id: string; returnId: string | null }>();
+    expect(returnId).toBeTruthy();
+    // Back as it was for the tests that follow.
+    for (const [offer, booking] of [
+      [outId, id],
+      [backId, returnId!],
+    ] as const) {
+      const cancel = await api(
+        teen.guardian.id,
+        "DELETE",
+        `/activities/${activityId}/carpool/offers/${offer}/bookings/${booking}`,
+      );
+      expect(cancel.statusCode, cancel.body).toBe(204);
+    }
+  });
+
   it("names passengers only to the car's people, families and leaders", async () => {
     const asPlayer = await carpool(player.id);
     expect(asPlayer.offers[0]!.bookings.map((x) => x.passenger)).toEqual([null]);

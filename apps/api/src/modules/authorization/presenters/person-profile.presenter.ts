@@ -12,7 +12,7 @@ import {
   type PersonProfile,
 } from "@clubadmin/shared";
 
-import { contactVisible, type ProfileAccess } from "../authorization.policy.ts";
+import { contactVisible, type ProfileAccess, seesClubContact } from "../authorization.policy.ts";
 import type { PersonResource } from "../policy.ts";
 import type { RequestAuthorization } from "../request-authorization.ts";
 import type { PersonPresenter, PresentablePerson } from "./person.presenter.ts";
@@ -47,22 +47,29 @@ export class PersonProfilePresenter {
     const summary = await this.people.presentOne(authorization, resource.clubId, person);
     if (!summary) return null;
     const profile: PersonProfile = { person: summary };
+    // The club's registrars see phone and address whatever was shared (P2.7d, ADR 0057).
+    const clubContact = seesClubContact(authorization.actor, resource);
     if (access === "member") {
-      // Contact details the person (or their guardians) chose to show (P1.8a).
-      if (
+      if (clubContact) {
+        profile.phone = person.phone;
+        profile.address = person.address;
+      } else if (
+        // Contact details the person (or their guardians) chose to show (P1.8a).
         contactVisible(authorization.actor, resource) &&
         (resource.inClub?.sharedFields ?? []).includes("phone")
       ) {
         profile.phone = person.phone;
       }
-      if (guardians.length > 0)
+      if (guardians.length > 0 || clubContact)
         profile.guardians = await this.guardiansOf(authorization, resource, guardians);
       return profile;
     }
 
     const shared = new Set(resource.inClub?.sharedFields ?? []);
     const sees = (field: "phone" | "address" | "gender") =>
-      access === "self" || (shared.has(field) && (access === "admin" || field === "phone"));
+      access === "self" ||
+      (clubContact && field !== "gender") ||
+      (shared.has(field) && (access === "admin" || field === "phone"));
     profile.birthDate = person.birthDate;
     if (sees("phone")) profile.phone = person.phone;
     if (sees("gender")) {

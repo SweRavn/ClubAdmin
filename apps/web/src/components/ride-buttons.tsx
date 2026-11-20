@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// A seat in a car from the schedule and the group's list (P2.7c, ADR 0048):
-// per person and direction, "Åk med dit" / "Åk med hem" books one tap (one
-// car), or opens the list of cars with free seats (driver, place, time);
-// a booked seat says whose car it is and can be cancelled. The data is the
-// club's car pool summaries (one request per club and page).
+// A seat in a car from the schedule and the group's list (P2.7c, P2.7d,
+// ADR 0048): one menu only. Before answering, "Kommer ▾" in the answer
+// buttons lists the cars; after answering "Kommer", "Åk med ▾" here does.
+// Choosing a car books the way there and, when the same car drives home
+// with a free seat, the way home too. A booked seat says whose car it is and
+// can be cancelled. The data is the club's car pool summaries (one request
+// per club and page).
 import type { CarpoolSummary } from "@clubadmin/shared";
 import { formatDateTime, personLabel } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -24,6 +26,13 @@ export function carsFor(
   return carpool.offers.filter((o) => o.direction === direction && !o.mine && o.freeSeats > 0);
 }
 
+/** Whether the car there also takes the person home (its return trip has a free seat). */
+export function drivesHome(carpool: CarpoolSummary, outward: Offer): boolean {
+  return carpool.offers.some(
+    (o) => o.direction === "back" && o.outwardOfferId === outward.id && o.freeSeats > 0,
+  );
+}
+
 /** "Anna Lindqvist · Klubbstugan 08:30": the driver, the pick-up place and time. */
 export function carLabelOf(
   offer: Offer,
@@ -42,97 +51,104 @@ export function carLabelOf(
     .join(" · ");
 }
 
-async function carLabel(offer: Offer, timeZone: string): Promise<string> {
-  const [t, locale] = await Promise.all([getTranslations(), getLocale()]);
-  return carLabelOf(offer, timeZone, locale, t("carpool.hiddenDriver"));
+/** The menu's line for a car: who, where, when, and whether it brings the person home. */
+export function rideLabel(
+  carpool: CarpoolSummary,
+  offer: Offer,
+  timeZone: string,
+  locale: string,
+  texts: { hiddenDriver: string; thereAndHome: string; thereOnly: string },
+): string {
+  return `${carLabelOf(offer, timeZone, locale, texts.hiddenDriver)} (${
+    drivesHome(carpool, offer) ? texts.thereAndHome : texts.thereOnly
+  })`;
 }
 
+/**
+ * The person's seats, and "Åk med ▾" once they have answered "Kommer"
+ * without a seat there. Before answering the "Kommer" menu offers the cars.
+ */
 export async function RideButtons({
   activityId,
   personId,
   carpool,
   timeZone,
+  attending,
 }: {
   activityId: string;
   personId: string;
   carpool: CarpoolSummary | undefined;
   timeZone: string;
+  /** The person answered "Kommer" (the menu is here, not in the answer buttons). */
+  attending: boolean;
 }) {
   if (!carpool) return null;
-  const t = await getTranslations();
-  const directions = (["out", "back"] as const).map((direction) => ({
-    direction,
-    booked: carpool.bookings.find(
-      (b) => b.passengerPersonId === personId && b.direction === direction,
-    ),
-    cars: carsFor(carpool, personId, direction),
-  }));
-  if (directions.every((d) => !d.booked && d.cars.length === 0)) return null;
-  const labelOf = (direction: "out" | "back") =>
-    direction === "out" ? t("carpool.rideOut") : t("carpool.rideHome");
+  const [t, locale] = await Promise.all([getTranslations(), getLocale()]);
+  const booked = carpool.bookings.filter((b) => b.passengerPersonId === personId);
+  const bookedOut = booked.some((b) => b.direction === "out");
+  const cars = attending && !bookedOut ? carsFor(carpool, personId, "out") : [];
+  if (booked.length === 0 && cars.length === 0) return null;
+  const texts = {
+    hiddenDriver: t("carpool.hiddenDriver"),
+    thereAndHome: t("carpool.thereAndHome"),
+    thereOnly: t("carpool.thereOnly"),
+  };
 
   return (
     <span className="flex flex-wrap items-center gap-2" data-testid={`rides-${personId}`}>
-      {await Promise.all(
-        directions.map(async ({ direction, booked, cars }) => {
-          if (booked) {
-            const offer = carpool.offers.find((o) => o.id === booked.offerId);
-            return (
-              <span
-                key={direction}
-                className="flex items-center gap-1 text-xs"
-                data-testid={`ride-booked-${direction}`}
-              >
-                {t(direction === "out" ? "carpool.ridingOut" : "carpool.ridingHome", {
-                  car: offer ? await carLabel(offer, timeZone) : "",
-                })}
-                {booked.status === "pending_guardian" ? ` (${t("carpool.pending")})` : null}
-                {booked.canCancel ? (
-                  <ActionForm action="carpool-cancel" className="inline">
-                    <input type="hidden" name="activityId" value={activityId} />
-                    <input type="hidden" name="offerId" value={booked.offerId} />
-                    <input type="hidden" name="bookingId" value={booked.id} />
-                    <button
-                      type="submit"
-                      className="underline"
-                      data-testid={`ride-cancel-${direction}`}
-                    >
-                      {t("carpool.cancel")}
-                    </button>
-                  </ActionForm>
-                ) : null}
-              </span>
-            );
-          }
-          if (cars.length === 0) return null;
-          const book = async (offer: Offer, label: string) => (
-            <ActionForm key={offer.id} action="carpool-book" className="inline">
-              <input type="hidden" name="activityId" value={activityId} />
-              <input type="hidden" name="offerId" value={offer.id} />
-              <input type="hidden" name="passengerPersonId" value={personId} />
-              <button
-                type="submit"
-                className={small}
-                title={await carLabel(offer, timeZone)}
-                data-testid={`ride-book-${direction}`}
-              >
-                {label}
-              </button>
-            </ActionForm>
-          );
-          if (cars.length === 1) return book(cars[0]!, labelOf(direction));
-          return (
-            <details key={direction} className="relative" data-testid={`ride-menu-${direction}`}>
-              <summary className={`${small} cursor-pointer list-none`}>
-                {labelOf(direction)} ▾
-              </summary>
-              <span className="absolute z-10 mt-1 flex min-w-56 flex-col gap-1 rounded-md border border-border bg-raised p-2 shadow">
-                {await Promise.all(cars.map(async (o) => book(o, await carLabel(o, timeZone))))}
-              </span>
-            </details>
-          );
-        }),
-      )}
+      {booked.map((b) => {
+        const offer = carpool.offers.find((o) => o.id === b.offerId);
+        return (
+          <span
+            key={b.id}
+            className="flex items-center gap-1 text-xs"
+            data-testid={`ride-booked-${b.direction}`}
+          >
+            {t(b.direction === "out" ? "carpool.ridingOut" : "carpool.ridingHome", {
+              car: offer ? carLabelOf(offer, timeZone, locale, texts.hiddenDriver) : "",
+            })}
+            {b.status === "pending_guardian" ? ` (${t("carpool.pending")})` : null}
+            {b.canCancel ? (
+              <ActionForm action="carpool-cancel" className="inline">
+                <input type="hidden" name="activityId" value={activityId} />
+                <input type="hidden" name="offerId" value={b.offerId} />
+                <input type="hidden" name="bookingId" value={b.id} />
+                <button
+                  type="submit"
+                  className="underline"
+                  data-testid={`ride-cancel-${b.direction}`}
+                >
+                  {t("carpool.cancel")}
+                </button>
+              </ActionForm>
+            ) : null}
+          </span>
+        );
+      })}
+      {cars.length > 0 ? (
+        <details className="relative" data-testid="ride-menu">
+          <summary className={`${small} cursor-pointer list-none`}>
+            {t("carpool.rideWith")} ▾
+          </summary>
+          <span className="absolute z-10 mt-1 flex min-w-64 flex-col gap-1 rounded-md border border-border bg-raised p-2 shadow">
+            {cars.map((o) => (
+              <ActionForm key={o.id} action="carpool-book">
+                <input type="hidden" name="activityId" value={activityId} />
+                <input type="hidden" name="offerId" value={o.id} />
+                <input type="hidden" name="passengerPersonId" value={personId} />
+                <input type="hidden" name="alsoReturn" value="on" />
+                <button
+                  type="submit"
+                  className="w-full rounded px-2 py-1 text-left text-sm hover:bg-surface"
+                  data-testid="ride-book"
+                >
+                  {rideLabel(carpool, o, timeZone, locale, texts)}
+                </button>
+              </ActionForm>
+            ))}
+          </span>
+        </details>
+      ) : null}
     </span>
   );
 }

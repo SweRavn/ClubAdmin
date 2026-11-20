@@ -597,6 +597,7 @@ export class ActivitiesService {
       await this.requireGroups(tx, context.clubId, groupIds);
       const locationId = data.locationId ?? null;
       if (locationId) await this.requireLocation(tx, context.clubId, locationId);
+      await this.requireSlotLocations(tx, context.clubId, data.slots);
       const club = await this.clubs.getClubInTx(tx, context.clubId);
       const rule = this.ruleOf(data);
       const until = this.horizon(club, data.endsOn, null);
@@ -1155,6 +1156,7 @@ export class ActivitiesService {
       values.locationId = locationId;
       values.locationText = locationId ? null : (data.locationText ?? null);
     }
+    if (data.slots !== undefined) await this.requireSlotLocations(tx, clubId, data.slots);
     return values;
   }
 
@@ -1198,8 +1200,7 @@ export class ActivitiesService {
         title: series.title,
         notes: series.notes,
         leaderNotes: series.leaderNotes,
-        locationId: series.locationId,
-        locationText: series.locationText,
+        ...placeOf(series, session.date),
         responseMode: series.responseMode,
         respondBy: respondByOf(series, session.startsAt),
         requestLead: series.requestLead,
@@ -1281,8 +1282,7 @@ export class ActivitiesService {
         title: series.title,
         notes: series.notes,
         leaderNotes: series.leaderNotes,
-        locationId: series.locationId,
-        locationText: series.locationText,
+        ...placeOf(series, s.date),
         startsAt: s.startsAt,
         endsAt: s.endsAt,
         responseMode: series.responseMode,
@@ -1334,6 +1334,16 @@ export class ActivitiesService {
     const found = await repo.clubGroups(tx, clubId, groupIds);
     if (found.length !== groupIds.length) throw new DomainError("not_found");
     if (found.some((g) => g.archived)) throw new DomainError("group_archived");
+  }
+
+  /** The weekdays' own places (P2.7d) are the club's live places. */
+  private async requireSlotLocations(
+    tx: Tx,
+    clubId: string,
+    slots: readonly SeriesSlot[] | undefined,
+  ): Promise<void> {
+    const ids = new Set((slots ?? []).flatMap((s) => (s.locationId ? [s.locationId] : [])));
+    for (const id of ids) await this.requireLocation(tx, clubId, id);
   }
 
   private async requireLocation(tx: Tx, clubId: string, locationId: string): Promise<void> {
@@ -1411,4 +1421,22 @@ function checkedRange(query: { from: string; to: string }): { from: Date; to: Da
     throw new DomainError("range_too_long");
   }
   return { from, to };
+}
+
+/**
+ * A session's place (P2.7d): its weekday's own place when the slot has one,
+ * else the series'.
+ */
+function placeOf(
+  series: { locationId: string | null; locationText: string | null; slots: readonly SeriesSlot[] },
+  date: string,
+): { locationId: string | null; locationText: string | null } {
+  const weekday = new Date(`${date}T12:00:00Z`).getUTCDay() || 7;
+  const slot = series.slots.find((s) => s.weekday === weekday && (s.locationId || s.locationText));
+  if (slot)
+    return {
+      locationId: slot.locationId ?? null,
+      locationText: slot.locationId ? null : (slot.locationText ?? null),
+    };
+  return { locationId: series.locationId, locationText: series.locationText };
 }

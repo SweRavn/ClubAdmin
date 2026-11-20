@@ -34,6 +34,11 @@ export const DOMAIN_ERRORS = {
   email_taken: "conflict",
   account_exists: "conflict",
   too_young_for_account: "conflict",
+  // Changing the login email (P2.7d, ADR 0057)
+  email_unchanged: "validation",
+  email_code_invalid: "validation",
+  email_code_expired: "conflict",
+  email_change_unavailable: "unavailable",
   // clubs and roles
   club_slug_taken: "conflict",
   unsupported_country: "validation",

@@ -716,7 +716,8 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => `/api/v1/people/${key("elsa")}?clubId=${key("svk")}`,
-    statements: 7,
+    // P2.7d: the guardians' login emails for the registrar (one statement).
+    statements: 8,
     pages: 110,
   },
   {

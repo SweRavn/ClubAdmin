@@ -5867,6 +5867,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/email": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Change my login email: a code goes to the new address; nothing changes until it is entered (recent login) */
+    post: operations["Onboarding_requestEmailChange"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/email/confirm": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirm the new login email with the code sent to it; the old address is told */
+    post: operations["Onboarding_confirmEmailChange"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/email/pending": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Drop an open change of my login email */
+    delete: operations["Onboarding_cancelEmailChange"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/events": {
     parameters: {
       query?: never;
@@ -6784,6 +6835,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/people/{personId}/club-contact": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change a member's phone and address for the club (club.people.contact.edit, second factor; never the login email)
+     * @description Requires permission `club.people.contact.edit` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["PersonProfiles_updateClubContact"];
+    trace?: never;
+  };
   "/api/v1/people/{personId}/consents": {
     parameters: {
       query?: never;
@@ -6826,6 +6897,26 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  "/api/v1/people/{personId}/contact": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Change my own or my ward's phone and address (the person, or a guardian acting on their behalf)
+     * @description Requires permission `person.profile.update` on the person. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["PersonProfiles_updateOwnContact"];
     trace?: never;
   };
   "/api/v1/people/{personId}/history": {
@@ -7132,6 +7223,9 @@ export interface components {
         weekday: number;
         startTime: string;
         durationMinutes: number;
+        /** Format: uuid */
+        locationId?: string | null;
+        locationText?: string | null;
       }[];
       /** Format: date */
       startsOn: string;
@@ -7865,6 +7959,9 @@ export interface components {
         weekday: number;
         startTime: string;
         durationMinutes: number;
+        /** Format: uuid */
+        locationId?: string | null;
+        locationText?: string | null;
       }[];
       rule?: components["schemas"]["SeriesRule"];
       rrule?: string;
@@ -7910,6 +8007,9 @@ export interface components {
         weekday: number;
         startTime: string;
         durationMinutes: number;
+        /** Format: uuid */
+        locationId?: string | null;
+        locationText?: string | null;
       }[];
       rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
@@ -7942,6 +8042,9 @@ export interface components {
         weekday: number;
         startTime: string;
         durationMinutes: number;
+        /** Format: uuid */
+        locationId?: string | null;
+        locationText?: string | null;
       }[];
       rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
@@ -11385,6 +11488,9 @@ export interface components {
         weekday: number;
         startTime: string;
         durationMinutes: number;
+        /** Format: uuid */
+        locationId?: string | null;
+        locationText?: string | null;
       }[];
       rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
@@ -11426,6 +11532,9 @@ export interface components {
         weekday: number;
         startTime: string;
         durationMinutes: number;
+        /** Format: uuid */
+        locationId?: string | null;
+        locationText?: string | null;
       }[];
       rule?: components["schemas"]["SeriesRule"];
       /** Format: date */
@@ -12021,6 +12130,7 @@ export interface components {
           | "event.registrations.manage"
           | "person.profile.read"
           | "person.profile.update"
+          | "club.people.contact.edit"
           | "person.protection.set"
           | "person.access_log.read"
           | "person.guardians.read"
@@ -12324,6 +12434,34 @@ export interface components {
       canTake: boolean;
       canAccept: boolean;
     };
+    MyProfile: {
+      person: components["schemas"]["PersonSummary"];
+      /** Format: date */
+      birthDate: string | null;
+      complete: boolean;
+      /** @enum {string} */
+      clubCreation: "create" | "request" | "not_allowed";
+      phone?: string | null;
+      address?: {
+        street: string;
+        postalCode: string;
+        city: string;
+        country: string;
+      } | null;
+      email?: string | null;
+      pendingEmail?: {
+        email: string;
+        /** Format: date-time */
+        expiresAt: string;
+      } | null;
+      protectedIdentity?: boolean;
+    };
+    RequestEmailChangeRequest: {
+      email: string;
+    };
+    ConfirmEmailChangeRequest: {
+      code: string;
+    };
     MyEvents: {
       items: {
         event: components["schemas"]["Event"];
@@ -12550,14 +12688,6 @@ export interface components {
       timeZone?: string | null;
       /** @enum {string|null} */
       theme?: "light" | "dark" | "system" | null;
-    };
-    MyProfile: {
-      person: components["schemas"]["PersonSummary"];
-      /** Format: date */
-      birthDate: string | null;
-      complete: boolean;
-      /** @enum {string} */
-      clubCreation: "create" | "request" | "not_allowed";
     };
     CompleteProfileRequest: {
       givenName?: string;
@@ -13119,7 +13249,11 @@ export interface components {
           | "step_parent"
           | "foster_parent";
         phone?: string | null;
+        email?: string | null;
       }[];
+      email?: string | null;
+      /** @enum {string} */
+      contactEditable?: "self" | "club";
       protection?: components["schemas"]["ProtectionState"];
       viewsLogged?: boolean;
     };
@@ -13134,6 +13268,15 @@ export interface components {
       canChangeGlobal: boolean;
       canRemoveGlobal: boolean;
       canChangeClub: boolean;
+    };
+    UpdateContactRequest: {
+      phone?: string | null;
+      address?: {
+        street: string;
+        postalCode: string;
+        city: string;
+        country: string;
+      } | null;
     };
     PersonConsents: {
       /** Format: uuid */
@@ -41149,6 +41292,200 @@ export interface operations {
       };
     };
   };
+  Onboarding_requestEmailChange: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RequestEmailChangeRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyProfile"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Onboarding_confirmEmailChange: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConfirmEmailChangeRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyProfile"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Onboarding_cancelEmailChange: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyProfile"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Events_mine: {
     parameters: {
       query?: {
@@ -45399,6 +45736,88 @@ export interface operations {
       };
     };
   };
+  PersonProfiles_updateClubContact: {
+    parameters: {
+      query: {
+        clubId: string;
+      };
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateContactRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Consents_personConsents: {
     parameters: {
       query: {
@@ -45595,6 +46014,86 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Empty"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  PersonProfiles_updateOwnContact: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateContactRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Ok"];
         };
       };
       /** @description Invalid request */

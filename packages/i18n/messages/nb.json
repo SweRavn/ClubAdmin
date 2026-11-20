@@ -469,6 +469,8 @@
       "invitationBody": "{hasInviter, select, yes {{inviter} inviterer deg} other {Du er invitert}} til ClubAdmin som {kind, select, parent {forelder} legal_guardian {verge} relative {slektning} step_parent {bonusforelder} foster_parent {fosterforelder} other {kontaktperson}} for {hasWard, select, yes {{ward}} other {et barn eller en ungdom}}.\n\nTakk ja (logg inn, eller opprett en innlogging med denne e-postadressen):\n{url}\n\nInvitasjonen gjelder til {expires}. Hvis du ikke ventet den, kan du se bort fra e-posten.",
       "acceptedSubject": "{person} har takket ja til invitasjonen din",
       "acceptedBody": "{person} har takket ja til invitasjonen din og er nå knyttet til {ward} som {kind, select, parent {forelder} legal_guardian {verge} relative {slektning} step_parent {bonusforelder} foster_parent {fosterforelder} other {kontaktperson}}.\n\nSe familien din i ClubAdmin:\n{url}",
+      "emailChangeSubject": "Bekreft den nye e-postadressen din",
+      "emailChangeBody": "Hei {name},\n\nSkriv inn denne koden i ClubAdmin for å bytte e-postadressen for innlogging til denne adressen:\n\n{code}\n\nKoden gjelder til {expires}. Fortsett på profilen din:\n{url}\n\nHvis du ikke ba om byttet, kan du se bort fra denne e-posten; ingenting endres.",
       "ownLoginSubject": "Din egen innlogging til ClubAdmin",
       "ownLoginBody": "Hei {name}!\n\nNå kan du logge inn i ClubAdmin selv. Medlemskapene, gruppene og historikken din er som før.\n\nLogg inn eller opprett innloggingen din med denne e-postadressen:\n{url}\n\nLenken gjelder til {expires}.",
       "ownLoginAgeSubject": "{ward} kan nå få egen innlogging",
@@ -509,7 +511,7 @@
     }
   },
   "profileForm": {
-    "title": "Profilen din",
+    "title": "Min profil",
     "intro": "Navnet og fødselsdatoen din. Fødselsdatoen trengs for klubbenes aldersregler og kan ikke endres her senere.",
     "givenName": "Fornavn",
     "familyName": "Etternavn",
@@ -676,6 +678,11 @@
     "creation_request_exists": "Du har allerede en ventende søknad.",
     "club_creation_not_allowed": "Du kan ikke opprette klubber her.",
     "too_young_for_account": "Du er for ung for en egen konto; en foresatt kan legge deg til.",
+    "email_taken": "E-postadressen tilhører en annen innlogging.",
+    "email_unchanged": "Det er allerede e-postadressen din.",
+    "email_code_invalid": "Koden er feil. Sjekk e-posten og prøv igjen.",
+    "email_code_expired": "Koden gjelder ikke lenger. Be om en ny.",
+    "email_change_unavailable": "E-postadressen kan ikke byttes på denne serveren akkurat nå.",
     "handover_invalid": "Overleveringen er ikke lenger åpen.",
     "club_has_manager": "Klubben har fortsatt en klubbansvarlig.",
     "mfa_required": "Dette krever innlogging med tofaktorautentisering. Logg ut og logg inn igjen med den.",
@@ -1448,7 +1455,16 @@
     "removed": "Fjernede datoer",
     "bringBack": "Ta tilbake",
     "datesRemoved": "Datoene er fjernet.",
-    "dateRestored": "Datoen er tilbake."
+    "dateRestored": "Datoen er tilbake.",
+    "sessionCancel": "Avlys…",
+    "sessionCancelReason": "Årsak (valgfri)",
+    "sessionCancelButton": "Avlys økten",
+    "sessionRestore": "Gjenopprett",
+    "sessionDelete": "Slett…",
+    "sessionDeleteHint": "Økten slettes og datoen hoppes over i serien.",
+    "sessionDeleteButton": "Slett økten",
+    "slotLocation": "Sted den dagen",
+    "slotLocationDefault": "Seriens sted"
   },
   "clubCalendar": {
     "title": "Klubbens kalender",
@@ -3005,6 +3021,8 @@
       "activity_response_set_by_leader": "{actor} svarte for en deltaker",
       "membership_type_changed": "{actor} endret en medlemskapstype",
       "account_email_changed": "{actor} endret e-postadressen for innlogging",
+      "account_email_change_requested": "{actor} ba om å bytte e-postadresse for innlogging",
+      "person_contact_updated": "{actor} endret kontaktopplysningene til en person",
       "club_phone_numbers_updated": "{actor} endret klubbens telefonnumre",
       "guardianship_ward_adult": "Et barn ble myndig",
       "guardianship_adult_decided": "{actor} bestemte om foreldreansvar etter myndighetsdagen",
@@ -3666,6 +3684,11 @@
         "name": "Se medlemmenes opplysninger",
         "description": "Kan se medlemmenes kontaktopplysninger, fødselsdato og andre opplysninger i registeret.",
         "example": "Kan for eksempel se adressen og telefonnummeret til et medlem."
+      },
+      "club_people_contact_edit": {
+        "name": "Endre medlemmenes kontaktopplysninger",
+        "description": "Kan se og endre medlemmenes telefonnummer og adresse, og se e-postadressen deres. Krever tofaktorinnlogging.",
+        "example": "Kan for eksempel rette adressen til et medlem som har flyttet."
       },
       "club_people_protected": {
         "name": "Se personer med beskyttet identitet",
@@ -4788,7 +4811,10 @@
     "ownCar": "Din bil",
     "full": "Fullt",
     "notTakingPart": "Du og barna dine deltar ikke, så dere kan ikke bestille plass.",
-    "startedNoBooking": "Turen har startet; plasser bestilles ikke lenger."
+    "startedNoBooking": "Turen har startet; plasser bestilles ikke lenger.",
+    "rideWith": "Sitt på med",
+    "thereAndHome": "dit og hjem",
+    "thereOnly": "bare dit"
   },
   "expenses": {
     "mine": "Mine utlegg",
@@ -5066,5 +5092,34 @@
     "next": "Neste side",
     "ended": "Rollen er fjernet.",
     "groupRoles": "Grupperoller (trenere, lagledere …) gis i hver gruppes administrasjon:"
+  },
+  "contact": {
+    "title": "Kontaktopplysninger",
+    "intro": "Telefonnummeret og adressen din. Klubbenes medlemsansvarlige ser dem; hva andre medlemmer og ledere ser, velger du under Personvern.",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "street": "Gateadresse",
+    "postalCode": "Postnummer",
+    "city": "Sted",
+    "country": "Land",
+    "save": "Lagre kontaktopplysninger",
+    "saved": "Kontaktopplysningene er lagret.",
+    "edit": "Endre kontaktopplysninger",
+    "clubNote": "Du endrer opplysningene på vegne av klubben. Endringen logges. Bare personen selv kan bytte e-postadressen for innlogging.",
+    "protectedNoAddress": "Personen har beskyttet identitet: ingen adresse lagres.",
+    "email": "E-post",
+    "emailTitle": "E-post for innlogging",
+    "currentEmail": "Du logger inn med",
+    "newEmail": "Ny e-postadresse",
+    "emailHelp": "Vi sender en kode til den nye adressen. Byttet skjer først når du har skrevet inn koden, og den gamle adressen får beskjed.",
+    "sendCode": "Send kode",
+    "pending": "Venter på bekreftelse: skriv inn koden som ble sendt til {email}. Koden gjelder til {until}.",
+    "code": "Kode",
+    "confirm": "Bekreft",
+    "cancelChange": "Avbryt byttet",
+    "emailSaved": "E-postadressen er byttet. Logg inn med den nye adressen neste gang.",
+    "wardsTitle": "Barna dine",
+    "wardsIntro": "Endre barnets telefon og adresse på barnets profil.",
+    "guardiansTitle": "Foresattes kontaktopplysninger"
   }
 }

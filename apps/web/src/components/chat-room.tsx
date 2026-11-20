@@ -396,9 +396,13 @@ export function ChatRoom(props: Props) {
   };
 
   return (
-    // At most the viewport below the frame (P2.7c): the messages scroll inside,
-    // the field to write in stays in view.
-    <div className="flex h-[calc(100dvh-12rem)] min-h-80 flex-col gap-3" data-testid="chat-room">
+    // As tall as its messages, at most the window below the frame, the
+    // breadcrumbs and the title (P2.7c, P2.7d): the messages scroll inside and
+    // the field to write in is in view at once, also in an empty chat.
+    <div
+      className="flex max-h-[calc(100dvh-19rem)] min-h-64 flex-col gap-3"
+      data-testid="chat-room"
+    >
       {notice ? (
         <p
           role="status"

@@ -213,7 +213,7 @@ test("switch clubs, browse groups and members; the last club is remembered", asy
   // On pages about the person the selector says "all clubs" (P2.7b) and the
   // navigation has only the person-wide pages (P2.7c); a club's pages bring
   // its items back.
-  await page.goto("/schedule");
+  await page.goto("/");
   // Lars uses Norwegian.
   await expect(page.getByTestId("club-switcher-current")).toHaveText("Alle klubber");
   await expect(page.getByTestId("nav-members")).toHaveCount(0);

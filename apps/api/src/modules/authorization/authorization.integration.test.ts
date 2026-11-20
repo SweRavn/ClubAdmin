@@ -1894,6 +1894,19 @@ describe("permission matrix", () => {
       expected: { ...ALL_NOT_FOUND, parent: 200 },
       body: { protected: false },
     },
+    // Contact details (P2.7d, ADR 0057): the person or a guardian acting for
+    // them; the club's registrars and managers with a second factor (these
+    // tokens have none: 403 mfa-required).
+    "PATCH /api/v1/people/:personId/contact": {
+      url: () => `/api/v1/people/${m.child.id}/contact`,
+      expected: { ...ALL_NOT_FOUND, parent: 200 },
+      body: { phone: "070-111 22 33" },
+    },
+    "PATCH /api/v1/people/:personId/club-contact": {
+      url: () => `/api/v1/people/${m.child.id}/club-contact?clubId=${m.clubA.id}`,
+      expected: { ...ALL_NOT_FOUND, manager: 403, registrar: 403 },
+      body: { phone: "070-111 22 33" },
+    },
     "GET /api/v1/people/:personId/access-log": {
       url: () => `/api/v1/people/${m.child.id}/access-log`,
       expected: { ...ALL_NOT_FOUND, parent: 200 },
@@ -2381,9 +2394,25 @@ describe("reads", () => {
     expect(asRegistrar).toMatchObject({
       club: { membership: { status: "active", membershipType: "active" } },
     });
-    // P1.15 A2: the club manager reads the register, not its details: the name.
+    // P1.15 A2: the club manager reads the register, not its details (no
+    // birth date or groups); P2.7d (ADR 0057): but the contact details, to
+    // change them, and the login email (null: the child has no login).
     const asManager = await profile(m.manager.id, m.child.id);
-    expect(Object.keys(asManager).sort()).toEqual(["person", "protection"]);
+    expect(Object.keys(asManager).sort()).toEqual([
+      "address",
+      "contactEditable",
+      "email",
+      "guardians",
+      "person",
+      "phone",
+      "protection",
+    ]);
+    expect(asManager).toMatchObject({ contactEditable: "club", email: null });
+    // The child is reached through the guardians (with their login emails).
+    const guardians = (asManager as { guardians?: { kind: string; email?: unknown }[] }).guardians;
+    const parentRow = guardians?.find((g) => g.kind === "parent");
+    expect(parentRow).toMatchObject({ phone: "+46 70 222 22 22" });
+    expect(typeof parentRow?.email).toBe("string");
   });
 });
 

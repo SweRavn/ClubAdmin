@@ -264,9 +264,23 @@ export const PersonProfileSchema = z
           person: PersonSummarySchema,
           kind: z.enum(GUARDIANSHIP_KINDS),
           phone: z.string().nullable().optional(),
+          /** The guardian's login email, for the club's registrars (P2.7d, ADR 0057). */
+          email: z.string().nullable().optional(),
         }),
       )
       .optional(),
+    /**
+     * The person's login email (null without a login), read-only, for the
+     * person, their guardians and the club's registrars (P2.7d, ADR 0057).
+     */
+    email: z.string().nullable().optional(),
+    /**
+     * Who changes the phone and address (P2.7d): `self` through
+     * PATCH /people/:personId/contact (the person or a guardian acting on
+     * their behalf), `club` through PATCH /people/:personId/club-contact
+     * with the clubId (registrars, second factor). Absent: neither.
+     */
+    contactEditable: z.enum(["self", "club"]).optional(),
     /**
      * P1.12: the protection state, for the person, full guardians and (with
      * `clubId`) club managers; absent for everyone else.

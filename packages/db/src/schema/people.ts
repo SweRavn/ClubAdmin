@@ -31,6 +31,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -117,6 +118,12 @@ export const accounts = pgTable(
     timeZone: text(),
     theme: text(),
     notificationSettings: jsonb().$type<Record<string, unknown>>().notNull().default({}),
+    /** A new login email waiting for its code (P2.7d, ADR 0057). */
+    pendingEmail: text(),
+    /** The code is derived from this ID (INVITATION_TOKEN_KEY); a new request gives a new one. */
+    pendingEmailId: uuid(),
+    pendingEmailExpiresAt: timestamp(tz),
+    pendingEmailAttempts: smallint().notNull().default(0),
     ...timestamps,
   },
   (t) => [
@@ -128,6 +135,14 @@ export const accounts = pgTable(
     check(
       "accounts_theme",
       sql`${t.theme} IS NULL OR ${oneOf(t.theme, ["light", "dark", "system"])}`,
+    ),
+    check(
+      "accounts_pending_email_normalised",
+      sql`${t.pendingEmail} = lower(btrim(${t.pendingEmail}))`,
+    ),
+    check(
+      "accounts_pending_email_complete",
+      sql`(${t.pendingEmail} IS NULL) = (${t.pendingEmailId} IS NULL) AND (${t.pendingEmail} IS NULL) = (${t.pendingEmailExpiresAt} IS NULL)`,
     ),
   ],
 );

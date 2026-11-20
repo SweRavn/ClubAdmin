@@ -4,7 +4,7 @@
 // own person, so duplicates are detected by the unique index, never by
 // looking up other people's accounts.
 
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 import { ageOn, type AgeRules, getCountryPack, isSupportedCountry } from "@clubadmin/country-packs";
 import {
@@ -15,7 +15,7 @@ import {
   outbox,
   type Tx,
 } from "@clubadmin/db";
-import { accountInvitationToken } from "@clubadmin/server-kit/invitations";
+import { accountInvitationToken, emailChangeCode } from "@clubadmin/server-kit/invitations";
 import {
   EmailSchema,
   type Preferences,
@@ -56,6 +56,17 @@ function preferencesOf(account: Account | null): Preferences {
 export const ACCOUNT_INVITATION_VALID_DAYS = 14;
 const hashToken = (token: string) => createHash("sha256").update(token, "utf8").digest("base64url");
 
+/** How long the code for a new login email works (P2.7d, ADR 0057). */
+export const EMAIL_CHANGE_VALID_MINUTES = 60;
+/** Wrong codes before the request is dropped (a new one sends a new code). */
+export const EMAIL_CHANGE_MAX_ATTEMPTS = 5;
+
+/** The identity provider's copy of the login email (Zitadel; absent with DEV_AUTH only). */
+export interface IdentityProviderEmails {
+  /** Sets the user's email as verified there; `email_taken` when another user has it. */
+  setVerifiedEmail(idpSubject: string, email: string): Promise<void>;
+}
+
 export interface NewAccount {
   email: string;
   /** When the identity provider verified the address. */
@@ -63,6 +74,13 @@ export interface NewAccount {
   idpSubject?: string | null;
   locale?: string | null;
 }
+
+const clearedPending = () => ({
+  pendingEmail: null,
+  pendingEmailId: null,
+  pendingEmailExpiresAt: null,
+  pendingEmailAttempts: 0,
+});
 
 export class AccountsService {
   private readonly db: Database;
@@ -81,6 +99,8 @@ export class AccountsService {
       defaultCountry: string;
       /** INVITATION_TOKEN_KEY: own-login invitations are emailed with a derived link (P1.3). */
       invitationTokenKey?: string | undefined;
+      /** Zitadel, when configured: a confirmed new email is set there first (P2.7d). */
+      identityProvider?: IdentityProviderEmails | undefined;
     },
   ) {
     this.db = db;
@@ -89,6 +109,149 @@ export class AccountsService {
     this.clubs = deps.clubs;
     this.defaultCountry = deps.defaultCountry;
     this.tokenKey = deps.invitationTokenKey;
+    this.identityProvider = deps.identityProvider;
+  }
+
+  private readonly identityProvider: IdentityProviderEmails | undefined;
+
+  /**
+   * Asks to change the login email (P2.7d, ADR 0057): the new address waits
+   * until the code the worker sends to it is entered. A new request replaces
+   * an open one (and its code). Nothing changes for logging in until then.
+   */
+  requestEmailChange(context: ActorContext, newEmail: string): Promise<Account> {
+    const key = this.tokenKey;
+    if (!key) throw new DomainError("email_change_unavailable");
+    return this.db.withActor(context, async (tx) => {
+      const account = await repo.findByPerson(tx, actorPersonId(context));
+      if (!account) throw new DomainError("not_found");
+      const email = parseInput(EmailSchema, newEmail);
+      if (email === account.email) throw new DomainError("email_unchanged");
+      const pending = {
+        pendingEmail: email,
+        pendingEmailId: uuidv7(),
+        pendingEmailExpiresAt: new Date(Date.now() + EMAIL_CHANGE_VALID_MINUTES * 60_000),
+        pendingEmailAttempts: 0,
+      };
+      await repo.updateAccount(tx, account.id, pending);
+      await audit.record(tx, {
+        action: "account.email.change_requested",
+        resourceType: "account",
+        resourceId: account.id,
+        changedFields: ["pending_email"],
+      });
+      await outbox.publish(tx, "account.email.change_requested", {
+        accountId: account.id,
+        personId: account.personId,
+      });
+      return { ...account, ...pending };
+    });
+  }
+
+  /** Drops an open email change (the code stops working). */
+  cancelEmailChange(context: ActorContext): Promise<Account> {
+    return this.db.withActor(context, async (tx) => {
+      const account = await repo.findByPerson(tx, actorPersonId(context));
+      if (!account) throw new DomainError("not_found");
+      if (!account.pendingEmail) return account;
+      const cleared = clearedPending();
+      await repo.updateAccount(tx, account.id, cleared);
+      return { ...account, ...cleared };
+    });
+  }
+
+  /**
+   * Confirms the new email with the code (ADR 0057). A wrong code counts
+   * (the request is dropped after EMAIL_CHANGE_MAX_ATTEMPTS); a right one
+   * sets the address in Zitadel (verified) and then here, and the old
+   * address is told (account.email.changed, the notice reads it from the
+   * account's history).
+   */
+  async confirmEmailChange(context: ActorContext, code: string): Promise<Account> {
+    const key = this.tokenKey;
+    if (!key) throw new DomainError("email_change_unavailable");
+    type Checked = { outcome: "ok"; account: Account } | { outcome: "expired" | "wrong" };
+    const checked = await this.db.withActor(context, async (tx): Promise<Checked> => {
+      const account = await repo.findByPerson(tx, actorPersonId(context));
+      if (!account) throw new DomainError("not_found");
+      if (
+        !account.pendingEmail ||
+        !account.pendingEmailId ||
+        !account.pendingEmailExpiresAt ||
+        account.pendingEmailExpiresAt.getTime() <= Date.now()
+      ) {
+        return { outcome: "expired" };
+      }
+      const expected = Buffer.from(emailChangeCode(key, account.pendingEmailId));
+      const given = Buffer.from(code.trim());
+      if (expected.length === given.length && timingSafeEqual(expected, given)) {
+        return { outcome: "ok", account };
+      }
+      // Counted in this transaction, which commits: the error comes after it.
+      const attempts = account.pendingEmailAttempts + 1;
+      await repo.updateAccount(
+        tx,
+        account.id,
+        attempts >= EMAIL_CHANGE_MAX_ATTEMPTS
+          ? clearedPending()
+          : { pendingEmailAttempts: attempts },
+      );
+      return { outcome: attempts >= EMAIL_CHANGE_MAX_ATTEMPTS ? "expired" : "wrong" };
+    });
+    if (checked.outcome !== "ok") {
+      throw new DomainError(
+        checked.outcome === "wrong" ? "email_code_invalid" : "email_code_expired",
+      );
+    }
+    const { account } = checked;
+    const email = account.pendingEmail!;
+
+    // Zitadel first: a login with the new address must work once it shows here.
+    if (account.idpSubject && this.identityProvider) {
+      await this.identityProvider.setVerifiedEmail(account.idpSubject, email);
+    }
+    return this.db.withActor(context, async (tx) => {
+      const current = await repo.findByPerson(tx, account.personId);
+      // A newer request (another tab) replaced this one meanwhile.
+      if (!current || current.pendingEmailId !== account.pendingEmailId) {
+        throw new DomainError("email_code_expired");
+      }
+      const verifiedAt = new Date();
+      try {
+        await repo.updateAccount(tx, current.id, {
+          email,
+          emailVerifiedAt: verifiedAt,
+          ...clearedPending(),
+        });
+      } catch (error) {
+        if (isUniqueViolation(error, "accounts_email_unique")) throw new DomainError("email_taken");
+        throw error;
+      }
+      await audit.record(tx, {
+        action: "account.email.changed",
+        resourceType: "account",
+        resourceId: current.id,
+        changedFields: ["email"],
+      });
+      await outbox.publish(tx, "account.email.changed", {
+        accountId: current.id,
+        personId: current.personId,
+      });
+      return { ...current, email, emailVerifiedAt: verifiedAt, ...clearedPending() };
+    });
+  }
+
+  /** Login emails of these people, for the club's registrars (P2.7d, ADR 0057; accounts are otherwise private). */
+  loginEmailsOf(personIds: readonly string[]): Promise<Map<string, string>> {
+    if (personIds.length === 0) return Promise.resolve(new Map<string, string>());
+    return this.db.withSystem(
+      "people:login-emails",
+      {},
+      async (tx) =>
+        new Map<string, string>(
+          (await repo.emailsOf(tx, personIds)).map((r) => [r.personId, r.email]),
+        ),
+    );
   }
 
   /** Creates the acting person's own account (sign-up; the IdP verified the email). */

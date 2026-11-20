@@ -16,6 +16,8 @@ interface CachedAccount {
   accountId: string | null;
   personId: string;
   email: string | null;
+  /** When the account's email was last verified (ms): older ID tokens carry an older address. */
+  emailSince?: number;
   expiresAt: number;
 }
 
@@ -77,12 +79,23 @@ export class IdentityService {
     if (!account) {
       const found = await this.accounts.findBySubject(token.subject);
       account = found
-        ? this.toCache(key, { accountId: found.id, personId: found.personId, email: found.email })
+        ? this.toCache(key, {
+            accountId: found.id,
+            personId: found.personId,
+            email: found.email,
+            emailSince: found.emailVerifiedAt.getTime(),
+          })
         : await this.provision(token, options, key);
     }
     // Email changed in Zitadel (and verified there): take it over.
     const email = token.email?.trim().toLowerCase();
-    if (email && token.emailVerified && account.email && email !== account.email) {
+    // Not from an ID token of a login before the last change made here
+    // (P2.7d, ADR 0057): that token still carries the old address.
+    const staleToken =
+      token.authTime !== null &&
+      account.emailSince !== undefined &&
+      token.authTime.getTime() < account.emailSince;
+    if (email && token.emailVerified && account.email && email !== account.email && !staleToken) {
       try {
         await this.accounts.syncEmail(
           { actorKind: "person", personId: account.personId, requestId: options.requestId ?? null },

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { eq, schema, sql, type Tx } from "@clubadmin/db";
+import { eq, inArray, schema, sql, type Tx } from "@clubadmin/db";
 import type { RolePermission } from "@clubadmin/shared";
 
 const { accounts, accountInvitations } = schema;
@@ -39,6 +39,17 @@ export async function findBySubject(tx: Tx, idpSubject: string): Promise<Account
 export async function findByPersonId(tx: Tx, personId: string): Promise<AccountRow | null> {
   const [row] = await tx.select().from(accounts).where(eq(accounts.personId, personId));
   return row ?? null;
+}
+
+/** Login emails of these people (P2.7d: shown to the club's registrars; system read). */
+export async function emailsOf(
+  tx: Tx,
+  personIds: readonly string[],
+): Promise<{ personId: string; email: string }[]> {
+  return tx
+    .select({ personId: accounts.personId, email: accounts.email })
+    .from(accounts)
+    .where(inArray(accounts.personId, [...personIds]));
 }
 
 export async function listAll(tx: Tx): Promise<{ personId: string; email: string }[]> {

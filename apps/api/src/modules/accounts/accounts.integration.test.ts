@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { sql } from "@clubadmin/db";
+import { emailChangeCode } from "@clubadmin/server-kit/invitations";
 import { uuidv7 } from "@clubadmin/shared";
 import { describe, expect, it } from "vitest";
 
 import { isDomainError } from "../../platform/domain/domain-error.ts";
 import { actor, buildClub, buildFamily, buildPerson } from "../../testing/builders.ts";
 import { historyOf, useCoreDatabase } from "../../testing/core.ts";
+import { TEST_INVITATION_TOKEN_KEY } from "../../testing/services.ts";
 
 const c = useCoreDatabase();
 
@@ -101,6 +103,64 @@ describe("accounts", () => {
       [p.id],
     );
     expect(rows[0]?.n).toBe(1);
+  });
+
+  it("changes the login email only with the code sent to the new address (P2.7d)", async () => {
+    const p = await buildPerson(c.s);
+    const old = p.email!;
+    await expect(c.s.accounts.requestEmailChange(actor(p.id), old.toUpperCase())).rejects.toSatisfy(
+      (e) => isDomainError(e, "email_unchanged"),
+    );
+    const pending = await c.s.accounts.requestEmailChange(actor(p.id), "Next@Example.test");
+    expect(pending).toMatchObject({ email: old, pendingEmail: "next@example.test" });
+    const { rows: events } = await c.t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM outbox.events WHERE type = 'account.email.change_requested' AND payload ->> 'personId' = $1",
+      [p.id],
+    );
+    expect(events[0]?.n).toBe(1);
+    const code = emailChangeCode(TEST_INVITATION_TOKEN_KEY, pending.pendingEmailId!);
+    const wrong = code === "000000" ? "111111" : "000000";
+    await expect(c.s.accounts.confirmEmailChange(actor(p.id), wrong)).rejects.toSatisfy((e) =>
+      isDomainError(e, "email_code_invalid"),
+    );
+    // The wrong attempt is counted (its transaction commits).
+    const counted = await c.s.accounts.getOwnAccount(actor(p.id));
+    expect(counted?.pendingEmailAttempts).toBe(1);
+    const changed = await c.s.accounts.confirmEmailChange(actor(p.id), code);
+    expect(changed).toMatchObject({ email: "next@example.test", pendingEmail: null });
+    const { rows } = await c.t.query<{ n: number }>(
+      "admin",
+      "SELECT count(*)::int AS n FROM outbox.events WHERE type = 'account.email.changed' AND payload ->> 'personId' = $1",
+      [p.id],
+    );
+    expect(rows[0]?.n).toBe(1);
+    // The code works once.
+    await expect(c.s.accounts.confirmEmailChange(actor(p.id), code)).rejects.toSatisfy((e) =>
+      isDomainError(e, "email_code_expired"),
+    );
+  });
+
+  it("drops an email change after too many wrong codes, and a new request replaces the code", async () => {
+    const p = await buildPerson(c.s);
+    const first = await c.s.accounts.requestEmailChange(actor(p.id), `a-${uuidv7()}@example.test`);
+    const second = await c.s.accounts.requestEmailChange(actor(p.id), `b-${uuidv7()}@example.test`);
+    const oldCode = emailChangeCode(TEST_INVITATION_TOKEN_KEY, first.pendingEmailId!);
+    const newCode = emailChangeCode(TEST_INVITATION_TOKEN_KEY, second.pendingEmailId!);
+    const wrong = ["000000", "111111", "222222", "333333", "444444", "555555"]
+      .filter((x) => x !== newCode)
+      .slice(0, 5);
+    if (oldCode !== newCode) wrong[0] = oldCode;
+    for (const [i, code] of wrong.entries()) {
+      await expect(c.s.accounts.confirmEmailChange(actor(p.id), code)).rejects.toSatisfy((e) =>
+        isDomainError(e, i < 4 ? "email_code_invalid" : "email_code_expired"),
+      );
+    }
+    const account = await c.s.accounts.getOwnAccount(actor(p.id));
+    expect(account).toMatchObject({ email: p.email, pendingEmail: null });
+    await expect(c.s.accounts.confirmEmailChange(actor(p.id), newCode)).rejects.toSatisfy((e) =>
+      isDomainError(e, "email_code_expired"),
+    );
   });
 
   it("accounts are visible only to their own person", async () => {

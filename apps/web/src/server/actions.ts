@@ -572,8 +572,10 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       return activityId ? { path: `/api/v1/activities/${activityId}`, method: "DELETE" } : null;
     },
     done: (form) => {
+      // From a series' list of sessions (P2.7d): stay on the series.
+      if (text(form, "stay") === "1") return withParam(back(form), "deleted", "1");
       const groupId = id(form, "groupId");
-      return groupId ? `/groups/${groupId}?deleted=1` : "/schedule";
+      return groupId ? `/groups/${groupId}?deleted=1` : "/";
     },
   },
   "create-series": {
@@ -688,7 +690,8 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
         {
           path: `/api/v1/activities/${activityId}/carpool/offers/${offerId}/bookings`,
           method: "POST",
-          body: { passengerPersonId: personId, alsoReturn: false, confirmAlone: false },
+          // The way home in the same car too, when it drives home with a seat (P2.7d).
+          body: { passengerPersonId: personId, alsoReturn: true, confirmAlone: false },
         },
       ];
     },
@@ -3340,6 +3343,53 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
   ...WAITLIST_ACTIONS,
   ...ACTIVITY_ACTIONS,
   ...EVENT_ACTIONS,
+  // P2.7d (ADR 0057): phone and address, by the person (or a guardian for
+  // them) or, with scope=club, by the club's registrars.
+  "update-contact": {
+    call: (form) => {
+      const personId = id(form, "personId");
+      if (!personId) return null;
+      const address = {
+        street: text(form, "street"),
+        postalCode: text(form, "postalCode"),
+        city: text(form, "city"),
+        country: (text(form, "country") || "SE").toUpperCase(),
+      };
+      const anyAddress = [address.street, address.postalCode, address.city].some((v) => v !== "");
+      const clubId = text(form, "scope") === "club" ? id(form, "clubId") : null;
+      return {
+        path: clubId
+          ? `/api/v1/people/${personId}/club-contact?clubId=${clubId}`
+          : `/api/v1/people/${personId}/contact`,
+        method: "PATCH",
+        body: {
+          phone: optional(text(form, "phone")) ?? null,
+          ...(form.has("street") ? { address: anyAddress ? address : null } : {}),
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "contact"),
+  },
+  "request-email-change": {
+    call: (form) => {
+      const email = text(form, "email");
+      return email ? { path: "/api/v1/me/email", method: "POST", body: { email } } : null;
+    },
+    done: (form) => back(form, "/me/profile"),
+  },
+  "confirm-email-change": {
+    call: (form) => {
+      const code = text(form, "code").replace(/\s/g, "");
+      return /^[0-9]{6}$/.test(code)
+        ? { path: "/api/v1/me/email/confirm", method: "POST", body: { code } }
+        : { invalid: "email_code_invalid" };
+    },
+    done: (form) => withParam(back(form, "/me/profile"), "saved", "email"),
+  },
+  "cancel-email-change": {
+    call: () => ({ path: "/api/v1/me/email/pending", method: "DELETE" }),
+    done: (form) => back(form, "/me/profile"),
+  },
   "complete-profile": {
     call: (form) => ({
       path: "/api/v1/me/profile",

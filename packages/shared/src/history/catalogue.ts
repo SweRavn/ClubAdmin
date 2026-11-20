@@ -198,6 +198,8 @@ export const AUDIT_ACTION_SENTENCES: readonly AuditAction[] = [
   "activity.response.set_by_leader",
   "membership.type.changed",
   "account.email.changed",
+  "account.email.change_requested",
+  "person.contact.updated",
   "club.phone_numbers.updated",
   "guardianship.ward.adult",
   "guardianship.adult.decided",

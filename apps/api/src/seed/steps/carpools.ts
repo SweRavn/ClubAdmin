@@ -202,6 +202,52 @@ export const carpoolsDemoStep: DemoStep = {
       departureAt: `${date(5)}T07:30:00Z`,
     });
 
+    // Planned rides to F2017's coming trainings (P2.7d): Erik drives to the
+    // next one with three seats, Maja and Johan have two, one is free (Alva
+    // has said she is coming and can take it); Mikael drives Elsa there and
+    // home to the one after.
+    const trainings = (
+      await s.activities.groupCalendar(svk("anna"), id("svk-f2017"), {
+        from: new Date(now + DAY_MS).toISOString(),
+        to: new Date(now + 14 * DAY_MS).toISOString(),
+        limit: 50,
+      })
+    ).items
+      .map((v) => v.activity)
+      .filter((a) => a.kind === "training" && a.status === "scheduled")
+      .slice(0, 2);
+    const [next, after] = trainings;
+    if (next) {
+      const at = (minutesBefore: number) =>
+        new Date(next.startsAt.getTime() - minutesBefore * 60_000).toISOString();
+      const eriks = await s.carpools.createOffer(svk("erik"), next.id, {
+        seats: 3,
+        departurePlace: "Strandviksskolan",
+        departureAt: at(30),
+        withReturn: true,
+        returnDeparturePlace: "Hallens entré",
+        returnDepartureAt: new Date(next.endsAt.getTime() + 10 * 60_000).toISOString(),
+      });
+      await s.carpools.book(svk("erik"), next.id, eriks.id, {
+        passengerPersonId: id("maja"),
+        alsoReturn: true,
+      });
+      await s.carpools.book(svk("johan"), next.id, eriks.id, { passengerPersonId: id("johan") });
+    }
+    if (after) {
+      const mikaels = await s.carpools.createOffer(svk("mikael"), after.id, {
+        seats: 2,
+        departurePlace: "Ekvägen 3",
+        departureAt: new Date(after.startsAt.getTime() - 25 * 60_000).toISOString(),
+        withReturn: true,
+        returnDeparturePlace: "Hallens entré",
+      });
+      await s.carpools.book(svk("mikael"), after.id, mikaels.id, {
+        passengerPersonId: id("elsa"),
+        alsoReturn: true,
+      });
+    }
+
     // The events are history, not news (as the governing step's): the seats
     // and decisions are shown where they live, not as unread notices.
     await env.db.withSystem("seed:carpools", {}, (tx) =>

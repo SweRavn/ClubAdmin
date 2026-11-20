@@ -22,6 +22,7 @@ export {
   type ProfileAccess,
   profileAccess,
   registerAccess,
+  seesClubContact,
 } from "./authorization.policy.ts";
 export { AuthorizationService } from "./authorization.service.ts";
 export { AuthorizationCache } from "./authorization-cache.ts";

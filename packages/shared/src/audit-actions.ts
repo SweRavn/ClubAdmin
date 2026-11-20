@@ -5,6 +5,7 @@
 export const AUDIT_ACTIONS = [
   "account.created",
   "account.email.changed",
+  "account.email.change_requested",
   "account.linked",
   "account.invitation.created",
   "account.email.synced",
@@ -16,6 +17,7 @@ export const AUDIT_ACTIONS = [
   "session.revoked",
   "person.created",
   "person.updated",
+  "person.contact.updated",
   "person.profile.completed",
   "person.protection.changed",
   "person.protection.removal_refused",

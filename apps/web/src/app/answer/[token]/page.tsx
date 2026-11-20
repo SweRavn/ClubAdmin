@@ -135,7 +135,7 @@ export default async function CalendarAnswerPage({ params, searchParams }: Props
       <h1 className="text-2xl font-semibold">{t("calendar.answer.title")}</h1>
       {content}
       <p>
-        <a href="/schedule" className="underline">
+        <a href="/" className="underline">
           {t("calendar.answer.toSchedule")}
         </a>
       </p>

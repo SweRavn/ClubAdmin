@@ -469,6 +469,8 @@
       "invitationBody": "{hasInviter, select, yes {{inviter} invites you} other {You are invited}} to ClubAdmin as {kind, select, parent {parent} legal_guardian {legal guardian} relative {relative} step_parent {step-parent} foster_parent {foster parent} other {contact person}} of {hasWard, select, yes {{ward}} other {a child or young person}}.\n\nAccept the invitation (log in, or create a login with this email address):\n{url}\n\nThe invitation is valid until {expires}. If you did not expect it, you can ignore this email.",
       "acceptedSubject": "{person} accepted your invitation",
       "acceptedBody": "{person} accepted your invitation and is now linked to {ward} as {kind, select, parent {parent} legal_guardian {legal guardian} relative {relative} step_parent {step-parent} foster_parent {foster parent} other {contact person}}.\n\nSee your family in ClubAdmin:\n{url}",
+      "emailChangeSubject": "Confirm your new email address",
+      "emailChangeBody": "Hi {name},\n\nEnter this code in ClubAdmin to change your login email to this address:\n\n{code}\n\nThe code is valid until {expires}. Continue on your profile:\n{url}\n\nIf you did not ask for the change, you can ignore this email; nothing changes.",
       "ownLoginSubject": "Your own login to ClubAdmin",
       "ownLoginBody": "Hi {name},\n\nYou can now log in to ClubAdmin yourself. Your memberships, groups and history stay as they are.\n\nLog in or create your login with this email address:\n{url}\n\nThe link is valid until {expires}.",
       "ownLoginAgeSubject": "{ward} can now get their own login",
@@ -509,7 +511,7 @@
     }
   },
   "profileForm": {
-    "title": "Your profile",
+    "title": "My profile",
     "intro": "Your name and birth date. The birth date is needed for the clubs' age rules and cannot be changed here later.",
     "givenName": "First name",
     "familyName": "Last name",
@@ -676,6 +678,11 @@
     "creation_request_exists": "You already have a pending request.",
     "club_creation_not_allowed": "You may not create clubs here.",
     "too_young_for_account": "You are too young for your own account; a guardian can add you.",
+    "email_taken": "This email address belongs to another login.",
+    "email_unchanged": "That is already your email address.",
+    "email_code_invalid": "The code is wrong. Check the email and try again.",
+    "email_code_expired": "The code no longer works. Ask for a new one.",
+    "email_change_unavailable": "Email cannot be changed on this server right now.",
     "handover_invalid": "The hand-over is no longer open.",
     "club_has_manager": "The club still has a manager.",
     "mfa_required": "This needs a login with a second factor. Log out and log in again with it.",
@@ -1448,7 +1455,16 @@
     "removed": "Removed dates",
     "bringBack": "Bring back",
     "datesRemoved": "The dates are removed.",
-    "dateRestored": "The date is back."
+    "dateRestored": "The date is back.",
+    "sessionCancel": "Cancel…",
+    "sessionCancelReason": "Reason (optional)",
+    "sessionCancelButton": "Cancel the session",
+    "sessionRestore": "Restore",
+    "sessionDelete": "Delete…",
+    "sessionDeleteHint": "The session is deleted and its date skipped in the series.",
+    "sessionDeleteButton": "Delete the session",
+    "slotLocation": "Place that day",
+    "slotLocationDefault": "The series' place"
   },
   "clubCalendar": {
     "title": "Club calendar",
@@ -3005,6 +3021,8 @@
       "activity_response_set_by_leader": "{actor} answered for a participant",
       "membership_type_changed": "{actor} changed a membership type",
       "account_email_changed": "{actor} changed the login email",
+      "account_email_change_requested": "{actor} asked to change the login email",
+      "person_contact_updated": "{actor} changed a person's contact details",
       "club_phone_numbers_updated": "{actor} changed the club's phone numbers",
       "guardianship_ward_adult": "A ward came of age",
       "guardianship_adult_decided": "{actor} decided on a guardianship after coming of age",
@@ -3666,6 +3684,11 @@
         "name": "See members' details",
         "description": "Can see members' contact details, birth dates and other details in the register.",
         "example": "For example, can see a member's address and phone number."
+      },
+      "club_people_contact_edit": {
+        "name": "Change members' contact details",
+        "description": "Can see and change members' phone numbers and addresses, and see their email address. Requires two-factor login.",
+        "example": "For example, can correct the address of a member who moved."
       },
       "club_people_protected": {
         "name": "See people with protected identity",
@@ -4788,7 +4811,10 @@
     "ownCar": "Your car",
     "full": "Full",
     "notTakingPart": "You and your children are not taking part, so you cannot book a seat.",
-    "startedNoBooking": "The trip has started; seats are no longer booked."
+    "startedNoBooking": "The trip has started; seats are no longer booked.",
+    "rideWith": "Ride with",
+    "thereAndHome": "there and home",
+    "thereOnly": "there only"
   },
   "expenses": {
     "mine": "My expenses",
@@ -5066,5 +5092,34 @@
     "next": "Next page",
     "ended": "The role was ended.",
     "groupRoles": "Group roles (coaches, team managers …) are given in each group's administration:"
+  },
+  "contact": {
+    "title": "Contact details",
+    "intro": "Your phone number and address. The clubs' registrars see them; what other members and leaders see is your choice under Privacy.",
+    "phone": "Phone",
+    "address": "Address",
+    "street": "Street address",
+    "postalCode": "Postal code",
+    "city": "City",
+    "country": "Country",
+    "save": "Save contact details",
+    "saved": "The contact details are saved.",
+    "edit": "Change contact details",
+    "clubNote": "You change the details on behalf of the club. The change is logged. Only the person can change their login email.",
+    "protectedNoAddress": "The person has protected identity: no address is stored.",
+    "email": "Email",
+    "emailTitle": "Login email",
+    "currentEmail": "You log in with",
+    "newEmail": "New email address",
+    "emailHelp": "We send a code to the new address. The change happens only when you have entered the code, and the old address is told.",
+    "sendCode": "Send code",
+    "pending": "Waiting for confirmation: enter the code sent to {email}. The code is valid until {until}.",
+    "code": "Code",
+    "confirm": "Confirm",
+    "cancelChange": "Cancel the change",
+    "emailSaved": "The email address is changed. Log in with the new address next time.",
+    "wardsTitle": "Your children",
+    "wardsIntro": "Change your child's phone and address on the child's profile.",
+    "guardiansTitle": "The guardians' contact details"
   }
 }

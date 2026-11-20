@@ -94,6 +94,22 @@ export function contactVisible(actor: Actor, resource: PersonResource): boolean 
 }
 
 /**
+ * Whether the club's registrars see the person's phone, address and login
+ * email whatever the person shared (P2.7d, ADR 0057): holders of
+ * `club.people.details` or `club.people.contact.edit` in the person's club
+ * (the membership is the legal basis). Protected members only with
+ * `club.people.protected`.
+ */
+export function seesClubContact(actor: Actor, resource: PersonResource): boolean {
+  const { clubId, inClub } = resource;
+  if (!clubId || !inClub) return false;
+  if (inClub.protected && !actor.holds("club.people.protected", clubId)) return false;
+  return (
+    actor.holds("club.people.details", clubId) || actor.holds("club.people.contact.edit", clubId)
+  );
+}
+
+/**
  * Who sees a group's activities (P1.4): its members and leaders (any role),
  * their guardians with view_schedule (full guardians hold every right), the
  * group's owners (also of parent groups), and holders of
@@ -492,6 +508,19 @@ export const POLICIES: readonly Policy[] = [
     "person",
     ({ actor, resource }) =>
       actor.isSelf(resource.personId) || actor.isGuardianOf(resource.personId, "act_on_behalf"),
+  ),
+  // P2.7d (ADR 0057): the club's registrars change a member's phone and
+  // address (never the login email), with a second factor, not on behalf of
+  // someone; protected members only with club.people.protected.
+  definePolicy(
+    "club.people.contact.edit",
+    "person",
+    ({ actor, resource }) =>
+      actor.onBehalfOf === null &&
+      resource.clubId !== null &&
+      actor.holds("club.people.contact.edit", resource.clubId) &&
+      seesClubContact(actor, resource),
+    { mfa: true },
   ),
   // Global flag: the person or a guardian; club flag (with clubId): holders
   // of `person.protection.set` (club managers), with a second factor.

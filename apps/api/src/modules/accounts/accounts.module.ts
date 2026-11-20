@@ -7,6 +7,15 @@ import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { MembershipsModule, MembershipsService } from "../memberships/index.ts";
 import { PeopleModule, PeopleService } from "../people/index.ts";
 import { AccountsService } from "./accounts.service.ts";
+import { zitadelEmails as zitadelEmailClient } from "./zitadel-emails.ts";
+
+/** Zitadel's copy of the login email, when the API can reach Zitadel (P2.7d). */
+function zitadelEmails(config: ApiConfig) {
+  const url = config.ZITADEL_API_URL ?? config.AUTH_ISSUER;
+  return url && config.ZITADEL_API_TOKEN
+    ? zitadelEmailClient(url, config.ZITADEL_API_TOKEN)
+    : undefined;
+}
 
 @Module({
   imports: [PeopleModule, MembershipsModule, ClubsModule],
@@ -27,6 +36,7 @@ import { AccountsService } from "./accounts.service.ts";
           clubs,
           defaultCountry: config.DEFAULT_COUNTRY,
           invitationTokenKey: config.INVITATION_TOKEN_KEY,
+          identityProvider: zitadelEmails(config),
         }),
     },
   ],

@@ -11,6 +11,7 @@ import {
 import { createLogger, loadEnvFiles } from "@clubadmin/server-kit";
 import {
   accountInvitationToken,
+  emailChangeCode,
   emailInvitationToken,
   guardianInvitationToken,
 } from "@clubadmin/server-kit/invitations";
@@ -611,6 +612,23 @@ describe("family emails (P1.3)", () => {
     expect(own.text).toContain(
       `https://clubadmin.test/login?invitation=${accountInvitationToken(key, accountInvitation)}`,
     );
+
+    // P2.7d (ADR 0057): the code for a new login email goes to the new address.
+    const pendingId = uuidv7();
+    const { rows: accounts } = await t.query<{ id: string }>(
+      "admin",
+      `UPDATE accounts SET pending_email = 'anna.ny@example.test', pending_email_id = $2,
+         pending_email_expires_at = now() + interval '1 hour'
+       WHERE person_id = $1 RETURNING id`,
+      [anna, pendingId],
+    );
+    await dispatch("account.email.change_requested", {
+      accountId: accounts[0]!.id,
+      personId: anna,
+    });
+    const code = provider.sent.at(-1)!;
+    expect(code.to).toBe("anna.ny@example.test");
+    expect(code.text).toContain(emailChangeCode(key, pendingId));
 
     const guardianshipId = rows[0]!.id;
     await dispatch("guardianship.ward.own_login_age", { guardianshipId, wardPersonId: child });

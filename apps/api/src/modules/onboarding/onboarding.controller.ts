@@ -9,6 +9,8 @@ import {
   type ClubCreationRequestStatus,
   type CompleteProfileInput,
   CompleteProfileSchema,
+  type ConfirmEmailChangeInput,
+  ConfirmEmailChangeSchema,
   type CreateClubInput,
   CreateClubRequestSchema,
   type CreateClubResult,
@@ -18,6 +20,8 @@ import {
   MyClubCreationRequestsSchema,
   type MyProfile,
   MyProfileSchema,
+  type RequestEmailChangeInput,
+  RequestEmailChangeSchema,
   RequestParamsSchema,
 } from "@clubadmin/shared";
 import { Body, Controller, Inject, Param, Query } from "@nestjs/common";
@@ -25,6 +29,7 @@ import { Body, Controller, Inject, Param, Query } from "@nestjs/common";
 import { API_CONFIG, type ApiConfig, clubCreationMode } from "../../config.ts";
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { Endpoint } from "../../platform/http/endpoint.ts";
+import { type Account, AccountsService } from "../accounts/index.ts";
 import {
   CurrentAuthorization,
   operatorActor,
@@ -32,6 +37,7 @@ import {
   type RequestAuthorization,
 } from "../authorization/index.ts";
 import { toClubResponse } from "../clubs/index.ts";
+import { RecentAuth } from "../identity/index.ts";
 import { PeopleService, type Person } from "../people/index.ts";
 import { type ClubCreationRequest, OnboardingService } from "./onboarding.service.ts";
 
@@ -50,19 +56,25 @@ function toRequest(request: ClubCreationRequest): ClubCreationRequestResponse {
   };
 }
 
+/** Email changes: each request sends an email (P2.7d). */
+const EMAIL_LIMIT = { max: 5, timeWindowMs: 10 * 60_000 };
+
 @Controller()
 export class OnboardingController {
   private readonly onboarding: OnboardingService;
   private readonly people: PeopleService;
   private readonly presenter: PersonPresenter;
   private readonly mode: ReturnType<typeof clubCreationMode>;
+  private readonly accounts: AccountsService;
 
   constructor(
     onboarding: OnboardingService,
     people: PeopleService,
     presenter: PersonPresenter,
     @Inject(API_CONFIG) config: ApiConfig,
+    accounts: AccountsService,
   ) {
+    this.accounts = accounts;
     this.onboarding = onboarding;
     this.people = people;
     this.presenter = presenter;
@@ -95,6 +107,57 @@ export class OnboardingController {
     @Body() body: CompleteProfileInput,
   ): Promise<MyProfile> {
     return this.toProfile(authz, await this.onboarding.completeProfile(authz.context, body));
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "me/email",
+    summary:
+      "Change my login email: a code goes to the new address; nothing changes until it is entered (recent login)",
+    tags: ["me"],
+    access: { authenticated: true },
+    request: { body: RequestEmailChangeSchema },
+    response: MyProfileSchema,
+    rateLimit: EMAIL_LIMIT,
+  })
+  @RecentAuth(15)
+  async requestEmailChange(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Body() body: RequestEmailChangeInput,
+  ): Promise<MyProfile> {
+    const account = await this.accounts.requestEmailChange(authz.context, body.email);
+    return this.toProfile(authz, await this.onboarding.myProfile(authz.context), account);
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "me/email/confirm",
+    summary: "Confirm the new login email with the code sent to it; the old address is told",
+    tags: ["me"],
+    access: { authenticated: true },
+    request: { body: ConfirmEmailChangeSchema },
+    response: MyProfileSchema,
+    rateLimit: EMAIL_LIMIT,
+  })
+  async confirmEmailChange(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Body() body: ConfirmEmailChangeInput,
+  ): Promise<MyProfile> {
+    const account = await this.accounts.confirmEmailChange(authz.context, body.code);
+    return this.toProfile(authz, await this.onboarding.myProfile(authz.context), account);
+  }
+
+  @Endpoint({
+    method: "DELETE",
+    path: "me/email/pending",
+    summary: "Drop an open change of my login email",
+    tags: ["me"],
+    access: { authenticated: true },
+    response: MyProfileSchema,
+  })
+  async cancelEmailChange(@CurrentAuthorization() authz: RequestAuthorization): Promise<MyProfile> {
+    const account = await this.accounts.cancelEmailChange(authz.context);
+    return this.toProfile(authz, await this.onboarding.myProfile(authz.context), account);
   }
 
   @Endpoint({
@@ -189,8 +252,15 @@ export class OnboardingController {
     return { items: [toRequest(request)] };
   }
 
-  private async toProfile(authz: RequestAuthorization, person: Person): Promise<MyProfile> {
+  private async toProfile(
+    authz: RequestAuthorization,
+    person: Person,
+    /** The account when the caller already has it (else read here; null without a login). */
+    known?: Account | null,
+  ): Promise<MyProfile> {
+    // One transaction at a time per request (ADR 0040).
     const summary = await this.presenter.presentOne(authz, null, person);
+    const account = known === undefined ? await this.accounts.getOwnAccount(authz.context) : known;
     if (!summary) throw new DomainError("not_found");
     const operator = authz.actor.isOperator();
     const clubCreation =
@@ -204,6 +274,15 @@ export class OnboardingController {
       birthDate: person.birthDate,
       complete: person.birthDate !== null,
       clubCreation,
+      // P2.7d: one's own contact details and login email (ADR 0057).
+      phone: person.phone,
+      address: person.address,
+      protectedIdentity: person.protectedIdentity,
+      email: account?.email ?? null,
+      pendingEmail:
+        account?.pendingEmail && account.pendingEmailExpiresAt
+          ? { email: account.pendingEmail, expiresAt: account.pendingEmailExpiresAt.toISOString() }
+          : null,
     };
   }
 }

@@ -24,7 +24,7 @@ export default async function AccountPage() {
       <p data-testid="me-mfa">{me.mfa ? t("account.mfa.on") : t("account.mfa.off")}</p>
       <ul className="list-inside list-disc">
         <li>
-          <a href={`/people/${me.personId}`} className="text-accent underline">
+          <a href="/me/profile" className="text-accent underline" data-testid="me-profile">
             {t("userMenu.profile")}
           </a>
         </li>

@@ -201,6 +201,12 @@ export const SeriesSlotSchema = z
     weekday: z.number().int().min(1).max(7),
     startTime: localTime,
     durationMinutes: z.number().int().min(15).max(720),
+    /**
+     * This weekday's own place (P2.7d): Tuesdays in one hall, Thursdays in
+     * another. Neither: the series' place.
+     */
+    locationId: z.uuid().nullish(),
+    locationText: text(200).nullish(),
   })
   .strict();
 export type SeriesSlot = z.infer<typeof SeriesSlotSchema>;

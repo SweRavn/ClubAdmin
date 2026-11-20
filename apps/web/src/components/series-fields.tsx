@@ -109,7 +109,11 @@ export async function SeriesFields({
         {Array.from({ length: SLOT_ROWS }, (_, n) => {
           const slot = values.slots?.[n];
           return (
-            <div key={n} className="grid grid-cols-3 gap-2" data-testid={`series-slot-${n}`}>
+            <div
+              key={n}
+              className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+              data-testid={`series-slot-${n}`}
+            >
               <select
                 name={`weekday.${n}`}
                 aria-label={t("series.weekday")}
@@ -145,6 +149,23 @@ export async function SeriesFields({
                 />
                 <span className="text-sm text-muted">{t("series.minutes")}</span>
               </label>
+              {/* A place per weekday (P2.7d): empty is the series' place below. */}
+              <select
+                name={`slotLocation.${n}`}
+                aria-label={t("series.slotLocation")}
+                className={inputClass}
+                defaultValue={slot?.locationId ?? ""}
+                data-testid={`series-slot-location-${n}`}
+              >
+                <option value="">{t("series.slotLocationDefault")}</option>
+                {locations
+                  .filter((l) => !l.archived || l.id === slot?.locationId)
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+              </select>
             </div>
           );
         })}

@@ -9,7 +9,12 @@ import { isUuid, localDate } from "@clubadmin/shared";
 import { formatDateTime } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { ActionForm, buttonClass, inputClass } from "../../../../components/action-form.tsx";
+import {
+  ActionForm,
+  buttonClass,
+  inputClass,
+  secondaryButtonClass,
+} from "../../../../components/action-form.tsx";
 import { Agenda, agendaItemOf } from "../../../../components/agenda.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
@@ -208,7 +213,11 @@ export default async function SeriesPage({ params, searchParams }: Props) {
           {t("series.coming")}
         </h2>
         <Agenda
-          items={sessions.map(agendaItemOf)}
+          items={sessions.map((a) => ({
+            ...agendaItemOf(a),
+            // Each session can be cancelled or deleted from here (P2.7d).
+            ...(series.canManage ? { actions: <SessionActions activity={a} /> } : {}),
+          }))}
           emptyText={t("series.noneComing")}
           testId="series-agenda"
         />
@@ -261,5 +270,65 @@ export default async function SeriesPage({ params, searchParams }: Props) {
         </details>
       ) : null}
     </div>
+  );
+}
+
+/** Cancel (with a reason), restore or delete one session, on the series' page (P2.7d). */
+async function SessionActions({
+  activity,
+}: {
+  activity: { id: string; status: "scheduled" | "cancelled"; startsAt: string };
+}) {
+  const t = await getTranslations();
+  if (Date.parse(activity.startsAt) <= Date.now()) return null;
+  if (activity.status === "cancelled") {
+    return (
+      <ActionForm action="restore-activity">
+        <input type="hidden" name="activityId" value={activity.id} />
+        <button type="submit" className="text-xs underline" data-testid="session-restore">
+          {t("series.sessionRestore")}
+        </button>
+      </ActionForm>
+    );
+  }
+  return (
+    <>
+      <details>
+        <summary className="cursor-pointer text-xs underline" data-testid="session-cancel">
+          {t("series.sessionCancel")}
+        </summary>
+        <ActionForm action="cancel-activity" className="mt-1 flex flex-wrap items-end gap-2">
+          <input type="hidden" name="activityId" value={activity.id} />
+          <label className="flex flex-col gap-1 text-xs">
+            {t("series.sessionCancelReason")}
+            <input name="reason" maxLength={300} className={inputClass} />
+          </label>
+          <button
+            type="submit"
+            className={secondaryButtonClass}
+            data-testid="session-cancel-confirm"
+          >
+            {t("series.sessionCancelButton")}
+          </button>
+        </ActionForm>
+      </details>
+      <details>
+        <summary className="cursor-pointer text-xs underline" data-testid="session-delete">
+          {t("series.sessionDelete")}
+        </summary>
+        <ActionForm action="delete-activity" className="mt-1 flex flex-wrap items-end gap-2">
+          <input type="hidden" name="activityId" value={activity.id} />
+          <input type="hidden" name="stay" value="1" />
+          <span className="text-xs">{t("series.sessionDeleteHint")}</span>
+          <button
+            type="submit"
+            className={secondaryButtonClass}
+            data-testid="session-delete-confirm"
+          >
+            {t("series.sessionDeleteButton")}
+          </button>
+        </ActionForm>
+      </details>
+    </>
   );
 }

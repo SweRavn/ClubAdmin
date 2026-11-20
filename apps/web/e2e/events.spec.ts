@@ -70,7 +70,7 @@ test("an organiser creates an event; a parent signs up from My schedule", async 
   await expect(page.getByTestId("notice")).toBeVisible();
 
   // Erik's daughter Maja plays in IKN: the club's party is open for her.
-  await page.goto("/schedule");
+  await page.goto("/");
   await page.getByTestId("schedule-events").getByRole("link", { name: "Avslutningsfest" }).click();
   const maja = page.getByTestId("event-mine").locator("div", { hasText: "Maja Johansson" }).last();
   await maja.getByTestId("register-submit").click();

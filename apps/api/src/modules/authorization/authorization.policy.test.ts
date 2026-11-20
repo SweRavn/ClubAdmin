@@ -760,6 +760,24 @@ const CASES: Record<Permission, Case[]> = {
       allowed: false,
     },
   ],
+  "club.people.contact.edit": [
+    { name: "the club's manager", actor: manager, resource: playerInTeam(), allowed: true },
+    { name: "a registrar", actor: registrar, resource: playerInTeam(), allowed: true },
+    { name: "a coach", actor: coach, resource: playerInTeam(), allowed: false },
+    {
+      name: "the person themselves (own endpoint instead)",
+      actor: as({ personId: player }),
+      resource: playerInTeam(),
+      allowed: false,
+    },
+    {
+      name: "a manager, no club",
+      actor: manager,
+      resource: personResource(player, null),
+      allowed: false,
+    },
+    { name: "a stranger", actor: outsider, resource: playerInTeam(), allowed: false },
+  ],
   "person.access_log.read": [
     {
       name: "self",

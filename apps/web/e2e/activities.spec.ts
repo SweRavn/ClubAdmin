@@ -20,7 +20,7 @@ async function openFirst(page: Page, list: string, text: string | RegExp) {
 }
 
 test("Erik's schedule covers his teams and Maja's in two clubs", async ({ page }) => {
-  await loginAs(page, PERSONAS.erik, { returnTo: "/schedule" });
+  await loginAs(page, PERSONAS.erik, { returnTo: "/" });
   const schedule = page.getByTestId("schedule");
   await expect(schedule).toContainText("Träning");
   await expect(schedule).toContainText("Innebandyträning");
@@ -32,13 +32,15 @@ test("Erik's schedule covers his teams and Maja's in two clubs", async ({ page }
   await people.getByRole("link", { name: /Maja/ }).click();
   await page.waitForURL(/person=/);
   await expect(page.getByTestId("schedule")).toContainText("Innebandyträning");
-  // The home page shows what is coming.
-  await page.goto("/");
-  await expect(page.getByTestId("upcoming")).toBeVisible();
+  // "Mitt schema" is Home (P2.7d): the old address leads there, no menu item of its own.
+  await page.goto("/schedule");
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId("schedule")).toBeVisible();
+  await expect(page.getByTestId("nav-schedule")).toHaveCount(0);
 });
 
 test("Liam sees his team's trainings but cannot change them", async ({ page }) => {
-  await loginAs(page, PERSONAS.liam, { returnTo: "/schedule" });
+  await loginAs(page, PERSONAS.liam, { returnTo: "/" });
   await openFirst(page, "schedule", "Fotbollsträning");
   await expect(page.getByTestId("activity-details")).toContainText("Norrbacka IP");
   await expect(page.getByTestId("activity-leaders")).toContainText("Ahmed");
@@ -122,6 +124,56 @@ test("Erik previews and creates a series, then changes this and following", asyn
   await page.waitForURL(/\/activity-series\/.*saved=1/);
   await expect(page.getByTestId("series-title-heading")).toHaveText("Fysträning (senare)");
   await expect(page.getByTestId("series-sessions")).toHaveText("2");
+});
+
+test("Erik gives Tuesdays and Thursdays their own halls, then cancels and deletes single sessions (P2.7d)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}/series/new` });
+  const start = day(21);
+  await page.getByTestId("series-title").fill("Bollträning");
+  await page.getByTestId("series-weekday-0").selectOption("2");
+  await page.getByTestId("series-start-0").fill("17:00");
+  await page
+    .getByTestId("series-slot-location-0")
+    .selectOption({ label: "Strandvikens sporthall" });
+  await page.getByTestId("series-weekday-1").selectOption("4");
+  await page.getByTestId("series-start-1").fill("17:00");
+  await page
+    .getByTestId("series-slot-location-1")
+    .selectOption({ label: "Strandviksskolans gymnastiksal" });
+  await page.getByTestId("series-startsOn").fill(start);
+  await page.getByTestId("series-endsOn").fill(day(21 + 13));
+  await page.getByTestId("series-skipHolidays").uncheck();
+  await page.getByTestId("series-preview-button").click();
+  await expect(page.getByTestId("series-preview").locator("li")).toHaveCount(4);
+  await page.getByTestId("series-create").click();
+  await page.waitForURL(/\/activity-series\/.*saved=1/);
+  const agenda = page.getByTestId("series-agenda");
+  const items = agenda.getByTestId("agenda-item");
+  await expect(items).toHaveCount(4);
+  // Each weekday in its own hall.
+  const tuesday = items.filter({ hasText: "Strandvikens sporthall" });
+  const thursday = items.filter({ hasText: "Strandviksskolans gymnastiksal" });
+  await expect(tuesday).toHaveCount(2);
+  await expect(thursday).toHaveCount(2);
+
+  // Cancel one session and delete another, from the series' page.
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  const first = items.first();
+  await first.getByTestId("session-cancel").click();
+  await first.locator('input[name="reason"]').fill("Hallen är upptagen");
+  await first.getByTestId("session-cancel-confirm").click();
+  await expect(items.first()).toHaveAttribute("data-status", "cancelled");
+  const last = items.last();
+  await last.getByTestId("session-delete").click();
+  await last.getByTestId("session-delete-confirm").click();
+  await expect(items).toHaveCount(3);
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
 });
 
 test("Erik makes a monthly series until further notice, removes a date and brings it back", async ({
@@ -211,7 +263,7 @@ test("Anna uses the club calendar and adds a location", async ({ page }) => {
 test("Erik, F2017's head coach, answers that he is coming to the next training (P2.7b)", async ({
   page,
 }) => {
-  await loginAs(page, PERSONAS.erik, { returnTo: "/schedule" });
+  await loginAs(page, PERSONAS.erik, { returnTo: "/" });
   // The answer is saved in place (ADR 0055): the page is not reloaded.
   await page.evaluate(() => {
     (window as unknown as { noReload: boolean }).noReload = true;
@@ -229,7 +281,7 @@ test("Erik, F2017's head coach, answers that he is coming to the next training (
 test("Anna answers for Elsa with one tap on the activity page; the note is saved on its own (P2.7b)", async ({
   page,
 }) => {
-  await loginAs(page, PERSONAS.anna, { returnTo: "/schedule" });
+  await loginAs(page, PERSONAS.anna, { returnTo: "/" });
   const item = page
     .getByTestId("agenda-item")
     .filter({ has: page.getByTestId(`response-${PERSONAS.elsa.id}`) })

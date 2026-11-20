@@ -11,6 +11,8 @@ import {
   type ProfileViewSurface,
   type SignUpPersonInput,
   SignUpPersonSchema,
+  type UpdateContactInput,
+  UpdateContactSchema,
   type UpdatePersonInput,
   UpdatePersonSchema,
   uuidv7,
@@ -482,6 +484,38 @@ export class PeopleService {
   }
 
   /**
+   * Changes a person's phone and address (P2.7d, ADR 0057). The caller
+   * checked who may (the person or a guardian acting for them, or with the
+   * club in the context a holder of club.people.contact.edit). A field left
+   * out stays, null removes it; a protected person stores no address. The
+   * audit event names the fields, never the values.
+   */
+  updateContact(context: Context, personId: string, input: UpdateContactInput): Promise<Person> {
+    return runAs(this.db, context, async (tx) => {
+      const data = parseInput(UpdateContactSchema, input);
+      const current = await repo.lockPerson(tx, personId);
+      if (!current) throw new DomainError("not_found");
+      if (current.protectedIdentity && data.address) throw new DomainError("protected_address");
+      const values: Partial<repo.NewPersonRow> = {};
+      if (data.phone !== undefined && data.phone !== current.phone) values.phone = data.phone;
+      if (data.address !== undefined && !sameAddress(data.address, current.address)) {
+        values.address = data.address;
+      }
+      const changed = Object.keys(values);
+      if (changed.length > 0) {
+        await repo.updatePerson(tx, personId, values);
+        await audit.record(tx, {
+          action: "person.contact.updated",
+          resourceType: "person",
+          resourceId: personId,
+          changedFields: changed,
+        });
+      }
+      return this.getPersonInTx(tx, personId);
+    });
+  }
+
+  /**
    * Sets or clears the global protected identity flag (ADR 0022, P1.12). Only
    * the person themselves or a full guardian may change it. Turning it on
    * removes the stored address and records who did it. Turning a ward's flag
@@ -567,4 +601,17 @@ export class PeopleService {
       personalIdentityNumberHash: this.encryption.blindIndex(PIN_PURPOSE, value),
     };
   }
+}
+
+type Address = { street: string; postalCode: string; city: string; country: string } | null;
+
+/** Field by field: jsonb does not keep the keys' order. */
+function sameAddress(a: Address, b: Address | undefined): boolean {
+  if (!a || !b) return !a && !b;
+  return (
+    a.street === b.street &&
+    a.postalCode === b.postalCode &&
+    a.city === b.city &&
+    a.country === b.country
+  );
 }

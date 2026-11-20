@@ -105,3 +105,12 @@ test("the chat keeps its size: messages scroll inside, the field stays in view (
     await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight + 400),
   ).toBe(true);
 });
+
+test("an empty direct chat shows the field to write in at once (P2.7d)", async ({ page }) => {
+  await loginAs(page, PERSONAS.anna, {
+    returnTo: `/people/${PERSONAS.johan.id}?clubId=0199a000-0000-7000-8001-000000000001`,
+  });
+  await page.getByTestId("send-message").getByRole("button").click();
+  await expect(page.getByTestId("chat-room")).toBeVisible();
+  await expect(page.getByTestId("chat-input")).toBeInViewport();
+});

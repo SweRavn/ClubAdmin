@@ -42,6 +42,19 @@ export const accountInvitationToken = (key: string, invitationId: string): strin
     .update(`account-invitation:${invitationId}`, "utf8")
     .digest("base64url");
 
+/**
+ * The six-digit code that confirms a new login email (P2.7d, ADR 0057),
+ * derived from the pending request's ID (accounts.pending_email_id): the
+ * worker puts it in the email and the API compares, nothing stores it.
+ */
+export const emailChangeCode = (key: string, pendingId: string): string =>
+  (
+    createHmac("sha256", key).update(`email-change:${pendingId}`, "utf8").digest().readUInt32BE(0) %
+    1_000_000
+  )
+    .toString()
+    .padStart(6, "0");
+
 export const guardianInvitationUrl = (webUrl: string, token: string): string =>
   new URL(`/guardian-invitations/${encodeURIComponent(token)}`, webUrl).toString();
 

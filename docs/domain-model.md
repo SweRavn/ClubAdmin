@@ -80,7 +80,11 @@ stored normalised: trimmed, lower-case), `email_verified_at`, `idp_subject`,
 No password data (that lives in Zitadel).
 - One account per person, one person per account.
 - Changing email requires verifying the new address; the old address is
-  notified.
+  notified. The new address waits in `pending_email` (with
+  `pending_email_id`, `pending_email_expires_at`, `pending_email_attempts`)
+  until the six-digit code emailed to it is entered; the code is derived
+  from `pending_email_id` and stored nowhere (ADR 0057). Only the person
+  changes their login email; registrars change phone and address only.
 - A guardian's email can never be attached to a child: uniqueness makes this
   impossible, and there is no "contact email" field on persons to put it in.
 
@@ -1386,13 +1390,17 @@ functions or employments); history and audit record both.
 ### Field visibility
 
 `GET /api/v1/people/:personId?clubId=` returns fields by relationship
-(`profileAccess`). Phone, address and gender reach a club only if the person
-shared them with it (`club_profiles.shared_fields`).
+(`profileAccess`). Phone, address and gender reach other members and leaders
+only if the person shared them with the club (`club_profiles.shared_fields`).
+The club's registrars (`club.people.details` or `club.people.contact.edit`)
+see phone and address regardless, and the login email read-only (ADR 0057,
+P2.7d).
 
 | Viewer | Fields |
 |---|---|
 | The person, guardian with `act_on_behalf` | everything: birth date, gender, phone, address, club profile (member number, membership, groups), guardians with phone numbers |
-| `club.people.details` in the club (club manager, registrar) | birth date; shared phone, gender and address; member number, membership, groups; guardians with phone numbers |
+| `club.people.details` in the club (registrar) | birth date; phone and address (shared or not), shared gender; login email; member number, membership, groups; guardians with phone numbers and login emails |
+| `club.people.contact.edit` without `club.people.details` (club manager) | the name, phone and address, login email, guardians with phone numbers and login emails |
 | Owner of one of the person's groups, or `group.people.details` in one (its leaders) | birth date, shared phone, member number, groups, guardians with phone numbers |
 | Same group, their guardians, support access | name only (never a protected person); the shared phone with the person's `contacts_group` or `contacts_club` consent, and guardians who gave theirs (P1.8a) |
 | Anyone else in the club | nothing, or with the person's `contacts_club` consent the name and shared phone (never a protected person) |

@@ -99,5 +99,6 @@ export default defineConfig({
         // The chat (P2.1, P2.7b): SVK F2017's channel.
         { name: "chat", testMatch: /chat\.spec\.ts/, dependencies: ["grants"] },
         { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["chat"] },
+        { name: "profile", testMatch: /profile\.spec\.ts/, dependencies: ["cleanup"] },
       ],
 });

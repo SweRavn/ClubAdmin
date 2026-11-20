@@ -386,6 +386,13 @@
       "when": 1794900000000,
       "tag": "0054_location_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1794910000000,
+      "tag": "0055_contact_details",
+      "breakpoints": true
     }
   ]
 }

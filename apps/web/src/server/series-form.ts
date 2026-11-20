@@ -28,7 +28,14 @@ export function slotsFrom(get: Get): SeriesSlot[] | null {
     if (!weekday || !startTime) continue;
     const duration = int(get(`duration.${n}`) || "90", 15, 720);
     if (!isTime(startTime) || duration === null || weekday < 1 || weekday > 7) return null;
-    slots.push({ weekday, startTime, durationMinutes: duration });
+    // This weekday's own place (P2.7d); none: the series' place.
+    const place = get(`slotLocation.${n}`);
+    slots.push({
+      weekday,
+      startTime,
+      durationMinutes: duration,
+      ...(/^[0-9a-f-]{36}$/.test(place) ? { locationId: place } : {}),
+    });
   }
   return slots;
 }

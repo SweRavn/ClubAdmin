@@ -146,7 +146,11 @@ season, so the group page shows "10 of 10 places".
 
 ## Demo scenario: named personas
 
-All names fictional. Children without own login have **no email**. Generated extras fill groups up to realistic sizes so each
+All names fictional. Children without own login have **no email**. Most
+adults and the F2017 children have a phone number and an address (P2.7d);
+only Anna, Erik, Johan and Ahmed share theirs with their clubs, so a leader
+sees few, while a registrar (Anna, with a second factor) sees and changes
+them all on the member's profile (ADR 0057). Emma and Ola have neither. Generated extras fill groups up to realistic sizes so each
 club has roughly 10 named/central users plus generated players.
 
 | # | Person | Age | Has login | Relationships (what it tests) |
@@ -459,6 +463,9 @@ schedule (Ola left two years ago).
   drives there (from Strandviksskolan) and home (from Bergby sporthall), the
   assistant coach Johan there only (from Klubbstugan); try booking Alva's
   seats from "Mitt schema" as Sara, or "Kommer" with a seat as Erik.
+  F2017's next training (P2.7d): Erik drives with three seats, Maja and
+  Johan have two, one is free for Alva (who said she is coming); to the
+  training after it Mikael drives Elsa there and home.
 - **Volunteer duties** (P2.6, `apps/api/src/seed/steps/duties.ts`): IK
   Norrbacka's duty types Kiosk (from 13, no contact with children) and
   Sekretariat (from 15, with children); P2012's quota is two shifts per

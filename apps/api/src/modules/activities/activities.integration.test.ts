@@ -92,6 +92,7 @@ interface ActivityJson {
   sequence: number;
   leaderNotes?: string | null;
   location: { id: string; name: string } | null;
+  locationText?: string | null;
   groups: { id: string; name: string }[];
   canManage: boolean;
 }
@@ -202,6 +203,53 @@ describe("series", () => {
     ]);
     expect(sessions[0]).toMatchObject({ canManage: true, leaderNotes: "Cones in the storeroom" });
     expect(await clubAudit(club.id)).toContain("activity.series.created");
+  });
+
+  it("each weekday can have its own place (P2.7d)", async () => {
+    const { club, groupId, coach } = await team();
+    const hall = (
+      await api(club.manager.id, "POST", `/clubs/${club.id}/locations`, {
+        body: { name: "Strandvikshallen" },
+      })
+    ).json<{ id: string }>().id;
+    const created = await api(coach.id, "POST", `/groups/${groupId}/activity-series`, {
+      body: {
+        title: "Träning",
+        locationText: "Skolans gymnastiksal",
+        slots: [
+          { weekday: 2, startTime: "18:00", durationMinutes: 60, locationId: hall },
+          { weekday: 4, startTime: "18:00", durationMinutes: 60 },
+        ],
+        startsOn: "2026-12-07",
+        endsOn: "2026-12-13",
+      },
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const sessions = await calendar(coach.id, groupId, "2026-12-07", "2026-12-14");
+    // Tuesday in its own hall, Thursday where the series is.
+    expect(
+      sessions.map((a) => [a.startsAt.slice(0, 10), a.location?.name ?? a.locationText]),
+    ).toEqual([
+      ["2026-12-08", "Strandvikshallen"],
+      ["2026-12-10", "Skolans gymnastiksal"],
+    ]);
+    // Another club's place is refused.
+    const other = await api(coach.id, "POST", `/groups/${groupId}/activity-series`, {
+      body: {
+        title: "Träning",
+        slots: [
+          {
+            weekday: 2,
+            startTime: "18:00",
+            durationMinutes: 60,
+            locationId: "0199a000-0000-7000-8013-00000000ffff",
+          },
+        ],
+        startsOn: "2026-12-07",
+        endsOn: "2026-12-13",
+      },
+    });
+    expect(other.statusCode).toBeGreaterThanOrEqual(400);
   });
 
   it("makes a long series' sessions up to the horizon and refuses times that do not exist", async () => {

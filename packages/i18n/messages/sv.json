@@ -469,6 +469,8 @@
       "invitationBody": "{hasInviter, select, yes {{inviter} bjuder in dig} other {Du är inbjuden}} till ClubAdmin som {kind, select, parent {förälder} legal_guardian {vårdnadshavare} relative {släkting} step_parent {bonusförälder} foster_parent {familjehem} other {kontaktperson}} till {hasWard, select, yes {{ward}} other {ett barn eller en ungdom}}.\n\nTacka ja (logga in, eller skapa en inloggning med den här e-postadressen):\n{url}\n\nInbjudan gäller till {expires}. Om du inte väntade dig den kan du bortse från mejlet.",
       "acceptedSubject": "{person} har tackat ja till din inbjudan",
       "acceptedBody": "{person} har tackat ja till din inbjudan och är nu kopplad till {ward} som {kind, select, parent {förälder} legal_guardian {vårdnadshavare} relative {släkting} step_parent {bonusförälder} foster_parent {familjehem} other {kontaktperson}}.\n\nSe din familj i ClubAdmin:\n{url}",
+      "emailChangeSubject": "Bekräfta din nya e-postadress",
+      "emailChangeBody": "Hej {name},\n\nAnge den här koden i ClubAdmin för att byta e-postadress för inloggning till den här adressen:\n\n{code}\n\nKoden gäller till {expires}. Fortsätt på din profil:\n{url}\n\nOm du inte bad om bytet kan du strunta i det här mejlet; inget ändras.",
       "ownLoginSubject": "Din egen inloggning till ClubAdmin",
       "ownLoginBody": "Hej {name}!\n\nNu kan du logga in i ClubAdmin själv. Dina medlemskap, grupper och din historik finns kvar som de är.\n\nLogga in eller skapa din inloggning med den här e-postadressen:\n{url}\n\nLänken gäller till {expires}.",
       "ownLoginAgeSubject": "{ward} kan nu få en egen inloggning",
@@ -509,7 +511,7 @@
     }
   },
   "profileForm": {
-    "title": "Din profil",
+    "title": "Min profil",
     "intro": "Ditt namn och födelsedatum. Födelsedatumet behövs för föreningarnas åldersregler och kan inte ändras här senare.",
     "givenName": "Förnamn",
     "familyName": "Efternamn",
@@ -676,6 +678,11 @@
     "creation_request_exists": "Du har redan en väntande ansökan.",
     "club_creation_not_allowed": "Du får inte skapa föreningar här.",
     "too_young_for_account": "Du är för ung för ett eget konto; en vårdnadshavare kan lägga till dig.",
+    "email_taken": "E-postadressen hör till en annan inloggning.",
+    "email_unchanged": "Det är redan din e-postadress.",
+    "email_code_invalid": "Koden är fel. Kontrollera mejlet och försök igen.",
+    "email_code_expired": "Koden gäller inte längre. Be om en ny.",
+    "email_change_unavailable": "E-postadressen kan inte bytas på den här servern just nu.",
     "handover_invalid": "Överlämningen är inte längre öppen.",
     "club_has_manager": "Föreningen har fortfarande en föreningsansvarig.",
     "mfa_required": "Det här kräver inloggning med tvåfaktorsautentisering. Logga ut och logga in igen med den.",
@@ -1448,7 +1455,16 @@
     "removed": "Borttagna datum",
     "bringBack": "Ta tillbaka",
     "datesRemoved": "Datumen är borttagna.",
-    "dateRestored": "Datumet är tillbaka."
+    "dateRestored": "Datumet är tillbaka.",
+    "sessionCancel": "Ställ in…",
+    "sessionCancelReason": "Anledning (valfri)",
+    "sessionCancelButton": "Ställ in tillfället",
+    "sessionRestore": "Återställ",
+    "sessionDelete": "Ta bort…",
+    "sessionDeleteHint": "Tillfället tas bort och datumet hoppas över i serien.",
+    "sessionDeleteButton": "Ta bort tillfället",
+    "slotLocation": "Plats den dagen",
+    "slotLocationDefault": "Seriens plats"
   },
   "clubCalendar": {
     "title": "Föreningens kalender",
@@ -3005,6 +3021,8 @@
       "activity_response_set_by_leader": "{actor} svarade för en deltagare",
       "membership_type_changed": "{actor} ändrade en medlemskapstyp",
       "account_email_changed": "{actor} ändrade e-postadressen för inloggning",
+      "account_email_change_requested": "{actor} bad om att byta e-postadress för inloggning",
+      "person_contact_updated": "{actor} ändrade en persons kontaktuppgifter",
       "club_phone_numbers_updated": "{actor} ändrade klubbens telefonnummer",
       "guardianship_ward_adult": "Ett barn blev myndigt",
       "guardianship_adult_decided": "{actor} beslutade om vårdnad efter myndighetsdagen",
@@ -3666,6 +3684,11 @@
         "name": "Se medlemmarnas uppgifter",
         "description": "Kan se medlemmarnas kontaktuppgifter, födelsedatum och andra uppgifter i registret.",
         "example": "Kan till exempel se en medlems adress och telefonnummer."
+      },
+      "club_people_contact_edit": {
+        "name": "Ändra medlemmarnas kontaktuppgifter",
+        "description": "Kan se och ändra medlemmarnas telefonnummer och adress, och se deras e-postadress. Kräver tvåfaktorinloggning.",
+        "example": "Kan till exempel rätta adressen för en medlem som flyttat."
       },
       "club_people_protected": {
         "name": "Se personer med skyddad identitet",
@@ -4788,7 +4811,10 @@
     "ownCar": "Din bil",
     "full": "Fullt",
     "notTakingPart": "Du och dina barn deltar inte i aktiviteten, så ni kan inte boka plats.",
-    "startedNoBooking": "Resan har börjat; platser bokas inte längre."
+    "startedNoBooking": "Resan har börjat; platser bokas inte längre.",
+    "rideWith": "Åk med",
+    "thereAndHome": "dit och hem",
+    "thereOnly": "bara dit"
   },
   "expenses": {
     "mine": "Mina utlägg",
@@ -5066,5 +5092,34 @@
     "next": "Nästa sida",
     "ended": "Rollen är borttagen.",
     "groupRoles": "Grupproller (tränare, lagledare …) ges i varje grupps administration:"
+  },
+  "contact": {
+    "title": "Kontaktuppgifter",
+    "intro": "Ditt telefonnummer och din adress. Föreningarnas medlemsansvariga ser dem; vad andra medlemmar och ledare ser väljer du under Integritet.",
+    "phone": "Telefon",
+    "address": "Adress",
+    "street": "Gatuadress",
+    "postalCode": "Postnummer",
+    "city": "Ort",
+    "country": "Land",
+    "save": "Spara kontaktuppgifter",
+    "saved": "Kontaktuppgifterna är sparade.",
+    "edit": "Ändra kontaktuppgifter",
+    "clubNote": "Du ändrar uppgifterna för föreningens räkning. Ändringen loggas. E-postadressen för inloggning kan bara personen själv byta.",
+    "protectedNoAddress": "Personen har skyddad identitet: ingen adress sparas.",
+    "email": "E-post",
+    "emailTitle": "E-post för inloggning",
+    "currentEmail": "Du loggar in med",
+    "newEmail": "Ny e-postadress",
+    "emailHelp": "Vi skickar en kod till den nya adressen. Bytet sker först när du har angett koden, och den gamla adressen får ett meddelande.",
+    "sendCode": "Skicka kod",
+    "pending": "Väntar på bekräftelse: ange koden som skickades till {email}. Koden gäller till {until}.",
+    "code": "Kod",
+    "confirm": "Bekräfta",
+    "cancelChange": "Avbryt bytet",
+    "emailSaved": "E-postadressen är bytt. Logga in med den nya adressen nästa gång.",
+    "wardsTitle": "Dina barn",
+    "wardsIntro": "Ändra ditt barns telefon och adress på barnets profil.",
+    "guardiansTitle": "Vårdnadshavarnas kontaktuppgifter"
   }
 }

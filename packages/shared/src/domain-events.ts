@@ -182,6 +182,8 @@ export const DOMAIN_EVENTS = {
   "person.merged": z.object({ keptPersonId: id, mergedPersonId: id, undone: z.boolean() }),
   /** Notify the old address (P1.7). */
   "account.email.changed": z.object({ accountId: id, personId: id }),
+  /** P2.7d (ADR 0057): a code to the pending address (the worker derives it). */
+  "account.email.change_requested": z.object({ accountId: id, personId: id }),
   /** Send the own-login invitation email (P1.3). */
   "account.invited": z.object({ invitationId: id, personId: id }),
   /** Send the invitation email (P1.3; also after a resend, with the new link). */

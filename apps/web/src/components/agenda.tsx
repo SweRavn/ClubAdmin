@@ -9,9 +9,10 @@ import { enumKey } from "@clubadmin/i18n";
 import { type CarpoolSummary, localDate, type PersonSummary } from "@clubadmin/shared";
 import { formatDateTime, personLabel, RoleBadge } from "@clubadmin/ui";
 import { getLocale, getTranslations } from "next-intl/server";
+import type { ReactNode } from "react";
 
 import { ResponseButtons } from "./response-buttons.tsx";
-import { carLabelOf, carsFor, RideButtons } from "./ride-buttons.tsx";
+import { carsFor, RideButtons, rideLabel } from "./ride-buttons.tsx";
 
 export interface AgendaItem {
   id: string;
@@ -47,6 +48,8 @@ export interface AgendaItem {
   counts?: { attending: number; notAttending: number; notAnswered: number };
   /** The car pool for the viewer's family (P2.7c): seats there and home. */
   carpool?: CarpoolSummary | undefined;
+  /** Actions on the item (P2.7d: cancel or delete a session from its series). */
+  actions?: ReactNode;
 }
 
 export async function Agenda({
@@ -180,27 +183,36 @@ export async function Agenda({
                                   item.respondBy ? Date.parse(item.respondBy) < Date.now() : false
                                 }
                                 {...(r.label ? { label: r.label } : {})}
-                                rides={carsFor(item.carpool, r.personId, "out").map((o) => ({
-                                  offerId: o.id,
-                                  label: carLabelOf(
-                                    o,
-                                    item.timeZone,
-                                    locale,
-                                    t("carpool.hiddenDriver"),
-                                  ),
-                                }))}
+                                rides={
+                                  item.carpool && r.status !== "attending"
+                                    ? carsFor(item.carpool, r.personId, "out").map((o) => ({
+                                        offerId: o.id,
+                                        label: rideLabel(item.carpool!, o, item.timeZone, locale, {
+                                          hiddenDriver: t("carpool.hiddenDriver"),
+                                          thereAndHome: t("carpool.thereAndHome"),
+                                          thereOnly: t("carpool.thereOnly"),
+                                        }),
+                                      }))
+                                    : []
+                                }
                               />
-                              {/* Seats there and home, apart (P2.7c). */}
+                              {/* The seats, and "Åk med" after answering "Kommer" (P2.7d: one menu). */}
                               {r.status !== "not_attending" ? (
                                 <RideButtons
                                   activityId={item.id}
                                   personId={r.personId}
                                   carpool={item.carpool}
                                   timeZone={item.timeZone}
+                                  attending={r.status === "attending"}
                                 />
                               ) : null}
                             </span>
                           ))}
+                      </span>
+                    ) : null}
+                    {item.actions ? (
+                      <span className="mt-2 flex flex-wrap gap-2" data-testid="agenda-actions">
+                        {item.actions}
                       </span>
                     ) : null}
                     {showPeople && item.people && item.people.length > 0 ? (

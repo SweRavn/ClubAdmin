@@ -139,7 +139,8 @@ export function ResponseButtons({
                 book.mutate({
                   offerId: ride.offerId,
                   passengerPersonId: personId,
-                  alsoReturn: false,
+                  // The way home in the same car too, when it has a seat (P2.7d).
+                  alsoReturn: true,
                   confirmAlone: false,
                 });
               }}

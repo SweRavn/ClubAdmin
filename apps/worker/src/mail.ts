@@ -17,6 +17,7 @@ import { type Catalogue, catalogues, DEFAULT_LOCALE, type Locale, localeOf } fro
 import {
   accountInvitationToken,
   accountInvitationUrl,
+  emailChangeCode,
   emailInvitationToken,
   guardianInvitationToken,
   guardianInvitationUrl,
@@ -188,7 +189,12 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
   return {
     name: "mail",
     // Emails to addresses without an account; the others are notifications (P1.7).
-    types: ["invitation.created", "guardianship.invited", "account.invited"],
+    types: [
+      "invitation.created",
+      "guardianship.invited",
+      "account.invited",
+      "account.email.change_requested",
+    ],
     async handle(event, tx) {
       switch (event.type) {
         case "invitation.created": {
@@ -488,6 +494,7 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
         case "guardianship.invited":
         case "guardianship.invitation.accepted":
         case "account.invited":
+        case "account.email.change_requested":
         case "guardianship.ward.own_login_age":
         case "guardianship.ward.adult":
         case "guardianship.adult.ended":
@@ -663,6 +670,41 @@ export function mailHandler(options: MailHandlerOptions): OutboxHandler {
           ),
           expires: date(locale, invitation.expires_at),
         });
+        return;
+      }
+      case "account.email.change_requested": {
+        // P2.7d (ADR 0057): the code goes to the new address only; it is
+        // derived from the pending request's ID, so a newer request (or a
+        // confirmed one) leaves nothing to send.
+        const { accountId, personId } = DOMAIN_EVENTS["account.email.change_requested"].parse(
+          event.payload,
+        );
+        if (!options.invitationTokenKey) throw new Error("INVITATION_TOKEN_KEY is not set");
+        const { rows } = await tx.execute<{
+          pending_email: string | null;
+          pending_email_id: string | null;
+          pending_email_expires_at: string | null;
+        }>(sql`
+          SELECT pending_email, pending_email_id, pending_email_expires_at
+          FROM public.accounts
+          WHERE id = ${accountId} AND pending_email_expires_at > now()`);
+        const pending = rows[0];
+        if (!pending?.pending_email || !pending.pending_email_id) return;
+        const locale = await localeOfPerson(personId);
+        await mail(
+          { personId: pending.pending_email_id, email: pending.pending_email, locale: null },
+          locale,
+          "emailChange",
+          {
+            name: await givenNameFor(tx, personId),
+            code: emailChangeCode(options.invitationTokenKey, pending.pending_email_id),
+            expires: new Intl.DateTimeFormat(locale, {
+              dateStyle: "long",
+              timeStyle: "short",
+            }).format(new Date(pending.pending_email_expires_at!)),
+            url: link("/me/profile"),
+          },
+        );
         return;
       }
       case "guardianship.ward.own_login_age": {

@@ -18,7 +18,7 @@ import {
   WAITLIST_STATUSES,
 } from "./core.ts";
 import { ClubSchema } from "./responses.ts";
-import { CreateClubSchema } from "./schemas.ts";
+import { CreateClubSchema, EmailSchema, PhoneSchema, PostalAddressSchema } from "./schemas.ts";
 
 const name = z.string().trim().min(1).max(100);
 
@@ -46,9 +46,57 @@ export const MyProfileSchema = z
     complete: z.boolean(),
     /** What POST /clubs does for this person (CLUB_CREATION, ADR 0018). */
     clubCreation: z.enum(["create", "request", "not_allowed"]),
+    /** P2.7d: the contact details the person changes themselves. */
+    phone: z.string().nullable().optional(),
+    address: PostalAddressSchema.nullable().optional(),
+    /** The login email (null for a person without a login). */
+    email: z.string().nullable().optional(),
+    /** A new email waiting for its code (ADR 0057), and until when the code works. */
+    pendingEmail: z
+      .object({ email: z.string(), expiresAt: z.iso.datetime({ offset: true }) })
+      .nullable()
+      .optional(),
+    /** A protected person stores no address (ADR 0022). */
+    protectedIdentity: z.boolean().optional(),
   })
   .openapi("MyProfile");
 export type MyProfile = z.infer<typeof MyProfileSchema>;
+
+/**
+ * Changing a person's phone and address (P2.7d, ADR 0057): the person or a
+ * guardian acting on their behalf, or the club's registrars. A field left
+ * out stays; null removes it.
+ */
+export const UpdateContactSchema = z
+  .object({
+    phone: PhoneSchema.nullable().optional(),
+    address: PostalAddressSchema.nullable().optional(),
+  })
+  .strict()
+  .openapi("UpdateContactRequest");
+export type UpdateContactInput = z.infer<typeof UpdateContactSchema>;
+
+/** The registrar's change names the club (P2.7d). */
+export const ClubContactQuerySchema = z.object({ clubId: z.uuid() });
+
+/** Asking to change one's login email: a code goes to the new address (ADR 0057). */
+export const RequestEmailChangeSchema = z
+  .object({ email: EmailSchema })
+  .strict()
+  .openapi("RequestEmailChangeRequest");
+export type RequestEmailChangeInput = z.infer<typeof RequestEmailChangeSchema>;
+
+/** The code from the email to the new address. */
+export const ConfirmEmailChangeSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .regex(/^[0-9]{6}$/, "six digits"),
+  })
+  .strict()
+  .openapi("ConfirmEmailChangeRequest");
+export type ConfirmEmailChangeInput = z.infer<typeof ConfirmEmailChangeSchema>;
 
 // --- Club search ---------------------------------------------------------
 

@@ -62,6 +62,12 @@
       "gender": "female",
       "login": "none",
       "email": null,
+      "address": {
+        "street": "Strandvägen 12",
+        "postalCode": "123 45",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "createdBy": "anna",
       "createdAt": "-9y",
       "description": "SVK F2017 player, no login; managed by her guardians. Moved from Minivolley half a year ago.",
@@ -100,6 +106,12 @@
       "login": "account",
       "email": "erik.johansson@example.test",
       "phone": "+46 70 174 06 07",
+      "address": {
+        "street": "Hamngatan 4",
+        "postalCode": "123 46",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "SVK F2017 head coach and owner, IKN F2015 assistant coach, parent of Maja.",
       "tags": [
         "leader in two clubs",
@@ -118,6 +130,12 @@
       "gender": "female",
       "login": "none",
       "email": null,
+      "address": {
+        "street": "Hamngatan 4",
+        "postalCode": "123 46",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "createdBy": "erik",
       "createdAt": "-10y",
       "description": "Plays in SVK F2017 and IKN F2015.",
@@ -137,6 +155,12 @@
       "login": "account",
       "email": "sara.ahmed@example.test",
       "phone": "+46 70 174 06 09",
+      "address": {
+        "street": "Sjövägen 7",
+        "postalCode": "123 47",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "SVK club manager, treasurer, F2017 team manager and owner; parent of Alva.",
       "tags": [
         "club manager",
@@ -157,6 +181,12 @@
       "gender": "female",
       "login": "none",
       "email": null,
+      "address": {
+        "street": "Sjövägen 7",
+        "postalCode": "123 47",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "createdBy": "sara",
       "createdAt": "-9y",
       "description": "SVK F2017 player without photo consent.",
@@ -176,6 +206,12 @@
       "login": "account",
       "email": "gunilla.berg@example.test",
       "phone": "+46 70 174 06 15",
+      "address": {
+        "street": "Kyrkbacken 2",
+        "postalCode": "123 40",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Grandmother of Alva: relative with view-only rights.",
       "tags": [
         "relative",
@@ -195,6 +231,12 @@
       "login": "account",
       "email": "johan.nilsson@example.test",
       "phone": "+46 70 174 06 10",
+      "address": {
+        "street": "Båtsmansgatan 19",
+        "postalCode": "123 48",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "SVK registrar (the full member register without manager rights), Herr senior player and owner, F2017 assistant coach; applied to SVK and was approved by Anna last year.",
       "tags": [
         "leader",
@@ -220,7 +262,14 @@
         "last manager",
         "person in three clubs"
       ],
-      "createdAt": "-15y"
+      "createdAt": "-15y",
+      "phone": "+46 70 174 06 08",
+      "address": {
+        "street": "Fyrvägen 3",
+        "postalCode": "123 49",
+        "city": "Strandviken",
+        "country": "SE"
+      }
     },
     {
       "key": "ingrid",
@@ -252,6 +301,12 @@
       "login": "account",
       "email": "karin.ek@example.test",
       "phone": "+46 70 174 06 11",
+      "address": {
+        "street": "Ekbacken 11",
+        "postalCode": "123 41",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "IKN club manager and safeguarding officer, employed part-time as club administrator; proposed handing over to Peter.",
       "tags": [
         "club manager",
@@ -272,6 +327,12 @@
       "login": "account",
       "email": "ahmed.yilmaz@example.test",
       "phone": "+46 70 174 06 12",
+      "address": {
+        "street": "Strandvägen 30",
+        "postalCode": "123 45",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "IKN P2012 head coach and owner, parent of Liam.",
       "tags": [
         "coach",
@@ -311,6 +372,12 @@
       "login": "account",
       "email": "peter.sund@example.test",
       "phone": "+46 70 174 06 13",
+      "address": {
+        "street": "Skolgatan 8",
+        "postalCode": "123 42",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "IKN treasurer; founded SVK and was its manager and board member until he handed over to Anna last year; Karin proposed handing IKN over to him.",
       "tags": [
         "historic roles",
@@ -418,6 +485,12 @@
       "login": "account",
       "email": "henrik.malm@example.test",
       "phone": "+46 70 174 06 14",
+      "address": {
+        "street": "Tallstigen 5",
+        "postalCode": "123 43",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Signed up himself and added his son Viktor, who waits for SVK F2017.",
       "tags": [
         "parent",
@@ -476,6 +549,12 @@
       "login": "account",
       "email": "jonas.karimi@example.test",
       "phone": "+46 70 174 06 16",
+      "address": {
+        "street": "Lotsgatan 14",
+        "postalCode": "123 44",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Invited by Samira as Nadia's second guardian (not accepted yet).",
       "tags": [
         "pending co-guardian"
@@ -498,7 +577,14 @@
         "parent",
         "join request"
       ],
-      "createdAt": "-1mo"
+      "createdAt": "-1mo",
+      "phone": "+46 70 174 06 41",
+      "address": {
+        "street": "Lotsgatan 14",
+        "postalCode": "123 44",
+        "city": "Strandviken",
+        "country": "SE"
+      }
     },
     {
       "key": "viktor",
@@ -609,7 +695,8 @@
       "tags": [
         "adult age",
         "decision"
-      ]
+      ],
+      "phone": "+46 70 174 06 42"
     },
     {
       "key": "leyla",
@@ -623,6 +710,12 @@
       "login": "account",
       "email": "leyla.yilmaz@example.test",
       "phone": "+46 70 174 06 33",
+      "address": {
+        "street": "Vassvägen 9",
+        "postalCode": "123 50",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "createdAt": "-10y",
       "description": "Tilde's mother, invited by Ahmed as second guardian.",
       "tags": [
@@ -658,6 +751,12 @@
       "login": "account",
       "email": "mats.berg@example.test",
       "phone": "+46 70 174 06 35",
+      "address": {
+        "street": "Granvägen 21",
+        "postalCode": "123 51",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "SVK club manager, the third administrator: with three, two can suspend the third without outside help (P1.15 A3).",
       "tags": [
         "administrator"
@@ -676,6 +775,12 @@
       "login": "account",
       "email": "linnea.holm@example.test",
       "phone": "+46 70 174 06 36",
+      "address": {
+        "street": "Bryggvägen 6",
+        "postalCode": "123 52",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Was an SVK club manager until Anna and Sara suspended her last week after a suspected break-in (compromised, demoted to an ordinary member).",
       "tags": [
         "suspended administrator"
@@ -694,6 +799,12 @@
       "login": "account",
       "email": "goran.lund@example.test",
       "phone": "+46 70 174 06 37",
+      "address": {
+        "street": "Ängsvägen 15",
+        "postalCode": "123 53",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "IKN club manager next to Karin: IKN has the minimum of two administrators.",
       "tags": [
         "administrator"
@@ -731,6 +842,12 @@
       "login": "account",
       "email": "ulf.ek@example.test",
       "phone": "+46 70 174 06 39",
+      "address": {
+        "street": "Mästargatan 1",
+        "postalCode": "123 54",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Founded Lövsta Bordtennisklubb, a small club with one administrator within its grace period: it must appoint a second.",
       "tags": [
         "grace period"
@@ -749,6 +866,12 @@
       "login": "account",
       "email": "britt.sjoberg@example.test",
       "phone": "+46 70 174 06 40",
+      "address": {
+        "street": "Mästargatan 1",
+        "postalCode": "123 54",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Founded Ekuddens Schackklubb, a club of the type Schackklubb (P1.15 B): its roles come from that type's template.",
       "tags": [
         "club type",
@@ -768,6 +891,12 @@
       "login": "account",
       "email": "aron.nystrom@example.test",
       "phone": "+46 70 174 06 41",
+      "address": {
+        "street": "Klippvägen 2",
+        "postalCode": "123 55",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Ekuddens Schackklubb's second administrator next to Britt.",
       "tags": [
         "club type",
@@ -787,6 +916,12 @@
       "login": "account",
       "email": "patrik.forsberg@example.test",
       "phone": "+46 70 174 06 42",
+      "address": {
+        "street": "Seglargatan 10",
+        "postalCode": "123 56",
+        "city": "Strandviken",
+        "country": "SE"
+      },
       "description": "Wilma's father: she has been offered a place in SVK F2017, which he can accept.",
       "tags": [
         "parent",

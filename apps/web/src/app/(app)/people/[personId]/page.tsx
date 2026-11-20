@@ -12,6 +12,7 @@ import {
   inputClass,
   secondaryButtonClass,
 } from "../../../../components/action-form.tsx";
+import { ContactForm } from "../../../../components/contact-form.tsx";
 import { GuardianRow, RightsFields } from "../../../../components/family.tsx";
 import { FormError, Notice } from "../../../../components/form-error.tsx";
 import { HistoryLink } from "../../../../components/history-view.tsx";
@@ -133,6 +134,8 @@ export default async function PersonPage({ params, searchParams }: Props) {
         .filter(Boolean)
         .join(", "),
     });
+  // The login email, read-only (P2.7d, ADR 0057): the person changes it.
+  if (profile.email) rows.push({ key: "email", label: t("contact.email"), value: profile.email });
   if (profile.club?.memberNumber !== undefined)
     rows.push({
       key: "memberNumber",
@@ -196,6 +199,22 @@ export default async function PersonPage({ params, searchParams }: Props) {
       ) : (
         <p className="text-muted">{t("person.limited")}</p>
       )}
+      {/* Changing phone and address (P2.7d): the person or a guardian acting
+          for them, or the club's registrars (second factor). */}
+      {profile.contactEditable ? (
+        <details className="space-y-3" data-testid="edit-contact" open={query.saved === "contact"}>
+          <summary className="cursor-pointer font-medium">{t("contact.edit")}</summary>
+          {query.saved === "contact" ? <Notice>{t("contact.saved")}</Notice> : null}
+          <ContactForm
+            personId={personId}
+            phone={profile.phone}
+            address={profile.address}
+            scope={profile.contactEditable}
+            clubId={profile.contactEditable === "club" ? (clubId ?? profile.club?.clubId) : null}
+            protectedIdentity={profile.person.protected === true}
+          />
+        </details>
+      ) : null}
 
       {profile.club?.groups?.length ? (
         <section aria-labelledby="person-groups">
@@ -476,6 +495,24 @@ export default async function PersonPage({ params, searchParams }: Props) {
                 <PersonName person={g.person} protectedLabel={protectedLabel} />
                 <RoleBadge label={t(enumKey("guardianKinds", g.kind))} />
                 {g.phone ? <span className="text-sm text-muted">{g.phone}</span> : null}
+                {g.email ? <span className="text-sm text-muted">{g.email}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {/* The registrar reaches a child through the guardians (P2.7d, ADR 0057). */}
+      {guardianClub && profile.guardians?.some((g) => g.phone || g.email) ? (
+        <section aria-labelledby="guardian-contacts" data-testid="guardian-contacts">
+          <h2 id="guardian-contacts" className="mb-2 text-lg font-semibold">
+            {t("contact.guardiansTitle")}
+          </h2>
+          <ul className="space-y-1">
+            {profile.guardians.map((g) => (
+              <li key={g.person.id} className="flex flex-wrap items-center gap-2">
+                <PersonName person={g.person} protectedLabel={protectedLabel} />
+                {g.phone ? <span className="text-sm text-muted">{g.phone}</span> : null}
+                {g.email ? <span className="text-sm text-muted">{g.email}</span> : null}
               </li>
             ))}
           </ul>

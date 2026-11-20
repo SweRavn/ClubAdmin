@@ -44,6 +44,7 @@ export const PERMISSIONS = [
   "event.registrations.manage",
   "person.profile.read",
   "person.profile.update",
+  "club.people.contact.edit",
   "person.protection.set",
   "person.access_log.read",
   "person.guardians.read",

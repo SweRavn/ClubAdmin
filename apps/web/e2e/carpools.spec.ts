@@ -23,8 +23,9 @@ test("the away match shows the cars, the note and who has no ride", async ({ pag
   // Who has no ride is for the leaders.
   await expect(section.getByTestId("carpool-without-ride")).toHaveCount(0);
 
+  // Among the demo's other rides (P2.7d), her own car.
   await page.goto("/me/carpools");
-  await expect(page.getByTestId("my-carpool").first()).toContainText("Du kör");
+  await expect(page.getByTestId("my-carpool").filter({ hasText: "Du kör" }).first()).toBeVisible();
 });
 
 test("a guardian confirms that the child rides home alone with the driver", async ({ page }) => {
@@ -74,25 +75,29 @@ test("claims: approved and rejected for Anna, in the queue for Ahmed", async ({
 // Johan's (there only).
 const SVK_MATCH = "0199a000-0000-7000-8015-000000000013";
 
-test("Sara books Alva's seats there and home from Mitt schema, apart (P2.7c)", async ({ page }) => {
-  await loginAs(page, PERSONAS.sara, { returnTo: "/schedule" });
+test("Sara books Alva's seat there and home in one choice from the schedule (P2.7d)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.sara, { returnTo: "/" });
   await page.evaluate(() => {
     (window as unknown as { noReload: boolean }).noReload = true;
   });
   const match = page
     .getByTestId("agenda-item")
     .filter({ has: page.locator(`a[href="/activities/${SVK_MATCH}"]`) });
+  const answer = match.getByTestId(`response-${PERSONAS.alva.id}`);
   const alva = match.getByTestId(`rides-${PERSONAS.alva.id}`);
-  // Two cars there: a menu with the drivers and pick-up places.
-  await alva.getByTestId("ride-menu-out").locator("summary").click();
-  await alva
-    .getByTestId("ride-menu-out")
-    .getByRole("button", { name: /Mikael Lindqvist · Strandviksskolan/ })
+  // Alva has not answered: one menu, "Kommer ▾", with the cars and whether
+  // they drive home; a car answers "Kommer" and books there and home.
+  await answer.getByTestId("response-attending").click();
+  await answer
+    .getByTestId("response-ride")
+    .filter({ hasText: /Mikael Lindqvist · Strandviksskolan.*dit och hem/ })
     .click();
   await expect(alva.getByTestId("ride-booked-out")).toContainText("Mikael Lindqvist");
-  // One car home: one tap.
-  await alva.getByTestId("ride-book-back").click();
   await expect(alva.getByTestId("ride-booked-back")).toContainText("Bergby sporthall");
+  // No second place to book: no "Åk med" under the answer once she has a seat.
+  await expect(alva.getByTestId("ride-menu")).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
     true,
   );
@@ -113,10 +118,33 @@ test("Erik answers Kommer with a seat in Johan's car from the group's list (P2.7
   await answer.getByTestId("response-attending").click();
   // "Tar mig dit själv" or a car: the driver and where they leave from.
   await expect(answer.getByTestId("response-self")).toBeVisible();
-  await answer.getByTestId("response-ride").filter({ hasText: "Johan" }).click();
+  // Johan drives there only: the menu says so.
+  await answer
+    .getByTestId("response-ride")
+    .filter({ hasText: /Johan.*bara dit/ })
+    .click();
   const rides = match.getByTestId(`rides-${PERSONAS.erik.id}`);
   await expect(rides.getByTestId("ride-booked-out")).toContainText("Johan");
   // The answer is given: the activity page shows "Kommer" chosen and the seat.
   await page.goto(`/activities/${SVK_MATCH}`);
   await expect(page.getByTestId("carpool")).toContainText("Erik Johansson");
+});
+
+test("the last free seat in Erik's car is offered for Alva (P2.7d)", async ({ page }) => {
+  // The demo's next F2017 training: Erik's car has three seats, Maja and Johan two.
+  await loginAs(page, PERSONAS.sara, { returnTo: "/" });
+  const rides = page
+    .getByTestId(`rides-${PERSONAS.alva.id}`)
+    .filter({ has: page.getByTestId("ride-menu") });
+  const withErik = rides.filter({
+    has: page.getByTestId("ride-book").filter({ hasText: "Erik Johansson" }),
+  });
+  await expect(withErik.first()).toBeAttached();
+  await withErik.first().getByTestId("ride-menu").locator("summary").click();
+  await expect(
+    withErik
+      .first()
+      .getByTestId("ride-book")
+      .filter({ hasText: /Erik Johansson.*dit och hem/ }),
+  ).toBeVisible();
 });

@@ -3,6 +3,7 @@
 // person, their club profile and guardians, filtered per relationship.
 import { Module } from "@nestjs/common";
 
+import { AccountsModule } from "../accounts/index.ts";
 import { AuthorizationModule } from "../authorization/index.ts";
 import { GuardianshipsModule } from "../guardianships/index.ts";
 import { PeopleModule } from "../people/index.ts";
@@ -12,6 +13,7 @@ import { PersonProfilesController } from "./person-profiles.controller.ts";
 
 @Module({
   imports: [
+    AccountsModule,
     AuthorizationModule,
     GuardianshipsModule,
     PeopleModule,

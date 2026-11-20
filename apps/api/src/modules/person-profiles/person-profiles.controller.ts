@@ -1,26 +1,36 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import {
+  ClubContactQuerySchema,
+  OkSchema,
   PersonParamsSchema,
   type PersonProfile,
   PersonProfileSchema,
   PersonQuerySchema,
+  type UpdateContactInput,
+  UpdateContactSchema,
 } from "@clubadmin/shared";
-import { Controller } from "@nestjs/common";
+import { Body, Controller } from "@nestjs/common";
 
 import { Endpoint } from "../../platform/http/endpoint.ts";
 import { ProblemError } from "../../platform/http/problem-error.ts";
+import { AccountsService } from "../accounts/index.ts";
 import {
   CurrentAuthorization,
   PersonProfilePresenter,
+  type PersonResource,
+  type ProfileAccess,
   profileAccess,
   type RequestAuthorization,
   resourceOf,
+  seesClubContact,
   tenantContext,
 } from "../authorization/index.ts";
 import { GuardianshipsService } from "../guardianships/index.ts";
 import { PeopleService } from "../people/index.ts";
 import { ConsentsService } from "../privacy/index.ts";
 import { ProtectionService } from "../protection/index.ts";
+
+const WRITE_LIMIT = { max: 30, timeWindowMs: 60_000 };
 
 @Controller("people")
 export class PersonProfilesController {
@@ -29,6 +39,7 @@ export class PersonProfilesController {
   private readonly presenter: PersonProfilePresenter;
   private readonly consents: ConsentsService;
   private readonly protection: ProtectionService;
+  private readonly accounts: AccountsService;
 
   constructor(
     people: PeopleService,
@@ -36,7 +47,9 @@ export class PersonProfilesController {
     presenter: PersonProfilePresenter,
     consents: ConsentsService,
     protection: ProtectionService,
+    accounts: AccountsService,
   ) {
+    this.accounts = accounts;
     this.people = people;
     this.guardianships = guardianships;
     this.presenter = presenter;
@@ -64,8 +77,9 @@ export class PersonProfilesController {
       (g) => g.status === "active",
     );
     // Others in the club see only the guardians who chose to show their
-    // contact details to the ward's groups or the whole club (P1.8a).
-    if (access === "member") {
+    // contact details to the ward's groups or the whole club (P1.8a); the
+    // club's registrars see them all (P2.7d, ADR 0057).
+    if (access === "member" && !seesClubContact(authz.actor, resource)) {
       const consents =
         resource.clubId && !resource.inClub?.protected
           ? await this.consents.contactConsentsOf(
@@ -111,9 +125,96 @@ export class PersonProfilesController {
     if (!profile) throw new ProblemError("not-found");
     const protection = await this.protection.state(authz, resource, person);
     return {
-      ...profile,
+      ...(await this.withContact(authz, access, resource, profile)),
       ...(protection ? { protection } : {}),
       ...(viewsLogged ? { viewsLogged: true } : {}),
     };
+  }
+
+  /**
+   * P2.7d (ADR 0057): the login emails (read-only) for the person, their
+   * guardians acting for them and the club's registrars, who also see the
+   * guardians' (a child without a login is reached through them); and who
+   * may change the phone and address.
+   */
+  private async withContact(
+    authz: RequestAuthorization,
+    access: ProfileAccess,
+    resource: PersonResource,
+    profile: PersonProfile,
+  ): Promise<PersonProfile> {
+    const clubContact = seesClubContact(authz.actor, resource);
+    if (access !== "self" && !clubContact) return profile;
+    const guardianIds = clubContact ? (profile.guardians ?? []).map((g) => g.person.id) : [];
+    const emails = await this.accounts.loginEmailsOf([resource.personId, ...guardianIds]);
+    const editable =
+      access === "self"
+        ? ("self" as const)
+        : authz.actor.onBehalfOf === null &&
+            resource.clubId !== null &&
+            authz.actor.holds("club.people.contact.edit", resource.clubId)
+          ? ("club" as const)
+          : undefined;
+    return {
+      ...profile,
+      email: emails.get(resource.personId) ?? null,
+      ...(clubContact && profile.guardians
+        ? {
+            guardians: profile.guardians.map((g) => ({
+              ...g,
+              email: emails.get(g.person.id) ?? null,
+            })),
+          }
+        : {}),
+      ...(editable ? { contactEditable: editable } : {}),
+    };
+  }
+
+  @Endpoint({
+    method: "PATCH",
+    path: ":personId/contact",
+    summary:
+      "Change my own or my ward's phone and address (the person, or a guardian acting on their behalf)",
+    tags: ["people"],
+    access: { permission: "person.profile.update", resource: "person" },
+    request: { params: PersonParamsSchema, body: UpdateContactSchema },
+    response: OkSchema,
+    rateLimit: WRITE_LIMIT,
+  })
+  async updateOwnContact(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Body() body: UpdateContactInput,
+  ): Promise<{ ok: true }> {
+    const resource = resourceOf(authz, "person");
+    await this.people.updateContact(authz.context, resource.personId, body);
+    return { ok: true };
+  }
+
+  @Endpoint({
+    method: "PATCH",
+    path: ":personId/club-contact",
+    summary:
+      "Change a member's phone and address for the club (club.people.contact.edit, second factor; never the login email)",
+    tags: ["people"],
+    access: { permission: "club.people.contact.edit", resource: "person" },
+    request: {
+      params: PersonParamsSchema,
+      query: ClubContactQuerySchema,
+      body: UpdateContactSchema,
+    },
+    response: OkSchema,
+    rateLimit: WRITE_LIMIT,
+  })
+  async updateClubContact(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Body() body: UpdateContactInput,
+  ): Promise<{ ok: true }> {
+    const resource = resourceOf(authz, "person");
+    await this.people.updateContact(
+      tenantContext(authz, resource.clubId!),
+      resource.personId,
+      body,
+    );
+    return { ok: true };
   }
 }

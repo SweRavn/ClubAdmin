@@ -109,6 +109,7 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "club.members.read": role("club", "members", true),
   "club.people.details": role("club", "members", true),
   "club.people.protected": role("club", "privacy", true),
+  "club.people.contact.edit": role("club", "members", true),
   "club.members.manage": role("club", "members", true),
   "club.members.routine": role("club", "members", true),
   "club.members.export": role("club", "members", true),
@@ -334,6 +335,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "club.roles.manage",
       "club.roles.read",
       "club.people.protected",
+      "club.people.contact.edit",
       "club.members.read",
       "club.join_requests.manage",
       "club.invitations.manage",
@@ -382,6 +384,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
     scope: "club",
     permissions: [
       ...ADMIN,
+      "club.people.contact.edit",
       "club.members.routine",
       "club.roles.read",
       "club.grants.read",

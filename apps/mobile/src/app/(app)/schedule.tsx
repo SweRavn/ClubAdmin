@@ -18,7 +18,7 @@ import { DataAge } from "../../components/data-age.tsx";
 import { ErrorView } from "../../components/error-view.tsx";
 import { OutboxBanner } from "../../components/outbox-banner.tsx";
 import { ResponseButtons } from "../../components/response-buttons.tsx";
-import { carsFor, RideChoices, useCarText } from "../../components/ride-choices.tsx";
+import { carsFor, RideChoices, useRideText } from "../../components/ride-choices.tsx";
 import { RoleBadge } from "../../components/role-badge.tsx";
 import { scheduleDays } from "../../components/schedule-days.ts";
 import {
@@ -66,7 +66,7 @@ export default function ScheduleScreen() {
     () => scheduleDays(schedule.data?.items ?? [], person, Date.now()),
     [schedule.data, person],
   );
-  const carText = useCarText();
+  const rideText = useRideText();
   // The car pools of the coming activities (P2.7c): one request per club.
   const carpools = useCarpoolSummaries(
     (schedule.data?.items ?? [])
@@ -215,10 +215,14 @@ export default function ScheduleScreen() {
                                   entry.respondBy ? Date.parse(entry.respondBy) < Date.now() : false
                                 }
                                 {...(several && who ? { label: personLabel(who) } : {})}
-                                rides={carsFor(carpool, r.personId, "out").map((o) => ({
-                                  offerId: o.id,
-                                  label: carText(o, entry.club.timeZone),
-                                }))}
+                                rides={
+                                  carpool && r.status !== "attending"
+                                    ? carsFor(carpool, r.personId, "out").map((o) => ({
+                                        offerId: o.id,
+                                        label: rideText(carpool, o, entry.club.timeZone),
+                                      }))
+                                    : []
+                                }
                               />
                               {r.status !== "not_attending" ? (
                                 <RideChoices
@@ -226,6 +230,7 @@ export default function ScheduleScreen() {
                                   personId={r.personId}
                                   carpool={carpool}
                                   timeZone={entry.club.timeZone}
+                                  attending={r.status === "attending"}
                                 />
                               ) : null}
                             </View>

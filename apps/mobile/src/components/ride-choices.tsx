@@ -44,20 +44,36 @@ export function useCarText() {
       .join(" · ");
 }
 
+/** "Mikael Lindqvist · Strandviksskolan 08:45 (dit och hem)". */
+export function useRideText() {
+  const t = useTranslations();
+  const carText = useCarText();
+  return (carpool: CarpoolSummary, offer: Offer, timeZone: string) => {
+    const home = carpool.offers.some(
+      (o) => o.direction === "back" && o.outwardOfferId === offer.id && o.freeSeats > 0,
+    );
+    return `${carText(offer, timeZone)} (${home ? t("carpool.thereAndHome") : t("carpool.thereOnly")})`;
+  };
+}
+
 export function RideChoices({
   activityId,
   personId,
   carpool,
   timeZone,
+  attending,
 }: {
   activityId: string;
   personId: string;
   carpool: CarpoolSummary | undefined;
   timeZone: string;
+  /** The person answered "Kommer": the cars are offered here. */
+  attending: boolean;
 }) {
   const t = useTranslations();
   const theme = useTheme();
   const book = useBookCarpoolSeat(activityId);
+  const rideText = useRideText();
   const cancel = useCancelCarpoolSeat(activityId);
   const carText = useCarText();
   if (!carpool) return null;
@@ -94,21 +110,24 @@ export function RideChoices({
         </View>,
       ];
     }
-    return carsFor(carpool, personId, direction).map((offer) => (
+    // One choice per car, there and (in the same car) home (P2.7d), once the
+    // person answered "Kommer"; before that the "Kommer" choice offers them.
+    if (direction === "back" || !attending) return [];
+    return carsFor(carpool, personId, "out").map((offer) => (
       <Button
         key={offer.id}
         kind="secondary"
-        label={`${direction === "out" ? t("carpool.rideOut") : t("carpool.rideHome")}: ${carText(offer, timeZone)}`}
+        label={`${t("carpool.rideWith")}: ${rideText(carpool, offer, timeZone)}`}
         busy={book.isPending}
         onPress={() =>
           book.mutate({
             offerId: offer.id,
             passengerPersonId: personId,
-            alsoReturn: false,
+            alsoReturn: true,
             confirmAlone: false,
           })
         }
-        testID={`ride-book-${direction}-${offer.id}-${personId}`}
+        testID={`ride-book-${offer.id}-${personId}`}
       />
     ));
   });

@@ -76,3 +76,43 @@ test("Johan resumes and pauses Lars's membership from his profile", async ({ pag
   await expect(page.getByTestId("notice")).toBeVisible();
   await expect(page.getByTestId("form-error")).toHaveCount(0);
 });
+
+test("Anna, registrar with a second factor, sees and changes Sara's contact details (P2.7d)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.anna, {
+    mfa: true,
+    returnTo: `/people/${PERSONAS.sara.id}?clubId=${CLUBS.svk}`,
+  });
+  // Sara shares nothing with the club; the registrar sees them anyway (ADR 0057).
+  const profile = page.getByTestId("person-profile");
+  await expect(profile.locator('[data-field="phone"]')).toContainText("+46 70 174 06 09");
+  await expect(profile.locator('[data-field="address"]')).toContainText("Sjövägen 7");
+  await expect(profile.locator('[data-field="email"]')).toContainText("sara.ahmed@example.test");
+
+  await page.evaluate(() => {
+    (window as unknown as { noReload: boolean }).noReload = true;
+  });
+  await page.getByTestId("edit-contact").locator("summary").click();
+  await page.getByTestId("contact-phone").fill("+46 70 999 00 11");
+  await page.getByTestId("contact-street").fill("Sjövägen 9");
+  await page.getByTestId("contact-save").click();
+  await expect(profile.locator('[data-field="phone"]')).toContainText("+46 70 999 00 11");
+  await expect(profile.locator('[data-field="address"]')).toContainText("Sjövägen 9");
+  expect(await page.evaluate(() => (window as unknown as { noReload?: boolean }).noReload)).toBe(
+    true,
+  );
+  // The email is the person's own: no field for it.
+  await expect(page.getByTestId("contact-form").locator('input[name="email"]')).toHaveCount(0);
+});
+
+test("Erik, a leader, sees only what Sara shares (P2.7d)", async ({ page }) => {
+  await loginAs(page, PERSONAS.erik, {
+    returnTo: `/people/${PERSONAS.sara.id}?clubId=${CLUBS.svk}`,
+  });
+  const profile = page.getByTestId("person-profile");
+  await expect(profile).toBeVisible();
+  await expect(profile.locator('[data-field="address"]')).toHaveCount(0);
+  await expect(profile.locator('[data-field="email"]')).toHaveCount(0);
+  await expect(page.getByTestId("edit-contact")).toHaveCount(0);
+});

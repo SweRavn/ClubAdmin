@@ -50,12 +50,12 @@ export async function AppFrame({ children }: { children: ReactNode }) {
   const myName = personLabel(me.person);
 
   const nav: { key: string; href: string; label: string; current: boolean }[] = [
-    { key: "home", href: "/", label: t("nav.home"), current: pathname === "/" },
+    // Home is "Mitt schema" too (P2.7d): an activity's page belongs to it.
     {
-      key: "schedule",
-      href: "/schedule",
-      label: t("nav.schedule"),
-      current: pathname.startsWith("/schedule") || pathname.startsWith("/activit"),
+      key: "home",
+      href: "/",
+      label: t("nav.home"),
+      current: pathname === "/" || pathname.startsWith("/activit"),
     },
     // "Mina kanaler" (P2.1): every chat across clubs and groups.
     {
@@ -197,7 +197,7 @@ export async function AppFrame({ children }: { children: ReactNode }) {
   }
 
   const userMenu: MenuItem[] = [
-    { kind: "link", key: "profile", label: t("userMenu.profile"), href: `/people/${me.personId}` },
+    { kind: "link", key: "profile", label: t("userMenu.profile"), href: "/me/profile" },
     { kind: "link", key: "account", label: t("userMenu.account"), href: "/me" },
     { kind: "link", key: "language", label: t("userMenu.language"), href: "/me/preferences" },
     {
