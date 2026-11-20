@@ -11,6 +11,7 @@
 //   node apps/web/scripts/lighthouse.ts [baseUrl]   (needs .env.local values and CHROME_PATH)
 
 import { spawnSync } from "node:child_process";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { createTestSession } from "./test-session.ts";
 
@@ -41,7 +42,48 @@ async function autorun(personId: string, urls: readonly string[]): Promise<numbe
     ],
     { stdio: "inherit", shell: false },
   );
+  summarise();
   return result.status ?? 1;
+}
+
+type Audit = { numericValue?: number; details?: { items?: unknown[] } };
+type Report = { finalUrl: string; audits: Record<string, Audit> };
+
+/**
+ * One line per run, and what made the largest paint late (the reports stay
+ * on the runner): the element, its phases, the document's timing and the
+ * main thread's work. CI cannot be compared with a laptop otherwise.
+ */
+function summarise(): void {
+  const dir = ".lighthouseci";
+  for (const file of readdirSync(dir).filter((f) => /^lhr-.*\.json$/.test(f))) {
+    const report = JSON.parse(readFileSync(`${dir}/${file}`, "utf8")) as Report;
+    const a = report.audits;
+    const ms = (id: string) => Math.round(a[id]?.numericValue ?? NaN);
+    const items = (id: string) => (a[id]?.details?.items ?? []) as Record<string, unknown>[];
+    const lcpElement = items("largest-contentful-paint-element") as {
+      items?: { node?: { nodeLabel?: string }; phase?: string; timing?: number }[];
+    }[];
+    const element = lcpElement[0]?.items?.[0]?.node?.nodeLabel?.slice(0, 40) ?? "?";
+    const phases = (lcpElement[1]?.items ?? [])
+      .map((p) => `${p.phase}=${Math.round(p.timing ?? 0)}`)
+      .join(" ");
+    const doc = items("network-requests").find((r) => r.resourceType === "Document") as
+      { networkRequestTime?: number; networkEndTime?: number; transferSize?: number } | undefined;
+    const work = items("mainthread-work-breakdown")
+      .slice(0, 4)
+      .map((w) => `${String(w.group)}=${Math.round(Number(w.duration))}`)
+      .join(" ");
+    console.log(
+      [
+        `[lighthouse] ${new URL(report.finalUrl).pathname}`,
+        `LCP=${ms("largest-contentful-paint")} FCP=${ms("first-contentful-paint")} TBT=${ms("total-blocking-time")} TTFB=${ms("server-response-time")}`,
+        `element="${element}" ${phases}`,
+        `document=${Math.round(doc?.networkRequestTime ?? NaN)}..${Math.round(doc?.networkEndTime ?? NaN)}ms ${doc?.transferSize ?? "?"}B`,
+        `main-thread: ${work}`,
+      ].join(" | "),
+    );
+  }
 }
 
 const first = await autorun(PERSON, ["/", `/groups/${GROUP}`]);
