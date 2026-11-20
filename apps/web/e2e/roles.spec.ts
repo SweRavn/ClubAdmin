@@ -84,6 +84,9 @@ test("Karin finds Administration, gives a role in the role matrix and ends it (P
   await page.getByTestId("role-matrix-add").first().click();
   const row = page.locator(`[data-testid="role-matrix-row"][data-person="${PERSONAS.ahmed.id}"]`);
   await expect(row).toBeVisible();
+  // "Lägg till" loads the page anew: wait for its script, or the first tap
+  // posts the form without it (a reload, not an update in place).
+  await page.waitForLoadState("networkidle");
   await page.evaluate(() => {
     (window as unknown as { noReload: boolean }).noReload = true;
   });
