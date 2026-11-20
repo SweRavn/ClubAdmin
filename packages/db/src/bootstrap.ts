@@ -76,7 +76,24 @@ export async function bootstrap(options: BootstrapOptions): Promise<void> {
   try {
     await bootstrapRoles(client, options.passwords);
     await bootstrapDatabase(client, databaseName(options.adminUrl));
+    await enableStatementStatistics(client);
   } finally {
     await client.end();
   }
+}
+
+/**
+ * pg_stat_statements in the application database, where the server loads it
+ * (the development and CI Postgres does; the request budgets read it). The
+ * volume's init script creates it once; `pnpm db:reset` recreates the
+ * database, so bootstrap creates it again. Elsewhere nothing happens.
+ */
+async function enableStatementStatistics(client: pg.Client): Promise<void> {
+  const { rows } = await client.query<{ setting: string }>(
+    "SELECT setting FROM pg_settings WHERE name = 'shared_preload_libraries'",
+  );
+  if (!(rows[0]?.setting ?? "").split(",").some((l) => l.trim() === "pg_stat_statements")) {
+    return;
+  }
+  await client.query("CREATE EXTENSION IF NOT EXISTS pg_stat_statements");
 }
