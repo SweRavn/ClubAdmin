@@ -7,9 +7,16 @@ import { isUuid } from "@clubadmin/shared";
 import { getTranslations } from "next-intl/server";
 
 import { ActionForm, buttonClass } from "../../../../../../components/action-form.tsx";
+import { CallUpList } from "../../../../../../components/call-up-list.tsx";
 import { EventFields, EventSessions } from "../../../../../../components/event-fields.tsx";
 import { FormError } from "../../../../../../components/form-error.tsx";
-import { formDraft, getClub, getClubGroups, getLocations } from "../../../../../../server/data.ts";
+import {
+  formDraft,
+  getClub,
+  getClubGroups,
+  getGroupMembers,
+  getLocations,
+} from "../../../../../../server/data.ts";
 
 type Props = {
   params: Promise<{ clubId: string }>;
@@ -34,6 +41,13 @@ export default async function NewEventPage({ params, searchParams }: Props) {
   const active = groups.filter((g) => !g.archived);
   const chosen = new Set(draft ? (draft.get("groupId") ?? []) : preselected ? [preselected] : []);
   const clubAudience = draft?.get("audience")?.[0] === "club";
+  // Who it is sent to (P2.7e): the one chosen group's players, all ticked.
+  const single = chosen.size === 1 ? [...chosen][0]! : null;
+  const members = single ? await getGroupMembers(single, 200) : null;
+  const players = (members?.items ?? [])
+    .filter((m) => m.functions.includes("member"))
+    .map((m) => m.person);
+  const ticked = draft ? new Set(draft.get("callUp") ?? []) : null;
 
   return (
     <div className="space-y-6">
@@ -82,6 +96,15 @@ export default async function NewEventPage({ params, searchParams }: Props) {
             {t("events.audienceClub")}
           </label>
         </fieldset>
+        {single && !clubAudience ? (
+          <CallUpList
+            people={players}
+            legend={t("callUp.eventTitle", {
+              group: active.find((g) => g.id === single)?.name ?? "",
+            })}
+            ticked={ticked}
+          />
+        ) : null}
         <EventFields
           timeZone={club.timeZone}
           locations={locations}

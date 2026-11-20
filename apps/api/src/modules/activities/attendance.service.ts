@@ -33,6 +33,7 @@ import type { MembershipsService } from "../memberships/index.ts";
 import type { PeopleService } from "../people/index.ts";
 import * as repo from "./activities.repository.ts";
 import * as records from "./attendance.repository.ts";
+import { applyCallUpInTx } from "./call-ups.ts";
 
 const MINUTE_MS = 60_000;
 
@@ -631,7 +632,7 @@ export class AttendanceService {
     );
   }
 
-  private async applyCallUp(
+  private applyCallUp(
     tx: Tx,
     context: TenantContext,
     activity: repo.ActivityRow,
@@ -639,41 +640,7 @@ export class AttendanceService {
     wanted: ReadonlySet<string>,
     invitedBy: string = actorPersonId(context),
   ): Promise<repo.ActivityRow> {
-    const activityId = activity.id;
-    const current = new Set(await records.invitees(tx, activityId));
-    const added = [...wanted].filter((id) => !current.has(id));
-    const removed = [...current].filter((id) => !wanted.has(id));
-    const modeChanged = activity.inviteesOnly !== inviteesOnly;
-    if (!modeChanged && added.length === 0 && removed.length === 0) return activity;
-    await records.removeInvitees(tx, activityId, removed);
-    await records.addInvitees(tx, {
-      clubId: context.clubId,
-      activityId,
-      personIds: added,
-      invitedBy,
-    });
-    let updated = activity;
-    if (modeChanged) {
-      // Not a calendar change: neither sequence nor changed_at move (ADR 0036).
-      updated = await repo.updateActivity(tx, activityId, { inviteesOnly });
-      await repo.syncScheduleEntries(tx, { activityIds: [activityId] });
-    }
-    await audit.record(tx, {
-      action: "activity.invitees.changed",
-      resourceType: "activity",
-      resourceId: activityId,
-      changedFields: [
-        ...(modeChanged ? ["invitees_only"] : []),
-        ...(added.length > 0 || removed.length > 0 ? ["invitees"] : []),
-      ],
-    });
-    await outbox.publish(tx, "activity.invitees.changed", {
-      clubId: context.clubId,
-      activityId,
-      added,
-      removed,
-    });
-    return updated;
+    return applyCallUpInTx(tx, context, activity, inviteesOnly, wanted, invitedBy);
   }
 
   private async inviteesView(tx: Tx, activity: repo.ActivityRow): Promise<InviteesView> {

@@ -753,6 +753,26 @@ describe("every type reaches the right people", () => {
     expect(await types(x.nils)).toEqual([]);
   });
 
+  it("event.published for an event sent to some players: only they hear of it (P2.7e)", async () => {
+    const x = await team();
+    const id = await event(x);
+    // Sent to Elsa's teammates but not Elsa: her guardians are not told.
+    await t.query("admin", "UPDATE events SET invitees_only = true WHERE id = $1", [id]);
+    await t.query(
+      "admin",
+      `INSERT INTO event_invitees (club_id, event_id, person_id, invited_by_person_id)
+       VALUES ($1, $2, $3, $3)`,
+      [x.club, id, x.coach],
+    );
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "event.changed", { clubId: x.club, eventId: id, change: "published" }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual([]);
+    expect(await types(x.mikael)).toEqual([]);
+  });
+
   it("registrations: a new place or queue tells the other guardian, a removal everyone who may sign up", async () => {
     const x = await team();
     const e = await event(x);

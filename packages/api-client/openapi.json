@@ -9660,6 +9660,14 @@
             "maxItems": 20,
             "default": []
           },
+          "notInvited": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 200
+          },
           "publish": {
             "type": "boolean",
             "default": false
@@ -17078,6 +17086,14 @@
             },
             "maxItems": 20,
             "default": []
+          },
+          "notCalledUp": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 200
           }
         },
         "required": [

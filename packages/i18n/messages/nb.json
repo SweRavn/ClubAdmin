@@ -5122,5 +5122,11 @@
     "wardsTitle": "Barna dine",
     "wardsIntro": "Endre barnets telefon og adresse på barnets profil.",
     "guardiansTitle": "Foresattes kontaktopplysninger"
+  },
+  "callUp": {
+    "title": "Innkalles",
+    "count": "{count, plural, one {# spiller} other {# spillere}}",
+    "hint": "Alle i gruppen er forhåndsvalgt. Fjern haken for dem som ikke skal innkalles; lederne er med som vanlig.",
+    "eventTitle": "Invitert fra {group}"
   }
 }

@@ -393,6 +393,13 @@
       "when": 1794910000000,
       "tag": "0055_contact_details",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1794920000000,
+      "tag": "0056_event_invitees",
+      "breakpoints": true
     }
   ]
 }

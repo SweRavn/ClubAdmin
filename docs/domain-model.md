@@ -761,7 +761,11 @@ managers and registrars get the notice `membership.left`.
   who called them up; readable across clubs by the person and their
   guardians for "My schedule", which leaves the activity out for members
   not called up). Those who manage the activity set it; answers of people
-  no longer called up are kept and not counted.
+  no longer called up are kept and not counted. Since P2.7e the call-up is
+  also chosen when the activity is created: the form lists the group's
+  players, all ticked, and those unticked are left out
+  (`notCalledUp` on create; none left out: no call-up). The title starts as
+  the kind's name ("Match", "Träning") and can be changed.
 - `activity_responses` (club-owned): one per activity and person on the
   roster: `status` (`attending`, `not_attending`), `note` (to the leaders,
   200 characters, may be about health: only the leaders and the person's
@@ -791,7 +795,13 @@ managers and registrars get the notice `membership.left`.
 
 ### Events with sign-up (P1.6, ADR 0038)
 - `events` (club-owned): a sign-up container for some groups
-  (`event_groups`) or the whole club (`audience`), `status` (`draft`,
+  (`event_groups`) or the whole club (`audience`). A group event can be
+  sent to some of its groups' players only (P2.7e): `invitees_only` and
+  `event_invitees` (club-owned, one per event and person, who invited them;
+  readable across clubs by the person and their guardians for "My
+  events"), chosen when it is created (the players, all ticked; those
+  unticked are left out, `notInvited`). Only those invited sign up (and
+  their guardians for them); the notice of publication goes to them. `status` (`draft`,
   `published`, `cancelled` with `cancelled_reason`), the period, a place,
   `price_text` (no payments before Phase 3), `registration_opens_at`
   (null: when published), `registration_closes_at`,

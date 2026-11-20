@@ -15,6 +15,7 @@ export const PERSONAS = {
   oskar: { id: person(4), name: "Oskar Lindqvist" },
   erik: { id: person(5), name: "Erik Johansson" },
   sara: { id: person(7), name: "Sara Ahmed" },
+  maja: { id: person(6), name: "Maja Johansson" },
   alva: { id: person(8), name: "Alva Ahmed" },
   gunilla: { id: person(9), name: "Gunilla Berg" },
   johan: { id: person(10), name: "Johan Nilsson" },

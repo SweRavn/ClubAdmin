@@ -367,3 +367,35 @@ test("Erik adds a member by typing part of a name and picking from the list (P2.
     true,
   );
 });
+
+test("a new activity is titled by its kind and called up to the ticked players (P2.7e)", async ({
+  page,
+}) => {
+  await loginAs(page, PERSONAS.erik, { returnTo: `/groups/${GROUPS.svkF2017}/activities/new` });
+  // The title follows the kind until one is written.
+  const title = page.getByTestId("activity-title");
+  await page.getByTestId("activity-kind").selectOption("training");
+  await expect(title).toHaveValue("Träning");
+  await page.getByTestId("activity-kind").selectOption("match");
+  await expect(title).toHaveValue("Match");
+  // Everyone in F2017 is ticked; Elsa is not called up.
+  const list = page.getByTestId("call-up-list");
+  const elsa = list.locator("label", { hasText: PERSONAS.elsa.name }).getByTestId("call-up");
+  await expect(elsa).toBeChecked();
+  await elsa.uncheck();
+  await page.getByTestId("activity-date").fill(day(13));
+  await page.getByTestId("activity-startTime").fill("10:00");
+  await page.getByTestId("activity-endTime").fill("11:30");
+  await page.getByTestId("activity-create").click();
+  await page.waitForURL(/\/activities\/.*saved=1/);
+  await expect(page.getByTestId("activity-heading")).toContainText("Match");
+  await page.goto(`${new URL(page.url()).pathname}/invitees`);
+  await expect(page.getByTestId("invitees-selected")).toBeChecked();
+  const form = page.getByTestId("invitees-form");
+  await expect(
+    form.locator("label", { hasText: PERSONAS.elsa.name }).getByTestId("invite"),
+  ).not.toBeChecked();
+  await expect(
+    form.locator("label", { hasText: PERSONAS.maja.name }).getByTestId("invite"),
+  ).toBeChecked();
+});

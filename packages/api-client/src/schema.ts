@@ -9514,6 +9514,7 @@ export interface components {
         locationId?: string | null;
         locationText?: string | null;
       }[];
+      notInvited?: string[];
       /** @default false */
       publish: boolean;
     };
@@ -11470,6 +11471,7 @@ export interface components {
       transportMode?: "own" | "shared" | null;
       /** @default [] */
       groupIds: string[];
+      notCalledUp?: string[];
     };
     CreateSeriesRequest: {
       /**

@@ -157,6 +157,12 @@ export const CreateActivitySchema = z
     ...transport,
     /** More groups for a joint activity (the caller must manage each). */
     groupIds: z.array(z.uuid()).max(20).default([]),
+    /**
+     * P2.7e: the groups' participants not called up. Left out or empty:
+     * everyone takes part; otherwise the activity has a call-up of the
+     * others (ADR 0036).
+     */
+    notCalledUp: z.array(z.uuid()).max(200).optional(),
   })
   .strict()
   .refine((v) => Date.parse(v.endsAt) > Date.parse(v.startsAt), {

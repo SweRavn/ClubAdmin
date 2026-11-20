@@ -547,3 +547,13 @@ export async function memberSummary(
     excused: r.excused,
   }));
 }
+
+/** The people who take part in these groups now (participating memberships; P2.7e). */
+export async function groupParticipants(tx: Tx, groupIds: readonly string[]): Promise<string[]> {
+  if (groupIds.length === 0) return [];
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT DISTINCT gm.person_id FROM public.group_memberships gm
+    WHERE gm.group_id = ANY (${uuidArray(groupIds)}::uuid[]) AND gm.participates
+      AND gm.valid_from <= now() AND (gm.valid_to IS NULL OR gm.valid_to > now())`);
+  return rows.map((r) => r.person_id);
+}

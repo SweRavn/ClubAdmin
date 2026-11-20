@@ -8,12 +8,14 @@ import { getTranslations } from "next-intl/server";
 import { ActionForm, buttonClass } from "../../../../../../components/action-form.tsx";
 import { ActivityFields } from "../../../../../../components/activity-fields.tsx";
 import { weekRange } from "../../../../../../components/agenda.tsx";
+import { CallUpList } from "../../../../../../components/call-up-list.tsx";
 import { FormError } from "../../../../../../components/form-error.tsx";
 import {
   getClub,
   getClubGroups,
   getGroup,
   getGroupCalendar,
+  getGroupMembers,
   getLocations,
 } from "../../../../../../server/data.ts";
 
@@ -35,11 +37,16 @@ export default async function NewActivityPage({ params, searchParams }: Props) {
     getGroupCalendar(groupId, from, to),
   ]);
   if (!calendar.canManage) forbidden();
-  const [club, groups, locations] = await Promise.all([
+  const [club, groups, locations, members] = await Promise.all([
     getClub(group.clubId),
     getClubGroups(group.clubId),
     getLocations(group.clubId),
+    getGroupMembers(group.id, 200),
   ]);
+  // The players to call up (P2.7e): all ticked; leaders take part anyway.
+  const players = (members?.items ?? [])
+    .filter((m) => m.functions.includes("member"))
+    .map((m) => m.person);
   const others = groups.filter((g) => g.id !== group.id && !g.archived);
 
   return (
@@ -58,6 +65,7 @@ export default async function NewActivityPage({ params, searchParams }: Props) {
           locations={locations}
           addPlaceHref={`/clubs/${club.id}/locations#new-location`}
         />
+        <CallUpList people={players} />
         {others.length > 0 ? (
           <fieldset className="space-y-1">
             <legend className="text-sm">{t("activities.jointGroups")}</legend>

@@ -202,3 +202,29 @@ test("a session row without its end time is marked in red next to the field (P2.
   expect(marked).not.toBe("none");
   await expect(row.getByTestId("session-title")).toHaveValue("Första matchen");
 });
+
+test("an event from a group is sent to the ticked players only (P2.7e)", async ({ page }) => {
+  await loginAs(page, PERSONAS.erik, {
+    returnTo: `/clubs/${CLUBS.svk}/events/new?groupId=${GROUPS.svkF2017}`,
+  });
+  const form = page.getByTestId("new-event-form");
+  const inDays = (days: number) =>
+    new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+  const list = form.getByTestId("call-up-list");
+  await expect(list).toContainText("Inbjudna från");
+  await list.locator("label", { hasText: PERSONAS.maja.name }).getByTestId("call-up").uncheck();
+  await form.getByTestId("event-title").fill("Lagfest F2017");
+  await form.getByTestId("event-startDate").fill(inDays(15));
+  await page.getByTestId("event-create").click();
+  await expect(page.getByTestId("event-title")).toHaveText("Lagfest F2017");
+  const url = page.url();
+  // Erik is Maja's parent: she is not invited, so nothing to sign her up for.
+  await expect(
+    page.getByTestId("event-mine").locator("div", { hasText: PERSONAS.maja.name }),
+  ).toHaveCount(0);
+  // Anna signs up Elsa, who is invited.
+  await loginAs(page, PERSONAS.anna, { returnTo: new URL(url).pathname });
+  await expect(
+    page.getByTestId("event-mine").locator("div", { hasText: PERSONAS.elsa.name }).last(),
+  ).toBeVisible();
+});

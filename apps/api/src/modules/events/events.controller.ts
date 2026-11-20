@@ -631,6 +631,12 @@ export class EventsController {
       byEvent.set(r.registration.eventId, [...(byEvent.get(r.registration.eventId) ?? []), r]);
     }
     const refs = await this.refsByClub(authz, result.items);
+    // Events sent to some of their groups' players (P2.7e).
+    const invited = await this.events.invitedAmong(
+      authz.context,
+      result.items.map((v) => v.event),
+      family,
+    );
     return {
       items: result.items.flatMap((view) => {
         const resource = eventResource(view, refs);
@@ -641,7 +647,8 @@ export class EventsController {
             event: toEvent(view, canManageEvent(actor, resource)),
             people: people.flatMap((person) => {
               const reg = registrations.find((r) => r.registration.personId === person.id);
-              const audience = inAudience(actor, person.id, resource);
+              const audience =
+                inAudience(actor, person.id, resource) && invited(view.event.id, person.id);
               if (!reg && !audience) return [];
               return [
                 {
@@ -749,13 +756,14 @@ export class EventsController {
       ...peopleOf(registrations),
     ]);
     const organiser = canManageEvent(actor, resource);
+    const invited = await this.events.invitedAmong(context, [view.event], family);
     return {
       ...toEvent(view, organiser),
       mine: family.flatMap((personId) => {
         const person = shown.get(personId);
         if (!person) return [];
         const reg = registrations.find((r) => r.registration.personId === personId) ?? null;
-        const audience = inAudience(actor, personId, resource);
+        const audience = inAudience(actor, personId, resource) && invited(view.event.id, personId);
         if (!reg && !audience) return [];
         return [
           {

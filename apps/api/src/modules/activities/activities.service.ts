@@ -52,6 +52,7 @@ import { actorPersonId, definedOnly, parseInput } from "../../platform/domain/ru
 import type { ClubsService } from "../clubs/index.ts";
 import * as repo from "./activities.repository.ts";
 import * as records from "./attendance.repository.ts";
+import { applyCallUpInTx, callUpCandidatesInTx } from "./call-ups.ts";
 import { expandSeries, type Expansion, localDate, RecurrenceError } from "./recurrence.ts";
 
 export type Location = repo.LocationRow;
@@ -338,8 +339,26 @@ export class ActivitiesService {
       resourceType: "activity",
       resourceId: activity!.id,
     });
-    await this.publish(tx, context.clubId, activity!.id, "created");
-    return (await this.views(tx, context.clubId, [activity!]))[0]!;
+    // Created with a call-up (P2.7e): the groups' participants but those
+    // left out. Everyone stays called up when no one is left out.
+    let created = activity!;
+    const leftOut = new Set(data.notCalledUp ?? []);
+    if (leftOut.size > 0) {
+      const candidates = await callUpCandidatesInTx(tx, created.id);
+      if ([...leftOut].some((id) => !candidates.includes(id))) {
+        throw new DomainError("not_on_roster");
+      }
+      created = await applyCallUpInTx(
+        tx,
+        context,
+        created,
+        true,
+        new Set(candidates.filter((id) => !leftOut.has(id))),
+        actorPersonId(context),
+      );
+    }
+    await this.publish(tx, context.clubId, created.id, "created");
+    return (await this.views(tx, context.clubId, [created]))[0]!;
   }
 
   getActivity(context: TenantContext, activityId: string): Promise<ActivityView> {
@@ -480,6 +499,11 @@ export class ActivitiesService {
   /** Groups of the club that are not archived (else not_found / group_archived). */
   requireGroupsInTx(tx: Tx, clubId: string, groupIds: readonly string[]): Promise<void> {
     return this.requireGroups(tx, clubId, groupIds);
+  }
+
+  /** Who takes part in these groups now (an event's invitations, P2.7e). */
+  groupParticipantsInTx(tx: Tx, groupIds: readonly string[]): Promise<string[]> {
+    return records.groupParticipants(tx, groupIds);
   }
 
   /** The club's groups among these IDs, by ID, with their names. */

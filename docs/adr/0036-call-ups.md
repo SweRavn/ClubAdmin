@@ -1,6 +1,6 @@
 # 0036 — Call-ups: only the people called up take part in an activity
 
-**Status:** Accepted (after P1.5, [#19](https://github.com/SweRavn/ClubAdmin/issues/19)). Amended by ADR 0056 (guests from other groups, series call-ups, revocation).
+**Status:** Accepted (after P1.5, [#19](https://github.com/SweRavn/ClubAdmin/issues/19)). Amended by ADR 0056 (guests from other groups, series call-ups, revocation) and P2.7e (chosen when the activity is created; group events invite some of their players the same way).
 
 **Context.** In P1.5 (ADR 0035) the roster of an activity is everyone in
 its groups on its start. Matches often need a squad ("kallelse"): only some
@@ -54,3 +54,13 @@ counted and see the match in their schedule.
   transaction as every change of a place. A leader's own call-up on such an
   activity is replaced at the event's next change, and an activity with a
   call-up of its own cannot be linked to an event.
+
+**Amendment (P2.7e, 2026-11-20).** The call-up is chosen when an activity
+is created: the form lists the group's players, all ticked, and unticking
+leaves them out (`notCalledUp` on `POST /groups/:id/activities`; the
+call-up is set in the same transaction, audit and event as above; nobody
+left out means no call-up). A group event is sent to some of its groups'
+players the same way (`notInvited` on `POST /clubs/:id/events`,
+`events.invitees_only` and `event_invitees`): only they sign up, and the
+notice of publication goes to them. Calling up people from outside the
+activity's groups stays ADR 0056 (P2.10).

@@ -8,7 +8,7 @@ import type { RegistrationStatus } from "@clubadmin/shared";
 
 import { givenNameSortKey } from "../people/index.ts";
 
-const { events, eventGroups, eventActivities, eventRegistrations } = schema;
+const { events, eventGroups, eventActivities, eventInvitees, eventRegistrations } = schema;
 
 export type EventRow = typeof events.$inferSelect;
 export type NewEventRow = typeof events.$inferInsert;
@@ -57,6 +57,41 @@ export async function insertEventGroups(
 ): Promise<void> {
   if (groupIds.length === 0) return;
   await tx.insert(eventGroups).values(groupIds.map((groupId) => ({ clubId, eventId, groupId })));
+}
+
+/** The people a group event is sent to (P2.7e). */
+export async function insertEventInvitees(
+  tx: Tx,
+  values: { clubId: string; eventId: string; personIds: readonly string[]; invitedBy: string },
+): Promise<void> {
+  if (values.personIds.length === 0) return;
+  await tx.insert(eventInvitees).values(
+    values.personIds.map((personId) => ({
+      clubId: values.clubId,
+      eventId: values.eventId,
+      personId,
+      invitedByPersonId: values.invitedBy,
+    })),
+  );
+}
+
+/** Which of these people are invited to which of these events (by the person index). */
+export async function invitedAmong(
+  tx: Tx,
+  eventIds: readonly string[],
+  personIds: readonly string[],
+): Promise<Set<string>> {
+  if (eventIds.length === 0 || personIds.length === 0) return new Set();
+  const rows = await tx
+    .select({ eventId: eventInvitees.eventId, personId: eventInvitees.personId })
+    .from(eventInvitees)
+    .where(
+      and(
+        inArray(eventInvitees.personId, [...personIds]),
+        inArray(eventInvitees.eventId, [...eventIds]),
+      ),
+    );
+  return new Set(rows.map((r) => `${r.eventId}:${r.personId}`));
 }
 
 /** The audience groups of these events. */

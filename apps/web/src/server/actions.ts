@@ -485,7 +485,7 @@ function activityFieldsOf(form: FormData, clear: boolean) {
     ...(responseMode ? { responseMode } : {}),
     ...(respondBy ? { respondBy } : clear ? { respondBy: null } : {}),
     ...(requestLead || clear ? { requestLead } : {}),
-    title: text(form, "title"),
+    title: titleOf(form),
     startsAt,
     endsAt,
     ...(meetAt ? { meetAt } : clear ? { meetAt: null } : {}),
@@ -495,6 +495,29 @@ function activityFieldsOf(form: FormData, clear: boolean) {
     ...placeOf(form, clear),
   };
 }
+/** Those offered in the call-up list but not ticked (P2.7e). */
+function leftOut(form: FormData): string[] {
+  const ticked = new Set(form.getAll("callUp"));
+  return [
+    ...new Set(
+      form
+        .getAll("callUpCandidate")
+        .filter((p): p is string => typeof p === "string" && isUuid(p) && !ticked.has(p)),
+    ),
+  ];
+}
+
+/**
+ * The title, or the kind's name when it is left empty (P2.7e): what "Other"
+ * is called, else the form's `kindTitle.<kind>` (the kind's translated name).
+ */
+function titleOf(form: FormData): string {
+  const title = text(form, "title");
+  if (title) return title;
+  const kind = text(form, "kind");
+  return (kind === "other" && text(form, "kindLabel")) || text(form, `kindTitle.${kind}`);
+}
+
 /** What an "other" activity is (P1.6b); cleared on edit when empty or another kind. */
 function kindLabelOf(form: FormData, kind: string, clear: boolean) {
   const label = kind === "other" ? text(form, "kindLabel") : "";
@@ -518,10 +541,17 @@ const ACTIVITY_ACTIONS: Record<string, FormAction> = {
       const groupIds = form
         .getAll("otherGroupId")
         .filter((g): g is string => typeof g === "string" && isUuid(g) && g !== groupId);
+      const notCalledUp = leftOut(form);
       return {
         path: `/api/v1/groups/${groupId}/activities`,
         method: "POST",
-        body: { kind, ...kindLabelOf(form, kind, false), ...fields, groupIds },
+        body: {
+          kind,
+          ...kindLabelOf(form, kind, false),
+          ...fields,
+          groupIds,
+          ...(notCalledUp.length > 0 ? { notCalledUp } : {}),
+        },
       };
     },
     done: (form, result) => {
@@ -1075,6 +1105,8 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
       const groupIds = form
         .getAll("groupId")
         .filter((g): g is string => typeof g === "string" && isUuid(g));
+      // Those unticked in the list are not invited (P2.7e).
+      const notInvited = audience === "groups" ? leftOut(form) : [];
       return {
         path: `/api/v1/clubs/${clubId}/events`,
         method: "POST",
@@ -1084,6 +1116,7 @@ const EVENT_ACTIONS: Record<string, FormAction> = {
           groupIds: audience === "club" ? [] : groupIds,
           activities: audience === "club" ? [] : activities,
           publish: text(form, "publish") === "on",
+          ...(notInvited.length > 0 ? { notInvited } : {}),
         },
       };
     },

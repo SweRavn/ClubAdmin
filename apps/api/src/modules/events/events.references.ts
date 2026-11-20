@@ -18,4 +18,7 @@ export const EVENT_PERSON_REFERENCES: readonly PersonReference[] = [
   },
   { table: "public.event_registrations", column: "registered_by_person_id", clubScoped: true },
   { table: "public.event_registrations", column: "decided_by_person_id", clubScoped: true },
+  // Who a group event is sent to (P2.7e), as an activity's call-up.
+  { table: "public.event_invitees", column: "person_id", clubScoped: true },
+  { table: "public.event_invitees", column: "invited_by_person_id", clubScoped: true },
 ];

@@ -430,6 +430,41 @@ describe("a group event", () => {
   });
 });
 
+describe("an event sent to some of the group's players (P2.7e)", () => {
+  it("only those invited sign up and see it as open; the others' guardians too", async () => {
+    const x = await team(2);
+    const [invited, left] = x.members as [BuiltPerson, BuiltPerson];
+    // Someone outside the group cannot be left out.
+    const stranger = await buildPerson(s);
+    const refused = await api(x.coach.id, "POST", `/clubs/${x.club.id}/events`, {
+      body: {
+        title: "Cupen",
+        audience: "groups",
+        groupIds: [x.groupId],
+        startsAt: at(10 * DAY),
+        notInvited: [stranger.id],
+      },
+    });
+    expect([refused.statusCode, detail(refused)]).toEqual([409, "not_in_audience"]);
+
+    const eventId = await createEvent(x, { notInvited: [left.id, x.child.id] });
+    const view = async (personId: string) =>
+      (await api(personId, "GET", `/events/${eventId}`)).json<Detail>();
+    expect((await view(invited.id)).mine.map((m) => m.canRegister)).toEqual([true]);
+    expect((await view(left.id)).mine).toEqual([]);
+    expect((await view(x.parent.id)).mine).toEqual([]);
+    const no = await register(left.id, eventId, left.id);
+    expect([no.statusCode, detail(no)]).toEqual([409, "not_in_audience"]);
+    const yes = await register(invited.id, eventId, invited.id);
+    expect(yes.statusCode, yes.body).toBe(200);
+    // "Mina evenemang": not open for those not invited.
+    const mine = (await api(left.id, "GET", "/me/events")).json<{
+      items: { event: { id: string }; people: { canRegister: boolean }[] }[];
+    }>();
+    expect(mine.items.find((i) => i.event.id === eventId)?.people ?? []).toEqual([]);
+  });
+});
+
 describe("a club event", () => {
   it("is created by club managers and the board, open to every member, listed in My events", async () => {
     const x = await team(1);

@@ -14,6 +14,7 @@ import { getTranslations } from "next-intl/server";
 
 import { inputClass } from "./action-form.tsx";
 import { RequestLeadFields, ResponseModeFields } from "./response-mode-fields.tsx";
+import { TitleFromKind } from "./title-from-kind.tsx";
 
 export interface ActivityFieldValues {
   kind?: string;
@@ -76,6 +77,9 @@ export async function ActivityFields({
   addPlaceHref?: string | null;
 }) {
   const t = await getTranslations();
+  const kindTitles = Object.fromEntries(
+    ACTIVITY_KINDS.map((k) => [k, t(enumKey("activityKinds", k))]),
+  ) as Record<string, string>;
   const input = (
     name: Exclude<keyof ActivityFieldValues, "requestLead">,
     label: string,
@@ -123,7 +127,15 @@ export async function ActivityFields({
           />
         </label>
       </div>
-      {input("title", t("activities.titleField"), { required: true, maxLength: 120 })}
+      {/* The kind's name until a title is written (P2.7e); empty: the kind's name. */}
+      {input("title", t("activities.titleField"), {
+        maxLength: 120,
+        ...(values.title ? {} : { defaultValue: kindTitles[values.kind ?? "match"] ?? "" }),
+      })}
+      <TitleFromKind titles={kindTitles} />
+      {ACTIVITY_KINDS.map((k) => (
+        <input key={k} type="hidden" name={`kindTitle.${k}`} value={kindTitles[k]} />
+      ))}
       {input("date", t("activities.date"), { type: "date", required: true })}
       <div className="grid grid-cols-2 gap-3">
         {input("startTime", t("activities.startTime"), { type: "time", required: true })}

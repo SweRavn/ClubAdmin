@@ -8,7 +8,14 @@
 // exactly the confirmed participants. Answers to sensitive questions are
 // sealed; their values never reach audit events, logs or domain events.
 
-import { audit, type Database, outbox, type TenantContext, type Tx } from "@clubadmin/db";
+import {
+  type ActorContext,
+  audit,
+  type Database,
+  outbox,
+  type TenantContext,
+  type Tx,
+} from "@clubadmin/db";
 import {
   type Answers,
   answersSchemaFor,
@@ -35,7 +42,7 @@ import {
 
 import type { FieldEncryption } from "../../platform/crypto/field-encryption.ts";
 import { DomainError } from "../../platform/domain/domain-error.ts";
-import { actorPersonId, definedOnly, parseInput } from "../../platform/domain/run.ts";
+import { actorPersonId, definedOnly, parseInput, runAs } from "../../platform/domain/run.ts";
 import type { ActivitiesService, AttendanceService, Location } from "../activities/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import * as repo from "./events.repository.ts";
@@ -216,6 +223,23 @@ export class EventsService {
         createdByPersonId: actorPersonId(context),
       });
       await repo.insertEventGroups(tx, context.clubId, event.id, groupIds);
+      // Sent to the groups' players but those left out (P2.7e).
+      const leftOut = new Set(data.notInvited ?? []);
+      let created = event;
+      if (leftOut.size > 0) {
+        if (data.audience !== "groups") throw new DomainError("invalid_input");
+        const candidates = await this.deps.activities.groupParticipantsInTx(tx, groupIds);
+        if ([...leftOut].some((id) => !candidates.includes(id))) {
+          throw new DomainError("not_in_audience");
+        }
+        await repo.insertEventInvitees(tx, {
+          clubId: context.clubId,
+          eventId: event.id,
+          personIds: candidates.filter((id) => !leftOut.has(id)),
+          invitedBy: actorPersonId(context),
+        });
+        created = await repo.updateEvent(tx, event.id, { inviteesOnly: true });
+      }
       const activityIds: string[] = [];
       for (const a of data.activities) {
         const view = await this.deps.activities.createActivityInTx(tx, context, groupIds[0]!, {
@@ -247,8 +271,8 @@ export class EventsService {
           resourceId: event.id,
         });
       }
-      await this.publishChange(tx, event, data.publish ? "published" : "created");
-      return (await this.views(tx, context.clubId, [event]))[0]!;
+      await this.publishChange(tx, created, data.publish ? "published" : "created");
+      return (await this.views(tx, context.clubId, [created]))[0]!;
     });
   }
 
@@ -565,6 +589,27 @@ export class EventsService {
   }
 
   /** Confirmed participants (IDs; the caller presents those the viewer may see). */
+  /**
+   * Who of these people may sign up to these events as far as the
+   * invitations go (P2.7e): everyone for events sent to their whole groups,
+   * else those invited ("eventId:personId" keys of the events with invitees).
+   */
+  invitedAmong(
+    context: TenantContext | ActorContext,
+    events: readonly { id: string; inviteesOnly: boolean }[],
+    personIds: readonly string[],
+  ): Promise<(eventId: string, personId: string) => boolean> {
+    const limited = events.filter((e) => e.inviteesOnly).map((e) => e.id);
+    if (limited.length === 0 || personIds.length === 0) {
+      return Promise.resolve(() => true);
+    }
+    const only = new Set(limited);
+    return runAs(this.db, context, async (tx) => {
+      const invited = await repo.invitedAmong(tx, limited, personIds);
+      return (eventId, personId) => !only.has(eventId) || invited.has(`${eventId}:${personId}`);
+    });
+  }
+
   confirmedPeople(context: TenantContext, eventId: string): Promise<string[]> {
     return this.db.withTenant(context, (tx) => repo.confirmedPeople(tx, eventId));
   }
@@ -586,6 +631,13 @@ export class EventsService {
       const event = await repo.lockEvent(tx, eventId);
       if (!event) throw new DomainError("not_found");
       this.requireSignUpOpen(event);
+      // Sent to some of the groups' players only (P2.7e).
+      if (
+        event.inviteesOnly &&
+        !(await repo.invitedAmong(tx, [eventId], [personId])).has(`${eventId}:${personId}`)
+      ) {
+        throw new DomainError("not_in_audience");
+      }
       const answers = validAnswers(event.questions, data.answers);
       const { plain, sensitive } = splitAnswers(event.questions, answers);
       const existing = await repo.lockOpenRegistration(tx, eventId, personId);

@@ -18,6 +18,7 @@ import {
 } from "@clubadmin/shared";
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   check,
   foreignKey,
   index,
@@ -63,6 +64,8 @@ export const events = pgTable(
     offerReplyHours: integer().notNull().default(24),
     /** The sign-up form (validated with EventQuestionsSchema). */
     questions: jsonb().$type<EventQuestion[]>().notNull().default([]),
+    /** Only the people invited (event_invitees) sign up (P2.7e). */
+    inviteesOnly: boolean().notNull().default(false),
     createdByPersonId: personRef(),
     ...timestamps,
   },
@@ -89,6 +92,30 @@ export const events = pgTable(
     index("events_location_idx")
       .on(t.clubId, t.locationId)
       .where(sql`${t.locationId} IS NOT NULL`),
+  ],
+);
+
+/** Who a group event is sent to when not to all of its groups (P2.7e). */
+export const eventInvitees = pgTable(
+  "event_invitees",
+  {
+    id: id(),
+    clubId: clubRef(),
+    eventId: uuid().notNull(),
+    personId: personRef(),
+    invitedByPersonId: personRef(),
+    ...timestamps,
+  },
+  (t) => [
+    foreignKey({
+      name: "event_invitees_event_fk",
+      columns: [t.clubId, t.eventId],
+      foreignColumns: [events.clubId, events.id],
+    }).onDelete("cascade"),
+    unique("event_invitees_unique").on(t.eventId, t.personId),
+    index("event_invitees_event_idx").on(t.clubId, t.eventId),
+    index("event_invitees_person_idx").on(t.personId, t.eventId),
+    index("event_invitees_inviter_idx").on(t.invitedByPersonId),
   ],
 );
 

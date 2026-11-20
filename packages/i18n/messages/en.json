@@ -5122,5 +5122,11 @@
     "wardsTitle": "Your children",
     "wardsIntro": "Change your child's phone and address on the child's profile.",
     "guardiansTitle": "The guardians' contact details"
+  },
+  "callUp": {
+    "title": "Called up",
+    "count": "{count, plural, one {# player} other {# players}}",
+    "hint": "Everyone in the group is ticked. Untick those who are not called up; the leaders take part as usual.",
+    "eventTitle": "Invited from {group}"
   }
 }

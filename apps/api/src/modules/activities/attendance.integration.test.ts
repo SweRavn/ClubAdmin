@@ -533,6 +533,51 @@ describe("call-ups", () => {
     expect(await has(x.member.id)).toBe(true);
   });
 
+  it("a new activity is created with its call-up: everyone but those left out (P2.7e)", async () => {
+    const x = await team();
+    type InviteesJson = {
+      inviteesOnly: boolean;
+      candidates: { person: { id: string }; invited: boolean }[];
+    };
+    // Nobody left out: the whole group, no call-up.
+    const all = await activity(x, {
+      startsAt: at(6 * DAY),
+      endsAt: at(6 * DAY + HOUR),
+      notCalledUp: [],
+    });
+    const whole = await api(x.coach.id, "GET", `/activities/${all}/invitees`);
+    expect(whole.json<InviteesJson>().inviteesOnly).toBe(false);
+    // The member left out: the others are called up, in the same request.
+    const id = await activity(x, {
+      startsAt: at(7 * DAY),
+      endsAt: at(7 * DAY + HOUR),
+      notCalledUp: [x.member.id],
+    });
+    const view = (await api(x.coach.id, "GET", `/activities/${id}/invitees`)).json<InviteesJson>();
+    expect(view.inviteesOnly).toBe(true);
+    expect(
+      view.candidates
+        .filter((c) => c.invited)
+        .map((c) => c.person.id)
+        .sort(),
+    ).toEqual([x.hidden.id, x.child.id].sort());
+    // Someone outside the group cannot be left out (nothing is created).
+    const stranger = await buildPerson(s);
+    const refused = await api(x.coach.id, "POST", `/groups/${x.groupId}/activities`, {
+      body: {
+        kind: "match",
+        title: "Match",
+        startsAt: at(8 * DAY),
+        endsAt: at(8 * DAY + HOUR),
+        notCalledUp: [stranger.id],
+      },
+    });
+    expect([refused.statusCode, refused.json<{ detail?: string }>().detail]).toEqual([
+      409,
+      "not_on_roster",
+    ]);
+  });
+
   it("the attendance roster is those called up; others come as guests; past activities are closed", async () => {
     const x = await team();
     await backdate(x.groupId);

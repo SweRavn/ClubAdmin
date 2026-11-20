@@ -192,6 +192,8 @@ export interface EventFacts {
   title: string;
   status: string;
   audience: string;
+  /** Sent to some of its groups' players only (P2.7e). */
+  inviteesOnly: boolean;
   startsAt: Date;
   closesAt: Date;
   timeZone: string;
@@ -209,12 +211,13 @@ export async function eventFacts(
     title: string;
     status: string;
     audience: string;
+    invitees_only: boolean;
     starts_at: string;
     registration_closes_at: string;
     time_zone: string;
   }>(sql`
-    SELECT e.id, e.club_id, e.title, e.status, e.audience, e.starts_at, e.registration_closes_at,
-      c.time_zone
+    SELECT e.id, e.club_id, e.title, e.status, e.audience, e.invitees_only, e.starts_at,
+      e.registration_closes_at, c.time_zone
     FROM public.events e JOIN public.clubs c ON c.id = e.club_id WHERE e.id = ${eventId}`);
   const r = rows[0];
   if (!r) return null;
@@ -224,6 +227,7 @@ export async function eventFacts(
     title: r.title,
     status: r.status,
     audience: r.audience,
+    inviteesOnly: r.invitees_only,
     startsAt: new Date(r.starts_at),
     closesAt: new Date(r.registration_closes_at),
     timeZone: r.time_zone,
@@ -237,8 +241,16 @@ export const eventParams = (e: EventFacts) => ({
   deadline: e.closesAt.toISOString(),
 });
 
-/** The audience of an event: its groups' members, or the club's active members. */
+/**
+ * The audience of an event: its groups' members, the club's active members,
+ * or the people it was sent to (P2.7e).
+ */
 export async function eventAudience(tx: Tx, event: EventFacts): Promise<string[]> {
+  if (event.inviteesOnly) {
+    const { rows } = await tx.execute<{ person_id: string }>(sql`
+      SELECT person_id FROM public.event_invitees WHERE event_id = ${event.id}`);
+    return rows.map((r) => r.person_id);
+  }
   if (event.audience === "club") {
     const { rows } = await tx.execute<{ person_id: string }>(sql`
       SELECT DISTINCT person_id FROM public.club_memberships

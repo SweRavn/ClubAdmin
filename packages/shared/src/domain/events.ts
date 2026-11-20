@@ -198,6 +198,11 @@ export const CreateEventSchema = z
     /** Sessions created with the event, in the audience groups. */
     activities: z.array(EventActivityInputSchema).max(EVENT_ACTIVITIES_MAX).default([]),
     /** Publish at once (default: a draft only organisers see). */
+    /**
+     * P2.7e: the groups' players not invited (a group event). Left out or
+     * empty: the whole groups; otherwise only the others sign up.
+     */
+    notInvited: z.array(z.uuid()).max(200).optional(),
     publish: z.boolean().default(false),
   })
   .strict()
