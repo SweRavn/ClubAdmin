@@ -500,6 +500,20 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
     columns: { event_id: "hidden", activity_id: "hidden" },
   },
   {
+    table: "public.event_invitees",
+    resource: "event_invitee",
+    link: { kind: "event", column: "event_id" },
+    about: [
+      { column: "person_id", kind: "person" },
+      { column: "event_id", kind: "event" },
+    ],
+    columns: {
+      event_id: "hidden",
+      person_id: "hidden",
+      invited_by_person_id: "hidden",
+    },
+  },
+  {
     table: "public.event_registrations",
     resource: "event_registration",
     link: { kind: "event", column: "event_id" },

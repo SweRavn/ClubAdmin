@@ -133,6 +133,10 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO event_registrations (club_id, event_id, person_id, registered_by_person_id, status)
         VALUES (${a.id}, ${event.event.id}, ${member.id}, ${member.id}, 'confirmed')`);
+      // Who the event is sent to (P2.7e).
+      await tx.execute(sql`
+        INSERT INTO event_invitees (club_id, event_id, person_id, invited_by_person_id)
+        VALUES (${a.id}, ${event.event.id}, ${member.id}, ${a.manager.id})`);
       // Privacy (P1.8a): a club text, a board decision and the policy version it published.
       await tx.execute(sql`
         INSERT INTO consent_texts (club_id, purpose, version, texts, published_by_person_id)

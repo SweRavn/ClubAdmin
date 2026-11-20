@@ -55,6 +55,7 @@ const SCOPES: Record<PanelKind, readonly [table: string, column: string][]> = {
     ["public.event_groups", "event_id"],
     ["public.event_activities", "event_id"],
     ["public.event_registrations", "event_id"],
+    ["public.event_invitees", "event_id"],
   ],
   club: [
     ["public.clubs", "id"],

@@ -2847,6 +2847,7 @@
       "activity_response": "Answer",
       "attendance_record": "Attendance",
       "activity_invitee": "Invited person",
+      "event_invitee": "Invited to the event",
       "activity_series": "Activity series",
       "activity_series_group": "Group of a series",
       "event": "Event",

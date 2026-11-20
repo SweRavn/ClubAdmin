@@ -2847,6 +2847,7 @@
       "activity_response": "Svar",
       "attendance_record": "Oppmøte",
       "activity_invitee": "Invitert",
+      "event_invitee": "Invitert til arrangementet",
       "activity_series": "Aktivitetsserie",
       "activity_series_group": "Seriens gruppe",
       "event": "Arrangement",

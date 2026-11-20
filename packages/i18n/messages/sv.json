@@ -2847,6 +2847,7 @@
       "activity_response": "Svar",
       "attendance_record": "Närvaro",
       "activity_invitee": "Inbjuden",
+      "event_invitee": "Inbjuden till evenemang",
       "activity_series": "Aktivitetsserie",
       "activity_series_group": "Seriens grupp",
       "event": "Evenemang",
