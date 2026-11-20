@@ -1320,7 +1320,8 @@
     "weeks": "Weeks",
     "earlier": "← Earlier",
     "later": "Later →",
-    "now": "Now"
+    "now": "Now",
+    "moreWeeks": "Show more weeks"
   },
   "activities": {
     "calendar": "Calendar",

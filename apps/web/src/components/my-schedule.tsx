@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // My schedule (P1.4), on Home since P2.7d: the activities of my groups and my wards' groups
-// (those whose schedule I may see), across clubs, four weeks at a time.
+// (those whose schedule I may see), across clubs: this week, four weeks at a
+// time on "Visa fler veckor" (`?weeks=4`). One week keeps Home's first paint
+// light (ADR 0040: the LCP budget); the rest is a tap away.
 // Chips narrow it to one person; when viewing as a ward, only theirs.
 import { isUuid } from "@clubadmin/shared";
 import { personLabel } from "@clubadmin/ui";
@@ -11,7 +13,8 @@ import { Agenda, weekOffset, weekRange } from "./agenda.tsx";
 import { ClubTime } from "./club-time.tsx";
 import { Notice } from "./form-error.tsx";
 
-const WEEKS = 4;
+/** Weeks shown after "Visa fler veckor"; Home starts with one. */
+const MORE_WEEKS = 4;
 
 /**
  * My schedule (P1.4, P1.5, P2.7c): the person filter, events open for
@@ -27,8 +30,9 @@ export async function MySchedule({
   basePath?: string;
 }) {
   const offset = weekOffset(params.week);
+  const weeks = params.weeks === String(MORE_WEEKS) ? MORE_WEEKS : 1;
   const person = typeof params.person === "string" && isUuid(params.person) ? params.person : null;
-  const { from, to } = weekRange(offset, WEEKS);
+  const { from, to } = weekRange(offset, weeks);
   const [t, schedule, events] = await Promise.all([
     getTranslations(),
     getSchedule(from, to, person ? `&personId=${person}` : ""),
@@ -44,12 +48,14 @@ export async function MySchedule({
   const signUp = events.items.filter(
     (i) => i.event.open && i.people.some((p) => p.canRegister && p.status === null),
   );
-  const link = (changes: { week?: number; person?: string | null }) => {
+  const link = (changes: { week?: number; person?: string | null; weeks?: number }) => {
     const query = new URLSearchParams();
     const week = changes.week ?? offset;
     const who = changes.person === undefined ? person : changes.person;
+    const shown = changes.weeks ?? weeks;
     if (week !== 0) query.set("week", String(week));
     if (who) query.set("person", who);
+    if (shown !== 1) query.set("weeks", String(shown));
     const qs = query.toString();
     return `${basePath}${qs ? `?${qs}` : ""}`;
   };
@@ -155,9 +161,20 @@ export async function MySchedule({
         }))}
       />
       {schedule.nextCursor ? <p className="text-sm text-muted">{t("schedule.more")}</p> : null}
+      {weeks === 1 ? (
+        <p>
+          <a
+            href={link({ weeks: MORE_WEEKS })}
+            className="text-sm underline"
+            data-testid="schedule-more-weeks"
+          >
+            {t("schedule.moreWeeks")}
+          </a>
+        </p>
+      ) : null}
       <nav className="flex justify-between text-sm" aria-label={t("schedule.weeks")}>
         <a
-          href={link({ week: offset - WEEKS })}
+          href={link({ week: offset - weeks })}
           className="underline"
           data-testid="schedule-earlier"
         >
@@ -168,7 +185,7 @@ export async function MySchedule({
             {t("schedule.now")}
           </a>
         ) : null}
-        <a href={link({ week: offset + WEEKS })} className="underline" data-testid="schedule-later">
+        <a href={link({ week: offset + weeks })} className="underline" data-testid="schedule-later">
           {t("schedule.later")}
         </a>
       </nav>

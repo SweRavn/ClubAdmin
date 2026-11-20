@@ -1320,7 +1320,8 @@
     "weeks": "Veckor",
     "earlier": "← Tidigare",
     "later": "Senare →",
-    "now": "Nu"
+    "now": "Nu",
+    "moreWeeks": "Visa fler veckor"
   },
   "activities": {
     "calendar": "Kalender",

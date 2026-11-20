@@ -21,6 +21,9 @@ async function openFirst(page: Page, list: string, text: string | RegExp) {
 
 test("Erik's schedule covers his teams and Maja's in two clubs", async ({ page }) => {
   await loginAs(page, PERSONAS.erik, { returnTo: "/" });
+  // Home shows this week; "Visa fler veckor" the next four (P2.7d, LCP budget).
+  await page.getByTestId("schedule-more-weeks").click();
+  await page.waitForURL(/weeks=4/);
   const schedule = page.getByTestId("schedule");
   await expect(schedule).toContainText("Träning");
   await expect(schedule).toContainText("Innebandyträning");
@@ -40,7 +43,7 @@ test("Erik's schedule covers his teams and Maja's in two clubs", async ({ page }
 });
 
 test("Liam sees his team's trainings but cannot change them", async ({ page }) => {
-  await loginAs(page, PERSONAS.liam, { returnTo: "/" });
+  await loginAs(page, PERSONAS.liam, { returnTo: "/?weeks=4" });
   await openFirst(page, "schedule", "Fotbollsträning");
   await expect(page.getByTestId("activity-details")).toContainText("Norrbacka IP");
   await expect(page.getByTestId("activity-leaders")).toContainText("Ahmed");
@@ -263,7 +266,7 @@ test("Anna uses the club calendar and adds a location", async ({ page }) => {
 test("Erik, F2017's head coach, answers that he is coming to the next training (P2.7b)", async ({
   page,
 }) => {
-  await loginAs(page, PERSONAS.erik, { returnTo: "/" });
+  await loginAs(page, PERSONAS.erik, { returnTo: "/?weeks=4" });
   // The answer is saved in place (ADR 0055): the page is not reloaded.
   await page.evaluate(() => {
     (window as unknown as { noReload: boolean }).noReload = true;
@@ -281,7 +284,7 @@ test("Erik, F2017's head coach, answers that he is coming to the next training (
 test("Anna answers for Elsa with one tap on the activity page; the note is saved on its own (P2.7b)", async ({
   page,
 }) => {
-  await loginAs(page, PERSONAS.anna, { returnTo: "/" });
+  await loginAs(page, PERSONAS.anna, { returnTo: "/?weeks=4" });
   const item = page
     .getByTestId("agenda-item")
     .filter({ has: page.getByTestId(`response-${PERSONAS.elsa.id}`) })

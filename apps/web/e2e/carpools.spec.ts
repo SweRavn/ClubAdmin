@@ -78,7 +78,7 @@ const SVK_MATCH = "0199a000-0000-7000-8015-000000000013";
 test("Sara books Alva's seat there and home in one choice from the schedule (P2.7d)", async ({
   page,
 }) => {
-  await loginAs(page, PERSONAS.sara, { returnTo: "/" });
+  await loginAs(page, PERSONAS.sara, { returnTo: "/?weeks=4" });
   await page.evaluate(() => {
     (window as unknown as { noReload: boolean }).noReload = true;
   });
@@ -132,7 +132,7 @@ test("Erik answers Kommer with a seat in Johan's car from the group's list (P2.7
 
 test("the last free seat in Erik's car is offered for Alva (P2.7d)", async ({ page }) => {
   // The demo's next F2017 training: Erik's car has three seats, Maja and Johan two.
-  await loginAs(page, PERSONAS.sara, { returnTo: "/" });
+  await loginAs(page, PERSONAS.sara, { returnTo: "/?weeks=4" });
   const rides = page
     .getByTestId(`rides-${PERSONAS.alva.id}`)
     .filter({ has: page.getByTestId("ride-menu") });
