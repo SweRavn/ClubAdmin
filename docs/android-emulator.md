@@ -325,6 +325,7 @@ maestro test -e APP_ID=org.clubadmin.app.dev -e APP_SCHEME=clubadmin-dev \
 | Android Studio spins on "Detecting project structure" | The repository is open in Android Studio | *File → Close Project*; it is not needed |
 | `pnpm dev:trust-ca --android` fails at `adb root` | WSL's `adb` does not see the emulator, or a "Google Play" image | Section 3; a Google APIs image (section 2) |
 | `adb remount` says to reboot | First time with `-writable-system` | `adb reboot`, `adb wait-for-device`, `adb root`, `adb remount` |
+| The app shows "Nobody has a login yet" and "The login did not work" | The app cannot reach the API: `pnpm dev:trust-ca --android` not run since the emulator started | Section 4b (after every emulator start) |
 | The app cannot reach the server, `ping` does not resolve | Emulator started without `-writable-system`, or the hosts entry is missing | Section 4a |
 | The app cannot reach the server, the name resolves | Port forwarding lost after the emulator restarted, or the services/API not running | `pnpm dev:trust-ca --android`; `pnpm dev` |
 | Certificate error in the emulator's Chrome | Caddy's certificate not in the emulator (or Caddy's data was deleted) | `pnpm dev:trust-ca --android` |
