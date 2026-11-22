@@ -64,6 +64,34 @@ In Android Studio's **Device Manager**:
 
    It lists `emulator-5554   device`.
 
+   **The emulator runs but `adb devices` lists nothing** (and the emulator's
+   window prints `adb command ... failed: 'adb.exe: device 'emulator-5554'
+   not found'`): the emulator could not register with adb. Leave it running
+   and, in another PowerShell, connect adb to it yourself:
+
+   ```powershell
+   $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+   & $adb kill-server
+   & $adb connect 127.0.0.1:5555
+   & $adb devices
+   ```
+
+   It now lists the emulator (as `emulator-5554` or `127.0.0.1:5555`;
+   either works). Do this after each start of the emulator. If `connect`
+   fails too:
+
+   - Hyper-V (used by WSL and Docker) may have reserved the emulator's ports.
+     `netsh interface ipv4 show excludedportrange protocol=tcp` lists the
+     reserved ranges; if one covers 5554–5555, start the emulator on free
+     ports with `-port 5600` (any even number from 5554 to 5682 outside the
+     ranges; the device is then `emulator-5600`), or in an administrator
+     PowerShell run `net stop winnat`, start the emulator, then
+     `net start winnat`.
+   - Another adb server holds port 5037 (`netstat -ano | findstr :5037`):
+     stop every adb (`Get-Process adb | Stop-Process`, and `adb kill-server`
+     in WSL if a Linux adb is installed there), close Android Studio, and
+     start the emulator again.
+
 ## 3. Use Windows' adb from WSL
 
 `adb` talks to the emulator. Inside WSL there is either no `adb` or one that
@@ -293,6 +321,7 @@ maestro test -e APP_ID=org.clubadmin.app.dev -e APP_SCHEME=clubadmin-dev \
 | What you see | Why | What to do |
 |---|---|---|
 | "Emulator failed to connect within 5 minutes" | Windows Hypervisor Platform is off | Section 1, step 2 |
+| The emulator runs, `adb devices` in PowerShell lists nothing; "device 'emulator-5554' not found" in its window | The emulator did not register with adb (reserved ports, another adb server) | Section 2, step 4: `adb kill-server`, `adb connect 127.0.0.1:5555` |
 | Android Studio spins on "Detecting project structure" | The repository is open in Android Studio | *File → Close Project*; it is not needed |
 | `pnpm dev:trust-ca --android` fails at `adb root` | WSL's `adb` does not see the emulator, or a "Google Play" image | Section 3; a Google APIs image (section 2) |
 | `adb remount` says to reboot | First time with `-writable-system` | `adb reboot`, `adb wait-for-device`, `adb root`, `adb remount` |
