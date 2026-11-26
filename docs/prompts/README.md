@@ -88,6 +88,7 @@ prompt (like P1.14) before Phase 2 starts.
 | [P2.7b Web fixes from testing: updates in place and one-tap answers (ADR 0055), leaders answer too, car pools in one tap, roles overview, navigation, search as you type, unsaved changes, waiting lists, chat, role names, demo data](P2.7b-web-feedback-fixes.md) | P2.7 |
 | [P2.7c Fixes from testing: car pools in the answer, field errors in forms, removing places, the club menu, an Administration page](P2.7c-testing-fixes.md) | P2.7b |
 | [P2.7d Fixes from testing: contact details for the registrar, own profile and email, a series' place per weekday, single sessions from the series, rides in one menu, Home as the schedule](P2.7d-testing-fixes.md) | P2.7c |
+| [P2.7g Mobile: attendance, creating activities, announcements, car pools and chats in the app](P2.7g-mobile-everyday-actions.md) | P2.7d |
 | [P2.9 Programmes and templates: cups, camps, match days copied to new dates](P2.9-programmes-and-templates.md) | P2.6, P1.6 |
 | [P2.10 Call-ups across groups, for series, and revoking a call-up](P2.10-call-ups-across-groups.md) | P2.7b |
 
