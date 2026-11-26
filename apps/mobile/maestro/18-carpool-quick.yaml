@@ -58,10 +58,11 @@ name: Offer a car in one tap, change and remove it
     timeout: 20000
 - tapOn:
     id: "carpool-edit-save"
+# The form closes: the car's button is above the screen now.
 - scrollUntilVisible:
     element:
       id: "carpool-edit-out"
-    direction: DOWN
+    direction: UP
     timeout: 20000
 - tapOn:
     id: "carpool-edit-out"

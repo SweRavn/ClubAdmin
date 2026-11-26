@@ -90,6 +90,11 @@ name: New activity, cancel and restore
     id: "activity-cancel-reason"
 - inputText: "Planen är avstängd"
 - hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "activity-cancel-confirm"
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: "activity-cancel-confirm"
 - scrollUntilVisible:
@@ -97,7 +102,15 @@ name: New activity, cancel and restore
       id: "activity-restore"
     direction: DOWN
     timeout: 20000
-- assertVisible: ".*Planen är avstängd.*"
+- scrollUntilVisible:
+    element: ".*Planen är avstängd.*"
+    direction: UP
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "activity-restore"
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: "activity-restore"
 - scrollUntilVisible:

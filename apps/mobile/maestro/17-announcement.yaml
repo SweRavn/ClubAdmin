@@ -52,6 +52,11 @@ name: Send an announcement to a group
       id: "announcement-reach"
     direction: DOWN
     timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "announcement-send"
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: "announcement-send"
 - extendedWaitUntil:
