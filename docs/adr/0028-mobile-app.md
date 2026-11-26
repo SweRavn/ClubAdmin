@@ -123,3 +123,29 @@ token's device ID (not the token) in its settings storage. Universal
 links, step-up authentication in the app and server selection for self-hosted installations
 ([#12](https://github.com/SweRavn/ClubAdmin/issues/12)) are not part of this
 decision.
+
+*Amended in P2.7g (the app's everyday actions):* the app is no longer read
+and answer only. Navigation is a tab bar (Hem = the schedule, Chatt with the
+unread count from the chat list it already loads, Anslagstavla, Mer = the
+clubs, groups, settings and the remaining links); each tab keeps its stack
+and deep links open the same screens. What the app now does, online only
+(creates and changes are never queued; only answers, attendance marks and
+chat messages go through the offline outbox): "Närvaro", the sessions of
+the groups one leads in the last attendance window that have started and
+have no marks (`GET /groups/:id/attendance` with `limit=1`: the sessions,
+not the member statistics), and guests from one's other groups on the
+attendance screen; creating an activity in a group (with the call-up list),
+changing, cancelling and restoring one (a series' session only itself);
+writing, changing and withdrawing announcements to a group or the club with
+the reach before sending; the car pool's departure and return times, the
+offer starting from one's defaults, changing and removing one's own car,
+"Skapa samåkning" in one tap, the defaults in Settings → Samåkning, and why
+a seat cannot be booked (the self-booking age); a new channel in a group
+(the whole group or its leaders). Field errors from the API's problem
+details are shown next to their fields, as on the web. The only new
+dependency is `@react-native-community/datetimepicker` (MIT) for the
+phone's own date and time pickers. Staying on the web: series, events and
+their sign-up forms, documents upload, channel administration (members,
+archiving), safeguarding, roles, club settings, announcement drafts,
+scheduling and statistics. The place list is read with `usage=false`
+(no use counts), a new optional parameter of `GET /clubs/:id/locations`.

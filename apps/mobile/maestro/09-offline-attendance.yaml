@@ -1,7 +1,9 @@
-# Taking attendance without coverage (P1.5): Erik opens the F2017 session
-# going on now (seeded half an hour before `pnpm db:reset`: run soon after),
-# goes offline, marks Alva absent and saves; the change waits
-# in the outbox and is sent when the phone is online again.
+# Taking attendance without coverage (P1.5): Erik opens "Närvaro" (P2.7g)
+# from the Mer tab, where the F2017 session going on now (seeded half an
+# hour before `pnpm db:reset`: run soon after) waits for its marks, opens it,
+# goes offline, marks Alva absent and saves; the change waits in the outbox
+# and is sent when the phone is online again. The activity's own page leads
+# to the same screen.
 appId: ${APP_ID}
 name: Offline attendance
 ---
@@ -9,23 +11,16 @@ name: Offline attendance
     file: subflows/login-as.yaml
     env:
       PERSONA: 0199a000-0000-7000-8000-000000000005
-- back
+- tapOn:
+    id: "open-attendance"
 - extendedWaitUntil:
     visible:
-      id: "schedule-screen"
+      id: "attendance-list-screen"
     timeout: 20000
-# The title line: leaders answer too (P2.7b), so the middle of the row can be
-# an answer button.
-- tapOn:
-    text: ".*· Extrapass inför matchen"
-    childOf:
-      id: "schedule-item-0199a000-0000-7000-8015-000000000001"
 - extendedWaitUntil:
-    visible:
-      id: "activity-screen"
+    visible: "Extrapass inför matchen"
     timeout: 20000
-- tapOn:
-    id: "take-attendance"
+- tapOn: "Extrapass inför matchen"
 - extendedWaitUntil:
     visible:
       id: "attendance-screen"

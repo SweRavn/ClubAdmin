@@ -2,17 +2,29 @@
 // "Anslagstavlan" (P2.3, ADR 0053): pinned announcements on top, then the
 // newest of the person's (and their children's) clubs and groups; unread
 // ones marked. Cache first: the cached board shows at once.
+import { router } from "expo-router";
 import { useTranslations } from "use-intl";
 
-import { useMyAnnouncements } from "../../../api/queries.ts";
+import { useMyAnnouncements, useMyPermissions } from "../../../api/queries.ts";
+import { mayAnnounceToClub } from "../../../components/announcement-logic.ts";
 import { AnnouncementRow } from "../../../components/announcements.tsx";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
 import { Button, EmptyState, Loading, Screen, Section } from "../../../components/ui.tsx";
+import { useCurrentClub } from "../../../state/club.tsx";
 
 export default function MyAnnouncements() {
   const t = useTranslations();
   const board = useMyAnnouncements();
+  // "Nytt anslag" (P2.7g) for those who may send in the current club.
+  const { club } = useCurrentClub();
+  const clubId = club?.club.id ?? "";
+  const permissions = useMyPermissions(clubId);
+  const maySend =
+    mayAnnounceToClub(permissions.data) ||
+    (permissions.data?.groups ?? []).some((g) =>
+      g.permissions.includes("group.announcements.send"),
+    );
   if (!board.data) {
     if (board.isError)
       return (
@@ -31,6 +43,14 @@ export default function MyAnnouncements() {
       testID="announcements-screen"
     >
       <DataAge updatedAt={board.dataUpdatedAt} />
+      {maySend ? (
+        <Button
+          kind="secondary"
+          label={t("mobile.newAnnouncement")}
+          onPress={() => router.push(`/announcements/new?clubId=${clubId}`)}
+          testID="board-new-announcement"
+        />
+      ) : null}
       {pinned.length > 0 ? (
         <Section title={t("announcements.pinned")}>
           {pinned.map((a, i) => (

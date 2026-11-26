@@ -72,6 +72,10 @@ const range = () => {
   return `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&limit=500`;
 };
 
+/** An instant some days from now, for a query string. */
+const daysFromNow = (days: number) =>
+  encodeURIComponent(new Date(Date.now() + days * 86_400_000).toISOString());
+
 /** Billing (P1.13, BILLING_ENABLED only): the club's billing page and the operator console. */
 const BILLING_CASES: Case[] = [
   {
@@ -184,6 +188,68 @@ const CASES: Case[] = [
       `/api/v1/clubs/${key("ikn")}/carpool-summaries?activityIds=${DEMO_CARPOOL_IDS.awayMatch}`,
     // Measured 6 statements, 60→64 pages.
     statements: 6,
+    pages: 100,
+  },
+  {
+    route: "GET /api/v1/me/carpool-settings",
+    persona: "ahmed",
+    method: "GET",
+    url: () => "/api/v1/me/carpool-settings",
+    // Measured 2 statements, 4→6 pages.
+    statements: 2,
+    pages: 20,
+  },
+  // P2.7g: the app's group page (coming activities, who manages them), the
+  // activity form's places, "Närvaro" (a group's sessions in the lock window)
+  // and the announcement's reach before sending.
+  {
+    route: "GET /api/v1/groups/{groupId}/activities",
+    persona: "erik",
+    method: "GET",
+    url: () =>
+      `/api/v1/groups/${key("svk-f2017")}/activities?from=${daysFromNow(0)}&to=${daysFromNow(28)}&limit=50`,
+    // The activities, their places, groups and answers' counts: 8 statements, 263→522 pages.
+    statements: 8,
+    pages: 560,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/locations",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/locations?limit=200&usage=false`,
+    // Without the use counts (usage=false): one statement.
+    statements: 1,
+    pages: 10,
+  },
+  {
+    route: "GET /api/v1/groups/{groupId}/attendance",
+    persona: "erik",
+    method: "GET",
+    url: () =>
+      `/api/v1/groups/${key("svk-f2017")}/attendance?from=${daysFromNow(-30)}&to=${daysFromNow(0)}&limit=1`,
+    // The sessions and their marks; the member statistics' page is one person
+    // (limit=1). Measured 16 statements, 230→534 pages.
+    statements: 16,
+    pages: 600,
+  },
+  {
+    route: "POST /api/v1/clubs/{clubId}/groups/{groupId}/announcements/preview",
+    persona: "sara",
+    method: "POST",
+    url: () => `/api/v1/clubs/${key("svk")}/groups/${key("svk-f2017")}/announcements/preview`,
+    body: () => ({ audience: [{ kind: "group", groupId: key("svk-f2017") }] }),
+    // The group's people and their guardians by index (0058): 49→81 pages.
+    statements: 2,
+    pages: 120,
+  },
+  {
+    route: "POST /api/v1/clubs/{clubId}/announcements/preview",
+    persona: "sara",
+    method: "POST",
+    url: () => `/api/v1/clubs/${key("svk")}/announcements/preview`,
+    body: () => ({ audience: [{ kind: "club" }] }),
+    // Measured 50→68 pages.
+    statements: 1,
     pages: 100,
   },
   {
@@ -992,6 +1058,26 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  // The app's everyday actions (P2.7g): writes the web makes too, covered by
+  // the activities, announcements, chat and car-pool tests; each reads its
+  // resource by key, checks its policy and writes with audit and outbox.
+  "POST /api/v1/groups/{groupId}/activities":
+    "a rare write: the group's policy, one insert per group, the call-up's invitees",
+  "PATCH /api/v1/activities/{activityId}": "a rare write by key (activities tests)",
+  "POST /api/v1/activities/{activityId}/cancel": "as changing it",
+  "POST /api/v1/activities/{activityId}/restore": "as changing it",
+  "PUT /api/v1/me/carpool-settings": "one account row by key",
+  "PATCH /api/v1/activities/{activityId}/carpool/offers/{offerId}":
+    "the offer locked by key and its bookings (carpools tests)",
+  "DELETE /api/v1/activities/{activityId}/carpool/offers/{offerId}":
+    "as changing it, plus the bookers' notices through the outbox",
+  "POST /api/v1/clubs/{clubId}/announcements":
+    "a rare write: one insert, the audience's rows, audit and outbox (announcements tests)",
+  "POST /api/v1/clubs/{clubId}/groups/{groupId}/announcements": "as the club's",
+  "PATCH /api/v1/clubs/{clubId}/announcements/{announcementId}": "a rare write by key",
+  "POST /api/v1/clubs/{clubId}/announcements/{announcementId}/withdraw": "as changing it",
+  "POST /api/v1/clubs/{clubId}/groups/{groupId}/chats":
+    "a rare write: the group's policy, one chat and its members (chat tests)",
   // Volunteer duties (P2.6): writes that cannot repeat; the duties tests
   // cover them. Each locks the shift and reads it, its assignments and the
   // family's guardianships by key.

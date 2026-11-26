@@ -158,6 +158,11 @@ function seededClient() {
   client.setQueryData(["clubs", ANNA, "self"], clubs);
   client.setQueryData(["groups", ANNA, "self"], groups);
   client.setQueryData(["me", ANNA, "wards"], wards);
+  // Car-pool defaults (P2.7g): the offer form starts from them.
+  client.setQueryData(["carpool", "settings", ANNA], {
+    canSet: true,
+    settings: { seats: 4, departurePlace: "Hemma", note: null, returnMinutes: null },
+  });
 
   const detail = {
     ...group(F2017, "F2017", "esports_squad"),
@@ -467,7 +472,7 @@ function renderScreen(node: ReactNode) {
 describe("screens", () => {
   it("Home shows clubs, roles, groups, the ward's groups and the viewing-as switcher", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
-    const Home = (require("./app/(app)/home.tsx") as { default: () => ReactNode }).default;
+    const Home = (require("./app/(app)/(tabs)/home.tsx") as { default: () => ReactNode }).default;
     renderScreen(<Home />);
     expect(screen.getByText("Hi Anna Lindqvist")).toBeTruthy();
     expect(screen.getAllByText("Strandvikens Volleybollklubb").length).toBeGreaterThan(0);
@@ -495,7 +500,8 @@ describe("screens", () => {
 
   it("My schedule groups the coming activities by day, with whose they are and cancellations", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
-    const Schedule = (require("./app/(app)/schedule.tsx") as { default: () => ReactNode }).default;
+    const Schedule = (require("./app/(app)/(tabs)/schedule.tsx") as { default: () => ReactNode })
+      .default;
     renderScreen(<Schedule />);
     expect(screen.getByTestId("schedule-item-a1")).toBeTruthy();
     expect(screen.getByTestId("schedule-item-0199a000-0000-7000-8099-000000000003")).toBeTruthy();
@@ -520,7 +526,7 @@ describe("screens", () => {
 
   it("My channels lists unread first, with people only as the API presented them", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
-    const Chats = (require("./app/(app)/chats/index.tsx") as { default: () => ReactNode }).default;
+    const Chats = (require("./app/(app)/(tabs)/chats.tsx") as { default: () => ReactNode }).default;
     renderScreen(<Chats />);
     const rows = screen.getAllByTestId(/^chat-0199/);
     expect(rows[0]?.props.testID).toBe(`chat-${CHANNEL}`);
@@ -557,7 +563,7 @@ describe("screens", () => {
   it("the notice board shows the cached announcements at once, pinned on top, unread marked", () => {
     type Module = { default: () => ReactNode };
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- after the mocks
-    const Board = (require("./app/(app)/announcements/index.tsx") as Module).default;
+    const Board = (require("./app/(app)/(tabs)/announcements.tsx") as Module).default;
     renderScreen(<Board />);
     const rows = screen.getAllByTestId(/^announcement-0199/);
     expect(rows[0]?.props.testID).toBe("announcement-0199a000-0000-7000-8007-000000000001");
@@ -632,6 +638,9 @@ describe("screens", () => {
     expect(screen.getByText("Sara Ahmed and 1 more")).toBeTruthy();
     expect(screen.getByTestId(`carpool-book-${offer.id}-${ELSA}`)).toBeTruthy();
     expect(screen.getByTestId("carpool-offer-submit")).toBeTruthy();
+    // The offer starts from my defaults (P2.7g).
+    expect(screen.getByDisplayValue("Hemma")).toBeTruthy();
+    expect(screen.getByText("4")).toBeTruthy();
   });
 
   it("Mina uppgifter's duties show quotas, an offered shift to take and open shifts", () => {

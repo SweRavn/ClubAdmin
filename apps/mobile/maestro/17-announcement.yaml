@@ -1,0 +1,75 @@
+# An announcement from the phone (P2.7g): Sara (team manager) opens F2017
+# from the Mer tab and taps "Nytt anslag". Sending without a title is
+# refused next to the field; with one, the reach shows before sending and
+# the announcement opens once sent. Anna, a parent in F2017, finds it on
+# the board tab.
+appId: ${APP_ID}
+name: Send an announcement to a group
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000007
+- scrollUntilVisible:
+    element:
+      id: "group-0199a000-0000-7000-8002-000000000001"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "group-0199a000-0000-7000-8002-000000000001"
+- extendedWaitUntil:
+    visible:
+      id: "group-new-announcement"
+    timeout: 20000
+- tapOn:
+    id: "group-new-announcement"
+- extendedWaitUntil:
+    visible:
+      id: "announcement-composer"
+    timeout: 20000
+- tapOn:
+    id: "field-announcement-body"
+- inputText: "Vi tränar i lilla hallen på torsdag."
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "announcement-send"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "announcement-send"
+- scrollUntilVisible:
+    element:
+      id: "field-error-announcement-title"
+    direction: UP
+    timeout: 20000
+- tapOn:
+    id: "field-announcement-title"
+- inputText: "Torsdagens träning i lilla hallen"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "announcement-reach"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "announcement-send"
+- extendedWaitUntil:
+    visible:
+      id: "announcement-screen"
+    timeout: 20000
+- assertVisible: "Torsdagens träning i lilla hallen"
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- tapOn:
+    id: "tab-board"
+- extendedWaitUntil:
+    visible:
+      id: "announcements-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element: "Torsdagens träning i lilla hallen"
+    direction: DOWN
+    timeout: 20000

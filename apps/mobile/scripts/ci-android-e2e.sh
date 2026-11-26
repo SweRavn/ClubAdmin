@@ -54,6 +54,11 @@ flows responses maestro/08-answer.yaml maestro/09-offline-attendance.yaml
 # Seats in a car from My schedule (P2.7c).
 flows carpools maestro/15-carpool-rides.yaml
 
+# Leaders' and members' everyday actions (P2.7g): a new match, an
+# announcement, a car in one tap, the chats tab.
+flows everyday maestro/16-new-activity.yaml maestro/17-announcement.yaml \
+  maestro/18-carpool-quick.yaml maestro/19-chats-tab.yaml
+
 # The inbox and notification settings (P1.7).
 flows notifications maestro/10-notifications.yaml
 

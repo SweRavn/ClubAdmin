@@ -3,6 +3,8 @@
 // (with the club switcher), my groups, my children's groups,
 // and the "viewing as" switcher for guardians. People without a club see the
 // onboarding placeholder. Requests run in parallel; cached data shows first.
+// Since P2.7g the "Mer" tab: also "Närvaro" for leaders and the links that
+// have no tab of their own.
 
 import { enumKey } from "@clubadmin/i18n";
 import { personLabel } from "@clubadmin/shared";
@@ -17,10 +19,11 @@ import {
   useMyGroups,
   useMyWards,
   useUnreadCount,
-} from "../../api/queries.ts";
-import { DataAge } from "../../components/data-age.tsx";
-import { ErrorView } from "../../components/error-view.tsx";
-import { RoleBadge } from "../../components/role-badge.tsx";
+} from "../../../api/queries.ts";
+import { isLeaderFunction } from "../../../components/attendance-logic.ts";
+import { DataAge } from "../../../components/data-age.tsx";
+import { ErrorView } from "../../../components/error-view.tsx";
+import { RoleBadge } from "../../../components/role-badge.tsx";
 import {
   Body,
   EmptyState,
@@ -30,11 +33,11 @@ import {
   Row,
   Screen,
   Section,
-} from "../../components/ui.tsx";
-import { hasFeature } from "../../state/client-info.ts";
-import { useCurrentClub } from "../../state/club.tsx";
-import { useSession } from "../../state/session.tsx";
-import { useTheme } from "../../theme.ts";
+} from "../../../components/ui.tsx";
+import { hasFeature } from "../../../state/client-info.ts";
+import { useCurrentClub } from "../../../state/club.tsx";
+import { useSession } from "../../../state/session.tsx";
+import { useTheme } from "../../../theme.ts";
 
 export default function Home() {
   const t = useTranslations();
@@ -72,7 +75,6 @@ export default function Home() {
           testID="open-notifications"
         />
       ) : null}
-      <LinkButton label={t("chat.nav")} onPress={() => router.push("/chats")} testID="open-chats" />
       <LinkButton
         label={t("mobile.settings")}
         onPress={() => router.push("/settings")}
@@ -103,12 +105,15 @@ export default function Home() {
         </Body>
       ) : null}
       <DataAge updatedAt={clubs.dataUpdatedAt} />
-      {/* "Anslagstavlan" (P2.3) and "Mina dokument" (P2.2): in the screen, the header has no room. */}
-      <LinkButton
-        label={t("announcements.board")}
-        onPress={() => router.push("/announcements")}
-        testID="open-announcements"
-      />
+      {/* "Närvaro" (P2.7g): the sessions of my groups waiting for attendance. */}
+      {(groups.data?.groups ?? []).some((g) => g.functions.some(isLeaderFunction)) ? (
+        <LinkButton
+          label={t("attendance.title")}
+          onPress={() => router.push("/attendance")}
+          testID="open-attendance"
+        />
+      ) : null}
+      {/* "Mina dokument" (P2.2): in the screen, the header has no room. */}
       <LinkButton
         label={t("nav.documents")}
         onPress={() => router.push("/documents")}

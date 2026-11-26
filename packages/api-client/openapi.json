@@ -45852,6 +45852,21 @@
             "required": false,
             "name": "archived",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "true",
+              "description": "false: useCount is not counted (0); for a form's list of places"
+            },
+            "required": false,
+            "description": "false: useCount is not counted (0); for a form's list of places",
+            "name": "usage",
+            "in": "query"
           }
         ],
         "responses": {

@@ -48,22 +48,30 @@ export default function SignedInLayout() {
           </View>
         )}
       >
-        <Stack.Screen name="schedule" options={{ title: t("schedule.title") }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="activities/[activityId]"
           options={{ title: t("activities.calendar") }}
         />
+        <Stack.Screen
+          name="activities/new/[groupId]"
+          options={{ title: t("activities.newTitle") }}
+        />
+        <Stack.Screen
+          name="activities/edit/[activityId]"
+          options={{ title: t("activities.edit") }}
+        />
+        <Stack.Screen name="attendance/index" options={{ title: t("attendance.title") }} />
         <Stack.Screen name="attendance/[activityId]" options={{ title: t("attendance.title") }} />
         <Stack.Screen name="events/index" options={{ title: t("events.title") }} />
         <Stack.Screen name="events/[eventId]" options={{ title: t("events.title") }} />
-        <Stack.Screen name="home" options={{ title: t("home.title") }} />
         <Stack.Screen name="clubs/[clubId]/index" options={{ title: t("club.overview") }} />
         <Stack.Screen name="clubs/[clubId]/groups" options={{ title: t("club.groups") }} />
         <Stack.Screen name="groups/[groupId]" options={{ title: t("nav.groups") }} />
-        <Stack.Screen name="chats/index" options={{ title: t("chat.title") }} />
+        <Stack.Screen name="chats/new" options={{ title: t("chat.newChannel") }} />
         <Stack.Screen name="chats/[clubId]/[chatId]" options={{ title: t("chat.nav") }} />
         <Stack.Screen name="chats/ward/[personId]" options={{ title: t("chat.wardChats") }} />
-        <Stack.Screen name="announcements/index" options={{ title: t("announcements.board") }} />
+        <Stack.Screen name="announcements/new" options={{ title: t("mobile.newAnnouncement") }} />
         <Stack.Screen
           name="announcements/[clubId]/[announcementId]"
           options={{ title: t("announcements.title") }}
@@ -77,6 +85,7 @@ export default function SignedInLayout() {
         <Stack.Screen name="settings/index" options={{ title: t("mobile.settings") }} />
         <Stack.Screen name="settings/sessions" options={{ title: t("sessions.title") }} />
         <Stack.Screen name="settings/calendar" options={{ title: t("calendar.ui.title") }} />
+        <Stack.Screen name="settings/carpool" options={{ title: t("carpool.defaults.title") }} />
         <Stack.Screen name="settings/protection" options={{ title: t("protection.title") }} />
         <Stack.Screen name="settings/roles" options={{ title: t("rolesAdmin.myRoles") }} />
         <Stack.Screen name="settings/privacy" options={{ title: t("privacy.title") }} />

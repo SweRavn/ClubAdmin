@@ -100,6 +100,15 @@ export const LocationListQuerySchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((v) => v === "true"),
+  /**
+   * Count each place's uses (P2.7g): `false` for a form's list of places (the
+   * app), which needs no counts; `useCount` is then 0.
+   */
+  usage: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true")
+    .describe("false: useCount is not counted (0); for a form's list of places"),
 });
 
 // --- Activities --------------------------------------------------------------

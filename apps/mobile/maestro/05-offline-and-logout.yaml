@@ -23,7 +23,7 @@ name: Offline cold start and logout
     id: "offline-banner"
 - assertVisible: ".*Träning.*"
 - tapOn:
-    id: "open-home"
+    id: "tab-more"
 - extendedWaitUntil:
     visible:
       id: "home-screen"

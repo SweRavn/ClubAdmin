@@ -199,6 +199,9 @@ export default function Settings() {
             <Body>{t("calendar.ui.title")}</Body>
           </Row>
         ) : null}
+        <Row onPress={() => router.push("/settings/carpool")} testID="open-carpool-settings">
+          <Body>{t("carpool.defaults.title")}</Body>
+        </Row>
         <Row onPress={() => router.push("/settings/roles")} testID="open-my-roles">
           <Body>{t("rolesAdmin.myRoles")}</Body>
         </Row>

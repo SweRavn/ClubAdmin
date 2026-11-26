@@ -13,14 +13,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useFormatter, useTranslations } from "use-intl";
 
-import { type ScheduleEntry, useCarpoolSummaries, useSchedule } from "../../api/queries.ts";
-import { DataAge } from "../../components/data-age.tsx";
-import { ErrorView } from "../../components/error-view.tsx";
-import { OutboxBanner } from "../../components/outbox-banner.tsx";
-import { ResponseButtons } from "../../components/response-buttons.tsx";
-import { carsFor, RideChoices, useRideText } from "../../components/ride-choices.tsx";
-import { RoleBadge } from "../../components/role-badge.tsx";
-import { scheduleDays } from "../../components/schedule-days.ts";
+import {
+  type ScheduleEntry,
+  useCarpoolSummaries,
+  useMyCarpoolSettings,
+  useSchedule,
+} from "../../../api/queries.ts";
+import { CarpoolQuickButton } from "../../../components/carpool.tsx";
+import { DataAge } from "../../../components/data-age.tsx";
+import { ErrorView } from "../../../components/error-view.tsx";
+import { OutboxBanner } from "../../../components/outbox-banner.tsx";
+import { ResponseButtons } from "../../../components/response-buttons.tsx";
+import { carsFor, RideChoices, useRideText } from "../../../components/ride-choices.tsx";
+import { RoleBadge } from "../../../components/role-badge.tsx";
+import { scheduleDays } from "../../../components/schedule-days.ts";
 import {
   Body,
   EmptyState,
@@ -30,10 +36,10 @@ import {
   Row,
   Screen,
   Section,
-} from "../../components/ui.tsx";
-import { BUILD_VARIANT } from "../../config.ts";
-import { usePrefetch } from "../../state/prefetch.ts";
-import { useTheme } from "../../theme.ts";
+} from "../../../components/ui.tsx";
+import { BUILD_VARIANT } from "../../../config.ts";
+import { usePrefetch } from "../../../state/prefetch.ts";
+import { useTheme } from "../../../theme.ts";
 
 /**
  * Logs when the start screen first shows data, and whether it came from the
@@ -74,6 +80,8 @@ export default function ScheduleScreen() {
       .slice(0, 60)
       .map((e) => ({ activityId: e.activityId, clubId: e.club.id })),
   );
+  // "Skapa samåkning" for those who keep car-pool defaults (P2.7f, P2.7g).
+  const carpoolDefaults = useMyCarpoolSettings().data?.settings;
 
   const header = (
     <View style={{ flexDirection: "row", gap: theme.space(2) }}>
@@ -81,11 +89,6 @@ export default function ScheduleScreen() {
         label={t("events.title")}
         onPress={() => router.push("/events")}
         testID="open-events"
-      />
-      <LinkButton
-        label={t("mobile.clubs")}
-        onPress={() => router.push("/home")}
-        testID="open-home"
       />
       <LinkButton
         label={t("mobile.settings")}
@@ -237,6 +240,14 @@ export default function ScheduleScreen() {
                           );
                         })
                     : null}
+                  {!cancelled ? (
+                    <CarpoolQuickButton
+                      activityId={entry.activityId}
+                      summary={carpools.get(entry.activityId)}
+                      settings={carpoolDefaults}
+                      returnPlace={entry.place}
+                    />
+                  ) : null}
                   {!cancelled &&
                   entry.responseMode === "requested" &&
                   (entry.responses ?? []).some((r) => r.canRespond && r.status === null) ? (

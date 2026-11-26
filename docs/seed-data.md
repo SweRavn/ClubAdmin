@@ -261,7 +261,7 @@ schedule (Ola left two years ago).
   Alva's mark about 40 days ago ("Fel markering", after the lock; in
   history). An extra F2017 session ("Extrapass inför matchen") starts half
   an hour before seeding, so attendance can be taken at once (Maestro flow
-  09). Generated players are in their groups since last year, so past
+  09) and the app's "Närvaro" lists it as waiting for marks (P2.7g). Generated players are in their groups since last year, so past
   sessions have them on the roster.
 - **Events** (P1.6, ADR 0038, `apps/api/src/seed/steps/events.ts`, through
   the events service): Erik's "Höstcupen i Strandviken" for SVK F2017 in 12

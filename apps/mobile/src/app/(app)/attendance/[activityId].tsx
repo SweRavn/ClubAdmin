@@ -3,19 +3,29 @@
 // large present / absent / excused buttons, prefilled from the answers. The
 // marks go through the offline outbox: saved on the phone, sent in order
 // when online (the newer mark wins on the server). The sheet itself comes
-// from the persisted cache when there is no coverage. Guests are added on
-// the web. Screenshots are blocked while protected people are shown.
+// from the persisted cache when there is no coverage. Guests (P2.7g): a
+// member of my other groups in the club, found as one types, marked like
+// the others. Screenshots are blocked while protected people are shown.
 
 import { enumKey } from "@clubadmin/i18n";
-import { onlineManager, useQueryClient } from "@tanstack/react-query";
+import { personLabel, type PersonSummary } from "@clubadmin/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Stack } from "expo-router";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useTranslations } from "use-intl";
 
 import { useOutbox, usePendingWrites } from "../../../api/outbox.ts";
-import { type Attendance, useAttendance } from "../../../api/queries.ts";
+import {
+  type Attendance,
+  useActivity,
+  useAttendance,
+  useGroupsMembers,
+  useMyGroups,
+} from "../../../api/queries.ts";
+import { isLeaderFunction } from "../../../components/attendance-logic.ts";
 import { ErrorView } from "../../../components/error-view.tsx";
+import { useOnline } from "../../../components/form.tsx";
 import { OutboxBanner } from "../../../components/outbox-banner.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useProtectScreen } from "../../../components/protect-screen.ts";
@@ -35,13 +45,6 @@ export default function AttendanceScreen() {
   return <Sheet activityId={activityId} />;
 }
 
-function useOnline(): boolean {
-  return useSyncExternalStore(
-    (listener) => onlineManager.subscribe(listener),
-    () => onlineManager.isOnline(),
-  );
-}
-
 function Sheet({ activityId }: { activityId: string }) {
   const t = useTranslations();
   const theme = useTheme();
@@ -55,6 +58,8 @@ function Sheet({ activityId }: { activityId: string }) {
   ).length;
   const [marks, setMarks] = useState<Record<string, Status>>({});
   const [reason, setReason] = useState("");
+  /** Guests added on this phone (shown until the sheet lists them). */
+  const [guests, setGuests] = useState<PersonSummary[]>([]);
   const data = sheet.data;
   useProtectScreen(data?.hasProtected === true, `attendance-${activityId}`);
 
@@ -82,7 +87,19 @@ function Sheet({ activityId }: { activityId: string }) {
   }
 
   const editable = data.canRecord || data.canCorrect;
-  const everyone = [...data.participants, ...data.leaders];
+  const onSheet = new Set([...data.participants, ...data.leaders].map((m) => m.person.id));
+  const newGuests: Mark[] = guests
+    .filter((p) => !onSheet.has(p.id))
+    .map((person) => ({
+      person,
+      role: "participant",
+      status: null,
+      suggested: null,
+      guest: true,
+      recordedAt: null,
+      correctedReason: null,
+    }));
+  const everyone = [...data.participants, ...data.leaders, ...newGuests];
   const save = () => {
     const list = everyone.flatMap((m) => {
       const status = marks[m.person.id];
@@ -171,6 +188,19 @@ function Sheet({ activityId }: { activityId: string }) {
       ))}
       <Section title={t("attendance.participants")}>{data.participants.map(row)}</Section>
       <Section title={t("attendance.leaders")}>{data.leaders.map(row)}</Section>
+      {newGuests.length > 0 ? (
+        <Section title={t("attendance.guests")}>{newGuests.map(row)}</Section>
+      ) : null}
+      {editable ? (
+        <GuestPicker
+          activityId={activityId}
+          exclude={new Set([...onSheet, ...guests.map((g) => g.id)])}
+          onAdd={(person) => {
+            setGuests((old) => [...old, person]);
+            setMarks((old) => ({ ...old, [person.id]: "present" }));
+          }}
+        />
+      ) : null}
       {data.canCorrect ? (
         <TextInput
           value={reason}
@@ -197,5 +227,96 @@ function Sheet({ activityId }: { activityId: string }) {
       ) : null}
       {waiting > 0 ? <Muted>{t("mobile.outboxWaiting", { count: waiting })}</Muted> : null}
     </Screen>
+  );
+}
+
+/**
+ * "Lägg till gäst": members of my other groups in the club (and of the
+ * activity's own groups when only some were called up), found as one types.
+ */
+function GuestPicker({
+  activityId,
+  exclude,
+  onAdd,
+}: {
+  activityId: string;
+  exclude: ReadonlySet<string>;
+  onAdd: (person: PersonSummary) => void;
+}) {
+  const t = useTranslations();
+  const theme = useTheme();
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const activity = useActivity(activityId);
+  const myGroups = useMyGroups();
+  const a = activity.data;
+  const groupIds =
+    open && a
+      ? (myGroups.data?.groups ?? [])
+          .filter(
+            (g) =>
+              g.club.id === a.clubId &&
+              g.functions.some(isLeaderFunction) &&
+              (a.inviteesOnly || !a.groups.some((x) => x.id === g.group.id)),
+          )
+          .map((g) => g.group.id)
+      : [];
+  const rosters = useGroupsMembers(groupIds);
+  if (!open) {
+    return (
+      <Button
+        kind="secondary"
+        label={t("mobile.addGuest")}
+        onPress={() => setOpen(true)}
+        testID="add-guest"
+      />
+    );
+  }
+  const people = new Map<string, PersonSummary>();
+  for (const r of rosters) {
+    for (const m of r.data ?? []) if (!exclude.has(m.person.id)) people.set(m.person.id, m.person);
+  }
+  const q = query.trim().toLowerCase();
+  const matches = [...people.values()]
+    .filter((p) => q.length > 0 && personLabel(p).toLowerCase().includes(q))
+    .slice(0, 20);
+  return (
+    <Section title={t("mobile.addGuest")}>
+      <View style={{ paddingVertical: theme.space(2), gap: theme.space(2) }}>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder={t("mobile.guestSearch")}
+          accessibilityLabel={t("mobile.guestSearch")}
+          placeholderTextColor={theme.colors.muted}
+          autoFocus
+          testID="guest-search"
+          style={{
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            borderRadius: 8,
+            padding: theme.space(3),
+            color: theme.colors.fg,
+          }}
+        />
+        {rosters.some((r) => r.isPending) ? <Muted>{t("common.loading")}</Muted> : null}
+        {q.length > 0 && matches.length === 0 && !rosters.some((r) => r.isPending) ? (
+          <Muted>{t("mobile.guestNone")}</Muted>
+        ) : null}
+      </View>
+      {matches.map((p, index) => (
+        <Row
+          key={p.id}
+          onPress={() => {
+            onAdd(p);
+            setQuery("");
+          }}
+          last={index === matches.length - 1}
+          testID={`guest-${p.id}`}
+        >
+          <PersonName person={p} />
+        </Row>
+      ))}
+    </Section>
   );
 }

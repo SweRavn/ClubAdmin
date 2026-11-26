@@ -155,6 +155,13 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
   for erasure from `people_orphaned_idx`, and a batch of audit retention
   from `events_created_idx`, deleted by primary key (`id = ANY(ARRAY(...))`;
   `id IN (subquery)` scanned the whole table).
+- The announcement composer's reach (P2.7g, `app.entries_people`) finds
+  the audience's guardians by `guardianships_ward_idx`, one lookup per
+  person (migration 0058): a join let the planner scan every guardianship
+  (25 → 156 pages for a club's reach, 68 now). The app's list of places
+  asks for no use counts (`GET /clubs/:id/locations?usage=false`, one
+  statement), and "Närvaro" reads a group's sessions with `limit=1` on the
+  member statistics.
 
 ### Web
 - React Server Components and streaming for first load; client components only
@@ -173,7 +180,11 @@ comes first (docs/vision.md, ADR 0040). Planning size: 1,000 clubs with about
 - Screens request what they need in parallel (Home: `/me`, `/me/clubs`,
   `/me/groups`, `/me/wards`; `/meta/client` alongside, never blocking).
 - Offline outbox for attendance and chat messages taken without coverage
-  (sports halls often have bad reception).
+  (sports halls often have bad reception). Creating and changing
+  (activities, announcements, cars, channels) needs a connection and is
+  never queued (P2.7g).
+- The tab bar adds no request: the chat tab's unread count comes from the
+  chat list the app already keeps fresh.
 - Push notifications carry IDs, not data; the app fetches the data.
 
 ## Measurement

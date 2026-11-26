@@ -5,6 +5,7 @@
 // unknown fields and enum values from a newer server are tolerated (ADR 0029).
 
 import type { ApiClient, components } from "@clubadmin/api-client";
+import { DEFAULT_ATTENDANCE_LOCK_DAYS } from "@clubadmin/shared";
 import {
   useInfiniteQuery,
   useMutation,
@@ -95,7 +96,7 @@ export function useMyPermissions(clubId: string) {
     queryKey: ["me", personId, "permissions", clubId],
     queryFn: async () =>
       data(await api.GET("/api/v1/me/permissions", { params: { query: { clubId } } })),
-    enabled: personId !== null,
+    enabled: personId !== null && clubId !== "",
   });
 }
 
@@ -116,6 +117,7 @@ export function useClub(clubId: string) {
     queryKey: ["club", clubId, ...scope],
     queryFn: async () =>
       data(await api.GET("/api/v1/clubs/{clubId}", { params: { path: { clubId } } })),
+    enabled: clubId !== "",
   });
 }
 
@@ -1390,5 +1392,383 @@ export function useAnswerDutySwap() {
       }
     },
     onSuccess: refresh,
+  });
+}
+
+// --- Everyday actions (P2.7g) --------------------------------------------------------
+// Creating and changing need a connection (no queued creates): plain mutations
+// that refresh what they change. Field errors come back in the ApiError's
+// problem details (components/form.tsx).
+
+export type Location = NonNullable<Schemas["Location"]>;
+export type GroupCalendar = Schemas["GroupCalendar"];
+export type PersonalCarpoolSettings = NonNullable<Schemas["PersonalCarpoolSettings"]>;
+
+/** A group's coming activities (four weeks) and whether the viewer manages them. */
+export function useGroupCalendar(groupId: string) {
+  const { api, personId } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["group", groupId, "calendar", ...scope],
+    queryFn: async () => {
+      const now = Date.now();
+      return data(
+        await api.GET("/api/v1/groups/{groupId}/activities", {
+          params: {
+            path: { groupId },
+            query: {
+              from: new Date(now - 2 * 3_600_000).toISOString(),
+              to: new Date(now + SCHEDULE_DAYS * 86_400_000).toISOString(),
+              limit: 50,
+            },
+          },
+        }),
+      );
+    },
+    enabled: personId !== null,
+  });
+}
+
+/** The club's places for the activity form (archived ones left out). */
+export function useLocations(clubId: string | undefined) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["club", clubId, "locations", personId],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/clubs/{clubId}/locations", {
+          params: { path: { clubId: clubId! }, query: { limit: 200, usage: "false" } },
+        }),
+      ).items.filter((l): l is Location => l !== null && !l.archived),
+    enabled: personId !== null && clubId !== undefined,
+  });
+}
+
+/** A group's members for the call-up list, the guests and the channel's leaders (first 200). */
+export function useGroupMembers(groupId: string | null) {
+  const { api, personId } = useSession();
+  const scope = useScope();
+  return useQuery({
+    queryKey: ["group", groupId, "members", "all", ...scope],
+    queryFn: async () =>
+      data(
+        await api.GET("/api/v1/groups/{groupId}/members", {
+          params: { path: { groupId: groupId! }, query: { limit: 200 } },
+        }),
+      ).items,
+    enabled: personId !== null && groupId !== null,
+  });
+}
+
+/** After an activity changes: the activity, the schedule and the group's lists. */
+function useActivityRefresh() {
+  const queryClient = useQueryClient();
+  return () => {
+    for (const key of ["activity", "schedule", "group", "responses", "carpool", "attendance"]) {
+      void queryClient.invalidateQueries({ queryKey: [key] });
+    }
+  };
+}
+
+export function useCreateActivity(groupId: string) {
+  const { api } = useSession();
+  const refresh = useActivityRefresh();
+  return useMutation({
+    mutationFn: async (body: Schemas["CreateActivityRequest"]) =>
+      data(
+        await api.POST("/api/v1/groups/{groupId}/activities", {
+          params: { path: { groupId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+export function useUpdateActivity(activityId: string) {
+  const { api } = useSession();
+  const refresh = useActivityRefresh();
+  return useMutation({
+    mutationFn: async (body: Schemas["UpdateActivityRequest"]) =>
+      data(
+        await api.PATCH("/api/v1/activities/{activityId}", {
+          params: { path: { activityId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+/** Cancels (with a reason) or restores an activity. */
+export function useCancelActivity(activityId: string) {
+  const { api } = useSession();
+  const refresh = useActivityRefresh();
+  return useMutation({
+    mutationFn: async (change: { cancel: true; reason: string } | { cancel: false }) => {
+      if (change.cancel) {
+        const reason = change.reason.trim();
+        await api.POST("/api/v1/activities/{activityId}/cancel", {
+          params: { path: { activityId } },
+          body: reason ? { reason } : {},
+        });
+      } else {
+        await api.POST("/api/v1/activities/{activityId}/restore", {
+          params: { path: { activityId } },
+        });
+      }
+    },
+    onSuccess: refresh,
+  });
+}
+
+/** How far back "Närvaro" looks: the default attendance lock (ADR 0035). */
+export const ATTENDANCE_LOOKBACK_DAYS = DEFAULT_ATTENDANCE_LOCK_DAYS;
+
+/**
+ * "Närvaro": the sessions of the groups I lead that have started and have no
+ * marks yet, newest first. One request per group, cached for the hall.
+ */
+export function useSessionsWaitingForAttendance(groupIds: readonly string[]) {
+  const { api, personId } = useSession();
+  const scope = useScope();
+  const results = useQueries({
+    queries: groupIds.map((groupId) => ({
+      queryKey: ["attendance", "group", groupId, ...scope],
+      queryFn: async () => {
+        const now = Date.now();
+        return data(
+          await api.GET("/api/v1/groups/{groupId}/attendance", {
+            params: {
+              path: { groupId },
+              query: {
+                from: new Date(now - ATTENDANCE_LOOKBACK_DAYS * 86_400_000).toISOString(),
+                to: new Date(now).toISOString(),
+                // The sessions only: the member statistics' page is one person.
+                limit: 1,
+              },
+            },
+          }),
+        );
+      },
+      enabled: personId !== null,
+    })),
+  });
+  return {
+    results,
+    sessions: results.flatMap((r, index) =>
+      (r.data?.sessions ?? []).map((s) => ({
+        ...s,
+        groupId: groupIds[index]!,
+        timeZone: r.data!.timeZone,
+      })),
+    ),
+  };
+}
+
+// Car pools (P2.7f in the app): my defaults, changing and removing my car.
+
+export function useMyCarpoolSettings() {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["carpool", "settings", personId],
+    queryFn: async () => data(await api.GET("/api/v1/me/carpool-settings")),
+    enabled: personId !== null,
+  });
+}
+
+export function useSaveMyCarpoolSettings() {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async (settings: PersonalCarpoolSettings | null) =>
+      data(await api.PUT("/api/v1/me/carpool-settings", { body: { settings } })),
+    onSuccess: refresh,
+  });
+}
+
+export function useUpdateCarpoolOffer(activityId: string) {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async ({ offerId, ...body }: { offerId: string } & Schemas["UpdateCarpoolOffer"]) =>
+      data(
+        await api.PATCH("/api/v1/activities/{activityId}/carpool/offers/{offerId}", {
+          params: { path: { activityId, offerId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+/** Removes my car; the API tells the passengers' bookers. */
+export function useDeleteCarpoolOffer(activityId: string) {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async (offerId: string) => {
+      await api.DELETE("/api/v1/activities/{activityId}/carpool/offers/{offerId}", {
+        params: { path: { activityId, offerId } },
+      });
+    },
+    onSuccess: refresh,
+  });
+}
+
+/** "Skapa samåkning" (P2.7f): my car there and home from my defaults, one tap. */
+export function useQuickCarpool() {
+  const { api } = useSession();
+  const refresh = useCarpoolRefresh();
+  return useMutation({
+    mutationFn: async ({
+      activityId,
+      settings,
+      returnPlace,
+    }: {
+      activityId: string;
+      settings: PersonalCarpoolSettings;
+      returnPlace: string | null;
+    }) =>
+      data(
+        await api.POST("/api/v1/activities/{activityId}/carpool/offers", {
+          params: { path: { activityId } },
+          body: {
+            direction: "out",
+            willingOnly: false,
+            seats: settings.seats,
+            departurePlace: settings.departurePlace,
+            note: settings.note,
+            withReturn: true,
+            returnDeparturePlace: returnPlace,
+          },
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+// Announcements (P2.3 in the app): write and send, edit, withdraw.
+
+export type AnnouncementAudience = Schemas["AnnouncementAudience"];
+
+/** How many an audience reaches, before sending. */
+export function useAnnouncementPreview(clubId: string, groupId: string | null, enabled: boolean) {
+  const { api, personId } = useSession();
+  return useQuery({
+    queryKey: ["announcements", personId, "preview", clubId, groupId],
+    queryFn: async () =>
+      groupId
+        ? data(
+            await api.POST("/api/v1/clubs/{clubId}/groups/{groupId}/announcements/preview", {
+              params: { path: { clubId, groupId } },
+              body: { audience: [{ kind: "group", groupId }] },
+            }),
+          )
+        : data(
+            await api.POST("/api/v1/clubs/{clubId}/announcements/preview", {
+              params: { path: { clubId } },
+              body: { audience: [{ kind: "club" }] },
+            }),
+          ),
+    enabled: personId !== null && enabled,
+  });
+}
+
+function useAnnouncementRefresh() {
+  const queryClient = useQueryClient();
+  return () => void queryClient.invalidateQueries({ queryKey: ["announcements"] });
+}
+
+export function useCreateAnnouncement() {
+  const { api } = useSession();
+  const refresh = useAnnouncementRefresh();
+  return useMutation({
+    mutationFn: async ({
+      clubId,
+      groupId,
+      body,
+    }: {
+      clubId: string;
+      groupId: string | null;
+      body: Schemas["CreateAnnouncement"];
+    }) =>
+      groupId
+        ? data(
+            await api.POST("/api/v1/clubs/{clubId}/groups/{groupId}/announcements", {
+              params: { path: { clubId, groupId } },
+              body,
+            }),
+          )
+        : data(
+            await api.POST("/api/v1/clubs/{clubId}/announcements", {
+              params: { path: { clubId } },
+              body,
+            }),
+          ),
+    onSuccess: refresh,
+  });
+}
+
+export function useUpdateAnnouncement(clubId: string, announcementId: string) {
+  const { api } = useSession();
+  const refresh = useAnnouncementRefresh();
+  return useMutation({
+    mutationFn: async (body: Schemas["UpdateAnnouncement"]) =>
+      data(
+        await api.PATCH("/api/v1/clubs/{clubId}/announcements/{announcementId}", {
+          params: { path: { clubId, announcementId } },
+          body,
+        }),
+      ),
+    onSuccess: refresh,
+  });
+}
+
+export function useWithdrawAnnouncement(clubId: string, announcementId: string) {
+  const { api } = useSession();
+  const refresh = useAnnouncementRefresh();
+  return useMutation({
+    mutationFn: async () => {
+      await api.POST("/api/v1/clubs/{clubId}/announcements/{announcementId}/withdraw", {
+        params: { path: { clubId, announcementId } },
+      });
+    },
+    onSuccess: refresh,
+  });
+}
+
+// Chat (P2.1 in the app): a new channel in a group.
+
+export function useCreateGroupChannel(clubId: string, groupId: string) {
+  const { api, personId } = useSession();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: Schemas["CreateChannel"]) =>
+      data(
+        await api.POST("/api/v1/clubs/{clubId}/groups/{groupId}/chats", {
+          params: { path: { clubId, groupId } },
+          body,
+        }),
+      ),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["chats", personId] }),
+  });
+}
+
+/** The members of several groups (the attendance's guests): one request each, first 200. */
+export function useGroupsMembers(groupIds: readonly string[]) {
+  const { api, personId } = useSession();
+  const scope = useScope();
+  return useQueries({
+    queries: groupIds.map((groupId) => ({
+      queryKey: ["group", groupId, "members", "all", ...scope],
+      queryFn: async () =>
+        data(
+          await api.GET("/api/v1/groups/{groupId}/members", {
+            params: { path: { groupId }, query: { limit: 200 } },
+          }),
+        ).items,
+      enabled: personId !== null,
+    })),
   });
 }

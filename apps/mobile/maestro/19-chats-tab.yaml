@@ -1,0 +1,44 @@
+# The chats one tap away (P2.7g): Anna opens the Chatt tab (its badge counts
+# the unread messages); F2017's team channel has Sara's reminder unread.
+# Reading it takes that channel's count away (and the badge's with it).
+appId: ${APP_ID}
+name: Chats from the tab bar
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000001
+- tapOn:
+    id: "tab-chats"
+- extendedWaitUntil:
+    visible:
+      id: "chats-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element: ".*kiosken på lördag.*"
+    direction: DOWN
+    timeout: 20000
+- assertVisible:
+    id: "chat-unread-.*"
+    childOf:
+      id: "chat-[0-9a-f-]+"
+      containsDescendants:
+        - text: ".*kiosken på lördag.*"
+- tapOn: ".*kiosken på lördag.*"
+- extendedWaitUntil:
+    notVisible:
+      id: "chats-screen"
+    timeout: 20000
+- back
+- extendedWaitUntil:
+    visible:
+      id: "chats-screen"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible:
+      id: "chat-unread-.*"
+      childOf:
+        id: "chat-[0-9a-f-]+"
+        containsDescendants:
+          - text: ".*kiosken på lördag.*"
+    timeout: 20000

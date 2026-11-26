@@ -146,7 +146,7 @@ export class ActivitiesService {
 
   listLocations(
     context: TenantContext,
-    page: { cursor?: string | undefined; limit: number; archived: boolean },
+    page: { cursor?: string | undefined; limit: number; archived: boolean; usage?: boolean },
   ): Promise<{
     items: Location[];
     usage: ReadonlyMap<string, number>;
@@ -159,11 +159,15 @@ export class ActivitiesService {
         archived: page.archived,
       });
       const items = rows.slice(0, page.limit);
-      const usage = await repo.locationUsage(
-        tx,
-        context.clubId,
-        items.map((l) => l.id),
-      );
+      // Without counts (P2.7g, a form's list): one statement, whatever the club's history.
+      const usage =
+        page.usage === false
+          ? new Map<string, number>()
+          : await repo.locationUsage(
+              tx,
+              context.clubId,
+              items.map((l) => l.id),
+            );
       return { items, usage, nextCursor: rows.length > page.limit ? items.at(-1)!.id : null };
     });
   }

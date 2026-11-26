@@ -84,9 +84,21 @@ export function Muted({
   );
 }
 
-export function Body({ children, style }: { children: ReactNode; style?: TextStyle }) {
+export function Body({
+  children,
+  style,
+  testID,
+}: {
+  children: ReactNode;
+  style?: TextStyle;
+  testID?: string;
+}) {
   const theme = useTheme();
-  return <Text style={[{ color: theme.colors.fg, fontSize: 16 }, style]}>{children}</Text>;
+  return (
+    <Text style={[{ color: theme.colors.fg, fontSize: 16 }, style]} testID={testID}>
+      {children}
+    </Text>
+  );
 }
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {

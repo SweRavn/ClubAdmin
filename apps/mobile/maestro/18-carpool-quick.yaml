@@ -1,0 +1,79 @@
+# "Skapa samåkning" from the phone (P2.7g): Mikael, who keeps car-pool
+# defaults (seeded), opens a coming activity from My schedule that offers
+# the button, offers his car there and home in one tap, then adds a seat
+# and saves, and finally removes the car.
+appId: ${APP_ID}
+name: Offer a car in one tap, change and remove it
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000002
+- back
+- extendedWaitUntil:
+    visible:
+      id: "schedule-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "carpool-quick-.*"
+    direction: DOWN
+    timeout: 30000
+# Open the activity whose row offers the button (its title line).
+- tapOn:
+    text: ".* · .*"
+    childOf:
+      id: "schedule-item-.*"
+      containsDescendants:
+        - id: "carpool-quick-.*"
+- extendedWaitUntil:
+    visible:
+      id: "activity-screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "carpool-quick-.*"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "carpool-quick-.*"
+- scrollUntilVisible:
+    element:
+      id: "carpool-edit-out"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "carpool-edit-out"
+- scrollUntilVisible:
+    element:
+      id: "carpool-seats-more"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "carpool-seats-more"
+- scrollUntilVisible:
+    element:
+      id: "carpool-edit-save"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "carpool-edit-save"
+- scrollUntilVisible:
+    element:
+      id: "carpool-edit-out"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "carpool-edit-out"
+- scrollUntilVisible:
+    element:
+      id: "carpool-remove"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "carpool-remove"
+- scrollUntilVisible:
+    element:
+      id: "carpool-quick-.*"
+    direction: DOWN
+    timeout: 20000

@@ -1,0 +1,107 @@
+# A new match from the phone (P2.7g): Erik opens F2017 from the Mer tab,
+# taps "Ny aktivitet"; the title is "Match" (the kind's name) until he writes
+# one. A way home 999 minutes after the end is refused next to its field;
+# with 20 minutes and one player unticked (not called up) the match is
+# created and opens. He cancels it with a reason and restores it.
+appId: ${APP_ID}
+name: New activity, cancel and restore
+---
+- runFlow:
+    file: subflows/login-as.yaml
+    env:
+      PERSONA: 0199a000-0000-7000-8000-000000000005
+- scrollUntilVisible:
+    element:
+      id: "group-0199a000-0000-7000-8002-000000000001"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "group-0199a000-0000-7000-8002-000000000001"
+- extendedWaitUntil:
+    visible:
+      id: "group-new-activity"
+    timeout: 20000
+- tapOn:
+    id: "group-new-activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity-form"
+    timeout: 20000
+# The title follows the kind (P2.7e).
+- assertVisible:
+    id: "field-title"
+    text: "Match"
+- scrollUntilVisible:
+    element:
+      id: "field-carpoolReturnMinutes"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "field-carpoolReturnMinutes"
+- inputText: "999"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "activity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "activity-submit"
+# The error next to its field.
+- scrollUntilVisible:
+    element:
+      id: "field-error-carpoolReturnMinutes"
+    direction: UP
+    timeout: 20000
+- tapOn:
+    id: "field-carpoolReturnMinutes"
+- eraseText: 5
+- inputText: "20"
+- hideKeyboard
+# One player is not called up.
+- scrollUntilVisible:
+    element:
+      id: "call-up-.*"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "call-up-.*"
+    index: 0
+- scrollUntilVisible:
+    element:
+      id: "activity-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "activity-submit"
+- extendedWaitUntil:
+    visible:
+      id: "activity-screen"
+    timeout: 20000
+- assertVisible: "Match"
+- scrollUntilVisible:
+    element:
+      id: "activity-cancel"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "activity-cancel"
+- tapOn:
+    id: "activity-cancel-reason"
+- inputText: "Planen är avstängd"
+- hideKeyboard
+- tapOn:
+    id: "activity-cancel-confirm"
+- scrollUntilVisible:
+    element:
+      id: "activity-restore"
+    direction: DOWN
+    timeout: 20000
+- assertVisible: ".*Planen är avstängd.*"
+- tapOn:
+    id: "activity-restore"
+- scrollUntilVisible:
+    element:
+      id: "activity-cancel"
+    direction: DOWN
+    timeout: 20000

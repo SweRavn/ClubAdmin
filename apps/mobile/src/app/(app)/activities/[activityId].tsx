@@ -3,21 +3,22 @@
 // meeting time, notes and the leaders of its groups. Answers (P1.5): how many
 // are coming and my family's answers with the buttons (through the offline
 // outbox); leaders open the attendance screen. Offline, before the details
-// were ever loaded, the schedule's cached entry is shown. Activities are
-// planned on the web. Car pools (P2.5): the cars there and home when the
-// group travels on its own.
+// were ever loaded, the schedule's cached entry is shown. Car pools (P2.5): the cars there and home when the
+// group travels on its own. Those who manage it change, cancel and restore
+// it (P2.7g; online only).
 
 import { describeRecurrence, enumKey } from "@clubadmin/i18n";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
 import { useState } from "react";
-import { Linking, View } from "react-native";
+import { Linking, TextInput, View } from "react-native";
 import { useFormatter, useLocale, useTranslations } from "use-intl";
 
 import {
   type SchedulePage,
   useActivity,
   useActivityDuties,
+  useCancelActivity,
   useCarpool,
   useMyGroups,
   useResponseList,
@@ -27,6 +28,7 @@ import { CarpoolSection } from "../../../components/carpool.tsx";
 import { DataAge } from "../../../components/data-age.tsx";
 import { DutyShifts } from "../../../components/duties.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
+import { FormError, formErrorsOf, useOnline } from "../../../components/form.tsx";
 import { NoticeDocuments } from "../../../components/notice-documents.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useProtectScreen } from "../../../components/protect-screen.ts";
@@ -186,6 +188,7 @@ function Activity({ activityId }: { activityId: string }) {
           ))}
         </Section>
       ) : null}
+      {a?.canManage ? <ManageActivity activityId={activityId} cancelled={cancelled} /> : null}
       {leads ? (
         <Button
           label={t("mobile.takeAttendance")}
@@ -280,6 +283,7 @@ function Activity({ activityId }: { activityId: string }) {
           carpool={carpool.data}
           timeZone={zone}
           open={!cancelled && startsAt.getTime() > Date.now()}
+          startsAt={startsAt.toISOString()}
           returnTrip={{
             place: a?.location?.name ?? a?.locationText ?? null,
             at: a?.endsAt ?? null,
@@ -347,5 +351,80 @@ function LeaderAnswers({ activityId }: { activityId: string }) {
         </Row>
       ))}
     </Section>
+  );
+}
+
+/** Change, cancel with a reason, restore (P2.7g): needs a connection. */
+function ManageActivity({ activityId, cancelled }: { activityId: string; cancelled: boolean }) {
+  const t = useTranslations();
+  const theme = useTheme();
+  const online = useOnline();
+  const change = useCancelActivity(activityId);
+  const [cancelling, setCancelling] = useState(false);
+  const [reason, setReason] = useState("");
+  return (
+    <View style={{ gap: theme.space(2) }} testID="manage-activity">
+      {online ? null : <Muted>{t("mobile.needsConnection")}</Muted>}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.space(2) }}>
+        {cancelled ? null : (
+          <Button
+            kind="secondary"
+            label={t("activities.edit")}
+            disabled={!online}
+            onPress={() => router.push(`/activities/edit/${activityId}`)}
+            testID="activity-edit"
+          />
+        )}
+        {cancelled ? (
+          <Button
+            kind="secondary"
+            label={t("activities.restore")}
+            disabled={!online}
+            busy={change.isPending}
+            onPress={() => change.mutate({ cancel: false })}
+            testID="activity-restore"
+          />
+        ) : cancelling ? null : (
+          <Button
+            kind="danger"
+            label={t("activities.cancel")}
+            disabled={!online}
+            onPress={() => setCancelling(true)}
+            testID="activity-cancel"
+          />
+        )}
+      </View>
+      {cancelling && !cancelled ? (
+        <View style={{ gap: theme.space(2) }}>
+          <TextInput
+            value={reason}
+            onChangeText={setReason}
+            placeholder={t("activities.cancelReason")}
+            accessibilityLabel={t("activities.cancelReason")}
+            placeholderTextColor={theme.colors.muted}
+            maxLength={300}
+            testID="activity-cancel-reason"
+            style={{
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              borderRadius: 8,
+              padding: theme.space(3),
+              color: theme.colors.fg,
+            }}
+          />
+          <Button
+            kind="danger"
+            label={t("activities.cancel")}
+            disabled={!online}
+            busy={change.isPending}
+            onPress={() =>
+              change.mutate({ cancel: true, reason }, { onSuccess: () => setCancelling(false) })
+            }
+            testID="activity-cancel-confirm"
+          />
+        </View>
+      ) : null}
+      <FormError errors={formErrorsOf(change.error)} />
+    </View>
   );
 }

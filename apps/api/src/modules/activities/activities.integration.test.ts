@@ -710,6 +710,11 @@ describe("places added by leaders (P1.6b)", () => {
     expect(forCoach.get(coachs)).toMatchObject({ useCount: 0, canDelete: true });
     expect(forCoach.get(managers)).toMatchObject({ useCount: 0, canDelete: false });
     expect((await list(club.manager.id)).get(used)).toMatchObject({ useCount: 1, canDelete: true });
+    // A form's list of places (P2.7g, the app) asks for no counts.
+    const plain = await api(club.manager.id, "GET", `/clubs/${club.id}/locations?usage=false`);
+    expect(plain.json<{ items: Item[] }>().items.find((l) => l.id === used)).toMatchObject({
+      useCount: 0,
+    });
 
     // Those who add places delete only their own; managers any unused one.
     const others = await api(coach.id, "DELETE", `/clubs/${club.id}/locations/${managers}`);

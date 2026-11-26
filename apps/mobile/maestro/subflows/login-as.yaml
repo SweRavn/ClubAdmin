@@ -46,7 +46,7 @@ appId: ${APP_ID}
       id: "schedule-screen"
     timeout: 30000
 - tapOn:
-    id: "open-home"
+    id: "tab-more"
 - extendedWaitUntil:
     visible:
       id: "home-screen"

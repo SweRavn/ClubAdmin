@@ -233,6 +233,14 @@ pnpm exec expo prebuild ...`). Release builds must set `APP_VARIANT`.
   believes it is offline, but a persona login still reaches the API. For a
   real loss of the connection, also `adb reverse --remove-all`
   (`android-emulator.md`, "Test").
+- **Screens (P2.7g):** a tab bar with Hem (the schedule, "Skapa
+  samåkning" under activities when one has car-pool defaults), Chatt (the
+  unread count; "Ny kanal" on a group's page), Anslagstavla ("Nytt anslag"
+  for those who may send) and Mer (clubs, groups, "Närvaro" for leaders,
+  settings with Samåkning). A group's page lists the coming activities and,
+  for leaders, "Ny aktivitet", "Närvaro", "Nytt anslag" and "Ny kanal"; an
+  activity's page has Ändra, Ställ in and Återställ for those who manage it.
+  Creating and changing need a connection; the form says so offline.
 - **Logging in:** development builds show the persona picker (`DEV_AUTH`,
   tokens from `POST /api/v1/dev/tokens`); "Log in with email" uses Zitadel
   in the system browser.
@@ -240,7 +248,11 @@ pnpm exec expo prebuild ...`). Release builds must set `APP_VARIANT`.
   `pnpm test`); end-to-end flows with [Maestro](https://maestro.dev) in
   `apps/mobile/maestro/` (`maestro test -e APP_ID=org.clubadmin.app.dev -e
 APP_SCHEME=clubadmin-dev apps/mobile/maestro/03-language.yaml`; CI runs
-  them all, see `apps/mobile/scripts/ci-android-e2e.sh`).
+  them all, see `apps/mobile/scripts/ci-android-e2e.sh`). P2.7g's flows: 09
+  (attendance from "Närvaro", offline), 16 (a new match with one player not
+  called up and a field error, cancelled and restored), 17 (Sara's
+  announcement to F2017, seen by Anna), 18 (Mikael's car in one tap,
+  changed and removed) and 19 (the chats tab and an unread count).
 - **Checks:** `pnpm --filter @clubadmin/mobile bundle:check` (production
   bundle without development code, size budget), `pnpm licenses:check
 --mobile`, and after changing dependencies `pnpm --filter

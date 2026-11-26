@@ -407,6 +407,13 @@
       "when": 1794930000000,
       "tag": "0057_carpool_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1794940000000,
+      "tag": "0058_entries_people_lookup",
+      "breakpoints": true
     }
   ]
 }

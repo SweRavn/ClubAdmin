@@ -5,22 +5,40 @@
 // them), booking a seat for oneself or a child, cancelling, and offering
 // seats in one's own car. A child's seat that needs a guardian's confirmation
 // (the rule of two) is confirmed in "Mina samåkningar", where the driver's
-// name is shown. Cache first: the cached car pool shows at once.
+// name is shown. Cache first: the cached car pool shows at once. Since
+// P2.7g as on the web: the departure and return times, the offer starting
+// from my defaults, changing and removing my car, why a seat cannot be
+// booked, and "Skapa samåkning" in one tap.
 
 import { enumKey } from "@clubadmin/i18n";
 import { personLabel } from "@clubadmin/shared";
 import { useState } from "react";
-import { Switch, Text, TextInput, View } from "react-native";
+import { Text, View } from "react-native";
 import { useFormatter, useTranslations } from "use-intl";
 
 import {
   type Carpool,
   type CarpoolOffer,
+  type CarpoolSummary,
+  type PersonalCarpoolSettings,
   useBookCarpoolSeat,
   useCancelCarpoolSeat,
+  useDeleteCarpoolOffer,
+  useMyCarpoolSettings,
   useOfferCarpool,
+  useQuickCarpool,
+  useUpdateCarpoolOffer,
 } from "../api/queries.ts";
 import { useTheme } from "../theme.ts";
+import { defaultReturnTime, timeOnDay } from "./activity-logic.ts";
+import {
+  DateTimeField,
+  FormError,
+  formErrorsOf,
+  SwitchField,
+  TextField,
+  useOnline,
+} from "./form.tsx";
 import { PersonName } from "./person-name.tsx";
 import { RoleBadge } from "./role-badge.tsx";
 import { Body, Button, Muted, Row, Section } from "./ui.tsx";
@@ -33,6 +51,7 @@ export function CarpoolSection({
   timeZone,
   open,
   returnTrip = { place: null, at: null },
+  startsAt,
 }: {
   activityId: string;
   carpool: Carpool;
@@ -41,6 +60,8 @@ export function CarpoolSection({
   open: boolean;
   /** Where and when the way home starts by default: the activity's place and end (P2.7c). */
   returnTrip?: { place: string | null; at: string | null };
+  /** The activity's start: times are entered on its day (P2.7g). */
+  startsAt?: string;
 }) {
   const t = useTranslations();
   if (carpool.transportMode === "shared") {
@@ -55,7 +76,14 @@ export function CarpoolSection({
   // No transport mode and no car yet (P2.7b): the offer form starts the car pool.
   if (carpool.transportMode !== "own" && carpool.offers.length === 0) {
     return open && carpool.canOffer ? (
-      <OfferForm activityId={activityId} title={t("carpool.start")} returnTrip={returnTrip} />
+      <OfferForm
+        activityId={activityId}
+        title={t("carpool.start")}
+        carpool={carpool}
+        timeZone={timeZone}
+        returnTrip={returnTrip}
+        startsAt={startsAt ?? null}
+      />
     ) : null;
   }
   const myOut = carpool.offers.some((o) => o.mine && o.direction === "out");
@@ -81,6 +109,7 @@ export function CarpoolSection({
                   carpool={carpool}
                   timeZone={timeZone}
                   open={open}
+                  startsAt={startsAt ?? null}
                   last={index === cars.length - 1}
                 />
               ))
@@ -104,8 +133,24 @@ export function CarpoolSection({
           </Row>
         </Section>
       ) : null}
+      {/* Why no seat can be booked (P2.7c; the age from which one books oneself, P2.7f). */}
+      {!open ? (
+        <Muted testID="carpool-why">{t("carpool.startedNoBooking")}</Muted>
+      ) : carpool.canBookFor.length === 0 && carpool.offers.some((o) => !o.mine) ? (
+        <Muted testID="carpool-why">
+          {carpool.selfBookingAge !== undefined
+            ? t("carpool.tooYoungToBook", { age: carpool.selfBookingAge })
+            : t("carpool.notTakingPart")}
+        </Muted>
+      ) : null}
       {open && carpool.canOffer && !myOut ? (
-        <OfferForm activityId={activityId} returnTrip={returnTrip} />
+        <OfferForm
+          activityId={activityId}
+          carpool={carpool}
+          timeZone={timeZone}
+          returnTrip={returnTrip}
+          startsAt={startsAt ?? null}
+        />
       ) : null}
     </>
   );
@@ -117,6 +162,7 @@ function Car({
   carpool,
   timeZone,
   open,
+  startsAt,
   last,
 }: {
   activityId: string;
@@ -124,6 +170,7 @@ function Car({
   carpool: Carpool;
   timeZone: string;
   open: boolean;
+  startsAt: string | null;
   last: boolean;
 }) {
   const t = useTranslations();
@@ -131,6 +178,7 @@ function Car({
   const theme = useTheme();
   const book = useBookCarpoolSeat(activityId);
   const cancel = useCancelCarpoolSeat(activityId);
+  const [editing, setEditing] = useState(false);
   const booked = new Set(offer.bookings.flatMap((b) => (b.passenger ? [b.passenger.id] : [])));
   const bookable = open && !offer.mine && offer.freeSeats > 0 && !offer.willingOnly;
   return (
@@ -206,118 +254,325 @@ function Car({
               />
             ))
         : null}
+      {open && offer.mine ? (
+        editing ? (
+          <EditCar
+            activityId={activityId}
+            offer={offer}
+            timeZone={timeZone}
+            startsAt={startsAt}
+            onDone={() => setEditing(false)}
+          />
+        ) : (
+          <Button
+            kind="secondary"
+            label={t("carpool.edit")}
+            onPress={() => setEditing(true)}
+            testID={`carpool-edit-${offer.direction}`}
+          />
+        )
+      ) : null}
     </Row>
   );
 }
 
-function OfferForm({
+/** My car's seats, time, place and note; or removing it (its passengers are told). */
+function EditCar({
   activityId,
-  title,
-  returnTrip,
+  offer,
+  timeZone,
+  startsAt,
+  onDone,
 }: {
   activityId: string;
-  title?: string;
-  returnTrip: { place: string | null; at: string | null };
+  offer: CarpoolOffer;
+  timeZone: string;
+  startsAt: string | null;
+  onDone: () => void;
 }) {
   const t = useTranslations();
   const theme = useTheme();
+  const online = useOnline();
+  const update = useUpdateCarpoolOffer(activityId);
+  const remove = useDeleteCarpoolOffer(activityId);
+  const [seats, setSeats] = useState(Math.max(1, offer.seats));
+  const [time, setTime] = useState(
+    offer.departureAt ? defaultReturnTime(offer.departureAt, null, timeZone) : "",
+  );
+  const [place, setPlace] = useState(offer.departurePlace ?? "");
+  const [note, setNote] = useState(offer.note ?? "");
+  const errors = formErrorsOf(update.error ?? remove.error);
+  return (
+    <View style={{ gap: theme.space(2) }} testID="carpool-edit-form">
+      {offer.willingOnly ? null : <SeatsStepper seats={seats} onChange={setSeats} />}
+      <DateTimeField
+        label={t("carpool.departureTime")}
+        mode="time"
+        name="carpool-edit-time"
+        optional
+        value={time}
+        onChange={setTime}
+        error={errors.fields.departureAt}
+      />
+      <TextField
+        label={t("carpool.departurePlace")}
+        name="carpool-edit-place"
+        value={place}
+        onChange={setPlace}
+        maxLength={200}
+        error={errors.fields.departurePlace}
+      />
+      <TextField
+        label={t("carpool.note")}
+        name="carpool-edit-note"
+        value={note}
+        onChange={setNote}
+        maxLength={300}
+        error={errors.fields.note}
+      />
+      <FormError errors={errors} />
+      {online ? null : <Muted>{t("mobile.needsConnection")}</Muted>}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.space(2) }}>
+        <Button
+          label={t("carpool.save")}
+          disabled={!online}
+          busy={update.isPending}
+          onPress={() =>
+            update.mutate(
+              {
+                offerId: offer.id,
+                ...(offer.willingOnly ? {} : { seats }),
+                departurePlace: place.trim() || null,
+                note: note.trim() || null,
+                departureAt: startsAt ? timeOnDay(time, startsAt, timeZone) : null,
+              },
+              { onSuccess: onDone },
+            )
+          }
+          testID="carpool-edit-save"
+        />
+        <Button
+          kind="danger"
+          label={t("carpool.remove")}
+          disabled={!online}
+          busy={remove.isPending}
+          onPress={() => remove.mutate(offer.id, { onSuccess: onDone })}
+          testID="carpool-remove"
+        />
+      </View>
+    </View>
+  );
+}
+
+function SeatsStepper({ seats, onChange }: { seats: number; onChange: (seats: number) => void }) {
+  const t = useTranslations();
+  const theme = useTheme();
+  return (
+    <View style={{ gap: theme.space(1) }}>
+      <Muted>{t("carpool.seats")}</Muted>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: theme.space(2) }}>
+        <Button
+          kind="secondary"
+          label="−"
+          disabled={seats <= 1}
+          onPress={() => onChange(seats - 1)}
+          testID="carpool-seats-less"
+        />
+        <Body>{String(seats)}</Body>
+        <Button
+          kind="secondary"
+          label="+"
+          disabled={seats >= 8}
+          onPress={() => onChange(seats + 1)}
+          testID="carpool-seats-more"
+        />
+      </View>
+    </View>
+  );
+}
+
+/** Offering seats; starts from my defaults once they are loaded. */
+function OfferForm(props: {
+  activityId: string;
+  title?: string;
+  carpool: Carpool;
+  timeZone: string;
+  returnTrip: { place: string | null; at: string | null };
+  startsAt: string | null;
+}) {
+  const settings = useMyCarpoolSettings();
+  if (settings.isPending && !settings.isError) return null;
+  return <OfferFields {...props} defaults={settings.data?.settings ?? null} />;
+}
+
+function OfferFields({
+  activityId,
+  title,
+  carpool,
+  timeZone,
+  returnTrip,
+  startsAt,
+  defaults,
+}: {
+  activityId: string;
+  title?: string;
+  carpool: Carpool;
+  timeZone: string;
+  returnTrip: { place: string | null; at: string | null };
+  startsAt: string | null;
+  defaults: PersonalCarpoolSettings | null;
+}) {
+  const t = useTranslations();
+  const theme = useTheme();
+  const online = useOnline();
   const offer = useOfferCarpool(activityId);
-  const [seats, setSeats] = useState(3);
-  const [note, setNote] = useState("");
+  const [seats, setSeats] = useState(defaults?.seats ?? 3);
+  const [time, setTime] = useState("");
+  const [place, setPlace] = useState(defaults?.departurePlace ?? "");
+  const [note, setNote] = useState(defaults?.note ?? "");
   const [withReturn, setWithReturn] = useState(true);
-  // The way home starts at the activity's place when it ends (P2.7c), never
-  // where the outward trip started.
+  // The way home starts at the activity's place (P2.7c), at the activity's,
+  // my, the club's or 15 minutes after the end (P2.7f, `defaultReturnAt`).
   const [returnPlace, setReturnPlace] = useState(returnTrip.place ?? "");
+  const [returnTime, setReturnTime] = useState(
+    defaultReturnTime(
+      carpool.defaultReturnAt,
+      returnTrip.at,
+      timeZone,
+      defaults?.returnMinutes ?? 15,
+    ),
+  );
+  const quick = useQuickCarpool();
+  const errors = formErrorsOf(offer.error ?? quick.error);
+  const day = startsAt ?? returnTrip.at;
   return (
     <Section title={title ?? t("carpool.offer")}>
-      <Row>
-        <Muted>{t("carpool.seats")}</Muted>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: theme.space(2) }}>
+      <View style={{ gap: theme.space(2), paddingVertical: theme.space(2) }}>
+        {/* With my defaults: there and home in one tap (P2.7f), or the details below. */}
+        {defaults ? (
           <Button
-            kind="secondary"
-            label="−"
-            disabled={seats <= 1}
-            onPress={() => setSeats(seats - 1)}
-            testID="carpool-seats-less"
+            label={t("carpool.quick", { seats: defaults.seats })}
+            disabled={!online}
+            busy={quick.isPending}
+            onPress={() =>
+              quick.mutate({ activityId, settings: defaults, returnPlace: returnTrip.place })
+            }
+            testID={`carpool-quick-${activityId}`}
           />
-          <Body>{String(seats)}</Body>
-          <Button
-            kind="secondary"
-            label="+"
-            disabled={seats >= 8}
-            onPress={() => setSeats(seats + 1)}
-            testID="carpool-seats-more"
-          />
-        </View>
-      </Row>
-      <Row>
-        <TextInput
-          value={note}
-          onChangeText={setNote}
-          placeholder={t("carpool.notePlaceholder")}
-          accessibilityLabel={t("carpool.note")}
-          maxLength={300}
-          testID="carpool-note"
-          style={{
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            borderRadius: 8,
-            padding: theme.space(3),
-            color: theme.colors.fg,
-          }}
+        ) : null}
+        <SeatsStepper seats={seats} onChange={setSeats} />
+        <DateTimeField
+          label={t("carpool.departureTime")}
+          mode="time"
+          name="carpool-time"
+          optional
+          value={time}
+          onChange={setTime}
+          error={errors.fields.departureAt}
         />
-      </Row>
-      <Row>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: theme.space(2) }}>
-          <Switch
-            value={withReturn}
-            onValueChange={setWithReturn}
-            accessibilityLabel={t("carpool.withReturn")}
-          />
-          <Body>{t("carpool.withReturn")}</Body>
-        </View>
-      </Row>
-      {withReturn ? (
-        <Row>
-          <TextInput
-            value={returnPlace}
-            onChangeText={setReturnPlace}
-            placeholder={t("carpool.returnDeparturePlace")}
-            accessibilityLabel={t("carpool.returnDeparturePlace")}
-            maxLength={200}
-            testID="carpool-return-place"
-            style={{
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-              borderRadius: 8,
-              padding: theme.space(3),
-              color: theme.colors.fg,
-            }}
-          />
-        </Row>
-      ) : null}
-      <Row last>
+        <TextField
+          label={t("carpool.departurePlace")}
+          name="carpool-place"
+          value={place}
+          onChange={setPlace}
+          maxLength={200}
+          error={errors.fields.departurePlace}
+        />
+        <TextField
+          label={t("carpool.note")}
+          name="carpool-note"
+          value={note}
+          onChange={setNote}
+          maxLength={300}
+          placeholder={t("carpool.notePlaceholder")}
+          error={errors.fields.note}
+        />
+        <SwitchField
+          label={t("carpool.withReturn")}
+          name="carpool-with-return"
+          value={withReturn}
+          onChange={setWithReturn}
+        />
+        {withReturn ? (
+          <>
+            <DateTimeField
+              label={t("carpool.returnDepartureTime")}
+              mode="time"
+              name="carpool-return-time"
+              optional
+              value={returnTime}
+              onChange={setReturnTime}
+              error={errors.fields.returnDepartureAt}
+            />
+            <TextField
+              label={t("carpool.returnDeparturePlace")}
+              name="carpool-return-place"
+              value={returnPlace}
+              onChange={setReturnPlace}
+              maxLength={200}
+              error={errors.fields.returnDeparturePlace}
+            />
+          </>
+        ) : null}
+        <FormError errors={errors} />
+        {online ? null : <Muted>{t("mobile.needsConnection")}</Muted>}
         <Button
           label={t("carpool.offerSubmit")}
+          disabled={!online}
           busy={offer.isPending}
           onPress={() =>
             offer.mutate({
               direction: "out",
               willingOnly: false,
               seats,
-              note: note.trim() === "" ? null : note.trim(),
+              departurePlace: place.trim() || null,
+              departureAt: day ? timeOnDay(time, day, timeZone) : null,
+              note: note.trim() || null,
               withReturn,
               ...(withReturn
                 ? {
-                    returnDeparturePlace: returnPlace.trim() === "" ? null : returnPlace.trim(),
-                    returnDepartureAt: returnTrip.at,
+                    returnDeparturePlace: returnPlace.trim() || null,
+                    returnDepartureAt: day ? timeOnDay(returnTime, day, timeZone, startsAt) : null,
                   }
                 : {}),
             })
           }
           testID="carpool-offer-submit"
         />
-      </Row>
+      </View>
     </Section>
+  );
+}
+
+/**
+ * "Skapa samåkning" (P2.7f): my car there and home with my defaults, one
+ * tap; for those with defaults where the car pool takes offers and I have
+ * no car yet. The way home's time is the API's (`defaultReturnAt`).
+ */
+export function CarpoolQuickButton({
+  activityId,
+  summary,
+  settings,
+  returnPlace,
+}: {
+  activityId: string;
+  summary: CarpoolSummary | undefined;
+  settings: PersonalCarpoolSettings | null | undefined;
+  returnPlace: string | null;
+}) {
+  const t = useTranslations();
+  const quick = useQuickCarpool();
+  const online = useOnline();
+  if (!settings || !summary?.open || summary.canOffer !== true) return null;
+  if (summary.offers.some((o) => o.mine)) return null;
+  return (
+    <Button
+      kind="secondary"
+      label={t("carpool.quick", { seats: settings.seats })}
+      disabled={!online}
+      busy={quick.isPending}
+      onPress={() => quick.mutate({ activityId, settings, returnPlace })}
+      testID={`carpool-quick-${activityId}`}
+    />
   );
 }
