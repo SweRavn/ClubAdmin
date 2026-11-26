@@ -7,4 +7,6 @@ name: Language follows the user's preference
     env:
       PERSONA: 0199a000-0000-7000-8000-000000000011
 - assertVisible: "Mine klubber"
-- assertVisible: "Hjem"
+# The tab bar (P2.7g) in Norwegian.
+- assertVisible: "Oppslagstavlen"
+- assertVisible: "Min timeplan"
