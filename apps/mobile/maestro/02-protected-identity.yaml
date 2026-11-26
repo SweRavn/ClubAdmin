@@ -23,8 +23,13 @@ name: Protected identity
     visible:
       id: "group-screen"
     timeout: 20000
+# The group's coming activities (P2.7g) may load after the roster and move
+# it down: scroll to the badge itself.
 - scrollUntilVisible:
     element:
       id: "person-0199a000-0000-7000-8000-000000000024"
-- assertVisible:
-    id: "protected-badge"
+- scrollUntilVisible:
+    element:
+      id: "protected-badge"
+    direction: DOWN
+    timeout: 20000
