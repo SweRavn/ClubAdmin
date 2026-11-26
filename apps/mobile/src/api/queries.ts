@@ -1591,13 +1591,16 @@ export function useUpdateCarpoolOffer(activityId: string) {
   const { api } = useSession();
   const refresh = useCarpoolRefresh();
   return useMutation({
-    mutationFn: async ({ offerId, ...body }: { offerId: string } & Schemas["UpdateCarpoolOffer"]) =>
-      data(
-        await api.PATCH("/api/v1/activities/{activityId}/carpool/offers/{offerId}", {
-          params: { path: { activityId, offerId } },
-          body,
-        }),
-      ),
+    // 204 No Content: nothing to unwrap.
+    mutationFn: async ({
+      offerId,
+      ...body
+    }: { offerId: string } & Schemas["UpdateCarpoolOffer"]) => {
+      await api.PATCH("/api/v1/activities/{activityId}/carpool/offers/{offerId}", {
+        params: { path: { activityId, offerId } },
+        body,
+      });
+    },
     onSuccess: refresh,
   });
 }
@@ -1714,13 +1717,13 @@ export function useUpdateAnnouncement(clubId: string, announcementId: string) {
   const { api } = useSession();
   const refresh = useAnnouncementRefresh();
   return useMutation({
-    mutationFn: async (body: Schemas["UpdateAnnouncement"]) =>
-      data(
-        await api.PATCH("/api/v1/clubs/{clubId}/announcements/{announcementId}", {
-          params: { path: { clubId, announcementId } },
-          body,
-        }),
-      ),
+    // 204 No Content: nothing to unwrap.
+    mutationFn: async (body: Schemas["UpdateAnnouncement"]) => {
+      await api.PATCH("/api/v1/clubs/{clubId}/announcements/{announcementId}", {
+        params: { path: { clubId, announcementId } },
+        body,
+      });
+    },
     onSuccess: refresh,
   });
 }
