@@ -19,10 +19,14 @@ import {
   type RecordAttendanceInput,
   RecordAttendanceSchema,
   type ResponseStatus,
+  type SetInviteeInput,
+  SetInviteeSchema,
   type SetInviteesInput,
   SetInviteesSchema,
   type SetResponseInput,
   SetResponseSchema,
+  type SetSeriesInviteesInput,
+  SetSeriesInviteesSchema,
 } from "@clubadmin/shared";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
@@ -33,7 +37,13 @@ import type { MembershipsService } from "../memberships/index.ts";
 import type { PeopleService } from "../people/index.ts";
 import * as repo from "./activities.repository.ts";
 import * as records from "./attendance.repository.ts";
-import { applyCallUpInTx } from "./call-ups.ts";
+import {
+  applyCallUpInTx,
+  applyCallUpsInTx,
+  callUpAnnounced,
+  type CallUpChange,
+  callUpSentAt,
+} from "./call-ups.ts";
 
 const MINUTE_MS = 60_000;
 
@@ -128,8 +138,34 @@ export interface GroupAttendanceView {
 
 export interface InviteesView {
   activity: repo.ActivityRow;
-  candidates: { personId: string; invited: boolean }[];
+  candidates: {
+    personId: string;
+    invited: boolean;
+    guest: boolean;
+    groups: { id: string; name: string }[];
+  }[];
   invitedCount: number;
+  /** Found by name (`q`): active members not on the list. */
+  others: { personId: string; groups: { id: string; name: string }[] }[];
+  callUpSentAt: Date | null;
+  announced: boolean;
+  editable: boolean;
+  /** A series session following its series' call-up. */
+  seriesId: string | null;
+  revocations: records.RevocationRow[];
+}
+
+export interface SeriesInviteesView {
+  seriesId: string;
+  inviteesOnly: boolean;
+  people: { personId: string; inSeries: boolean; guest: boolean }[];
+  sessions: {
+    activity: repo.ActivityRow;
+    callUpSentAt: Date | null;
+    calledUp: Set<string>;
+    overrides: Map<string, records.OverrideKind>;
+  }[];
+  nextCursor: string | null;
 }
 
 const SUGGESTION: Record<ResponseStatus, AttendanceStatus> = {
@@ -536,21 +572,31 @@ export class AttendanceService {
   // --- Internals ----------------------------------------------------------------------
 
   /** The activity locked for an answer from this person: scheduled, asking, not over, on the roster. */
-  // --- Call-ups (#19) --------------------------------------------------------------
+  // --- Call-ups (#19, P2.10, ADR 0056) ------------------------------------------------
 
-  /** Who may be called up (the groups' members on the start) and who is. */
-  invitees(context: TenantContext, activityId: string): Promise<InviteesView> {
+  /**
+   * Who may be called up (the groups' participants, guests marked, and those
+   * called up from elsewhere), who is, when the call-up went out, its
+   * revocations; with `q` also active members of the club found by name.
+   */
+  invitees(
+    context: TenantContext,
+    activityId: string,
+    query: { q?: string | undefined } = {},
+  ): Promise<InviteesView> {
     return this.db.withTenant(context, async (tx) => {
       const activity = await repo.findActivity(tx, activityId);
       if (!activity) throw new DomainError("not_found");
-      return this.inviteesView(tx, activity);
+      return this.inviteesView(tx, activity, query.q ?? null);
     });
   }
 
   /**
-   * Calls up some of the groups' members, or the whole groups again. Those no
-   * longer called up keep their answers, which are then not counted. Setting
-   * the same again changes nothing.
+   * Calls up people (any active member of the club, never the groups'
+   * leaders), or the whole groups again. Until the start; not an event's
+   * session. After the call-up went out, removals are revocations and need a
+   * reason. A series session following its series' call-up keeps the
+   * difference as its own overrides.
    */
   setInvitees(
     context: TenantContext,
@@ -559,22 +605,241 @@ export class AttendanceService {
   ): Promise<InviteesView> {
     return this.db.withTenant(context, async (tx) => {
       const data = parseInput(SetInviteesSchema, input);
-      const activity = await repo.lockActivity(tx, activityId);
-      if (!activity) throw new DomainError("not_found");
-      if (activity.status === "cancelled") throw new DomainError("activity_cancelled");
-      if (activity.endsAt.getTime() <= this.now().getTime()) {
-        throw new DomainError("activity_ended");
-      }
-      const candidates = new Set(
-        (await records.roster(tx, activityId, { wholeGroups: true }))
-          .filter((r) => r.role === "participant")
-          .map((r) => r.personId),
-      );
+      const activity = await this.callUpTarget(tx, activityId);
       const wanted = new Set(data.personIds);
-      if ([...wanted].some((id) => !candidates.has(id))) throw new DomainError("not_on_roster");
-      const updated = await this.applyCallUp(tx, context, activity, data.inviteesOnly, wanted);
-      return this.inviteesView(tx, updated);
+      await this.requireCallable(tx, context.clubId, activity, wanted);
+      const series = await this.followedSeries(tx, activity);
+      if (series && data.inviteesOnly) {
+        const listed = await records.seriesInvitees(tx, series.id);
+        const by = actorPersonId(context);
+        for (const personId of new Set([...listed, ...wanted])) {
+          const kind =
+            wanted.has(personId) === listed.has(personId)
+              ? null
+              : wanted.has(personId)
+                ? "added"
+                : "removed";
+          await records.setOverride(tx, context.clubId, activity.id, personId, kind, by);
+        }
+      }
+      await applyCallUpInTx(
+        tx,
+        context,
+        activity,
+        data.inviteesOnly,
+        wanted,
+        actorPersonId(context),
+        {
+          now: this.now(),
+          reason: data.revocationReason ?? null,
+        },
+      );
+      return this.inviteesView(tx, (await repo.findActivity(tx, activityId))!, null);
     });
+  }
+
+  /** One person on one activity (a series session: an override of its series' list). */
+  setInvitee(
+    context: TenantContext,
+    activityId: string,
+    personId: string,
+    input: SetInviteeInput,
+  ): Promise<InviteesView> {
+    return this.db.withTenant(context, async (tx) => {
+      const data = parseInput(SetInviteeSchema, input);
+      const activity = await this.callUpTarget(tx, activityId);
+      const current = (await records.inviteesOf(tx, [activity.id])).get(activity.id)!;
+      const groups = (await records.groupParticipantsOf(tx, [activity.id])).get(activity.id)!;
+      const effective = new Set(activity.inviteesOnly ? current : groups);
+      if (data.calledUp) effective.add(personId);
+      else effective.delete(personId);
+      await this.requireCallable(tx, context.clubId, activity, effective);
+      const series = await this.followedSeries(tx, activity);
+      if (series) {
+        const listed = await records.seriesInvitees(tx, series.id);
+        const kind =
+          data.calledUp === listed.has(personId) ? null : data.calledUp ? "added" : "removed";
+        await records.setOverride(
+          tx,
+          context.clubId,
+          activity.id,
+          personId,
+          kind,
+          actorPersonId(context),
+        );
+      }
+      await applyCallUpInTx(tx, context, activity, true, effective, actorPersonId(context), {
+        now: this.now(),
+        reason: data.revocationReason ?? null,
+      });
+      return this.inviteesView(tx, (await repo.findActivity(tx, activityId))!, null);
+    });
+  }
+
+  /**
+   * A series' call-up and the grid of its coming sessions (a page by start):
+   * the groups' participants and the series' guests by session.
+   */
+  seriesInvitees(
+    context: TenantContext,
+    seriesId: string,
+    page: { cursor?: string | undefined; limit: number },
+  ): Promise<SeriesInviteesView> {
+    return this.db.withTenant(context, async (tx) => {
+      const series = await repo.findSeries(tx, seriesId);
+      if (!series) throw new DomainError("not_found");
+      const now = this.now();
+      const rows = await repo.seriesComingSessions(tx, seriesId, now, {
+        cursor: page.cursor ?? null,
+        limit: page.limit + 1,
+      });
+      const sessions = rows.slice(0, page.limit);
+      const ids = sessions.map((a) => a.id);
+      const listed = await records.seriesInvitees(tx, seriesId);
+      const group = await repo.seriesGroupPeople(tx, seriesId);
+      const invited = await records.inviteesOf(tx, ids);
+      const overrides = await records.overridesOf(tx, ids);
+      const extra = new Set([...listed, ...[...invited.values()].flatMap((s) => [...s])]);
+      const people = [...new Set([...group.participants, ...extra])];
+      return {
+        seriesId,
+        inviteesOnly: series.inviteesOnly,
+        people: people.map((personId) => ({
+          personId,
+          inSeries: listed.has(personId),
+          guest: group.guests.has(personId) || !group.participants.has(personId),
+        })),
+        sessions: sessions.map((activity) => ({
+          activity,
+          callUpSentAt: callUpSentAt(activity, now),
+          calledUp: activity.inviteesOnly
+            ? (invited.get(activity.id) ?? new Set())
+            : new Set(group.participants),
+          overrides: overrides.get(activity.id) ?? new Map(),
+        })),
+        nextCursor: rows.length > page.limit ? sessions.at(-1)!.id : null,
+      };
+    });
+  }
+
+  /**
+   * Sets a series' call-up: every coming session that follows the series
+   * (not detached, not an event's) gets the list with its own overrides, in
+   * one go; removals from sessions whose call-up went out are revocations
+   * with one reason and one notice per person (ADR 0056 decision 6).
+   */
+  setSeriesInvitees(
+    context: TenantContext,
+    seriesId: string,
+    input: SetSeriesInviteesInput,
+  ): Promise<{ sessions: number; revoked: number }> {
+    return this.db.withTenant(context, async (tx) => {
+      const data = parseInput(SetSeriesInviteesSchema, input);
+      const series = await repo.lockSeries(tx, seriesId);
+      if (!series) throw new DomainError("not_found");
+      const group = await repo.seriesGroupPeople(tx, seriesId);
+      const wanted = new Set(data.personIds);
+      const outside = [...wanted].filter((id) => !group.participants.has(id));
+      if ([...wanted].some((id) => group.leaders.has(id) && !group.participants.has(id))) {
+        throw new DomainError("not_callable");
+      }
+      const active = await this.memberships.activeMembersInTx(tx, context.clubId, outside);
+      if (outside.some((id) => !active.has(id))) throw new DomainError("not_callable");
+      const by = actorPersonId(context);
+      await repo.updateSeries(tx, seriesId, { inviteesOnly: data.inviteesOnly });
+      await records.replaceSeriesInvitees(
+        tx,
+        context.clubId,
+        seriesId,
+        data.inviteesOnly ? [...wanted] : [],
+        by,
+      );
+      const now = this.now();
+      const coming = (await repo.seriesComingSessions(tx, seriesId, now, null)).filter(
+        (a) => !a.detached && a.status === "scheduled",
+      );
+      const events = await records.eventSessions(
+        tx,
+        coming.map((a) => a.id),
+      );
+      const sessions = coming.filter((a) => !events.has(a.id));
+      const overrides = await records.overridesOf(
+        tx,
+        sessions.map((a) => a.id),
+      );
+      if (!data.inviteesOnly) {
+        await records.deleteOverrides(
+          tx,
+          sessions.map((a) => a.id),
+        );
+      }
+      const changes: CallUpChange[] = sessions.map((activity) => {
+        const own = overrides.get(activity.id) ?? new Map<string, records.OverrideKind>();
+        const effective = new Set(wanted);
+        for (const [personId, kind] of own) {
+          if (kind === "added") effective.add(personId);
+          else effective.delete(personId);
+        }
+        return data.inviteesOnly
+          ? { activity, inviteesOnly: true, wanted: effective }
+          : { activity, inviteesOnly: false, wanted: new Set<string>() };
+      });
+      const result = await applyCallUpsInTx(tx, context, changes, {
+        invitedBy: by,
+        now,
+        reason: data.revocationReason ?? null,
+        seriesId,
+      });
+      await audit.record(tx, {
+        action: "activity.series.invitees.changed",
+        resourceType: "activity_series",
+        resourceId: seriesId,
+        changedFields: ["invitees"],
+      });
+      return {
+        sessions: changes.length,
+        revoked: [...result.revoked.values()].reduce((n, ids) => n + ids.length, 0),
+      };
+    });
+  }
+
+  /** An activity whose call-up may change now: scheduled, not started, not an event's. */
+  private async callUpTarget(tx: Tx, activityId: string): Promise<repo.ActivityRow> {
+    const activity = await repo.lockActivity(tx, activityId);
+    if (!activity) throw new DomainError("not_found");
+    if (activity.status === "cancelled") throw new DomainError("activity_cancelled");
+    if (activity.startsAt.getTime() <= this.now().getTime()) {
+      throw new DomainError("activity_started");
+    }
+    if ((await records.eventSessions(tx, [activity.id])).size > 0) {
+      throw new DomainError("event_session");
+    }
+    return activity;
+  }
+
+  /** The series whose call-up the session follows (not detached), if any. */
+  private async followedSeries(tx: Tx, activity: repo.ActivityRow): Promise<repo.SeriesRow | null> {
+    if (!activity.seriesId || activity.detached) return null;
+    const series = await repo.findSeries(tx, activity.seriesId);
+    return series?.inviteesOnly ? series : null;
+  }
+
+  /** Those called up from outside the groups are active members, never the groups' leaders. */
+  private async requireCallable(
+    tx: Tx,
+    clubId: string,
+    activity: repo.ActivityRow,
+    wanted: ReadonlySet<string>,
+  ): Promise<void> {
+    const groups = (await records.groupParticipantsOf(tx, [activity.id])).get(activity.id)!;
+    const current = (await records.inviteesOf(tx, [activity.id])).get(activity.id)!;
+    const leaders = await records.groupLeadersOf(tx, activity.id);
+    if ([...wanted].some((id) => leaders.has(id) && !groups.has(id))) {
+      throw new DomainError("not_callable");
+    }
+    const outside = [...wanted].filter((id) => !groups.has(id) && !current.has(id));
+    const active = await this.memberships.activeMembersInTx(tx, clubId, outside);
+    if (outside.some((id) => !active.has(id))) throw new DomainError("not_callable");
   }
 
   // --- Events (P1.6, ADR 0038) --------------------------------------------------------
@@ -640,18 +905,53 @@ export class AttendanceService {
     wanted: ReadonlySet<string>,
     invitedBy: string = actorPersonId(context),
   ): Promise<repo.ActivityRow> {
-    return applyCallUpInTx(tx, context, activity, inviteesOnly, wanted, invitedBy);
+    return applyCallUpInTx(tx, context, activity, inviteesOnly, wanted, invitedBy, {
+      now: this.now(),
+    });
   }
 
-  private async inviteesView(tx: Tx, activity: repo.ActivityRow): Promise<InviteesView> {
-    const candidates = (await records.roster(tx, activity.id, { wholeGroups: true }))
-      .filter((r) => r.role === "participant")
-      .map((r) => r.personId);
+  private async inviteesView(
+    tx: Tx,
+    activity: repo.ActivityRow,
+    q: string | null,
+  ): Promise<InviteesView> {
+    const roster = (await records.roster(tx, activity.id, { wholeGroups: true })).filter(
+      (r) => r.role === "participant",
+    );
     const invited = new Set(await records.invitees(tx, activity.id));
+    // Members first, then guests (ADR 0056: "Gäster" apart).
+    const ordered = [...roster.filter((r) => !r.guest), ...roster.filter((r) => r.guest)];
+    const onList = new Set(ordered.map((r) => r.personId));
+    const leaders = await records.groupLeadersOf(tx, activity.id);
+    const found = q
+      ? (await this.memberships.activeMembersMatchingInTx(tx, activity.clubId, q, 25)).filter(
+          (id) => !onList.has(id) && !leaders.has(id),
+        )
+      : [];
+    const groups = await repo.groupsOfPeople(tx, activity.clubId, [
+      ...ordered.filter((r) => r.guest).map((r) => r.personId),
+      ...found,
+    ]);
+    const now = this.now();
+    const series = await this.followedSeries(tx, activity);
     return {
       activity,
-      candidates: candidates.map((personId) => ({ personId, invited: invited.has(personId) })),
-      invitedCount: candidates.filter((id) => invited.has(id)).length,
+      candidates: ordered.map((r) => ({
+        personId: r.personId,
+        invited: invited.has(r.personId),
+        guest: r.guest,
+        groups: groups.get(r.personId) ?? [],
+      })),
+      invitedCount: ordered.filter((r) => invited.has(r.personId)).length,
+      others: found.map((personId) => ({ personId, groups: groups.get(personId) ?? [] })),
+      callUpSentAt: callUpSentAt(activity, now),
+      announced: callUpAnnounced(activity, now),
+      editable:
+        activity.status === "scheduled" &&
+        activity.startsAt.getTime() > now.getTime() &&
+        (await records.eventSessions(tx, [activity.id])).size === 0,
+      seriesId: series?.id ?? null,
+      revocations: await records.revocations(tx, [activity.id]),
     };
   }
 

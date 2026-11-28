@@ -40,6 +40,7 @@ let t: TestDatabase;
 let app: TestApp;
 let ids: {
   activity: string;
+  series: string;
   event: string;
   programme: string;
   programmeDay: string;
@@ -273,8 +274,9 @@ const CASES: Case[] = [
     url: () =>
       `/api/v1/groups/${key("svk-f2017")}/activities?from=${daysFromNow(0)}&to=${daysFromNow(28)}&limit=50`,
     // The activities, their places, groups and answers' counts: 8 statements, 263→522 pages.
+    // P2.10: the call-ups' branch of the schedule (ad hoc guests, revocations).
     statements: 8,
-    pages: 560,
+    pages: 620,
   },
   {
     route: "GET /api/v1/clubs/{clubId}/locations",
@@ -546,8 +548,9 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => "/cal/demo-anna-my-schedule.ics",
+    // P2.10: the call-ups' branch of the schedule (ad hoc guests, revocations).
     statements: 7,
-    pages: 600,
+    pages: 640,
   },
   {
     route: "GET /cal/{secret}.ics (group)",
@@ -765,9 +768,10 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => `/api/v1/me/schedule?${range()}`,
-    statements: 5,
+    // P2.10: one statement for the page's revoked call-ups.
+    statements: 6,
     // P2.7c: SVK F2017's away match added one more activity (226 measured in CI).
-    pages: 250,
+    pages: 280,
   },
   {
     route: "GET /api/v1/me/events",
@@ -857,7 +861,8 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => `/api/v1/activities/${ids.activity}`,
-    statements: 7,
+    // P2.10: one statement for my and my wards' revoked call-ups.
+    statements: 8,
     pages: 150,
   },
   {
@@ -914,8 +919,9 @@ const CASES: Case[] = [
     method: "PUT",
     url: () => `/api/v1/activities/${ids.activity}/responses/${key("elsa")}`,
     body: () => ({ status: "attending" }),
+    // P2.10: the roster's branch of those called up from other groups.
     statements: 9,
-    pages: 220,
+    pages: 240,
   },
   {
     route: "POST /api/v1/me/notifications/read",
@@ -1106,6 +1112,34 @@ const CASES: Case[] = [
     // As the deletion preview, for one ward.
     statements: 4,
     pages: 75,
+  },
+  // Call-ups across groups (P2.10): the call-up page (the activity's groups,
+  // guests and a search of the club), one person's toggle and the series'
+  // grid of eight sessions, as Erik. The toggle is last: it sets the call-up.
+  {
+    route: "GET /api/v1/activities/{activityId}/invitees",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/activities/${ids.activity}/invitees?q=wi`,
+    statements: 12,
+    pages: 380,
+  },
+  {
+    route: "GET /api/v1/activity-series/{seriesId}/invitees",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/activity-series/${ids.series}/invitees`,
+    statements: 10,
+    pages: 220,
+  },
+  {
+    route: "PUT /api/v1/activities/{activityId}/invitees/{personId}",
+    persona: "erik",
+    method: "PUT",
+    url: () => `/api/v1/activities/${ids.activity}/invitees/${key("elsa")}`,
+    body: () => ({ calledUp: true }),
+    statements: 18,
+    pages: 320,
   },
   {
     route: "PATCH /api/v1/me/preferences",
@@ -1389,9 +1423,13 @@ beforeAll(async () => {
     assignment: string;
     programme: string;
     programmeDay: string;
+    series: string;
   }>(
     "admin",
     `SELECT
+       (SELECT s.id FROM activity_series s JOIN activity_series_groups sg ON sg.series_id = s.id
+        WHERE sg.group_id = $1 AND (s.ends_on IS NULL OR s.ends_on > now()::date)
+        ORDER BY s.id LIMIT 1) AS series,
        (SELECT a.id FROM activities a JOIN activity_groups ag ON ag.activity_id = a.id
         WHERE ag.group_id = $1 AND a.status = 'scheduled' AND a.starts_at > now()
           AND a.response_mode = 'requested' ORDER BY a.starts_at LIMIT 1) AS activity,

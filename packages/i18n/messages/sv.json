@@ -989,7 +989,11 @@
     "programme_group_unavailable": "En vald grupp finns inte längre eller är arkiverad.",
     "programme_event_exists": "Evenemanget har redan ett program.",
     "programme_not_untouched": "Någon har redan svarat, anmält sig, tagit ett pass eller erbjudit skjuts. Ställ in punkterna en och en i stället.",
-    "programme_template_archived": "Mallen är arkiverad."
+    "programme_template_archived": "Mallen är arkiverad.",
+    "revocation_reason_required": "Ange en anledning: kallelsen har redan gått ut.",
+    "activity_started": "Aktiviteten har redan börjat.",
+    "event_session": "Kallelsen till ett evenemangspass ändras på evenemanget.",
+    "not_callable": "Den personen kan inte kallas hit."
   },
   "memberExport": {
     "columns": {
@@ -1894,6 +1898,10 @@
       "removed": {
         "title": "Inte längre kallad: {title} {when}",
         "body": "{club} · {group}"
+      },
+      "revoked": {
+        "title": "{count, plural, one {Kallelsen återkallad: {title} {when}} other {Kallelsen återkallad till # pass från {when}}}",
+        "body": "Se anledningen i schemat. {club} · {group}"
       }
     },
     "response": {
@@ -2945,7 +2953,10 @@
       "chat_report": "en anmälan från en chatt",
       "document": "Fil",
       "document_folder": "Mapp",
-      "announcement": "Anslag"
+      "announcement": "Anslag",
+      "activity_series_invitee": "Kallad till serien",
+      "activity_invitee_override": "Undantag i seriens kallelse",
+      "activity_callup_revocation": "Återkallad kallelse"
     },
     "statuses": {
       "scheduled": "Planerad",
@@ -3086,7 +3097,8 @@
       "call_failed": "misslyckades med anrop till",
       "locked": "låste",
       "requirements_changed": "ändrade kraven för",
-      "applied": "lade ut"
+      "applied": "lade ut",
+      "overridden": "gjorde undantag för"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",

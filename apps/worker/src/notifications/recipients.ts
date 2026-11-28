@@ -131,7 +131,12 @@ export async function participants(tx: Tx, activityId: string): Promise<string[]
     WHERE a.id = ${activityId}
       AND (NOT a.invitees_only OR EXISTS (
         SELECT 1 FROM public.activity_invitees i
-        WHERE i.activity_id = a.id AND i.person_id = gm.person_id))`);
+        WHERE i.activity_id = a.id AND i.person_id = gm.person_id))
+    UNION
+    -- Called up from outside its groups (P2.10).
+    SELECT i.person_id FROM public.activities a
+    JOIN public.activity_invitees i ON i.activity_id = a.id
+    WHERE a.id = ${activityId} AND a.invitees_only`);
   return rows.map((r) => r.person_id);
 }
 
@@ -149,7 +154,11 @@ export async function answerers(tx: Tx, activityId: string): Promise<string[]> {
     WHERE a.id = ${activityId}
       AND (NOT gm.participates OR NOT a.invitees_only OR EXISTS (
         SELECT 1 FROM public.activity_invitees i
-        WHERE i.activity_id = a.id AND i.person_id = gm.person_id))`);
+        WHERE i.activity_id = a.id AND i.person_id = gm.person_id))
+    UNION
+    SELECT i.person_id FROM public.activities a
+    JOIN public.activity_invitees i ON i.activity_id = a.id
+    WHERE a.id = ${activityId} AND a.invitees_only`);
   return rows.map((r) => r.person_id);
 }
 

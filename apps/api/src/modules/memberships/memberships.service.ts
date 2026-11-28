@@ -590,6 +590,7 @@ export class MembershipsService {
       personId: string;
       functions: GroupFunction[];
       memberships: { id: string; function: GroupFunction }[];
+      guest: boolean;
     }[];
     nextCursor: string | null;
     totalCount: number;
@@ -651,6 +652,16 @@ export class MembershipsService {
   }
 
   /** Whether the person is an active (or paused) member of the club. */
+  /** Which of these people are active members of the club (P2.10: who may be called up). */
+  activeMembersInTx(tx: Tx, clubId: string, personIds: readonly string[]): Promise<Set<string>> {
+    return repo.activeMembers(tx, clubId, personIds);
+  }
+
+  /** Active members of the club found by name (ad hoc guests, P2.10). */
+  activeMembersMatchingInTx(tx: Tx, clubId: string, q: string, limit: number): Promise<string[]> {
+    return repo.activeMembersMatching(tx, clubId, q, limit);
+  }
+
   async isMemberInTx(tx: Tx, clubId: string, personId: string): Promise<boolean> {
     const membership = await repo.findOpenMembership(tx, clubId, personId);
     return membership?.status === "active" || membership?.status === "paused";

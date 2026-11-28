@@ -464,13 +464,13 @@ describe("call-ups", () => {
         .sort(),
     ).toEqual([x.member.id, x.hidden.id, x.child.id].sort());
 
-    // Someone outside the group cannot be called up.
+    // Someone who is not an active member of the club cannot be called up (P2.10).
     const stranger = await buildPerson(s);
     const refused = await api(x.coach.id, "PUT", `/activities/${id}/invitees`, {
       body: { inviteesOnly: true, personIds: [stranger.id] },
     });
-    expect(refused.statusCode).toBe(409);
-    expect(detail(refused)).toBe("not_on_roster");
+    expect(refused.statusCode).toBe(400);
+    expect(detail(refused)).toBe("not_callable");
 
     const set = await api(x.coach.id, "PUT", `/activities/${id}/invitees`, {
       body: { inviteesOnly: true, personIds: [x.child.id, x.hidden.id] },
@@ -605,7 +605,8 @@ describe("call-ups", () => {
       body: { inviteesOnly: true, personIds: [x.child.id] },
     });
     expect(closed.statusCode).toBe(409);
-    expect(detail(closed)).toBe("activity_ended");
+    // Not after the start (P2.10).
+    expect(detail(closed)).toBe("activity_started");
   });
 });
 

@@ -39,6 +39,11 @@ export interface MarkRow {
 export interface RosterRow {
   personId: string;
   role: AttendanceRole;
+  /**
+   * A guest (P2.10): a participant only through a guest role of the group,
+   * or called up from another group (ad hoc).
+   */
+  guest: boolean;
 }
 
 export interface ResponseCountRow {
@@ -54,21 +59,35 @@ export function rosterQuery(
   options: { wholeGroups?: boolean } = {},
 ): SQL {
   // With a call-up (invitees_only, #19) only the people called up are
-  // participants; the leaders stay. wholeGroups: everyone who could be called up.
+  // participants; the leaders stay. wholeGroups: everyone who could be called
+  // up from the groups, and those called up from elsewhere.
   const calledUp = options.wholeGroups
     ? sql``
     : sql`AND (NOT gm.participates OR NOT a.invitees_only OR EXISTS (
         SELECT 1 FROM public.activity_invitees i
         WHERE i.club_id = a.club_id AND i.activity_id = a.id AND i.person_id = gm.person_id))`;
+  // P2.10: called up from another group (ad hoc guests) are participants of
+  // the activity only; a guest role of the group takes part without being a
+  // member (permanent guests). `guest`: no ordinary participation.
   return sql`
-    SELECT ag.activity_id, gm.person_id,
-      CASE WHEN bool_or(gm.participates) THEN 'participant' ELSE 'leader' END AS role
-    FROM public.activities a
-    JOIN public.activity_groups ag ON ag.activity_id = a.id
-    JOIN public.group_memberships gm ON gm.club_id = ag.club_id AND gm.group_id = ag.group_id
-      AND gm.valid_from <= a.starts_at AND (gm.valid_to IS NULL OR gm.valid_to > a.starts_at)
-    WHERE a.id = ANY (${uuidArray(activityIds)}::uuid[]) ${calledUp}
-    GROUP BY ag.activity_id, gm.person_id`;
+    SELECT m.activity_id, m.person_id,
+      CASE WHEN bool_or(m.part) THEN 'participant' ELSE 'leader' END AS role,
+      (bool_or(m.part) AND NOT bool_or(m.member)) AS guest
+    FROM (
+      SELECT ag.activity_id, gm.person_id, gm.participates AS part,
+        gm.participates AND NOT gm.guest AS member
+      FROM public.activities a
+      JOIN public.activity_groups ag ON ag.activity_id = a.id
+      JOIN public.group_memberships gm ON gm.club_id = ag.club_id AND gm.group_id = ag.group_id
+        AND gm.valid_from <= a.starts_at AND (gm.valid_to IS NULL OR gm.valid_to > a.starts_at)
+      WHERE a.id = ANY (${uuidArray(activityIds)}::uuid[]) ${calledUp}
+      UNION ALL
+      SELECT i.activity_id, i.person_id, true, false
+      FROM public.activities a
+      JOIN public.activity_invitees i ON i.club_id = a.club_id AND i.activity_id = a.id
+      WHERE a.id = ANY (${uuidArray(activityIds)}::uuid[]) AND a.invitees_only
+    ) m
+    GROUP BY m.activity_id, m.person_id`;
 }
 
 export async function roster(
@@ -76,10 +95,14 @@ export async function roster(
   activityId: string,
   options: { wholeGroups?: boolean } = {},
 ): Promise<RosterRow[]> {
-  const { rows } = await tx.execute<{ person_id: string; role: AttendanceRole }>(sql`
-    SELECT r.person_id, r.role FROM (${rosterQuery([activityId], options)}) r
+  const { rows } = await tx.execute<{
+    person_id: string;
+    role: AttendanceRole;
+    guest: boolean;
+  }>(sql`
+    SELECT r.person_id, r.role, r.guest FROM (${rosterQuery([activityId], options)}) r
     ORDER BY ${givenNameSortKey(sql`r.person_id`)}, r.person_id`);
-  return rows.map((r) => ({ personId: r.person_id, role: r.role }));
+  return rows.map((r) => ({ personId: r.person_id, role: r.role, guest: r.guest }));
 }
 
 /** Whether each person is on the activity's roster, in any role (leaders answer too, P2.7b). */
@@ -209,6 +232,242 @@ export async function removeInvitees(
     WHERE activity_id = ${activityId} AND person_id = ANY (${uuidArray(personIds)}::uuid[])`);
 }
 
+// --- Call-ups in bulk and their revocations (P2.10) ---------------------------------
+
+/** Who is called up to each of these activities. */
+export async function inviteesOf(
+  tx: Tx,
+  activityIds: readonly string[],
+): Promise<Map<string, Set<string>>> {
+  const map = new Map<string, Set<string>>(activityIds.map((id) => [id, new Set<string>()]));
+  if (activityIds.length === 0) return map;
+  const { rows } = await tx.execute<{ activity_id: string; person_id: string }>(sql`
+    SELECT activity_id, person_id FROM public.activity_invitees
+    WHERE activity_id = ANY (${uuidArray(activityIds)}::uuid[])`);
+  for (const r of rows) map.get(r.activity_id)?.add(r.person_id);
+  return map;
+}
+
+/** The groups' participants (who take part without a call-up) of each activity. */
+export async function groupParticipantsOf(
+  tx: Tx,
+  activityIds: readonly string[],
+): Promise<Map<string, Set<string>>> {
+  const map = new Map<string, Set<string>>(activityIds.map((id) => [id, new Set<string>()]));
+  if (activityIds.length === 0) return map;
+  const { rows } = await tx.execute<{ activity_id: string; person_id: string }>(sql`
+    SELECT DISTINCT ag.activity_id, gm.person_id
+    FROM public.activities a
+    JOIN public.activity_groups ag ON ag.activity_id = a.id
+    JOIN public.group_memberships gm ON gm.club_id = ag.club_id AND gm.group_id = ag.group_id
+      AND gm.participates AND gm.valid_from <= a.starts_at
+      AND (gm.valid_to IS NULL OR gm.valid_to > a.starts_at)
+    WHERE a.id = ANY (${uuidArray(activityIds)}::uuid[])`);
+  for (const r of rows) map.get(r.activity_id)?.add(r.person_id);
+  return map;
+}
+
+/** The groups' leaders-only people of each activity (never called up). */
+export async function groupLeadersOf(tx: Tx, activityId: string): Promise<Set<string>> {
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT r.person_id FROM (${rosterQuery([activityId], { wholeGroups: true })}) r
+    WHERE r.role = 'leader'`);
+  return new Set(rows.map((r) => r.person_id));
+}
+
+export async function addInviteePairs(
+  tx: Tx,
+  clubId: string,
+  pairs: readonly { activityId: string; personId: string }[],
+  invitedBy: string,
+): Promise<void> {
+  if (pairs.length === 0) return;
+  await tx.execute(sql`
+    INSERT INTO public.activity_invitees (club_id, activity_id, person_id, invited_by_person_id)
+    SELECT ${clubId}::uuid, p."activityId", p."personId", ${invitedBy}::uuid
+    FROM jsonb_to_recordset(${JSON.stringify(pairs)}::jsonb) AS p("activityId" uuid, "personId" uuid)
+    ON CONFLICT (activity_id, person_id) DO NOTHING`);
+}
+
+export async function removeInviteePairs(
+  tx: Tx,
+  pairs: readonly { activityId: string; personId: string }[],
+): Promise<void> {
+  if (pairs.length === 0) return;
+  await tx.execute(sql`
+    DELETE FROM public.activity_invitees i
+    USING jsonb_to_recordset(${JSON.stringify(pairs)}::jsonb) AS p("activityId" uuid, "personId" uuid)
+    WHERE i.activity_id = p."activityId" AND i.person_id = p."personId"`);
+}
+
+/** Records revocations (one reason for all; a newer one replaces an older). */
+export async function addRevocations(
+  tx: Tx,
+  clubId: string,
+  pairs: readonly { activityId: string; personId: string }[],
+  reason: string,
+  revokedBy: string | null,
+): Promise<void> {
+  if (pairs.length === 0) return;
+  await tx.execute(sql`
+    INSERT INTO public.activity_callup_revocations (club_id, activity_id, person_id, reason,
+      revoked_by_person_id, revoked_at)
+    SELECT ${clubId}::uuid, p."activityId", p."personId", ${reason}, ${revokedBy}::uuid, now()
+    FROM jsonb_to_recordset(${JSON.stringify(pairs)}::jsonb) AS p("activityId" uuid, "personId" uuid)
+    ON CONFLICT (activity_id, person_id) DO UPDATE SET reason = EXCLUDED.reason,
+      revoked_by_person_id = EXCLUDED.revoked_by_person_id, revoked_at = EXCLUDED.revoked_at`);
+}
+
+/** A person called up again: their revocation goes. */
+export async function removeRevocations(
+  tx: Tx,
+  pairs: readonly { activityId: string; personId: string }[],
+): Promise<void> {
+  if (pairs.length === 0) return;
+  await tx.execute(sql`
+    DELETE FROM public.activity_callup_revocations v
+    USING jsonb_to_recordset(${JSON.stringify(pairs)}::jsonb) AS p("activityId" uuid, "personId" uuid)
+    WHERE v.activity_id = p."activityId" AND v.person_id = p."personId"`);
+}
+
+export interface RevocationRow {
+  activityId: string;
+  personId: string;
+  reason: string;
+  revokedByPersonId: string | null;
+  revokedAt: Date;
+}
+
+/**
+ * Revocations of these activities (all, or of these people: the person's own
+ * view reads through own_read across clubs).
+ */
+export async function revocations(
+  tx: Tx,
+  activityIds: readonly string[],
+  personIds: readonly string[] | null = null,
+): Promise<RevocationRow[]> {
+  if (activityIds.length === 0 || personIds?.length === 0) return [];
+  const { rows } = await tx.execute<{
+    activity_id: string;
+    person_id: string;
+    reason: string;
+    revoked_by_person_id: string | null;
+    revoked_at: string | Date;
+  }>(sql`
+    SELECT activity_id, person_id, reason, revoked_by_person_id, revoked_at
+    FROM public.activity_callup_revocations
+    WHERE activity_id = ANY (${uuidArray(activityIds)}::uuid[])
+      ${personIds ? sql`AND person_id = ANY (${uuidArray(personIds)}::uuid[])` : sql``}
+    ORDER BY revoked_at, person_id`);
+  return rows.map((r) => ({
+    activityId: r.activity_id,
+    personId: r.person_id,
+    reason: r.reason,
+    revokedByPersonId: r.revoked_by_person_id,
+    revokedAt: new Date(r.revoked_at),
+  }));
+}
+
+/** Sets invitees_only on these activities (one statement). */
+export async function setInviteesOnly(
+  tx: Tx,
+  activityIds: readonly string[],
+  value: boolean,
+): Promise<void> {
+  if (activityIds.length === 0) return;
+  await tx.execute(sql`
+    UPDATE public.activities SET invitees_only = ${value}
+    WHERE id = ANY (${uuidArray(activityIds)}::uuid[]) AND invitees_only <> ${value}`);
+}
+
+// --- A series' call-up and its sessions' overrides (P2.10) ---------------------------------
+
+export async function seriesInvitees(tx: Tx, seriesId: string): Promise<Set<string>> {
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT person_id FROM public.activity_series_invitees WHERE series_id = ${seriesId}`);
+  return new Set(rows.map((r) => r.person_id));
+}
+
+export async function replaceSeriesInvitees(
+  tx: Tx,
+  clubId: string,
+  seriesId: string,
+  personIds: readonly string[],
+  addedBy: string | null,
+): Promise<void> {
+  await tx.execute(sql`
+    DELETE FROM public.activity_series_invitees
+    WHERE series_id = ${seriesId} AND NOT (person_id = ANY (${uuidArray(personIds)}::uuid[]))`);
+  if (personIds.length > 0) {
+    await tx.execute(sql`
+      INSERT INTO public.activity_series_invitees (club_id, series_id, person_id, added_by_person_id)
+      SELECT ${clubId}::uuid, ${seriesId}::uuid, p, ${addedBy}::uuid
+      FROM unnest(${uuidArray(personIds)}::uuid[]) AS p
+      ON CONFLICT (series_id, person_id) DO NOTHING`);
+  }
+}
+
+export type OverrideKind = "added" | "removed";
+
+/** The overrides of these sessions: activity → person → kind. */
+export async function overridesOf(
+  tx: Tx,
+  activityIds: readonly string[],
+): Promise<Map<string, Map<string, OverrideKind>>> {
+  const map = new Map<string, Map<string, OverrideKind>>(
+    activityIds.map((id) => [id, new Map<string, OverrideKind>()]),
+  );
+  if (activityIds.length === 0) return map;
+  const { rows } = await tx.execute<{
+    activity_id: string;
+    person_id: string;
+    kind: OverrideKind;
+  }>(sql`
+    SELECT activity_id, person_id, kind FROM public.activity_invitee_overrides
+    WHERE activity_id = ANY (${uuidArray(activityIds)}::uuid[])`);
+  for (const r of rows) map.get(r.activity_id)?.set(r.person_id, r.kind);
+  return map;
+}
+
+export async function setOverride(
+  tx: Tx,
+  clubId: string,
+  activityId: string,
+  personId: string,
+  kind: OverrideKind | null,
+  by: string | null,
+): Promise<void> {
+  if (kind === null) {
+    await tx.execute(sql`
+      DELETE FROM public.activity_invitee_overrides
+      WHERE activity_id = ${activityId} AND person_id = ${personId}`);
+    return;
+  }
+  await tx.execute(sql`
+    INSERT INTO public.activity_invitee_overrides (club_id, activity_id, person_id, kind, set_by_person_id)
+    VALUES (${clubId}, ${activityId}, ${personId}, ${kind}, ${by})
+    ON CONFLICT (activity_id, person_id) DO UPDATE SET kind = EXCLUDED.kind,
+      set_by_person_id = EXCLUDED.set_by_person_id`);
+}
+
+export async function deleteOverrides(tx: Tx, activityIds: readonly string[]): Promise<void> {
+  if (activityIds.length === 0) return;
+  await tx.execute(sql`
+    DELETE FROM public.activity_invitee_overrides
+    WHERE activity_id = ANY (${uuidArray(activityIds)}::uuid[])`);
+}
+
+/** Whether these activities belong to an event (ADR 0038: their call-up is the event's). */
+export async function eventSessions(tx: Tx, activityIds: readonly string[]): Promise<Set<string>> {
+  if (activityIds.length === 0) return new Set();
+  // Read-only: the events module owns event_activities (as the schedule's query).
+  const { rows } = await tx.execute<{ activity_id: string }>(sql`
+    SELECT activity_id FROM public.event_activities
+    WHERE activity_id = ANY (${uuidArray(activityIds)}::uuid[])`);
+  return new Set(rows.map((r) => r.activity_id));
+}
+
 /**
  * Counts per activity among its roster's participants: one grouped statement
  * for a page of a calendar (never one per activity).
@@ -257,13 +516,14 @@ export async function responseList(
     id: string | null;
     person_id: string;
     role: AttendanceRole;
+    guest: boolean;
     status: ResponseStatus | null;
     note: string | null;
     responded_by_person_id: string | null;
     responded_at: string | null;
   }>(sql`
     SELECT * FROM (
-      SELECT ar.id, r.person_id, r.role, ar.status, ar.note, ar.responded_by_person_id, ar.responded_at,
+      SELECT ar.id, r.person_id, r.role, r.guest, ar.status, ar.note, ar.responded_by_person_id, ar.responded_at,
         ${givenNameSortKey(sql`r.person_id`)} AS sort_key
       FROM (${rosterQuery([activityId])}) r
       LEFT JOIN public.activity_responses ar ON ar.activity_id = r.activity_id AND ar.person_id = r.person_id
@@ -280,6 +540,7 @@ export async function responseList(
   return rows.map((r) => ({
     personId: r.person_id,
     role: r.role,
+    guest: r.guest,
     response:
       r.id && r.status && r.responded_by_person_id && r.responded_at
         ? toResponse({

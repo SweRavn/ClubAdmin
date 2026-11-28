@@ -299,15 +299,35 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * Who may be called up to the activity (its groups' members) and who is
+     * Who may be called up (the groups' members and guests; with q others of the club) and who is
      * @description Requires permission `activity.responses.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     get: operations["Attendance_invitees"];
     /**
-     * Call up some of the groups' members (only they answer and are counted), or all
+     * Call up people (any active member; after it went out a removal needs a reason), or all
      * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
      */
     put: operations["Attendance_setInvitees"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activities/{activityId}/invitees/{personId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Call up or take back one person (a series session: an override of the series)
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Attendance_setInvitee"];
     post?: never;
     delete?: never;
     options?: never;
@@ -456,6 +476,30 @@ export interface paths {
      */
     get: operations["Audit_seriesHistory"];
     put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/activity-series/{seriesId}/invitees": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A series' call-up and the grid of its coming sessions by person
+     * @description Requires permission `activity.responses.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Attendance_seriesInvitees"];
+    /**
+     * A series' call-up for its coming sessions (their overrides kept); removals after a session went out need a reason
+     * @description Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["Attendance_setSeriesInvitees"];
     post?: never;
     delete?: never;
     options?: never;
@@ -7556,6 +7600,7 @@ export interface components {
     ActivityDetail: components["schemas"]["Activity"] & {
       leaders: components["schemas"]["PersonSummary"][];
       recurrence?: components["schemas"]["SeriesRecurrence"];
+      revocations?: components["schemas"]["CallUpRevocation"][];
     };
     Location: {
       /** Format: uuid */
@@ -7636,6 +7681,14 @@ export interface components {
       byMonthDay?: number[];
       startTime?: string;
       durationMinutes?: number;
+    };
+    CallUpRevocation: {
+      /** Format: uuid */
+      personId: string;
+      reason: string;
+      revokedBy?: components["schemas"]["PersonSummary"];
+      /** Format: date-time */
+      revokedAt: string;
     };
     Activity: {
       /** Format: uuid */
@@ -8118,6 +8171,9 @@ export interface components {
         | "activity_invitee"
         | "activity_series"
         | "activity_series_group"
+        | "activity_series_invitee"
+        | "activity_invitee_override"
+        | "activity_callup_revocation"
         | "event"
         | "event_group"
         | "event_activity"
@@ -8297,12 +8353,38 @@ export interface components {
       candidates: {
         person: components["schemas"]["PersonSummary"];
         invited: boolean;
+        guest?: boolean;
+        groups?: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        }[];
       }[];
       invitedCount: number;
+      others?: {
+        person: components["schemas"]["PersonSummary"];
+        groups: {
+          /** Format: uuid */
+          id: string;
+          name: string;
+        }[];
+      }[];
+      /** Format: date-time */
+      callUpSentAt?: string | null;
+      announced?: boolean;
+      editable?: boolean;
+      /** Format: uuid */
+      seriesId?: string | null;
+      revocations?: components["schemas"]["CallUpRevocation"][];
     };
     SetInviteesRequest: {
       inviteesOnly: boolean;
       personIds: string[];
+      revocationReason?: string;
+    };
+    SetInviteeRequest: {
+      calledUp: boolean;
+      revocationReason?: string;
     };
     MinutesAssembled: {
       /** Format: uuid */
@@ -8432,6 +8514,41 @@ export interface components {
       requestLead?: components["schemas"]["RequestLead"];
       /** @enum {string|null} */
       transportMode?: "own" | "shared" | null;
+    };
+    SeriesInvitees: {
+      /** Format: uuid */
+      seriesId: string;
+      inviteesOnly: boolean;
+      people: {
+        person: components["schemas"]["PersonSummary"];
+        inSeries: boolean;
+        guest: boolean;
+      }[];
+      sessions: {
+        /** Format: uuid */
+        activityId: string;
+        /** Format: date-time */
+        startsAt: string;
+        status: string;
+        /** Format: date-time */
+        callUpSentAt: string | null;
+        detached: boolean;
+        inviteesOnly: boolean;
+        cells: {
+          /** Format: uuid */
+          personId: string;
+          calledUp: boolean;
+          /** @enum {string|null} */
+          override: "added" | "removed" | null;
+        }[];
+      }[];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    SetSeriesInviteesRequest: {
+      inviteesOnly: boolean;
+      personIds: string[];
+      revocationReason?: string;
     };
     SkipDatesRequest: {
       /** Format: date */
@@ -10401,6 +10518,7 @@ export interface components {
       admissionMode: "direct" | "waitlist" | "closed";
       archived: boolean;
       adapted: boolean;
+      guestsInChannel?: boolean;
     };
     AnnouncementBoard: {
       pinned: components["schemas"]["Announcement"][];
@@ -11953,6 +12071,7 @@ export interface components {
        */
       backgroundCheckCategory:
         "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
+      guest?: boolean;
     };
     RoleTexts: {
       sv?: string;
@@ -12616,6 +12735,7 @@ export interface components {
             | "physio"
             | "other_leader";
         }[];
+        guest?: boolean;
       }[];
       /** Format: uuid */
       nextCursor: string | null;
@@ -13772,6 +13892,7 @@ export interface components {
         status: "attending" | "not_attending" | null;
         canRespond: boolean;
       }[];
+      revocations?: components["schemas"]["CallUpRevocation"][];
     };
     ScheduleDuty: {
       /** Format: uuid */
@@ -15869,7 +15990,9 @@ export interface operations {
   };
   Attendance_invitees: {
     parameters: {
-      query?: never;
+      query?: {
+        q?: string;
+      };
       header?: never;
       path: {
         activityId: string;
@@ -15955,6 +16078,87 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["SetInviteesRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Invitees"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_setInvitee: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+        personId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetInviteeRequest"];
       };
     };
     responses: {
@@ -16670,6 +16874,168 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["HistoryPage"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_seriesInvitees: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        seriesId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SeriesInvitees"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Attendance_setSeriesInvitees: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        seriesId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetSeriesInviteesRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            sessions: number;
+            revoked: number;
+          };
         };
       };
       /** @description Invalid request */
@@ -27280,6 +27646,7 @@ export interface operations {
           offerReplyDays?: number;
           waitlistAutoOffer?: boolean;
           adapted?: boolean;
+          guestsInChannel?: boolean;
         };
       };
     };
@@ -29285,6 +29652,9 @@ export interface operations {
           | "activity_invitee"
           | "activity_series"
           | "activity_series_group"
+          | "activity_series_invitee"
+          | "activity_invitee_override"
+          | "activity_callup_revocation"
           | "event"
           | "event_group"
           | "event_activity"
@@ -38939,6 +39309,7 @@ export interface operations {
           offerReplyDays?: number;
           waitlistAutoOffer?: boolean;
           adapted?: boolean;
+          guestsInChannel?: boolean;
         };
       };
     };

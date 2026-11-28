@@ -77,6 +77,8 @@ export const NOTIFICATION_TYPES = {
   "series.changed": { category: "schedule" },
   "callup.added": { category: "schedule" },
   "callup.removed": { category: "schedule" },
+  // P2.10: a call-up taken back after it went out, with the reason.
+  "callup.revoked": { category: "schedule" },
   "response.reminder": { category: "responses" },
   // The answer request a chosen time before a session (P1.14).
   "response.requested": { category: "responses" },

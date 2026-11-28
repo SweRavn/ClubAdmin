@@ -312,6 +312,15 @@ export const DOMAIN_ERRORS = {
   programme_event_exists: "conflict",
   programme_not_untouched: "conflict",
   programme_template_archived: "conflict",
+  // P2.10 (ADR 0056): call-ups across groups, for series, revoked.
+  /** Removing someone after the call-up went out needs a reason (a revocation). */
+  revocation_reason_required: "validation",
+  /** No changes to a call-up after the start: attendance takes over. */
+  activity_started: "conflict",
+  /** An event's sessions are called up from its registrations (ADR 0038). */
+  event_session: "conflict",
+  /** Only active members of the club, never its leaders, are called up. */
+  not_callable: "validation",
   /** One does not report one's own message. */
   chat_report_own: "conflict",
   /** The request to read is not open, was made by the caller, or lapsed. */

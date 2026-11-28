@@ -103,6 +103,7 @@ export function toRoleResponse(role: ClubRoleRow, template?: readonly string[]):
       (template.length !== role.permissions.length ||
         template.some((p) => !role.permissions.includes(p))),
     backgroundCheckCategory: role.backgroundCheckCategory as Role["backgroundCheckCategory"],
+    guest: role.guest,
   };
 }
 

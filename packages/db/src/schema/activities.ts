@@ -108,6 +108,8 @@ export const activitySeries = pgTable(
     respondByMinutes: integer(),
     /** How participants get there (P2.5); copied to each session. */
     transportMode: text().$type<TransportMode>(),
+    /** The series' own call-up (P2.10, ADR 0056): its sessions follow it. */
+    inviteesOnly: boolean().notNull().default(false),
     createdByPersonId: personRef(),
     ...timestamps,
   },

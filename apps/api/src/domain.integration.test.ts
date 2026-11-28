@@ -114,6 +114,19 @@ describe("tenant isolation of club-owned tables", () => {
         INSERT INTO activity_invitees (club_id, activity_id, person_id, invited_by_person_id)
         SELECT ${a.id}, id, ${member.id}, ${a.manager.id} FROM activities
         WHERE club_id = ${a.id} AND kind = 'match'`);
+      // P2.10: a series' call-up, an exception on a session, a revoked call-up.
+      await tx.execute(sql`
+        INSERT INTO activity_series_invitees (club_id, series_id, person_id, added_by_person_id)
+        SELECT ${a.id}, id, ${member.id}, ${a.manager.id} FROM activity_series
+        WHERE club_id = ${a.id} LIMIT 1`);
+      await tx.execute(sql`
+        INSERT INTO activity_invitee_overrides (club_id, activity_id, person_id, kind, set_by_person_id)
+        SELECT ${a.id}, id, ${member.id}, 'removed', ${a.manager.id} FROM activities
+        WHERE club_id = ${a.id} AND series_id IS NOT NULL LIMIT 1`);
+      await tx.execute(sql`
+        INSERT INTO activity_callup_revocations (club_id, activity_id, person_id, reason, revoked_by_person_id)
+        SELECT ${a.id}, id, ${member.id}, 'Too many', ${a.manager.id} FROM activities
+        WHERE club_id = ${a.id} AND kind = 'match'`);
     });
     // An event (P1.6) with its group, the match, and a registration.
     const event = await c.s.events.createEvent(a.ctx, {

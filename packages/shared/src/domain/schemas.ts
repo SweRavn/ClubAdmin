@@ -186,6 +186,8 @@ const groupFields = {
   waitlistAutoOffer: z.boolean(),
   /** Adapted activities, parasport (P2.7): grant reports count its members as such. */
   adapted: z.boolean(),
+  /** Guests are in the group's default chat channel (P2.10; default off). */
+  guestsInChannel: z.boolean(),
 };
 
 export const CreateGroupSchema = z

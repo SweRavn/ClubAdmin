@@ -45,10 +45,13 @@ const SCOPES: Record<PanelKind, readonly [table: string, column: string][]> = {
     ["public.activity_responses", "activity_id"],
     ["public.attendance_records", "activity_id"],
     ["public.activity_invitees", "activity_id"],
+    ["public.activity_invitee_overrides", "activity_id"],
+    ["public.activity_callup_revocations", "activity_id"],
   ],
   series: [
     ["public.activity_series", "id"],
     ["public.activity_series_groups", "series_id"],
+    ["public.activity_series_invitees", "series_id"],
   ],
   event: [
     ["public.events", "id"],

@@ -74,6 +74,8 @@ export interface ActivityView {
     startsOn: string;
     endsOn: string | null;
   } | null;
+  /** Detail only: the call-ups of these people taken back (P2.10). */
+  revocations?: records.RevocationRow[];
 }
 
 export interface SeriesView {
@@ -527,7 +529,12 @@ export class ActivitiesService {
     return repo.findLocations(tx, ids);
   }
 
-  getActivity(context: TenantContext, activityId: string): Promise<ActivityView> {
+  getActivity(
+    context: TenantContext,
+    activityId: string,
+    /** Whose revoked call-ups to include (the caller and their wards). */
+    revocationsOf: readonly string[] = [],
+  ): Promise<ActivityView> {
     return this.db.withTenant(context, async (tx) => {
       const activity = await repo.findActivity(tx, activityId);
       if (!activity) throw new DomainError("not_found");
@@ -535,6 +542,10 @@ export class ActivitiesService {
       const series = activity.seriesId ? await repo.findSeries(tx, activity.seriesId) : null;
       return {
         ...view,
+        revocations:
+          revocationsOf.length > 0
+            ? await records.revocations(tx, [activity.id], [...revocationsOf])
+            : [],
         recurrence: series
           ? {
               rule: series.rule,
@@ -615,6 +626,10 @@ export class ActivitiesService {
         detached: current.seriesId !== null || current.detached,
         ...(shown ? { sequence: current.sequence + 1, changedAt: this.now() } : {}),
       });
+      // Detached: the series' call-up no longer applies, nor its exceptions (P2.10).
+      if (current.seriesId !== null && !current.detached) {
+        await records.deleteOverrides(tx, [activityId]);
+      }
       await repo.syncScheduleEntries(tx, { activityIds: [activityId] });
       await audit.record(tx, {
         action: "activity.updated",
@@ -965,6 +980,8 @@ export class ActivitiesService {
         },
         groupIds,
       );
+      // The call-up goes on with the series (P2.10).
+      await repo.copySeriesCallUp(tx, seriesId, successor.id);
       await repo.moveSessionsToSeries(
         tx,
         later.map((s) => s.id),
@@ -1186,6 +1203,8 @@ export class ActivitiesService {
     nextCursor: string | null;
     groups: Map<string, string>;
     clubs: Map<string, { name: string; timeZone: string }>;
+    /** The people's call-ups taken back (P2.10), by activity. */
+    revocations: Map<string, records.RevocationRow[]>;
   }> {
     return this.db.withActor(context, async (tx) => {
       const range = checkedRange(input);
@@ -1199,11 +1218,20 @@ export class ActivitiesService {
       const items = rows.slice(0, input.limit);
       const groups = await repo.groupNames(tx, [...new Set(items.flatMap((r) => r.groupIds))]);
       const clubs = await this.clubs.findClubsInTx(tx, [...new Set(items.map((r) => r.clubId))]);
+      const revoked = new Map<string, records.RevocationRow[]>();
+      for (const r of await records.revocations(
+        tx,
+        items.map((i) => i.activityId),
+        input.personIds,
+      )) {
+        revoked.set(r.activityId, [...(revoked.get(r.activityId) ?? []), r]);
+      }
       return {
         items,
         nextCursor: rows.length > input.limit ? items.at(-1)!.activityId : null,
         groups,
         clubs: new Map(clubs.map((c) => [c.id, { name: c.name, timeZone: c.timeZone }])),
+        revocations: revoked,
       };
     });
   }
@@ -1492,11 +1520,14 @@ export class ActivitiesService {
         requestLead: series.requestLead,
         requestAt: requestAt(series.requestLead, s.startsAt, club.timeZone),
         transportMode: series.transportMode,
+        inviteesOnly: series.inviteesOnly,
         createdByPersonId: series.createdByPersonId,
       })),
     );
     const ids = rows.map((r) => r.id);
     await repo.insertActivityGroups(tx, series.clubId, ids, groupIds);
+    // The series' call-up (P2.10): new sessions get its list, silently.
+    if (series.inviteesOnly) await repo.callUpNewSessions(tx, series.clubId, series.id, ids);
     await repo.syncScheduleEntries(tx, { activityIds: ids });
     return ids;
   }

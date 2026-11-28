@@ -542,6 +542,24 @@ export function scheduleQuery(input: ScheduleInput): SQL {
         AND (NOT m.participates OR NOT se.invitees_only OR EXISTS (
           SELECT 1 FROM public.activity_invitees i
           WHERE i.activity_id = se.activity_id AND i.person_id = m.person_id))
+      UNION ALL
+      -- P2.10: called up from another group (taking part), or the call-up taken
+      -- back (shown with its reason until the session has ended).
+      SELECT se.*, x.person_id, x.participates FROM (
+        SELECT i.activity_id, i.person_id, true AS participates FROM public.activity_invitees i
+        WHERE i.person_id = ANY (${uuidArray(input.personIds)}::uuid[])
+          ${input.clubId ? sql`AND i.club_id = ${input.clubId}` : sql``}
+        UNION
+        SELECT v.activity_id, v.person_id, false FROM public.activity_callup_revocations v
+        WHERE v.person_id = ANY (${uuidArray(input.personIds)}::uuid[])
+          ${input.clubId ? sql`AND v.club_id = ${input.clubId}` : sql``}
+      ) x
+      JOIN LATERAL (
+        SELECT s2.* FROM public.schedule_entries s2 WHERE s2.activity_id = x.activity_id
+        ORDER BY s2.group_id LIMIT 1) se ON true
+      WHERE se.starts_at >= ${input.from} AND se.starts_at < ${input.to}
+        AND (x.participates OR se.ends_at > now())
+        ${input.activityId ? sql`AND se.activity_id = ${input.activityId}` : sql``}
     )
     SELECT h.activity_id, h.club_id, h.kind, h.kind_label, h.title, h.status, h.cancelled_reason,
       h.starts_at, h.ends_at, h.all_day, h.meet_at, h.place, h.changed_at, h.response_mode,
@@ -772,4 +790,99 @@ export async function setProgramme(
   await tx.execute(sql`
     UPDATE public.activities SET programme_id = ${programmeId}::uuid
     WHERE id = ANY (${uuidArray(ids)}::uuid[]) AND programme_id IS NULL`);
+}
+
+// --- A series' call-up (P2.10) ---------------------------------------------------------
+
+/** A series' coming sessions (not started), by start: the grid's page, or all for a change. */
+export async function seriesComingSessions(
+  tx: Tx,
+  seriesId: string,
+  after: Date,
+  page: { cursor: string | null; limit: number } | null,
+): Promise<ActivityRow[]> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT a.id FROM public.activities a
+    WHERE a.series_id = ${seriesId} AND a.starts_at > ${after.toISOString()}::timestamptz
+      ${
+        page?.cursor
+          ? sql`AND (a.starts_at, a.id) > (SELECT c.starts_at, c.id FROM public.activities c WHERE c.id = ${page.cursor}::uuid)`
+          : sql``
+      }
+    ORDER BY a.starts_at, a.id
+    LIMIT ${page ? page.limit : 1000}`);
+  return orderedActivities(
+    tx,
+    rows.map((r) => r.id),
+  );
+}
+
+/** Those who take part in a series' groups now, and its groups' leaders-only people. */
+export async function seriesGroupPeople(
+  tx: Tx,
+  seriesId: string,
+): Promise<{ participants: Set<string>; leaders: Set<string>; guests: Set<string> }> {
+  const { rows } = await tx.execute<{ person_id: string; part: boolean; member: boolean }>(sql`
+    SELECT gm.person_id, bool_or(gm.participates) AS part,
+      bool_or(gm.participates AND NOT coalesce(ro.guest, false)) AS member
+    FROM public.activity_series_groups sg
+    JOIN public.group_memberships gm ON gm.club_id = sg.club_id AND gm.group_id = sg.group_id
+      AND gm.valid_to IS NULL
+    LEFT JOIN public.roles ro ON ro.id = gm.role_id
+    WHERE sg.series_id = ${seriesId}
+    GROUP BY gm.person_id`);
+  return {
+    participants: new Set(rows.filter((r) => r.part).map((r) => r.person_id)),
+    leaders: new Set(rows.filter((r) => !r.part).map((r) => r.person_id)),
+    guests: new Set(rows.filter((r) => r.part && !r.member).map((r) => r.person_id)),
+  };
+}
+
+/** The club groups people take part in (a hint for guests). */
+export async function groupsOfPeople(
+  tx: Tx,
+  clubId: string,
+  personIds: readonly string[],
+): Promise<Map<string, { id: string; name: string }[]>> {
+  const map = new Map<string, { id: string; name: string }[]>();
+  if (personIds.length === 0) return map;
+  const { rows } = await tx.execute<{ person_id: string; id: string; name: string }>(sql`
+    SELECT DISTINCT gm.person_id, g.id, g.name FROM public.group_memberships gm
+    JOIN public.groups g ON g.id = gm.group_id
+    WHERE gm.club_id = ${clubId} AND gm.valid_to IS NULL AND gm.participates
+      AND g.archived_at IS NULL AND gm.person_id = ANY (${uuidArray(personIds)}::uuid[])
+    ORDER BY g.name`);
+  for (const r of rows)
+    map.set(r.person_id, [...(map.get(r.person_id) ?? []), { id: r.id, name: r.name }]);
+  return map;
+}
+
+/** Copies a series' call-up to its successor (a split, P2.10). */
+export async function copySeriesCallUp(tx: Tx, fromId: string, toId: string): Promise<void> {
+  await tx.execute(sql`
+    UPDATE public.activity_series t SET invitees_only = f.invitees_only
+    FROM public.activity_series f WHERE f.id = ${fromId}::uuid AND t.id = ${toId}::uuid`);
+  await tx.execute(sql`
+    INSERT INTO public.activity_series_invitees (club_id, series_id, person_id, added_by_person_id)
+    SELECT club_id, ${toId}::uuid, person_id, added_by_person_id
+    FROM public.activity_series_invitees WHERE series_id = ${fromId}::uuid
+    ON CONFLICT (series_id, person_id) DO NOTHING`);
+}
+
+/** New sessions of a series with a call-up get its list (one statement). */
+export async function callUpNewSessions(
+  tx: Tx,
+  clubId: string,
+  seriesId: string,
+  activityIds: readonly string[],
+): Promise<void> {
+  if (activityIds.length === 0) return;
+  await tx.execute(sql`
+    INSERT INTO public.activity_invitees (club_id, activity_id, person_id, invited_by_person_id)
+    SELECT ${clubId}::uuid, a, si.person_id, coalesce(si.added_by_person_id, s.created_by_person_id, si.person_id)
+    FROM unnest(${uuidArray(activityIds)}::uuid[]) AS a
+    CROSS JOIN public.activity_series_invitees si
+    JOIN public.activity_series s ON s.id = si.series_id
+    WHERE si.series_id = ${seriesId} AND s.invitees_only
+    ON CONFLICT (activity_id, person_id) DO NOTHING`);
 }

@@ -7,7 +7,12 @@
 
 import { PersonSummarySchema } from "../auth/schemas.ts";
 import { z } from "../zod.ts";
-import { RESPONSE_MODES, RESPONSE_STATUSES, ResponseCountsSchema } from "./attendance.ts";
+import {
+  CallUpRevocationSchema,
+  RESPONSE_MODES,
+  RESPONSE_STATUSES,
+  ResponseCountsSchema,
+} from "./attendance.ts";
 import { TRANSPORT_MODES } from "./carpool.ts";
 import { ScheduleDutySchema } from "./duties.ts";
 import { RECURRENCE_FREQS, ruleProblem, type SeriesRule, WEEKDAY_ORDINALS } from "./recurrence.ts";
@@ -451,6 +456,8 @@ export const ActivityDetailSchema = ActivitySchema.extend({
   leaders: z.array(PersonSummarySchema),
   /** A series session: how the series repeats (P1.14). */
   recurrence: SeriesRecurrenceSchema.nullable().optional(),
+  /** My and my wards' call-ups taken back (P2.10), with the reason. */
+  revocations: z.array(CallUpRevocationSchema).optional(),
 }).openapi("ActivityDetail");
 export type ActivityDetail = z.infer<typeof ActivityDetailSchema>;
 
@@ -584,6 +591,8 @@ export const ScheduleEntrySchema = z
         }),
       )
       .optional(),
+    /** Call-ups of `people` taken back (P2.10), until the session has ended. */
+    revocations: z.array(CallUpRevocationSchema).optional(),
   })
   .openapi("ScheduleEntry");
 export type ScheduleEntry = z.infer<typeof ScheduleEntrySchema>;

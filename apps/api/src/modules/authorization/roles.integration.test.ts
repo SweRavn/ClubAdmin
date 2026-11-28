@@ -44,7 +44,16 @@ describe("roles (P1.15 A1)", () => {
         WHERE r.club_id = ${club.id}`);
       return rows;
     });
-    expect(rows.map((r) => r.row).sort()).toEqual(templateRows());
+    // The guest role (P2.10) comes from the club types' template roles only.
+    expect(rows.map((r) => r.row).filter((r) => r.startsWith("group:guest_player:"))).toEqual([
+      "group:guest_player:group.participate",
+    ]);
+    expect(
+      rows
+        .map((r) => r.row)
+        .filter((r) => !r.startsWith("group:guest_player:"))
+        .sort(),
+    ).toEqual(templateRows());
     const locked = new Set(rows.filter((r) => r.locked).map((r) => r.row.split(":")[1]));
     expect([...locked].sort()).toEqual(["chair", "club_manager"]);
   });

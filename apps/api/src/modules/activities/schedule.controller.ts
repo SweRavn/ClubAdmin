@@ -84,6 +84,19 @@ export class ScheduleController {
       cursor: query.cursor,
       limit: query.limit,
     });
+    // Who took a call-up back (P2.10): shown where the viewer may see them.
+    const revokers = [
+      ...new Set([...page.revocations.values()].flat().flatMap((r) => r.revokedByPersonId ?? [])),
+    ];
+    const revokedBy = new Map(
+      (
+        await this.presenter.present(
+          authz,
+          null,
+          await this.people.summaries(authz.context, revokers),
+        )
+      ).map((p) => [p.id, p]),
+    );
     const changedSince = query.changedSince ? Date.parse(query.changedSince) : null;
     const respondable = new Set(respondablePeople(authz));
     const now = new Date();
@@ -136,11 +149,25 @@ export class ScheduleController {
                 {
                   personId: id,
                   status: status === "attending" || status === "not_attending" ? status : null,
-                  // Everyone who has the activity answers, leaders too (P2.7b).
-                  canRespond: open && respondable.has(id),
+                  // Everyone who has the activity answers, leaders too (P2.7b);
+                  // not after the call-up was taken back (P2.10).
+                  canRespond:
+                    open &&
+                    respondable.has(id) &&
+                    !(page.revocations.get(row.activityId) ?? []).some((r) => r.personId === id),
                 },
               ];
             }),
+            revocations: (page.revocations.get(row.activityId) ?? [])
+              .filter((r) => shown.has(r.personId))
+              .map((r) => ({
+                personId: r.personId,
+                reason: r.reason,
+                ...(r.revokedByPersonId && revokedBy.has(r.revokedByPersonId)
+                  ? { revokedBy: revokedBy.get(r.revokedByPersonId)! }
+                  : {}),
+                revokedAt: r.revokedAt.toISOString(),
+              })),
           },
         ];
       }),

@@ -381,11 +381,26 @@ export async function loadEventScope(
 export async function loadActivityScope(
   tx: Tx,
   ids: { activityId?: string; seriesId?: string },
-): Promise<{ clubId: string; groupIds: string[] } | null> {
-  const { rows } = await tx.execute<{ club_id: string; group_ids: string[] }>(sql`
-    SELECT club_id, group_ids FROM app.activity_scope(${ids.activityId ?? null}::uuid, ${ids.seriesId ?? null}::uuid)`);
+): Promise<{ clubId: string; groupIds: string[]; calledUp: string[] } | null> {
+  const activityId = ids.activityId ?? null;
+  // In the same statement (P2.10): of the actor and their wards, those called
+  // up to the activity or whose call-up was taken back (own_read policies).
+  const { rows } = await tx.execute<{
+    club_id: string;
+    group_ids: string[];
+    called_up: string[];
+  }>(sql`
+    SELECT s.club_id, s.group_ids,
+      CASE WHEN ${activityId}::uuid IS NULL THEN '{}'::uuid[] ELSE ARRAY(
+        SELECT i.person_id FROM public.activity_invitees i WHERE i.activity_id = ${activityId}::uuid
+          AND i.person_id = ANY ((SELECT app.self_and_wards())::uuid[])
+        UNION
+        SELECT r.person_id FROM public.activity_callup_revocations r
+        WHERE r.activity_id = ${activityId}::uuid
+          AND r.person_id = ANY ((SELECT app.self_and_wards())::uuid[])) END AS called_up
+    FROM app.activity_scope(${activityId}::uuid, ${ids.seriesId ?? null}::uuid) s`);
   const row = rows[0];
-  return row ? { clubId: row.club_id, groupIds: row.group_ids } : null;
+  return row ? { clubId: row.club_id, groupIds: row.group_ids, calledUp: row.called_up } : null;
 }
 
 /**

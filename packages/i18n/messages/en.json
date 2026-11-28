@@ -989,7 +989,11 @@
     "programme_group_unavailable": "A chosen group no longer exists or is archived.",
     "programme_event_exists": "The event already has a programme.",
     "programme_not_untouched": "Someone has already answered, signed up, taken a shift or offered a ride. Cancel the items one by one instead.",
-    "programme_template_archived": "The template is archived."
+    "programme_template_archived": "The template is archived.",
+    "revocation_reason_required": "Give a reason: the call-up has already gone out.",
+    "activity_started": "The activity has already started.",
+    "event_session": "The call-up of an event session is changed on the event.",
+    "not_callable": "That person cannot be called up here."
   },
   "memberExport": {
     "columns": {
@@ -1894,6 +1898,10 @@
       "removed": {
         "title": "No longer called up: {title} {when}",
         "body": "{club} · {group}"
+      },
+      "revoked": {
+        "title": "{count, plural, one {Call-up withdrawn: {title} {when}} other {Call-up withdrawn for # sessions from {when}}}",
+        "body": "See the reason in the schedule. {club} · {group}"
       }
     },
     "response": {
@@ -2945,7 +2953,10 @@
       "chat_report": "a report from a chat",
       "document": "File",
       "document_folder": "Folder",
-      "announcement": "Announcement"
+      "announcement": "Announcement",
+      "activity_series_invitee": "Called up for the series",
+      "activity_invitee_override": "Exception to the series' call-up",
+      "activity_callup_revocation": "Withdrawn call-up"
     },
     "statuses": {
       "scheduled": "Scheduled",
@@ -3086,7 +3097,8 @@
       "call_failed": "failed a call to",
       "locked": "locked",
       "requirements_changed": "changed the requirements for",
-      "applied": "laid out"
+      "applied": "laid out",
+      "overridden": "made an exception for"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",

@@ -54,6 +54,12 @@ export interface ActivityResource {
   clubId: string;
   /** Its groups, each with its ancestors (nearest first). */
   groups: readonly GroupRef[];
+  /**
+   * The actor and their wards called up to it, or whose call-up was taken
+   * back (P2.10: guests from other groups see and answer it). Optional for
+   * resources built elsewhere.
+   */
+  calledUp?: readonly string[];
 }
 
 /** An event with sign-up (:eventId, P1.6) with its audience groups. */

@@ -19,6 +19,7 @@ import {
   GroupAttendanceSchema,
   GroupParamsSchema,
   type Invitees,
+  InviteesQuerySchema,
   InviteesSchema,
   type MyResponse,
   type PersonSummary,
@@ -33,10 +34,18 @@ import {
   ResponseParamsSchema,
   type ResponseSummary,
   ResponseSummarySchema,
+  type SeriesInvitees,
+  SeriesInviteesQuerySchema,
+  SeriesInviteesSchema,
+  SeriesParamsSchema,
+  type SetInviteeInput,
+  SetInviteeSchema,
   type SetInviteesInput,
   SetInviteesSchema,
   type SetResponseInput,
   SetResponseSchema,
+  type SetSeriesInviteesInput,
+  SetSeriesInviteesSchema,
   z,
 } from "@clubadmin/shared";
 import { Body, Controller, Param, Query } from "@nestjs/common";
@@ -196,20 +205,23 @@ export class AttendanceController {
   @Endpoint({
     method: "GET",
     path: "activities/:activityId/invitees",
-    summary: "Who may be called up to the activity (its groups' members) and who is",
+    summary:
+      "Who may be called up (the groups' members and guests; with q others of the club) and who is",
     tags: ["activities"],
     access: { permission: "activity.responses.read", resource: "activity" },
-    request: { params: ActivityParamsSchema },
+    request: { params: ActivityParamsSchema, query: InviteesQuerySchema },
     response: InviteesSchema,
   })
   async invitees(
     @CurrentAuthorization() authz: RequestAuthorization,
     @Param() params: z.infer<typeof ActivityParamsSchema>,
+    @Query() query: z.infer<typeof InviteesQuerySchema>,
   ): Promise<Invitees> {
     const { clubId } = resourceOf(authz, "activity");
     const view = await this.attendance.invitees(
       tenantContext(authz, clubId, { viewerPrivileged: true }),
       params.activityId,
+      query,
     );
     return this.toInvitees(authz, view);
   }
@@ -217,7 +229,8 @@ export class AttendanceController {
   @Endpoint({
     method: "PUT",
     path: "activities/:activityId/invitees",
-    summary: "Call up some of the groups' members (only they answer and are counted), or all",
+    summary:
+      "Call up people (any active member; after it went out a removal needs a reason), or all",
     tags: ["activities"],
     access: { permission: "activity.manage", resource: "activity" },
     request: { params: ActivityParamsSchema, body: SetInviteesSchema },
@@ -235,6 +248,107 @@ export class AttendanceController {
       body,
     );
     return this.toInvitees(authz, view);
+  }
+
+  @Endpoint({
+    method: "PUT",
+    path: "activities/:activityId/invitees/:personId",
+    summary: "Call up or take back one person (a series session: an override of the series)",
+    tags: ["activities"],
+    access: { permission: "activity.manage", resource: "activity" },
+    request: {
+      params: z.object({ activityId: z.uuid(), personId: z.uuid() }),
+      body: SetInviteeSchema,
+    },
+    response: InviteesSchema,
+  })
+  async setInvitee(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { activityId: string; personId: string },
+    @Body() body: SetInviteeInput,
+  ): Promise<Invitees> {
+    const { clubId } = resourceOf(authz, "activity");
+    const view = await this.attendance.setInvitee(
+      tenantContext(authz, clubId, { viewerPrivileged: true }),
+      params.activityId,
+      params.personId,
+      body,
+    );
+    return this.toInvitees(authz, view);
+  }
+
+  @Endpoint({
+    method: "GET",
+    path: "activity-series/:seriesId/invitees",
+    summary: "A series' call-up and the grid of its coming sessions by person",
+    tags: ["activities"],
+    access: { permission: "activity.responses.read", resource: "activity" },
+    request: { params: SeriesParamsSchema, query: SeriesInviteesQuerySchema },
+    response: SeriesInviteesSchema,
+  })
+  async seriesInvitees(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof SeriesParamsSchema>,
+    @Query() query: z.infer<typeof SeriesInviteesQuerySchema>,
+  ): Promise<SeriesInvitees> {
+    const { clubId } = resourceOf(authz, "activity");
+    const view = await this.attendance.seriesInvitees(
+      tenantContext(authz, clubId, { viewerPrivileged: true }),
+      params.seriesId,
+      query,
+    );
+    const shown = await this.presented(
+      authz,
+      clubId,
+      view.people.map((p) => p.personId),
+    );
+    const people = view.people.flatMap((p) => {
+      const person = shown.get(p.personId);
+      return person ? [{ person, inSeries: p.inSeries, guest: p.guest }] : [];
+    });
+    const visible = new Set(people.map((p) => p.person.id));
+    return {
+      seriesId: view.seriesId,
+      inviteesOnly: view.inviteesOnly,
+      people,
+      sessions: view.sessions.map((s) => ({
+        activityId: s.activity.id,
+        startsAt: s.activity.startsAt.toISOString(),
+        status: s.activity.status,
+        callUpSentAt: s.callUpSentAt?.toISOString() ?? null,
+        detached: s.activity.detached,
+        inviteesOnly: s.activity.inviteesOnly,
+        cells: [...visible].map((personId) => ({
+          personId,
+          calledUp: s.calledUp.has(personId),
+          override: s.overrides.get(personId) ?? null,
+        })),
+      })),
+      nextCursor: view.nextCursor,
+    };
+  }
+
+  @Endpoint({
+    method: "PUT",
+    path: "activity-series/:seriesId/invitees",
+    summary:
+      "A series' call-up for its coming sessions (their overrides kept); removals after a session went out need a reason",
+    tags: ["activities"],
+    access: { permission: "activity.manage", resource: "activity" },
+    request: { params: SeriesParamsSchema, body: SetSeriesInviteesSchema },
+    response: z.object({ sessions: z.number().int(), revoked: z.number().int() }),
+  })
+  async setSeriesInvitees(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: z.infer<typeof SeriesParamsSchema>,
+    @Body() body: SetSeriesInviteesInput,
+  ): Promise<{ sessions: number; revoked: number }> {
+    const { clubId } = resourceOf(authz, "activity");
+    return this.attendance.setSeriesInvitees(
+      tenantContext(authz, clubId, { viewerPrivileged: true }),
+      params.seriesId,
+      body,
+    );
   }
 
   // --- Attendance ----------------------------------------------------------------------
@@ -344,19 +458,41 @@ export class AttendanceController {
   // --- Helpers -----------------------------------------------------------------------
 
   private async toInvitees(authz: RequestAuthorization, view: InviteesView): Promise<Invitees> {
-    const shown = await this.presented(
-      authz,
-      view.activity.clubId,
-      view.candidates.map((c) => c.personId),
-    );
+    const shown = await this.presented(authz, view.activity.clubId, [
+      ...view.candidates.map((c) => c.personId),
+      ...view.others.map((o) => o.personId),
+      ...view.revocations.flatMap((r) => [r.personId, r.revokedByPersonId ?? []].flat()),
+    ]);
     return {
       activityId: view.activity.id,
       inviteesOnly: view.activity.inviteesOnly,
       candidates: view.candidates.flatMap((c) => {
         const person = shown.get(c.personId);
-        return person ? [{ person, invited: c.invited }] : [];
+        return person ? [{ person, invited: c.invited, guest: c.guest, groups: c.groups }] : [];
       }),
       invitedCount: view.invitedCount,
+      others: view.others.flatMap((o) => {
+        const person = shown.get(o.personId);
+        return person ? [{ person, groups: o.groups }] : [];
+      }),
+      callUpSentAt: view.callUpSentAt?.toISOString() ?? null,
+      announced: view.announced,
+      editable: view.editable,
+      seriesId: view.seriesId,
+      revocations: view.revocations.flatMap((r) =>
+        shown.has(r.personId)
+          ? [
+              {
+                personId: r.personId,
+                reason: r.reason,
+                ...(r.revokedByPersonId && shown.has(r.revokedByPersonId)
+                  ? { revokedBy: shown.get(r.revokedByPersonId)! }
+                  : {}),
+                revokedAt: r.revokedAt.toISOString(),
+              },
+            ]
+          : [],
+      ),
     };
   }
 

@@ -24,10 +24,12 @@ export interface RoleRow {
   holderCount: number;
   /** P2.8: the background-check category holders need (a requirement, not a permission). */
   backgroundCheckCategory: string | null;
+  /** P2.10: a guest role (takes part, takes no place). */
+  guest: boolean;
 }
 
 const ROLE_COLUMNS = sql`r.id, r.club_id, r.scope, r.template_key, r.locked, r.names, r.descriptions,
-  r.sort_order, r.archived_at, r.version, r.background_check_category,
+  r.sort_order, r.archived_at, r.version, r.background_check_category, r.guest,
   coalesce((SELECT array_agg(rp.permission ORDER BY rp.permission) FROM public.role_permissions rp
     WHERE rp.role_id = r.id), '{}') AS permissions`;
 
@@ -45,6 +47,7 @@ type RawRole = {
   permissions: string[];
   holder_count?: number;
   background_check_category: string | null;
+  guest: boolean;
 };
 
 const toRole = (r: RawRole): RoleRow => ({
@@ -61,6 +64,7 @@ const toRole = (r: RawRole): RoleRow => ({
   permissions: r.permissions,
   holderCount: r.holder_count ?? 0,
   backgroundCheckCategory: r.background_check_category,
+  guest: r.guest,
 });
 
 /** The club's roles (not deleted) with their permissions, without holder counts. */

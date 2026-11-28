@@ -709,6 +709,34 @@ describe("every type reaches the right people", () => {
     expect(await types(x.coach)).toEqual([]);
   });
 
+  it("callup.revoked (P2.10): those told about the schedule, one notice for several sessions", async () => {
+    const x = await team();
+    const first = await activity(x, 3 * DAY);
+    const second = await activity(x, 10 * DAY);
+    await outbox.dispatch(
+      t.db,
+      await publish(x.club, "activity.callup.revoked", {
+        clubId: x.club,
+        activityIds: [second, first],
+        personIds: [x.elsa],
+        seriesId: null,
+      }),
+      [handler()],
+    );
+    expect(await types(x.anna)).toEqual(["callup.revoked"]);
+    expect(await types(x.nils)).toEqual(["callup.revoked"]);
+    expect(await types(x.gunilla)).toEqual([]);
+    expect(await types(x.coach)).toEqual([]);
+    // About the first session, with the count; never the reason (free text).
+    const { rows } = await t.query<{ params: Record<string, unknown>; subject_id: string }>(
+      "admin",
+      "SELECT params, subject_id FROM notifications WHERE recipient_person_id = $1",
+      [x.anna],
+    );
+    expect(rows[0]).toMatchObject({ subject_id: first, params: { count: 2 } });
+    expect(Object.keys(rows[0]!.params)).not.toContain("reason");
+  });
+
   it("event.published: the audience's guardians who may sign up; event.cancelled: only those registered", async () => {
     const x = await team();
     const published = await event(x);

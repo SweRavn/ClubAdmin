@@ -216,6 +216,8 @@ export interface GroupMembersPageRow {
     personId: string;
     functions: GroupFunction[];
     memberships: { id: string; function: GroupFunction }[];
+    /** Only a guest of the group (P2.10). */
+    guest: boolean;
   }[];
 }
 
@@ -254,6 +256,8 @@ export function groupMembersPageQuery(
     ), page AS (
       SELECT v.person_id, array_agg(v.function ORDER BY v.function) AS functions,
         jsonb_agg(jsonb_build_object('id', v.id, 'function', v.function) ORDER BY v.function) AS memberships,
+        -- Only a guest (P2.10): every membership has a guest role.
+        bool_and(v.guest) AS guest,
         row_number() OVER (ORDER BY v.sort_given_name, v.person_id) AS ord
       FROM app.visible_group_members v
       WHERE v.club_id = ${clubId} AND v.group_id = ${groupId}
@@ -267,7 +271,7 @@ export function groupMembersPageQuery(
       (SELECT count(DISTINCT gm.person_id)::int FROM public.group_memberships gm
        WHERE gm.club_id = ${clubId} AND gm.group_id = ${groupId} AND gm.valid_to IS NULL) AS total_count,
       (${page.cursor}::uuid IS NULL OR EXISTS (SELECT 1 FROM anchor)) AS cursor_found,
-      coalesce((SELECT jsonb_agg(jsonb_build_object('personId', p.person_id, 'functions', p.functions, 'memberships', p.memberships) ORDER BY p.ord) FROM page p), '[]') AS items`;
+      coalesce((SELECT jsonb_agg(jsonb_build_object('personId', p.person_id, 'functions', p.functions, 'memberships', p.memberships, 'guest', p.guest) ORDER BY p.ord) FROM page p), '[]') AS items`;
 }
 
 // --- P1.10a: group administration ------------------------------------------------------
@@ -406,4 +410,37 @@ export async function takesPartInGroup(
     )
     .limit(1);
   return row !== undefined;
+}
+
+/**
+ * Active members of the club found by name or member number (P2.10: called up
+ * from other groups), visible to the viewer, by given name; at most `limit`.
+ */
+export async function activeMembersMatching(
+  tx: Tx,
+  clubId: string,
+  q: string,
+  limit: number,
+): Promise<string[]> {
+  const conditions = registerConditions(clubId, { q });
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT e.person_id FROM app.register_entries e
+    WHERE ${conditions} AND e.visible AND e.valid_to IS NULL AND e.status = 'active'
+    ORDER BY e.sort_given_name, e.person_id
+    LIMIT ${limit}`);
+  return rows.map((r) => r.person_id);
+}
+
+/** Which of these people have an active (not paused) open membership of the club. */
+export async function activeMembers(
+  tx: Tx,
+  clubId: string,
+  personIds: readonly string[],
+): Promise<Set<string>> {
+  if (personIds.length === 0) return new Set();
+  const { rows } = await tx.execute<{ person_id: string }>(sql`
+    SELECT m.person_id FROM public.club_memberships m
+    WHERE m.club_id = ${clubId} AND m.valid_to IS NULL AND m.status = 'active'
+      AND m.person_id = ANY (${`{${[...new Set(personIds)].join(",")}}`}::uuid[])`);
+  return new Set(rows.map((r) => r.person_id));
 }

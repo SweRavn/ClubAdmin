@@ -391,3 +391,11 @@ export async function closeOpenWaitlistEntries(
     .returning({ id: groupWaitlistEntries.id });
   return rows.map((r) => r.id);
 }
+
+/** Brings the group's default chat channel (if made yet) up to its members (P2.10). */
+export async function syncDefaultChannel(tx: Tx, groupId: string): Promise<void> {
+  await tx.execute(sql`
+    SELECT app.chat_sync_group(g.id) FROM public.groups g
+    WHERE g.id = ${groupId}::uuid
+      AND EXISTS (SELECT 1 FROM public.chats c WHERE c.default_for_group_id = g.id)`);
+}

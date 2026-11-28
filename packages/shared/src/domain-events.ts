@@ -264,11 +264,23 @@ export const DOMAIN_EVENTS = {
     kind: z.enum(["confirmed", "offered"]),
   }),
   /** Call-ups (#19): P1.7 tells those newly called up. */
+  /**
+   * A call-up changed. Since P2.10 `added` lists only those to tell (the
+   * call-up had gone out); `removed` stays for older consumers and is not
+   * notified (revocations are `activity.callup.revoked`).
+   */
   "activity.invitees.changed": z.object({
     clubId: id,
     activityId: id,
     added: z.array(id),
     removed: z.array(id),
+  }),
+  /** Call-ups taken back after they went out (P2.10): one notice per person, the sessions listed. */
+  "activity.callup.revoked": z.object({
+    clubId: id,
+    activityIds: z.array(id).min(1),
+    personIds: z.array(id).min(1),
+    seriesId: id.nullable(),
   }),
 } as const;
 

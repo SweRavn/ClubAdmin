@@ -26,6 +26,7 @@ import { clubHolders } from "../holders.ts";
 import { mailHandler, type MailHandlerOptions, memoryMailProvider } from "../mail.ts";
 import { type Channels, createNotices, debounce, type Notice } from "./fanout.ts";
 import {
+  type ActivityFacts,
   activityFacts,
   activityParams,
   dutyShiftFacts,
@@ -166,6 +167,8 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "activity.changed",
       "activity_series.changed",
       "activity.invitees.changed",
+      // A call-up taken back (P2.10).
+      "activity.callup.revoked",
       "activity.response.changed",
       "event.changed",
       "event.registration.changed",
@@ -314,6 +317,40 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
             }
           }
           await notify(tx, notices);
+          return;
+        }
+        case "activity.callup.revoked": {
+          // The person and their guardians (view_schedule), at once. The
+          // reason is free text, so it is shown in the app, never in the
+          // notice; one notice per person for a series' change (P2.10).
+          const { clubId, activityIds, personIds, seriesId } = DOMAIN_EVENTS[
+            "activity.callup.revoked"
+          ].parse(event.payload);
+          const coming: ActivityFacts[] = [];
+          for (const id of activityIds) {
+            const a = await activityFacts(tx, clubId, id);
+            if (a && a.status === "scheduled" && a.startsAt.getTime() > at.getTime())
+              coming.push(a);
+          }
+          coming.sort((x, y) => x.startsAt.getTime() - y.startsAt.getTime());
+          const first = coming[0];
+          if (!first) return;
+          const series = seriesId !== null && coming.length > 1;
+          const people = await withGuardians(tx, personIds, RIGHTS.schedule);
+          await notify(
+            tx,
+            [...people].map(([recipient, about]) => ({
+              recipientPersonId: recipient,
+              clubId,
+              type: "callup.revoked" as const,
+              subjectType: series ? "series" : "activity",
+              subjectId: series ? seriesId : first.id,
+              about,
+              params: { ...activityParams(first), count: coming.length },
+              dedupeKey: `callup:revoked:${event.idempotencyKey}`,
+              dueAt: first.startsAt,
+            })),
+          );
           return;
         }
         case "activity.response.changed": {

@@ -72,6 +72,7 @@ export function toGroupResponse(group: Group): GroupResponse {
     admissionMode: group.admissionMode,
     archived: group.archivedAt !== null,
     adapted: group.adapted,
+    guestsInChannel: group.guestsInChannel,
   };
 }
 

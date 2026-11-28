@@ -452,6 +452,49 @@ export const HISTORY_POLICY: readonly TablePolicy[] = [
     ],
     columns: { series_id: "hidden", group_id: "hidden" },
   },
+  // Call-ups across groups (P2.10).
+  {
+    table: "public.activity_series_invitees",
+    resource: "activity_series_invitee",
+    link: { kind: "series", column: "series_id" },
+    about: [
+      { column: "person_id", kind: "person" },
+      { column: "series_id", kind: "series" },
+    ],
+    columns: { series_id: "hidden", person_id: "hidden", added_by_person_id: "hidden" },
+  },
+  {
+    table: "public.activity_invitee_overrides",
+    resource: "activity_invitee_override",
+    link: { kind: "activity", column: "activity_id" },
+    about: [
+      { column: "person_id", kind: "person" },
+      { column: "activity_id", kind: "activity" },
+    ],
+    columns: {
+      activity_id: "hidden",
+      person_id: "hidden",
+      kind: "name_only",
+      set_by_person_id: "hidden",
+    },
+  },
+  {
+    table: "public.activity_callup_revocations",
+    resource: "activity_callup_revocation",
+    link: { kind: "activity", column: "activity_id" },
+    about: [
+      { column: "person_id", kind: "person" },
+      { column: "activity_id", kind: "activity" },
+    ],
+    columns: {
+      activity_id: "hidden",
+      person_id: "hidden",
+      // About a child's participation: that it changed, never the text.
+      reason: "name_only",
+      revoked_by_person_id: "hidden",
+      revoked_at: "hidden",
+    },
+  },
   // Events.
   {
     table: "public.events",

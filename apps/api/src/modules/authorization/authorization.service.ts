@@ -22,6 +22,7 @@ import {
   canReadGroupActivities,
   canReadProgramme,
   policyFor,
+  seesCalledUp,
 } from "./authorization.policy.ts";
 import {
   loadActivityScope,
@@ -198,7 +199,8 @@ export class AuthorizationService {
     if (resource.kind === "platform") return "forbidden";
     if (resource.kind === "person" || resource.kind === "handover") return "not-found";
     if (resource.kind === "activity") {
-      return resource.groups.some((g) => canReadGroupActivities(actor, g))
+      return resource.groups.some((g) => canReadGroupActivities(actor, g)) ||
+        seesCalledUp(actor, resource)
         ? "forbidden"
         : "not-found";
     }
@@ -502,7 +504,7 @@ export class AuthorizationService {
           ancestorIds: (await loadGroupScope(tx, groupId))?.ancestorIds ?? [],
         })),
       );
-      return { kind: "activity" as const, clubId: scope.clubId, groups };
+      return { kind: "activity" as const, clubId: scope.clubId, groups, calledUp: scope.calledUp };
     });
   }
 

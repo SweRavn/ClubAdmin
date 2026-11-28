@@ -989,7 +989,11 @@
     "programme_group_unavailable": "En valgt gruppe finnes ikke lenger eller er arkivert.",
     "programme_event_exists": "Arrangementet har allerede et program.",
     "programme_not_untouched": "Noen har allerede svart, meldt seg på, tatt en vakt eller tilbudt skyss. Avlys punktene ett og ett i stedet.",
-    "programme_template_archived": "Malen er arkivert."
+    "programme_template_archived": "Malen er arkivert.",
+    "revocation_reason_required": "Oppgi en begrunnelse: innkallingen er allerede sendt.",
+    "activity_started": "Aktiviteten har allerede startet.",
+    "event_session": "Innkallingen til en arrangementsøkt endres på arrangementet.",
+    "not_callable": "Den personen kan ikke innkalles hit."
   },
   "memberExport": {
     "columns": {
@@ -1894,6 +1898,10 @@
       "removed": {
         "title": "Ikke lenger innkalt: {title} {when}",
         "body": "{club} · {group}"
+      },
+      "revoked": {
+        "title": "{count, plural, one {Innkallingen trukket tilbake: {title} {when}} other {Innkallingen trukket tilbake for # økter fra {when}}}",
+        "body": "Se begrunnelsen i timeplanen. {club} · {group}"
       }
     },
     "response": {
@@ -2945,7 +2953,10 @@
       "chat_report": "en melding fra en chat",
       "document": "Fil",
       "document_folder": "Mappe",
-      "announcement": "Kunngjøring"
+      "announcement": "Kunngjøring",
+      "activity_series_invitee": "Innkalt til serien",
+      "activity_invitee_override": "Unntak i seriens innkalling",
+      "activity_callup_revocation": "Tilbakekalt innkalling"
     },
     "statuses": {
       "scheduled": "Planlagt",
@@ -3086,7 +3097,8 @@
       "call_failed": "mislyktes med kall til",
       "locked": "låste",
       "requirements_changed": "endret kravene for",
-      "applied": "la ut"
+      "applied": "la ut",
+      "overridden": "gjorde unntak for"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",

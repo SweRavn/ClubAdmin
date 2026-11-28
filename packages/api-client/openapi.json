@@ -107,6 +107,12 @@
               },
               "recurrence": {
                 "$ref": "#/components/schemas/SeriesRecurrence"
+              },
+              "revocations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CallUpRevocation"
+                }
               }
             },
             "required": [
@@ -497,6 +503,30 @@
           "freq"
         ],
         "additionalProperties": false
+      },
+      "CallUpRevocation": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "revokedBy": {
+            "$ref": "#/components/schemas/PersonSummary"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "personId",
+          "reason",
+          "revokedAt"
+        ]
       },
       "Activity": {
         "type": "object",
@@ -2449,6 +2479,9 @@
               "activity_invitee",
               "activity_series",
               "activity_series_group",
+              "activity_series_invitee",
+              "activity_invitee_override",
+              "activity_callup_revocation",
               "event",
               "event_group",
               "event_activity",
@@ -3063,6 +3096,28 @@
                 },
                 "invited": {
                   "type": "boolean"
+                },
+                "guest": {
+                  "type": "boolean"
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ]
+                  }
                 }
               },
               "required": [
@@ -3073,6 +3128,66 @@
           },
           "invitedCount": {
             "type": "integer"
+          },
+          "others": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "person",
+                "groups"
+              ]
+            }
+          },
+          "callUpSentAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "announced": {
+            "type": "boolean"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "seriesId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "revocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CallUpRevocation"
+            }
           }
         },
         "required": [
@@ -3095,11 +3210,33 @@
               "format": "uuid"
             },
             "maxItems": 200
+          },
+          "revocationReason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
           }
         },
         "required": [
           "inviteesOnly",
           "personIds"
+        ],
+        "additionalProperties": false
+      },
+      "SetInviteeRequest": {
+        "type": "object",
+        "properties": {
+          "calledUp": {
+            "type": "boolean"
+          },
+          "revocationReason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "calledUp"
         ],
         "additionalProperties": false
       },
@@ -3675,6 +3812,152 @@
             ]
           }
         },
+        "additionalProperties": false
+      },
+      "SeriesInvitees": {
+        "type": "object",
+        "properties": {
+          "seriesId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inviteesOnly": {
+            "type": "boolean"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "inSeries": {
+                  "type": "boolean"
+                },
+                "guest": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "person",
+                "inSeries",
+                "guest"
+              ]
+            }
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "activityId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "startsAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "callUpSentAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "detached": {
+                  "type": "boolean"
+                },
+                "inviteesOnly": {
+                  "type": "boolean"
+                },
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "personId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "calledUp": {
+                        "type": "boolean"
+                      },
+                      "override": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "added",
+                          "removed",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "personId",
+                      "calledUp",
+                      "override"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "activityId",
+                "startsAt",
+                "status",
+                "callUpSentAt",
+                "detached",
+                "inviteesOnly",
+                "cells"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "seriesId",
+          "inviteesOnly",
+          "people",
+          "sessions",
+          "nextCursor"
+        ]
+      },
+      "SetSeriesInviteesRequest": {
+        "type": "object",
+        "properties": {
+          "inviteesOnly": {
+            "type": "boolean"
+          },
+          "personIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 200
+          },
+          "revocationReason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "inviteesOnly",
+          "personIds"
+        ],
         "additionalProperties": false
       },
       "SkipDatesRequest": {
@@ -11712,6 +11995,9 @@
           },
           "adapted": {
             "type": "boolean"
+          },
+          "guestsInChannel": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -17304,6 +17590,9 @@
               null
             ],
             "default": null
+          },
+          "guest": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -20011,6 +20300,9 @@
                       "function"
                     ]
                   }
+                },
+                "guest": {
+                  "type": "boolean"
                 }
               },
               "required": [
@@ -23955,6 +24247,12 @@
                 "status",
                 "canRespond"
               ]
+            }
+          },
+          "revocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CallUpRevocation"
             }
           }
         },
@@ -28251,7 +28549,7 @@
     "/api/v1/activities/{activityId}/invitees": {
       "get": {
         "operationId": "Attendance_invitees",
-        "summary": "Who may be called up to the activity (its groups' members) and who is",
+        "summary": "Who may be called up (the groups' members and guests; with q others of the club) and who is",
         "tags": [
           "activities"
         ],
@@ -28270,6 +28568,16 @@
             "required": true,
             "name": "activityId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
           }
         ],
         "responses": {
@@ -28347,7 +28655,7 @@
       },
       "put": {
         "operationId": "Attendance_setInvitees",
-        "summary": "Call up some of the groups' members (only they answer and are counted), or all",
+        "summary": "Call up people (any active member; after it went out a removal needs a reason), or all",
         "tags": [
           "activities"
         ],
@@ -28374,6 +28682,123 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SetInviteesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Invitees"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activities/{activityId}/invitees/{personId}": {
+      "put": {
+        "operationId": "Attendance_setInvitee",
+        "summary": "Call up or take back one person (a series session: an override of the series)",
+        "tags": [
+          "activities"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "activityId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "personId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetInviteeRequest"
               }
             }
           }
@@ -29364,6 +29789,242 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HistoryPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/activity-series/{seriesId}/invitees": {
+      "get": {
+        "operationId": "Attendance_seriesInvitees",
+        "summary": "A series' call-up and the grid of its coming sessions by person",
+        "tags": [
+          "activities"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.responses.read` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "seriesId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 32,
+              "default": 8
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeriesInvitees"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "Attendance_setSeriesInvitees",
+        "summary": "A series' call-up for its coming sessions (their overrides kept); removals after a session went out need a reason",
+        "tags": [
+          "activities"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `activity.manage` on the activity. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "seriesId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSeriesInviteesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sessions": {
+                      "type": "integer"
+                    },
+                    "revoked": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "sessions",
+                    "revoked"
+                  ]
                 }
               }
             }
@@ -44423,6 +45084,9 @@
                   },
                   "adapted": {
                     "type": "boolean"
+                  },
+                  "guestsInChannel": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -47382,6 +48046,9 @@
                 "activity_invitee",
                 "activity_series",
                 "activity_series_group",
+                "activity_series_invitee",
+                "activity_invitee_override",
+                "activity_callup_revocation",
                 "event",
                 "event_group",
                 "event_activity",
@@ -61243,6 +61910,9 @@
                     "type": "boolean"
                   },
                   "adapted": {
+                    "type": "boolean"
+                  },
+                  "guestsInChannel": {
                     "type": "boolean"
                   }
                 },

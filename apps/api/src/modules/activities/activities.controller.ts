@@ -85,6 +85,7 @@ import {
   type SeriesView,
 } from "./activities.service.ts";
 import { AttendanceService } from "./attendance.service.ts";
+import { schedulePeopleOf } from "./people-scope.ts";
 
 const iso = (date: Date) => date.toISOString();
 
@@ -456,20 +457,43 @@ export class ActivitiesController {
   ): Promise<ActivityDetail> {
     const resource = resourceOf(authz, "activity");
     const context = tenantContext(authz, resource.clubId);
-    const view = await this.activities.getActivity(context, params.activityId);
+    const view = await this.activities.getActivity(
+      context,
+      params.activityId,
+      schedulePeopleOf(authz.actor),
+    );
     const members = (
       await Promise.all(view.groups.map((g) => this.memberships.groupMembers(context, g.id)))
     ).flat();
     const leaderIds = [...new Set(members.filter((m) => m.leads).map((m) => m.personId))];
-    const leaders = await this.presenter.present(
+    const revocations = view.revocations ?? [];
+    const shown = await this.presenter.present(
       authz,
       resource.clubId,
-      await this.people.summaries(context, leaderIds),
+      await this.people.summaries(context, [
+        ...new Set([
+          ...leaderIds,
+          ...revocations.flatMap((r) => [r.personId, r.revokedByPersonId ?? []].flat()),
+        ]),
+      ]),
     );
+    const byId = new Map(shown.map((p) => [p.id, p]));
+    const leaders = shown.filter((p) => leaderIds.includes(p.id));
     return {
       ...toActivityResponse(view, this.managesAll(authz, resource.groups)),
       leaders,
       recurrence: view.recurrence ?? null,
+      // My and my wards' call-ups taken back (P2.10), with the reason.
+      revocations: revocations
+        .filter((r) => byId.has(r.personId))
+        .map((r) => ({
+          personId: r.personId,
+          reason: r.reason,
+          ...(r.revokedByPersonId && byId.has(r.revokedByPersonId)
+            ? { revokedBy: byId.get(r.revokedByPersonId)! }
+            : {}),
+          revokedAt: r.revokedAt.toISOString(),
+        })),
     };
   }
 

@@ -144,16 +144,30 @@ export type ResponseList = z.infer<typeof ResponseListSchema>;
 
 /** At most this many people are called up to one activity. */
 export const INVITEES_MAX = 200;
+/**
+ * When a call-up goes out without an answer request (P2.10, ADR 0056 as
+ * amended): this many hours before the start; an activity saved inside the
+ * window goes out when saved.
+ */
+export const CALLUP_DEFAULT_LEAD_HOURS = 72;
+/** Changes by the leaders this soon after a call-up went out are still silent (corrections). */
+export const CALLUP_GRACE_MINUTES = 15;
+/** The series grid's page of sessions (ADR 0056 decision 4). */
+export const SERIES_GRID_SESSIONS = 8;
+
+const revocationReason = z.string().trim().min(1).max(500);
 
 /**
  * Who is called up. With inviteesOnly the roster's participants are the
- * people in personIds (the groups' members on the start); without it the
- * whole groups take part and personIds must be empty.
+ * people in personIds (any active member of the club, P2.10); without it the
+ * whole groups take part and personIds must be empty. After the call-up went
+ * out, removing someone is a revocation and needs `revocationReason`.
  */
 export const SetInviteesSchema = z
   .object({
     inviteesOnly: z.boolean(),
     personIds: z.array(z.uuid()).max(INVITEES_MAX),
+    revocationReason: revocationReason.optional(),
   })
   .strict()
   .refine((v) => v.inviteesOnly || v.personIds.length === 0, {
@@ -163,17 +177,129 @@ export const SetInviteesSchema = z
   .openapi("SetInviteesRequest");
 export type SetInviteesInput = z.input<typeof SetInviteesSchema>;
 
+/** One person on one activity (a series session: an override, ADR 0056 decision 4). */
+export const SetInviteeSchema = z
+  .object({ calledUp: z.boolean(), revocationReason: revocationReason.optional() })
+  .strict()
+  .openapi("SetInviteeRequest");
+export type SetInviteeInput = z.input<typeof SetInviteeSchema>;
+
+/** A call-up taken back after it went out (P2.10): shown to the person, guardians and leaders. */
+export const CallUpRevocationSchema = z
+  .object({
+    personId: z.uuid(),
+    reason: z.string(),
+    /** Who took it back (left out when the viewer may not see them). */
+    revokedBy: PersonSummarySchema.optional(),
+    revokedAt: z.iso.datetime({ offset: true }),
+  })
+  .openapi("CallUpRevocation");
+export type CallUpRevocation = z.infer<typeof CallUpRevocationSchema>;
+
+export const InviteesQuerySchema = z.object({
+  /** Members of the club's other groups (ad hoc guests): part of a name. */
+  q: z.string().trim().min(1).max(60).optional(),
+});
+
+const groupRef = z.object({ id: z.uuid(), name: z.string() });
+
 export const InviteesSchema = z
   .object({
     activityId: z.uuid(),
     inviteesOnly: z.boolean(),
-    /** Everyone who may be called up (the groups' members on the start), and whether they are. */
-    candidates: z.array(z.object({ person: PersonSummarySchema, invited: z.boolean() })),
+    /**
+     * The activity's groups' participants first (permanent guests marked),
+     * then those called up from elsewhere (ad hoc guests, P2.10).
+     */
+    candidates: z.array(
+      z.object({
+        person: PersonSummarySchema,
+        invited: z.boolean(),
+        /** A permanent guest of the group, or called up from another group. */
+        guest: z.boolean().optional(),
+        /** Their own groups (a hint for guests). */
+        groups: z.array(groupRef).optional(),
+      }),
+    ),
     /** How many are called up (protected members the viewer may not see included). */
     invitedCount: z.number().int(),
+    /** With `q`: active members of the club found by name, not yet on the list. */
+    others: z
+      .array(z.object({ person: PersonSummarySchema, groups: z.array(groupRef) }))
+      .optional(),
+    /** When the call-up went out (null: not yet; changes are silent until then). */
+    callUpSentAt: z.iso.datetime({ offset: true }).nullable().optional(),
+    /** Whether changes now tell people (after the call-up went out and its grace). */
+    announced: z.boolean().optional(),
+    /** Not after the start (attendance takes over). */
+    editable: z.boolean().optional(),
+    /** A series session following its series' call-up. */
+    seriesId: z.uuid().nullable().optional(),
+    revocations: z.array(CallUpRevocationSchema).optional(),
   })
   .openapi("Invitees");
 export type Invitees = z.infer<typeof InviteesSchema>;
+
+// --- A series' call-up (P2.10, ADR 0056 decisions 3 and 4) ---------------------------------
+
+export const SetSeriesInviteesSchema = z
+  .object({
+    inviteesOnly: z.boolean(),
+    personIds: z.array(z.uuid()).max(INVITEES_MAX),
+    /** One reason for every session whose call-up went out (ADR 0056 decision 6). */
+    revocationReason: revocationReason.optional(),
+  })
+  .strict()
+  .refine((v) => v.inviteesOnly || v.personIds.length === 0, {
+    message: "personIds must be empty without inviteesOnly",
+    path: ["personIds"],
+  })
+  .openapi("SetSeriesInviteesRequest");
+export type SetSeriesInviteesInput = z.input<typeof SetSeriesInviteesSchema>;
+
+export const SeriesInviteesQuerySchema = z.object({
+  /** The grid's page: sessions starting after this one (keyset by start). */
+  cursor: z.uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(32).default(SERIES_GRID_SESSIONS),
+});
+
+export const SeriesInviteesSchema = z
+  .object({
+    seriesId: z.uuid(),
+    inviteesOnly: z.boolean(),
+    /** The groups' participants and the series' guests: the grid's rows. */
+    people: z.array(
+      z.object({
+        person: PersonSummarySchema,
+        /** On the series' list. */
+        inSeries: z.boolean(),
+        guest: z.boolean(),
+      }),
+    ),
+    /** The coming sessions (the grid's columns). */
+    sessions: z.array(
+      z.object({
+        activityId: z.uuid(),
+        startsAt: z.iso.datetime({ offset: true }),
+        status: z.string(),
+        callUpSentAt: z.iso.datetime({ offset: true }).nullable(),
+        /** Detached sessions keep their own call-up (ADR 0034). */
+        detached: z.boolean(),
+        inviteesOnly: z.boolean(),
+        /** Per person: called up, and the session's own override if any. */
+        cells: z.array(
+          z.object({
+            personId: z.uuid(),
+            calledUp: z.boolean(),
+            override: z.enum(["added", "removed"]).nullable(),
+          }),
+        ),
+      }),
+    ),
+    nextCursor: z.uuid().nullable(),
+  })
+  .openapi("SeriesInvitees");
+export type SeriesInvitees = z.infer<typeof SeriesInviteesSchema>;
 
 // --- Attendance -------------------------------------------------------------------
 

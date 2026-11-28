@@ -158,6 +158,8 @@ export const GroupSchema = z
     archived: z.boolean(),
     /** Adapted activities, parasport (P2.7). */
     adapted: z.boolean(),
+    /** Guests are in the group's default chat channel (P2.10). */
+    guestsInChannel: z.boolean().optional(),
   })
   .openapi("Group");
 export type GroupResponse = z.infer<typeof GroupSchema>;
@@ -222,6 +224,8 @@ export const GroupMemberListSchema = z
         memberships: z
           .array(z.object({ id: z.uuid(), function: z.enum(GROUP_FUNCTIONS) }))
           .optional(),
+        /** Only a guest of the group (a guest role, P2.10): takes part, takes no place. */
+        guest: z.boolean().optional(),
       }),
     ),
     nextCursor: z.uuid().nullable(),

@@ -398,7 +398,7 @@ export async function groupParticipants(
     : sql``;
   const { rows } = await tx.execute<{ person_id: string }>(sql`
     SELECT DISTINCT gm.person_id FROM public.group_memberships gm
-    WHERE gm.group_id = ${groupId}::uuid AND gm.valid_to IS NULL AND gm.participates ${people}
+    WHERE gm.group_id = ${groupId}::uuid AND gm.valid_to IS NULL AND gm.participates AND NOT gm.guest ${people}
     LIMIT 2000`);
   return rows.map((r) => r.person_id);
 }
@@ -723,7 +723,7 @@ export async function participations(
     SELECT DISTINCT gm.person_id, gm.group_id, g.name FROM public.group_memberships gm
     JOIN public.groups g ON g.id = gm.group_id
     WHERE gm.person_id = ANY (${uuidArray([...new Set(personIds)])}::uuid[])
-      AND gm.valid_to IS NULL AND gm.participates AND g.club_id = app.current_club_id()`);
+      AND gm.valid_to IS NULL AND gm.participates AND NOT gm.guest AND g.club_id = app.current_club_id()`);
   return rows.map((r) => ({ personId: r.person_id, groupId: r.group_id, groupName: r.name }));
 }
 

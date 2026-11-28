@@ -264,6 +264,8 @@ export class GroupsService {
       if (changed.includes("parentGroupId")) {
         await outbox.publish(tx, "group.parent.changed", { clubId: context.clubId, groupId });
       }
+      // Guests join or leave the default channel at once (P2.10).
+      if (changed.includes("guestsInChannel")) await repo.syncDefaultChannel(tx, groupId);
       return this.getGroupInTx(tx, groupId);
     });
   }

@@ -105,6 +105,7 @@ export class GroupMembersController {
           {
             person,
             functions: m.functions,
+            ...(m.guest ? { guest: true } : {}),
             ...(manages ? { memberships: m.memberships } : {}),
           },
         ];
@@ -177,7 +178,11 @@ export class GroupMembersController {
     const row = await this.memberships.addGroupMember(context, group.groupId, body.personId, fn, {
       overCapacity: body.overCapacity === true,
       ...(body.queueBypassReason ? { queueBypassReason: body.queueBypassReason } : {}),
-      role: { id: role.id, participates: role.permissions.includes("group.participate") },
+      // A guest takes part without taking a place (P2.10): no capacity or queue.
+      role: {
+        id: role.id,
+        participates: role.permissions.includes("group.participate") && !role.guest,
+      },
     });
     return { id: row.id, personId: row.personId, function: row.function, roleId: role.id };
   }

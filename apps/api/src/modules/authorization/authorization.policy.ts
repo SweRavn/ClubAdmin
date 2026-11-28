@@ -7,6 +7,7 @@
 import { type Permission, PERMISSIONS, type RegisterAccess } from "@clubadmin/shared";
 
 import {
+  type ActivityResource,
   type AnnouncementResource,
   type ChatResource,
   type ClubResource,
@@ -199,6 +200,32 @@ export function canManageProgramme(actor: Actor, programme: ProgrammeResource): 
     actor.holds("club.programmes.manage", programme.clubId) ||
     (programme.groups.length > 0 &&
       programme.groups.every((g) => canManageGroupActivities(actor, g)))
+  );
+}
+
+/**
+ * Called up from another group (P2.10): the person sees the activity, and so
+ * do their guardians who see their schedule; also after it was taken back.
+ */
+export function seesCalledUp(actor: Actor, activity: ActivityResource): boolean {
+  return (activity.calledUp ?? []).some(
+    (id) =>
+      id === actor.personId ||
+      actor.relationships.wards.some(
+        (w) =>
+          w.personId === id && (w.rights.includes("view_schedule") || actor.isFullGuardianOf(id)),
+      ),
+  );
+}
+
+/** Called up from another group: the person answers, and guardians with sign_up for them. */
+function answersCalledUp(actor: Actor, activity: ActivityResource): boolean {
+  return (activity.calledUp ?? []).some(
+    (id) =>
+      id === actor.personId ||
+      actor.relationships.wards.some(
+        (w) => w.personId === id && (w.rights.includes("sign_up") || actor.isFullGuardianOf(id)),
+      ),
   );
 }
 
@@ -419,8 +446,12 @@ export const POLICIES: readonly Policy[] = [
     "group",
     ({ actor, resource }) => !resource.archived && canManageGroupActivities(actor, resource),
   ),
-  definePolicy("activity.read", "activity", ({ actor, resource }) =>
-    resource.groups.some((g) => canReadGroupActivities(actor, g)),
+  definePolicy(
+    "activity.read",
+    "activity",
+    ({ actor, resource }) =>
+      resource.groups.some((g) => canReadGroupActivities(actor, g)) ||
+      seesCalledUp(actor, resource),
   ),
   definePolicy(
     "activity.manage",
@@ -481,8 +512,13 @@ export const POLICIES: readonly Policy[] = [
   // Responses and attendance (P1.5). The service checks whose answer it is
   // (the caller or a ward with sign_up, on the roster) and the lock.
   // Leaders of one of its groups answer for its participants too (P1.6b).
-  definePolicy("activity.respond", "activity", ({ actor, resource }) =>
-    resource.groups.some((g) => canRespondInGroup(actor, g) || canLeadGroupActivities(actor, g)),
+  definePolicy(
+    "activity.respond",
+    "activity",
+    ({ actor, resource }) =>
+      resource.groups.some(
+        (g) => canRespondInGroup(actor, g) || canLeadGroupActivities(actor, g),
+      ) || answersCalledUp(actor, resource),
   ),
   definePolicy("activity.responses.read", "activity", ({ actor, resource }) =>
     resource.groups.some((g) => canLeadGroupActivities(actor, g)),

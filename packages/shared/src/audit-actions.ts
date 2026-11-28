@@ -157,6 +157,10 @@ export const AUDIT_ACTIONS = [
   "attendance.recorded",
   "attendance.corrected",
   "activity.invitees.changed",
+  // P2.10: a series' call-up, a session's override, a call-up taken back.
+  "activity.series.invitees.changed",
+  "activity.invitee.overridden",
+  "activity.callup.revoked",
   "event.created",
   "event.updated",
   "event.published",

@@ -1677,6 +1677,17 @@ describe("permission matrix", () => {
       expected: TEAM_MANAGERS(200),
       body: { notes: "Bring water" },
     },
+    // A series' call-up (P2.10): leaders see the grid, those who manage set the list
+    // (the whole groups again here, which changes nothing).
+    "GET /api/v1/activity-series/:seriesId/invitees": {
+      url: () => `/api/v1/activity-series/${m.seriesId}/invitees`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "PUT /api/v1/activity-series/:seriesId/invitees": {
+      url: () => `/api/v1/activity-series/${m.seriesId}/invitees`,
+      expected: TEAM_MANAGERS(200),
+      body: { inviteesOnly: false, personIds: [] },
+    },
     // P1.14: a range with one Wednesday of the series; the manager (first) brings it back.
     "POST /api/v1/activity-series/:seriesId/skipped-dates": {
       url: () => `/api/v1/activity-series/${m.seriesId}/skipped-dates`,
@@ -1725,6 +1736,12 @@ describe("permission matrix", () => {
     "GET /api/v1/activities/:activityId/invitees": {
       url: () => `/api/v1/activities/${m.activityId}/invitees`,
       expected: TEAM_MANAGERS(200),
+    },
+    // One person (P2.10); the whole-group PUT below puts it back.
+    "PUT /api/v1/activities/:activityId/invitees/:personId": {
+      url: () => `/api/v1/activities/${m.activityId}/invitees/${m.member.id}`,
+      expected: TEAM_MANAGERS(200),
+      body: { calledUp: true },
     },
     "PUT /api/v1/activities/:activityId/invitees": {
       url: () => `/api/v1/activities/${m.activityId}/invitees`,
@@ -2272,6 +2289,7 @@ describe("tenant isolation", () => {
       `/api/v1/activities/${m.activityId}/responses`,
       `/api/v1/activities/${m.activityId}/attendance`,
       `/api/v1/activities/${m.activityId}/invitees`,
+      `/api/v1/activity-series/${m.seriesId}/invitees`,
       `/api/v1/groups/${m.team.id}/attendance?from=2026-01-01T00:00:00Z&to=2026-12-31T00:00:00Z`,
       `/api/v1/events/${m.eventId}`,
       `/api/v1/events/${m.eventId}/registrations`,

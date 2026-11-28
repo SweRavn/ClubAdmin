@@ -59,6 +59,8 @@ export const groups = pgTable(
     carpoolStatsPublic: boolean().notNull().default(false),
     /** Adapted activities, parasport (P2.7, ADR 0051): grant plugins derive `disability` from it. */
     adapted: boolean().notNull().default(false),
+    /** Guests are members of the group's default channel (P2.10; default off). */
+    guestsInChannel: boolean().notNull().default(false),
     archivedAt: timestamp(tz),
     ...timestamps,
   },
@@ -151,6 +153,8 @@ export const groupMemberships = pgTable(
     roleId: uuid(), // NOT NULL in the database (0032); filled by a trigger for writers naming the template key
     /** The role holds `group.participate` / `group.lead` (kept by triggers). */
     participates: boolean().notNull().default(false),
+    /** A guest membership (P2.10): its role is a guest role; kept by the role trigger. */
+    guest: boolean().notNull().default(false),
     leads: boolean().notNull().default(false),
     /** Why a `member` was added past people waiting (P1.10b; audited, listed for club managers). */
     queueBypassReason: text(),

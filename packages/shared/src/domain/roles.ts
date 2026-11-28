@@ -63,6 +63,8 @@ export const RoleSchema = z
       .enum(["regular_contact_with_children", "alone_with_children", "overnight", "board"])
       .nullable()
       .default(null),
+    /** A guest role (P2.10): its holders take part without taking a place. */
+    guest: z.boolean().optional(),
   })
   .openapi("Role");
 export type Role = z.infer<typeof RoleSchema>;
