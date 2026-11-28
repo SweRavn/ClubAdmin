@@ -365,6 +365,47 @@ describe("permission matrix", () => {
       url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/types`,
       expected: ADMINS(200),
     },
+    // Background checks (P2.8): the follow-up for managers and registrars;
+    // ticking off and deleting need a second factor (403 for everyone here).
+    // Club A is Swedish: the extract is the person's to order, so a request
+    // the club starts is refused (400).
+    "GET /api/v1/clubs/:clubId/background-checks/overview": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/overview`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/clubs/:clubId/background-checks/requirements": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/requirements`,
+      expected: ADMINS(200),
+    },
+    "PUT /api/v1/clubs/:clubId/background-checks/requirements": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/requirements`,
+      expected: ADMINS(204),
+      body: { clubRequirements: [] },
+    },
+    "POST /api/v1/clubs/:clubId/background-checks/records": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/records`,
+      expected: CLUB_FORBIDDEN,
+      body: () => ({
+        personId: m.member.id,
+        pluginId: "se.rf.registerutdrag",
+        checkType: "extract",
+        issuedOn: "2026-01-01",
+      }),
+    },
+    "DELETE /api/v1/clubs/:clubId/background-checks/records/:recordId": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/background-checks/records/0199a000-0000-7000-8099-000000000001`,
+      expected: CLUB_FORBIDDEN,
+    },
+    "POST /api/v1/clubs/:clubId/background-checks/requests": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/background-checks/requests`,
+      expected: ADMINS(400),
+      body: () => ({
+        personId: m.member.id,
+        pluginId: "se.rf.registerutdrag",
+        checkType: "extract",
+      }),
+    },
     // Grant reports (P2.7 part B): managers, registrars and treasurers read
     // them; registrars lock and export. Club A has no grant plugin enabled
     // (409 plugin_disabled for a period's report; the report ID is unknown).
@@ -2223,6 +2264,8 @@ describe("reads", () => {
       "club.grants.read",
       "club.grants.report",
       "club.background_checks.manage",
+      "club.background_checks.read",
+      "club.background_checks.verify",
     ]);
     // Listed without a second factor; the endpoints ask for it.
     expect((await permissions(m.manager.id))?.permissions).toEqual(

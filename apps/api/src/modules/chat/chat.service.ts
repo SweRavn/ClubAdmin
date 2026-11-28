@@ -27,6 +27,7 @@ import {
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { actorPersonId } from "../../platform/domain/run.ts";
 import type { ChatResource } from "../authorization/index.ts";
+import type { BackgroundChecksService } from "../background-checks/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import type { GroupsService } from "../groups/index.ts";
 import type { RealtimePublisher } from "../realtime/index.ts";
@@ -76,29 +77,28 @@ export function uuidv7Time(id: string): number | null {
   return Number.parseInt(hex.slice(0, 12), 16);
 }
 
-/**
- * ADR 0047 rule 9: where the club requires a background check, a leader
- * writes to children and joins children's chats only with a valid one.
- * Until background checks are tracked (P2.8) the hook allows.
- */
-export function backgroundCheckAllows(_clubId: string, _personId: string): boolean {
-  return true;
-}
-
 export class ChatService {
   private readonly db: Database;
   private readonly publisher: RealtimePublisher;
   private readonly clubs: ClubsService;
   private readonly groups: GroupsService;
+  private readonly checks: BackgroundChecksService | undefined;
 
   constructor(
     db: Database,
-    deps: { publisher: RealtimePublisher; clubs: ClubsService; groups: GroupsService },
+    deps: {
+      publisher: RealtimePublisher;
+      clubs: ClubsService;
+      groups: GroupsService;
+      /** ADR 0047 rule 9 (P2.8): leaders write to children only with a valid check. */
+      checks?: BackgroundChecksService;
+    },
   ) {
     this.db = db;
     this.publisher = deps.publisher;
     this.clubs = deps.clubs;
     this.groups = deps.groups;
+    this.checks = deps.checks;
   }
 
   /** A muted member writes nothing in the club's chats (P2.1 part B). */
@@ -365,13 +365,24 @@ export class ChatService {
    * rules allow (ADR 0047 rules 3–5, app.chat_direct_refusal); the guardian
    * rule then adds the child's guardians.
    */
+  /**
+   * ADR 0047 rule 9 (P2.8): where the club requires a background check for
+   * a role the person holds, they write to children and join children's
+   * chats only with a valid one (one statement in this transaction).
+   */
+  private async requireCheckInTx(tx: Tx, clubId: string, personId: string): Promise<void> {
+    if (this.checks && !(await this.checks.childContactAllowedInTx(tx, clubId, personId))) {
+      throw new DomainError("chat_background_check");
+    }
+  }
+
   async openDirect(context: TenantContext, otherId: string): Promise<string> {
     const personId = actorPersonId(context);
     if (otherId === personId) throw new DomainError("chat_self");
-    if (!backgroundCheckAllows(context.clubId, personId)) {
-      throw new DomainError("chat_background_check");
-    }
     const fx = await this.db.withTenant(context, async (tx) => {
+      // ADR 0047 rule 9 (P2.8): writing to a child needs a valid check where the club requires one.
+      if (await repo.isChild(tx, otherId))
+        await this.requireCheckInTx(tx, context.clubId, personId);
       const existing = await repo.findDirect(tx, personId, otherId);
       if (existing) {
         const me = await repo.findMember(tx, existing.id, personId);
@@ -587,10 +598,9 @@ export class ChatService {
     as: "guardian" | "leader" | "self",
   ): Promise<void> {
     const personId = actorPersonId(context);
-    if (as === "leader" && !backgroundCheckAllows(context.clubId, personId)) {
-      throw new DomainError("chat_background_check");
-    }
     const fx = await this.db.withTenant(context, async (tx) => {
+      // ADR 0047 rule 9 (P2.8): a leader joins children's chats only with a valid check.
+      if (as === "leader") await this.requireCheckInTx(tx, context.clubId, personId);
       const fx = effects(context.clubId, chat.chatId);
       const member = await repo.findMember(tx, chat.chatId, personId);
       if (member?.status === "active") return fx;

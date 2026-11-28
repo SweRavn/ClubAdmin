@@ -285,9 +285,15 @@ importers:
       '@clubadmin/plugin-api':
         specifier: workspace:*
         version: link:../../packages/plugin-api
+      '@clubadmin/plugin-no-background-check':
+        specifier: workspace:*
+        version: link:../../plugins/no-background-check
       '@clubadmin/plugin-no-lam':
         specifier: workspace:*
         version: link:../../plugins/no-lam
+      '@clubadmin/plugin-se-background-check':
+        specifier: workspace:*
+        version: link:../../plugins/se-background-check
       '@clubadmin/plugin-se-lok':
         specifier: workspace:*
         version: link:../../plugins/se-lok
@@ -1034,6 +1040,28 @@ importers:
         specifier: 'catalog:'
         version: 5.0.4(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(jsdom@20.0.3)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
+  plugins/no-background-check:
+    dependencies:
+      '@clubadmin/plugin-api':
+        specifier: workspace:*
+        version: link:../../packages/plugin-api
+    devDependencies:
+      '@clubadmin/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
+      eslint:
+        specifier: 'catalog:'
+        version: 10.12.0(jiti@2.7.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.4(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(jsdom@20.0.3)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+
   plugins/no-lam:
     dependencies:
       '@clubadmin/plugin-api':
@@ -1052,6 +1080,28 @@ importers:
       '@types/pdfkit':
         specifier: ^0.17.7
         version: 0.17.7
+      eslint:
+        specifier: 'catalog:'
+        version: 10.12.0(jiti@2.7.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.4(@opentelemetry/api@1.9.1)(@types/node@24.19.2)(jsdom@20.0.3)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+
+  plugins/se-background-check:
+    dependencies:
+      '@clubadmin/plugin-api':
+        specifier: workspace:*
+        version: link:../../packages/plugin-api
+    devDependencies:
+      '@clubadmin/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
       eslint:
         specifier: 'catalog:'
         version: 10.12.0(jiti@2.7.0)

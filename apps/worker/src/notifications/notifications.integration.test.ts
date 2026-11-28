@@ -975,6 +975,33 @@ describe("privacy notices (P1.8a)", () => {
     expect(await types(ids.mikael)).toEqual([]);
   });
 
+  it("a check that ends soon reaches the person; the weekly follow-up those who follow up (P2.8)", async () => {
+    const ids = await team();
+    await t.query(
+      "admin",
+      "INSERT INTO club_role_assignments (club_id, person_id, role) VALUES ($1, $2, 'registrar')",
+      [ids.club, ids.anna],
+    );
+    const expiring = await publish(ids.club, "background_check.expiring", {
+      clubId: ids.club,
+      personId: ids.coach,
+      expiresOn: "2026-12-31",
+      days: 60,
+    });
+    await outbox.dispatch(t.db, expiring, [handler()]);
+    expect(await types(ids.coach)).toEqual(["background_check.expiring"]);
+    expect(await types(ids.anna)).toEqual([]);
+    const followUp = await publish(ids.club, "background_check.follow_up", {
+      clubId: ids.club,
+      missing: 1,
+      expiring: 1,
+      week: "2026-W48",
+    });
+    await outbox.dispatch(t.db, followUp, [handler()]);
+    expect(await types(ids.anna)).toEqual(["background_check.follow_up"]);
+    expect(await types(ids.mikael)).toEqual([]);
+  });
+
   it("chat reports reach the safeguarding officers only; a mute reaches the person (P2.1 B)", async () => {
     const ids = await team();
     await t.query(

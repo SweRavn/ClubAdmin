@@ -159,7 +159,14 @@ export const RETENTION_RULES: readonly RetentionRule[] = [
     status: "implemented",
   },
   { key: "chat_messages", period: { value: 24, unit: "months" }, status: "planned" },
-  { key: "background_checks", period: { value: 12, unit: "months" }, status: "planned" },
+  {
+    // Background checks (P2.8): kept until someone who follows up deletes
+    // them; listed for deletion 12 months after the person last held a role
+    // that needs one (no automatic deletion).
+    key: "background_checks",
+    period: { value: 12, unit: "months" },
+    status: "implemented",
+  },
   { key: "restorable_club_profiles", period: { value: 60, unit: "months" }, status: "planned" },
 ];
 

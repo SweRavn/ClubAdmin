@@ -43,6 +43,14 @@ export async function upsertClubPlugin(
     DO UPDATE SET enabled = excluded.enabled, config = excluded.config`);
 }
 
+/** The club's row of a plugin that is on by default (P2.8), if it has none yet. */
+export async function ensureClubPlugin(tx: Tx, pluginId: string): Promise<void> {
+  await tx.execute(sql`
+    INSERT INTO public.club_plugins (club_id, plugin_id, enabled, config)
+    VALUES (app.current_club_id(), ${pluginId}, true, '{}'::jsonb)
+    ON CONFLICT (club_id, plugin_id) DO NOTHING`);
+}
+
 /** The names of the secrets set, per plugin. */
 export async function secretNames(tx: Tx): Promise<{ pluginId: string; name: string }[]> {
   const { rows } = await tx.execute<{ plugin_id: string; name: string }>(sql`

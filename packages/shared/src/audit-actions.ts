@@ -285,6 +285,8 @@ export const AUDIT_ACTIONS = [
   "background_check.recorded",
   "background_check.deleted",
   "background_check.requested",
+  // P2.8: the club's stricter requirements and duty types' categories.
+  "background_check.requirements_changed",
   // Part B: marked by the planners, swaps, a group's visibility.
   "duty.assignment.completed",
   "duty.assignment.updated",

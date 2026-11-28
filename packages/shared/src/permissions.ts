@@ -145,6 +145,10 @@ export const PERMISSIONS = [
   "club.grants.read",
   "club.grants.report",
   "club.background_checks.manage",
+  // P2.8: ticking off a shown certificate (registrar, safeguarding officer).
+  "club.background_checks.verify",
+  // The overview of who needs a check: those who follow up or tick off (derived).
+  "club.background_checks.read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

@@ -12,6 +12,8 @@ export interface TemplateRoleRow {
   locked: boolean;
   sortOrder: number;
   permissions: string[];
+  /** P2.8: the background-check category the template's holders need (null: none). */
+  backgroundCheckCategory?: string | null;
 }
 
 export interface ClubTypeRow {
@@ -39,6 +41,7 @@ const TYPE_COLUMNS = sql`ct.id, ct.key, ct.names, ct.descriptions, ct.active, ct
   coalesce((SELECT json_agg(json_build_object(
       'id', r.id, 'key', r.key, 'scope', r.scope, 'names', r.names,
       'descriptions', r.descriptions, 'locked', r.locked, 'sortOrder', r.sort_order,
+      'backgroundCheckCategory', r.background_check_category,
       'permissions', coalesce((SELECT array_agg(p.permission ORDER BY p.permission)
         FROM public.club_type_role_permissions p WHERE p.club_type_role_id = r.id), '{}'))
     ORDER BY r.scope, r.sort_order, r.key)

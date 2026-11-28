@@ -2263,6 +2263,16 @@
         "title": "Fristen for en tilskuddsrapport nærmer seg",
         "body": "Rapporten i {club} skal være sendt inn senest {date}. Åpne Tilskudd for å se gjennom, låse og laste den ned."
       }
+    },
+    "background_check": {
+      "expiring": {
+        "title": "Politiattesten din må fornyes",
+        "body": "Kontrollen i {club} gjelder til {date}. Bestill en ny og vis den til klubbens ansvarlige i god tid."
+      },
+      "follow_up": {
+        "title": "Politiattester å følge opp",
+        "body": "{count, plural, one {# leder} other {# ledere}} i {club} mangler eller må snart fornye kontrollen. Åpne Trygghet → Politiattester."
+      }
     }
   },
   "notifyCategories": {
@@ -3033,7 +3043,8 @@
       "disabled": "slo av",
       "configured": "endret innstillingene for",
       "call_failed": "mislyktes med kall til",
-      "locked": "låste"
+      "locked": "låste",
+      "requirements_changed": "endret kravene for"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -4047,6 +4058,11 @@
         "name": "Følge opp politiattester",
         "description": "Kan se og følge opp hvem som har vist politiattest og når en ny trengs. Ingen attester lagres, bare at de er vist.",
         "example": "Kan for eksempel se hvilke ledere som må vise ny politiattest."
+      },
+      "club_background_checks_verify": {
+        "name": "Krysse av viste politiattester",
+        "description": "Kan registrere at en person har vist en gyldig attest (type, datoer, hvordan). Ingen dokumenter eller koder lagres, og ingen krysser av sin egen.",
+        "example": "Kan for eksempel krysse av en treners attest når den vises."
       }
     }
   },
@@ -4151,7 +4167,10 @@
     "copyFromTemplate": "Legg til fra malen",
     "copied": "Rollen er lagt til fra malen.",
     "moreLanguages": "Flere språk",
-    "moreLanguagesHint": "Valgfritt. Uten navn på et språk vises navnet på klubbens språk eller engelsk."
+    "moreLanguagesHint": "Valgfritt. Uten navn på et språk vises navnet på klubbens språk eller engelsk.",
+    "backgroundCheck": "Krever politiattest",
+    "backgroundCheckHint": "Den som har vervet trenger gyldig politiattest for denne typen kontakt med barn. Uten den kan de ikke skrive til barn i chatten eller ta vakter med barn, men beholder vervet. Et krav, ikke en tillatelse.",
+    "noBackgroundCheck": "Ingen attest"
   },
   "administrators": {
     "title": "Administratorer",
@@ -5168,5 +5187,75 @@
     "count": "{count, plural, one {# spiller} other {# spillere}}",
     "hint": "Alle i gruppen er forhåndsvalgt. Fjern haken for dem som ikke skal innkalles; lederne er med som vanlig.",
     "eventTitle": "Invitert fra {group}"
+  },
+  "backgroundChecks": {
+    "title": "Politiattester",
+    "nav": "Politiattester",
+    "intro": "Hvilke ledere som må vise politiattest, hvem som har en gyldig og når den må fornyes. Klubben lagrer aldri attesten, et bilde eller en kode, bare at den er vist.",
+    "off": "Tillegget for politiattest er slått av i klubben: ingen krav gjelder, og chat og vakter sperres ikke. Slå det på under Tillegg.",
+    "all": "Alle",
+    "empty": "Ingen trenger attest akkurat nå.",
+    "validUntil": "Gjelder til {date}",
+    "requested": "Bekreftelse på formål sendt {date}",
+    "record": "{type}: utstedt {issued}, vist {verified} ({method})",
+    "by": "av",
+    "delete": "Slett",
+    "request": "Bekreft formål: {type}",
+    "hidden": "{count, plural, one {# person} other {# personer}} vises ikke for deg (sperret identitet).",
+    "more": "Vis flere",
+    "recordTitle": "Kryss av en vist attest",
+    "recordIntro": "Personen viser deg attesten (på papir eller i sin digitale postkasse). Les av utstedelsesdatoen og gi den tilbake. Du kan ikke krysse av din egen.",
+    "person": "Person",
+    "choosePerson": "Velg person",
+    "type": "Type attest",
+    "issuedOn": "Utstedt",
+    "issuedHint": "Datoen på attesten.",
+    "how": "Hvordan den ble vist",
+    "nothingKept": "Ingen dokumenter, bilder eller koder lagres. Viser attesten merknader: registrer ingenting; vervet avsluttes uten begrunnelse.",
+    "recordSubmit": "Kryss av",
+    "requirements": "Krav",
+    "noPlugin": "Det finnes ikke noe tillegg for politiattest i klubbens land.",
+    "maxAge": "{name}: høyst {days, plural, one {# dag} other {# dager}} gammel når den vises.",
+    "rolesNeeding": "Verv som krever attest: {roles}.",
+    "noRoles": "Ingen verv krever attest ennå.",
+    "editRoles": "Endre under Verv",
+    "clubStricter": "Klubben krever attest for",
+    "byPlugin": "(etter regelverket)",
+    "recheckMonths": "Ny attest etter (måneder)",
+    "recheckPlugin": "Regelverket: etter {months} måneder. Klubben kan bare velge kortere tid.",
+    "recheckNone": "Regelverket angir ingen tid: tomt betyr at attesten gjelder inntil videre.",
+    "dutyTypes": "Vakter og kontakt med barn",
+    "noCheck": "Ingen attest",
+    "fromContact": "Fra kontakten med barn: {category}",
+    "saveRequirements": "Lagre kravene",
+    "saved": {
+      "recorded": "Attesten er krysset av.",
+      "deleted": "Opplysningen er slettet.",
+      "requested": "Bekreftelsen på formål er registrert.",
+      "requirements": "Kravene er lagret."
+    },
+    "statuses": {
+      "missing": "Mangler",
+      "expiring": "Går ut snart",
+      "valid": "Gyldig",
+      "to_delete": "Kan slettes"
+    },
+    "categories": {
+      "regular_contact_with_children": "Regelmessig kontakt med barn",
+      "alone_with_children": "Alene med barn",
+      "overnight": "Overnatting",
+      "board": "Styreverv"
+    },
+    "methods": {
+      "viewed": "vist på papir",
+      "digital_mailbox": "vist i digital postkasse",
+      "code_lookup": "kontrollert med kode",
+      "received_by_club": "mottatt av klubben",
+      "federation_feed": "fra forbundet"
+    },
+    "levels": {
+      "required": "kreves",
+      "recommended": "anbefales"
+    }
   }
 }

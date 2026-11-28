@@ -23,4 +23,6 @@ export const ADMINISTRATION_PERMISSIONS: ReadonlySet<string> = new Set([
   "club.history.read",
   "club.profile_views.read",
   "club.safeguarding.handle",
+  "club.background_checks.manage",
+  "club.background_checks.verify",
 ]);

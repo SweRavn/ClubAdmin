@@ -143,3 +143,24 @@ export async function buildFamily(
   }
   return { guardian, coGuardian, child, guardianships: [guardianship, second] };
 }
+
+/**
+ * A valid background check (P2.8) of the club's country for a person,
+ * ticked off by the club's manager, issued `daysAgo` days ago.
+ */
+export async function buildBackgroundCheck(
+  services: CoreServices,
+  club: BuiltClub,
+  personId: string,
+  daysAgo = 30,
+): Promise<string> {
+  const issuedOn = new Date(Date.now() - daysAgo * 86_400_000).toISOString().slice(0, 10);
+  const se = club.country !== "NO";
+  return services.checks.recordDirect(club.ctx, {
+    personId,
+    pluginId: se ? "se.rf.registerutdrag" : "no.nif.politiattest",
+    checkType: se ? "extract" : "attest",
+    issuingCountry: se ? "SE" : "NO",
+    issuedOn,
+  });
+}

@@ -155,7 +155,9 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => `/api/v1/activities/${DEMO_DUTY_IDS.homeMatch}/duty-shifts`,
-    statements: 7,
+    // P2.8: the club's rules and the staff's checks for the "Sekretariat" shift
+    // (two statements whatever the number of shifts): 9 statements, 76→128 pages.
+    statements: 9,
     pages: 200,
   },
   {
@@ -163,7 +165,8 @@ const CASES: Case[] = [
     persona: "anna",
     method: "GET",
     url: () => `/api/v1/me/duties?clubId=${key("ikn")}`,
-    statements: 12,
+    // P2.8: as the activity's shifts, two statements for the background checks.
+    statements: 14,
     pages: 120,
   },
   // Car pools (P2.5): Saturday's away match of IK Norrbacka P2012 with two
@@ -174,8 +177,9 @@ const CASES: Case[] = [
     method: "GET",
     url: () => `/api/v1/activities/${DEMO_CARPOOL_IDS.awayMatch}/carpool`,
     // P2.7f: the caller's own minutes for the way home (their account).
+    // P2.8: three more leaders in P2012 (168→261 pages).
     statements: 8,
-    pages: 260,
+    pages: 300,
   },
   // P2.7c: "Mitt schema" asks per club for its activities' car pools: the
   // activities, Ahmed's wards, his family on their rosters, their facts, the
@@ -189,6 +193,37 @@ const CASES: Case[] = [
     // Measured 6 statements, 60→64 pages.
     statements: 6,
     pages: 100,
+  },
+  // Background checks (P2.8): IKN's follow-up (Karin, club manager), its
+  // requirements, and Ahmed's own status. The overview reads the club's
+  // roles that need a check and their holders (by their indexes), never
+  // other clubs' data.
+  {
+    route: "GET /api/v1/clubs/{clubId}/background-checks/overview",
+    persona: "karin",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/background-checks/overview`,
+    // The rules, the holders with their records, the people's summaries: 3, 29→40 pages.
+    statements: 3,
+    pages: 90,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/background-checks/requirements",
+    persona: "karin",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("ikn")}/background-checks/requirements`,
+    // The rules, the roles, the duty types: 3 statements, 6→8 pages.
+    statements: 3,
+    pages: 30,
+  },
+  {
+    route: "GET /api/v1/me/background-checks",
+    persona: "ahmed",
+    method: "GET",
+    url: () => `/api/v1/me/background-checks?clubId=${key("ikn")}`,
+    // One's roles and records, the role names, the verifiers: 3, 15→22 pages.
+    statements: 3,
+    pages: 50,
   },
   {
     route: "GET /api/v1/me/carpool-settings",
@@ -228,9 +263,9 @@ const CASES: Case[] = [
     url: () =>
       `/api/v1/groups/${key("svk-f2017")}/attendance?from=${daysFromNow(-30)}&to=${daysFromNow(0)}&limit=1`,
     // The sessions and their marks; the member statistics' page is one person
-    // (limit=1). Measured 16 statements, 230→534 pages.
-    statements: 16,
-    pages: 600,
+    // (limit=1). Measured 16 statements, 230→534 pages; P2.8: 17, 250→599.
+    statements: 17,
+    pages: 660,
   },
   {
     route: "POST /api/v1/clubs/{clubId}/groups/{groupId}/announcements/preview",

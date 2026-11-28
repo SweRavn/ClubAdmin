@@ -1,0 +1,26 @@
+{
+  "name": "@clubadmin/plugin-no-background-check",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Norway's politiattest (barneomsorgsattest, politiregisterloven § 39) in sport (NIF), as a background-check plugin (ADR 0051, P2.8)",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clubadmin/plugin-api": "workspace:*"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

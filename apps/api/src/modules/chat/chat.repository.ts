@@ -704,3 +704,11 @@ export async function activeMemberIds(tx: Tx, chatId: string): Promise<string[]>
     .where(and(eq(chatMembers.chatId, chatId), sql`${chatMembers.status} <> 'left'`));
   return rows.map((r) => r.personId);
 }
+
+/** Whether the person is a child in the club's country (ADR 0047 rule 9, P2.8). */
+export async function isChild(tx: Tx, personId: string): Promise<boolean> {
+  const { rows } = await tx.execute<{ child: boolean | null }>(
+    sql`SELECT app.is_child_in_club(${personId}::uuid) AS child`,
+  );
+  return rows[0]?.child === true;
+}

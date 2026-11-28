@@ -3450,7 +3450,109 @@ const GRANT_ACTIONS: Record<string, FormAction> = {
   },
 };
 
+/** Background checks (P2.8): tick off, delete, request, the club's stricter requirements. */
+const BACKGROUND_CHECK_ACTIONS: Record<string, FormAction> = {
+  "background-check-record": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      const issuedOn = text(form, "issuedOn");
+      const [pluginId = "", checkType = ""] = text(form, "type").split(":");
+      if (!clubId) return null;
+      const wrong: Record<string, string> = {};
+      if (!personId) wrong.personId = "required";
+      if (!isDate(issuedOn)) wrong.issuedOn = "invalid_date";
+      if (!pluginId || !checkType) wrong.type = "required";
+      if (Object.keys(wrong).length > 0) return { invalid: "invalid_input", fields: wrong };
+      return {
+        path: `/api/v1/clubs/${clubId}/background-checks/records`,
+        method: "POST",
+        body: {
+          personId,
+          pluginId,
+          checkType,
+          issuedOn,
+          method: text(form, "method") === "digital_mailbox" ? "digital_mailbox" : "viewed",
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "recorded"),
+  },
+  "background-check-delete": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const recordId = id(form, "recordId");
+      return clubId && recordId
+        ? {
+            path: `/api/v1/clubs/${clubId}/background-checks/records/${recordId}`,
+            method: "DELETE",
+          }
+        : null;
+    },
+    done: (form) => withParam(back(form), "saved", "deleted"),
+  },
+  "background-check-request": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const personId = id(form, "personId");
+      const [pluginId = "", checkType = ""] = text(form, "type").split(":");
+      if (!clubId || !personId || !pluginId || !checkType) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/background-checks/requests`,
+        method: "POST",
+        body: { personId, pluginId, checkType },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "requested"),
+  },
+  "background-check-requirements": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const pluginId = text(form, "pluginId");
+      if (!clubId || !/^[a-z]{2,}(\.[a-z0-9-]+)+$/.test(pluginId)) return null;
+      const checkType = text(form, "checkType");
+      const categories = [
+        "regular_contact_with_children",
+        "alone_with_children",
+        "overnight",
+        "board",
+      ] as const;
+      const months = text(form, "recheckMonths");
+      const recheckMonths = months === "" ? null : Number(months);
+      if (
+        recheckMonths !== null &&
+        !(Number.isInteger(recheckMonths) && recheckMonths >= 1 && recheckMonths <= 120)
+      ) {
+        return { invalid: "invalid_input", fields: { recheckMonths: "invalid_number" } };
+      }
+      // The categories the club requires (more than the plugin), each with the club's interval.
+      const clubRequirements = categories
+        .filter((c) => form.get(`require.${c}`) === "on")
+        .map((category) => ({ pluginId, category, checkType, recheckMonths }));
+      const dutyTypes = form
+        .getAll("dutyTypeId")
+        .filter((v): v is string => typeof v === "string" && isUuid(v))
+        .map((typeId) => {
+          const value = text(form, `dutyCategory.${typeId}`);
+          return {
+            id: typeId,
+            category: (categories as readonly string[]).includes(value)
+              ? (value as (typeof categories)[number])
+              : null,
+          };
+        });
+      return {
+        path: `/api/v1/clubs/${clubId}/background-checks/requirements`,
+        method: "PUT",
+        body: { clubRequirements, dutyTypes },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "requirements"),
+  },
+};
+
 export const FORM_ACTIONS: Record<string, FormAction> = {
+  ...BACKGROUND_CHECK_ACTIONS,
   ...GRANT_ACTIONS,
   ...CARPOOL_ACTIONS,
   ...DUTY_ACTIONS,
@@ -3673,6 +3775,32 @@ export const FORM_ACTIONS: Record<string, FormAction> = {
               names,
               permissions: permissionsOf(form),
             },
+      };
+    },
+    done: (form) => `/clubs/${text(form, "clubId")}/roles/${text(form, "roleId")}?saved=1`,
+  },
+  // "Kräver registerutdrag" (P2.8): one tap sets the role's category (empty: none).
+  "role-background-check": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const roleId = id(form, "roleId");
+      const version = Number(text(form, "version"));
+      const category = text(form, "category");
+      const known = [
+        "regular_contact_with_children",
+        "alone_with_children",
+        "overnight",
+        "board",
+      ] as const;
+      if (!clubId || !roleId || !Number.isInteger(version)) return null;
+      if (category !== "" && !(known as readonly string[]).includes(category)) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/roles/${roleId}`,
+        method: "PATCH",
+        body: {
+          version,
+          backgroundCheckCategory: category === "" ? null : (category as (typeof known)[number]),
+        },
       };
     },
     done: (form) => `/clubs/${text(form, "clubId")}/roles/${text(form, "roleId")}?saved=1`,

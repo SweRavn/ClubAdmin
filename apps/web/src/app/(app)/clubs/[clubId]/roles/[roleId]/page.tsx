@@ -4,6 +4,7 @@
 // Saving goes through a preview: the change in sentences and who loses
 // what (names through the person presenter, others counted). Copy, reset
 // to the template and delete (with a replacement) for administrators.
+import { enumKey } from "@clubadmin/i18n";
 import { personLabel } from "@clubadmin/ui";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -185,6 +186,50 @@ export default async function RolePage({ params, searchParams }: Props) {
                 )),
             )}
           </ul>
+        )}
+      </section>
+
+      {/* "Kräver registerutdrag" (P2.8): a requirement on the role, not a permission; one tap saves. */}
+      <section className="space-y-2" data-testid="role-background-check">
+        <h2 className="text-lg font-semibold">{t("rolesAdmin.backgroundCheck")}</h2>
+        <p className="max-w-prose text-sm text-muted">{t("rolesAdmin.backgroundCheckHint")}</p>
+        {canManage && !previewing ? (
+          <ActionForm action="role-background-check" className="flex flex-wrap gap-2">
+            <input type="hidden" name="clubId" value={club.id} />
+            <input type="hidden" name="roleId" value={role.id} />
+            <input type="hidden" name="version" value={role.version} />
+            {(
+              [
+                "",
+                "regular_contact_with_children",
+                "alone_with_children",
+                "overnight",
+                "board",
+              ] as const
+            ).map((c) => (
+              <button
+                key={c || "none"}
+                type="submit"
+                name="category"
+                value={c}
+                aria-pressed={(role.backgroundCheckCategory ?? "") === c}
+                className={
+                  (role.backgroundCheckCategory ?? "") === c ? buttonClass : secondaryButtonClass
+                }
+                data-testid={`role-check-${c || "none"}`}
+              >
+                {c
+                  ? t(enumKey("backgroundChecks.categories", c))
+                  : t("rolesAdmin.noBackgroundCheck")}
+              </button>
+            ))}
+          </ActionForm>
+        ) : (
+          <p>
+            {role.backgroundCheckCategory
+              ? t(enumKey("backgroundChecks.categories", role.backgroundCheckCategory))
+              : t("rolesAdmin.noBackgroundCheck")}
+          </p>
         )}
       </section>
 

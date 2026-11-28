@@ -6,6 +6,7 @@ import { createApp } from "./app.ts";
 import { loadApiConfig } from "./config.ts";
 import { ActivitiesService } from "./modules/activities/index.ts";
 import { AuthorizationService, PersonPresenter } from "./modules/authorization/index.ts";
+import { BackgroundChecksService } from "./modules/background-checks/index.ts";
 import { EventsService } from "./modules/events/index.ts";
 import { GrantsService } from "./modules/grants/index.ts";
 import { GuardianshipsService } from "./modules/guardianships/index.ts";
@@ -48,6 +49,7 @@ const importJobs =
         events: app.get(EventsService),
         activities: app.get(ActivitiesService),
         grants: app.get(GrantsService),
+        checks: app.get(BackgroundChecksService),
         ...privacyJobDeps(),
         logger,
       })

@@ -130,6 +130,11 @@ export const DutyAssignmentSchema = z
     status: z.enum(TASK_ASSIGNMENT_STATUSES),
     /** The caller's own or their family's. */
     mine: z.boolean(),
+    /**
+     * P2.8: the person has no valid background check the shift needs (shown
+     * to its planners; the shift is not cancelled automatically).
+     */
+    missingBackgroundCheck: z.boolean().default(false),
   })
   .openapi("DutyAssignment");
 export type DutyAssignment = z.infer<typeof DutyAssignmentSchema>;
@@ -145,7 +150,17 @@ export const DutyShiftSchema = z
       name: z.string(),
       minAge: z.number().int().nullable(),
       childContact: z.enum(DUTY_CHILD_CONTACTS),
+      /** P2.8: the background-check category the shift needs (null: none). */
+      backgroundCheckCategory: z
+        .enum(["regular_contact_with_children", "alone_with_children", "overnight", "board"])
+        .nullable()
+        .default(null),
     }),
+    /**
+     * P2.8: the caller has no valid background check the shift needs, so it
+     * is not offered to them (sign-up is refused with background_check_required).
+     */
+    backgroundCheckRequired: z.boolean().default(false),
     /** The shift's own title; none: the type's name. */
     title: z.string(),
     note: z.string().nullable(),

@@ -240,6 +240,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "kind": "team",
       "named": [
         "ingrid",
+        "kari (team_manager)",
         "lars (head_coach)",
       ],
       "owners": [
@@ -327,8 +328,11 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       "kind": "team",
       "named": [
         "ahmed (head_coach)",
+        "goran (assistant_coach)",
         "liam",
         "oskar",
+        "peter (team_manager)",
+        "tilde (assistant_coach)",
       ],
       "owners": [
         "ahmed",
@@ -611,7 +615,9 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "locale": null,
       },
       "clubProtected": [],
-      "groups": [],
+      "groups": [
+        "ikn-p2012: assistant_coach",
+      ],
       "guardians": [],
       "hasBirthDate": true,
       "memberships": [
@@ -710,7 +716,9 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "locale": "nb",
       },
       "clubProtected": [],
-      "groups": [],
+      "groups": [
+        "fil-j2014: team_manager",
+      ],
       "guardians": [],
       "hasBirthDate": true,
       "memberships": [
@@ -980,6 +988,7 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
       },
       "clubProtected": [],
       "groups": [
+        "ikn-p2012: team_manager",
         "ikn-styrelsen: member",
       ],
       "guardians": [],
@@ -1062,7 +1071,9 @@ exports[`demo scenario > creates exactly the clubs, groups and personas of docs/
         "locale": null,
       },
       "clubProtected": [],
-      "groups": [],
+      "groups": [
+        "ikn-p2012: assistant_coach",
+      ],
       "guardians": [
         "ahmed: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",
         "leyla: parent active [act_on_behalf, receive_messages, view_schedule, sign_up, see_medical]",

@@ -283,6 +283,21 @@ export const DOMAIN_ERRORS = {
   chat_muted: "forbidden",
   /** ADR 0047 rule 9: the club requires a valid background check (P2.8). */
   chat_background_check: "forbidden",
+  // Background checks (P2.8)
+  /** A duty that needs a check: sign-up, assignment and taking a swap refused without one. */
+  background_check_required: "forbidden",
+  /** Nobody ticks off their own certificate. */
+  background_check_own: "forbidden",
+  /** The plugin did not accept what was shown (too old, a date in the future). */
+  background_check_not_verified: "validation",
+  /** The club turned the background-check plugin of its country off. */
+  background_check_off: "conflict",
+  /** A check type the club's plugin does not have. */
+  background_check_type_unknown: "validation",
+  /** A club may only be stricter than the plugin (a weaker category or longer interval). */
+  background_check_weaker: "validation",
+  /** The person is not in the club. */
+  background_check_not_in_club: "validation",
   /** One does not report one's own message. */
   chat_report_own: "conflict",
   /** The request to read is not open, was made by the caller, or lapsed. */

@@ -111,6 +111,21 @@ export const DOMAIN_EVENTS = {
     deadline: z.iso.date(),
     days: z.number().int().min(0),
   }),
+  // Background checks (P2.8): a person's check ends in 60 or 14 days (to
+  // them); the club's follow-up, once a week while checks are missing or
+  // expiring (to those who follow up: counts only, never names).
+  "background_check.expiring": z.object({
+    clubId: id,
+    personId: id,
+    expiresOn: z.iso.date(),
+    days: z.number().int().min(0),
+  }),
+  "background_check.follow_up": z.object({
+    clubId: id,
+    missing: z.number().int().min(0),
+    expiring: z.number().int().min(0),
+    week: z.string().regex(/^\d{4}-W\d{2}$/),
+  }),
   "duty.changed": z.object({
     clubId: id,
     kind: z.enum(["assigned", "unassigned", "swap_requested", "swapped", "swap_declined"]),

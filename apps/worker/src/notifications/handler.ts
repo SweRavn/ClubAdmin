@@ -203,6 +203,9 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
       "expense_claim.decided",
       // Grant reports (P2.7 part C): a deadline near.
       "grant.deadline.near",
+      // Background checks (P2.8): a check ends soon; the club's weekly follow-up.
+      "background_check.expiring",
+      "background_check.follow_up",
       // Announcements (P2.3).
       "announcement.sent",
       "announcement.withdrawn",
@@ -842,6 +845,56 @@ export function notificationsHandler(options: NotificationsOptions): OutboxHandl
                 count: payload.days,
               },
               dedupeKey: `grant.deadline:${payload.pluginId}:${payload.scheme}:${payload.period}:${payload.days}`,
+            })),
+          );
+          return;
+        }
+        // A person's background check ends in 60 or 14 days (P2.8): to them.
+        case "background_check.expiring": {
+          const payload = DOMAIN_EVENTS["background_check.expiring"].parse(event.payload);
+          await useClub(tx, payload.clubId);
+          const { rows } = await tx.execute<{ time_zone: string }>(sql`
+            SELECT time_zone FROM public.clubs WHERE id = ${payload.clubId}::uuid`);
+          await notify(tx, [
+            {
+              recipientPersonId: payload.personId,
+              clubId: payload.clubId,
+              type: "background_check.expiring" as const,
+              subjectType: "my_background_check",
+              subjectId: null,
+              about: [],
+              params: {
+                date: `${payload.expiresOn}T12:00:00Z`,
+                timeZone: rows[0]?.time_zone ?? "UTC",
+                count: payload.days,
+              },
+              dedupeKey: `background_check.expiring:${payload.personId}:${payload.expiresOn}:${payload.days}`,
+            },
+          ]);
+          return;
+        }
+        // The club's weekly follow-up (P2.8): those who follow up checks
+        // (club.background_checks.manage through a club role); counts only.
+        case "background_check.follow_up": {
+          const payload = DOMAIN_EVENTS["background_check.follow_up"].parse(event.payload);
+          await useClub(tx, payload.clubId);
+          const { rows } = await tx.execute<{ person_id: string }>(sql`
+            SELECT DISTINCT r.person_id
+            FROM public.club_role_assignments r
+            JOIN public.role_permissions rp ON rp.club_id = r.club_id AND rp.role_id = r.role_id
+              AND rp.permission = 'club.background_checks.manage'
+            WHERE r.club_id = ${payload.clubId}::uuid AND r.valid_to IS NULL`);
+          await notify(
+            tx,
+            rows.map((r) => ({
+              recipientPersonId: r.person_id,
+              clubId: payload.clubId,
+              type: "background_check.follow_up" as const,
+              subjectType: "club_background_checks",
+              subjectId: null,
+              about: [],
+              params: { count: payload.missing + payload.expiring },
+              dedupeKey: `background_check.follow_up:${payload.clubId}:${payload.week}`,
             })),
           );
           return;

@@ -159,7 +159,7 @@ afterAll(async () => {
 });
 
 describe("a club's plugins", () => {
-  it("lists the plugins of the club's country, disabled at first", async () => {
+  it("lists the plugins of the club's country; background-check ones on by default (P2.8)", async () => {
     const swedishList = await service.clubPlugins(club.ctx, "sv");
     expect(swedishList.map((p) => p.id)).toEqual([
       "se.test.hangs",
@@ -168,7 +168,7 @@ describe("a club's plugins", () => {
       "se.test.throws",
     ]);
     expect(swedishList.find((p) => p.id === "se.test.host")).toMatchObject({
-      enabled: false,
+      enabled: true,
       config: {},
       secrets: [{ name: "apiKey", set: false }],
       texts: { "t.org": "Organisationsnummer" },
@@ -264,6 +264,12 @@ describe("a club's plugins", () => {
   });
 
   it("refuses a call to a disabled plugin", async () => {
+    // Background-check plugins are on by default (P2.8): the club turns it off.
+    await service.putClubPlugin(otherClub.ctx, "se.test.host", {
+      enabled: false,
+      config: { orgNumber: "802000-0000" },
+      secrets: {},
+    });
     await expect(
       service.run(otherClub.ctx, "se.test.host", async () => [], z.array(z.unknown())),
     ).rejects.toThrow(DomainError);
@@ -355,12 +361,15 @@ describe("the endpoints", () => {
     await t.query("admin", "INSERT INTO platform_operators (person_id) VALUES ($1)", [operator.id]);
     const res = await api(operator.id, "GET", "/ops/plugins");
     expect(res.statusCode).toBe(200);
-    // The bundled plugins: LOK (Sweden) and samordnet rapportering (Norway).
+    // The bundled plugins: LOK (Sweden), samordnet rapportering (Norway) and
+    // the two countries' background checks (P2.8).
     const installed = res.json<InstalledPluginList>();
     expect(installed.pluginApi).toBe("1.0.0");
     expect(installed.items.map((p) => [p.id, p.regions])).toEqual([
+      ["no.nif.politiattest", ["NO"]],
       ["no.nif.samordnet", ["NO"]],
       ["se.rf.lok", ["SE"]],
+      ["se.rf.registerutdrag", ["SE"]],
     ]);
     expect((await api(club.manager.id, "GET", "/ops/plugins")).statusCode).toBe(403);
   });
@@ -368,9 +377,10 @@ describe("the endpoints", () => {
   it("needs club.plugins.manage with a second factor, and hides another club's", async () => {
     const res = await api(club.manager.id, "GET", `/clubs/${club.id}/plugins`);
     expect(res.statusCode).toBe(200);
-    // A Swedish club sees LOK only, disabled until it enables it.
+    // A Swedish club sees LOK, off until it turns it on, and the extract, on by default (P2.8).
     expect(res.json<ClubPluginList>().items.map((p) => [p.id, p.enabled])).toEqual([
       ["se.rf.lok", false],
+      ["se.rf.registerutdrag", true],
     ]);
     expect(
       (await api(club.manager.id, "GET", `/clubs/${club.id}/plugins`, undefined, false)).statusCode,

@@ -209,6 +209,7 @@ export class ClubRolesService {
           locked: template.locked,
           names: template.names,
           descriptions: template.descriptions,
+          backgroundCheckCategory: template.backgroundCheckCategory ?? null,
         });
       }
       await repo.addPermissions(tx, context.clubId, roleId, template.permissions);
@@ -355,6 +356,14 @@ export class ClubRolesService {
           changed.push("descriptions");
         }
         await repo.updateRoleTexts(tx, roleId, texts);
+      }
+      // "Kräver registerutdrag" (P2.8): a requirement on the role, not a permission.
+      if (
+        input.backgroundCheckCategory !== undefined &&
+        input.backgroundCheckCategory !== role.backgroundCheckCategory
+      ) {
+        await repo.setBackgroundCheckCategory(tx, roleId, input.backgroundCheckCategory);
+        changed.push("background_check_category");
       }
       if (changed.length > 0) {
         await repo.bumpVersion(tx, roleId);

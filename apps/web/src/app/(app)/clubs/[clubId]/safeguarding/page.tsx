@@ -54,6 +54,15 @@ export default async function SafeguardingPage({ params, searchParams }: Props) 
         <p className="mt-1 max-w-prose text-sm text-muted">{t("safeguarding.intro")}</p>
       </div>
       <FormError code={query.error} />
+      <p>
+        <a
+          href={`/clubs/${club.id}/safeguarding/background-checks`}
+          className="text-accent underline"
+          data-testid="open-background-checks"
+        >
+          {t("backgroundChecks.title")}
+        </a>
+      </p>
       <nav className="flex gap-4 text-sm" aria-label={t("safeguarding.title")}>
         {(["open", "closed"] as const).map((s) => (
           <a

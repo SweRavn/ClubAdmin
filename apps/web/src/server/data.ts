@@ -23,6 +23,8 @@ import {
   AssignmentsSchema,
   AttendanceSchema,
   AuditPageSchema,
+  BackgroundCheckOverviewSchema,
+  BackgroundCheckRequirementsSchema,
   BillingAccountResponseSchema,
   CalendarFeedListSchema,
   CarpoolAgeSchema,
@@ -104,6 +106,7 @@ import {
   MemberImportRowPageSchema,
   MemberImportSchema,
   MeResponseSchema,
+  MyBackgroundChecksSchema,
   MyCarpoolListSchema,
   MyCarpoolSettingsSchema,
   MyClubCreationRequestsSchema,
@@ -1194,6 +1197,29 @@ export const getCarpool = cache((activityId: string) =>
   required(`/api/v1/activities/${requireId(activityId)}/carpool`, CarpoolSchema),
 );
 export const getMyCarpools = cache(() => required("/api/v1/me/carpools", MyCarpoolListSchema));
+// Background checks (P2.8): the club's follow-up and requirements, and one's own.
+export const getBackgroundCheckOverview = cache(
+  (clubId: string, status: string | null, cursor: string | null) => {
+    const query = new URLSearchParams({ limit: "100" });
+    if (status && ["missing", "expiring", "valid", "to_delete"].includes(status)) {
+      query.set("status", status);
+    }
+    if (cursor && isUuid(cursor)) query.set("cursor", cursor);
+    return required(
+      `/api/v1/clubs/${requireId(clubId)}/background-checks/overview?${query}`,
+      BackgroundCheckOverviewSchema,
+    );
+  },
+);
+export const getBackgroundCheckRequirements = cache((clubId: string) =>
+  apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/background-checks/requirements`,
+    BackgroundCheckRequirementsSchema,
+  ),
+);
+export const getMyBackgroundChecks = cache((clubId: string) =>
+  apiGet(`/api/v1/me/background-checks?clubId=${requireId(clubId)}`, MyBackgroundChecksSchema),
+);
 /** My car-pool defaults (P2.7f): what "Skapa samåkning" offers. */
 export const getMyCarpoolSettings = cache(() =>
   required("/api/v1/me/carpool-settings", MyCarpoolSettingsSchema),

@@ -167,6 +167,10 @@ export const NOTIFICATION_TYPES = {
   // Grant reports (P2.7 part C): a deadline 14 and 3 days ahead, to those
   // who lock and export the club's reports.
   "grant.deadline": { category: "club_admin" },
+  // Background checks (P2.8): one's own check ends soon; the club's
+  // follow-up (counts, never names) to those who follow up.
+  "background_check.expiring": { category: "account", mandatoryEmail: true },
+  "background_check.follow_up": { category: "club_admin" },
   "duty.assigned": { category: "duties" },
   "duty.swap": { category: "duties", immediate: true },
   // Announcements (P2.3, ADR 0053): emailed at once; important ones to

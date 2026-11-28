@@ -250,6 +250,11 @@ export function noticeLink(input: NoticeInput): string {
       });
       return input.clubId ? `/clubs/${input.clubId}/grants?${query}` : "/";
     }
+    // Background checks (P2.8): one's own status, the club's follow-up.
+    case "my_background_check":
+      return input.clubId ? `/me/background-checks?clubId=${input.clubId}` : "/me";
+    case "club_background_checks":
+      return input.clubId ? `/clubs/${input.clubId}/safeguarding/background-checks` : "/";
     default:
       return "/";
   }

@@ -1763,6 +1763,20 @@ const CASES: Record<Permission, Case[]> = {
     { name: "head coach", actor: coach, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
   ],
+  "club.background_checks.read": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "safeguarding officer", actor: safeguardingOfficer, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.background_checks.verify": [
+    { name: "registrar", actor: registrar, resource: clubR, allowed: true },
+    { name: "safeguarding officer", actor: safeguardingOfficer, resource: clubR, allowed: true },
+    { name: "club manager (follows up only)", actor: manager, resource: clubR, allowed: false },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
 };
 
 describe("policies", () => {

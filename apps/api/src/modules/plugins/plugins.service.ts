@@ -68,6 +68,14 @@ const LOCALES = ["sv", "en", "nb"] as const;
 const textsIn = (plugin: Plugin, locale: string) =>
   plugin.manifest.texts[(LOCALES as readonly string[]).includes(locale) ? (locale as "sv") : "en"];
 
+/**
+ * Whether a plugin is on for a club that has not set it (P2.8, decision 0):
+ * the background-check plugin of the club's country is on until the club
+ * turns it off on the Tillägg page; other plugins are off until turned on.
+ */
+export const enabledByDefault = (plugin: Plugin): boolean =>
+  plugin.manifest.capabilities.includes("background-checks");
+
 export function installedPlugin(plugin: Plugin): InstalledPlugin {
   const m = plugin.manifest;
   return {
@@ -123,13 +131,16 @@ export class PluginsService {
     return { items: this.registry.all().map(installedPlugin), pluginApi: PLUGIN_API_VERSION };
   }
 
-  /** The IDs of the plugins the club has enabled (installed ones only). */
+  /** The IDs of the plugins the club has enabled (installed ones only; P2.8: or on by default). */
   enabledPluginIds(context: TenantContext): Promise<string[]> {
-    return this.db.withTenant(context, async (tx) =>
-      (await repo.clubPlugins(tx))
-        .filter((r) => r.enabled && this.registry.get(r.pluginId))
-        .map((r) => r.pluginId),
-    );
+    return this.db.withTenant(context, async (tx) => {
+      const club = await this.clubs.getClubInTx(tx, context.clubId);
+      const rows = new Map((await repo.clubPlugins(tx)).map((r) => [r.pluginId, r.enabled]));
+      return this.registry
+        .forCountry(club.country)
+        .filter((p) => rows.get(p.manifest.id) ?? enabledByDefault(p))
+        .map((p) => p.manifest.id);
+    });
   }
 
   /**
@@ -162,7 +173,7 @@ export class PluginsService {
         );
         return {
           ...installedPlugin(plugin),
-          enabled: row?.enabled ?? false,
+          enabled: row?.enabled ?? enabledByDefault(plugin),
           config: row?.config ?? {},
           configFields: plugin.manifest.config.map((f) => ({
             key: f.key,
@@ -267,7 +278,12 @@ export class PluginsService {
     const settings = await this.inClub(context, async (tx) => {
       const club = await this.clubs.getClubInTx(tx, context.clubId);
       const row = await repo.clubPlugin(tx, pluginId);
-      if (!row?.enabled) throw new DomainError("plugin_disabled");
+      const enabled = row
+        ? row.enabled
+        : enabledByDefault(plugin) && servesCountry(plugin, club.country);
+      if (!enabled) throw new DomainError("plugin_disabled");
+      // On by default (P2.8): the club's row, which the plugin's state refers to.
+      if (!row) await repo.ensureClubPlugin(tx, pluginId);
       const secrets: Record<string, string> = {};
       for (const s of await repo.secrets(tx, pluginId)) {
         secrets[s.name] = await this.encryption.decrypt(
@@ -276,7 +292,7 @@ export class PluginsService {
           secretAad(context.clubId, pluginId, s.name),
         );
       }
-      return { club, config: row.config, secrets };
+      return { club, config: row?.config ?? {}, secrets };
     });
     const state = {
       get: (key: string) =>

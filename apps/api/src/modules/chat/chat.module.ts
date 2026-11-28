@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common";
 
 import { DATABASE, type OptionalDatabase, requireDatabase } from "../../platform/infra/database.ts";
 import { AuthorizationModule } from "../authorization/index.ts";
+import { BackgroundChecksModule, BackgroundChecksService } from "../background-checks/index.ts";
 import { ClubsModule, ClubsService } from "../clubs/index.ts";
 import { GroupsModule, GroupsService } from "../groups/index.ts";
 import { PeopleModule } from "../people/index.ts";
@@ -14,18 +15,26 @@ import { SafeguardingController } from "./safeguarding.controller.ts";
 import { SafeguardingService } from "./safeguarding.service.ts";
 
 @Module({
-  imports: [AuthorizationModule, ClubsModule, GroupsModule, PeopleModule, RealtimeModule],
+  imports: [
+    AuthorizationModule,
+    BackgroundChecksModule,
+    ClubsModule,
+    GroupsModule,
+    PeopleModule,
+    RealtimeModule,
+  ],
   controllers: [ChatController, SafeguardingController],
   providers: [
     {
       provide: ChatService,
-      inject: [DATABASE, RealtimePublisher, ClubsService, GroupsService],
+      inject: [DATABASE, RealtimePublisher, ClubsService, GroupsService, BackgroundChecksService],
       useFactory: (
         db: OptionalDatabase,
         publisher: RealtimePublisher,
         clubs: ClubsService,
         groups: GroupsService,
-      ) => new ChatService(requireDatabase(db), { publisher, clubs, groups }),
+        checks: BackgroundChecksService,
+      ) => new ChatService(requireDatabase(db), { publisher, clubs, groups, checks }),
     },
     {
       provide: SafeguardingService,

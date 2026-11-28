@@ -159,11 +159,18 @@ export async function AppFrame({ children }: { children: ReactNode }) {
         current: pathname.startsWith(`/clubs/${club.id}/join-requests`),
       });
     }
-    // Safeguarding cases (P2.1 part B): the club's safeguarding officers.
-    if (club.mine?.permissions.includes("club.safeguarding.handle")) {
+    // Safeguarding cases (P2.1 part B): the club's safeguarding officers;
+    // background checks (P2.8): those who follow them up or tick them off.
+    const handles = club.mine?.permissions.includes("club.safeguarding.handle") === true;
+    const checks = (
+      ["club.background_checks.manage", "club.background_checks.verify"] as const
+    ).some((p) => club.mine?.permissions.includes(p));
+    if (handles || checks) {
       nav.push({
         key: "safeguarding",
-        href: `/clubs/${club.id}/safeguarding`,
+        href: handles
+          ? `/clubs/${club.id}/safeguarding`
+          : `/clubs/${club.id}/safeguarding/background-checks`,
         label: t("safeguarding.nav"),
         current: pathname.startsWith(`/clubs/${club.id}/safeguarding`),
       });

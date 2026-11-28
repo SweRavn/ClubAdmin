@@ -876,6 +876,8 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "a person's background-check metadata (no document or code): on the background-check screens (background_check.*)",
   "public.background_check_requests":
     "a check the club requested and its status: on the background-check screens (background_check.requested)",
+  "public.background_check_club_requirements":
+    "the club's stricter background-check requirements: on the requirements page (background_check.requirements_changed)",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

@@ -76,6 +76,7 @@ import {
   type RequestAuthorization,
   tenantContext,
 } from "../authorization/index.ts";
+import { BackgroundChecksService } from "../background-checks/index.ts";
 import { PeopleService } from "../people/index.ts";
 import {
   type AssignmentRow,
@@ -199,6 +200,13 @@ export class DutiesController {
       clubId,
       shown.flatMap((a) => [a.personId, a.countsForPersonId]),
     );
+    // P2.8: shifts the caller cannot take, and staff without a valid check (planners).
+    const flags = await this.duties.backgroundCheckFlags(
+      tenantContext(authz, clubId),
+      result.shifts,
+      result.assignments,
+      authz.actor.onBehalfOf ? null : family.me,
+    );
     const items: DutyShift[] = result.shifts.map((s) => {
       const of = result.assignments.filter((a) => a.shiftId === s.id);
       return {
@@ -211,7 +219,12 @@ export class DutiesController {
           name: s.typeName,
           minAge: s.minAge,
           childContact: s.childContact,
+          backgroundCheckCategory: BackgroundChecksService.dutyCategory({
+            childContact: s.childContact,
+            category: s.checkCategory,
+          }),
         },
+        backgroundCheckRequired: flags.blockedShiftIds.has(s.id),
         title: s.title,
         note: s.note,
         startsAt: s.startsAt.toISOString(),
@@ -232,6 +245,7 @@ export class DutiesController {
             source: a.source,
             status: a.status,
             mine: isMine(a),
+            missingBackgroundCheck: this.plans(authz, s) && flags.missingAssignmentIds.has(a.id),
           })),
       };
     });

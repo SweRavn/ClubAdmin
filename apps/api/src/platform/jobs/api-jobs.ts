@@ -16,6 +16,7 @@ import {
 } from "graphile-worker";
 
 import type { ActivitiesService } from "../../modules/activities/index.ts";
+import type { BackgroundChecksService } from "../../modules/background-checks/index.ts";
 import type { EventsService } from "../../modules/events/index.ts";
 import type { GrantsService } from "../../modules/grants/index.ts";
 import type { MemberImportsService } from "../../modules/members/index.ts";
@@ -78,6 +79,15 @@ export function grantTasks(grants: GrantsService): TaskList {
   };
 }
 
+export function backgroundCheckTasks(checks: BackgroundChecksService): TaskList {
+  return {
+    // Background checks (P2.8): reminders 60 and 14 days before a check ends.
+    "background_checks:reminders": async () => {
+      await checks.remindExpiring();
+    },
+  };
+}
+
 const ExportPayload = z.object({ exportId: z.uuid() });
 
 export function privacyTasks(exports: DataExportJobDeps, erasure: ErasureJobDeps): TaskList {
@@ -95,13 +105,15 @@ export function privacyTasks(exports: DataExportJobDeps, erasure: ErasureJobDeps
 /**
  * Every minute: an offer is answered by its time to the minute. Every ten
  * minutes: erasures whose grace period has passed. Daily: series extended
- * to the horizon (P1.14), grant deadline reminders (P2.7).
+ * to the horizon (P1.14), grant deadline reminders (P2.7), background-check
+ * reminders (P2.8).
  */
 export const API_CRONTAB = [
   "* * * * * events:expire_offers ?max=1",
   "*/10 * * * * privacy:erase ?max=1",
   "23 2 * * * activities:extend_series ?max=1",
   "41 6 * * * grants:deadline_reminders ?max=1",
+  "53 6 * * * background_checks:reminders ?max=1",
 ].join("\n");
 
 function graphileLogger(logger: Logger): GraphileLogger {
@@ -122,6 +134,7 @@ export function startApiJobs(options: {
   events: EventsService;
   activities: ActivitiesService;
   grants: GrantsService;
+  checks: BackgroundChecksService;
   exports: DataExportJobDeps;
   erasure: ErasureJobDeps;
   logger: Logger;
@@ -136,6 +149,7 @@ export function startApiJobs(options: {
       ...eventTasks(options.events),
       ...activityTasks(options.activities),
       ...grantTasks(options.grants),
+      ...backgroundCheckTasks(options.checks),
       ...privacyTasks(options.exports, options.erasure),
     },
     crontab: API_CRONTAB,

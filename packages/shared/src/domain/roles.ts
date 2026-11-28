@@ -55,6 +55,14 @@ export const RoleSchema = z
     version: z.number().int(),
     /** The template's permissions differ from the role's (a template role was changed). */
     differsFromTemplate: z.boolean(),
+    /**
+     * "Kräver registerutdrag" (P2.8): the background-check category the
+     * role's holders need (a requirement, never a permission); null: none.
+     */
+    backgroundCheckCategory: z
+      .enum(["regular_contact_with_children", "alone_with_children", "overnight", "board"])
+      .nullable()
+      .default(null),
   })
   .openapi("Role");
 export type Role = z.infer<typeof RoleSchema>;
@@ -122,6 +130,11 @@ export const UpdateRoleSchema = z
     permissions: z.array(RolePermissionSchema).max(100).optional(),
     /** Back to the template's permissions and names (template roles). */
     resetToTemplate: z.boolean().optional(),
+    /** P2.8: the background-check category holders need (null: none). */
+    backgroundCheckCategory: z
+      .enum(["regular_contact_with_children", "alone_with_children", "overnight", "board"])
+      .nullable()
+      .optional(),
   })
   .openapi("UpdateRole");
 export type UpdateRoleInput = z.infer<typeof UpdateRoleSchema>;

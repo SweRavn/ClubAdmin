@@ -1,0 +1,26 @@
+{
+  "name": "@clubadmin/plugin-se-background-check",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sweden's begränsat registerutdrag for work with children in sport (lag 2013:852, RF:s stadgar), as a background-check plugin (ADR 0051, P2.8)",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clubadmin/plugin-api": "workspace:*"
+  },
+  "devDependencies": {
+    "@clubadmin/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

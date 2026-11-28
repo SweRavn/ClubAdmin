@@ -2263,6 +2263,16 @@
         "title": "Sista dag för en bidragsrapport närmar sig",
         "body": "Rapporten i {club} ska vara inskickad senast {date}. Öppna Bidrag för att granska, låsa och hämta den."
       }
+    },
+    "background_check": {
+      "expiring": {
+        "title": "Ditt registerutdrag behöver förnyas",
+        "body": "Kontrollen i {club} gäller till {date}. Beställ ett nytt utdrag och visa det för föreningens ansvariga i god tid."
+      },
+      "follow_up": {
+        "title": "Registerutdrag att följa upp",
+        "body": "{count, plural, one {# ledare} other {# ledare}} i {club} saknar eller behöver snart förnya sin kontroll. Öppna Trygghet → Registerutdrag."
+      }
     }
   },
   "notifyCategories": {
@@ -3033,7 +3043,8 @@
       "disabled": "slog av",
       "configured": "ändrade inställningarna för",
       "call_failed": "misslyckades med anrop till",
-      "locked": "låste"
+      "locked": "låste",
+      "requirements_changed": "ändrade kraven för"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -4047,6 +4058,11 @@
         "name": "Följa upp utdrag ur belastningsregistret",
         "description": "Kan se och följa upp vilka som har visat utdrag och när ett nytt behövs. Inga utdrag sparas, bara att de har visats.",
         "example": "Kan till exempel se vilka ledare som behöver visa ett nytt utdrag."
+      },
+      "club_background_checks_verify": {
+        "name": "Bocka av visade registerutdrag",
+        "description": "Kan registrera att en person har visat ett giltigt utdrag (typ, datum, hur). Inget dokument eller kod sparas, och man bockar aldrig av sitt eget.",
+        "example": "Kan till exempel bocka av en tränares utdrag när hen visar det."
       }
     }
   },
@@ -4151,7 +4167,10 @@
     "copyFromTemplate": "Lägg till från mallen",
     "copied": "Rollen är tillagd från mallen.",
     "moreLanguages": "Fler språk",
-    "moreLanguagesHint": "Valfritt. Utan namn på ett språk visas namnet på föreningens språk eller engelska."
+    "moreLanguagesHint": "Valfritt. Utan namn på ett språk visas namnet på föreningens språk eller engelska.",
+    "backgroundCheck": "Kräver registerutdrag",
+    "backgroundCheckHint": "Den som har rollen behöver ett giltigt utdrag ur belastningsregistret för den här sortens kontakt med barn. Utan det får hen inte skriva till barn i chatten eller ta pass med barn, men behåller rollen. Ett krav, ingen behörighet.",
+    "noBackgroundCheck": "Inget utdrag"
   },
   "administrators": {
     "title": "Föreningsadministratörer",
@@ -5168,5 +5187,75 @@
     "count": "{count, plural, one {# spelare} other {# spelare}}",
     "hint": "Alla i gruppen är förvalda. Bocka ur dem som inte ska kallas; ledarna är med som vanligt.",
     "eventTitle": "Inbjudna från {group}"
+  },
+  "backgroundChecks": {
+    "title": "Registerutdrag",
+    "nav": "Registerutdrag",
+    "intro": "Vilka ledare som behöver visa ett utdrag ur belastningsregistret, vilka som har ett giltigt och när det behöver förnyas. Föreningen sparar aldrig utdraget, en bild eller en kod, bara att det har visats.",
+    "off": "Tillägget för registerutdrag är avstängt i föreningen: inga krav gäller och chatt och pass spärras inte. Slå på det under Tillägg.",
+    "all": "Alla",
+    "empty": "Ingen behöver något utdrag just nu.",
+    "validUntil": "Gäller till {date}",
+    "requested": "Bekräftelse på ändamål skickad {date}",
+    "record": "{type}: utfärdat {issued}, visat {verified} ({method})",
+    "by": "av",
+    "delete": "Radera",
+    "request": "Bekräfta ändamål: {type}",
+    "hidden": "{count, plural, one {# person} other {# personer}} visas inte för dig (skyddad identitet).",
+    "more": "Visa fler",
+    "recordTitle": "Bocka av ett visat utdrag",
+    "recordIntro": "Personen visar utdraget för dig (på papper eller i sin digitala brevlåda). Läs av utfärdandedatumet och lämna tillbaka det. Du kan inte bocka av ditt eget.",
+    "person": "Person",
+    "choosePerson": "Välj person",
+    "type": "Typ av utdrag",
+    "issuedOn": "Utfärdat",
+    "issuedHint": "Datumet på utdraget.",
+    "how": "Hur det visades",
+    "nothingKept": "Inget dokument, ingen bild och ingen kod sparas. Visar utdraget något: spara inget, rollen avslutas utan skäl.",
+    "recordSubmit": "Bocka av",
+    "requirements": "Krav",
+    "noPlugin": "Det finns inget tillägg för registerutdrag i föreningens land.",
+    "maxAge": "{name}: högst {days, plural, one {# dag} other {# dagar}} gammalt när det visas.",
+    "rolesNeeding": "Roller som kräver utdrag: {roles}.",
+    "noRoles": "Ingen roll kräver utdrag ännu.",
+    "editRoles": "Ändra under Roller",
+    "clubStricter": "Föreningen kräver utdrag för",
+    "byPlugin": "(enligt regelverket)",
+    "recheckMonths": "Nytt utdrag efter (månader)",
+    "recheckPlugin": "Regelverket: efter {months} månader. Föreningen kan bara välja kortare tid.",
+    "recheckNone": "Regelverket anger ingen tid: tomt betyder att utdraget gäller tills vidare.",
+    "dutyTypes": "Pass och kontakt med barn",
+    "noCheck": "Inget utdrag",
+    "fromContact": "Från kontakten med barn: {category}",
+    "saveRequirements": "Spara kraven",
+    "saved": {
+      "recorded": "Utdraget är avbockat.",
+      "deleted": "Uppgiften är raderad.",
+      "requested": "Bekräftelsen på ändamål är registrerad.",
+      "requirements": "Kraven är sparade."
+    },
+    "statuses": {
+      "missing": "Saknas",
+      "expiring": "Går ut snart",
+      "valid": "Giltigt",
+      "to_delete": "Kan raderas"
+    },
+    "categories": {
+      "regular_contact_with_children": "Regelbunden kontakt med barn",
+      "alone_with_children": "Ensam med barn",
+      "overnight": "Övernattning",
+      "board": "Styrelseuppdrag"
+    },
+    "methods": {
+      "viewed": "visat på papper",
+      "digital_mailbox": "visat i digital brevlåda",
+      "code_lookup": "kontrollerat med kod",
+      "received_by_club": "mottaget av föreningen",
+      "federation_feed": "från förbundet"
+    },
+    "levels": {
+      "required": "krävs",
+      "recommended": "rekommenderas"
+    }
   }
 }

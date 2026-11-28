@@ -23,6 +23,7 @@ import { WebSocket } from "ws";
 
 import { subscribeToFeatures } from "../../testing/billing.ts";
 import {
+  buildBackgroundCheck,
   buildClub,
   buildFamily,
   buildPerson,
@@ -96,6 +97,9 @@ async function buildTeam(): Promise<Team> {
   await s.memberships.addToGroup(club.ctx, group.id, supporter.id, "member");
   await s.memberships.addToGroup(club.ctx, group.id, kid1.child.id, "member");
   await s.memberships.addToGroup(club.ctx, group.id, kid2.child.id, "member");
+  // The leaders have valid background checks (P2.8, ADR 0047 rule 9).
+  await buildBackgroundCheck(s, club, coach.id);
+  await buildBackgroundCheck(s, club, assistant.id);
   return { club, groupId: group.id, coach, assistant, kid1, kid2, supporter, outsider };
 }
 

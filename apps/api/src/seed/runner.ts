@@ -13,6 +13,7 @@ import { seedMinimal } from "./minimal.ts";
 import { activitiesDemoStep } from "./steps/activities.ts";
 import { announcementsDemoStep } from "./steps/announcements.ts";
 import { attendanceDemoStep } from "./steps/attendance.ts";
+import { backgroundChecksDemoStep } from "./steps/background-checks.ts";
 import { billingDemoStep, billingInvoicesDemoStep } from "./steps/billing.ts";
 import { calendarDemoStep } from "./steps/calendar.ts";
 import { carpoolsDemoStep } from "./steps/carpools.ts";
@@ -44,6 +45,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   calendarDemoStep,
   protectionDemoStep,
   pluginsDemoStep,
+  backgroundChecksDemoStep,
   chatDemoStep,
   documentsDemoStep,
   announcementsDemoStep,

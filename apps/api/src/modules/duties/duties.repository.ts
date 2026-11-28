@@ -7,7 +7,12 @@
 // an activity (their indexes).
 
 import { sql, type Tx } from "@clubadmin/db";
-import type { DutyChildContact, DutyVisibility, TaskAssignmentStatus } from "@clubadmin/shared";
+import type {
+  BackgroundCheckCategory,
+  DutyChildContact,
+  DutyVisibility,
+  TaskAssignmentStatus,
+} from "@clubadmin/shared";
 
 const uuidArray = (ids: readonly string[]) => `{${ids.join(",")}}`;
 
@@ -145,6 +150,8 @@ export interface ShiftRow {
   typeName: string;
   minAge: number | null;
   childContact: DutyChildContact;
+  /** P2.8: the club's stricter background-check category for the type (null: from the contact). */
+  checkCategory: BackgroundCheckCategory | null;
   typeArchived: boolean;
   title: string;
   note: string | null;
@@ -166,6 +173,7 @@ type ShiftDb = {
   type_name: string;
   min_age: number | null;
   child_contact: DutyChildContact;
+  check_category: BackgroundCheckCategory | null;
   type_archived: boolean;
   title: string;
   description: string | null;
@@ -186,6 +194,7 @@ const toShift = (r: ShiftDb): ShiftRow => ({
   typeName: r.type_name,
   minAge: r.min_age,
   childContact: r.child_contact,
+  checkCategory: r.check_category,
   typeArchived: r.type_archived,
   title: r.title,
   note: r.description,
@@ -199,7 +208,8 @@ const toShift = (r: ShiftDb): ShiftRow => ({
 });
 const SHIFT_SELECT = sql`
   SELECT t.id, t.club_id, t.group_id, g.name AS group_name, t.duty_type_id, dt.name AS type_name,
-    dt.min_age, dt.child_contact, dt.archived_at IS NOT NULL AS type_archived, t.title,
+    dt.min_age, dt.child_contact, dt.background_check_category AS check_category,
+    dt.archived_at IS NOT NULL AS type_archived, t.title,
     t.description, t.starts_at, t.ends_at, t.location_id, l.name AS location_name,
     t.source_activity_id, t.source_event_id, t.needed
   FROM public.tasks t

@@ -22,10 +22,12 @@ export interface RoleRow {
   version: number;
   permissions: string[];
   holderCount: number;
+  /** P2.8: the background-check category holders need (a requirement, not a permission). */
+  backgroundCheckCategory: string | null;
 }
 
 const ROLE_COLUMNS = sql`r.id, r.club_id, r.scope, r.template_key, r.locked, r.names, r.descriptions,
-  r.sort_order, r.archived_at, r.version,
+  r.sort_order, r.archived_at, r.version, r.background_check_category,
   coalesce((SELECT array_agg(rp.permission ORDER BY rp.permission) FROM public.role_permissions rp
     WHERE rp.role_id = r.id), '{}') AS permissions`;
 
@@ -42,6 +44,7 @@ type RawRole = {
   version: number;
   permissions: string[];
   holder_count?: number;
+  background_check_category: string | null;
 };
 
 const toRole = (r: RawRole): RoleRow => ({
@@ -57,6 +60,7 @@ const toRole = (r: RawRole): RoleRow => ({
   version: r.version,
   permissions: r.permissions,
   holderCount: r.holder_count ?? 0,
+  backgroundCheckCategory: r.background_check_category,
 });
 
 /** The club's roles (not deleted) with their permissions, without holder counts. */
@@ -207,14 +211,17 @@ export async function insertTemplateRole(
     locked: boolean;
     names: Record<string, string> | null;
     descriptions: Record<string, string> | null;
+    backgroundCheckCategory?: string | null;
   },
 ): Promise<string> {
   const { rows } = await tx.execute<{ id: string }>(sql`
-    INSERT INTO public.roles (club_id, scope, template_key, locked, names, descriptions, sort_order)
+    INSERT INTO public.roles (club_id, scope, template_key, locked, names, descriptions, sort_order,
+      background_check_category)
     VALUES (${values.clubId}, ${values.scope}, ${values.templateKey}, ${values.locked},
       ${values.names ? JSON.stringify(values.names) : null}::jsonb,
       ${values.descriptions ? JSON.stringify(values.descriptions) : null}::jsonb,
-      1000 + (SELECT count(*)::int FROM public.roles WHERE club_id = ${values.clubId}))
+      1000 + (SELECT count(*)::int FROM public.roles WHERE club_id = ${values.clubId}),
+      ${values.backgroundCheckCategory ?? null})
     RETURNING id`);
   return rows[0]!.id;
 }
@@ -462,4 +469,15 @@ export async function endHolders(
     )
     SELECT person_id FROM c UNION ALL SELECT person_id FROM g`);
   return rows.map((r) => ({ personId: r.person_id }));
+}
+
+/** P2.8: the background-check category a role's holders need (null: none). */
+export async function setBackgroundCheckCategory(
+  tx: Tx,
+  roleId: string,
+  category: string | null,
+): Promise<void> {
+  await tx.execute(sql`
+    UPDATE public.roles SET background_check_category = ${category}
+    WHERE club_id = app.current_club_id() AND id = ${roleId}`);
 }

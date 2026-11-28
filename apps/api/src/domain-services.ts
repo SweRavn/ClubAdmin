@@ -12,6 +12,7 @@ import { AccountsService } from "./modules/accounts/index.ts";
 import { ActivitiesService, AttendanceService } from "./modules/activities/index.ts";
 import { AdministratorsService } from "./modules/administrators/index.ts";
 import { AnnouncementsService } from "./modules/announcements/index.ts";
+import { BackgroundChecksService } from "./modules/background-checks/index.ts";
 import { CarpoolsService } from "./modules/carpools/index.ts";
 import { ChatService, SafeguardingService } from "./modules/chat/index.ts";
 import { ClubProfilesService } from "./modules/club-profiles/index.ts";
@@ -34,6 +35,7 @@ import { MembershipsService } from "./modules/memberships/index.ts";
 import { OnboardingService } from "./modules/onboarding/index.ts";
 import { PeopleService } from "./modules/people/index.ts";
 import { PersonMergeService } from "./modules/person-merge/index.ts";
+import { PluginRegistry } from "./modules/plugins/index.ts";
 import {
   ClubPrivacyService,
   ConsentsService,
@@ -45,6 +47,7 @@ import {
 import { RealtimeBus, RealtimePublisher } from "./modules/realtime/index.ts";
 import { ClubRolesService, RolesService } from "./modules/roles/index.ts";
 import type { FieldEncryption } from "./platform/crypto/field-encryption.ts";
+import { BUNDLED_PLUGINS } from "./plugins.ts";
 
 export interface CoreServices {
   encryption: FieldEncryption;
@@ -74,6 +77,7 @@ export interface CoreServices {
   events: EventsService;
   /** Chat (P2.1); real-time events stay in this process (no Valkey). */
   chat: ChatService;
+  checks: BackgroundChecksService;
   /** Reports, safeguarding cases and mutes (P2.1 part B). */
   safeguarding: SafeguardingService;
   /** The file archive (P2.2): the installation's default storage limit per club. */
@@ -161,7 +165,11 @@ export function createCoreServices(
     isMember: (tx, clubId, personId) => memberships.isMemberInTx(tx, clubId, personId),
   });
   const carpools = new CarpoolsService(db, { guardianships });
+  // Background checks (P2.8): the bundled plugins' declarations; records are
+  // written by the seed directly (no plugin calls without the API).
+  const checks = new BackgroundChecksService(db, { registry: new PluginRegistry(BUNDLED_PLUGINS) });
   return {
+    checks,
     encryption,
     carpools,
     // Seed and tests: every feature is entitled (the API checks the plan).
@@ -170,7 +178,7 @@ export function createCoreServices(
       clubs,
       entitlements: { has: () => Promise.resolve(true) },
     }),
-    duties: new DutiesService(db, { clubs }),
+    duties: new DutiesService(db, { clubs, checks }),
     activities,
     attendance,
     events,
@@ -178,6 +186,7 @@ export function createCoreServices(
       publisher: new RealtimePublisher(new RealtimeBus(undefined)),
       clubs,
       groups,
+      checks,
     }),
     safeguarding: new SafeguardingService(db, {
       publisher: new RealtimePublisher(new RealtimeBus(undefined)),

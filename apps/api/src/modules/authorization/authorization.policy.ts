@@ -980,6 +980,22 @@ export const POLICIES: readonly Policy[] = [
     ({ actor, resource }) =>
       !actor.onBehalfOf && actor.holds("club.background_checks.manage", resource.clubId),
   ),
+  // P2.8: the overview, for those who follow up and those who tick off.
+  definePolicy(
+    "club.background_checks.read",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("club.background_checks.manage", resource.clubId) ||
+        actor.holds("club.background_checks.verify", resource.clubId)),
+  ),
+  // P2.8: the service refuses one's own record (background_check_own).
+  definePolicy(
+    "club.background_checks.verify",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.background_checks.verify", resource.clubId),
+  ),
 ];
 
 const byPermission = new Map<Permission, Policy>(POLICIES.map((p) => [p.permission, p]));

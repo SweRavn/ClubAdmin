@@ -7,6 +7,7 @@ import { ActivitiesModule } from "./modules/activities/index.ts";
 import { AdministratorsModule } from "./modules/administrators/index.ts";
 import { AnnouncementsModule } from "./modules/announcements/index.ts";
 import { AuditModule } from "./modules/audit/index.ts";
+import { BackgroundChecksModule } from "./modules/background-checks/index.ts";
 import { BackupsModule } from "./modules/backups/index.ts";
 import { CalendarModule } from "./modules/calendar/index.ts";
 import { CarpoolsModule } from "./modules/carpools/index.ts";
@@ -68,6 +69,7 @@ const MODULES = [
   DutiesModule,
   PluginsModule,
   GrantsModule,
+  BackgroundChecksModule,
   ProtectionModule,
   PersonProfilesModule,
   NotificationsModule,

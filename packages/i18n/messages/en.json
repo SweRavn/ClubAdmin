@@ -2263,6 +2263,16 @@
         "title": "A grant report's deadline is near",
         "body": "The report in {club} is due by {date}. Open Grants to review, lock and download it."
       }
+    },
+    "background_check": {
+      "expiring": {
+        "title": "Your background check needs renewing",
+        "body": "The check in {club} is valid until {date}. Order a new one and show it to the club's contact in good time."
+      },
+      "follow_up": {
+        "title": "Background checks to follow up",
+        "body": "{count, plural, one {# leader} other {# leaders}} in {club} lack a check or need to renew it soon. Open Safeguarding → Background checks."
+      }
     }
   },
   "notifyCategories": {
@@ -3033,7 +3043,8 @@
       "disabled": "disabled",
       "configured": "configured",
       "call_failed": "failed a call to",
-      "locked": "locked"
+      "locked": "locked",
+      "requirements_changed": "changed the requirements for"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -4047,6 +4058,11 @@
         "name": "Follow up background checks",
         "description": "Can see and follow up who has shown a background check and when a new one is due. No certificates are kept, only that they were shown.",
         "example": "For example, can see which leaders need to show a new certificate."
+      },
+      "club_background_checks_verify": {
+        "name": "Tick off shown background checks",
+        "description": "Can record that a person showed a valid check (type, dates, how). No document or code is kept, and nobody ticks off their own.",
+        "example": "For example, tick off a coach's extract when they show it."
       }
     }
   },
@@ -4151,7 +4167,10 @@
     "copyFromTemplate": "Add from the template",
     "copied": "The role was added from the template.",
     "moreLanguages": "More languages",
-    "moreLanguagesHint": "Optional. Without a name in a language, the name in the club's language or English is shown."
+    "moreLanguagesHint": "Optional. Without a name in a language, the name in the club's language or English is shown.",
+    "backgroundCheck": "Needs a background check",
+    "backgroundCheckHint": "Holders of this role need a valid background check for this kind of contact with children. Without one they cannot write to children in chat or take duties with children, but keep the role. A requirement, not a permission.",
+    "noBackgroundCheck": "No check"
   },
   "administrators": {
     "title": "Administrators",
@@ -5168,5 +5187,75 @@
     "count": "{count, plural, one {# player} other {# players}}",
     "hint": "Everyone in the group is ticked. Untick those who are not called up; the leaders take part as usual.",
     "eventTitle": "Invited from {group}"
+  },
+  "backgroundChecks": {
+    "title": "Background checks",
+    "nav": "Background checks",
+    "intro": "Which leaders need to show a background check, who has a valid one and when it needs renewing. The club never keeps the certificate, a picture or a code, only that it was shown.",
+    "off": "The background-check plugin is turned off in the club: nothing is required and chat and duties are not blocked. Turn it on under Plugins.",
+    "all": "All",
+    "empty": "Nobody needs a check at the moment.",
+    "validUntil": "Valid until {date}",
+    "requested": "Confirmation of purpose sent {date}",
+    "record": "{type}: issued {issued}, shown {verified} ({method})",
+    "by": "by",
+    "delete": "Delete",
+    "request": "Confirm the purpose: {type}",
+    "hidden": "{count, plural, one {# person is} other {# people are}} not shown to you (protected identity).",
+    "more": "Show more",
+    "recordTitle": "Tick off a shown check",
+    "recordIntro": "The person shows you the check (on paper or in their digital mailbox). Read the issue date and hand it back. You cannot tick off your own.",
+    "person": "Person",
+    "choosePerson": "Choose a person",
+    "type": "Kind of check",
+    "issuedOn": "Issued",
+    "issuedHint": "The date on the certificate.",
+    "how": "How it was shown",
+    "nothingKept": "No document, picture or code is kept. If the check shows something: record nothing; the role ends without a reason.",
+    "recordSubmit": "Tick off",
+    "requirements": "Requirements",
+    "noPlugin": "There is no background-check plugin for the club's country.",
+    "maxAge": "{name}: at most {days, plural, one {# day} other {# days}} old when shown.",
+    "rolesNeeding": "Roles that need a check: {roles}.",
+    "noRoles": "No role needs a check yet.",
+    "editRoles": "Change under Roles",
+    "clubStricter": "The club requires a check for",
+    "byPlugin": "(by the rules)",
+    "recheckMonths": "New check after (months)",
+    "recheckPlugin": "The rules: after {months} months. The club may only choose a shorter time.",
+    "recheckNone": "The rules set no interval: empty means the check stays valid.",
+    "dutyTypes": "Duties and contact with children",
+    "noCheck": "No check",
+    "fromContact": "From the contact with children: {category}",
+    "saveRequirements": "Save the requirements",
+    "saved": {
+      "recorded": "The check is ticked off.",
+      "deleted": "The record is deleted.",
+      "requested": "The confirmation of purpose is recorded.",
+      "requirements": "The requirements are saved."
+    },
+    "statuses": {
+      "missing": "Missing",
+      "expiring": "Expiring",
+      "valid": "Valid",
+      "to_delete": "Can be deleted"
+    },
+    "categories": {
+      "regular_contact_with_children": "Regular contact with children",
+      "alone_with_children": "Alone with children",
+      "overnight": "Overnight stays",
+      "board": "Board roles"
+    },
+    "methods": {
+      "viewed": "shown on paper",
+      "digital_mailbox": "shown in a digital mailbox",
+      "code_lookup": "checked with a code",
+      "received_by_club": "received by the club",
+      "federation_feed": "from the federation"
+    },
+    "levels": {
+      "required": "required",
+      "recommended": "recommended"
+    }
   }
 }

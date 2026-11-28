@@ -1136,6 +1136,110 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/background-checks/overview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Who needs a background check: missing, expiring, valid, records to delete
+     * @description Requires permission `club.background_checks.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["BackgroundChecks_overview"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/background-checks/records": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Tick off a certificate a person shows (nothing is uploaded or kept)
+     * @description Requires permission `club.background_checks.verify` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["BackgroundChecks_record"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/background-checks/records/{recordId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete a background-check record (audited)
+     * @description Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["BackgroundChecks_deleteRecord"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/background-checks/requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Start a check the club requests (Norway: the confirmation of purpose)
+     * @description Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["BackgroundChecks_request"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/background-checks/requirements": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The plugin's requirements, the club's stricter additions, roles and duty types
+     * @description Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["BackgroundChecks_requirements"];
+    /**
+     * The club's stricter requirements and duty types' categories (never weaker)
+     * @description Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    put: operations["BackgroundChecks_putRequirements"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/background-checks/types": {
     parameters: {
       query?: never;
@@ -5558,6 +5662,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/me/background-checks": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My background-check status in a club and what is required of me */
+    get: operations["BackgroundChecks_mine"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/me/calendar-feeds": {
     parameters: {
       query?: never;
@@ -7667,7 +7788,15 @@ export interface components {
         minAge: number | null;
         /** @enum {string} */
         childContact: "none" | "with_children" | "alone_with_children";
+        /**
+         * @default null
+         * @enum {string|null}
+         */
+        backgroundCheckCategory:
+          "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
       };
+      /** @default false */
+      backgroundCheckRequired: boolean;
       title: string;
       note: string | null;
       /** Format: date-time */
@@ -7696,6 +7825,8 @@ export interface components {
       /** @enum {string} */
       status: "planned" | "done" | "missed";
       mine: boolean;
+      /** @default false */
+      missingBackgroundCheck: boolean;
     };
     HistoryPage: {
       items: components["schemas"]["HistoryItem"][];
@@ -8731,6 +8862,147 @@ export interface components {
       changedFields: {
         name: string;
         labelKey: string | null;
+      }[];
+    };
+    BackgroundCheckOverview: {
+      active: boolean;
+      expiringDays: number;
+      items: {
+        person: components["schemas"]["PersonSummary"];
+        /** @enum {string} */
+        status: "missing" | "expiring" | "valid" | "to_delete";
+        categories: (
+          "regular_contact_with_children" | "alone_with_children" | "overnight" | "board"
+        )[];
+        /** Format: date */
+        expiresOn: string | null;
+        records: components["schemas"]["BackgroundCheckRecord"][];
+        request: {
+          /** Format: uuid */
+          id: string;
+          status: string;
+          /** Format: date-time */
+          createdAt: string;
+        } | null;
+      }[];
+      hiddenCount: number;
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    BackgroundCheckRecord: {
+      /** Format: uuid */
+      id: string;
+      pluginId: string;
+      checkType: string;
+      checkTypeName: string;
+      issuingCountry: string;
+      /** Format: date */
+      issuedOn: string;
+      /** Format: date */
+      verifiedOn: string;
+      verifiedBy: components["schemas"]["PersonSummary"] & (Record<string, never> | null);
+      method: string;
+      /** Format: date */
+      expiresOn: string | null;
+      /** @enum {string|null} */
+      closedReason: "expired" | "superseded" | "closed" | null;
+    };
+    BackgroundCheckRecordCreated: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      expiresOn: string | null;
+    };
+    CreateBackgroundCheckRecord: {
+      /** Format: uuid */
+      personId: string;
+      pluginId: string;
+      checkType: string;
+      /** Format: date */
+      issuedOn: string;
+      /**
+       * @default viewed
+       * @enum {string}
+       */
+      method: "viewed" | "digital_mailbox";
+    };
+    BackgroundCheckRequestCreated: {
+      /** Format: uuid */
+      id: string;
+      status: string;
+    };
+    CreateBackgroundCheckRequest: {
+      /** Format: uuid */
+      personId: string;
+      pluginId: string;
+      checkType: string;
+    };
+    BackgroundCheckRequirements: {
+      plugin: {
+        id: string;
+        enabled: boolean;
+      } | null;
+      types: {
+        pluginId: string;
+        key: string;
+        name: string;
+        /** @enum {string} */
+        initiator: "person" | "club" | "federation";
+        maxAgeDaysWhenPresented: number | null;
+        recheckMonths: number | null;
+        minAge: number | null;
+      }[];
+      pluginRequirements: {
+        pluginId: string;
+        /** @enum {string} */
+        category: "regular_contact_with_children" | "alone_with_children" | "overnight" | "board";
+        checkType: string;
+        /** @enum {string} */
+        level: "required" | "recommended";
+        basis: string;
+      }[];
+      clubRequirements: components["schemas"]["BackgroundCheckClubRequirement"][];
+      roles: {
+        /** Format: uuid */
+        id: string;
+        /** @enum {string} */
+        scope: "club" | "group";
+        name: string;
+        templateKey: string | null;
+        /** @enum {string|null} */
+        category:
+          "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
+      }[];
+      dutyTypes: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+        /** @enum {string} */
+        childContact: "none" | "with_children" | "alone_with_children";
+        /** @enum {string|null} */
+        category:
+          "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
+        /** @enum {string|null} */
+        effectiveCategory:
+          "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
+      }[];
+    };
+    BackgroundCheckClubRequirement: {
+      pluginId: string;
+      /** @enum {string} */
+      category: "regular_contact_with_children" | "alone_with_children" | "overnight" | "board";
+      checkType: string;
+      recheckMonths: number | null;
+    };
+    PutBackgroundCheckRequirements: {
+      clubRequirements: components["schemas"]["BackgroundCheckClubRequirement"][];
+      /** @default [] */
+      dutyTypes: {
+        /** Format: uuid */
+        id: string;
+        /** @enum {string|null} */
+        category:
+          "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
       }[];
     };
     BackgroundCheckTypes: {
@@ -11035,6 +11307,12 @@ export interface components {
       holderCount: number;
       version: number;
       differsFromTemplate: boolean;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      backgroundCheckCategory:
+        "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
     };
     RoleTexts: {
       sv?: string;
@@ -11082,6 +11360,9 @@ export interface components {
       descriptions?: components["schemas"]["RoleDescriptions"];
       permissions?: components["schemas"]["RolePermission"][];
       resetToTemplate?: boolean;
+      /** @enum {string|null} */
+      backgroundCheckCategory?:
+        "regular_contact_with_children" | "alone_with_children" | "overnight" | "board" | null;
     };
     RolePreview: {
       added: string[];
@@ -12051,6 +12332,30 @@ export interface components {
         decision: "kept" | "ended" | null;
       }[];
     };
+    MyBackgroundChecks: {
+      /** Format: uuid */
+      clubId: string;
+      active: boolean;
+      /** @enum {string} */
+      status: "not_required" | "missing" | "expiring" | "valid";
+      required: {
+        /** @enum {string} */
+        category: "regular_contact_with_children" | "alone_with_children" | "overnight" | "board";
+        checkTypeName: string;
+        basis: string;
+        because: string[];
+      }[];
+      /** Format: date */
+      expiresOn: string | null;
+      records: components["schemas"]["BackgroundCheckRecord"][];
+      howTo: {
+        name: string;
+        /** @enum {string} */
+        initiator: "person" | "club" | "federation";
+        maxAgeDaysWhenPresented: number | null;
+        minAge: number | null;
+      }[];
+    };
     CalendarFeedList: {
       items: components["schemas"]["CalendarFeed"][];
       max: number;
@@ -12251,6 +12556,8 @@ export interface components {
           | "club.grants.read"
           | "club.grants.report"
           | "club.background_checks.manage"
+          | "club.background_checks.verify"
+          | "club.background_checks.read"
         )[];
       }[];
     };
@@ -18734,6 +19041,475 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["AuditPage"];
         };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  BackgroundChecks_overview: {
+    parameters: {
+      query?: {
+        status?: "missing" | "expiring" | "valid" | "to_delete";
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BackgroundCheckOverview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  BackgroundChecks_record: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateBackgroundCheckRecord"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BackgroundCheckRecordCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  BackgroundChecks_deleteRecord: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        recordId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  BackgroundChecks_request: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateBackgroundCheckRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BackgroundCheckRequestCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  BackgroundChecks_requirements: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["BackgroundCheckRequirements"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  BackgroundChecks_putRequirements: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PutBackgroundCheckRequirements"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Invalid request */
       400: {
@@ -39919,6 +40695,73 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AnnouncementBoard"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  BackgroundChecks_mine: {
+    parameters: {
+      query: {
+        clubId: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyBackgroundChecks"];
         };
       };
       /** @description Invalid request */

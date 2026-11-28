@@ -2201,6 +2201,20 @@
                   "with_children",
                   "alone_with_children"
                 ]
+              },
+              "backgroundCheckCategory": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "regular_contact_with_children",
+                  "alone_with_children",
+                  "overnight",
+                  "board",
+                  null
+                ],
+                "default": null
               }
             },
             "required": [
@@ -2209,6 +2223,10 @@
               "minAge",
               "childContact"
             ]
+          },
+          "backgroundCheckRequired": {
+            "type": "boolean",
+            "default": false
           },
           "title": {
             "type": "string"
@@ -2341,6 +2359,10 @@
           },
           "mine": {
             "type": "boolean"
+          },
+          "missingBackgroundCheck": {
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
@@ -6505,6 +6527,605 @@
           "actor",
           "onBehalfOf",
           "changedFields"
+        ]
+      },
+      "BackgroundCheckOverview": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "expiringDays": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "person": {
+                  "$ref": "#/components/schemas/PersonSummary"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "missing",
+                    "expiring",
+                    "valid",
+                    "to_delete"
+                  ]
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "regular_contact_with_children",
+                      "alone_with_children",
+                      "overnight",
+                      "board"
+                    ]
+                  }
+                },
+                "expiresOn": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date"
+                },
+                "records": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BackgroundCheckRecord"
+                  }
+                },
+                "request": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "createdAt"
+                  ]
+                }
+              },
+              "required": [
+                "person",
+                "status",
+                "categories",
+                "expiresOn",
+                "records",
+                "request"
+              ]
+            }
+          },
+          "hiddenCount": {
+            "type": "integer"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "active",
+          "expiringDays",
+          "items",
+          "hiddenCount",
+          "nextCursor"
+        ]
+      },
+      "BackgroundCheckRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pluginId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+          },
+          "checkType": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+          },
+          "checkTypeName": {
+            "type": "string"
+          },
+          "issuingCountry": {
+            "type": "string"
+          },
+          "issuedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "verifiedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "verifiedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "method": {
+            "type": "string"
+          },
+          "expiresOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "closedReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "expired",
+              "superseded",
+              "closed",
+              null
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "pluginId",
+          "checkType",
+          "checkTypeName",
+          "issuingCountry",
+          "issuedOn",
+          "verifiedOn",
+          "verifiedBy",
+          "method",
+          "expiresOn",
+          "closedReason"
+        ]
+      },
+      "BackgroundCheckRecordCreated": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expiresOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        },
+        "required": [
+          "id",
+          "expiresOn"
+        ]
+      },
+      "CreateBackgroundCheckRecord": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pluginId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+          },
+          "checkType": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+          },
+          "issuedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "viewed",
+              "digital_mailbox"
+            ],
+            "default": "viewed"
+          }
+        },
+        "required": [
+          "personId",
+          "pluginId",
+          "checkType",
+          "issuedOn"
+        ],
+        "additionalProperties": false
+      },
+      "BackgroundCheckRequestCreated": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "CreateBackgroundCheckRequest": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pluginId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+          },
+          "checkType": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+          }
+        },
+        "required": [
+          "personId",
+          "pluginId",
+          "checkType"
+        ],
+        "additionalProperties": false
+      },
+      "BackgroundCheckRequirements": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "enabled"
+            ]
+          },
+          "types": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pluginId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+                },
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "initiator": {
+                  "type": "string",
+                  "enum": [
+                    "person",
+                    "club",
+                    "federation"
+                  ]
+                },
+                "maxAgeDaysWhenPresented": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "recheckMonths": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "minAge": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "pluginId",
+                "key",
+                "name",
+                "initiator",
+                "maxAgeDaysWhenPresented",
+                "recheckMonths",
+                "minAge"
+              ]
+            }
+          },
+          "pluginRequirements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pluginId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "regular_contact_with_children",
+                    "alone_with_children",
+                    "overnight",
+                    "board"
+                  ]
+                },
+                "checkType": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+                },
+                "level": {
+                  "type": "string",
+                  "enum": [
+                    "required",
+                    "recommended"
+                  ]
+                },
+                "basis": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "pluginId",
+                "category",
+                "checkType",
+                "level",
+                "basis"
+              ]
+            }
+          },
+          "clubRequirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackgroundCheckClubRequirement"
+            }
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "scope": {
+                  "type": "string",
+                  "enum": [
+                    "club",
+                    "group"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "templateKey": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "category": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "regular_contact_with_children",
+                    "alone_with_children",
+                    "overnight",
+                    "board",
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "scope",
+                "name",
+                "templateKey",
+                "category"
+              ]
+            }
+          },
+          "dutyTypes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "childContact": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "with_children",
+                    "alone_with_children"
+                  ]
+                },
+                "category": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "regular_contact_with_children",
+                    "alone_with_children",
+                    "overnight",
+                    "board",
+                    null
+                  ]
+                },
+                "effectiveCategory": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "regular_contact_with_children",
+                    "alone_with_children",
+                    "overnight",
+                    "board",
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "childContact",
+                "category",
+                "effectiveCategory"
+              ]
+            }
+          }
+        },
+        "required": [
+          "plugin",
+          "types",
+          "pluginRequirements",
+          "clubRequirements",
+          "roles",
+          "dutyTypes"
+        ]
+      },
+      "BackgroundCheckClubRequirement": {
+        "type": "object",
+        "properties": {
+          "pluginId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]{2,63}$"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "regular_contact_with_children",
+              "alone_with_children",
+              "overnight",
+              "board"
+            ]
+          },
+          "checkType": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+          },
+          "recheckMonths": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 120
+          }
+        },
+        "required": [
+          "pluginId",
+          "category",
+          "checkType",
+          "recheckMonths"
+        ]
+      },
+      "PutBackgroundCheckRequirements": {
+        "type": "object",
+        "properties": {
+          "clubRequirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackgroundCheckClubRequirement"
+            },
+            "maxItems": 40
+          },
+          "dutyTypes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "category": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "regular_contact_with_children",
+                    "alone_with_children",
+                    "overnight",
+                    "board",
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "category"
+              ]
+            },
+            "maxItems": 200,
+            "default": []
+          }
+        },
+        "required": [
+          "clubRequirements"
         ]
       },
       "BackgroundCheckTypes": {
@@ -15182,6 +15803,20 @@
           },
           "differsFromTemplate": {
             "type": "boolean"
+          },
+          "backgroundCheckCategory": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "regular_contact_with_children",
+              "alone_with_children",
+              "overnight",
+              "board",
+              null
+            ],
+            "default": null
           }
         },
         "required": [
@@ -15376,6 +16011,19 @@
           },
           "resetToTemplate": {
             "type": "boolean"
+          },
+          "backgroundCheckCategory": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "regular_contact_with_children",
+              "alone_with_children",
+              "overnight",
+              "board",
+              null
+            ]
           }
         },
         "required": [
@@ -19061,6 +19709,121 @@
           "guardians"
         ]
       },
+      "MyBackgroundChecks": {
+        "type": "object",
+        "properties": {
+          "clubId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_required",
+              "missing",
+              "expiring",
+              "valid"
+            ]
+          },
+          "required": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "regular_contact_with_children",
+                    "alone_with_children",
+                    "overnight",
+                    "board"
+                  ]
+                },
+                "checkTypeName": {
+                  "type": "string"
+                },
+                "basis": {
+                  "type": "string"
+                },
+                "because": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "category",
+                "checkTypeName",
+                "basis",
+                "because"
+              ]
+            }
+          },
+          "expiresOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackgroundCheckRecord"
+            }
+          },
+          "howTo": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "initiator": {
+                  "type": "string",
+                  "enum": [
+                    "person",
+                    "club",
+                    "federation"
+                  ]
+                },
+                "maxAgeDaysWhenPresented": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "minAge": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "initiator",
+                "maxAgeDaysWhenPresented",
+                "minAge"
+              ]
+            }
+          }
+        },
+        "required": [
+          "clubId",
+          "active",
+          "status",
+          "required",
+          "expiresOn",
+          "records",
+          "howTo"
+        ]
+      },
       "CalendarFeedList": {
         "type": "object",
         "properties": {
@@ -19535,7 +20298,9 @@
                       "club.plugins.manage",
                       "club.grants.read",
                       "club.grants.report",
-                      "club.background_checks.manage"
+                      "club.background_checks.manage",
+                      "club.background_checks.verify",
+                      "club.background_checks.read"
                     ]
                   }
                 }
@@ -31387,6 +32152,651 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/background-checks/overview": {
+      "get": {
+        "operationId": "BackgroundChecks_overview",
+        "summary": "Who needs a background check: missing, expiring, valid, records to delete",
+        "tags": [
+          "background-checks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.background_checks.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "missing",
+                "expiring",
+                "valid",
+                "to_delete"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackgroundCheckOverview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/background-checks/records": {
+      "post": {
+        "operationId": "BackgroundChecks_record",
+        "summary": "Tick off a certificate a person shows (nothing is uploaded or kept)",
+        "tags": [
+          "background-checks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.background_checks.verify` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBackgroundCheckRecord"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackgroundCheckRecordCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/background-checks/records/{recordId}": {
+      "delete": {
+        "operationId": "BackgroundChecks_deleteRecord",
+        "summary": "Delete a background-check record (audited)",
+        "tags": [
+          "background-checks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "recordId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done"
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/background-checks/requests": {
+      "post": {
+        "operationId": "BackgroundChecks_request",
+        "summary": "Start a check the club requests (Norway: the confirmation of purpose)",
+        "tags": [
+          "background-checks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBackgroundCheckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackgroundCheckRequestCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clubs/{clubId}/background-checks/requirements": {
+      "get": {
+        "operationId": "BackgroundChecks_requirements",
+        "summary": "The plugin's requirements, the club's stricter additions, roles and duty types",
+        "tags": [
+          "background-checks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackgroundCheckRequirements"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "BackgroundChecks_putRequirements",
+        "summary": "The club's stricter requirements and duty types' categories (never weaker)",
+        "tags": [
+          "background-checks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Requires permission `club.background_checks.manage` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutBackgroundCheckRequirements"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Done"
           },
           "400": {
             "description": "Invalid request",
@@ -61625,6 +63035,93 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnouncementBoard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not logged in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me/background-checks": {
+      "get": {
+        "operationId": "BackgroundChecks_mine",
+        "summary": "My background-check status in a club and what is required of me",
+        "tags": [
+          "background-checks"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clubId",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyBackgroundChecks"
                 }
               }
             }

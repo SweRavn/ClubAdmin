@@ -57,6 +57,7 @@ import {
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { actorPersonId, parseInput } from "../../platform/domain/run.ts";
+import { BackgroundChecksService } from "../background-checks/index.ts";
 import type { ClubsService } from "../clubs/index.ts";
 import * as repo from "./duties.repository.ts";
 
@@ -82,11 +83,21 @@ export interface Family {
 export class DutiesService {
   private readonly db: Database;
   private readonly clubs: ClubsService;
+  private readonly checks: BackgroundChecksService | undefined;
   private readonly now: () => Date;
 
-  constructor(db: Database, deps: { clubs: ClubsService; now?: () => Date }) {
+  constructor(
+    db: Database,
+    deps: {
+      clubs: ClubsService;
+      /** P2.8: a duty that needs a background check is refused without a valid one. */
+      checks?: BackgroundChecksService;
+      now?: () => Date;
+    },
+  ) {
     this.db = db;
     this.clubs = deps.clubs;
+    this.checks = deps.checks;
     this.now = deps.now ?? (() => new Date());
   }
 
@@ -364,16 +375,72 @@ export class DutiesService {
     });
   }
 
+  // --- Background checks (P2.8) ---------------------------------------------------
+
+  /**
+   * For a list of shifts: which the caller may not take for want of a
+   * background check, and which assignments lack one (the planners' list).
+   * Nothing is read unless a shift needs a check.
+   */
+  async backgroundCheckFlags(
+    context: TenantContext,
+    shifts: readonly repo.ShiftRow[],
+    assignments: readonly repo.AssignmentRow[],
+    personId: string | null,
+  ): Promise<{ blockedShiftIds: Set<string>; missingAssignmentIds: Set<string> }> {
+    const out = { blockedShiftIds: new Set<string>(), missingAssignmentIds: new Set<string>() };
+    const checks = this.checks;
+    if (!checks) return out;
+    const byCategory = new Map<string, repo.ShiftRow[]>();
+    for (const s of shifts) {
+      const category = BackgroundChecksService.dutyCategory({
+        childContact: s.childContact,
+        category: s.checkCategory,
+      });
+      if (category) byCategory.set(category, [...(byCategory.get(category) ?? []), s]);
+    }
+    if (byCategory.size === 0) return out;
+    await this.db.withTenant(context, async (tx) => {
+      for (const [category, list] of byCategory) {
+        const ids = new Set(list.map((s) => s.id));
+        const of = assignments.filter((a) => ids.has(a.shiftId));
+        const people = [
+          ...new Set([...(personId ? [personId] : []), ...of.map((a) => a.personId)]),
+        ];
+        const lacking = await checks.lackingInTx(
+          tx,
+          context.clubId,
+          people,
+          category as Parameters<typeof checks.lackingInTx>[3],
+        );
+        if (personId && lacking.has(personId)) for (const id of ids) out.blockedShiftIds.add(id);
+        for (const a of of) if (lacking.has(a.personId)) out.missingAssignmentIds.add(a.id);
+      }
+    });
+    return out;
+  }
+
   // --- Who may do it and whom it counts for --------------------------------------
 
-  private async requireAge(tx: Tx, shift: repo.ShiftRow, personId: string): Promise<void> {
-    if (shift.minAge === null) return;
-    const facts = (await repo.ages(tx, [personId])).get(personId);
-    const on = shift.startsAt;
-    const tooYoung = facts?.birthDate
-      ? ageOn(facts.birthDate, on) < shift.minAge
-      : facts?.hasGuardian === true;
-    if (tooYoung) throw new DomainError("duty_too_young");
+  /** The minimum age, and (P2.8) the background check the type's contact with children needs. */
+  private async requireEligible(tx: Tx, shift: repo.ShiftRow, personId: string): Promise<void> {
+    if (shift.minAge !== null) {
+      const facts = (await repo.ages(tx, [personId])).get(personId);
+      const tooYoung = facts?.birthDate
+        ? ageOn(facts.birthDate, shift.startsAt) < shift.minAge
+        : facts?.hasGuardian === true;
+      if (tooYoung) throw new DomainError("duty_too_young");
+    }
+    // P2.8: a type with contact with children needs the club's background check.
+    await this.checks?.requireForDutyInTx(
+      tx,
+      shift.clubId,
+      personId,
+      BackgroundChecksService.dutyCategory({
+        childContact: shift.childContact,
+        category: shift.checkCategory,
+      }),
+    );
   }
 
   /** The players a shift of the family could count for: participants of its group, or the club's members. */
@@ -433,7 +500,7 @@ export class DutiesService {
       const shift = await repo.shift(tx, shiftId, true);
       if (!shift) throw new DomainError("not_found");
       this.requireOpen(shift);
-      await this.requireAge(tx, shift, worker);
+      await this.requireEligible(tx, shift, worker);
       const countsFor = await this.countsFor(
         tx,
         shift,
@@ -507,7 +574,7 @@ export class DutiesService {
     const data = parseInput(AssignDutySchema, input);
     return this.db.withTenant(context, async (tx) => {
       const shift = await this.scopedShift(tx, scope, shiftId, true);
-      await this.requireAge(tx, shift, data.personId);
+      await this.requireEligible(tx, shift, data.personId);
       // The worker's family as the club knows it: themselves and their wards in the club.
       const family = [data.personId, ...(await repo.wardsOf(tx, data.personId))];
       const countsFor = await this.countsFor(tx, shift, family, data.countsForPersonId);
@@ -805,7 +872,7 @@ export class DutiesService {
     if (worker !== family.me && !family.wardIds.includes(worker)) {
       throw new DomainError("duty_person_invalid");
     }
-    await this.requireAge(tx, shift, worker);
+    await this.requireEligible(tx, shift, worker);
     const countsFor = await this.countsFor(
       tx,
       shift,

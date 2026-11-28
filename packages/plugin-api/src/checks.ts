@@ -87,6 +87,8 @@ export interface PresentedInput {
   personId: string;
   checkType: string;
   issuedOn: string;
+  /** How the club saw it (P2.8): on paper (`viewed`) or in the person's digital mailbox. */
+  method?: VerificationMethod | null;
   /** A verification code from the certificate, used during this call only. */
   code?: string | null;
   personalIdentityNumber?: string | null;
@@ -138,6 +140,11 @@ export const FeedEntrySchema = z.object({ personId: z.uuid(), result: CheckResul
 export type FeedEntry = z.infer<typeof FeedEntrySchema>;
 
 export interface BackgroundChecks {
+  /**
+   * Declarations (P2.8): the same for every club of the plugin's regions, no
+   * network and no state. The host reads them once per process and enforces
+   * them inside its transactions (chat, duties) without calling the plugin.
+   */
   checkTypes: (ctx: PluginContext) => Promise<CheckType[]>;
   requirements: (ctx: PluginContext) => Promise<Requirement[]>;
   /** The person presents a certificate (initiator `person`). */

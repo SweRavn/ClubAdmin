@@ -213,6 +213,14 @@ export default async function AdministrationPage({ params }: Props) {
           label: t("administration.safeguarding"),
           show: has("club.safeguarding.handle"),
         },
+        // Background checks (P2.8): those who follow up or tick off.
+        {
+          key: "background-checks",
+          kind: "manage",
+          href: `${base}/safeguarding/background-checks`,
+          label: t("backgroundChecks.title"),
+          show: has("club.background_checks.manage") || has("club.background_checks.verify"),
+        },
       ],
     },
   ];

@@ -231,6 +231,10 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "club.grants.read": role("club", "finance", true),
   "club.grants.report": role("club", "finance", true),
   "club.background_checks.manage": role("club", "privacy", true),
+  // P2.8: ticking off a certificate a person shows (never one's own).
+  "club.background_checks.verify": role("club", "privacy", true),
+  // The overview: those who follow up and those who tick off.
+  "club.background_checks.read": derived("club.background_checks.manage"),
   // Operators
   "ops.backup.read": builtIn,
   "ops.plugins.manage": builtIn,
@@ -390,6 +394,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "club.grants.read",
       "club.grants.report",
       "club.background_checks.manage",
+      "club.background_checks.verify",
     ],
   },
   chair: {
@@ -433,7 +438,10 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
   auditor: { scope: "club", permissions: [] },
   nomination_committee: { scope: "club", permissions: [] },
   // Reports and safeguarding cases (P2.1 part B, ADR 0047 rule 7).
-  safeguarding_officer: { scope: "club", permissions: ["club.safeguarding.handle"] },
+  safeguarding_officer: {
+    scope: "club",
+    permissions: ["club.safeguarding.handle", "club.background_checks.verify"],
+  },
   communications: { scope: "club", permissions: ["club.announcements.send"] },
   staff: { scope: "club", permissions: [] },
   // Children create channels too (P2.1, ADR 0047: visible to their guardians and leaders).

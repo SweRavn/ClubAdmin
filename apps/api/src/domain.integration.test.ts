@@ -280,6 +280,9 @@ describe("tenant isolation of club-owned tables", () => {
         INSERT INTO background_check_requests (club_id, person_id, plugin_id, check_type, status, plugin_reference)
         VALUES (${a.id}, ${member.id}, 'se.test.fixture', 'extract', 'requested', 'ref')`);
       await tx.execute(sql`
+        INSERT INTO background_check_club_requirements (club_id, plugin_id, category, check_type, recheck_months)
+        VALUES (${a.id}, 'se.test.fixture', 'board', 'extract', 24)`);
+      await tx.execute(sql`
         INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
         VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);
     });
