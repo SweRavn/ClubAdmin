@@ -44,6 +44,7 @@ import {
   LeavingService,
   type OutstandingObligationsProvider,
 } from "./modules/privacy/index.ts";
+import { ProgrammesService } from "./modules/programmes/index.ts";
 import { RealtimeBus, RealtimePublisher } from "./modules/realtime/index.ts";
 import { ClubRolesService, RolesService } from "./modules/roles/index.ts";
 import type { FieldEncryption } from "./platform/crypto/field-encryption.ts";
@@ -87,6 +88,8 @@ export interface CoreServices {
   carpools: CarpoolsService;
   expenses: ExpensesService;
   duties: DutiesService;
+  /** Programmes and templates (P2.9). */
+  programmes: ProgrammesService;
   announcements: AnnouncementsService;
   consents: ConsentsService;
   clubPrivacy: ClubPrivacyService;
@@ -168,17 +171,19 @@ export function createCoreServices(
   // Background checks (P2.8): the bundled plugins' declarations; records are
   // written by the seed directly (no plugin calls without the API).
   const checks = new BackgroundChecksService(db, { registry: new PluginRegistry(BUNDLED_PLUGINS) });
+  const duties = new DutiesService(db, { clubs, checks });
   return {
     checks,
     encryption,
     carpools,
+    programmes: new ProgrammesService(db, { clubs, activities, duties, events, carpools }),
     // Seed and tests: every feature is entitled (the API checks the plan).
     expenses: new ExpensesService(db, {
       carpools,
       clubs,
       entitlements: { has: () => Promise.resolve(true) },
     }),
-    duties: new DutiesService(db, { clubs, checks }),
+    duties,
     activities,
     attendance,
     events,

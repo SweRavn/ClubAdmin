@@ -37,6 +37,7 @@ import { JOINING_PERSON_REFERENCES, MEMBERSHIP_PERSON_REFERENCES } from "../memb
 import type { PeopleService } from "../people/index.ts";
 import { PLUGIN_PERSON_REFERENCES } from "../plugins/index.ts";
 import { PRIVACY_PERSON_REFERENCES } from "../privacy/index.ts";
+import { PROGRAMME_PERSON_REFERENCES } from "../programmes/index.ts";
 import { ROLE_PERSON_REFERENCES } from "../roles/index.ts";
 import * as repo from "./person-merge.repository.ts";
 
@@ -63,6 +64,7 @@ export const PERSON_REFERENCES: readonly PersonReference[] = [
   ...DUTY_PERSON_REFERENCES,
   ...PLUGIN_PERSON_REFERENCES,
   ...PRIVACY_PERSON_REFERENCES,
+  ...PROGRAMME_PERSON_REFERENCES,
 ];
 
 export type PersonMerge = repo.MergeRow;

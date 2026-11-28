@@ -16,6 +16,7 @@ import {
   type FolderResource,
   type PersonResource,
   type Policy,
+  type ProgrammeResource,
   type ResourceKind,
   type Resources,
 } from "./policy.ts";
@@ -178,6 +179,27 @@ export function canManageEvent(actor: Actor, event: EventResource): boolean {
   if (actor.holds("event.manage", event.clubId)) return true;
   if (event.audience === "club") return actor.holds("club.events.create", event.clubId);
   return event.groups.length > 0 && event.groups.every((g) => canManageGroupActivities(actor, g));
+}
+
+/**
+ * Who sees a programme (P2.9): those who see one of its groups' activities,
+ * those who read the club's activities and those who manage programmes.
+ */
+export function canReadProgramme(actor: Actor, programme: ProgrammeResource): boolean {
+  return (
+    actor.holds("club.programmes.manage", programme.clubId) ||
+    actor.holds("club.activities.read", programme.clubId) ||
+    programme.groups.some((g) => canReadGroupActivities(actor, g))
+  );
+}
+
+/** Who organises a programme: club managers, or those who plan every one of its groups. */
+export function canManageProgramme(actor: Actor, programme: ProgrammeResource): boolean {
+  return (
+    actor.holds("club.programmes.manage", programme.clubId) ||
+    (programme.groups.length > 0 &&
+      programme.groups.every((g) => canManageGroupActivities(actor, g)))
+  );
 }
 
 /**
@@ -979,6 +1001,49 @@ export const POLICIES: readonly Policy[] = [
     "club",
     ({ actor, resource }) =>
       !actor.onBehalfOf && actor.holds("club.background_checks.manage", resource.clubId),
+  ),
+  // P2.9 (ADR 0054): programmes and templates. Club templates and
+  // programmes in every group: club managers; a group's: those who plan its
+  // activities. Laying out checks every mapped group in the controller.
+  definePolicy(
+    "club.programmes.manage",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf && actor.holds("club.programmes.manage", resource.clubId),
+  ),
+  definePolicy(
+    "club.programmes.use",
+    "club",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("club.programmes.manage", resource.clubId) ||
+        actor.managesAnyGroupActivities(resource.clubId)),
+  ),
+  definePolicy("programme.read", "programme", ({ actor, resource }) =>
+    canReadProgramme(actor, resource),
+  ),
+  definePolicy(
+    "programme.manage",
+    "programme",
+    ({ actor, resource }) => !actor.onBehalfOf && canManageProgramme(actor, resource),
+  ),
+  definePolicy(
+    "programme_template.manage",
+    "programme_template",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("club.programmes.manage", resource.clubId) ||
+        (resource.group !== null && canManageGroupActivities(actor, resource.group))),
+  ),
+  definePolicy(
+    "programme_template.use",
+    "programme_template",
+    ({ actor, resource }) =>
+      !actor.onBehalfOf &&
+      (actor.holds("club.programmes.manage", resource.clubId) ||
+        (resource.group === null
+          ? actor.managesAnyGroupActivities(resource.clubId)
+          : canManageGroupActivities(actor, resource.group))),
   ),
   // P2.8: the overview, for those who follow up and those who tick off.
   definePolicy(

@@ -9,12 +9,14 @@ export {
   canManageDocuments,
   canManageEvent,
   canManageGroupActivities,
+  canManageProgramme,
   canPostInChat,
   canReadChat,
   canReadDocuments,
   canReadEvent,
   canReadGroupActivities,
   canReadGroupMembers,
+  canReadProgramme,
   canRespondInGroup,
   canSendAnnouncements,
   clubPermissions,
@@ -38,6 +40,8 @@ export type {
   FolderResource,
   GroupResource,
   PersonResource,
+  ProgrammeResource,
+  ProgrammeTemplateResource,
   ResourceKind,
 } from "./policy.ts";
 export {

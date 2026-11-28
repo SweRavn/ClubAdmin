@@ -298,6 +298,20 @@ export const DOMAIN_ERRORS = {
   background_check_weaker: "validation",
   /** The person is not in the club. */
   background_check_not_in_club: "validation",
+  // P2.9 (ADR 0054): programmes and templates.
+  programme_template_too_large: "validation",
+  programme_day_offset_invalid: "validation",
+  programme_source_empty: "validation",
+  programme_slot_unknown: "validation",
+  programme_range_too_long: "validation",
+  /** Laying out refused (the preview lists why); the first refusal's code is the detail's. */
+  programme_slot_unmapped: "validation",
+  programme_location_archived: "conflict",
+  programme_duty_type_archived: "conflict",
+  programme_group_unavailable: "conflict",
+  programme_event_exists: "conflict",
+  programme_not_untouched: "conflict",
+  programme_template_archived: "conflict",
   /** One does not report one's own message. */
   chat_report_own: "conflict",
   /** The request to read is not open, was made by the caller, or lapsed. */

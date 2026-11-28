@@ -643,3 +643,12 @@ export async function drives(
     distanceKm: r.km === null ? null : Number(r.km),
   }));
 }
+
+/** Whether any of these activities has a car-pool offer (a programme is no longer untouched, P2.9). */
+export async function anyOffers(tx: Tx, activityIds: readonly string[]): Promise<boolean> {
+  if (activityIds.length === 0) return false;
+  const { rows } = await tx.execute<{ found: boolean }>(sql`
+    SELECT EXISTS (SELECT 1 FROM public.carpool_offers o
+      WHERE o.activity_id = ANY (${uuidArray([...new Set(activityIds)])}::uuid[])) AS found`);
+  return rows[0]?.found === true;
+}

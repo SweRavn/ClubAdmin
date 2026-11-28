@@ -878,6 +878,18 @@ export const NEVER_SHOWN: Readonly<Record<string, string>> = {
     "a check the club requested and its status: on the background-check screens (background_check.requested)",
   "public.background_check_club_requirements":
     "the club's stricter background-check requirements: on the requirements page (background_check.requirements_changed)",
+  // Programmes and templates (P2.9, ADR 0054): no people; changes in the
+  // audit log (programme.*), the items in their own activities' and shifts' history.
+  "public.programme_templates":
+    "a club's or group's programme template: on the template page, changes in the audit log (programme.template.*)",
+  "public.programme_template_slots":
+    "a template's group slots: on the template page (programme.template.updated)",
+  "public.programme_template_items":
+    "a template's activities and shifts (relative times, no people): on the template page (programme.template.updated)",
+  "public.programmes":
+    "a programme laid out or copied: its activities and shifts have their own history (programme.applied)",
+  "public.programme_groups":
+    "the groups a programme is for: on the programme page (programme.applied)",
   "public.storage_quotas":
     "the club's own storage limits: on the storage settings page and in the audit log (documents.storage.updated)",
 };

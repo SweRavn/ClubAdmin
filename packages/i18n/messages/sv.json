@@ -342,7 +342,19 @@
     "background_check_off": "Tillägget för registerutdrag är avstängt i föreningen.",
     "background_check_type_unknown": "Den typen av utdrag finns inte i föreningens land.",
     "background_check_weaker": "Föreningen kan bara skärpa kraven, inte mildra dem.",
-    "background_check_not_in_club": "Personen är inte med i föreningen."
+    "background_check_not_in_club": "Personen är inte med i föreningen.",
+    "programme_template_too_large": "En mall kan ha högst 300 aktiviteter och pass.",
+    "programme_day_offset_invalid": "Programmet kan vara högst 31 dagar, och varje punkt måste ligga inom mallens dagar.",
+    "programme_source_empty": "Det finns inga aktiviteter eller pass att spara som mall.",
+    "programme_slot_unknown": "En punkt hör till ett lag som inte finns i mallen.",
+    "programme_range_too_long": "Välj högst 31 dagar.",
+    "programme_slot_unmapped": "Välj en grupp för varje lag i mallen som har aktiviteter.",
+    "programme_location_archived": "En plats i mallen är arkiverad. Välj en annan plats för den.",
+    "programme_duty_type_archived": "En passtyp i mallen är arkiverad eller inte tillåten här.",
+    "programme_group_unavailable": "En vald grupp finns inte längre eller är arkiverad.",
+    "programme_event_exists": "Evenemanget har redan ett program.",
+    "programme_not_untouched": "Någon har redan svarat, anmält sig, tagit ett pass eller erbjudit skjuts. Ställ in punkterna en och en i stället.",
+    "programme_template_archived": "Mallen är arkiverad."
   },
   "roles": {
     "chair": "Ordförande",
@@ -963,7 +975,19 @@
     "background_check_off": "Tillägget för registerutdrag är avstängt i föreningen.",
     "background_check_type_unknown": "Den typen av utdrag finns inte i föreningens land.",
     "background_check_weaker": "Föreningen kan bara skärpa kraven, inte mildra dem.",
-    "background_check_not_in_club": "Personen är inte med i föreningen."
+    "background_check_not_in_club": "Personen är inte med i föreningen.",
+    "programme_template_too_large": "En mall kan ha högst 300 aktiviteter och pass.",
+    "programme_day_offset_invalid": "Programmet kan vara högst 31 dagar, och varje punkt måste ligga inom mallens dagar.",
+    "programme_source_empty": "Det finns inga aktiviteter eller pass att spara som mall.",
+    "programme_slot_unknown": "En punkt hör till ett lag som inte finns i mallen.",
+    "programme_range_too_long": "Välj högst 31 dagar.",
+    "programme_slot_unmapped": "Välj en grupp för varje lag i mallen som har aktiviteter.",
+    "programme_location_archived": "En plats i mallen är arkiverad. Välj en annan plats för den.",
+    "programme_duty_type_archived": "En passtyp i mallen är arkiverad eller inte tillåten här.",
+    "programme_group_unavailable": "En vald grupp finns inte längre eller är arkiverad.",
+    "programme_event_exists": "Evenemanget har redan ett program.",
+    "programme_not_untouched": "Någon har redan svarat, anmält sig, tagit ett pass eller erbjudit skjuts. Ställ in punkterna en och en i stället.",
+    "programme_template_archived": "Mallen är arkiverad."
   },
   "memberExport": {
     "columns": {
@@ -3059,7 +3083,8 @@
       "configured": "ändrade inställningarna för",
       "call_failed": "misslyckades med anrop till",
       "locked": "låste",
-      "requirements_changed": "ändrade kraven för"
+      "requirements_changed": "ändrade kraven för",
+      "applied": "lade ut"
     },
     "actions": {
       "members_exported": "{actor} exporterade medlemsregistret",
@@ -4078,6 +4103,11 @@
         "name": "Bocka av visade registerutdrag",
         "description": "Kan registrera att en person har visat ett giltigt utdrag (typ, datum, hur). Inget dokument eller kod sparas, och man bockar aldrig av sitt eget.",
         "example": "Kan till exempel bocka av en tränares utdrag när hen visar det."
+      },
+      "club_programmes_manage": {
+        "name": "Hantera föreningens program och mallar",
+        "description": "Kan göra mallar för hela föreningen (som alla lag kan använda för sina egna grupper) och lägga ut, kopiera och ta bort program i alla grupper.",
+        "example": "Kan till exempel göra mallen \"Städdag\" som varje lag lägger ut för sig."
       }
     }
   },

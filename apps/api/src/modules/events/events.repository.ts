@@ -523,3 +523,11 @@ export async function findRegistration(tx: Tx, id: string): Promise<Registration
   const [row] = await tx.select().from(eventRegistrations).where(eq(eventRegistrations.id, id));
   return row ?? null;
 }
+
+/** Whether anyone has registered for the event, in any status (P2.9). */
+export async function anyRegistrations(tx: Tx, eventId: string): Promise<boolean> {
+  const { rows } = await tx.execute<{ found: boolean }>(sql`
+    SELECT EXISTS (SELECT 1 FROM public.event_registrations
+      WHERE event_id = ${eventId}::uuid) AS found`);
+  return rows[0]?.found === true;
+}

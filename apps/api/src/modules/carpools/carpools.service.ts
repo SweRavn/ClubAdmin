@@ -171,6 +171,10 @@ export class CarpoolsService {
     this.guardianships = deps.guardianships;
     this.now = deps.now ?? (() => new Date());
   }
+  /** Whether any of these activities has a car-pool offer (P2.9: a programme is no longer untouched). */
+  hasOffersInTx(tx: Tx, activityIds: readonly string[]): Promise<boolean> {
+    return repo.anyOffers(tx, activityIds);
+  }
 
   // --- Reading ------------------------------------------------------------------
 

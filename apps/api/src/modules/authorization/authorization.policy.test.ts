@@ -144,6 +144,33 @@ const jointActivityR: Resource = {
     { clubId: club, groupId: otherTeam, ancestorIds: [] },
   ],
 };
+const programmeR: Resource = {
+  kind: "programme",
+  clubId: club,
+  programmeId: uuidv7(),
+  groups: [{ clubId: club, groupId: team, ancestorIds: [section] }],
+};
+const jointProgrammeR: Resource = {
+  kind: "programme",
+  clubId: club,
+  programmeId: uuidv7(),
+  groups: [
+    { clubId: club, groupId: team, ancestorIds: [section] },
+    { clubId: club, groupId: otherTeam, ancestorIds: [] },
+  ],
+};
+const groupTemplateR: Resource = {
+  kind: "programme_template",
+  clubId: club,
+  templateId: uuidv7(),
+  group: { clubId: club, groupId: team, ancestorIds: [section] },
+};
+const clubTemplateR: Resource = {
+  kind: "programme_template",
+  clubId: club,
+  templateId: uuidv7(),
+  group: null,
+};
 const eventR = (status: "draft" | "published" = "published"): Resource => ({
   kind: "event",
   clubId: club,
@@ -1776,6 +1803,65 @@ const CASES: Record<Permission, Case[]> = {
     { name: "club manager (follows up only)", actor: manager, resource: clubR, allowed: false },
     { name: "head coach", actor: coach, resource: clubR, allowed: false },
     { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  // P2.9 (ADR 0054): programmes and templates.
+  "club.programmes.manage": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "head coach", actor: coach, resource: clubR, allowed: false },
+    { name: "manager of another club", actor: otherClubManager, resource: clubR, allowed: false },
+  ],
+  "club.programmes.use": [
+    { name: "club manager", actor: manager, resource: clubR, allowed: true },
+    { name: "head coach (plans a group)", actor: coach, resource: clubR, allowed: true },
+    { name: "player", actor: teammate, resource: clubR, allowed: false },
+    { name: "registrar", actor: registrar, resource: clubR, allowed: false },
+  ],
+  "programme.read": [
+    { name: "player of its group", actor: teammate, resource: programmeR, allowed: true },
+    {
+      name: "relative who sees the schedule",
+      actor: relative,
+      resource: programmeR,
+      allowed: true,
+    },
+    { name: "manager", actor: manager, resource: programmeR, allowed: true },
+    { name: "member of another group", actor: plainMember, resource: programmeR, allowed: false },
+    { name: "outsider", actor: outsider, resource: programmeR, allowed: false },
+  ],
+  "programme.manage": [
+    { name: "head coach of its group", actor: coach, resource: programmeR, allowed: true },
+    { name: "manager", actor: manager, resource: jointProgrammeR, allowed: true },
+    {
+      name: "head coach of one of two groups",
+      actor: coach,
+      resource: jointProgrammeR,
+      allowed: false,
+    },
+    { name: "player", actor: teammate, resource: programmeR, allowed: false },
+    { name: "acting for a ward", actor: onBehalf, resource: programmeR, allowed: false },
+  ],
+  "programme_template.manage": [
+    { name: "head coach, the group's", actor: coach, resource: groupTemplateR, allowed: true },
+    { name: "manager, the club's", actor: manager, resource: clubTemplateR, allowed: true },
+    { name: "head coach, the club's", actor: coach, resource: clubTemplateR, allowed: false },
+    {
+      name: "coach of another team",
+      actor: otherTeamCoach,
+      resource: groupTemplateR,
+      allowed: false,
+    },
+    { name: "player", actor: teammate, resource: groupTemplateR, allowed: false },
+  ],
+  "programme_template.use": [
+    { name: "head coach, the club's", actor: coach, resource: clubTemplateR, allowed: true },
+    { name: "head coach, the group's", actor: coach, resource: groupTemplateR, allowed: true },
+    {
+      name: "coach of another team, the group's",
+      actor: otherTeamCoach,
+      resource: groupTemplateR,
+      allowed: false,
+    },
+    { name: "player, the club's", actor: teammate, resource: clubTemplateR, allowed: false },
   ],
 };
 

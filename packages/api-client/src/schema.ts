@@ -3901,6 +3901,202 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/clubs/{clubId}/programme-templates": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's templates and those of the groups the caller plans
+     * @description Requires permission `club.programmes.use` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Programmes_listTemplates"];
+    put?: never;
+    /**
+     * Save a programme, an event, a group's range or an activity as a template
+     * @description Requires permission `club.programmes.use` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Programmes_createTemplate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programme-templates/{templateId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A template: its slots, items, event settings and editions
+     * @description Requires permission `programme_template.use` on the programme_template. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Programmes_getTemplate"];
+    put?: never;
+    post?: never;
+    /**
+     * Archive a template (its editions stay)
+     * @description Requires permission `programme_template.manage` on the programme_template. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Programmes_archiveTemplate"];
+    options?: never;
+    head?: never;
+    /**
+     * Rename a template, change its slots, items or event, or archive it
+     * @description Requires permission `programme_template.manage` on the programme_template. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    patch: operations["Programmes_updateTemplate"];
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programme-templates/{templateId}/apply": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Lay a template out: the programme, event, activities and shifts, all or nothing
+     * @description Requires permission `programme_template.use` on the programme_template. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Programmes_apply"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programme-templates/{templateId}/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Lay a template out on a first day without writing: items, warnings, refusals
+     * @description Requires permission `programme_template.use` on the programme_template. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Programmes_preview"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programmes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * The club's programmes, by first day
+     * @description Requires permission `club.activities.read` on the club. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Programmes_listClubProgrammes"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programmes/{programmeId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A programme: its groups, days and places
+     * @description Requires permission `programme.read` on the programme. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Programmes_getProgramme"];
+    put?: never;
+    post?: never;
+    /**
+     * Remove a programme with all its items while nothing is answered or registered
+     * @description Requires permission `programme.manage` on the programme. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    delete: operations["Programmes_deleteProgramme"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programmes/{programmeId}/copy": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Copy a programme to a new date (no template is kept)
+     * @description Requires permission `programme.manage` on the programme. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Programmes_copy"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programmes/{programmeId}/copy/preview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Copy a programme to a new date without writing: items, warnings, refusals
+     * @description Requires permission `programme.manage` on the programme. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Programmes_copyPreview"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/clubs/{clubId}/programmes/{programmeId}/timeline": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * One day of a programme as the caller may see it: activities and shifts
+     * @description Requires permission `programme.read` on the programme. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Programmes_timeline"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/clubs/{clubId}/role-assignments": {
     parameters: {
       query?: never;
@@ -5169,6 +5365,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/groups/{groupId}/programmes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * A group's programmes, by first day
+     * @description Requires permission `group.activities.read` on the group. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    get: operations["Programmes_listGroupProgrammes"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/groups/{groupId}/restore": {
     parameters: {
       query?: never;
@@ -6291,6 +6507,23 @@ export interface paths {
     get: operations["Onboarding_profile"];
     /** Complete my profile after sign-up (the birth date is set once) */
     put: operations["Onboarding_completeProfile"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/me/programmes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Coming programmes of my groups and my family's in a club */
+    get: operations["Programmes_mine"];
+    put?: never;
     post?: never;
     delete?: never;
     options?: never;
@@ -11246,6 +11479,387 @@ export interface components {
       /** Format: uuid */
       nextCursor: string | null;
     };
+    ProgrammeTemplateList: {
+      items: components["schemas"]["ProgrammeTemplateSummary"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    ProgrammeTemplateSummary: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      groupId: string | null;
+      name: string;
+      description: string | null;
+      dayCount: number;
+      itemCount: number;
+      hasEvent: boolean;
+      archived: boolean;
+      canManage: boolean;
+    };
+    CreateProgrammeTemplateRequest: {
+      name: string;
+      description?: string | null;
+      /** Format: uuid */
+      groupId: string | null;
+      source:
+        | {
+            /** Format: uuid */
+            programmeId: string;
+          }
+        | {
+            /** Format: uuid */
+            eventId: string;
+          }
+        | {
+            /** Format: uuid */
+            groupId: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+          }
+        | {
+            /** Format: uuid */
+            activityId: string;
+          };
+    };
+    ProgrammeTemplate: components["schemas"]["ProgrammeTemplateSummary"] & {
+      eventSettings: components["schemas"]["ProgrammeEventSettings"];
+      slots: components["schemas"]["ProgrammeSlot"][];
+      items: components["schemas"]["ProgrammeItem"][];
+      editions: components["schemas"]["ProgrammeEdition"][];
+    };
+    ProgrammeEventSettings: {
+      title: string;
+      /** @default null */
+      description: string | null;
+      /** @enum {string} */
+      audience: "groups" | "club";
+      /** @default null */
+      capacity: number | null;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      waitlistMode: "none" | "auto" | "offer" | null;
+      /** @default [] */
+      questions: components["schemas"]["EventQuestion"][];
+      /** @default null */
+      priceText: string | null;
+      /** @default null */
+      opensDaysBefore: number | null;
+      /** @default null */
+      closesDaysBefore: number | null;
+    } | null;
+    ProgrammeSlot: {
+      key: string;
+      label: string;
+      /** Format: uuid */
+      defaultGroupId: string | null;
+    };
+    ProgrammeItem: {
+      /** @enum {string} */
+      kind: "activity" | "duty_shift";
+      dayOffset: number;
+      startTime: string;
+      endDayOffset: number;
+      endTime: string;
+      /** @default [] */
+      slotKeys: string[];
+      title: string;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      activityKind: "training" | "match" | "meeting" | "other" | null;
+      /** @default null */
+      kindLabel: string | null;
+      /** @default null */
+      notes: string | null;
+      /**
+       * Format: uuid
+       * @default null
+       */
+      locationId: string | null;
+      /** @default null */
+      locationText: string | null;
+      /** @default null */
+      meetMinutesBefore: number | null;
+      /** @default null */
+      meetPlace: string | null;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      transportMode: "own" | "shared" | null;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      homeAway: "home" | "away" | "neutral" | null;
+      /** @default null */
+      opponent: string | null;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      responseMode: "none" | "optional" | "requested" | null;
+      /**
+       * Format: uuid
+       * @default null
+       */
+      dutyTypeId: string | null;
+      /** @default null */
+      needed: number | null;
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      parentItemId: string | null;
+    };
+    ProgrammeEdition: {
+      /** Format: uuid */
+      programmeId: string;
+      title: string;
+      edition: string | null;
+      /** Format: date */
+      firstDay: string;
+    };
+    UpdateProgrammeTemplateRequest: {
+      name?: string;
+      description?: string | null;
+      dayCount?: number;
+      eventSettings?: components["schemas"]["ProgrammeEventSettings"];
+      slots?: components["schemas"]["ProgrammeSlot"][];
+      items?: components["schemas"]["ProgrammeItemInput"][];
+      archived?: boolean;
+    };
+    ProgrammeItemInput: {
+      ref: string;
+      /** @enum {string} */
+      kind: "activity" | "duty_shift";
+      /** @default null */
+      parentRef: string | null;
+      dayOffset: number;
+      startTime: string;
+      endDayOffset: number;
+      endTime: string;
+      /** @default [] */
+      slotKeys: string[];
+      title: string;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      activityKind: "training" | "match" | "meeting" | "other" | null;
+      /** @default null */
+      kindLabel: string | null;
+      /** @default null */
+      notes: string | null;
+      /**
+       * Format: uuid
+       * @default null
+       */
+      locationId: string | null;
+      /** @default null */
+      locationText: string | null;
+      /** @default null */
+      meetMinutesBefore: number | null;
+      /** @default null */
+      meetPlace: string | null;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      transportMode: "own" | "shared" | null;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      homeAway: "home" | "away" | "neutral" | null;
+      /** @default null */
+      opponent: string | null;
+      /**
+       * @default null
+       * @enum {string|null}
+       */
+      responseMode: "none" | "optional" | "requested" | null;
+      /**
+       * Format: uuid
+       * @default null
+       */
+      dutyTypeId: string | null;
+      /** @default null */
+      needed: number | null;
+    };
+    ProgrammeCreated: {
+      programme: components["schemas"]["ProgrammeSummary"];
+      activities: number;
+      dutyShifts: number;
+    };
+    ProgrammeSummary: {
+      /** Format: uuid */
+      id: string;
+      title: string;
+      edition: string | null;
+      /** Format: uuid */
+      templateId: string | null;
+      /** Format: uuid */
+      eventId: string | null;
+      /** Format: date */
+      firstDay: string;
+      /** Format: date */
+      lastDay: string;
+      groups: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+      }[];
+    };
+    ApplyProgrammeRequest: {
+      /** Format: date */
+      firstDay: string;
+      /** @default {} */
+      slots: {
+        [key: string]: string[];
+      };
+      /** @default {} */
+      locations: {
+        [key: string]: string;
+      };
+      title?: string | null;
+      edition?: string | null;
+    };
+    ProgrammePreview: {
+      title: string;
+      edition: string | null;
+      /** Format: date */
+      firstDay: string;
+      /** Format: date */
+      lastDay: string;
+      timeZone: string;
+      items: components["schemas"]["ProgrammePreviewItem"][];
+      slots: {
+        key: string;
+        label: string;
+        groupIds: string[];
+      }[];
+      event: {
+        title: string;
+        /** @enum {string} */
+        audience: "groups" | "club";
+      } | null;
+      warnings: components["schemas"]["ProgrammeNotice"][];
+      refusals: components["schemas"]["ProgrammeNotice"][];
+    };
+    ProgrammePreviewItem: {
+      itemId: string;
+      /** @enum {string} */
+      kind: "activity" | "duty_shift";
+      parentItemId: string | null;
+      title: string;
+      /** @enum {string|null} */
+      activityKind: "training" | "match" | "meeting" | "other" | null;
+      kindLabel: string | null;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt: string;
+      groupIds: string[];
+      /** Format: uuid */
+      locationId: string | null;
+      locationText: string | null;
+      /** Format: uuid */
+      dutyTypeId: string | null;
+      needed: number | null;
+    };
+    ProgrammeNotice: {
+      code: string;
+      itemId: string | null;
+      slotKey: string | null;
+      /** Format: uuid */
+      groupId: string | null;
+      /** Format: uuid */
+      locationId: string | null;
+      /** Format: uuid */
+      activityId: string | null;
+    };
+    ProgrammeList: {
+      items: components["schemas"]["ProgrammeSummary"][];
+      /** Format: uuid */
+      nextCursor: string | null;
+    };
+    ProgrammeDetail: components["schemas"]["ProgrammeSummary"] & {
+      timeZone: string;
+      days: string[];
+      places: components["schemas"]["ProgrammePlace"][];
+      canManage: boolean;
+      untouched: boolean;
+    };
+    ProgrammePlace: {
+      /** Format: uuid */
+      locationId: string | null;
+      name: string | null;
+    };
+    CopyProgrammeRequest: {
+      /** Format: date */
+      firstDay: string;
+      /** @default {} */
+      slots: {
+        [key: string]: string[];
+      };
+      /** @default {} */
+      locations: {
+        [key: string]: string;
+      };
+      title?: string | null;
+      /** @default false */
+      preview: boolean;
+    };
+    ProgrammeTimeline: {
+      /** Format: date */
+      day: string;
+      activities: components["schemas"]["ProgrammeTimelineActivity"][];
+      shifts: components["schemas"]["ProgrammeTimelineShift"][];
+    };
+    ProgrammeTimelineActivity: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      kind: "training" | "match" | "meeting" | "other";
+      kindLabel: string | null;
+      title: string;
+      status: string;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt: string;
+      /** Format: uuid */
+      locationId: string | null;
+      locationText: string | null;
+      groups: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+      }[];
+      conflict: boolean;
+    };
+    ProgrammeTimelineShift: {
+      /** Format: uuid */
+      id: string;
+      title: string;
+      /** Format: date-time */
+      startsAt: string;
+      /** Format: date-time */
+      endsAt: string;
+      /** Format: uuid */
+      activityId: string | null;
+      /** Format: uuid */
+      locationId: string | null;
+      needed: number;
+      filled: number;
+      mine: boolean;
+    };
     ClubRoleAssignmentList: {
       items: components["schemas"]["ClubRoleAssignment"][];
     };
@@ -12558,6 +13172,12 @@ export interface components {
           | "club.background_checks.manage"
           | "club.background_checks.verify"
           | "club.background_checks.read"
+          | "club.programmes.manage"
+          | "club.programmes.use"
+          | "programme.read"
+          | "programme.manage"
+          | "programme_template.use"
+          | "programme_template.manage"
         )[];
       }[];
     };
@@ -13044,6 +13664,12 @@ export interface components {
       familyName?: string;
       /** Format: date */
       birthDate: string;
+    };
+    MyProgrammes: {
+      items: (components["schemas"]["ProgrammeSummary"] & {
+        /** Format: uuid */
+        clubId: string;
+      })[];
     };
     PushDeviceList: {
       items: components["schemas"]["PushDevice"][];
@@ -32546,6 +33172,1036 @@ export interface operations {
       };
     };
   };
+  Programmes_listTemplates: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        groupId?: string;
+        archived?: "true" | "false";
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeTemplateList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_createTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateProgrammeTemplateRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** Format: uuid */
+            id: string;
+          };
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_getTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeTemplate"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_archiveTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_updateTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateProgrammeTemplateRequest"];
+      };
+    };
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_apply: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ApplyProgrammeRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_preview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        templateId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ApplyProgrammeRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammePreview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_listClubProgrammes: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        from?: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_getProgramme: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        programmeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeDetail"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_deleteProgramme: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        programmeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Done */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_copy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        programmeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CopyProgrammeRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeCreated"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_copyPreview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        clubId: string;
+        programmeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CopyProgrammeRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammePreview"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_timeline: {
+    parameters: {
+      query: {
+        day: string;
+      };
+      header?: never;
+      path: {
+        clubId: string;
+        programmeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeTimeline"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   ClubRoles_assignments: {
     parameters: {
       query: {
@@ -38676,6 +40332,86 @@ export interface operations {
       };
     };
   };
+  Programmes_listGroupProgrammes: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        from?: string;
+      };
+      header?: never;
+      path: {
+        groupId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeList"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
   Groups_restoreGroup: {
     parameters: {
       query?: never;
@@ -43561,6 +45297,73 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MyProfile"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_mine: {
+    parameters: {
+      query: {
+        clubId: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyProgrammes"];
         };
       };
       /** @description Invalid request */

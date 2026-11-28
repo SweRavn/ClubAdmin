@@ -149,6 +149,15 @@ export const PERMISSIONS = [
   "club.background_checks.verify",
   // The overview of who needs a check: those who follow up or tick off (derived).
   "club.background_checks.read",
+  // Programmes and templates (P2.9, ADR 0054): club templates and programmes
+  // in every group (club managers); using templates (anyone who plans a
+  // group's activities, derived); a programme and a template as resources.
+  "club.programmes.manage",
+  "club.programmes.use",
+  "programme.read",
+  "programme.manage",
+  "programme_template.use",
+  "programme_template.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

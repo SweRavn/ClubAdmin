@@ -342,7 +342,19 @@
     "background_check_off": "The background-check plugin is turned off in the club.",
     "background_check_type_unknown": "That kind of check does not exist in the club's country.",
     "background_check_weaker": "The club can only make the requirements stricter, never milder.",
-    "background_check_not_in_club": "The person is not in the club."
+    "background_check_not_in_club": "The person is not in the club.",
+    "programme_template_too_large": "A template can have at most 300 activities and shifts.",
+    "programme_day_offset_invalid": "A programme can be at most 31 days, and every item must be within the template's days.",
+    "programme_source_empty": "There are no activities or shifts to save as a template.",
+    "programme_slot_unknown": "An item belongs to a team slot the template does not have.",
+    "programme_range_too_long": "Choose at most 31 days.",
+    "programme_slot_unmapped": "Choose a group for every team slot of the template that has activities.",
+    "programme_location_archived": "A place in the template is archived. Choose another place for it.",
+    "programme_duty_type_archived": "A duty type in the template is archived or not allowed here.",
+    "programme_group_unavailable": "A chosen group no longer exists or is archived.",
+    "programme_event_exists": "The event already has a programme.",
+    "programme_not_untouched": "Someone has already answered, signed up, taken a shift or offered a ride. Cancel the items one by one instead.",
+    "programme_template_archived": "The template is archived."
   },
   "roles": {
     "chair": "Chair",
@@ -963,7 +975,19 @@
     "background_check_off": "The background-check plugin is turned off in the club.",
     "background_check_type_unknown": "That kind of check does not exist in the club's country.",
     "background_check_weaker": "The club can only make the requirements stricter, never milder.",
-    "background_check_not_in_club": "The person is not in the club."
+    "background_check_not_in_club": "The person is not in the club.",
+    "programme_template_too_large": "A template can have at most 300 activities and shifts.",
+    "programme_day_offset_invalid": "A programme can be at most 31 days, and every item must be within the template's days.",
+    "programme_source_empty": "There are no activities or shifts to save as a template.",
+    "programme_slot_unknown": "An item belongs to a team slot the template does not have.",
+    "programme_range_too_long": "Choose at most 31 days.",
+    "programme_slot_unmapped": "Choose a group for every team slot of the template that has activities.",
+    "programme_location_archived": "A place in the template is archived. Choose another place for it.",
+    "programme_duty_type_archived": "A duty type in the template is archived or not allowed here.",
+    "programme_group_unavailable": "A chosen group no longer exists or is archived.",
+    "programme_event_exists": "The event already has a programme.",
+    "programme_not_untouched": "Someone has already answered, signed up, taken a shift or offered a ride. Cancel the items one by one instead.",
+    "programme_template_archived": "The template is archived."
   },
   "memberExport": {
     "columns": {
@@ -3059,7 +3083,8 @@
       "configured": "configured",
       "call_failed": "failed a call to",
       "locked": "locked",
-      "requirements_changed": "changed the requirements for"
+      "requirements_changed": "changed the requirements for",
+      "applied": "laid out"
     },
     "actions": {
       "members_exported": "{actor} exported the member register",
@@ -4078,6 +4103,11 @@
         "name": "Tick off shown background checks",
         "description": "Can record that a person showed a valid check (type, dates, how). No document or code is kept, and nobody ticks off their own.",
         "example": "For example, tick off a coach's extract when they show it."
+      },
+      "club_programmes_manage": {
+        "name": "Manage the club's programmes and templates",
+        "description": "Can make templates for the whole club (which every team can use for its own groups) and lay out, copy and remove programmes in every group.",
+        "example": "Can for example make the template \"Cleaning day\" that each team lays out for itself."
       }
     }
   },

@@ -503,3 +503,24 @@ export async function loadChatScope(
     members: row.members ?? [],
   };
 }
+
+/** A programme's groups (P2.9), or null when it is not in the current club. */
+export async function loadProgrammeScope(tx: Tx, programmeId: string): Promise<string[] | null> {
+  const { rows } = await tx.execute<{ group_ids: string[] }>(sql`
+    SELECT coalesce(array_agg(g.group_id ORDER BY g.group_id)
+      FILTER (WHERE g.group_id IS NOT NULL), '{}') AS group_ids
+    FROM public.programmes p LEFT JOIN public.programme_groups g ON g.programme_id = p.id
+    WHERE p.id = ${programmeId}::uuid
+    GROUP BY p.id`);
+  return rows[0]?.group_ids ?? null;
+}
+
+/** A programme template's group (P2.9), or null when it is not in the current club. */
+export async function loadProgrammeTemplateScope(
+  tx: Tx,
+  templateId: string,
+): Promise<{ groupId: string | null } | null> {
+  const { rows } = await tx.execute<{ group_id: string | null }>(sql`
+    SELECT group_id FROM public.programme_templates WHERE id = ${templateId}::uuid`);
+  return rows[0] ? { groupId: rows[0].group_id } : null;
+}

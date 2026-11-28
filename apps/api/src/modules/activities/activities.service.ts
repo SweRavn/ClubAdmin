@@ -17,6 +17,7 @@ import {
   type Tx,
 } from "@clubadmin/db";
 import {
+  type ActivityKind,
   CALENDAR_MAX_DAYS,
   type CancelActivityInput,
   CancelActivitySchema,
@@ -25,9 +26,11 @@ import {
   type CreateSeriesInput,
   CreateSeriesSchema,
   defaultResponseMode,
+  type HomeAway,
   type LocationInput,
   LocationInputSchema,
   requestAt,
+  type ResponseMode,
   SERIES_HORIZON_DAYS,
   type SeriesPreviewInput,
   SeriesPreviewSchema,
@@ -37,6 +40,7 @@ import {
   SkipDatesSchema,
   type SplitSeriesInput,
   SplitSeriesSchema,
+  type TransportMode,
   type UpdateActivityInput,
   UpdateActivitySchema,
   type UpdateLocationInput,
@@ -130,6 +134,27 @@ const sameValue = (a: unknown, b: unknown) =>
     : a !== null && b !== null && typeof a === "object" && typeof b === "object"
       ? JSON.stringify(a) === JSON.stringify(b)
       : a === b;
+
+/** An activity of a programme being laid out (P2.9), with its own groups. */
+export interface ProgrammeActivityValues {
+  id: string;
+  groupIds: readonly string[];
+  kind: ActivityKind;
+  kindLabel: string | null;
+  title: string;
+  notes: string | null;
+  locationId: string | null;
+  locationText: string | null;
+  startsAt: Date;
+  endsAt: Date;
+  meetAt: Date | null;
+  meetPlace: string | null;
+  transportMode: TransportMode | null;
+  homeAway: HomeAway | null;
+  opponent: string | null;
+  responseMode: ResponseMode | null;
+  inviteesOnly: boolean;
+}
 
 export class ActivitiesService {
   private readonly db: Database;
@@ -366,6 +391,137 @@ export class ActivitiesService {
     return (await this.views(tx, context.clubId, [created]))[0]!;
   }
 
+  // --- Programmes (P2.9, ADR 0054) ---------------------------------------------------
+
+  /**
+   * A programme's activities in one go: the groups and places are checked
+   * once, and each step is one statement whatever the number of activities
+   * (inserts, groups, the read model, audit, outbox). Answers default as for
+   * a single activity; `inviteesOnly` for an event's sessions (nobody is
+   * confirmed yet).
+   */
+  async createProgrammeActivitiesInTx(
+    tx: Tx,
+    context: TenantContext,
+    programmeId: string,
+    items: readonly ProgrammeActivityValues[],
+  ): Promise<string[]> {
+    if (items.length === 0) return [];
+    await this.requireGroups(tx, context.clubId, [...new Set(items.flatMap((i) => i.groupIds))]);
+    const locationIds = [...new Set(items.flatMap((i) => (i.locationId ? [i.locationId] : [])))];
+    const places = await repo.findLocations(tx, locationIds);
+    if (places.length !== locationIds.length || places.some((l) => l.clubId !== context.clubId)) {
+      throw new DomainError("not_found");
+    }
+    if (places.some((l) => l.archivedAt)) throw new DomainError("location_archived");
+    const by = actorPersonId(context);
+    const rows = await repo.insertActivities(
+      tx,
+      items.map((i) => ({
+        id: i.id,
+        clubId: context.clubId,
+        programmeId,
+        kind: i.kind,
+        kindLabel: i.kind === "other" ? i.kindLabel : null,
+        title: i.title,
+        notes: i.notes,
+        meetPlace: i.meetPlace,
+        opponent: i.opponent,
+        homeAway: i.homeAway,
+        locationId: i.locationId,
+        locationText: i.locationId ? null : i.locationText,
+        startsAt: i.startsAt,
+        endsAt: i.endsAt,
+        meetAt: i.meetAt,
+        responseMode: i.responseMode ?? defaultResponseMode(i.kind),
+        transportMode: i.transportMode,
+        inviteesOnly: i.inviteesOnly,
+        createdByPersonId: by,
+      })),
+    );
+    const ids = rows.map((r) => r.id);
+    await repo.insertActivityGroupPairs(
+      tx,
+      context.clubId,
+      items.flatMap((i) =>
+        [...new Set(i.groupIds)].map((groupId) => ({ activityId: i.id, groupId })),
+      ),
+    );
+    await repo.syncScheduleEntries(tx, { activityIds: ids });
+    await audit.recordMany(
+      tx,
+      ids.map((id) => ({ action: "activity.created", resourceType: "activity", resourceId: id })),
+    );
+    await outbox.publishMany(
+      tx,
+      "activity.changed",
+      ids.map((activityId) => ({ clubId: context.clubId, activityId, change: "created" as const })),
+    );
+    return ids;
+  }
+
+  /** Deletes a programme's activities nobody answered (the caller checked); one statement each. */
+  async deleteProgrammeActivitiesInTx(
+    tx: Tx,
+    context: TenantContext,
+    ids: readonly string[],
+  ): Promise<void> {
+    if (ids.length === 0) return;
+    await repo.deleteActivities(tx, ids);
+    await audit.recordMany(
+      tx,
+      ids.map((id) => ({ action: "activity.deleted", resourceType: "activity", resourceId: id })),
+    );
+    await outbox.publishMany(
+      tx,
+      "activity.changed",
+      ids.map((activityId) => ({ clubId: context.clubId, activityId, change: "deleted" as const })),
+    );
+  }
+
+  /** Scheduled activities at these places overlapping the range (conflict warnings). */
+  activitiesAtLocationsInTx(
+    tx: Tx,
+    clubId: string,
+    locationIds: readonly string[],
+    range: { from: Date; to: Date },
+  ): ReturnType<typeof repo.activitiesAtLocations> {
+    return repo.activitiesAtLocations(tx, clubId, locationIds, range);
+  }
+
+  programmeActivitiesInTx(
+    tx: Tx,
+    programmeId: string,
+    range: { from: Date; to: Date } | null = null,
+  ): Promise<repo.ActivityRow[]> {
+    return repo.programmeActivities(tx, programmeId, range);
+  }
+
+  groupActivitiesInRangeInTx(
+    tx: Tx,
+    groupId: string,
+    range: { from: Date; to: Date },
+  ): Promise<repo.ActivityRow[]> {
+    return repo.groupActivitiesInRange(tx, groupId, range);
+  }
+
+  groupsOfActivitiesInTx(
+    tx: Tx,
+    activityIds: readonly string[],
+  ): Promise<Map<string, { id: string; name: string }[]>> {
+    return repo.groupsOfActivities(tx, activityIds);
+  }
+
+  /** Whether any of these activities has answers or attendance. */
+  async anyRecordsInTx(tx: Tx, activityIds: readonly string[]): Promise<boolean> {
+    return (await records.withRecords(tx, activityIds)).size > 0;
+  }
+
+  /** The club's places (any, archived too) by ID. */
+  findLocationsInTx(tx: Tx, ids: readonly string[]): Promise<Location[]> {
+    return repo.findLocations(tx, ids);
+  }
+
   getActivity(context: TenantContext, activityId: string): Promise<ActivityView> {
     return this.db.withTenant(context, async (tx) => {
       const activity = await repo.findActivity(tx, activityId);
@@ -515,6 +671,15 @@ export class ActivitiesService {
   }
 
   /** The club's groups among these IDs, by ID, with their names. */
+  /** Groups of the club by ID with their names and whether archived (P2.9). */
+  clubGroupsInTx(
+    tx: Tx,
+    clubId: string,
+    groupIds: readonly string[],
+  ): Promise<{ id: string; name: string; archived: boolean }[]> {
+    return repo.clubGroups(tx, clubId, groupIds);
+  }
+
   async groupNamesInTx(
     tx: Tx,
     clubId: string,

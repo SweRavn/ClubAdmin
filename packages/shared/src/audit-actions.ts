@@ -295,6 +295,13 @@ export const AUDIT_ACTIONS = [
   "duty.swap.accepted",
   "duty.swap.declined",
   "duty.swap.withdrawn",
+  // Programmes and templates (P2.9): the items laid out have their own events.
+  "programme.template.created",
+  "programme.template.updated",
+  "programme.template.archived",
+  "programme.created",
+  "programme.applied",
+  "programme.deleted",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

@@ -29,7 +29,9 @@ export type EndpointResource =
   | "chat"
   | "folder"
   | "document"
-  | "announcement";
+  | "announcement"
+  | "programme"
+  | "programme_template";
 
 /**
  * Who may call the endpoint: `public` needs no login, `authenticated` any

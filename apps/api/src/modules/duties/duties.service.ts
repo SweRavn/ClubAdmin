@@ -320,6 +320,136 @@ export class DutiesService {
     });
   }
 
+  // --- Programmes (P2.9, ADR 0054) ---------------------------------------------------
+
+  /**
+   * Why each of these duty types cannot be laid out (archived, the country
+   * rule on being alone with children, or not the club's); absent when it can.
+   */
+  async typeRefusalsInTx(
+    tx: Tx,
+    clubId: string,
+    typeIds: readonly string[],
+  ): Promise<
+    Map<string, "not_found" | "duty_type_archived" | "duty_alone_with_children_forbidden">
+  > {
+    const types = await repo.typesById(tx, typeIds);
+    const out = new Map<
+      string,
+      "not_found" | "duty_type_archived" | "duty_alone_with_children_forbidden"
+    >();
+    const found = new Map(types.map((t) => [t.id, t]));
+    const alone = types.some((t) => t.childContact === "alone_with_children")
+      ? await this.aloneAllowed(tx, clubId)
+      : true;
+    for (const id of new Set(typeIds)) {
+      const type = found.get(id);
+      if (!type) out.set(id, "not_found");
+      else if (type.archived) out.set(id, "duty_type_archived");
+      else if (type.childContact === "alone_with_children" && !alone) {
+        out.set(id, "duty_alone_with_children_forbidden");
+      }
+    }
+    return out;
+  }
+
+  /** The names of duty types (archived too), for templates and previews. */
+  async typesByIdInTx(tx: Tx, typeIds: readonly string[]): Promise<repo.DutyTypeRow[]> {
+    return repo.typesById(tx, typeIds);
+  }
+
+  /**
+   * A programme's shifts in one statement (the caller checked the types with
+   * typeRefusalsInTx), audited in one more.
+   */
+  async createProgrammeShiftsInTx(
+    tx: Tx,
+    context: TenantContext,
+    programmeId: string,
+    shifts: readonly {
+      id: string;
+      groupId: string | null;
+      dutyTypeId: string;
+      title: string;
+      note: string | null;
+      startsAt: Date;
+      endsAt: Date;
+      locationId: string | null;
+      needed: number;
+      activityId: string | null;
+      eventId: string | null;
+    }[],
+  ): Promise<void> {
+    if (shifts.length === 0) return;
+    const refused = await this.typeRefusalsInTx(
+      tx,
+      context.clubId,
+      shifts.map((s) => s.dutyTypeId),
+    );
+    const [first] = refused.values();
+    if (first) throw new DomainError(first);
+    const by = actorPersonId(context);
+    await repo.insertShifts(
+      tx,
+      shifts.map((s) => ({
+        ...s,
+        clubId: context.clubId,
+        startsAt: s.startsAt.toISOString(),
+        endsAt: s.endsAt.toISOString(),
+        programmeId,
+        by,
+      })),
+    );
+    await audit.recordMany(
+      tx,
+      shifts.map((s) => ({
+        action: "duty.shift.created" as const,
+        resourceType: s.groupId ? "group" : "club",
+        resourceId: s.groupId ?? context.clubId,
+        changedFields: ["duty_type_id", "starts_at", "ends_at", "needed"],
+      })),
+    );
+  }
+
+  /** Shifts of a programme (a day of it), of activities or of an event. */
+  shiftsOfInTx(tx: Tx, where: Parameters<typeof repo.shiftsOf>[1]): Promise<repo.ShiftRow[]> {
+    return repo.shiftsOf(tx, where);
+  }
+
+  /** A group's shifts starting in a range. */
+  groupShiftsInTx(
+    tx: Tx,
+    groupId: string,
+    range: { from: Date; to: Date },
+  ): Promise<repo.ShiftRow[]> {
+    return repo.shifts(tx, { groupId }, range, DUTY_SHIFT_LIST_MAX);
+  }
+
+  assignmentsInTx(tx: Tx, shiftIds: readonly string[]): Promise<repo.AssignmentRow[]> {
+    return repo.assignments(tx, shiftIds);
+  }
+
+  /** Deletes shifts nobody has (the caller checked), audited in one statement. */
+  async deleteProgrammeShiftsInTx(
+    tx: Tx,
+    context: TenantContext,
+    shifts: readonly repo.ShiftRow[],
+  ): Promise<void> {
+    if (shifts.length === 0) return;
+    await repo.deleteShifts(
+      tx,
+      shifts.map((s) => s.id),
+    );
+    await audit.recordMany(
+      tx,
+      shifts.map((s) => ({
+        action: "duty.shift.deleted" as const,
+        resourceType: s.groupId ? "group" : "club",
+        resourceId: s.groupId ?? context.clubId,
+      })),
+    );
+  }
+
   updateShift(
     context: TenantContext,
     scope: ShiftScope,

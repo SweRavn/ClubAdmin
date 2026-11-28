@@ -887,3 +887,79 @@ export async function myDutyShifts(
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
     .slice(0, limit);
 }
+
+// --- Programmes (P2.9) -------------------------------------------------------------
+
+/** Shifts of a programme (optionally starting in a range), of activities or of an event. */
+export async function shiftsOf(
+  tx: Tx,
+  where:
+    | { programmeId: string; range: { from: Date; to: Date } | null }
+    | { activityIds: readonly string[] }
+    | { eventId: string },
+): Promise<ShiftRow[]> {
+  let filter;
+  if ("programmeId" in where) {
+    filter = where.range
+      ? sql`t.programme_id = ${where.programmeId}::uuid
+          AND t.starts_at >= ${where.range.from.toISOString()}::timestamptz
+          AND t.starts_at < ${where.range.to.toISOString()}::timestamptz`
+      : sql`t.programme_id = ${where.programmeId}::uuid`;
+  } else if ("activityIds" in where) {
+    if (where.activityIds.length === 0) return [];
+    filter = sql`t.source_activity_id = ANY (${uuidArray([...new Set(where.activityIds)])}::uuid[])`;
+  } else {
+    filter = sql`t.source_event_id = ${where.eventId}::uuid`;
+  }
+  const { rows } = await tx.execute<ShiftDb>(sql`
+    ${SHIFT_SELECT} WHERE ${filter} AND t.kind = 'duty_shift'
+    ORDER BY t.starts_at, t.id LIMIT 1000`);
+  return rows.map(toShift);
+}
+
+/** Many shifts in one statement (laying out a programme). */
+export async function insertShifts(
+  tx: Tx,
+  rows: readonly {
+    id: string;
+    clubId: string;
+    groupId: string | null;
+    dutyTypeId: string;
+    title: string;
+    note: string | null;
+    startsAt: string;
+    endsAt: string;
+    locationId: string | null;
+    needed: number;
+    activityId: string | null;
+    eventId: string | null;
+    programmeId: string;
+    by: string;
+  }[],
+): Promise<void> {
+  if (rows.length === 0) return;
+  await tx.execute(sql`
+    INSERT INTO public.tasks (id, club_id, group_id, kind, title, description, starts_at, ends_at,
+      needed, duty_type_id, location_id, source_activity_id, source_event_id, programme_id,
+      created_by_person_id)
+    SELECT r.id, r."clubId", r."groupId", 'duty_shift', r.title, r.note, r."startsAt", r."endsAt",
+      r.needed, r."dutyTypeId", r."locationId", r."activityId", r."eventId", r."programmeId", r.by
+    FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS r(id uuid, "clubId" uuid,
+      "groupId" uuid, title text, note text, "startsAt" timestamptz, "endsAt" timestamptz,
+      needed integer, "dutyTypeId" uuid, "locationId" uuid, "activityId" uuid, "eventId" uuid,
+      "programmeId" uuid, by uuid)`);
+}
+
+export async function deleteShifts(tx: Tx, ids: readonly string[]): Promise<void> {
+  if (ids.length === 0) return;
+  await tx.execute(sql`
+    DELETE FROM public.tasks WHERE id = ANY (${uuidArray(ids)}::uuid[]) AND kind = 'duty_shift'`);
+}
+
+/** Duty types by ID (archived ones too). */
+export async function typesById(tx: Tx, ids: readonly string[]): Promise<DutyTypeRow[]> {
+  if (ids.length === 0) return [];
+  const { rows } = await tx.execute<DutyTypeDb>(sql`
+    SELECT ${TYPE_COLUMNS} FROM public.duty_types WHERE id = ANY (${uuidArray([...new Set(ids)])}::uuid[])`);
+  return rows.map(toType);
+}

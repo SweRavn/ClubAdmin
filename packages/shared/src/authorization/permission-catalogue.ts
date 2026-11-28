@@ -235,6 +235,14 @@ export const PERMISSION_CATALOGUE: Readonly<Record<RolePermission, CatalogueEntr
   "club.background_checks.verify": role("club", "privacy", true),
   // The overview: those who follow up and those who tick off.
   "club.background_checks.read": derived("club.background_checks.manage"),
+  // P2.9: club templates and programmes in every group; the rest follows
+  // group.activities.manage of the groups (checked per mapped group).
+  "club.programmes.manage": role("club", "activities"),
+  "club.programmes.use": derived("group.activities.manage"),
+  "programme.read": derived("group.activities.read"),
+  "programme.manage": derived("group.activities.manage"),
+  "programme_template.use": derived("group.activities.manage"),
+  "programme_template.manage": derived("group.activities.manage"),
   // Operators
   "ops.backup.read": builtIn,
   "ops.plugins.manage": builtIn,
@@ -382,6 +390,7 @@ export const BUILT_IN_ROLE_TEMPLATE: Readonly<
       "club.plugins.manage",
       "club.grants.read",
       "club.background_checks.manage",
+      "club.programmes.manage",
     ],
   },
   registrar: {

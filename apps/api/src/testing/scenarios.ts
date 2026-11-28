@@ -52,6 +52,14 @@ export interface MatrixScenario {
   cancelEventId: string;
   draftEventId: string;
   /**
+   * Programmes (P2.9): a template of team T (from the match), one to archive,
+   * a programme laid out from it and one to delete.
+   */
+  templateId: string;
+  disposableTemplateId: string;
+  programmeId: string;
+  disposableProgrammeId: string;
+  /**
    * Chats of team T (P2.1): a closed channel of the coach with the member and
    * the child (the parent is added by the guardian rule), an open channel of
    * the coach alone, and two of the coach's messages (to edit, to hide).
@@ -207,6 +215,24 @@ export async function buildMatrixScenario(
   const cancelEvent = await event("Matrix camp", true);
   const draftEvent = await event("Matrix party", false);
 
+  // Programmes (P2.9): team T's template from the match, laid out twice.
+  const template = await s.programmes.createTemplate(a, {
+    name: "Matrix day",
+    groupId: team.id,
+    source: { activityId: match.activity.id },
+  });
+  const disposableTemplate = await s.programmes.createTemplate(a, {
+    name: "Matrix spare",
+    groupId: team.id,
+    source: { activityId: match.activity.id },
+  });
+  const programme = await s.programmes.apply(a, { templateId: template.id }, { firstDay: day(40) });
+  const disposableProgramme = await s.programmes.apply(
+    a,
+    { templateId: template.id },
+    { firstDay: day(41) },
+  );
+
   // Chats of team T (P2.1).
   const coachCtx = { ...a, personId: coach.id };
   const chatId = await s.chat.createChannel(coachCtx, {
@@ -357,6 +383,10 @@ export async function buildMatrixScenario(
     eventId: matrixEvent.event.id,
     cancelEventId: cancelEvent.event.id,
     draftEventId: draftEvent.event.id,
+    templateId: template.id,
+    disposableTemplateId: disposableTemplate.id,
+    programmeId: programme.programme.id,
+    disposableProgrammeId: disposableProgramme.programme.id,
     chatId,
     openChatId,
     messageId: message.id,

@@ -406,6 +406,77 @@ describe("permission matrix", () => {
         checkType: "extract",
       }),
     },
+    // Programmes and templates (P2.9): team T's template and programme are
+    // for those who plan its activities (manager, owner, coach); reading a
+    // programme follows reading its group's activities.
+    "GET /api/v1/clubs/:clubId/programme-templates": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programme-templates`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "POST /api/v1/clubs/:clubId/programme-templates": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programme-templates`,
+      expected: TEAM_MANAGERS(201),
+      body: () => ({ name: "Matrix", groupId: m.team.id, source: { activityId: m.activityId } }),
+    },
+    "GET /api/v1/clubs/:clubId/programme-templates/:templateId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programme-templates/${m.templateId}`,
+      expected: TEAM_MANAGERS(200),
+    },
+    "PATCH /api/v1/clubs/:clubId/programme-templates/:templateId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programme-templates/${m.templateId}`,
+      expected: TEAM_MANAGERS(204),
+      body: { name: "Matrix day" },
+    },
+    "DELETE /api/v1/clubs/:clubId/programme-templates/:templateId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programme-templates/${m.disposableTemplateId}`,
+      expected: TEAM_MANAGERS(204),
+    },
+    "POST /api/v1/clubs/:clubId/programme-templates/:templateId/preview": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programme-templates/${m.templateId}/preview`,
+      expected: TEAM_MANAGERS(200),
+      body: () => ({ firstDay: matrixDay(50) }),
+    },
+    "POST /api/v1/clubs/:clubId/programme-templates/:templateId/apply": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programme-templates/${m.templateId}/apply`,
+      expected: TEAM_MANAGERS(201),
+      body: () => ({ firstDay: matrixDay(51) }),
+    },
+    "GET /api/v1/clubs/:clubId/programmes": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programmes`,
+      expected: ADMINS(200),
+    },
+    "GET /api/v1/groups/:groupId/programmes": {
+      url: () => `/api/v1/groups/${m.team.id}/programmes`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/clubs/:clubId/programmes/:programmeId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programmes/${m.programmeId}`,
+      expected: INSIDERS,
+    },
+    "GET /api/v1/clubs/:clubId/programmes/:programmeId/timeline": {
+      url: () =>
+        `/api/v1/clubs/${m.clubA.id}/programmes/${m.programmeId}/timeline?day=${matrixDay(40)}`,
+      expected: INSIDERS,
+    },
+    "POST /api/v1/clubs/:clubId/programmes/:programmeId/copy/preview": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programmes/${m.programmeId}/copy/preview`,
+      expected: TEAM_MANAGERS(200),
+      body: () => ({ firstDay: matrixDay(52) }),
+    },
+    "POST /api/v1/clubs/:clubId/programmes/:programmeId/copy": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programmes/${m.programmeId}/copy`,
+      expected: TEAM_MANAGERS(201),
+      body: () => ({ firstDay: matrixDay(53) }),
+    },
+    "DELETE /api/v1/clubs/:clubId/programmes/:programmeId": {
+      url: () => `/api/v1/clubs/${m.clubA.id}/programmes/${m.disposableProgrammeId}`,
+      // The manager removes it; for everyone after that it no longer exists.
+      expected: { ...ALL_NOT_FOUND, manager: 204 },
+    },
+    "GET /api/v1/me/programmes": {
+      url: () => `/api/v1/me/programmes?clubId=${m.clubA.id}`,
+      expected: ALL_OK,
+    },
     // Grant reports (P2.7 part B): managers, registrars and treasurers read
     // them; registrars lock and export. Club A has no grant plugin enabled
     // (409 plugin_disabled for a period's report; the report ID is unknown).

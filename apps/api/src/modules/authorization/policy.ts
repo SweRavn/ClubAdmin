@@ -141,6 +141,24 @@ export interface AnnouncementResource {
   createdByPersonId: string | null;
 }
 
+/** A programme (:programmeId within :clubId; P2.9, ADR 0054) with its groups. */
+export interface ProgrammeResource {
+  kind: "programme";
+  clubId: string;
+  programmeId: string;
+  /** The groups it is for, each with its ancestors. */
+  groups: readonly GroupRef[];
+}
+
+/** A programme template (:templateId within :clubId; P2.9): a group's or the club's. */
+export interface ProgrammeTemplateResource {
+  kind: "programme_template";
+  clubId: string;
+  templateId: string;
+  /** The group whose template it is, with its ancestors (none: the club's). */
+  group: GroupRef | null;
+}
+
 export interface Resources {
   platform: PlatformResource;
   club: ClubResource;
@@ -154,6 +172,8 @@ export interface Resources {
   folder: FolderResource;
   document: DocumentResource;
   announcement: AnnouncementResource;
+  programme: ProgrammeResource;
+  programme_template: ProgrammeTemplateResource;
 }
 export type ResourceKind = keyof Resources;
 export type Resource = Resources[ResourceKind];

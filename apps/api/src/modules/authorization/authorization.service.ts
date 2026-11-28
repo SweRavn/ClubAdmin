@@ -20,6 +20,7 @@ import {
   canReadDocuments,
   canReadEvent,
   canReadGroupActivities,
+  canReadProgramme,
   policyFor,
 } from "./authorization.policy.ts";
 import {
@@ -34,6 +35,8 @@ import {
   loadGroupsOfPeople,
   loadHandoverScope,
   loadPersonInClub,
+  loadProgrammeScope,
+  loadProgrammeTemplateScope,
   loadRelationshipSet,
   loadSuspensionScope,
 } from "./authorization.repository.ts";
@@ -50,6 +53,8 @@ import type {
   GroupResource,
   HandoverResource,
   PersonResource,
+  ProgrammeResource,
+  ProgrammeTemplateResource,
   Resource,
   ResourceKind,
   SuspensionResource,
@@ -212,6 +217,10 @@ export class AuthorizationService {
         ? "forbidden"
         : "not-found";
     }
+    // Programmes one cannot see do not exist (P2.9).
+    if (resource.kind === "programme") {
+      return canReadProgramme(actor, resource) ? "forbidden" : "not-found";
+    }
     return actor.hasClubRelationship(resource.clubId) ? "forbidden" : "not-found";
   }
 
@@ -245,7 +254,56 @@ export class AuthorizationService {
         return this.archiveResource(authorization, request, "document");
       case "announcement":
         return this.announcementResource(authorization, request);
+      case "programme":
+        return this.programmeResource(request);
+      case "programme_template":
+        return this.programmeTemplateResource(request);
     }
+  }
+
+  /** A programme within :clubId (P2.9) with its groups and their ancestors. */
+  private async programmeResource(request: FastifyRequest): Promise<ProgrammeResource> {
+    const { clubId } = this.clubResource(request);
+    const programmeId = param(request, "programmeId");
+    if (!programmeId || !isUuid(programmeId)) throw new ProblemError("not-found");
+    return this.db.withSystem("authz:programmes", { clubId }, async (tx) => {
+      const groupIds = await loadProgrammeScope(tx, programmeId);
+      if (!groupIds) throw new ProblemError("not-found");
+      const ancestors = await loadGroupScopes(tx, groupIds);
+      return {
+        kind: "programme" as const,
+        clubId,
+        programmeId,
+        groups: groupIds.map((groupId) => ({
+          clubId,
+          groupId,
+          ancestorIds: ancestors.get(groupId)?.ancestorIds ?? [],
+        })),
+      };
+    });
+  }
+
+  /** A programme template within :clubId (P2.9): its group, if any. */
+  private async programmeTemplateResource(
+    request: FastifyRequest,
+  ): Promise<ProgrammeTemplateResource> {
+    const { clubId } = this.clubResource(request);
+    const templateId = param(request, "templateId");
+    if (!templateId || !isUuid(templateId)) throw new ProblemError("not-found");
+    return this.db.withSystem("authz:programme-templates", { clubId }, async (tx) => {
+      const scope = await loadProgrammeTemplateScope(tx, templateId);
+      if (!scope) throw new ProblemError("not-found");
+      let group: GroupRef | null = null;
+      if (scope.groupId) {
+        const ancestors = await loadGroupScopes(tx, [scope.groupId]);
+        group = {
+          clubId,
+          groupId: scope.groupId,
+          ancestorIds: ancestors.get(scope.groupId)?.ancestorIds ?? [],
+        };
+      }
+      return { kind: "programme_template" as const, clubId, templateId, group };
+    });
   }
 
   /** An announcement within :clubId (P2.3): its group, writer and whether the actor reads it. */

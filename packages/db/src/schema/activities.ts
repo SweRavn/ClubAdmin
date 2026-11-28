@@ -210,11 +210,16 @@ export const activities = pgTable(
     /** Minutes after the end that the way home leaves (P2.7f); null: the driver's or club's. */
     carpoolReturnMinutes: integer(),
     transportMode: text().$type<TransportMode>(),
+    /** The programme it belongs to (P2.9, ADR 0054); null for most. */
+    programmeId: uuid(),
     createdByPersonId: personRef(),
     ...timestamps,
   },
   (t) => [
     unique("activities_club_id_unique").on(t.clubId, t.id),
+    index("activities_programme_idx")
+      .on(t.programmeId, t.startsAt)
+      .where(sql`${t.programmeId} IS NOT NULL`),
     check("activities_response_mode", oneOf(t.responseMode, RESPONSE_MODES)),
     foreignKey({
       name: "activities_series_fk",

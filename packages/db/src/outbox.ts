@@ -47,6 +47,24 @@ async function publish<T extends DomainEventType>(
   return id;
 }
 
+/** Several events of one type in one statement (laying out a programme, P2.9). */
+async function publishMany<T extends DomainEventType>(
+  tx: Tx,
+  type: T,
+  payloads: readonly DomainEventPayload<T>[],
+): Promise<void> {
+  if (payloads.length === 0) return;
+  const rows = payloads.map((payload) => {
+    const id = uuidv7();
+    return { id, payload: DOMAIN_EVENTS[type].parse(payload) };
+  });
+  await tx.execute(sql`
+    INSERT INTO outbox.events (id, type, club_id, payload, idempotency_key)
+    SELECT e.id, ${type}, app.current_club_id(), e.payload, e.id::text
+    FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS e(id uuid, payload jsonb)
+    ON CONFLICT (idempotency_key) DO NOTHING`);
+}
+
 export type DispatchResult = "dispatched" | "already-done" | "not-found";
 
 async function dispatch(
@@ -115,4 +133,4 @@ async function recordFailure(
   );
 }
 
-export const outbox = { publish, dispatch, recordFailure };
+export const outbox = { publish, publishMany, dispatch, recordFailure };

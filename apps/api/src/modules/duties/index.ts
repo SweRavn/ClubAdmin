@@ -3,5 +3,6 @@
 // shifts (tasks of kind duty_shift, ADR 0052), sign-up, assignment, quotas.
 export { DutiesModule } from "./duties.module.ts";
 export { DUTY_PERSON_REFERENCES } from "./duties.references.ts";
+export type { AssignmentRow, DutyTypeRow, ShiftRow } from "./duties.repository.ts";
 export type { MyDutyRow } from "./duties.service.ts";
 export { DutiesService } from "./duties.service.ts";

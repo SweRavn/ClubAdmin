@@ -282,6 +282,21 @@ describe("tenant isolation of club-owned tables", () => {
       await tx.execute(sql`
         INSERT INTO background_check_club_requirements (club_id, plugin_id, category, check_type, recheck_months)
         VALUES (${a.id}, 'se.test.fixture', 'board', 'extract', 24)`);
+      // Programmes (P2.9): a group template with a slot and an item, and a
+      // programme for the group.
+      await tx.execute(sql`
+        WITH tp AS (INSERT INTO programme_templates (club_id, group_id, name, day_count)
+                    VALUES (${a.id}, ${group.id}, 'Fixture', 1) RETURNING id),
+        sl AS (INSERT INTO programme_template_slots (template_id, club_id, key, label, default_group_id)
+               SELECT id, ${a.id}, 'g1', 'Fixture', ${group.id} FROM tp),
+        it AS (INSERT INTO programme_template_items (template_id, club_id, kind, day_offset,
+                 start_time, end_day_offset, end_time, slot_keys, activity_kind, title, response_mode)
+               SELECT id, ${a.id}, 'activity', 0, '09:00', 0, '10:00', '{g1}', 'training',
+                 'Fixture', 'none' FROM tp),
+        pr AS (INSERT INTO programmes (club_id, title, template_id, first_day, last_day)
+               SELECT ${a.id}, 'Fixture', id, '2030-06-01', '2030-06-01' FROM tp RETURNING id)
+        INSERT INTO programme_groups (programme_id, club_id, group_id)
+        SELECT id, ${a.id}, ${group.id} FROM pr`);
       await tx.execute(sql`
         INSERT INTO agenda_templates (club_id, meeting_kind, name, items)
         VALUES (${a.id}, 'board_meeting', 'Fixture', '[{"title": "Öppnande"}]'::jsonb)`);

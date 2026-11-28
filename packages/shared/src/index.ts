@@ -35,6 +35,7 @@ export * from "./domain/meetings.ts";
 export * from "./domain/members.ts";
 export * from "./domain/person-label.ts";
 export * from "./domain/plugins.ts";
+export * from "./domain/programmes.ts";
 export * from "./domain/protection.ts";
 export * from "./domain/recurrence.ts";
 export * from "./domain/responses.ts";

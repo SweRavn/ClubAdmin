@@ -682,3 +682,82 @@ export async function seriesToExtend(
     LIMIT ${limit}`);
   return rows.map((r) => ({ id: r.id, clubId: r.club_id }));
 }
+
+// --- Programmes (P2.9) -------------------------------------------------------------
+
+/** Each activity in its own groups (one statement for a whole programme). */
+export async function insertActivityGroupPairs(
+  tx: Tx,
+  clubId: string,
+  pairs: readonly { activityId: string; groupId: string }[],
+): Promise<void> {
+  if (pairs.length === 0) return;
+  await tx.insert(activityGroups).values(pairs.map((p) => ({ clubId, ...p })));
+}
+
+/** Scheduled activities at these places overlapping the range (the location index). */
+export async function activitiesAtLocations(
+  tx: Tx,
+  clubId: string,
+  locationIds: readonly string[],
+  range: { from: Date; to: Date },
+): Promise<{ id: string; locationId: string; startsAt: Date; endsAt: Date }[]> {
+  if (locationIds.length === 0) return [];
+  const { rows } = await tx.execute<{
+    id: string;
+    location_id: string;
+    starts_at: string;
+    ends_at: string;
+  }>(sql`
+    SELECT id, location_id, starts_at, ends_at FROM public.activities
+    WHERE club_id = ${clubId} AND location_id = ANY (${uuidArray(locationIds)}::uuid[])
+      AND starts_at < ${range.to.toISOString()}::timestamptz
+      AND starts_at >= ${new Date(range.from.getTime() - 86_400_000).toISOString()}::timestamptz
+      AND ends_at > ${range.from.toISOString()}::timestamptz AND status = 'scheduled'
+    ORDER BY starts_at LIMIT 2000`);
+  return rows.map((r) => ({
+    id: r.id,
+    locationId: r.location_id,
+    startsAt: new Date(r.starts_at),
+    endsAt: new Date(r.ends_at),
+  }));
+}
+
+/** A programme's activities, by start (optionally of a range), from (programme_id, starts_at). */
+export function programmeActivities(
+  tx: Tx,
+  programmeId: string,
+  range: { from: Date; to: Date } | null = null,
+): Promise<ActivityRow[]> {
+  const where = range
+    ? and(
+        eq(activities.programmeId, programmeId),
+        sql`${activities.startsAt} >= ${range.from.toISOString()}::timestamptz`,
+        sql`${activities.startsAt} < ${range.to.toISOString()}::timestamptz`,
+      )
+    : eq(activities.programmeId, programmeId);
+  return tx
+    .select()
+    .from(activities)
+    .where(where)
+    .orderBy(asc(activities.startsAt), asc(activities.id))
+    .limit(1000);
+}
+
+/** A group's activities starting in a range (the read model's group index). */
+export async function groupActivitiesInRange(
+  tx: Tx,
+  groupId: string,
+  range: { from: Date; to: Date },
+): Promise<ActivityRow[]> {
+  const { rows } = await tx.execute<{ id: string }>(sql`
+    SELECT se.activity_id AS id FROM public.schedule_entries se
+    WHERE se.group_id = ${groupId}
+      AND se.starts_at >= ${range.from.toISOString()}::timestamptz
+      AND se.starts_at < ${range.to.toISOString()}::timestamptz
+    ORDER BY se.starts_at, se.activity_id LIMIT 400`);
+  return orderedActivities(
+    tx,
+    rows.map((r) => r.id),
+  );
+}

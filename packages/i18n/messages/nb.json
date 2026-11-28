@@ -342,7 +342,19 @@
     "background_check_off": "Tillegget for politiattest er slått av i klubben.",
     "background_check_type_unknown": "Den typen attest finnes ikke i klubbens land.",
     "background_check_weaker": "Klubben kan bare skjerpe kravene, ikke mildne dem.",
-    "background_check_not_in_club": "Personen er ikke med i klubben."
+    "background_check_not_in_club": "Personen er ikke med i klubben.",
+    "programme_template_too_large": "En mal kan ha høyst 300 aktiviteter og vakter.",
+    "programme_day_offset_invalid": "Et program kan være høyst 31 dager, og hvert punkt må ligge innenfor malens dager.",
+    "programme_source_empty": "Det finnes ingen aktiviteter eller vakter å lagre som mal.",
+    "programme_slot_unknown": "Et punkt hører til et lag som ikke finnes i malen.",
+    "programme_range_too_long": "Velg høyst 31 dager.",
+    "programme_slot_unmapped": "Velg en gruppe for hvert lag i malen som har aktiviteter.",
+    "programme_location_archived": "Et sted i malen er arkivert. Velg et annet sted for det.",
+    "programme_duty_type_archived": "En vakttype i malen er arkivert eller ikke tillatt her.",
+    "programme_group_unavailable": "En valgt gruppe finnes ikke lenger eller er arkivert.",
+    "programme_event_exists": "Arrangementet har allerede et program.",
+    "programme_not_untouched": "Noen har allerede svart, meldt seg på, tatt en vakt eller tilbudt skyss. Avlys punktene ett og ett i stedet.",
+    "programme_template_archived": "Malen er arkivert."
   },
   "roles": {
     "chair": "Leder",
@@ -963,7 +975,19 @@
     "background_check_off": "Tillegget for politiattest er slått av i klubben.",
     "background_check_type_unknown": "Den typen attest finnes ikke i klubbens land.",
     "background_check_weaker": "Klubben kan bare skjerpe kravene, ikke mildne dem.",
-    "background_check_not_in_club": "Personen er ikke med i klubben."
+    "background_check_not_in_club": "Personen er ikke med i klubben.",
+    "programme_template_too_large": "En mal kan ha høyst 300 aktiviteter og vakter.",
+    "programme_day_offset_invalid": "Et program kan være høyst 31 dager, og hvert punkt må ligge innenfor malens dager.",
+    "programme_source_empty": "Det finnes ingen aktiviteter eller vakter å lagre som mal.",
+    "programme_slot_unknown": "Et punkt hører til et lag som ikke finnes i malen.",
+    "programme_range_too_long": "Velg høyst 31 dager.",
+    "programme_slot_unmapped": "Velg en gruppe for hvert lag i malen som har aktiviteter.",
+    "programme_location_archived": "Et sted i malen er arkivert. Velg et annet sted for det.",
+    "programme_duty_type_archived": "En vakttype i malen er arkivert eller ikke tillatt her.",
+    "programme_group_unavailable": "En valgt gruppe finnes ikke lenger eller er arkivert.",
+    "programme_event_exists": "Arrangementet har allerede et program.",
+    "programme_not_untouched": "Noen har allerede svart, meldt seg på, tatt en vakt eller tilbudt skyss. Avlys punktene ett og ett i stedet.",
+    "programme_template_archived": "Malen er arkivert."
   },
   "memberExport": {
     "columns": {
@@ -3059,7 +3083,8 @@
       "configured": "endret innstillingene for",
       "call_failed": "mislyktes med kall til",
       "locked": "låste",
-      "requirements_changed": "endret kravene for"
+      "requirements_changed": "endret kravene for",
+      "applied": "la ut"
     },
     "actions": {
       "members_exported": "{actor} eksporterte medlemsregisteret",
@@ -4078,6 +4103,11 @@
         "name": "Krysse av viste politiattester",
         "description": "Kan registrere at en person har vist en gyldig attest (type, datoer, hvordan). Ingen dokumenter eller koder lagres, og ingen krysser av sin egen.",
         "example": "Kan for eksempel krysse av en treners attest når den vises."
+      },
+      "club_programmes_manage": {
+        "name": "Administrere klubbens program og maler",
+        "description": "Kan lage maler for hele klubben (som alle lag kan bruke for sine egne grupper) og legge ut, kopiere og fjerne program i alle grupper.",
+        "example": "Kan for eksempel lage malen «Dugnad» som hvert lag legger ut for seg."
       }
     }
   },

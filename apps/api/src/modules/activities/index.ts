@@ -9,7 +9,7 @@ export {
   type Location,
   type SeriesView,
 } from "./activities.service.ts";
-export { type ScheduleRow } from "./activities.service.ts";
+export { type ProgrammeActivityValues, type ScheduleRow } from "./activities.service.ts";
 export { rosterQuery } from "./attendance.repository.ts";
 export { AttendanceService } from "./attendance.service.ts";
 export { answerState } from "./attendance.service.ts";

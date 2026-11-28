@@ -175,7 +175,16 @@ export class EventsService {
    * club events).
    */
   createEvent(context: TenantContext, input: CreateEventInput): Promise<EventView> {
-    return this.db.withTenant(context, async (tx) => {
+    return this.db.withTenant(context, (tx) => this.createEventInTx(tx, context, input));
+  }
+
+  /** As createEvent, in the caller's transaction (a programme's event, P2.9). */
+  async createEventInTx(
+    tx: Tx,
+    context: TenantContext,
+    input: CreateEventInput,
+  ): Promise<EventView> {
+    {
       const data = parseInput(CreateEventSchema, input);
       const groupIds = [...new Set(data.groupIds)];
       if (data.audience === "club" && data.activities.length > 0) {
@@ -273,7 +282,45 @@ export class EventsService {
       }
       await this.publishChange(tx, created, data.publish ? "published" : "created");
       return (await this.views(tx, context.clubId, [created]))[0]!;
-    });
+    }
+  }
+
+  // --- Programmes (P2.9) -------------------------------------------------------------
+
+  /** Links a programme's new sessions (already called up to nobody) to its event. */
+  async linkProgrammeActivitiesInTx(
+    tx: Tx,
+    clubId: string,
+    eventId: string,
+    activityIds: readonly string[],
+  ): Promise<void> {
+    await repo.addEventActivities(tx, clubId, eventId, [...activityIds]);
+  }
+
+  /** The event's sessions and what a template keeps of it (no people). */
+  async eventForTemplateInTx(
+    tx: Tx,
+    eventId: string,
+  ): Promise<{ event: repo.EventRow; activityIds: string[]; groupIds: string[] } | null> {
+    const event = await repo.findEvent(tx, eventId);
+    if (!event) return null;
+    const activityIds = (await repo.activitiesOfEvents(tx, [eventId])).get(eventId) ?? [];
+    const groupIds = (await repo.groupsOfEvents(tx, [eventId])).get(eventId) ?? [];
+    return { event, activityIds, groupIds };
+  }
+
+  /** Whether anyone has registered for the event (a programme is no longer untouched). */
+  async anyRegistrationsInTx(tx: Tx, eventId: string): Promise<boolean> {
+    return repo.anyRegistrations(tx, eventId);
+  }
+
+  /** Deletes a programme's event nobody registered for (the caller checked). */
+  async deleteProgrammeEventInTx(tx: Tx, eventId: string): Promise<void> {
+    const current = await repo.lockEvent(tx, eventId);
+    if (!current) return;
+    await repo.deleteEvent(tx, eventId);
+    await audit.record(tx, { action: "event.deleted", resourceType: "event", resourceId: eventId });
+    await this.publishChange(tx, current, "deleted");
   }
 
   getEvent(context: TenantContext, eventId: string): Promise<EventView> {
