@@ -29,6 +29,8 @@ appId: ${APP_ID}
 # loaded the personas). Waiting for the picker itself is unreliable: it is
 # taller than the screen. After clearing the app's state the emulator
 # sometimes takes over 30 s to start it again (CI), hence the long wait.
+# Personas without a club role (parents) are at the end of a long list
+# (descriptions and roles, P2.8): scrolling there takes over 30 s on CI.
 - extendedWaitUntil:
     visible:
       id: "login-screen"
@@ -37,7 +39,7 @@ appId: ${APP_ID}
     element:
       id: "persona-${PERSONA}"
     direction: DOWN
-    timeout: 30000
+    timeout: 90000
 - tapOn:
     id: "persona-${PERSONA}"
 # The start screen is My schedule (P1.4); the flows go on from clubs and groups.
