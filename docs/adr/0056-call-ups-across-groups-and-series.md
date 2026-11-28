@@ -22,7 +22,7 @@ someone is silent. Coaches asked for more (2026-11-19):
    the club (any of its groups, or none) added to the group with the
    template group role `guest_player` ("Gästspelare"; the club may rename
    it, ADR 0046). It holds `group.participate` and nothing else and is
-   marked as a guest role (`club_roles.guest`, a template property like
+   marked as a guest role (`roles.guest`, a template property like
    `locked`; a club may mark its own group roles as guest roles too).
    Guests:
    - are participants on the roster of the group's activities (so they
@@ -91,7 +91,7 @@ someone is silent. Coaches asked for more (2026-11-19):
 
 **Consequences.**
 
-- One new group template role, a `guest` flag on club roles, two
+- One new group template role, a `guest` flag on roles, two
   new tables (`activity_series_invitees`, `activity_invitee_overrides`)
   and one for revocations; `activity_invitees` stays the read model.
 - The roster query widens from "members of the groups" to "members of the
@@ -106,3 +106,29 @@ someone is silent. Coaches asked for more (2026-11-19):
   person and deleted with the attendance retention.
 - Cross-club call-ups (a player of another club) are not part of this:
   they need a guest membership in the other club and are left for later.
+
+## Amendment (2026-11-28, before P2.10)
+
+Checked against the code after P2.9 (details in the P2.10 prompt,
+"Adjustments"):
+
+- **Decision 5 replaced.** A call-up goes out with its answer request
+  (`request_at`, or when `requested_at` is set). Without an answer request
+  it goes out `CALLUP_DEFAULT_LEAD_HOURS` (72) before the start; an
+  activity saved or a call-up changed inside that window goes out when
+  saved. Changes by its leaders within `CALLUP_GRACE_MINUTES` (15) of it
+  going out stay silent, so that correcting a call-up right after creating
+  an activity is not a revocation. The previous rule ("out as soon as it is
+  saved") would have made nearly every change a revocation.
+- **ADR 0036 decision 7 amended**: changes are no longer notified at once;
+  `callup.added` only after the call-up went out, `callup.revoked` for a
+  removal after it; `callup.removed` stays in the API but is not sent.
+- **Places**: guest memberships (`function = 'member'`, the guest role)
+  are excluded from `app.group_places` and the waiting list (ADR 0043), and
+  are not players for duty quotas (P2.6).
+- **Series**: the series' call-up follows splits, extensions and restored
+  dates; a skipped date drops its overrides.
+- **Events**: an event's sessions refuse call-up changes (`event_session`).
+- The guest flag is on `roles` and `club_type_roles`; the group setting is
+  `groups.guests_in_channel`.
+
