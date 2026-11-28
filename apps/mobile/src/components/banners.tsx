@@ -15,6 +15,7 @@ import {
   useMyClubs,
   useMyWards,
 } from "../api/queries.ts";
+import { useServerReachable } from "../api/server-status.ts";
 import { useSession } from "../state/session.tsx";
 import { UpdateNotice } from "./gates.tsx";
 import { Banner, LinkButton } from "./ui.tsx";
@@ -29,11 +30,13 @@ export function useOnline(): boolean {
 export function OfflineBanner() {
   const t = useTranslations("mobile");
   const online = useOnline();
+  const reachable = useServerReachable();
   const restoring = useIsRestoring();
-  if (online || restoring) return null;
+  if ((online && reachable) || restoring) return null;
+  // No network, or a network but no answer from the server: said apart.
   return (
-    <Banner tone="warning" testID="offline-banner">
-      {t("offline")}
+    <Banner tone="warning" testID={online ? "server-unreachable-banner" : "offline-banner"}>
+      {online ? t("serverUnreachable") : t("offline")}
     </Banner>
   );
 }

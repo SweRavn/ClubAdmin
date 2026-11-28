@@ -476,7 +476,9 @@
     "preview": "Preview",
     "channelWho": "Who is in it?",
     "channelGroup": "The whole group",
-    "channelLeaders": "The group's leaders"
+    "channelLeaders": "The group's leaders",
+    "serverUnreachable": "The server is not answering. Saved information is shown.",
+    "serverUnreachableLoad": "The server is not answering right now. Try again in a while."
   },
   "email": {
     "footer": "This email was sent by ClubAdmin on behalf of {club}.",

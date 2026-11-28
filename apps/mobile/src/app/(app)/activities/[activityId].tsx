@@ -60,6 +60,7 @@ function Activity({ activityId }: { activityId: string }) {
   const format = useFormatter();
   const locale = useLocale();
   const activity = useActivity(activityId);
+  const phoneOnline = useOnline();
   const answers = useResponseSummary(activityId);
   const myGroups = useMyGroups();
   const cached = useCachedEntry(activityId);
@@ -336,7 +337,7 @@ function Activity({ activityId }: { activityId: string }) {
           )
         ) : (
           <Row last>
-            <Muted>{t("mobile.offline")}</Muted>
+            <Muted>{phoneOnline ? t("mobile.serverUnreachableLoad") : t("mobile.offline")}</Muted>
           </Row>
         )}
       </Section>

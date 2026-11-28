@@ -476,7 +476,9 @@
     "preview": "Forhåndsvis",
     "channelWho": "Hvem er med?",
     "channelGroup": "Hele gruppen",
-    "channelLeaders": "Gruppens ledere"
+    "channelLeaders": "Gruppens ledere",
+    "serverUnreachable": "Serveren svarer ikke. Lagrede opplysninger vises.",
+    "serverUnreachableLoad": "Serveren svarer ikke akkurat nå. Prøv igjen om litt."
   },
   "email": {
     "footer": "Denne e-posten ble sendt av ClubAdmin på vegne av {club}.",

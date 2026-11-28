@@ -5,11 +5,18 @@
 // other client errors are not retried.
 
 import { ApiError } from "@clubadmin/api-client";
-import NetInfo from "@react-native-community/netinfo";
-import { focusManager, onlineManager, QueryCache, QueryClient } from "@tanstack/react-query";
+import NetInfo, { NetInfoStateType } from "@react-native-community/netinfo";
+import {
+  focusManager,
+  MutationCache,
+  onlineManager,
+  QueryCache,
+  QueryClient,
+} from "@tanstack/react-query";
 import { AppState, type AppStateStatus } from "react-native";
 
 import { BUILD_VARIANT } from "../config.ts";
+import { noteResult } from "./server-status.ts";
 
 let wired = false;
 function wireOnlineAndFocus() {
@@ -17,7 +24,10 @@ function wireOnlineAndFocus() {
   wired = true;
   onlineManager.setEventListener((setOnline) =>
     NetInfo.addEventListener((state) => {
-      setOnline(state.isConnected !== false && state.isInternetReachable !== false);
+      // Offline is no network. Android's "internet reachable" check fails
+      // behind proxies, VPNs and emulators while the network works; whether
+      // ClubAdmin's server answers is told apart (server-status.ts).
+      setOnline(state.isConnected !== false && state.type !== NetInfoStateType.none);
     }),
   );
   focusManager.setEventListener((handleFocus) => {
@@ -54,12 +64,18 @@ export function createQueryClient(): QueryClient {
     // Development and preview builds: why a request failed, in logcat / the
     // console (error name and message, never response data).
     queryCache: new QueryCache({
+      onSuccess: () => noteResult(null),
       onError: (error, query) => {
+        noteResult(error);
         if (BUILD_VARIANT === "production") return;
         console.warn(
           `ClubAdmin: query ${String(query.queryKey[0])} failed: ${errorSummary(error)}`,
         );
       },
+    }),
+    mutationCache: new MutationCache({
+      onSuccess: () => noteResult(null),
+      onError: (error) => noteResult(error),
     }),
     defaultOptions: {
       queries: {

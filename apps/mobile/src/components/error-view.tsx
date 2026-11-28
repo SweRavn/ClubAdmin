@@ -9,6 +9,7 @@ import { ApiError } from "@clubadmin/api-client";
 import { useTranslations } from "use-intl";
 
 import { errorSummary } from "../api/query-client.ts";
+import { isUnreachable } from "../api/server-status.ts";
 import { BUILD_VARIANT } from "../config.ts";
 import { Button, EmptyState, Muted } from "./ui.tsx";
 
@@ -31,7 +32,9 @@ export function ErrorView({ error, onRetry }: { error: unknown; onRetry?: () => 
   }
   return (
     <>
-      <EmptyState title={t("mobile.loadFailed")} />
+      <EmptyState
+        title={isUnreachable(error) ? t("mobile.serverUnreachableLoad") : t("mobile.loadFailed")}
+      />
       {/* Development and preview builds: the reason (for Maestro's screen dump and testers). */}
       {BUILD_VARIANT !== "production" ? (
         <Muted testID="error-detail">{errorSummary(error)}</Muted>
