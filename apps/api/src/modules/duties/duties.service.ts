@@ -411,6 +411,11 @@ export class DutiesService {
     );
   }
 
+  /** Puts existing shifts in a programme (an event's, P2.9); one statement. */
+  async assignProgrammeInTx(tx: Tx, programmeId: string, ids: readonly string[]): Promise<void> {
+    await repo.setProgramme(tx, programmeId, ids);
+  }
+
   /** Shifts of a programme (a day of it), of activities or of an event. */
   shiftsOfInTx(tx: Tx, where: Parameters<typeof repo.shiftsOf>[1]): Promise<repo.ShiftRow[]> {
     return repo.shiftsOf(tx, where);

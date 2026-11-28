@@ -41,6 +41,8 @@ let app: TestApp;
 let ids: {
   activity: string;
   event: string;
+  programme: string;
+  programmeDay: string;
   chat: string;
   message: string;
   folder: string;
@@ -224,6 +226,33 @@ const CASES: Case[] = [
     // One's roles and records, the role names, the verifiers: 3, 15→22 pages.
     statements: 3,
     pages: 50,
+  },
+  // Programmes (P2.9): one programme's header, days and places; one day of
+  // it from (programme_id, starts_at); my family's coming programmes.
+  {
+    route: "GET /api/v1/clubs/{clubId}/programmes/{programmeId}",
+    persona: "erik",
+    method: "GET",
+    url: () => `/api/v1/clubs/${key("svk")}/programmes/${ids.programme}`,
+    statements: 14,
+    pages: 200,
+  },
+  {
+    route: "GET /api/v1/clubs/{clubId}/programmes/{programmeId}/timeline",
+    persona: "erik",
+    method: "GET",
+    url: () =>
+      `/api/v1/clubs/${key("svk")}/programmes/${ids.programme}/timeline?day=${ids.programmeDay}`,
+    statements: 10,
+    pages: 200,
+  },
+  {
+    route: "GET /api/v1/me/programmes",
+    persona: "sara",
+    method: "GET",
+    url: () => `/api/v1/me/programmes?clubId=${key("svk")}`,
+    statements: 4,
+    pages: 60,
   },
   {
     route: "GET /api/v1/me/carpool-settings",
@@ -676,8 +705,9 @@ const CASES: Case[] = [
     persona: "sara",
     method: "GET",
     url: () => `/api/v1/clubs/${key("svk")}/history`,
+    // P2.9: 4 statements, 87→103 pages (SVK's history holds its programme now).
     statements: 4,
-    pages: 100,
+    pages: 120,
     mfa: true,
   },
   {
@@ -1093,6 +1123,13 @@ const CASES: Case[] = [
  * budget here, with the reason.
  */
 const NOT_HERE: Record<string, string> = {
+  // Laying out a programme (P2.9) is a write that is not repeatable: a
+  // constant number of statements per kind of item (one insert of all the
+  // activities, their groups, the read model, audit, outbox; the same for the
+  // shifts), about 40 whatever the size; timed with 300 items in
+  // programmes.integration.test.ts. The web calls it, the app does not.
+  "POST /api/v1/clubs/{clubId}/programme-templates/{templateId}/apply":
+    "a rare write with bulk inserts (programmes tests, 300 items)",
   // The app's everyday actions (P2.7g): writes the web makes too, covered by
   // the activities, announcements, chat and car-pool tests; each reads its
   // resource by key, checks its policy and writes with audit and outbox.
@@ -1350,13 +1387,15 @@ beforeAll(async () => {
     announcement: string;
     minutes: string;
     assignment: string;
+    programme: string;
+    programmeDay: string;
   }>(
     "admin",
     `SELECT
        (SELECT a.id FROM activities a JOIN activity_groups ag ON ag.activity_id = a.id
         WHERE ag.group_id = $1 AND a.status = 'scheduled' AND a.starts_at > now()
           AND a.response_mode = 'requested' ORDER BY a.starts_at LIMIT 1) AS activity,
-       (SELECT id FROM events WHERE title = 'Höstcupen i Strandviken') AS event,
+       (SELECT id FROM events WHERE title = 'Höstcupen i Strandviken' AND status = 'published') AS event,
        (SELECT id FROM chats WHERE default_for_group_id = $1) AS chat,
        (SELECT last_message_id FROM chats WHERE default_for_group_id = $1) AS message,
        (SELECT id FROM document_folders WHERE group_id = $2 AND name = 'Matchschema') AS folder,
@@ -1366,7 +1405,11 @@ beforeAll(async () => {
        (SELECT d.id FROM documents d JOIN document_folders f ON f.id = d.folder_id
         WHERE f.name = 'Styrelseprotokoll' AND d.kind = 'governing' LIMIT 1) AS minutes,
        (SELECT a.id FROM task_assignments a JOIN tasks t ON t.id = a.task_id
-        WHERE t.title = 'Skicka budgeten till revisorerna') AS assignment`,
+        WHERE t.title = 'Skicka budgeten till revisorerna') AS assignment,
+       (SELECT p.id FROM programmes p JOIN events e ON e.id = p.event_id
+        WHERE e.title = 'Höstcupen i Strandviken' AND e.status = 'published') AS programme,
+       (SELECT p.first_day::text FROM programmes p JOIN events e ON e.id = p.event_id
+        WHERE e.title = 'Höstcupen i Strandviken' AND e.status = 'published') AS "programmeDay"`,
     [key("svk-f2017"), key("ikn-f2015")],
   );
   ids = rows[0]!;

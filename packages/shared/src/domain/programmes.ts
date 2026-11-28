@@ -178,6 +178,8 @@ export const ProgrammeTemplateSourceSchema = z.union([
   z.object({ eventId: z.uuid() }).strict(),
   z.object({ groupId: z.uuid(), from: z.iso.date(), to: z.iso.date() }).strict(),
   z.object({ activityId: z.uuid() }).strict(),
+  /** An empty template to fill in the editor (one day, one slot). */
+  z.object({ empty: z.literal(true) }).strict(),
 ]);
 export type ProgrammeTemplateSource = z.infer<typeof ProgrammeTemplateSourceSchema>;
 

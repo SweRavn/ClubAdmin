@@ -102,8 +102,14 @@ export default defineConfig({
           testMatch: /background-checks\.spec\.ts/,
           dependencies: ["grants"],
         },
+        // Programmes (P2.9): lays out SVK's "Höstcupen" and IKN's "Städdag".
+        {
+          name: "programmes",
+          testMatch: /programmes\.spec\.ts/,
+          dependencies: ["background-checks"],
+        },
         // The chat (P2.1, P2.7b): SVK F2017's channel.
-        { name: "chat", testMatch: /chat\.spec\.ts/, dependencies: ["background-checks"] },
+        { name: "chat", testMatch: /chat\.spec\.ts/, dependencies: ["programmes"] },
         { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["chat"] },
         { name: "profile", testMatch: /profile\.spec\.ts/, dependencies: ["cleanup"] },
       ],

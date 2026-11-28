@@ -1769,6 +1769,11 @@ describe("permission matrix", () => {
       url: () => `/api/v1/events/${m.eventId}`,
       expected: INSIDERS,
     },
+    // P2.9: the event's programme, made when its organisers open it.
+    "POST /api/v1/events/:eventId/programme": {
+      url: () => `/api/v1/events/${m.eventId}/programme`,
+      expected: TEAM_MANAGERS(200),
+    },
     "PATCH /api/v1/events/:eventId": {
       url: () => `/api/v1/events/${m.eventId}`,
       expected: TEAM_MANAGERS(200),

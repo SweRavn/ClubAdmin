@@ -479,6 +479,11 @@ export class ActivitiesService {
     );
   }
 
+  /** Puts existing activities in a programme (an event's, P2.9); one statement. */
+  async assignProgrammeInTx(tx: Tx, programmeId: string, ids: readonly string[]): Promise<void> {
+    await repo.setProgramme(tx, programmeId, ids);
+  }
+
   /** Scheduled activities at these places overlapping the range (conflict warnings). */
   activitiesAtLocationsInTx(
     tx: Tx,

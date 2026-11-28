@@ -963,3 +963,15 @@ export async function typesById(tx: Tx, ids: readonly string[]): Promise<DutyTyp
     SELECT ${TYPE_COLUMNS} FROM public.duty_types WHERE id = ANY (${uuidArray([...new Set(ids)])}::uuid[])`);
   return rows.map(toType);
 }
+
+/** Puts shifts that belong to no programme in this one (P2.9). */
+export async function setProgramme(
+  tx: Tx,
+  programmeId: string,
+  ids: readonly string[],
+): Promise<void> {
+  if (ids.length === 0) return;
+  await tx.execute(sql`
+    UPDATE public.tasks SET programme_id = ${programmeId}::uuid
+    WHERE id = ANY (${uuidArray(ids)}::uuid[]) AND programme_id IS NULL AND kind = 'duty_shift'`);
+}

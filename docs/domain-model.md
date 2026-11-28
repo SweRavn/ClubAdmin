@@ -1469,3 +1469,38 @@ P2.7d).
   start a direct message with someone else's child; children chat with
   children of their groups; guardians see their child's chats and who is
   in them and may join visibly. Rules in "Chat" above.
+
+### Programmes and templates (P2.9, ADR 0054)
+
+Migration 0060. A programme groups activities and duty shifts (a cup, a
+camp, a match day, a cleaning day); a template keeps them without people.
+
+- `programme_templates`: a group's (`group_id`) or the club's template;
+  `day_count` (1–31), `event_settings` (the sign-up laid out with it, as days
+  before the first day), archived. `programme_template_slots`: the teams
+  ("Lag 1") with a default group. `programme_template_items`: activities and
+  duty shifts with day offsets and wall-clock times in the club's time zone,
+  their slots, places by reference (or text), duty type and need; a shift may
+  belong to an activity item. At most 300 items.
+- `programmes`: title, the template and edition it came from, the event it
+  belongs to (at most one programme per event), first and last day;
+  `programme_groups` its groups. `activities.programme_id` and
+  `tasks.programme_id` put items in it; they keep all their behaviour.
+- Laying out maps each slot to groups, replaces places, previews (warnings:
+  location conflicts, past dates, slots without a group; refusals: archived
+  places and duty types, the country rule, groups) and creates everything in
+  one transaction or nothing. Removing a programme works only while nothing
+  is answered, registered, assigned or offered.
+
+Permissions: `club.programmes.manage` (club managers), and the group's own
+`group.activities.manage` (with `group.duties.manage` for shifts and
+`club.events.create` for an event). Endpoints:
+`GET|POST /clubs/:clubId/programme-templates`,
+`GET|PATCH|DELETE /clubs/:clubId/programme-templates/:templateId`,
+`POST …/:templateId/preview` and `…/apply`,
+`GET /clubs/:clubId/programmes`, `GET /groups/:groupId/programmes`,
+`GET /clubs/:clubId/programmes/:programmeId` and `…/timeline?day=`,
+`POST …/:programmeId/copy/preview` and `…/copy`,
+`DELETE /clubs/:clubId/programmes/:programmeId`,
+`POST /events/:eventId/programme`, `GET /me/programmes?clubId=`.
+

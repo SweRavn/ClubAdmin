@@ -361,6 +361,54 @@ export const eventQuery = (api: ApiClient, scope: Scope, eventId: string) => ({
     data(await api.GET("/api/v1/events/{eventId}", { params: { path: { eventId } } })),
 });
 
+// Programmes (P2.9): a programme's header and one day of it; cache first.
+export type ProgrammeDetail = Schemas["ProgrammeDetail"];
+export type ProgrammeTimeline = Schemas["ProgrammeTimeline"];
+
+export const programmeQuery = (
+  api: ApiClient,
+  scope: Scope,
+  clubId: string,
+  programmeId: string,
+) => ({
+  queryKey: ["programme", programmeId, ...scope] as const,
+  queryFn: async () =>
+    data(
+      await api.GET("/api/v1/clubs/{clubId}/programmes/{programmeId}", {
+        params: { path: { clubId, programmeId } },
+      }),
+    ),
+});
+
+export const programmeTimelineQuery = (
+  api: ApiClient,
+  scope: Scope,
+  clubId: string,
+  programmeId: string,
+  day: string,
+) => ({
+  queryKey: ["programme-timeline", programmeId, day, ...scope] as const,
+  queryFn: async () =>
+    data(
+      await api.GET("/api/v1/clubs/{clubId}/programmes/{programmeId}/timeline", {
+        params: { path: { clubId, programmeId }, query: { day } },
+      }),
+    ),
+});
+
+export function useProgramme(clubId: string, programmeId: string) {
+  const { api } = useSession();
+  return useQuery(programmeQuery(api, useScope(), clubId, programmeId));
+}
+
+export function useProgrammeTimeline(clubId: string, programmeId: string, day: string | null) {
+  const { api } = useSession();
+  return useQuery({
+    ...programmeTimelineQuery(api, useScope(), clubId, programmeId, day ?? ""),
+    enabled: day !== null,
+  });
+}
+
 export function useActivity(activityId: string) {
   const { api } = useSession();
   return useQuery(activityQuery(api, useScope(), activityId));

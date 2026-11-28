@@ -427,6 +427,8 @@ export const ActivitySchema = z
     transportMode: z.enum(TRANSPORT_MODES).nullable().optional(),
     /** Minutes after the end that the way home leaves (P2.7f); null: not said. */
     carpoolReturnMinutes: z.number().int().nullable().optional(),
+    /** The programme it belongs to (P2.9: "Del av Höstcupen"), or null. */
+    programmeId: z.uuid().nullable().optional(),
     /** For those who manage it, in the group calendar. */
     responseCounts: ResponseCountsSchema.optional(),
   })

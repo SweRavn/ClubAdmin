@@ -147,6 +147,16 @@ export default async function ClubPage({ params, searchParams }: Params) {
               {t("duties.title")}
             </a>
           ) : null}
+          {permissions.includes("club.activities.read") ||
+          permissions.includes("club.programmes.use") ? (
+            <a
+              href={`/clubs/${club.id}/programmes`}
+              className="text-sm text-accent underline"
+              data-testid="club-programmes-link"
+            >
+              {t("programmes.title")}
+            </a>
+          ) : null}
           {permissions.includes("club.grants.read") ? (
             <a
               href={`/clubs/${club.id}/grants`}

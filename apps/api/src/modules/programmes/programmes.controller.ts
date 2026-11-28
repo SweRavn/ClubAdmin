@@ -24,6 +24,7 @@ import {
   type ProgrammePreview,
   ProgrammePreviewSchema,
   type ProgrammeSummary,
+  ProgrammeSummarySchema,
   type ProgrammeTemplate,
   ProgrammeTemplateListSchema,
   ProgrammeTemplateParamsSchema,
@@ -37,7 +38,7 @@ import {
   UpdateProgrammeTemplateSchema,
   z,
 } from "@clubadmin/shared";
-import { Body, Controller, Query } from "@nestjs/common";
+import { Body, Controller, Param, Query } from "@nestjs/common";
 
 import { DomainError } from "../../platform/domain/domain-error.ts";
 import { Endpoint } from "../../platform/http/endpoint.ts";
@@ -153,7 +154,9 @@ export class ProgrammesController {
       ) {
         throw new DomainError("group_not_managed");
       }
-      if (sourceGroups.length === 0) throw new DomainError("not_allowed");
+      if (sourceGroups.length === 0 && !("empty" in body.source)) {
+        throw new DomainError("not_allowed");
+      }
     }
     return this.programmes.createTemplate(context, body);
   }
@@ -322,6 +325,28 @@ export class ProgrammesController {
       activities: created.activities,
       dutyShifts: created.dutyShifts,
     };
+  }
+
+  @Endpoint({
+    method: "POST",
+    path: "events/:eventId/programme",
+    summary: "The event's programme, made from its sessions and shifts when first opened",
+    tags: TAGS,
+    access: { permission: "event.manage", resource: "event" },
+    request: { params: z.object({ eventId: z.uuid() }) },
+    response: ProgrammeSummarySchema,
+    status: 200,
+  })
+  async eventProgramme(
+    @CurrentAuthorization() authz: RequestAuthorization,
+    @Param() params: { eventId: string },
+  ): Promise<ProgrammeSummary> {
+    const event = resourceOf(authz, "event");
+    const found = await this.programmes.ensureEventProgramme(
+      tenantContext(authz, event.clubId),
+      params.eventId,
+    );
+    return summary(found.programme, found.groupNames);
   }
 
   @Endpoint({

@@ -342,6 +342,13 @@ export default async function GroupPage({ params, searchParams }: Params) {
             >
               {t("carpool.stats")}
             </a>
+            <a
+              href={`/groups/${group.id}/programmes`}
+              className="text-sm underline"
+              data-testid="group-programmes"
+            >
+              {t("programmes.title")}
+            </a>
             {calendar.canManage || calendar.canReadAttendance ? (
               <div className="flex flex-wrap gap-2">
                 {calendar.canManage ? (

@@ -491,6 +491,16 @@ schedule (Ola left two years ago).
   `/clubs/<svk>/safeguarding/background-checks` as Anna (with a second
   factor), `/clubs/<ikn>/safeguarding/background-checks` as Karin,
   `/me/background-checks` as Tilde, and Liam's page as Göran.
+- **Programmes and templates** (P2.9, `apps/api/src/seed/steps/programmes.ts`):
+  SVK F2017's "Höstcupen i Strandviken" is a programme: its matches in
+  Strandvikshallen A and B, the lunch, kiosk (two places) and score-table
+  shifts at every match. Erik saved it as the template "Höstcupen", and last
+  year's edition was laid out from it (its draft event carries the year).
+  IK Norrbacka P2012 has the group template "Hemmamatchdag" (P2.6's home
+  match with its shifts) and the club has the template "Städdag" (a morning
+  with two cleaning shifts and coffee) for every team. Try
+  `/groups/<svk-f2017>/programmes` as Erik (open the cup, lay out the
+  template on a new date) and `/clubs/<ikn>/programmes` as Karin.
 
 ## Club-defined roles (P1.15)
 

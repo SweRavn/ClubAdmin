@@ -498,3 +498,83 @@ describe("club templates and events", () => {
     expect(patch.statusCode).toBe(403);
   });
 });
+
+describe("a full template", () => {
+  it("lays out 300 items in one request with bulk inserts", async () => {
+    const created = await api(coach.id, "POST", `/clubs/${club.id}/programme-templates`, {
+      name: "Läger",
+      groupId: teamId,
+      source: { empty: true },
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const id = created.json<{ id: string }>().id;
+    const base = {
+      parentRef: null,
+      endDayOffset: 0,
+      slotKeys: ["g1"],
+      kindLabel: null,
+      notes: null,
+      locationId: null,
+      locationText: "Lägergården",
+      meetMinutesBefore: null,
+      meetPlace: null,
+      transportMode: null,
+      homeAway: null,
+      opponent: null,
+      responseMode: null,
+      dutyTypeId: null,
+      needed: null,
+    };
+    const items = Array.from({ length: 150 }, (_, i) => {
+      const day = i % 30;
+      const hour = String(8 + Math.floor(i / 30) * 2).padStart(2, "0");
+      const end = String(9 + Math.floor(i / 30) * 2).padStart(2, "0");
+      return [
+        {
+          ...base,
+          ref: `a${i}`,
+          kind: "activity",
+          activityKind: "training",
+          title: `Pass ${i + 1}`,
+          dayOffset: day,
+          endDayOffset: day,
+          startTime: `${hour}:00`,
+          endTime: `${end}:00`,
+        },
+        {
+          ...base,
+          ref: `s${i}`,
+          kind: "duty_shift",
+          parentRef: `a${i}`,
+          activityKind: null,
+          locationText: null,
+          title: "Kiosk",
+          dayOffset: day,
+          endDayOffset: day,
+          startTime: `${hour}:00`,
+          endTime: `${end}:00`,
+          dutyTypeId: kiosk,
+          needed: 1,
+        },
+      ];
+    }).flat();
+    const patched = await api(coach.id, "PATCH", `/clubs/${club.id}/programme-templates/${id}`, {
+      dayCount: 30,
+      slots: [{ key: "g1", label: "Laget", defaultGroupId: teamId }],
+      items,
+    });
+    expect(patched.statusCode, patched.body).toBe(204);
+    const started = Date.now();
+    const res = await api(coach.id, "POST", `/clubs/${club.id}/programme-templates/${id}/apply`, {
+      firstDay: "2027-07-01",
+    });
+    const took = Date.now() - started;
+    expect(res.statusCode, res.body).toBe(201);
+    expect(res.json<{ activities: number; dutyShifts: number }>()).toMatchObject({
+      activities: 150,
+      dutyShifts: 150,
+    });
+    // Bulk inserts: well within a request's budget on a CI machine.
+    expect(took).toBeLessThan(10_000);
+  });
+});

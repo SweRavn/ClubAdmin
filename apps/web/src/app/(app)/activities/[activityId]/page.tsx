@@ -99,6 +99,15 @@ export default async function ActivityPage({ params, searchParams }: Props) {
         {cancelled ? <RoleBadge tone="accent" label={t("activities.cancelled")} /> : null}
       </h1>
       <HistoryLink clubId={activity.clubId} href={`/activities/${activity.id}/history`} />
+      {activity.programmeId ? (
+        <a
+          href={`/clubs/${activity.clubId}/programmes/${activity.programmeId}`}
+          className="text-sm text-accent underline"
+          data-testid="activity-programme"
+        >
+          {t("programmes.openProgramme")}
+        </a>
+      ) : null}
       {query.saved ? <Notice>{t("activities.saved")}</Notice> : null}
       {query.answered ? <Notice>{t("responses.saved")}</Notice> : null}
       {query.updated ? <Notice>{t("activities.updated")}</Notice> : null}
@@ -415,6 +424,32 @@ export default async function ActivityPage({ params, searchParams }: Props) {
           <h2 id="activity-manage" className="text-lg font-semibold">
             {t("activities.manage")}
           </h2>
+          {/* P2.9: the activity with its shifts as a template (a usual home match day). */}
+          {activity.groups[0] ? (
+            <ActionForm
+              action="programme-template-create"
+              className="flex max-w-xl flex-wrap items-end gap-2"
+              testId="activity-save-template"
+            >
+              <input type="hidden" name="clubId" value={activity.clubId} />
+              <input type="hidden" name="scope" value={activity.groups[0].id} />
+              <input type="hidden" name="sourceKind" value="activity" />
+              <input type="hidden" name="activityId" value={activity.id} />
+              <label className="block flex-1 space-y-1">
+                <span className="text-sm">{t("programmes.templateName")}</span>
+                <input
+                  name="name"
+                  required
+                  maxLength={120}
+                  defaultValue={activity.title}
+                  className={inputClass}
+                />
+              </label>
+              <button type="submit" className={secondaryButtonClass}>
+                {t("programmes.saveAsTemplate")}
+              </button>
+            </ActionForm>
+          ) : null}
           {activity.seriesId ? (
             <p className="text-sm">
               {activity.detached ? t("activities.detachedHint") : t("activities.seriesHint")}{" "}

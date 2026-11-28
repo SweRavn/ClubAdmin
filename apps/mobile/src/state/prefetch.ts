@@ -3,7 +3,8 @@
 // fetched in the background while the app is open and online, so a tap
 // shows it at once and it is there without coverage. Bounded: the coming
 // week's activities (at most PREFETCH_ACTIVITIES, with their answers and, when
-// the group travels on its own, their car pools), the
+// the group travels on its own, their car pools; the programme of a cup's
+// activity with that day of it, P2.9), the
 // events on the schedule, the inbox and its count. Prefetched data is kept
 // fresh for PREFETCH_FRESH_MS, so reopening the app does not fetch it again.
 
@@ -14,6 +15,8 @@ import {
   activityQuery,
   carpoolQuery,
   eventQuery,
+  programmeQuery,
+  programmeTimelineQuery,
   responseSummaryQuery,
   type ScheduleEntry,
   useScope,
@@ -54,10 +57,28 @@ export function usePrefetch(entries: readonly ScheduleEntry[] | undefined): void
     for (const id of targets.activities) {
       const query = activityQuery(api, scope, id);
       void client.prefetchQuery({ ...query, ...options }).then(() => {
-        if (
-          client.getQueryData<{ transportMode?: string | null }>(query.queryKey)?.transportMode ===
-          "own"
-        ) {
+        const activity = client.getQueryData<{
+          transportMode?: string | null;
+          programmeId?: string | null;
+          clubId: string;
+          startsAt: string;
+          timeZone?: string;
+        }>(query.queryKey);
+        // A cup or a camp (P2.9): its programme and the activity's day of it.
+        if (activity?.programmeId) {
+          const day = new Intl.DateTimeFormat("sv-SE", {
+            timeZone: activity.timeZone ?? "UTC",
+          }).format(new Date(activity.startsAt));
+          void client.prefetchQuery({
+            ...programmeQuery(api, scope, activity.clubId, activity.programmeId),
+            ...options,
+          });
+          void client.prefetchQuery({
+            ...programmeTimelineQuery(api, scope, activity.clubId, activity.programmeId, day),
+            ...options,
+          });
+        }
+        if (activity?.transportMode === "own") {
           void client.prefetchQuery({ ...carpoolQuery(api, scope, id), ...options });
         }
       });

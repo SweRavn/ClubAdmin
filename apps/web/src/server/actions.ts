@@ -3451,6 +3451,307 @@ const GRANT_ACTIONS: Record<string, FormAction> = {
 };
 
 /** Background checks (P2.8): tick off, delete, request, the club's stricter requirements. */
+// Programmes and templates (P2.9, ADR 0054).
+const isClock = (value: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+const intIn = (value: string, min: number, max: number): number | null => {
+  const n = Number(value);
+  return value !== "" && Number.isInteger(n) && n >= min && n <= max ? n : null;
+};
+/** The template's items as the page sent them (the editor works on the whole list). */
+function templateItemsOf(form: FormData): Record<string, unknown>[] | null {
+  try {
+    const parsed: unknown = JSON.parse(text(form, "items") || "[]");
+    return Array.isArray(parsed) && parsed.length <= 300
+      ? (parsed as Record<string, unknown>[])
+      : null;
+  } catch {
+    return null;
+  }
+}
+const templatePath = (form: FormData) => {
+  const clubId = id(form, "clubId");
+  const templateId = id(form, "templateId");
+  return clubId && templateId ? `/api/v1/clubs/${clubId}/programme-templates/${templateId}` : null;
+};
+/** The slots to groups and the places replaced (laying out and copying). */
+function layoutBody(form: FormData): Record<string, unknown> | null {
+  const firstDay = text(form, "firstDay");
+  if (!isDate(firstDay)) return null;
+  const slots: Record<string, string[]> = {};
+  for (const key of text(form, "slotKeys")
+    .split(",")
+    .filter((k) => /^[a-z0-9_-]{1,40}$/.test(k))) {
+    slots[key] = form
+      .getAll(`slot_${key}`)
+      .filter((v): v is string => typeof v === "string" && isUuid(v));
+  }
+  const locations: Record<string, string> = {};
+  for (const from of text(form, "locationIds").split(",").filter(isUuid)) {
+    const to = id(form, `loc_${from}`);
+    if (to && to !== from) locations[from] = to;
+  }
+  return {
+    firstDay,
+    slots,
+    locations,
+    ...(optional(text(form, "title")) ? { title: text(form, "title") } : {}),
+    ...(optional(text(form, "edition")) ? { edition: text(form, "edition") } : {}),
+  };
+}
+
+const PROGRAMME_ACTIONS: Record<string, FormAction> = {
+  "programme-template-create": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const name = text(form, "name");
+      if (!clubId) return null;
+      if (!name) return { invalid: "invalid_input", fields: { name: "required" } };
+      const scope = text(form, "scope");
+      const groupId = scope === "club" ? null : id(form, "scope");
+      if (scope !== "club" && !groupId) return null;
+      const kind = text(form, "sourceKind");
+      let source: Record<string, unknown> | null = null;
+      if (kind === "empty") source = { empty: true };
+      else if (kind === "programme" && id(form, "programmeId")) {
+        source = { programmeId: id(form, "programmeId") };
+      } else if (kind === "event" && id(form, "eventId")) source = { eventId: id(form, "eventId") };
+      else if (kind === "activity" && id(form, "activityId")) {
+        source = { activityId: id(form, "activityId") };
+      } else if (kind === "range" && id(form, "groupId")) {
+        const from = text(form, "from");
+        const to = text(form, "to");
+        if (!isDate(from) || !isDate(to)) {
+          return {
+            invalid: "invalid_input",
+            fields: {
+              ...(isDate(from) ? {} : { from: "invalid_date" }),
+              ...(isDate(to) ? {} : { to: "invalid_date" }),
+            },
+          };
+        }
+        source = { groupId: id(form, "groupId"), from, to };
+      }
+      if (!source) return null;
+      return {
+        path: `/api/v1/clubs/${clubId}/programme-templates`,
+        method: "POST",
+        body: { name, groupId, source },
+      };
+    },
+    done: (form, result) => {
+      const created = (result as { id?: string } | null)?.id;
+      return created
+        ? `/clubs/${id(form, "clubId")}/programme-templates/${created}?saved=template`
+        : back(form);
+    },
+  },
+  "programme-template-details": {
+    call: (form) => {
+      const path = templatePath(form);
+      const name = text(form, "name");
+      const dayCount = intIn(text(form, "dayCount"), 1, 31);
+      if (!path) return null;
+      if (!name || dayCount === null) {
+        return {
+          invalid: "invalid_input",
+          fields: {
+            ...(name ? {} : { name: "required" }),
+            ...(dayCount === null ? { dayCount: "invalid_number" } : {}),
+          },
+        };
+      }
+      return {
+        path,
+        method: "PATCH",
+        body: { name, description: optional(text(form, "description")) ?? null, dayCount },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "updated"),
+  },
+  "programme-template-archive": {
+    call: (form) => {
+      const path = templatePath(form);
+      return path ? { path, method: "DELETE" } : null;
+    },
+    done: (form) => withParam(back(form), "saved", "archived"),
+  },
+  "programme-template-items": {
+    call: (form) => {
+      const path = templatePath(form);
+      const items = templateItemsOf(form);
+      if (!path || !items) return null;
+      const op = text(form, "op");
+      const ref = text(form, "ref");
+      let next: Record<string, unknown>[];
+      if (op === "remove") {
+        next = items.filter((i) => i.ref !== ref && i.parentRef !== ref);
+      } else if (op === "move") {
+        const day = intIn(text(form, "day"), 0, 30);
+        if (day === null) return null;
+        next = items.map((i) => {
+          if (i.ref !== ref && i.parentRef !== ref) return i;
+          const shift = day - Number(i.dayOffset);
+          return { ...i, dayOffset: day, endDayOffset: Number(i.endDayOffset) + shift };
+        });
+      } else if (op === "add") {
+        const kind = text(form, "kind");
+        const title = text(form, "title");
+        const day = intIn(text(form, "day"), 0, 30);
+        const startTime = text(form, "startTime");
+        const endTime = text(form, "endTime");
+        const wrong: Record<string, string> = {};
+        if (!title) wrong.title = "required";
+        if (day === null) wrong.day = "invalid_number";
+        if (!isClock(startTime)) wrong.startTime = "invalid_time";
+        if (!isClock(endTime) || endTime <= startTime) wrong.endTime = "invalid_time";
+        const isShift = kind === "duty_shift";
+        if (isShift && !id(form, "dutyTypeId")) wrong.dutyTypeId = "required";
+        if (Object.keys(wrong).length > 0) return { invalid: "invalid_input", fields: wrong };
+        const activityKind = (ACTIVITY_KINDS as readonly string[]).includes(kind) ? kind : null;
+        if (!isShift && !activityKind) return null;
+        const slot = text(form, "slot");
+        const parentRef = isShift ? (optional(text(form, "parentRef")) ?? null) : null;
+        next = [
+          ...items,
+          {
+            ref: `new-${items.length}`,
+            kind: isShift ? "duty_shift" : "activity",
+            parentRef,
+            dayOffset: day,
+            startTime,
+            endDayOffset: day,
+            endTime,
+            slotKeys: slot ? [slot] : [],
+            title,
+            activityKind: isShift ? null : activityKind,
+            kindLabel: activityKind === "other" ? title.slice(0, 60) : null,
+            notes: null,
+            locationId: id(form, "locationId"),
+            locationText: id(form, "locationId")
+              ? null
+              : (optional(text(form, "locationText")) ?? null),
+            meetMinutesBefore: null,
+            meetPlace: null,
+            transportMode: null,
+            homeAway: null,
+            opponent: null,
+            responseMode: isShift ? null : activityKind === "other" ? "none" : "requested",
+            dutyTypeId: isShift ? id(form, "dutyTypeId") : null,
+            needed: isShift ? (intIn(text(form, "needed"), 1, 50) ?? 1) : null,
+          },
+        ];
+      } else {
+        return null;
+      }
+      return { path, method: "PATCH", body: { items: next } };
+    },
+    done: (form) => withParam(back(form), "saved", "updated"),
+  },
+  "programme-template-slots": {
+    call: (form) => {
+      const path = templatePath(form);
+      if (!path) return null;
+      const keys = text(form, "slotKeys")
+        .split(",")
+        .filter((k) => /^[a-z0-9_-]{1,40}$/.test(k));
+      const slots = keys.map((key) => ({
+        key,
+        label: text(form, `label_${key}`).slice(0, 60) || key,
+        defaultGroupId: id(form, `group_${key}`),
+      }));
+      const added = text(form, "newSlot").slice(0, 60);
+      if (added) {
+        let n = keys.length + 1;
+        while (keys.includes(`g${n}`)) n++;
+        slots.push({ key: `g${n}`, label: added, defaultGroupId: id(form, "newSlotGroup") });
+      }
+      return { path, method: "PATCH", body: { slots } };
+    },
+    done: (form) => withParam(back(form), "saved", "updated"),
+  },
+  "programme-template-event": {
+    call: (form) => {
+      const path = templatePath(form);
+      if (!path) return null;
+      if (text(form, "remove") === "1")
+        return { path, method: "PATCH", body: { eventSettings: null } };
+      const title = text(form, "eventTitle");
+      if (!title) return { invalid: "invalid_input", fields: { eventTitle: "required" } };
+      const days = (name: string) => intIn(text(form, name), 0, 365);
+      return {
+        path,
+        method: "PATCH",
+        body: {
+          eventSettings: {
+            title,
+            audience: text(form, "audience") === "club" ? "club" : "groups",
+            capacity: intIn(text(form, "capacity"), 1, 10_000),
+            opensDaysBefore: days("opensDaysBefore"),
+            closesDaysBefore: days("closesDaysBefore"),
+          },
+        },
+      };
+    },
+    done: (form) => withParam(back(form), "saved", "updated"),
+  },
+  "programme-apply": {
+    call: (form) => {
+      const path = templatePath(form);
+      const body = layoutBody(form);
+      if (!path) return null;
+      if (!body) return { invalid: "invalid_input", fields: { firstDay: "invalid_date" } };
+      return { path: `${path}/apply`, method: "POST", body };
+    },
+    done: (form, result) => {
+      const programme = (result as { programme?: { id?: string } } | null)?.programme?.id;
+      return programme
+        ? `/clubs/${id(form, "clubId")}/programmes/${programme}?saved=created`
+        : back(form);
+    },
+  },
+  "programme-copy": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const programmeId = id(form, "programmeId");
+      const body = layoutBody(form);
+      if (!clubId || !programmeId) return null;
+      if (!body) return { invalid: "invalid_input", fields: { firstDay: "invalid_date" } };
+      const { edition: _edition, ...copy } = body;
+      return {
+        path: `/api/v1/clubs/${clubId}/programmes/${programmeId}/copy`,
+        method: "POST",
+        body: copy,
+      };
+    },
+    done: (form, result) => {
+      const programme = (result as { programme?: { id?: string } } | null)?.programme?.id;
+      return programme
+        ? `/clubs/${id(form, "clubId")}/programmes/${programme}?saved=created`
+        : back(form);
+    },
+  },
+  "programme-delete": {
+    call: (form) => {
+      const clubId = id(form, "clubId");
+      const programmeId = id(form, "programmeId");
+      return clubId && programmeId
+        ? { path: `/api/v1/clubs/${clubId}/programmes/${programmeId}`, method: "DELETE" }
+        : null;
+    },
+    done: (form) => withParam(back(form), "saved", "deleted"),
+  },
+  "event-programme": {
+    call: (form) => {
+      const eventId = id(form, "eventId");
+      return eventId ? { path: `/api/v1/events/${eventId}/programme`, method: "POST" } : null;
+    },
+    done: (form, result) => {
+      const programme = result as { id?: string } | null;
+      return programme?.id ? `/clubs/${id(form, "clubId")}/programmes/${programme.id}` : back(form);
+    },
+  },
+};
+
 const BACKGROUND_CHECK_ACTIONS: Record<string, FormAction> = {
   "background-check-record": {
     call: (form) => {
@@ -3553,6 +3854,7 @@ const BACKGROUND_CHECK_ACTIONS: Record<string, FormAction> = {
 
 export const FORM_ACTIONS: Record<string, FormAction> = {
   ...BACKGROUND_CHECK_ACTIONS,
+  ...PROGRAMME_ACTIONS,
   ...GRANT_ACTIONS,
   ...CARPOOL_ACTIONS,
   ...DUTY_ACTIONS,

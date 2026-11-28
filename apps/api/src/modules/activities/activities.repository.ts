@@ -761,3 +761,15 @@ export async function groupActivitiesInRange(
     rows.map((r) => r.id),
   );
 }
+
+/** Puts activities that belong to no programme in this one. */
+export async function setProgramme(
+  tx: Tx,
+  programmeId: string,
+  ids: readonly string[],
+): Promise<void> {
+  if (ids.length === 0) return;
+  await tx.execute(sql`
+    UPDATE public.activities SET programme_id = ${programmeId}::uuid
+    WHERE id = ANY (${uuidArray(ids)}::uuid[]) AND programme_id IS NULL`);
+}

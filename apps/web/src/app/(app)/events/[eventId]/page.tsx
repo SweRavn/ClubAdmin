@@ -271,6 +271,14 @@ export default async function EventPage({ params, searchParams }: Props) {
             >
               {t("events.editTitle")}
             </a>
+            {/* P2.9: the event's programme (made when first opened). */}
+            <ActionForm action="event-programme">
+              <input type="hidden" name="eventId" value={event.id} />
+              <input type="hidden" name="clubId" value={event.clubId} />
+              <button type="submit" className={secondaryButtonClass} data-testid="event-programme">
+                {t("programmes.eventProgramme")}
+              </button>
+            </ActionForm>
             {event.status === "draft" ? (
               <>
                 <ActionForm action="publish-event">

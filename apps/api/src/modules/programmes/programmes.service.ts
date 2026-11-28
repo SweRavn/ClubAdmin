@@ -123,6 +123,7 @@ export class ProgrammesService {
 
   /** The groups of a source (to check the caller may use it before saving it as a template). */
   sourceGroups(context: TenantContext, source: ProgrammeTemplateSource): Promise<string[]> {
+    if ("empty" in source) return Promise.resolve([]);
     return this.db.withTenant(context, async (tx) => {
       const loaded = await this.loadSource(tx, context, source);
       return [
@@ -149,6 +150,29 @@ export class ProgrammesService {
         if (group.archived) throw new DomainError("group_archived");
       }
       const club = await this.deps.clubs.getClubInTx(tx, context.clubId);
+      if ("empty" in data.source) {
+        const id = uuidv7();
+        await repo.insertTemplate(tx, {
+          id,
+          clubId: context.clubId,
+          groupId: data.groupId,
+          name: data.name,
+          description: data.description ?? null,
+          dayCount: 1,
+          eventSettings: null,
+          by: actorPersonId(context),
+        });
+        await repo.replaceContent(tx, context.clubId, id, {
+          slots: [{ key: "g1", label: "Lag 1", defaultGroupId: data.groupId }],
+          items: [],
+        });
+        await audit.record(tx, {
+          action: "programme.template.created",
+          resourceType: "programme_template",
+          resourceId: id,
+        });
+        return { id };
+      }
       const loaded = await this.loadSource(tx, context, data.source);
       const groupIds = [
         ...new Set([
@@ -415,6 +439,73 @@ export class ProgrammesService {
   }
 
   // --- Programmes -----------------------------------------------------------------
+
+  /**
+   * The event's programme (decision 1): made when its organiser opens the
+   * programme view, holding the event's sessions and their and its shifts.
+   */
+  ensureEventProgramme(
+    context: TenantContext,
+    eventId: string,
+  ): Promise<{ programme: repo.ProgrammeRow; groupNames: Map<string, string> }> {
+    return this.db.withTenant(context, async (tx) => {
+      const existing = await repo.programmeOfEvent(tx, eventId);
+      if (!existing) {
+        const found = await this.deps.events.eventForTemplateInTx(tx, eventId);
+        if (!found) throw new DomainError("not_found");
+        const club = await this.deps.clubs.getClubInTx(tx, context.clubId);
+        const rows = await this.deps.activities.activitiesInTx(tx, found.activityIds);
+        const shifts = [
+          ...(await this.deps.duties.shiftsOfInTx(tx, { activityIds: found.activityIds })),
+          ...(await this.deps.duties.shiftsOfInTx(tx, { eventId })),
+        ];
+        const instants = [
+          found.event.startsAt,
+          found.event.endsAt,
+          ...rows.flatMap((r) => [r.startsAt, r.endsAt]),
+        ];
+        const days = instants.map((d) => localDate(d, club.timeZone)).sort();
+        const id = uuidv7();
+        const groupsOf = await this.deps.activities.groupsOfActivitiesInTx(
+          tx,
+          rows.map((r) => r.id),
+        );
+        const groupIds = [
+          ...new Set([...found.groupIds, ...[...groupsOf.values()].flat().map((g) => g.id)]),
+        ];
+        await repo.insertProgramme(tx, {
+          id,
+          clubId: context.clubId,
+          title: found.event.title,
+          templateId: null,
+          edition: null,
+          eventId,
+          firstDay: days[0]!,
+          lastDay: days.at(-1)!,
+          groupIds,
+          by: actorPersonId(context),
+        });
+        await this.deps.activities.assignProgrammeInTx(
+          tx,
+          id,
+          rows.map((r) => r.id),
+        );
+        await this.deps.duties.assignProgrammeInTx(
+          tx,
+          id,
+          shifts.map((s) => s.id),
+        );
+        await audit.record(tx, {
+          action: "programme.created",
+          resourceType: "programme",
+          resourceId: id,
+        });
+      }
+      const programmeId = existing ?? (await repo.programmeOfEvent(tx, eventId))!;
+      const programme = (await repo.programme(tx, programmeId))!;
+      return { programme, groupNames: await this.groupNames(tx, context.clubId, [programme]) };
+    });
+  }
 
   listProgrammes(
     context: TenantContext,
@@ -813,6 +904,8 @@ export class ProgrammesService {
       rows = await activities.activitiesInTx(tx, [source.activityId]);
       if (rows.length === 0) throw new DomainError("not_found");
       shifts = await duties.shiftsOfInTx(tx, { activityIds: [source.activityId] });
+    } else if ("empty" in source) {
+      throw new DomainError("programme_source_empty");
     } else {
       const days = daysBetween(source.from, source.to);
       if (days < 0 || days >= PROGRAMME_RANGE_DAYS_MAX) {

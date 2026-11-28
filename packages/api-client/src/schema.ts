@@ -4845,6 +4845,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/events/{eventId}/programme": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * The event's programme, made from its sessions and shifts when first opened
+     * @description Requires permission `event.manage` on the event. Answers 404 when the caller has no relationship with the resource's club (or it is a person they may not see), 403 otherwise.
+     */
+    post: operations["Programmes_eventProgramme"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/events/{eventId}/publish": {
     parameters: {
       query?: never;
@@ -7669,6 +7689,8 @@ export interface components {
       /** @enum {string|null} */
       transportMode?: "own" | "shared" | null;
       carpoolReturnMinutes?: number | null;
+      /** Format: uuid */
+      programmeId?: string | null;
       responseCounts?: components["schemas"]["ResponseCounts"];
     };
     UpdateActivityRequest: {
@@ -11522,6 +11544,10 @@ export interface components {
         | {
             /** Format: uuid */
             activityId: string;
+          }
+        | {
+            /** @enum {boolean} */
+            empty: true;
           };
     };
     ProgrammeTemplate: components["schemas"]["ProgrammeTemplateSummary"] & {
@@ -37882,6 +37908,82 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MinutesAssembled"];
+        };
+      };
+      /** @description Invalid request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not logged in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Not found, or not visible to the caller */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Too many requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+      /** @description Unexpected error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["ProblemDetails"];
+        };
+      };
+    };
+  };
+  Programmes_eventProgramme: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        eventId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Success */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProgrammeSummary"];
         };
       };
       /** @description Invalid request */

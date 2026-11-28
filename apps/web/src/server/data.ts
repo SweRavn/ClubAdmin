@@ -120,6 +120,7 @@ import {
   MyJoinRequestsSchema,
   MyPermissionsSchema,
   MyProfileSchema,
+  MyProgrammesSchema,
   MySignatureRequestListSchema,
   MyTaskPageSchema,
   MyWaitlistsSchema,
@@ -137,6 +138,13 @@ import {
   PlanListSchema,
   PrivacyPolicySchema,
   ProfileViewPageSchema,
+  ProgrammeDetailSchema,
+  ProgrammeListSchema,
+  type ProgrammePreview,
+  ProgrammePreviewSchema,
+  ProgrammeTemplateListSchema,
+  ProgrammeTemplateSchema,
+  ProgrammeTimelineSchema,
   PushDeviceListSchema,
   RegisterFacetsSchema,
   RegisterPageSchema,
@@ -1317,3 +1325,73 @@ export const getExpenseClaimQueue = cache(
     );
   },
 );
+
+// Programmes and templates (P2.9, ADR 0054).
+export const getProgrammeTemplates = cache((clubId: string, groupId: string | null) => {
+  const query = new URLSearchParams({ limit: "100" });
+  if (groupId && isUuid(groupId)) query.set("groupId", groupId);
+  return apiGet(
+    `/api/v1/clubs/${requireId(clubId)}/programme-templates?${query}`,
+    ProgrammeTemplateListSchema,
+    { nullOn: [403] },
+  );
+});
+export const getProgrammeTemplate = cache((clubId: string, templateId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/programme-templates/${requireId(templateId)}`,
+    ProgrammeTemplateSchema,
+  ),
+);
+export const getClubProgrammes = cache((clubId: string) =>
+  apiGet(`/api/v1/clubs/${requireId(clubId)}/programmes?limit=100`, ProgrammeListSchema, {
+    nullOn: [403],
+  }),
+);
+export const getGroupProgrammes = cache((groupId: string) =>
+  required(`/api/v1/groups/${requireId(groupId)}/programmes?limit=100`, ProgrammeListSchema),
+);
+export const getProgramme = cache((clubId: string, programmeId: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/programmes/${requireId(programmeId)}`,
+    ProgrammeDetailSchema,
+  ),
+);
+export const getProgrammeTimeline = cache((clubId: string, programmeId: string, day: string) =>
+  required(
+    `/api/v1/clubs/${requireId(clubId)}/programmes/${requireId(programmeId)}/timeline?day=${encodeURIComponent(day)}`,
+    ProgrammeTimelineSchema,
+  ),
+);
+export const getMyProgrammes = cache((clubId: string) =>
+  required(`/api/v1/me/programmes?clubId=${requireId(clubId)}`, MyProgrammesSchema),
+);
+/**
+ * Laying out without writing (the preview): a template on a first day, or a
+ * programme copied; null with the problem's detail code when refused.
+ */
+export async function previewProgramme(
+  clubId: string,
+  from: { templateId: string } | { programmeId: string },
+  body: Record<string, unknown>,
+): Promise<{ preview: ProgrammePreview | null; error: string | null }> {
+  const session = await requireSession();
+  const path =
+    "templateId" in from
+      ? `/api/v1/clubs/${requireId(clubId)}/programme-templates/${requireId(from.templateId)}/preview`
+      : `/api/v1/clubs/${requireId(clubId)}/programmes/${requireId(from.programmeId)}/copy/preview`;
+  const res = await apiFetch(path, session.record, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  }).catch(() => null);
+  if (!res) return { preview: null, error: "failed" };
+  const json: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const detail = (json as { detail?: unknown } | null)?.detail;
+    return { preview: null, error: typeof detail === "string" ? detail : "failed" };
+  }
+  const parsed = ProgrammePreviewSchema.safeParse(json);
+  return parsed.success
+    ? { preview: parsed.data, error: null }
+    : { preview: null, error: "failed" };
+}

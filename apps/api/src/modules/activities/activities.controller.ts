@@ -159,6 +159,7 @@ export function toActivityResponse(view: ActivityView, canManage: boolean): Acti
     inviteesOnly: a.inviteesOnly,
     transportMode: a.transportMode,
     carpoolReturnMinutes: a.carpoolReturnMinutes,
+    programmeId: a.programmeId,
   };
 }
 

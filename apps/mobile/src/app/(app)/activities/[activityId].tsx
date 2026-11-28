@@ -75,6 +75,11 @@ function Activity({ activityId }: { activityId: string }) {
   );
 
   const a = activity.data;
+  const programmeLink = a?.programmeId
+    ? `/programmes/${a.clubId}/${a.programmeId}?day=${new Intl.DateTimeFormat("sv-SE", {
+        timeZone: a.timeZone,
+      }).format(new Date(a.startsAt))}`
+    : null;
   if (!a && !cached) {
     if (activity.isError)
       return (
@@ -293,6 +298,20 @@ function Activity({ activityId }: { activityId: string }) {
         <Section title={t("carpool.title")}>
           <Row last>
             <Body>{t("carpool.shared")}</Body>
+          </Row>
+        </Section>
+      ) : null}
+
+      {/* A cup's or a camp's activity (P2.9): its programme, on this day. */}
+      {programmeLink ? (
+        <Section title={t("programmes.title")}>
+          <Row
+            last
+            onPress={() => router.push(programmeLink)}
+            accessibilityLabel={t("programmes.openProgramme")}
+            testID="activity-programme"
+          >
+            <Body style={{ fontWeight: "600" }}>{t("programmes.openProgramme")}</Body>
           </Row>
         </Section>
       ) : null}

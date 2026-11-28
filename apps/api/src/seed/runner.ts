@@ -27,6 +27,7 @@ import { importsDemoStep } from "./steps/imports.ts";
 import { notificationsDemoStep } from "./steps/notifications.ts";
 import { pluginsDemoStep } from "./steps/plugins.ts";
 import { privacyDemoStep } from "./steps/privacy.ts";
+import { programmesDemoStep } from "./steps/programmes.ts";
 import { protectionDemoStep } from "./steps/protection.ts";
 import { SeedClock } from "./time.ts";
 
@@ -52,6 +53,7 @@ export const DEMO_STEPS: readonly DemoStep[] = [
   governingDemoStep,
   carpoolsDemoStep,
   dutiesDemoStep,
+  programmesDemoStep,
 ];
 
 export interface SeedOptions {

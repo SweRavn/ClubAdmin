@@ -1,6 +1,6 @@
 # 0054 — Programmes and templates: a container for activities and shifts, copied without people
 
-**Status:** Proposed (decided 2026-11-18; built in P2.9)
+**Status:** Accepted (decided 2026-11-18; built in P2.9, 2026-11-28)
 
 **Context.** Clubs run cups, camps, match days and cleaning days that are
 many activities, meals and duty shifts over one or more days and places,
@@ -47,3 +47,55 @@ schedules are Phase 4 and need somewhere to put their matches.
   inventing their own container.
 - Public programme pages wait for Phase 3; sharing between clubs would need
   a separate decision on what crosses the tenant boundary.
+
+## As implemented (P2.9, 2026-11-28)
+
+- Migration 0060: `programme_templates` (a group's or the club's),
+  `programme_template_slots`, `programme_template_items` (day offsets and
+  wall-clock times; activities' kind, label, place by reference or text,
+  meeting minutes before, transport, home/away, opponent, answers; shifts'
+  duty type, need and parent activity item), `programmes` and
+  `programme_groups`; `activities.programme_id` and `tasks.programme_id`
+  indexed on `(programme_id, starts_at)`. Tenant RLS, history and
+  `updated_at` on every new table; `created_by_person_id` is the only person
+  column (declared for merging).
+- Permissions: `club.programmes.manage` (club managers); the derived
+  `club.programmes.use` (it or planning any group's activities),
+  `programme.read`/`programme.manage` and `programme_template.use`/`.manage`
+  on two new resources. Laying out, saving and copying check every group
+  involved in the controller as events do (`group.activities.manage`, plus
+  `group.duties.manage` for shifts and `club.events.create` for an event).
+- Templates come from a programme, an event (its sign-up settings with
+  sign-up as days before the first day), a group's range of at most 31
+  days, one activity with its shifts, or empty (the editor replaces the
+  items as a whole, at most 300). A copy is a template made on the fly.
+- Laying out is `preview` then `apply` with the same body; the apply runs
+  the preview's rules and refuses with its first refusal's code. Bulk paths
+  in the activities, duties and events services insert every activity,
+  their groups, the read model, audit events (`audit.recordMany`) and
+  outbox events (`outbox.publishMany`) in one statement each: about 40
+  statements whatever the number of items, 300 items in well under a second
+  locally (`programmes.integration.test.ts`). An event's sessions are
+  created called up to nobody and the event as a draft.
+- A local time the spring change skips becomes the same wall-clock time an
+  hour later; an item never ends before it starts.
+- An event gets its programme when its organisers open it
+  (`POST /events/{eventId}/programme`, which adopts the event's sessions and
+  their and its shifts). Activities carry `programmeId` ("Del av …").
+- Deviation from the prompt's paths: a programme is read under its club
+  (`/clubs/{clubId}/programmes/{programmeId}` and `…/timeline`), as the
+  resource is loaded within the club; a group's programmes are
+  `GET /groups/{groupId}/programmes` (group.activities.read) and the club's
+  `GET /clubs/{clubId}/programmes` (club.activities.read); copying has its
+  own preview (`…/copy/preview`). `GET /me/programmes?clubId=` reads one club
+  as `/me/duties` does.
+- The audit event `programme.applied` names what was laid out (activities,
+  duty shifts, event) in its changed fields; the counts are in the response.
+- Web: Program on the club's and the group's pages, the timeline per day
+  (a column per place, conflicts marked, shifts filled of needed), laying
+  out and copying with the preview, the template editor (items per day,
+  teams and default groups, the sign-up, editions), "Spara som mall" on a
+  programme, an activity and a group's range, and "Program" for an event's
+  organisers. App: the timeline as a list per day from the activity screen,
+  prefetched with the schedule's activities.
+
