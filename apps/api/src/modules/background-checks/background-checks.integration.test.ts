@@ -17,6 +17,7 @@ import type {
 import type { InjectOptions } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { subscribeToFeatures } from "../../testing/billing.ts";
 import {
   buildBackgroundCheck,
   buildClub,
@@ -78,6 +79,8 @@ beforeAll(async () => {
   club = await buildClub(s, { registrar: false });
   norway = await buildClub(s, { country: "NO" });
   other = await buildClub(s);
+  // CI also runs with billing on: the clubs' plan includes chat.
+  await subscribeToFeatures(t, [club.id, norway.id, other.id], ["chat"]);
   registrar = await buildPerson(s);
   await s.memberships.addMember(club.ctx, registrar.id);
   await s.roles.assignRole(club.ctx, registrar.id, "registrar");
