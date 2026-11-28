@@ -146,8 +146,13 @@ season, so the group page shows "10 of 10 places".
 
 ## Demo scenario: named personas
 
-Erik and Mikael keep car-pool defaults (P2.7f), so the F2017 page offers
-them "Skapa samåkning" under the activities they do not drive to yet.
+Erik and Mikael keep car-pool defaults (P2.7f), so Mitt schema on Home (web
+and app) and the F2017 page offer them "Skapa samåkning" under the
+activities they do not drive to yet. F2017 has three coming sessions with
+own transport that nobody drives to: "Extrapass i Norrbyhallen" (tomorrow),
+"Träningsmatch mot Norrby VK" (in two days) and "Beachvolley vid
+Hamnstranden" (in nine days; "Visa fler veckor" on Home). Log in as Mikael
+or Erik to try it.
 
 All names fictional. Children without own login have **no email**. Most
 adults and the F2017 children have a phone number and an address (P2.7d);

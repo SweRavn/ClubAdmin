@@ -24,6 +24,10 @@ export const DEMO_CARPOOL_IDS = {
   pastMatch2: "0199a000-0000-7000-8015-000000000012",
   /** SVK F2017's away match with two families' cars (P2.7c). */
   svkF2017Match: "0199a000-0000-7000-8015-000000000013",
+  /** F2017's coming sessions nobody drives to yet: "Skapa samåkning" for Erik and Mikael. */
+  svkExtraTraining: "0199a000-0000-7000-8015-000000000014",
+  svkFriendlyMatch: "0199a000-0000-7000-8015-000000000015",
+  svkBeachTraining: "0199a000-0000-7000-8015-000000000016",
 } as const;
 
 const DAY_MS = 86_400_000;
@@ -262,6 +266,61 @@ export const carpoolsDemoStep: DemoStep = {
         alsoReturn: true,
       });
     }
+
+    // Coming F2017 sessions where the families take their own cars and nobody
+    // drives yet: Erik and Mikael (who keep defaults) get "Skapa samåkning"
+    // under them in Mitt schema (web and app) and on the group's page.
+    const session = (
+      id_: string,
+      offset: number,
+      values: {
+        kind: "training" | "match" | "other";
+        title: string;
+        startTime: string;
+        endTime: string;
+        locationText: string;
+        kindLabel?: string;
+        opponent?: string;
+      },
+    ) =>
+      s.activities.createActivity(
+        svk("erik"),
+        id("svk-f2017"),
+        {
+          kind: values.kind,
+          title: values.title,
+          ...(values.kindLabel ? { kindLabel: values.kindLabel } : {}),
+          ...(values.opponent ? { opponent: values.opponent, homeAway: "away" as const } : {}),
+          startsAt: `${date(offset)}T${values.startTime}:00Z`,
+          endsAt: `${date(offset)}T${values.endTime}:00Z`,
+          locationText: values.locationText,
+          transportMode: "own",
+        },
+        { id: id_ },
+      );
+    await session(DEMO_CARPOOL_IDS.svkExtraTraining, 1, {
+      kind: "training",
+      title: "Extrapass i Norrbyhallen",
+      startTime: "15:30",
+      endTime: "17:00",
+      locationText: "Norrbyhallen",
+    });
+    await session(DEMO_CARPOOL_IDS.svkFriendlyMatch, 2, {
+      kind: "match",
+      title: "Träningsmatch mot Norrby VK",
+      opponent: "Norrby VK",
+      startTime: "09:00",
+      endTime: "11:00",
+      locationText: "Norrby sporthall",
+    });
+    await session(DEMO_CARPOOL_IDS.svkBeachTraining, 9, {
+      kind: "other",
+      kindLabel: "Beachvolley",
+      title: "Beachvolley vid Hamnstranden",
+      startTime: "14:00",
+      endTime: "16:00",
+      locationText: "Hamnstranden",
+    });
 
     // The events are history, not news (as the governing step's): the seats
     // and decisions are shown where they live, not as unread notices.

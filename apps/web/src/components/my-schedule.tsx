@@ -4,12 +4,19 @@
 // time on "Visa fler veckor" (`?weeks=4`). One week keeps Home's first paint
 // light (ADR 0040: the LCP budget); the rest is a tap away.
 // Chips narrow it to one person; when viewing as a ward, only theirs.
+// "Skapa samåkning" under the activities I may drive to (P2.7f).
 import { isUuid } from "@clubadmin/shared";
 import { personLabel } from "@clubadmin/ui";
 import { getTranslations } from "next-intl/server";
 
-import { getCarpoolSummaries, getMyEvents, getSchedule } from "../server/data.ts";
+import {
+  getCarpoolSummaries,
+  getMyCarpoolSettings,
+  getMyEvents,
+  getSchedule,
+} from "../server/data.ts";
 import { Agenda, weekOffset, weekRange } from "./agenda.tsx";
+import { CarpoolQuick } from "./carpool-quick.tsx";
 import { ClubTime } from "./club-time.tsx";
 import { Notice } from "./form-error.tsx";
 
@@ -33,11 +40,16 @@ export async function MySchedule({
   const weeks = params.weeks === String(MORE_WEEKS) ? MORE_WEEKS : 1;
   const person = typeof params.person === "string" && isUuid(params.person) ? params.person : null;
   const { from, to } = weekRange(offset, weeks);
-  const [t, schedule, events] = await Promise.all([
+  const [t, schedule, events, mySettings] = await Promise.all([
     getTranslations(),
     getSchedule(from, to, person ? `&personId=${person}` : ""),
     getMyEvents(),
+    getMyCarpoolSettings(),
   ]);
+  // "Skapa samåkning" (P2.7f) under the activities I may drive to, as on the
+  // group's page and in the app: with my defaults, where the car pool takes
+  // offers and I have no car yet.
+  const carpoolDefaults = mySettings.settings;
   // Events open for sign-up for me or my wards (P1.6): "Sign up by …".
   // The car pools of the page's activities (P2.7c): one request per club.
   const carpools = await getCarpoolSummaries(
@@ -147,6 +159,24 @@ export async function MySchedule({
           groups: e.groups,
           people: e.people,
           carpool: carpools.get(e.activityId),
+          ...(() => {
+            const carpool = carpools.get(e.activityId);
+            return carpoolDefaults &&
+              e.status === "scheduled" &&
+              carpool?.open &&
+              carpool.canOffer &&
+              !carpool.offers.some((o) => o.mine)
+              ? {
+                  actions: (
+                    <CarpoolQuick
+                      activityId={e.activityId}
+                      settings={carpoolDefaults}
+                      returnPlace={e.place}
+                    />
+                  ),
+                }
+              : {};
+          })(),
           ...(e.responseMode ? { responseMode: e.responseMode } : {}),
           respondBy: e.respondBy ?? null,
           responses: (e.responses ?? []).map((r) => {

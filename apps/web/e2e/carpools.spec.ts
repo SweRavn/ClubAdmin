@@ -177,6 +177,26 @@ test("Erik offers his car with one tap from the group's list, with his defaults 
   await expect(mine.first()).toContainText("Plats för en bollbag");
 });
 
+test("Mikael offers his car with one tap from Mitt schema on Home (P2.7f)", async ({ page }) => {
+  // Mikael keeps defaults (the demo) and nobody drives to the friendly match yet.
+  await loginAs(page, PERSONAS.mikael, { returnTo: "/?weeks=4" });
+  const item = page
+    .getByTestId("agenda-item")
+    .filter({ hasText: "Träningsmatch mot Norrby VK" })
+    .first();
+  await item.getByTestId("carpool-quick").click();
+  await expect(
+    page
+      .getByTestId("agenda-item")
+      .filter({ hasText: "Träningsmatch mot Norrby VK" })
+      .getByTestId("carpool-quick"),
+  ).toHaveCount(0);
+  await page.goto("/activities/0199a000-0000-7000-8015-000000000015");
+  await expect(
+    page.getByTestId("carpool-car").filter({ hasText: "Din bil" }).first(),
+  ).toBeVisible();
+});
+
 test("Anna keeps her car-pool defaults on her profile (P2.7f)", async ({ page }) => {
   await loginAs(page, PERSONAS.anna, { returnTo: "/me/profile" });
   const form = page.getByTestId("carpool-defaults-form");
