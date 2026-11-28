@@ -96,8 +96,14 @@ export default defineConfig({
           dependencies: ["carpools"],
         },
         { name: "grants", testMatch: /grants\.spec\.ts/, dependencies: ["duties"] },
+        // Background checks (P2.8): SVK's registrar, IKN P2012's leaders.
+        {
+          name: "background-checks",
+          testMatch: /background-checks\.spec\.ts/,
+          dependencies: ["grants"],
+        },
         // The chat (P2.1, P2.7b): SVK F2017's channel.
-        { name: "chat", testMatch: /chat\.spec\.ts/, dependencies: ["grants"] },
+        { name: "chat", testMatch: /chat\.spec\.ts/, dependencies: ["background-checks"] },
         { name: "cleanup", testMatch: /cleanup\.spec\.ts/, dependencies: ["chat"] },
         { name: "profile", testMatch: /profile\.spec\.ts/, dependencies: ["cleanup"] },
       ],

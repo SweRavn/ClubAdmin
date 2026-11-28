@@ -44,6 +44,15 @@ export default async function AccountPage() {
           </a>
         </li>
         <li>
+          <a
+            href="/me/background-checks"
+            className="text-accent underline"
+            data-testid="me-background-checks"
+          >
+            {t("account.backgroundChecks")}
+          </a>
+        </li>
+        <li>
           <a href="/me/protection" className="text-accent underline" data-testid="me-protection">
             {t("userMenu.protection")}
           </a>

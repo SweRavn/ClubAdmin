@@ -939,7 +939,7 @@ only by the person, their family and the clubs they belong to.
 | `relative` of P with `view_schedule` | See P's schedule only |
 | `treasurer` of club C | Club finance, fees; with MFA |
 | `board_member` of C | Board documents, meetings; member list (limited fields) |
-| `safeguarding_officer` / `club_manager` | Background-check status of leaders; with MFA |
+| `safeguarding_officer` / `club_manager` | Background-check status of leaders; ticking off (`verify`, safeguarding officers and registrars) with MFA |
 | `club_manager` of C | Everything in C's administration: settings, roles (incl. other managers and group owners), members, join requests, waiting lists, history; with MFA |
 | Signed-up person without club | Own profile, add children, search clubs, send join requests, join waiting lists, create a club (if allowed) |
 | Platform operator | Nothing in club data, unless the club grants time-limited support access |
@@ -1308,6 +1308,42 @@ plugin's files; the report becomes `exported`). The attendance views'
 hints). Attendance changed in a locked period flags the report
 (`attendance_changed_at`, worker job `grants:attendance_changed`). `adapted` is a field of the group (create, update, responses). The
 plugins and their rules: [plugins.md](plugins.md).
+
+### Background-check requirements and records (P2.8, ADR 0051, ADR 0047)
+
+Migration 0059. The enabled background-check plugin of the club's country
+(on by default) declares its check types and the categories that need a
+check (`regular_contact_with_children`, `alone_with_children`, `overnight`:
+required; `board`: recommended).
+
+- `roles.background_check_category` (and on `club_type_roles` and
+  `duty_types`): the category a role or duty type falls in, or none. The
+  built-in template gives coaches and team managers
+  `regular_contact_with_children`.
+- `background_check_club_requirements`: the club's stricter requirements
+  per plugin, category and check type: a shorter `recheck_months` (1–120)
+  and/or `level` `required` for a recommended category. Never weaker.
+- A person needs a check while they hold a role (club or group) or are
+  assigned to a shift whose category is required. Status: `missing`,
+  `expiring` (within 60 days), `valid`, `to_delete` (12 months after the
+  last role that needed it; deleted only by a person with `manage`).
+- `club.background_checks.verify` (registrars, safeguarding officers, MFA)
+  records a shown check; `club.background_checks.manage` (club managers,
+  registrars) sets requirements, requests and deletes. The overview is open
+  to either (`club.background_checks.read`, derived).
+
+Endpoints: `GET /clubs/:clubId/background-checks/overview` (keyset
+paginated, filter by status), `GET|PUT
+/clubs/:clubId/background-checks/requirements`, `POST
+/clubs/:clubId/background-checks/records` (MFA), `DELETE
+/clubs/:clubId/background-checks/records/:recordId` (MFA), `POST
+/clubs/:clubId/background-checks/requests`, `GET
+/me/background-checks?clubId=`. Enforcement: chat (`chat_background_check`)
+and duties (`background_check_required`); duty shifts carry
+`backgroundCheckRequired` for the viewer and assignments
+`missingBackgroundCheck` for leaders. Events `background_check.expiring`
+(60 and 14 days) and `background_check.follow_up` (weekly, counts only)
+from the API's daily job `background_checks:reminders`.
 
 ## Permissions (implemented policies)
 

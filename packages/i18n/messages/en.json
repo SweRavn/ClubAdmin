@@ -114,7 +114,8 @@
     "mfa": {
       "on": "You logged in with two-factor authentication.",
       "off": "You logged in without a second factor."
-    }
+    },
+    "backgroundChecks": "Background checks"
   },
   "preferences": {
     "title": "Language and time zone",
@@ -334,7 +335,14 @@
     "duty_visibility_locked": "The club does not let its groups choose the visibility of duties.",
     "duty_swap_open": "The shift is offered already.",
     "duty_swap_closed": "The swap is already done, declined or withdrawn.",
-    "duty_swap_own": "You cannot swap with yourself."
+    "duty_swap_own": "You cannot swap with yourself.",
+    "background_check_required": "This duty needs a valid background check, which is missing or has expired. Show a new one to the club's contact.",
+    "background_check_own": "You cannot tick off your own check.",
+    "background_check_not_verified": "The check could not be accepted. See the reason by the date.",
+    "background_check_off": "The background-check plugin is turned off in the club.",
+    "background_check_type_unknown": "That kind of check does not exist in the club's country.",
+    "background_check_weaker": "The club can only make the requirements stricter, never milder.",
+    "background_check_not_in_club": "The person is not in the club."
   },
   "roles": {
     "chair": "Chair",
@@ -948,7 +956,14 @@
     "grant_export_empty": "The plugin gave no file in that format.",
     "respond_by_after_start": "The answer deadline cannot be after the activity starts.",
     "role_names_required": "Give the role a name in the club's language and in English.",
-    "location_in_use": "The place is in use and cannot be deleted – archive it instead."
+    "location_in_use": "The place is in use and cannot be deleted – archive it instead.",
+    "background_check_required": "This duty needs a valid background check, which is missing or has expired. Show a new one to the club's contact.",
+    "background_check_own": "You cannot tick off your own check.",
+    "background_check_not_verified": "The check could not be accepted. See the reason by the date.",
+    "background_check_off": "The background-check plugin is turned off in the club.",
+    "background_check_type_unknown": "That kind of check does not exist in the club's country.",
+    "background_check_weaker": "The club can only make the requirements stricter, never milder.",
+    "background_check_not_in_club": "The person is not in the club."
   },
   "memberExport": {
     "columns": {
@@ -4992,7 +5007,9 @@
     },
     "visibility": "Who sees the names on shifts",
     "who": "Who",
-    "addTypes": "Add duty types"
+    "addTypes": "Add duty types",
+    "needsCheck": "This duty needs a valid background check that the club has not seen from you.",
+    "missingCheck": "No valid background check"
   },
   "plugins": {
     "title": "Plugins",
@@ -5256,6 +5273,17 @@
     "levels": {
       "required": "required",
       "recommended": "recommended"
-    }
+    },
+    "mineTitle": "My background checks",
+    "mineIntro": "What your clubs require of you to be with children in your role, and when your check needs renewing.",
+    "mineNone": "No club requires a check of you.",
+    "mineValidUntil": "Your check is valid until {date}.",
+    "mineValid": "Your check stays valid.",
+    "mineMissing": "The club needs to see a valid check. Until then you cannot write to children in chat or take duties with children.",
+    "mineNotRequired": "No check is required at the moment.",
+    "mineExpiring": "Order a new one in good time and show it to the club's contact.",
+    "mineBecause": "{type} is required for {category} ({roles}).",
+    "howPerson": "How: order the {name} from the police and show it to the club's contact. It may be at most {days} days old.",
+    "howClub": "How: the club confirms the purpose, you apply for the {name} to the police and show it to the club's contact."
   }
 }

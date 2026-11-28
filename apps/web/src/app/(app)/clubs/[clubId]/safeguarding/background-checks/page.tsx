@@ -148,11 +148,15 @@ export default async function BackgroundChecksPage({ params, searchParams }: Pro
                   ))}
                 </div>
                 {item.expiresOn ? (
-                  <p className="text-sm">{t("backgroundChecks.validUntil", { date: day(item.expiresOn) })}</p>
+                  <p className="text-sm">
+                    {t("backgroundChecks.validUntil", { date: day(item.expiresOn) })}
+                  </p>
                 ) : null}
                 {item.request ? (
                   <p className="text-sm text-muted">
-                    {t("backgroundChecks.requested", { date: day(item.request.createdAt.slice(0, 10)) })}
+                    {t("backgroundChecks.requested", {
+                      date: day(item.request.createdAt.slice(0, 10)),
+                    })}
                   </p>
                 ) : null}
                 {item.records.map((r) => (
@@ -277,7 +281,9 @@ export default async function BackgroundChecksPage({ params, searchParams }: Pro
         </section>
       ) : null}
 
-      {requirements ? <Requirements clubId={club.id} back={back} requirements={requirements} /> : null}
+      {requirements ? (
+        <Requirements clubId={club.id} back={back} requirements={requirements} />
+      ) : null}
     </div>
   );
 }
@@ -309,7 +315,9 @@ async function Requirements({
       <ul className="space-y-1 text-sm">
         {requirements.pluginRequirements.map((r) => (
           <li key={`${r.category}:${r.checkType}`}>
-            <span className="font-medium">{t(enumKey("backgroundChecks.categories", r.category))}</span>
+            <span className="font-medium">
+              {t(enumKey("backgroundChecks.categories", r.category))}
+            </span>
             {": "}
             {t(enumKey("backgroundChecks.levels", r.level))}
             <span className="block text-xs text-muted">{r.basis}</span>
@@ -332,7 +340,11 @@ async function Requirements({
         </a>
       </p>
       {type ? (
-        <ActionForm action="background-check-requirements" back={back} className="max-w-lg space-y-3">
+        <ActionForm
+          action="background-check-requirements"
+          back={back}
+          className="max-w-lg space-y-3"
+        >
           <input type="hidden" name="clubId" value={clubId} />
           <input type="hidden" name="pluginId" value={plugin.id} />
           <input type="hidden" name="checkType" value={type.key} />

@@ -69,6 +69,16 @@ as a complement. Nothing here needs anyone to approve anything by hand.
    limits, ADR 0041). Where required, a leader writes to children and joins
    children's chats only with a valid check (the background-check tracking
    of Phase 2).
+   **Amended (P2.8, 2026-11-28):** the source of the requirement is the
+   enabled background-check plugin of the club's country (ADR 0051
+   decision 6), not a flag in the country pack (no
+   `backgroundCheckForChildren` was added). The plugin of the club's
+   country is on by default; a club that turns it off under **Tillägg**
+   lifts every requirement. A club may add stricter requirements (a
+   shorter re-check interval, a recommended category made required), never
+   weaker ones. A leader with a role whose category needs a check opens a
+   direct chat with a child or joins a chat with children only with a valid
+   check (`chat_background_check`).
 7. **Reporting.** One tap for children and guardians; the reported person
    does not see who reported. Reports go to the club's safeguarding officers
    (the `safeguarding_officer` template role, a permission in the catalogue).

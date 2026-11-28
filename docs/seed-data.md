@@ -162,16 +162,16 @@ club has roughly 10 named/central users plus generated players.
 | 2 | **Mikael Lindqvist** | 43 | yes | Parent of Elsa and Oskar; separate household from Anna (divorced) → two full guardians, separate addresses |
 | 3 | **Elsa Lindqvist** | 9 | **no** | SVK F2017 player → child without account, managed by guardians |
 | 4 | **Oskar Lindqvist** | 14 | yes | IKN P2012 player → teen with own login *and* guardians; was created by Anna as a child without email and **got his own email/login last year** (visible in history) |
-| 5 | **Erik Johansson** | 38 | yes | SVK F2017 **head coach**; IKN floorball F2015 **assistant coach**; parent of Maja → leader in two clubs + parent; background check **valid** |
+| 5 | **Erik Johansson** | 38 | yes | SVK F2017 **head coach**; IKN floorball F2015 **assistant coach**; parent of Maja → leader in two clubs + parent; background checks **valid** in SVK and IKN (P2.8) |
 | 6 | **Maja Johansson** | 10 | no | Plays in SVK F2017 *and* IKN F2015 → one child in two clubs/sports |
 | 7 | **Sara Ahmed** | 35 | yes | SVK **club manager** + **treasurer** + F2017 **team manager** (cash desk) + parent of Alva → several roles in one club, second manager; MFA required. Not the registrar: since P1.15 A2 she administers SVK but does not see the register's details, guardians or consents (the roles page offers her the registrar role) |
 | 8 | **Alva Ahmed** | 9 | no | SVK F2017 player; **no photo consent** → tests consent filtering |
 | 9 | **Gunilla Berg** | 68 | yes | Grandmother of Alva, **relative** with view-only rights → restricted guardian kind |
-| 10 | **Johan Nilsson** | 27 | yes | SVK **registrar** (the full member register without manager rights, P1.2), Herr senior player and F2017 **assistant coach**; background check **expires in 20 days** → reminder flow |
-| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** + **registrar** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior**, where he holds SVK's own group role **Materialansvarig** (P1.15 A2) (membership **paused**, P1.2) and IKN supporting member → person in all three clubs, nb-NO locale preference, background check (politiattest) valid in NO, **missing** in SE |
+| 10 | **Johan Nilsson** | 27 | yes | SVK **registrar** (the full member register without manager rights, P1.2), Herr senior player and F2017 **assistant coach**; background check **valid** (ticked off by Anna, P2.8) |
+| 11 | **Lars Haugen** | 45 | yes | Norwegian. FIL **club manager** + **registrar** (created the club via self sign-up) + **board member** + J2014 **head coach**; also **member/player in SVK Herr senior**, where he holds SVK's own group role **Materialansvarig** (P1.15 A2) (membership **paused**, P1.2) and IKN supporting member → person in all three clubs, nb-NO locale preference, politiattest **valid** in FIL (shown digitally, P2.8); his SVK role needs no check |
 | 12 | **Ingrid Haugen** | 12 | no | Daughter of Lars, FIL J2014 player |
 | 13 | **Karin Ek** | 52 | yes | IKN **club manager** + **registrar** + **safeguarding officer** + **secretary** (governing documents, P2.4); employed part-time as club administrator (staff, time reporting) |
-| 14 | **Ahmed Yilmaz** | 47 | yes | IKN P2012 **head coach**; background check **expired** → must be flagged |
+| 14 | **Ahmed Yilmaz** | 47 | yes | IKN P2012 **head coach**; background check **valid** (IKN re-checks every 36 months, P2.8) |
 | 15 | **Liam Yilmaz** | 14 | yes | IKN P2012 player; user preference `en` locale → locale override |
 | 16 | **Peter Sund** | 60 | yes | IKN **treasurer**; former SVK board member and **manager**, handed over to Anna last year → historic roles (valid_to in past); has a **pending manager hand-over** from Karin in IKN |
 | 17 | **Nora Lund** | 30 | invited | SVK new leader, **invitation pending** (not yet accepted) |
@@ -189,13 +189,13 @@ club has roughly 10 named/central users plus generated players.
 | 29 | **Elsa Lindqvist** (duplicate) | 9 | no | Elsa added again by Mikael (same birth date, no clubs), Anna invited as second parent → **merge notice** for Anna and Mikael, merge and undo |
 | 30 | **Nils Granqvist** | — | no | Alva's neighbour who drives to training: **contact person without login**, linked by Sara (schedule and messages) |
 | 31 | **Bo Stöd** | — | no | Emma's **LSS contact person**, linked by Emma herself |
-| 32 | **Tilde Yilmaz** | 18 | yes | IKN, own login; just reached the adult age (guardianships flagged) → **adult decision** page for Ahmed and Leyla |
+| 32 | **Tilde Yilmaz** | 18 | yes | IKN, own login; just reached the adult age (guardianships flagged) → **adult decision** page for Ahmed and Leyla; IKN P2012 **assistant coach** whose extract is 35 months old → **expiring** (reminder flow, P2.8) |
 | 33 | **Leyla Yilmaz** | 45 | yes | Tilde's mother, invited by Ahmed as second guardian |
 | 34 | **Petra Johansson** | — | no | Recorded by Johan (SVK registrar) as Maja's mother **from a paper application**; ended by Anna (club manager) **with a reason** (history) |
 | 35 | **Mats Berg** | 48 | yes | SVK **club manager**, the third administrator: with three, two can suspend the third without outside help (P1.15 A3) |
 | 36 | **Linnea Holm** | 33 | yes | Was an SVK club manager; **suspended** last week by Anna and Sara (suspected break-in, demoted to an ordinary member) → a confirmed suspension on the administrators page and in the audit log |
-| 37 | **Göran Lund** | 58 | yes | IKN **club manager** next to Karin (the minimum of two) |
-| 38 | **Kari Haugen** | 44 | yes | Norwegian (nb). FIL **club manager** next to Lars: FIL has exactly two administrators |
+| 37 | **Göran Lund** | 58 | yes | IKN **club manager** next to Karin (the minimum of two); new IKN P2012 **assistant coach** with **no background check** → refused in the children's chats and on "Sekretariat" shifts (P2.8) |
+| 38 | **Kari Haugen** | 44 | yes | Norwegian (nb). FIL **club manager** next to Lars: FIL has exactly two administrators; new J2014 **team manager**, politiattest **requested** (purpose confirmed, P2.8) |
 | 39 | **Ulf Ek** | 63 | yes | Founded **Lövsta Bordtennisklubb** and is its only administrator: the grace period's banner and reminders |
 | 40 | **Britt Sjöberg** | 58 | yes | Founded **Ekuddens Schackklubb**, of the club type Schackklubb: its roles came from the type's template (P1.15 B) |
 | 41 | **Aron Nyström** | 36 | yes | Ekudden SK's second administrator next to Britt |
@@ -213,8 +213,7 @@ as applying does, so the list's owners see every applicant. Henrik sees
 "Number 2 of 5" for Viktor on `/me/waitlists`; Erik
 (owner) sees the list in order with the offer out on the group's waiting
 list page; Sara (club manager) sees the out-of-turn admission with its
-reason on the club's waiting lists page (P1.10b). Seeded now as data only, for modules that come later: background
-checks (clearances), billing plans, chat rooms and the anonymisation
+reason on the club's waiting lists page (P1.10b). Seeded now as data only, for modules that come later: billing plans, chat rooms and the anonymisation
 schedule (Ola left two years ago).
 
 ## Demo scenario: activity and other data (added as modules land)
@@ -481,6 +480,17 @@ schedule (Ola left two years ago).
   `/clubs/<ikn>/duties` as Karin. SVK has the duty types Kiosk (from 13) and
   Sekretariat (from 15, with children) and no shifts yet, so Erik (F2017's
   head coach) can create one on `/groups/<f2017>/duties` (P2.7b).
+- **Background checks** (P2.8, `apps/api/src/seed/steps/background-checks.ts`):
+  the Swedish and Norwegian plugins are on by default. In SVK Anna ticked off
+  the extracts of Erik, Sara and Johan. IKN asks for a new extract every 36
+  months; in P2012 Ahmed and Peter are valid, Tilde's extract runs out within
+  weeks (expiring) and Göran, a new assistant coach, has none: he is refused
+  when writing to Liam or joining the team's chat, and the "Sekretariat"
+  shift says it needs a check. In FIL Lars's politiattest is recorded (shown
+  digitally) and Kari's is requested (purpose confirmed). Try
+  `/clubs/<svk>/safeguarding/background-checks` as Anna (with a second
+  factor), `/clubs/<ikn>/safeguarding/background-checks` as Karin,
+  `/me/background-checks` as Tilde, and Liam's page as Göran.
 
 ## Club-defined roles (P1.15)
 

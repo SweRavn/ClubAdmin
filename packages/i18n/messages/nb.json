@@ -114,7 +114,8 @@
     "mfa": {
       "on": "Du logget inn med tofaktorautentisering.",
       "off": "Du logget inn uten tofaktorautentisering."
-    }
+    },
+    "backgroundChecks": "Politiattester"
   },
   "preferences": {
     "title": "Språk og tidssone",
@@ -334,7 +335,14 @@
     "duty_visibility_locked": "Klubben lar ikke gruppene velge synlighet for dugnadsvakter.",
     "duty_swap_open": "Vakten er allerede tilbudt.",
     "duty_swap_closed": "Byttet er allerede gjort, avslått eller trukket tilbake.",
-    "duty_swap_own": "Du kan ikke bytte med deg selv."
+    "duty_swap_own": "Du kan ikke bytte med deg selv.",
+    "background_check_required": "Vakten krever gyldig politiattest, og den mangler eller er utløpt. Vis en ny til klubbens ansvarlige.",
+    "background_check_own": "Du kan ikke krysse av din egen attest.",
+    "background_check_not_verified": "Attesten kunne ikke godtas. Se begrunnelsen ved datoen.",
+    "background_check_off": "Tillegget for politiattest er slått av i klubben.",
+    "background_check_type_unknown": "Den typen attest finnes ikke i klubbens land.",
+    "background_check_weaker": "Klubben kan bare skjerpe kravene, ikke mildne dem.",
+    "background_check_not_in_club": "Personen er ikke med i klubben."
   },
   "roles": {
     "chair": "Leder",
@@ -948,7 +956,14 @@
     "grant_export_empty": "Tillegget ga ingen fil i det formatet.",
     "respond_by_after_start": "Svarfristen kan ikke være etter at aktiviteten begynner.",
     "role_names_required": "Gi rollen et navn på klubbens språk og på engelsk.",
-    "location_in_use": "Stedet er i bruk og kan ikke slettes – arkiver det i stedet."
+    "location_in_use": "Stedet er i bruk og kan ikke slettes – arkiver det i stedet.",
+    "background_check_required": "Vakten krever gyldig politiattest, og den mangler eller er utløpt. Vis en ny til klubbens ansvarlige.",
+    "background_check_own": "Du kan ikke krysse av din egen attest.",
+    "background_check_not_verified": "Attesten kunne ikke godtas. Se begrunnelsen ved datoen.",
+    "background_check_off": "Tillegget for politiattest er slått av i klubben.",
+    "background_check_type_unknown": "Den typen attest finnes ikke i klubbens land.",
+    "background_check_weaker": "Klubben kan bare skjerpe kravene, ikke mildne dem.",
+    "background_check_not_in_club": "Personen er ikke med i klubben."
   },
   "memberExport": {
     "columns": {
@@ -4992,7 +5007,9 @@
     },
     "visibility": "Hvem ser navnene på vaktene",
     "who": "Hvem",
-    "addTypes": "Legg til typer dugnadsvakter"
+    "addTypes": "Legg til typer dugnadsvakter",
+    "needsCheck": "Vakten krever gyldig politiattest, som klubben ikke har sett fra deg.",
+    "missingCheck": "Mangler gyldig politiattest"
   },
   "plugins": {
     "title": "Tillegg",
@@ -5256,6 +5273,17 @@
     "levels": {
       "required": "kreves",
       "recommended": "anbefales"
-    }
+    },
+    "mineTitle": "Mine politiattester",
+    "mineIntro": "Hva klubbene dine krever av deg for at du skal kunne være med barn i vervet ditt, og når attesten må fornyes.",
+    "mineNone": "Ingen klubb krever attest av deg.",
+    "mineValidUntil": "Attesten din gjelder til {date}.",
+    "mineValid": "Attesten din gjelder inntil videre.",
+    "mineMissing": "Klubben må se en gyldig attest. Inntil da kan du ikke skrive til barn i chatten eller ta vakter med barn.",
+    "mineNotRequired": "Ingen attest kreves akkurat nå.",
+    "mineExpiring": "Bestill en ny i god tid og vis den til klubbens ansvarlige.",
+    "mineBecause": "{type} kreves for {category} ({roles}).",
+    "howPerson": "Slik gjør du: bestill {name} fra politiet og vis den til klubbens ansvarlige. Den kan være høyst {days} dager gammel.",
+    "howClub": "Slik gjør du: klubben bekrefter formålet, du søker om {name} hos politiet og viser den til klubbens politiattestansvarlige."
   }
 }

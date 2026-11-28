@@ -31,6 +31,8 @@ export const PERSONAS = {
   vera: { id: person(28), name: "Vera Ahmed" },
   elsaDuplicate: { id: person(29), name: "Elsa Lindqvist" },
   tilde: { id: person(32), name: "Tilde Yilmaz" },
+  // P2.8: IKN P2012's new assistant coach, no background check yet.
+  goran: { id: person(37), name: "Göran Lund" },
   // At least two administrators (P1.15 A3).
   mats: { id: person(35), name: "Mats Berg" },
   linnea: { id: person(36), name: "Linnea Holm" },

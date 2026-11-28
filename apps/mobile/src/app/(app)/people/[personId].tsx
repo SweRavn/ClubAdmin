@@ -11,6 +11,7 @@ import { useFormatter, useTranslations } from "use-intl";
 import { useClubGroups, useMyClubs, useOpenDirectChat, usePerson } from "../../../api/queries.ts";
 import { DataAge } from "../../../components/data-age.tsx";
 import { ErrorView } from "../../../components/error-view.tsx";
+import { FormError, formErrorsOf } from "../../../components/form.tsx";
 import { PersonName } from "../../../components/person-name.tsx";
 import { useProtectScreen } from "../../../components/protect-screen.ts";
 import { RoleBadge } from "../../../components/role-badge.tsx";
@@ -124,7 +125,8 @@ function Person({ personId, clubId }: { personId: string; clubId: string | null 
           testID="send-message"
         />
       ) : null}
-      {openChat.isError ? <ErrorView error={openChat.error} /> : null}
+      {/* The reason (e.g. P2.8: a background check is needed to write to a child). */}
+      {openChat.isError ? <FormError errors={formErrorsOf(openChat.error)} /> : null}
       {rows.length > 0 ? (
         <Section title={t("person.title")}>
           {rows.map((row, index) => (

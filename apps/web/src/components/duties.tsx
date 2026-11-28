@@ -73,6 +73,15 @@ export async function ShiftSummary({ shift }: { shift: DutyShift }) {
                 ? ` (${t("duties.countsFor", { name: personLabel(a.countsFor) })})`
                 : ""}
               {a.status !== "planned" ? ` · ${t(enumKey("tasks.statuses", a.status))}` : ""}
+              {/* P2.8: shown to the shift's planners; the shift is not cancelled. */}
+              {a.missingBackgroundCheck ? (
+                <span
+                  className="ml-2 rounded bg-protected-soft px-2 text-xs"
+                  data-testid="duty-missing-check"
+                >
+                  {t("duties.missingCheck")}
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -97,7 +106,15 @@ export async function ShiftSignUp({
   const mine = shift.assignments.filter((a) => a.mine && a.source !== "assigned");
   return (
     <div className="flex flex-wrap items-end gap-3">
-      {shift.filled < shift.needed ? (
+      {shift.filled < shift.needed && shift.backgroundCheckRequired ? (
+        // P2.8: not offered without the club's background check; why, and where to see it.
+        <p className="text-sm" data-testid="duty-needs-check">
+          {t("duties.needsCheck")}{" "}
+          <a href="/me/background-checks" className="underline">
+            {t("backgroundChecks.mineTitle")}
+          </a>
+        </p>
+      ) : shift.filled < shift.needed ? (
         <ActionForm action="duty-signup" className="flex flex-wrap items-end gap-2">
           <input type="hidden" name="clubId" value={shift.clubId} />
           <input type="hidden" name="shiftId" value={shift.id} />

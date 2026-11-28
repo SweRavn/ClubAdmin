@@ -41,6 +41,7 @@ import {
 import { useRealtime } from "../../../../api/realtime.ts";
 import { useChatPersonLabel, useChatTitle } from "../../../../components/chat-parts.tsx";
 import { ErrorView } from "../../../../components/error-view.tsx";
+import { FormError, formErrorsOf } from "../../../../components/form.tsx";
 import { OutboxBanner } from "../../../../components/outbox-banner.tsx";
 import { useProtectScreen } from "../../../../components/protect-screen.ts";
 import { RoleBadge } from "../../../../components/role-badge.tsx";
@@ -251,6 +252,8 @@ function ChatInfo({
               testID="chat-join"
             />
           ) : null}
+          {/* Why joining was refused (P2.8: a leader needs a valid background check). */}
+          {actions.join.isError ? <FormError errors={formErrorsOf(actions.join.error)} /> : null}
         </View>
       ) : null}
       <Section title={t("chat.members")}>

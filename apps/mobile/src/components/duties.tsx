@@ -22,6 +22,7 @@ import {
   useMyWards,
 } from "../api/queries.ts";
 import { useTheme } from "../theme.ts";
+import { FormError, formErrorsOf } from "./form.tsx";
 import { RoleBadge } from "./role-badge.tsx";
 import { Body, Button, Muted, Row, Section } from "./ui.tsx";
 
@@ -82,6 +83,10 @@ function ShiftRow({ shift, last }: { shift: DutyShift; last: boolean }) {
               ? ` (${t("duties.countsFor", { name: personLabel(a.countsFor) })})`
               : ""}
           </Body>
+          {/* P2.8: the planners see who lacks a valid background check. */}
+          {a.missingBackgroundCheck ? (
+            <RoleBadge tone="accent" label={t("duties.missingCheck")} />
+          ) : null}
           {open && a.mine && a.source !== "assigned" ? (
             <Button
               kind="secondary"
@@ -95,7 +100,14 @@ function ShiftRow({ shift, last }: { shift: DutyShift; last: boolean }) {
           ) : null}
         </View>
       ))}
-      {open && free
+      {/* P2.8: not offered without the club's background check; the reason instead. */}
+      {open && free && shift.backgroundCheckRequired ? (
+        <Muted testID={`duty-needs-check-${shift.id}`}>{t("duties.needsCheck")}</Muted>
+      ) : null}
+      {signUp.error && signUp.variables?.shiftId === shift.id ? (
+        <FormError errors={formErrorsOf(signUp.error)} />
+      ) : null}
+      {open && free && !shift.backgroundCheckRequired
         ? (children.length === 0 ? [null] : children).map((child) => (
             <Button
               key={child?.id ?? "me"}

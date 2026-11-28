@@ -218,3 +218,48 @@ RF's Idrottsarenan needs a vendor agreement
   so there is no submit endpoint or button yet; the e2e test checks the LOK
   report, locking and the CSV download, not fixing a birth date (the demo
   people have theirs).
+
+## As implemented (P2.8, background checks, 2026-11-28)
+
+- Plugins `plugins/se-background-check` (`se.rf.registerutdrag`: the
+  person's extract, at most six months old when shown, from 15, no re-check
+  interval) and `plugins/no-background-check` (`no.nif.politiattest`: the
+  club confirms the purpose, from 15, no renewal), bundled with the API and
+  passing the conformance suite. Sources in their READMEs.
+- A plugin's `checkTypes` and `requirements` are **static declarations**:
+  the host reads them once per process with a neutral context. Background-
+  check plugins are **on by default** for clubs of their country (no
+  `club_plugins` row means enabled; the row is created the first time the
+  plugin keeps state). Turning one off lifts every requirement (ADR 0047
+  rule 6, amended).
+- Who needs a check is a category on roles (`background_check_category`,
+  set in the role editor with one tap; the template's coaches and team
+  managers have `regular_contact_with_children`) and on duty types (a duty
+  type with contact with children needs `regular_contact_with_children`).
+  The club's stricter requirements live in
+  `background_check_club_requirements` (shorter re-check, recommended made
+  required; never weaker: `background_check_weaker`).
+- Permissions: `club.background_checks.verify` (registrars, safeguarding
+  officers; MFA) ticks off a shown check; `club.background_checks.manage`
+  sets requirements, requests and deletes records. The overview uses a
+  derived `club.background_checks.read` (manage or verify), so a
+  safeguarding officer can find the person whose check they tick off: a
+  deviation from the prompt, which gave the overview to `manage` only.
+- Enforcement in the caller's transaction (one query for a person's facts):
+  opening a direct chat with a child and joining a chat as a leader
+  (`chat_background_check`); signing up for, being assigned to or swapping
+  into a duty shift whose type needs a check (`background_check_required`);
+  open shifts say "needs a check" instead of offering sign-up, and leaders
+  see staffed shifts whose person lacks a valid check.
+- Status per person: missing, expiring (60 days), valid; a record is listed
+  for deletion 12 months after the person's last role that needed it (it is
+  kept until someone with `manage` deletes it, P2.8 decision 4).
+- Reminders: the API's daily job `background_checks:reminders` publishes
+  `background_check.expiring` 60 and 14 days before a check runs out (to the
+  person, category `account`, also by email) and a weekly
+  `background_check.follow_up` with counts only (to the holders of
+  `manage`, category `club_admin`).
+- Screens: the club's **Registerutdrag** page under Trygghet (overview,
+  ticking off, requests, requirements), the role editor's category,
+  **Mitt konto → Registerutdrag** (`/me/background-checks`), and the
+  blocked-chat and duty explanations on the web and in the mobile app.

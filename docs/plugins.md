@@ -32,6 +32,37 @@ Groups with adapted activities (parasport) are marked as such on the group
 (`adapted`). Grant plugins count their members as "with a disability" where
 the rules say so; ClubAdmin never stores health data about a person.
 
+## Background checks
+
+The background-check plugin of the club's country is **on by default**
+(Sweden: registerutdrag, Norway: politiattest); a club that turns it off
+under **Tillägg** has no background-check requirements at all.
+
+- Who needs a check is set on the club's roles (the role page, one tap per
+  category: regular contact with children, alone with children, overnight
+  trips, board) and on duty types with contact with children. The template's
+  coaches and team managers have regular contact with children.
+- On **Trygghet → Registerutdrag** (`/clubs/<club>/safeguarding/background-checks`)
+  registrars and safeguarding officers see who is missing a check, whose
+  check expires within 60 days and which records may be deleted, and tick
+  off a check that was shown to them (a second factor is needed). Nothing is
+  uploaded: only the type, the issue date and how it was shown. Club
+  managers also set stricter requirements (for example a new extract every
+  36 months), request an attest where the club starts it (Norway) and delete
+  records.
+- Without a valid check where one is required, a leader cannot write to a
+  child or join a chat with children, and cannot take a duty shift whose
+  type has contact with children; the app says why.
+- Everyone sees their own checks and what each club requires under
+  **Mitt konto → Registerutdrag** (`/me/background-checks`). The person gets
+  a reminder 60 and 14 days before a check runs out; the club's managers a
+  weekly summary (counts only).
+
+| Country | Check | Plugin | Rules |
+|---|---|---|---|
+| Sweden | Begränsat registerutdrag (arbete med barn), shown to the club | [`se.rf.registerutdrag`](../plugins/se-background-check/README.md) | Lag (2013:852); RF's statutes 5 § 8; at most six months old when shown |
+| Norway | Politiattest, the club confirms the purpose | [`no.nif.politiattest`](../plugins/no-background-check/README.md) | Politiregisterloven §§ 37, 39; politiregisterforskriften § 34-1; Idrettsstyret 2017 (sak 185) |
+
 ## Grant schemes and their rules
 
 The bundled plugins implement these rules. When an organisation publishes new
@@ -69,10 +100,13 @@ logged.
 
 ## Writing a plugin
 
-Start from one of the bundled plugins (`plugins/se-lok`, `plugins/no-lam`).
+Start from one of the bundled plugins (`plugins/se-lok`, `plugins/no-lam`,
+`plugins/se-background-check`, `plugins/no-background-check`).
 A plugin is a TypeScript package under `plugins/` that exports
 `definePlugin({ manifest, grantReporting?, backgroundChecks? })`, keeps its
 texts in Swedish, English and Norwegian in the manifest, and passes the
 conformance suite (`checkConformance` from `@clubadmin/plugin-api/testing`)
 in its tests. Results name people and sessions by ID with reason codes; the
-host turns those into texts and names.
+host turns those into texts and names. A background-check plugin's
+`checkTypes` and `requirements` are static: the host reads them once per
+process, not per club.

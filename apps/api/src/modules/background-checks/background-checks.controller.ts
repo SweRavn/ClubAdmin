@@ -41,7 +41,7 @@ import {
   resourceOf,
   tenantContext,
 } from "../authorization/index.ts";
-import { RequireMfa } from "../identity/principal.ts";
+import { RequireMfa } from "../identity/index.ts";
 import { PeopleService } from "../people/index.ts";
 import type { RecordRow } from "./background-checks.repository.ts";
 import { BackgroundChecksService, EXPIRING_DAYS } from "./background-checks.service.ts";
